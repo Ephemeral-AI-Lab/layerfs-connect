@@ -39,6 +39,8 @@
   --color-foreground: var(--foreground);
   --color-background: var(--background);
   --color-faint: var(--faint);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
   --color-idle: var(--idle);
   --color-agent-builder: var(--agent-builder);
   --color-agent-reviewer: var(--agent-reviewer);
@@ -68,6 +70,8 @@
   --accent: #eef0fc;
   --accent-foreground: #2d3a9a;
   --destructive: #c23b22;
+  --success: #1c7a43;
+  --warning: #8c5b00;
   --border: #e7e7ea;
   --input: #d9d9de;
   --ring: #cbd0f4;
@@ -105,6 +109,8 @@
   --accent: #262a45;
   --accent-foreground: #c3c9f7;
   --destructive: #f2877a;
+  --success: #4cc488;
+  --warning: #e0a83e;
   --border: #2a2a2e;
   --input: #34343a;
   --ring: #4a538f;

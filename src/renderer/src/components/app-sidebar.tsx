@@ -12,7 +12,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from '@/components/ui/sidebar'
-import { type Agent, COMPUTE_COUNT, PROJECTS, STORAGE_COUNT } from '@/data/sample'
+import { type Agent, PROJECTS } from '@/data/sample'
 import { cn } from '@/lib/utils'
 
 export type NavId = 'sessions' | 'extensions' | 'projects' | 'storage' | 'compute'
@@ -32,14 +32,14 @@ const APP_NAV: NavItem[] = [
   { id: 'extensions', label: 'Extensions', icon: Blocks },
 ]
 
-const LAYERFS_NAV: NavItem[] = [
+const layerfsNav = (storageCount: number, computeCount: number): NavItem[] => [
   { id: 'projects', label: 'Projects', icon: Layers, count: PROJECTS.length },
-  { id: 'storage', label: 'Storage', icon: Database, count: STORAGE_COUNT },
-  { id: 'compute', label: 'Compute', icon: Cpu, count: COMPUTE_COUNT },
+  { id: 'storage', label: 'Storage', icon: Database, count: storageCount },
+  { id: 'compute', label: 'Compute', icon: Cpu, count: computeCount },
 ]
 
 // Literal class names, so Tailwind sees them.
-const AGENT_DOT: Record<Agent, string> = {
+export const AGENT_DOT: Record<Agent, string> = {
   builder: 'bg-agent-builder',
   reviewer: 'bg-agent-reviewer',
   tester: 'bg-agent-tester',
@@ -49,9 +49,12 @@ const AGENT_DOT: Record<Agent, string> = {
 interface AppSidebarProps {
   selected: Selection
   onSelect: (selection: Selection) => void
+  storageCount: number
+  /** Compute targets turned on. */
+  computeCount: number
 }
 
-export function AppSidebar({ selected, onSelect }: AppSidebarProps) {
+export function AppSidebar({ selected, onSelect, storageCount, computeCount }: AppSidebarProps) {
   const navItems = (items: NavItem[]) =>
     items.map((item) => (
       <SidebarMenuItem key={item.id}>
@@ -95,7 +98,7 @@ export function AppSidebar({ selected, onSelect }: AppSidebarProps) {
             <LayerfsMark className="size-3.5" />
             LayerFS
           </SidebarGroupLabel>
-          <SidebarMenu className="gap-1">{navItems(LAYERFS_NAV)}</SidebarMenu>
+          <SidebarMenu className="gap-1">{navItems(layerfsNav(storageCount, computeCount))}</SidebarMenu>
         </SidebarGroup>
 
         <SidebarGroup className="px-3 pt-4">

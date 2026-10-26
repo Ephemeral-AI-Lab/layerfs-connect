@@ -3,7 +3,7 @@
 
 import { writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
-import { BrowserWindow, app, shell } from 'electron'
+import { BrowserWindow, app, nativeTheme, shell } from 'electron'
 
 function createWindow(): BrowserWindow {
   const win = new BrowserWindow({
@@ -34,6 +34,14 @@ function createWindow(): BrowserWindow {
   if (shot) {
     win.webContents.once('did-finish-load', () => {
       setTimeout(async () => {
+        // CONNECT_SCROLL=<px> scrolls the page's scrolling panes first.
+        const scroll = Number(process.env.CONNECT_SCROLL ?? 0)
+        if (scroll > 0) {
+          await win.webContents.executeJavaScript(
+            `for (const e of document.querySelectorAll('*')) if (getComputedStyle(e).overflowY === 'auto' && e.scrollHeight > e.clientHeight) e.scrollTop = ${scroll}`,
+          )
+          await new Promise((resolve) => setTimeout(resolve, 300))
+        }
         const image = await win.webContents.capturePage()
         await writeFile(shot, image.toPNG())
         app.quit()
@@ -41,16 +49,21 @@ function createWindow(): BrowserWindow {
     })
   }
 
+  // Dev aid: CONNECT_VIEW=storage/gd-team opens on that page.
+  const view = app.isPackaged ? undefined : process.env.CONNECT_VIEW
   const devServer = process.env.ELECTRON_RENDERER_URL
   if (!app.isPackaged && devServer) {
-    void win.loadURL(devServer)
+    void win.loadURL(view ? `${devServer}#${view}` : devServer)
   } else {
-    void win.loadFile(join(__dirname, '../renderer/index.html'))
+    void win.loadFile(join(__dirname, '../renderer/index.html'), view ? { hash: view } : undefined)
   }
   return win
 }
 
 void app.whenReady().then(() => {
+  // Dev aid: CONNECT_THEME=dark or light overrides the system setting.
+  const theme = process.env.CONNECT_THEME
+  if (!app.isPackaged && (theme === 'dark' || theme === 'light')) nativeTheme.themeSource = theme
   createWindow()
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
