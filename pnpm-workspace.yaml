@@ -1,0 +1,5 @@
+# Packages whose install scripts may run: Electron downloads its binary,
+# esbuild picks its platform build.
+allowBuilds:
+  electron: true
+  esbuild: true
