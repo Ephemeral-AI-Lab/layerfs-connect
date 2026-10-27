@@ -62,9 +62,7 @@ export interface KindStyle {
   label: string
   /** What the kind covers, for the legend. */
   about: string
-  /** The block's left edge. */
-  edge: string
-  /** The block's tint. */
+  /** A marked line's tint (the call lines of a script). */
   tint: string
   /** The kind chip. */
   chip: string
@@ -75,7 +73,6 @@ export const KIND: Record<SegmentKind, KindStyle> = {
   workspace: {
     label: 'workspace',
     about: 'mount, exec, commit, unmount',
-    edge: 'border-l-primary',
     tint: 'bg-primary/[0.05]',
     chip: 'bg-primary/10 text-accent-foreground ring-primary/25 dark:text-primary',
     dot: 'bg-primary',
@@ -83,7 +80,6 @@ export const KIND: Record<SegmentKind, KindStyle> = {
   fs: {
     label: 'fs',
     about: 'reads and writes on a Branch',
-    edge: 'border-l-success',
     tint: 'bg-success/[0.05]',
     chip: 'bg-success/10 text-success ring-success/25',
     dot: 'bg-success',
@@ -91,7 +87,6 @@ export const KIND: Record<SegmentKind, KindStyle> = {
   branch: {
     label: 'branch',
     about: 'fork, merge, publish, history',
-    edge: 'border-l-(--lane-1)',
     tint: 'bg-(--lane-1)/[0.06]',
     chip: 'bg-(--lane-1)/10 text-(--lane-1) ring-(--lane-1)/25',
     dot: 'bg-(--lane-1)',
@@ -99,7 +94,6 @@ export const KIND: Record<SegmentKind, KindStyle> = {
   sandbox: {
     label: 'sandbox',
     about: 'create, list, close',
-    edge: 'border-l-(--lane-2)',
     tint: 'bg-(--lane-2)/[0.06]',
     chip: 'bg-(--lane-2)/10 text-(--lane-2) ring-(--lane-2)/25',
     dot: 'bg-(--lane-2)',
@@ -107,7 +101,6 @@ export const KIND: Record<SegmentKind, KindStyle> = {
   project: {
     label: 'project',
     about: 'branches, layers, state',
-    edge: 'border-l-(--lane-4)',
     tint: 'bg-(--lane-4)/[0.06]',
     chip: 'bg-(--lane-4)/10 text-(--lane-4) ring-(--lane-4)/25',
     dot: 'bg-(--lane-4)',
@@ -115,7 +108,6 @@ export const KIND: Record<SegmentKind, KindStyle> = {
   backend: {
     label: 'backend',
     about: '@layerfs/backend reads, processes',
-    edge: 'border-l-(--hl-function)',
     tint: 'bg-(--hl-function)/[0.06]',
     chip: 'bg-(--hl-function)/10 text-(--hl-function) ring-(--hl-function)/25',
     dot: 'bg-(--hl-function)',
@@ -123,7 +115,6 @@ export const KIND: Record<SegmentKind, KindStyle> = {
   subagent: {
     label: 'subagent',
     about: 'spawn, message, interrupt',
-    edge: 'border-l-(--lane-3)',
     tint: 'bg-(--lane-3)/[0.06]',
     chip: 'bg-(--lane-3)/10 text-(--lane-3) ring-(--lane-3)/25',
     dot: 'bg-(--lane-3)',
@@ -131,7 +122,6 @@ export const KIND: Record<SegmentKind, KindStyle> = {
   job: {
     label: 'job',
     about: 'background bash jobs',
-    edge: 'border-l-warning',
     tint: 'bg-warning/[0.05]',
     chip: 'bg-warning/10 text-warning ring-warning/25',
     dot: 'bg-warning',
@@ -139,7 +129,6 @@ export const KIND: Record<SegmentKind, KindStyle> = {
   local: {
     label: 'local',
     about: 'plain shell, no LayerFS call',
-    edge: 'border-l-input',
     tint: 'bg-muted/40',
     chip: 'bg-muted text-muted-foreground ring-foreground/10',
     dot: 'bg-faint',

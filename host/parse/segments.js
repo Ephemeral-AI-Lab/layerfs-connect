@@ -13,11 +13,11 @@
 // from an earlier `cmd=…` or `read … cmd <<'X'` heredoc of the same script.
 import { COMMANDS, isCall, KIND } from './families.js'
 import { jsPieces } from './js.js'
-import { commandWords, linesOf, shellUnits } from './shell.js'
+import { commandWords, lineIndex, linesOf, shellUnits } from './shell.js'
 
 const basename = (word) => word.value.slice(word.value.lastIndexOf('/') + 1)
 
-/** A `layerfs` command's call: { family, call, kind, words } or null. */
+/** A `layerfs` command's call: { family, call, kind, args, from, to } or null (`from`/`to`: offsets of `layerfs … <call>`). */
 function layerfsCall(cmd) {
   const words = commandWords(cmd)
   if (!words.length || words[0].quoted || basename(words[0]) !== 'layerfs') return null
@@ -25,10 +25,11 @@ function layerfsCall(cmd) {
   // global options before the family (argv.js globals)
   while (words[k] && /^--(text|project)(=|$)/.test(words[k].value)) k += words[k].value === '--project' ? 2 : 1
   const family = words[k]?.value
-  if (family === 'init') return { family: 'project', call: 'project.init', kind: 'project', args: words.slice(k + 1) }
+  const from = words[0].offset
+  if (family === 'init') return { family: 'project', call: 'project.init', kind: 'project', args: words.slice(k + 1), from, to: words[k].offset + words[k].raw.length }
   const call = words[k + 1]?.value?.replaceAll('-', '_')
   if (!family || !call || !isCall(family, call)) return null
-  return { family, call: `${family}.${call}`, kind: KIND[family], args: words.slice(k + 2) }
+  return { family, call: `${family}.${call}`, kind: KIND[family], args: words.slice(k + 2), from, to: words[k + 1].offset + words[k + 1].raw.length }
 }
 
 /** The positional arguments of a CLI call, its options (and their values) skipped. */
@@ -86,7 +87,7 @@ function unitPieces(unit, vars) {
   const script = nodeScript(unit)
   if (script) {
     const body = script.end >= script.start ? jsPieces(script.value, script.start) : []
-    const pieces = body.map((p) => ({ ...p, form: 'sdk' }))
+    const pieces = body.map((p) => ({ ...p, form: 'sdk', at: p.at?.map((a) => ({ ...a, from: a.from + script.from, to: a.to + script.from })) }))
     if (!pieces.length || pieces.every((p) => p.attach)) {
       return [{ start: unit.start, end: unit.end, kind: 'local', form: 'sdk' }]
     }
@@ -94,13 +95,13 @@ function unitPieces(unit, vars) {
     if (unit.end > script.end) pieces.push({ start: script.end + 1, end: unit.end, kind: 'local', form: 'sdk', attach: 'prev' })
     return pieces
   }
-  let found = null
-  for (const cmd of unit.commands) {
-    found = layerfsCall(cmd)
-    if (found) break
-  }
+  const calls = unit.commands.map(layerfsCall).filter(Boolean)
+  const [found] = calls
   const piece = { start: unit.start, end: unit.end, kind: found ? found.kind : 'local', form: found ? 'cli' : 'shell' }
-  if (found) piece.call = found.call
+  if (found) {
+    piece.call = found.call
+    piece.at = calls.map(({ call, from, to }) => ({ call, from, to }))
+  }
   if (found?.call === 'workspace.exec') {
     const args = positional(found)
     if (args[1]) piece.detail = resolve(args[1], vars)
@@ -122,7 +123,7 @@ function assemble(pieces) {
       } else pending.push(p)
       continue
     }
-    const seg = { ...p, start: Math.min(p.start, ...pending.map((q) => q.start)), details: p.detail !== undefined ? [p.detail] : [] }
+    const seg = { ...p, start: Math.min(p.start, ...pending.map((q) => q.start)), details: p.detail !== undefined ? [p.detail] : [], at: p.at ?? [] }
     delete seg.attach
     delete seg.detail
     pending = []
@@ -130,20 +131,33 @@ function assemble(pieces) {
     if (last && last.kind === seg.kind && last.form === seg.form && last.call === seg.call) {
       last.end = seg.end
       last.details.push(...seg.details)
+      last.at.push(...seg.at)
     } else out.push(seg)
   }
   if (pending.length) {
     if (out.length) out.at(-1).end = Math.max(out.at(-1).end, ...pending.map((q) => q.end))
-    else out.push({ start: pending[0].start, end: pending.at(-1).end, kind: 'local', form: pending[0].form, details: [] })
+    else out.push({ start: pending[0].start, end: pending.at(-1).end, kind: 'local', form: pending[0].form, details: [], at: [] })
   }
   return out
 }
 
-/** The command's segments: [{ kind, form, call?, text, lines: [first, last], detail? }]. */
+/**
+ * The command's segments: [{ kind, form, call?, text, lines: [first, last], detail?, at? }].
+ * `at` places each LayerFS call of a segment: { call, line, cols: [from, to] },
+ * `cols` spanning `lf.branch.fork(` or `layerfs branch fork` on that line.
+ */
 export function segments(command) {
   const lines = linesOf(String(command ?? ''))
+  const joined = lines.join('\n')
+  const lineAt = lineIndex(joined)
+  const starts = lines.reduce((acc, l) => (acc.push(acc.at(-1) + l.length + 1), acc), [0])
+  const place = ({ call, from, to }) => {
+    const line = lineAt(from)
+    const at = from - starts[line - 1]
+    return { call, line, cols: [at, Math.min(to - starts[line - 1], lines[line - 1].length)] }
+  }
   const vars = new Map()
-  const pieces = shellUnits(lines.join('\n')).flatMap((unit) => unitPieces(unit, vars))
+  const pieces = shellUnits(joined, lines.length).flatMap((unit) => unitPieces(unit, vars))
   return assemble(pieces).map((s) => {
     const seg = { kind: s.kind, form: s.form }
     if (s.call) seg.call = s.call
@@ -151,6 +165,7 @@ export function segments(command) {
     seg.lines = [s.start, s.end]
     const details = [...new Set(s.details)]
     if (details.length) seg.detail = details.join('\n')
+    if (s.at.length) seg.at = s.at.map(place)
     return seg
   })
 }

@@ -310,9 +310,9 @@ export const linesOf = (text) => {
   return lines
 }
 
-export function shellUnits(text) {
+/** Top-level units of `text`, covering lines 1 to `total` (default: its lines). */
+export function shellUnits(text, total = linesOf(text).length) {
   const lineAt = lineIndex(text)
-  const total = linesOf(text).length
   const lexer = new Lexer(text)
   const units = []
   let current = null
@@ -373,7 +373,7 @@ function withLines(cmd, lineAt) {
     words: cmd.words,
     offset: cmd.offset,
     line: lineAt(cmd.offset),
-    heredocs: cmd.heredocs.map((h) => ({ delim: h.delim, quoted: h.quoted, value: h.value, start: lineAt(h.from), end: h.to > h.from ? lineAt(h.to - 1) : lineAt(h.from) - 1 })),
+    heredocs: cmd.heredocs.map((h) => ({ delim: h.delim, quoted: h.quoted, value: h.value, from: h.from, start: lineAt(h.from), end: h.to > h.from ? lineAt(h.to - 1) : lineAt(h.from) - 1 })),
   }
 }
 

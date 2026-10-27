@@ -1,10 +1,9 @@
-import { Ban, ChevronDown, CornerDownRight, MessageSquareReply, Send, Wrench } from 'lucide-react'
+import { Ban, ChevronDown, CornerDownRight, MessageSquareReply, Send } from 'lucide-react'
 import { memo, useEffect, useState } from 'react'
 
+import { InlineText, Markdown, StepBlock } from '@/components/runs/blocks'
 import { KindChip, Spinner } from '@/components/runs/run-badges'
 import { type AgentColor, KIND, clock, duration } from '@/components/runs/run-format'
-import { SegmentList } from '@/components/runs/segments'
-import { CallStrip, CheckChips, OutputBlock } from '@/components/runs/step-parts'
 import { type Entry, type Message, type Sender, kindCounts, targetOf } from '@/components/runs/thread'
 import { cn } from '@/lib/utils'
 import type { SegmentKind } from '@shared/host-api'
@@ -13,7 +12,7 @@ import type { SegmentKind } from '@shared/host-api'
 export function UserMessage({ text }: { text: string }) {
   return (
     <div className="flex justify-end">
-      <p className="max-w-[80%] rounded-2xl bg-muted px-4 py-2.5 text-[15px] leading-relaxed whitespace-pre-wrap">{text}</p>
+      <Markdown text={text} className="max-w-[80%] rounded-2xl bg-muted px-4 py-2.5 text-[15px] leading-relaxed" />
     </div>
   )
 }
@@ -22,12 +21,14 @@ export function UserMessage({ text }: { text: string }) {
 const STREAM_TOKENS = 2
 const STREAM_MS = 45
 
+const Cursor = () => <span aria-hidden="true" className="ml-0.5 inline-block h-[1em] w-[2px] translate-y-[2px] animate-pulse bg-foreground/60" />
+
 /**
- * `text`, streamed word by word when `stream` is true as it mounts (text
- * that arrived while the reader watched); whole otherwise. A later change of
- * `stream` does not restart or cut it.
+ * `text` as Markdown, streamed word by word when `stream` is true as it
+ * mounts (text that arrived while the reader watched); whole otherwise. A
+ * later change of `stream` does not restart or cut it.
  */
-function Streamed({ text, stream }: { text: string; stream?: boolean }) {
+function Streamed({ text, stream, className }: { text: string; stream?: boolean; className?: string }) {
   const [animate] = useState(!!stream)
   const tokens = animate ? text.split(/(\s+)/) : []
   const [shown, setShown] = useState(0)
@@ -37,13 +38,8 @@ function Streamed({ text, stream }: { text: string; stream?: boolean }) {
     const t = setInterval(() => setShown((n) => n + STREAM_TOKENS), STREAM_MS)
     return () => clearInterval(t)
   }, [done])
-  if (done) return <>{text}</>
-  return (
-    <>
-      {tokens.slice(0, shown).join('')}
-      <span aria-hidden="true" className="ml-0.5 inline-block h-[1em] w-[2px] translate-y-[2px] animate-pulse bg-foreground/60" />
-    </>
-  )
+  if (done) return <Markdown text={text} className={className} />
+  return <Markdown text={tokens.slice(0, shown).join('')} tail={<Cursor />} className={className} />
 }
 
 /** The agent between steps: a model thinking. */
@@ -84,12 +80,16 @@ export function ReceivedCard({ message, sender, script, open, onToggle }: Receiv
       >
         <Icon aria-hidden="true" className="size-4 shrink-0 text-muted-foreground" />
         <span className="shrink-0 text-sm text-muted-foreground">{title}</span>
-        {!open && <span className="min-w-0 flex-1 truncate text-sm text-faint">{message.text}</span>}
+        {!open && (
+          <span className="min-w-0 flex-1 truncate text-sm text-faint">
+            <InlineText text={message.text.replace(/\s+/g, ' ')} />
+          </span>
+        )}
         {open && <span className="flex-1" />}
         {!script && <span className="shrink-0 text-xs text-faint tabular-nums">{clock(message.at)}</span>}
         <ChevronDown aria-hidden="true" className={cn('size-3.5 shrink-0 text-faint transition-transform', open && 'rotate-180')} />
       </button>
-      {open && <p className="px-4 pb-3.5 pl-11 text-sm leading-relaxed whitespace-pre-wrap text-foreground/90">{message.text}</p>}
+      {open && <Markdown text={message.text} className="px-4 pb-3.5 pl-11 text-sm leading-relaxed text-foreground/90" />}
     </div>
   )
 }
@@ -97,9 +97,7 @@ export function ReceivedCard({ message, sender, script, open, onToggle }: Receiv
 /** Plain text the agent says before its calls. */
 export function SayText({ text, stream }: { text: string; stream?: boolean }) {
   return (
-    <p className="text-[15px] leading-relaxed whitespace-pre-wrap">
-      <Streamed text={text} stream={stream} />
-    </p>
+    <Streamed text={text} stream={stream} className="text-[15px] leading-relaxed" />
   )
 }
 
@@ -107,9 +105,7 @@ export function SayText({ text, stream }: { text: string; stream?: boolean }) {
 export function ReplyText({ text, at, stream }: { text: string; at?: number | null; stream?: boolean }) {
   return (
     <div className="flex flex-col gap-2">
-      <p className="text-[15px] leading-relaxed whitespace-pre-wrap">
-        <Streamed text={text} stream={stream} />
-      </p>
+      <Streamed text={text} stream={stream} className="text-[15px] leading-relaxed" />
       {at ? <span className="text-xs text-faint tabular-nums">{clock(at)}</span> : null}
     </div>
   )
@@ -191,6 +187,8 @@ export const CallsFold = memo(function CallsFold({ id, entries, folds, onToggle 
               entry={e}
               open={folds.get(`s:${e.key}`) ?? fallback}
               onToggle={() => onToggle(`s:${e.key}`, fallback)}
+              full={folds.get(`f:${e.key}`) ?? false}
+              onFull={() => onToggle(`f:${e.key}`, false)}
             />
           )
         })}
@@ -226,10 +224,13 @@ interface StepRowProps {
   entry: Entry
   open: boolean
   onToggle: () => void
+  /** The opened detail shows everything: setup lines and all output. */
+  full: boolean
+  onFull: () => void
 }
 
 /** One call: status, what it did, its LayerFS calls and duration; opens to the detail. */
-function StepRow({ entry, open, onToggle }: StepRowProps) {
+function StepRow({ entry, open, onToggle, full, onFull }: StepRowProps) {
   const calls = callsOf(entry)
   const r = entry.result
   return (
@@ -242,7 +243,7 @@ function StepRow({ entry, open, onToggle }: StepRowProps) {
       >
         <RowMark entry={entry} />
         <span className="min-w-0 flex-1 truncate text-[13px]" title={titleOf(entry)}>
-          {titleOf(entry)}
+          <InlineText text={titleOf(entry)} />
         </span>
         <span className="hidden min-w-0 shrink items-center gap-1 overflow-hidden md:flex">
           {calls.slice(0, 3).map((c) => (
@@ -258,8 +259,9 @@ function StepRow({ entry, open, onToggle }: StepRowProps) {
         <ChevronDown aria-hidden="true" className={cn('size-3.5 shrink-0 text-faint transition-transform group-hover:text-muted-foreground', open && 'rotate-180')} />
       </button>
       {open && (
-        <div className="border-t border-border/60 bg-muted/25 px-3 py-3 dark:bg-muted/15">
-          <StepDetail entry={entry} />
+        <div className="flex flex-col gap-2 pr-3 pb-3 pl-9">
+          {entry.view?.note && <p className="text-xs text-muted-foreground italic">{entry.view.note}</p>}
+          <StepBlock view={entry.view} result={entry.result} full={full} onFull={onFull} />
         </div>
       )}
     </li>
@@ -272,43 +274,6 @@ function RowMark({ entry }: { entry: Entry }) {
   if (r?.state === 'running') return <Spinner className="size-3.5" />
   if (r?.state === 'stopped') return <Ban aria-label="stopped" className="size-3.5 shrink-0 text-warning" strokeWidth={2.5} />
   return <span aria-hidden="true" className="mx-1 size-1.5 shrink-0 rounded-full bg-faint/60" />
-}
-
-/** One call opened: what it does, its segments, LayerFS calls, checks and output. */
-function StepDetail({ entry }: { entry: Entry }) {
-  const { view, result } = entry
-  const bash = !view || view.tool === 'bash'
-  return (
-    <div className="flex flex-col gap-2">
-      {!bash && (
-        <div className="flex min-w-0 items-center gap-2 text-[13px] text-muted-foreground">
-          <Wrench aria-hidden="true" className="size-3.5 shrink-0" />
-          {view?.tool}
-        </div>
-      )}
-      {view?.note && <p className="text-xs text-muted-foreground italic">{view.note}</p>}
-      {view && view.segments.length > 0 && <SegmentList segments={view.segments} />}
-      {result ? (
-        <>
-          <CallStrip calls={result.calls} />
-          <CheckChips view={view} result={result} />
-          <OutputBlock result={result} defaultOpen={result.state === 'failed'} />
-        </>
-      ) : (
-        view?.expect &&
-        view.expect.length > 0 && (
-          <div className="flex flex-wrap items-center gap-1">
-            <span className="mr-0.5 text-[11px] text-faint">expects</span>
-            {view.expect.map((x) => (
-              <span key={x} className="rounded-md bg-muted px-1.5 font-mono text-[11px] leading-5 text-muted-foreground ring-1 ring-foreground/10 ring-inset">
-                {x}
-              </span>
-            ))}
-          </div>
-        )
-      )}
-    </div>
-  )
 }
 
 interface ChipProps {

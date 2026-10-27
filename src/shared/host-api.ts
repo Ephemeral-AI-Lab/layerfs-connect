@@ -173,6 +173,14 @@ export interface Segment {
   lines: [number, number]
   /** The command a workspace.exec runs inside the Workspace, a subagent's name, a job's id. */
   detail?: string
+  /** Where each LayerFS call of the segment is: its line in the command and the columns of `lf.fs.edit(` or `layerfs fs edit`. */
+  at?: SegmentCall[]
+}
+
+export interface SegmentCall {
+  call: string
+  line: number
+  cols: [number, number]
 }
 
 export interface StepView {

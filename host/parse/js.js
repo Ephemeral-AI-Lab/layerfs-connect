@@ -107,7 +107,7 @@ function aliases(tokens) {
   return { lf, be, families }
 }
 
-/** The LayerFS calls in `tokens[from..to)`: [{ call, family, at }] (`at`: index of its '('). */
+/** The LayerFS calls in `tokens[from..to)`: [{ call, family, at, span }] (`at`: index of its '('; `span`: source offsets from callee to '('). */
 function callsIn(tokens, from, to, names) {
   const out = []
   const v = (k) => tokens[k]?.v
@@ -116,14 +116,14 @@ function callsIn(tokens, from, to, names) {
     if (!id(k) || v(k - 1) === '.' || v(k - 1) === '?.') continue
     const name = v(k)
     if (names.lf.has(name) && v(k + 1) === '.' && FAMILIES.has(v(k + 2)) && v(k + 3) === '.' && id(k + 4) && v(k + 5) === '(' && FAMILIES.get(v(k + 2)).has(v(k + 4))) {
-      out.push({ family: v(k + 2), call: `${v(k + 2)}.${v(k + 4)}`, at: k + 5 })
+      out.push({ family: v(k + 2), call: `${v(k + 2)}.${v(k + 4)}`, at: k + 5, span: [tokens[k].from, tokens[k + 5].to] })
     } else if (names.be.has(name) && v(k + 1) === '.' && v(k + 3) === '.' && v(k + 5) === '.' && v(k + 7) === '(' && BACKEND_CALLS.has(`${v(k + 2)}.${v(k + 4)}.${v(k + 6)}`)) {
-      out.push({ family: 'backend', call: `backend.${v(k + 2)}.${v(k + 4)}.${v(k + 6)}`, at: k + 7 })
+      out.push({ family: 'backend', call: `backend.${v(k + 2)}.${v(k + 4)}.${v(k + 6)}`, at: k + 7, span: [tokens[k].from, tokens[k + 7].to] })
     } else if (names.families.has(name) && v(k + 1) === '.' && id(k + 2) && v(k + 3) === '(' && FAMILIES.get(names.families.get(name)).has(v(k + 2))) {
       const family = names.families.get(name)
-      out.push({ family, call: `${family}.${v(k + 2)}`, at: k + 3 })
+      out.push({ family, call: `${family}.${v(k + 2)}`, at: k + 3, span: [tokens[k].from, tokens[k + 3].to] })
     } else if (name === 'LayerFS' && v(k + 1) === '.' && v(k + 2) === 'init' && v(k + 3) === '(') {
-      out.push({ family: 'project', call: 'project.init', at: k + 3 })
+      out.push({ family: 'project', call: 'project.init', at: k + 3, span: [tokens[k].from, tokens[k + 3].to] })
     }
   }
   return out
@@ -271,6 +271,7 @@ export function jsPieces(src, first) {
         .map((c) => argument(c.tokens, c.at, DETAIL[c.call], src, consts))
         .filter((d) => d !== null)
       if (details.length) piece.detail = details.join('\n')
+      piece.at = unit.calls.map((c) => ({ call: c.call, from: c.span[0], to: c.span[1] }))
     } else {
       piece.kind = 'local'
       piece.attach = unit.closer ? 'prev' : side.get(i) ?? 'prev'
