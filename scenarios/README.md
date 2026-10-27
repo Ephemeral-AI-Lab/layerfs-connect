@@ -9,7 +9,8 @@ come from dsh-layerfs (`scenarios/`, `demo-workspace/`, `tools/replay`,
 - **The seven hand-written scenarios** and `fixtures/demo-workspace` are what
   [`tools/port-scenarios.mjs`](../tools/port-scenarios.mjs) writes from
   dsh-layerfs. Only names changed: the steps, expects, exits, commits, `as`
-  names, placeholders, shell and JavaScript are as dsh-layerfs has them.
+  names, placeholders, shell and JavaScript are as dsh-layerfs has them,
+  except agents' Sandboxes (see [Connect changes](#connect-changes)).
 - **The replays (shop, depot, crew)** are what
   [`tools/replay/convert.mjs`](../tools/replay/convert.mjs) writes from the
   recording (layerfs `0c7d9c47c1^`). Connect's converter fixed two things
@@ -26,7 +27,7 @@ the three against a fresh conversion.
 | conflicts | 3 | cli | demo-workspace | 1 | 13 | hand |
 | merge | 4 | sdk | demo-workspace | 1 | 13 | hand |
 | sandbox | 4 | sdk | demo-workspace | 1 | 6 | hand |
-| agents | 5 | sdk | demo-workspace | 6 | 111 | hand |
+| agents | 5 | sdk | demo-workspace | 6 | 113 | hand |
 | shop | 7 | cli | seed.json | 1 | 17 | `tools/replay/convert.mjs` |
 | depot | 8 | sdk | seed.json | 1 | 97 | `tools/replay/convert.mjs` |
 | crew | 9 | cli | seed.json | 6 | 560 | `tools/replay/convert.mjs` |
@@ -200,6 +201,22 @@ has its run's project checked by [`host/checks`](../host/checks/index.js)
   Workspace of a Branch `final-tree-check-<time>` forked from main, in a
   Sandbox of its own, unmounted without a Commit and closed.
 - `final.closed`: no Sandbox of the project still runs.
+
+## Connect changes
+
+- **agents keeps two Sandboxes for the session.** dsh-layerfs's "5 agents"
+  has every subagent command create a Sandbox, mount, run, commit, unmount
+  and close it, so a Sandbox lives about a second and Live shows none most
+  of the time. The port ([`tools/lib/agents-sandboxes.mjs`](../tools/lib/agents-sandboxes.mjs))
+  changes it: after forking, the lead opens Sandbox 1 for checkout (Ava, Ben,
+  Cy) and Sandbox 2 for search (Dee, Eli), checking it got those numbers (a
+  fresh project numbers its Sandboxes from 1). Each subagent's prompt names
+  its Sandbox; every command mounts a Workspace of its own there and unmounts
+  it; the lead builds release in Sandbox 1 and closes both before its last
+  reply. In a shared Sandbox, Cy finds the Workspace it keeps open by its
+  path (`{{ws}}`) and Dee's stop unmounts only the server's Workspace. Two
+  lead steps are added (113 tool calls, was 111). Each rewrite must match
+  dsh's text exactly, or the port stops.
 
 ## Replay fixes
 
