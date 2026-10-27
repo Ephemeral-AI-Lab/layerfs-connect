@@ -14,6 +14,9 @@ import { BrowserWindow, app, nativeTheme, shell } from 'electron'
 
 type HostAddress = { url: string; token: string } | { error: string }
 
+/** The app icon (resources/icon.svg, drawn at 1024 px): the window's on Linux and Windows, the Dock's on macOS. */
+const ICON = join(__dirname, '../../resources/icon.png')
+
 /** How long the host may take to print its ready line. */
 const READY_MS = 20_000
 
@@ -83,6 +86,7 @@ function createWindow(): BrowserWindow {
     minHeight: 600,
     show: false,
     title: 'LayerFS Connect',
+    icon: ICON,
     backgroundColor: '#F6F6F7',
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
@@ -143,6 +147,8 @@ function createWindow(): BrowserWindow {
 }
 
 void app.whenReady().then(async () => {
+  // a packaged app takes its icon from the bundle; unpackaged, the Dock would show Electron's
+  if (process.platform === 'darwin' && !app.isPackaged) app.dock?.setIcon(ICON)
   // Dev aid: CONNECT_THEME=dark or light overrides the system setting.
   const theme = process.env.CONNECT_THEME
   if (!app.isPackaged && (theme === 'dark' || theme === 'light')) nativeTheme.themeSource = theme

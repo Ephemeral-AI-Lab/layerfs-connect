@@ -2,7 +2,7 @@ import type { DemoSummary, RunSummary } from '@shared/host-api'
 import { Cpu, Folder, FolderOpen, LoaderCircle, Plus, RotateCw, Unplug } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 
-import { LayerfsMark } from '@/components/layerfs-mark'
+import { ConnectMark } from '@/components/connect-mark'
 import { LfsProject, LfsStore } from '@/components/lfs-icons'
 import { RunDot } from '@/components/runs/run-badges'
 import { ago, isLive, runLabel } from '@/components/runs/run-format'
@@ -85,7 +85,7 @@ export function AppSidebar({ selected, onSelect, storageCount, computeCount }: A
     <Sidebar collapsible="none" className="h-svh border-r border-sidebar-border">
       <SidebarHeader className="px-3 pt-5 pb-2">
         <div className="flex items-center gap-3 px-2">
-          <LayerfsMark className="size-9 shrink-0" />
+          <ConnectMark className="size-10 shrink-0" />
           <div className="leading-tight">
             <div className="text-[17px] font-semibold tracking-[-0.01em]">LayerFS Connect</div>
             <div className="text-[13px] text-faint">Demo replays on real LayerFS</div>
