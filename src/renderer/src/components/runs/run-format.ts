@@ -189,6 +189,8 @@ export function agentColors(names: string[]): (name: string) => AgentColor {
 /** "4.2 s", "1 m 05 s", "320 ms". */
 export function duration(ms: number | null | undefined): string {
   if (ms === null || ms === undefined || !Number.isFinite(ms)) return '–'
+  // the page's clock ticks once a second, so an event newer than its last tick would read negative
+  ms = Math.max(0, ms)
   if (ms < 1000) return `${Math.round(ms)} ms`
   const s = ms / 1000
   if (s < 60) return `${s < 10 ? s.toFixed(1) : Math.round(s)} s`
