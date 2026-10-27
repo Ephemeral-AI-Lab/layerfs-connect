@@ -1,35 +1,53 @@
 # LayerFS Connect
 
-An agent app built on [pi](https://github.com/badlogic/pi-mono), where every
-tool call an agent makes is saved as a LayerFS Commit. This is the LayerFS 2.0
-app proposed in
-[LayerFS #446](https://github.com/Ephemeral-AI-Lab/layerfs/issues/446).
+The LayerFS desktop app. It runs on the real LayerFS: a local SQLite Store per
+project in a Docker volume, and Docker Sandboxes. Its projects are ten scripted
+demos (tour, parallel, conflicts, merge, sandbox, agents, checkpoints, shop,
+depot, crew). Each run of a demo Inits a fresh LayerFS project from the demo's
+fixture and replays its agents, which have only bash and the subagent tools,
+as in dsh-layerfs. There is no language model: every call comes from the
+scenario, and every call really runs.
 
-Status: app shell only. The sidebar shows sample projects and sessions; the
-main page is empty. pi and LayerFS are not wired in yet.
+Not implemented: PostgreSQL and cloud storage, and native and cloud compute.
+Those pages show them disabled.
 
-## Stack
-
-Electron + electron-vite, React 19, Tailwind CSS v4 and shadcn/ui, TypeScript.
-pi and the LayerFS SDK will run in a separate host process that the UI reaches
-over one WebSocket protocol; Electron's main process only manages windows.
+## Layout
 
 ```
+host/          the backend: a plain Node process the app starts (host/README.md)
+  runs/        scenario engine: agents, bash and subagent tools, jobs, expect checks
+  parse/       splits every agent call into classified segments (workspace, fs, branch, …)
+  checks/      final checks of a finished replay against its recording
+scenarios/     the ten demos (scenarios/README.md)
+fixtures/      the demo workspace most demos Init from
+tools/         scenario tools: port, replay convert/check, connect-run
 src/
-  main/              Electron main process (windows only)
-  preload/           exposes the platform name to the renderer
-  renderer/
-    index.html
-    src/
-      App.tsx        sidebar + empty main page
-      styles.css     theme: Tailwind + shadcn variables
-      components/    app-sidebar, layerfs-mark, ui/ (shadcn)
-      data/          sample sidebar data
+  main/        Electron main process: starts the host, opens windows
+  preload/     hands the host's address to the renderer
+  shared/      host-api.ts, the host ↔ renderer contract
+  renderer/    React UI: projects (demos), runs, files, history, storage, compute
 ```
+
+## Where LayerFS comes from
+
+Connect never installs into or edits the LayerFS repository. `package.json`
+links `@layerfs/*` to the LayerFS checkout beside this repo
+(`../layerfs/api/…`), and the host and every agent's bash call load
+`host/resolve-layerfs.js`, so `@layerfs/*` resolves from Connect's
+`node_modules`. The macOS worker runs a sealed Linux LayerFS build, named in
+`~/.layerfs-connect/settings.json`:
+
+```json
+{ "image": "sha256:…", "bundle": "/path/to/build-linux-…", "containerPrefix": "lfc-" }
+```
+
+Connect keeps its own LayerFS home (`~/.layerfs-connect/home`) and container
+prefix, so its worker (`lfc-worker`), Sandboxes and volumes never meet another
+integration's.
 
 ## Develop
 
-Needs Node 22.12 or later and pnpm.
+Needs Node 22.15 or later, pnpm, Docker and `jq`.
 
 ```bash
 pnpm install
@@ -39,7 +57,26 @@ pnpm build       # production build into out/
 pnpm start       # run the production build
 ```
 
-Add shadcn components with `pnpm exec shadcn add <name>`.
+Host tests (each command stays under two minutes):
 
-`CONNECT_SHOT=<file.png>` saves a screenshot of the window once it has loaded,
-then quits; it works with `pnpm dev` and `pnpm start`.
+```bash
+node --import ./host/resolve-layerfs.js --test host/test/*.test.js tools/checks/tests/*.test.mjs
+```
+
+Run demos without the window:
+
+```bash
+node --import ./host/resolve-layerfs.js host/run-demo.js tour
+```
+
+Drive the running app's host from a terminal (it writes
+`~/.layerfs-connect/host.json`):
+
+```bash
+node tools/connect-run.mjs start tour merge
+```
+
+Dev aids: `CONNECT_VIEW=<hash>` opens a page (`projects/<demo>[/<tab>]`,
+`runs/<run id>`, `storage`, `compute`); `CONNECT_SHOT=<file.png>` saves a
+screenshot once loaded, then quits (`CONNECT_SHOT_DELAY` waits longer);
+`CONNECT_THEME=dark|light`.

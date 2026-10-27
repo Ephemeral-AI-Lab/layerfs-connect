@@ -1,0 +1,160 @@
+{
+ "type": "layerfs-scenario",
+ "version": 3,
+ "title": "Commit & merge",
+ "blurb": "One agent on two Branches: a stale Workspace's commit merges cleanly, an fs edit of the same line makes a commit refuse Conflict until the markers are fixed in the Workspace, two Branches merge into a new one, a merge conflict is fixed on its source Branch, and the result is published.",
+ "order": 4,
+ "tags": [
+  "sdk",
+  "merge",
+  "conflicts",
+  "publish"
+ ],
+ "fixture": "../../fixtures/demo-workspace",
+ "agents": {
+  "root": [
+   {
+    "bash": {
+     "description": "Fork feature from main",
+     "command": "# fork feature from main\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\ntry {\n  const r = await lf.branch.fork(\"feature\");\n  console.log(r.kind, r.branch);\n} finally {\n  await lf.close();\n}\nJS\n"
+    },
+    "phase": "Fork",
+    "expect": [
+     "branch.fork:Forked"
+    ]
+   },
+   {
+    "bash": {
+     "description": "Change the heading in a Workspace while README.md changes on the Branch",
+     "command": "# the fs edit moves feature's head after the mount; the commit merges with it\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\ntry {\n  const { sandbox } = await lf.sandbox.create();\n  const ws = await lf.workspace.mount(sandbox, \"feature\");\n  const r = await lf.workspace.exec(ws, \"sed -i \\\"s/Hello world/Hello from the Workspace/\\\" app/page.tsx\");\n  console.log(`$ sed … app/page.tsx\\n[exit ${r.exitCode}]`);\n  console.log(\"fs.edit README.md\", (await lf.fs.edit(\"feature\", \"/README.md\", \"# Website\", \"# Website (feature)\", \"edit /README.md\")).kind);\n  const c = await lf.workspace.commit(ws, \"heading: Hello from the Workspace\");\n  console.log(\"commit\", c.kind, c.merged ? \"· was stale, merged with the head first\" : \"\");\n  await lf.workspace.unmount(ws);\n  await lf.sandbox.close(sandbox);\n} finally {\n  await lf.close();\n}\nJS\n"
+    },
+    "phase": "Commit",
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "fs.edit:Committed",
+     "workspace.commit:Committed",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "Change the same line in a Workspace and with fs; commit",
+     "command": "# both sides change the heading: the commit is refused Conflict and the Workspace is kept\nnode --input-type=module <<'JS'\nconst { LayerFS, isRefusal } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\ntry {\n  const { sandbox } = await lf.sandbox.create();\n  const ws = await lf.workspace.mount(sandbox, \"feature\");\n  console.log(JSON.stringify({ ws: `${sandbox}:${ws.path}` }));\n  console.log(\"fs.edit app/page.tsx\", (await lf.fs.edit(\"feature\", \"/app/page.tsx\", \"Hello from the Workspace\", \"Hello from fs\", \"edit /app/page.tsx\")).kind);\n  const r = await lf.workspace.exec(ws, \"sed -i \\\"s/Hello from the Workspace/Hello, Workspace/\\\" app/page.tsx\");\n  console.log(`$ sed … app/page.tsx\\n[exit ${r.exitCode}]`);\n  try {\n    await lf.workspace.commit(ws, \"heading: Hello, Workspace\");\n  } catch (error) {\n    if (!isRefusal(error, \"Conflict\")) throw error;\n    console.log(`commit refused ${error.code}: ${error.message}`);\n    for (const c of error.detail?.conflicts ?? []) console.log(`  ${c.path}`);\n  }\n} finally {\n  await lf.close();\n}\nJS\n"
+    },
+    "phase": "Commit conflict",
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "fs.edit:Committed",
+     "workspace.exec:exit:0",
+     "workspace.commit:Conflict"
+    ],
+    "note": "Nothing is committed: the merge is written into the Workspace with markers. The Workspace and its Sandbox stay up for the next two steps, which fix it there."
+   },
+   {
+    "bash": {
+     "description": "Read the markers; commit again",
+     "command": "# the Workspace kept after the Conflict\nnode --input-type=module <<'JS'\nconst { LayerFS, isRefusal } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\ntry {\n  const [sandbox, path] = \"{{ws}}\".split(\":\");\n  const ws = { sandbox, path };\n  const r = await lf.workspace.exec(ws, \"cat app/page.tsx\");\n  console.log(r.stdout);\n  try {\n    await lf.workspace.commit(ws, \"heading: Hello, Workspace\");\n  } catch (error) {\n    if (!isRefusal(error, \"Conflict\")) throw error;\n    console.log(`commit refused ${error.code}: ${error.message}`);\n  }\n} finally {\n  await lf.close();\n}\nJS\n"
+    },
+    "expect": [
+     "workspace.exec:exit:0",
+     "workspace.commit:Conflict"
+    ],
+    "note": "A commit is refused while the markers are still in the file."
+   },
+   {
+    "bash": {
+     "description": "Keep the Workspace's heading; commit; unmount",
+     "command": "# drop fs's side and the markers, then commit and tear down\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\ntry {\n  const [sandbox, path] = \"{{ws}}\".split(\":\");\n  const ws = { sandbox, path };\n  const r = await lf.workspace.exec(ws, \"sed -i '/Hello from fs\\\\|^<<<<<<<\\\\|^=======\\\\|^>>>>>>>/d' app/page.tsx\");\n  console.log(`$ sed … app/page.tsx\\n[exit ${r.exitCode}]`);\n  console.log(\"commit\", (await lf.workspace.commit(ws, \"heading: Hello, Workspace (conflict fixed)\")).kind);\n  await lf.workspace.unmount(ws);\n  await lf.sandbox.close(sandbox);\n} finally {\n  await lf.close();\n}\nJS\n"
+    },
+    "expect": [
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "Fork header from main",
+     "command": "# fork header from main\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\ntry {\n  const r = await lf.branch.fork(\"header\");\n  console.log(r.kind, r.branch);\n} finally {\n  await lf.close();\n}\nJS\n"
+    },
+    "phase": "Merge",
+    "expect": [
+     "branch.fork:Forked"
+    ]
+   },
+   {
+    "bash": {
+     "description": "Write app/header.tsx on header",
+     "command": "# one file on header\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\ntry {\n  console.log((await lf.fs.write(\"header\", \"/app/header.tsx\", \"export const Header = () => <header/>;\", \"write /app/header.tsx\")).kind);\n} finally {\n  await lf.close();\n}\nJS\n"
+    },
+    "expect": [
+     "fs.write:Committed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "Merge feature and header as release",
+     "command": "# a new Branch with both\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\ntry {\n  const r = await lf.branch.merge(\"feature\", \"header\", \"release\");\n  console.log(r.kind, r.branch, r.fastForward ? \"fast-forward\" : \"a merge Commit\");\n} finally {\n  await lf.close();\n}\nJS\n"
+    },
+    "expect": [
+     "branch.merge:Merged"
+    ]
+   },
+   {
+    "bash": {
+     "description": "Change the heading on header",
+     "command": "# header changes the line release changed\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\ntry {\n  console.log((await lf.fs.edit(\"header\", \"/app/page.tsx\", \"Hello world\", \"Hello from header\", \"edit /app/page.tsx\")).kind);\n} finally {\n  await lf.close();\n}\nJS\n"
+    },
+    "phase": "Merge conflict",
+    "expect": [
+     "fs.edit:Committed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "Merge release and header as release-2",
+     "command": "# both changed the heading\nnode --input-type=module <<'JS'\nconst { LayerFS, isRefusal } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\ntry {\n  try {\n    const r = await lf.branch.merge(\"release\", \"header\", \"release-2\");\n    console.log(r.kind, r.branch);\n  } catch (error) {\n    if (!isRefusal(error, \"Conflict\")) throw error;\n    console.log(`merge refused ${error.code}: ${error.message}`);\n    for (const c of error.detail?.conflicts ?? []) console.log(`  ${c.path}`);\n  }\n} finally {\n  await lf.close();\n}\nJS\n"
+    },
+    "expect": [
+     "branch.merge:Conflict"
+    ]
+   },
+   {
+    "bash": {
+     "description": "Make header's heading match release's",
+     "command": "# fix the conflict on its source Branch\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\ntry {\n  console.log((await lf.fs.edit(\"header\", \"/app/page.tsx\", \"Hello from header\", \"Hello, Workspace\", \"edit /app/page.tsx\")).kind);\n} finally {\n  await lf.close();\n}\nJS\n"
+    },
+    "expect": [
+     "fs.edit:Committed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "Merge release and header as release-2",
+     "command": "# both sides now agree on the heading\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\ntry {\n  const r = await lf.branch.merge(\"release\", \"header\", \"release-2\");\n  console.log(r.kind, r.branch, r.fastForward ? \"fast-forward\" : \"a merge Commit\");\n} finally {\n  await lf.close();\n}\nJS\n"
+    },
+    "expect": [
+     "branch.merge:Merged"
+    ]
+   },
+   {
+    "bash": {
+     "description": "Publish release-2",
+     "command": "# main shows release-2\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\ntry {\n  const r = await lf.branch.publish(\"release-2\");\n  console.log(r.kind, `overwrote ${r.overwrote?.length ?? 0} Layer(s) of main`);\n} finally {\n  await lf.close();\n}\nJS\n"
+    },
+    "phase": "Publish",
+    "expect": [
+     "branch.publish:Added"
+    ]
+   },
+   {
+    "reply": "main has feature's and header's work."
+   }
+  ]
+ }
+}

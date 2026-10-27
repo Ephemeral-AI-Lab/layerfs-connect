@@ -1,0 +1,7 @@
+[
+ {
+  "op": "write",
+  "path": "/packages/web/build.mjs",
+  "content": "import { build } from 'esbuild';\nimport { mkdir,copyFile } from 'node:fs/promises';\nawait mkdir(new URL('./dist/',import.meta.url),{recursive:true});\nawait build({entryPoints:[new URL('./src/main.jsx',import.meta.url).pathname],bundle:true,minify:true,format:'esm',outfile:new URL('./dist/app.js',import.meta.url).pathname,jsx:'automatic',jsxImportSource:'preact',define:{'process.env.NODE_ENV':'\"production\"'},metafile:true}).then(async result=>{\n  const {writeFile}=await import('node:fs/promises');\n  await writeFile(new URL('./dist/meta.json',import.meta.url),JSON.stringify(result.metafile,null,2));\n});\nawait copyFile(new URL('./public/index.html',import.meta.url),new URL('./dist/index.html',import.meta.url));\n"
+ }
+]

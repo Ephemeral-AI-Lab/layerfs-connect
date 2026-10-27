@@ -3,9 +3,7 @@ import { type SimpleIcon, siApple, siDocker, siLinux, siModal } from 'simple-ico
 
 import { Chip } from '@/components/storage/chips'
 import { Tile } from '@/components/storage/icons'
-import { Unavailable } from '@/components/storage/unavailable'
-import { Switch } from '@/components/ui/switch'
-import { TARGET_LABEL, type TargetId } from '@/data/compute'
+import type { TargetId } from '@/data/compute'
 import { cn } from '@/lib/utils'
 
 function Mark({ icon }: { icon: SimpleIcon }) {
@@ -56,27 +54,6 @@ export function DefaultChip() {
       Default
     </Chip>
   )
-}
-
-interface TargetSwitchProps {
-  id: TargetId
-  checked: boolean
-  onChange: (on: boolean) => void
-  /** Why the switch can't move right now; undefined when it can. */
-  locked?: string
-}
-
-/** The on/off switch for a target, with the reason when it's locked. */
-export function TargetSwitch({ id, checked, onChange, locked }: TargetSwitchProps) {
-  const control = (
-    <Switch
-      aria-label={`Use ${TARGET_LABEL[id]}`}
-      checked={checked}
-      onCheckedChange={onChange}
-      disabled={locked !== undefined}
-    />
-  )
-  return locked ? <Unavailable reason={locked}>{control}</Unavailable> : control
 }
 
 /** The top row every target card shares. */

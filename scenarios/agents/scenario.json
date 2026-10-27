@@ -1,0 +1,1476 @@
+{
+ "type": "layerfs-scenario",
+ "version": 3,
+ "title": "5 agents",
+ "blurb": "A lead forks checkout and search and hands one command at a time to five subagents, three on checkout and two on search. Every command runs in a Sandbox and Workspace of its own and commits: stale Workspaces merge with the head, and .lww settles node_modules and build output. Cy keeps a Workspace open while Ben commits the same package.json line, gets a Conflict and resolves it; Dee serves the search pages from a background process and curls them; Eli's risky delete goes to a fork. The lead's merge conflicts on the layout, is fixed on both Branches, then built, tested, published and blamed.",
+ "order": 5,
+ "tags": [
+  "sdk",
+  "multi-agent",
+  "conflicts",
+  "background"
+ ],
+ "fixture": "../../fixtures/demo-workspace",
+ "agents": {
+  "root": [
+   {
+    "bash": {
+     "description": "fork checkout",
+     "command": "# Fork checkout from main\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\ntry {\n  const r = await lf.branch.fork(\"checkout\");\n  console.log(r.kind, r.branch);\n} finally {\n  await lf.close();\n}\nJS"
+    },
+    "phase": "Kickoff",
+    "expect": [
+     "branch.fork:Forked"
+    ]
+   },
+   {
+    "bash": {
+     "description": "fork search",
+     "command": "# Fork search from main\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\ntry {\n  const r = await lf.branch.fork(\"search\");\n  console.log(r.kind, r.branch);\n} finally {\n  await lf.close();\n}\nJS"
+    },
+    "expect": [
+     "branch.fork:Forked"
+    ]
+   },
+   {
+    "bash": {
+     "description": "fs on checkout: write .lww \"%include .gitignore\"",
+     "command": "# Write /.lww on checkout: generated files merge last-writer-wins\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\ntry {\n  const r = await lf.fs.write(\"checkout\", \"/.lww\", \"%include .gitignore\\n\", \"lead: write /.lww\");\n  console.log(r.kind);\n} finally {\n  await lf.close();\n}\nJS"
+    },
+    "expect": [
+     "fs.write:Committed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "fs on search: write .lww \"%include .gitignore\"",
+     "command": "# Write /.lww on search: generated files merge last-writer-wins\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\ntry {\n  const r = await lf.fs.write(\"search\", \"/.lww\", \"%include .gitignore\\n\", \"lead: write /.lww\");\n  console.log(r.kind);\n} finally {\n  await lf.close();\n}\nJS"
+    },
+    "expect": [
+     "fs.write:Committed"
+    ]
+   },
+   {
+    "subagent": {
+     "description": "ava",
+     "prompt": "You are Ava, on the checkout Branch. Each message from the lead is one command: run it in a Workspace of your own on checkout, commit, unmount and report."
+    }
+   },
+   {
+    "subagent": {
+     "description": "ben",
+     "prompt": "You are Ben, on the checkout Branch. Each message from the lead is one command: run it in a Workspace of your own on checkout, commit, unmount and report."
+    }
+   },
+   {
+    "subagent": {
+     "description": "cy",
+     "prompt": "You are Cy, on the checkout Branch. Each message from the lead is one command: run it in a Workspace of your own on checkout, commit, unmount and report."
+    }
+   },
+   {
+    "reply": "Ava, Ben and Cy take checkout.",
+    "until": [
+     "ava",
+     "ben",
+     "cy"
+    ]
+   },
+   {
+    "subagent": {
+     "description": "dee",
+     "prompt": "You are Dee, on the search Branch. Each message from the lead is one command: run it in a Workspace of your own on search, commit, unmount and report."
+    }
+   },
+   {
+    "subagent": {
+     "description": "eli",
+     "prompt": "You are Eli, on the search Branch. Each message from the lead is one command: run it in a Workspace of your own on search, commit, unmount and report."
+    }
+   },
+   {
+    "reply": "Dee and Eli take search.",
+    "until": [
+     "dee",
+     "eli"
+    ]
+   },
+   {
+    "send_message": {
+     "agent_id": "@ava",
+     "message": "sh install.sh"
+    },
+    "phase": "checkout 25%"
+   },
+   {
+    "reply": "Ava is on it.",
+    "until": [
+     "ava"
+    ]
+   },
+   {
+    "send_message": {
+     "agent_id": "@ben",
+     "message": "ls node_modules"
+    }
+   },
+   {
+    "reply": "Ben is on it.",
+    "until": [
+     "ben"
+    ]
+   },
+   {
+    "send_message": {
+     "agent_id": "@ben",
+     "message": "mkdir -p app/cart && echo \"export default function Cart() { return <main><h1>Cart</h1></main>; }\" > app/cart/page.tsx"
+    }
+   },
+   {
+    "send_message": {
+     "agent_id": "@cy",
+     "message": "mkdir -p app/api && echo \"export async function GET() { return Response.json({ items: [] }); }\" > app/api/route.ts"
+    }
+   },
+   {
+    "reply": "Ben and Cy are on it.",
+    "until": [
+     "ben",
+     "cy"
+    ]
+   },
+   {
+    "send_message": {
+     "agent_id": "@dee",
+     "message": "sh install.sh"
+    },
+    "phase": "search 25%"
+   },
+   {
+    "reply": "Dee is on it.",
+    "until": [
+     "dee"
+    ]
+   },
+   {
+    "send_message": {
+     "agent_id": "@eli",
+     "message": "ls node_modules"
+    }
+   },
+   {
+    "reply": "Eli is on it.",
+    "until": [
+     "eli"
+    ]
+   },
+   {
+    "send_message": {
+     "agent_id": "@dee",
+     "message": "mkdir -p app/search && echo 'import { index } from \"@/lib/index\"; export default function Search() { return <main><h1>Search</h1></main>; }' > app/search/page.tsx"
+    }
+   },
+   {
+    "send_message": {
+     "agent_id": "@eli",
+     "message": "mkdir -p lib && echo \"export const index = new Map();\" > lib/index.ts"
+    }
+   },
+   {
+    "reply": "Dee and Eli are on it.",
+    "until": [
+     "dee",
+     "eli"
+    ]
+   },
+   {
+    "send_message": {
+     "agent_id": "@ava",
+     "message": "sh test.sh"
+    },
+    "phase": "checkout 50%"
+   },
+   {
+    "send_message": {
+     "agent_id": "@ben",
+     "message": "mkdir -p lib && echo \"export const total = (items) => items.length;\" > lib/cart.ts"
+    }
+   },
+   {
+    "send_message": {
+     "agent_id": "@cy",
+     "message": "sed -i \"s/items: \\[\\]/items: await load()/\" app/api/route.ts"
+    }
+   },
+   {
+    "reply": "Ava, Ben and Cy are on it.",
+    "until": [
+     "ava",
+     "ben",
+     "cy"
+    ]
+   },
+   {
+    "send_message": {
+     "agent_id": "@cy",
+     "message": "cat app/api/route.ts"
+    }
+   },
+   {
+    "reply": "Cy is on it.",
+    "until": [
+     "cy"
+    ]
+   },
+   {
+    "send_message": {
+     "agent_id": "@ava",
+     "message": "sh build.sh"
+    }
+   },
+   {
+    "send_message": {
+     "agent_id": "@cy",
+     "message": "sh build.sh"
+    }
+   },
+   {
+    "reply": "Ava and Cy are on it.",
+    "until": [
+     "ava",
+     "cy"
+    ]
+   },
+   {
+    "send_message": {
+     "agent_id": "@ben",
+     "message": "sh test.sh"
+    }
+   },
+   {
+    "reply": "Ben is on it.",
+    "until": [
+     "ben"
+    ]
+   },
+   {
+    "send_message": {
+     "agent_id": "@eli",
+     "message": "echo \"export const tokenize = (s) => s.toLowerCase().split(' ');\" > lib/tokenize.ts"
+    },
+    "phase": "search 50%"
+   },
+   {
+    "send_message": {
+     "agent_id": "@dee",
+     "message": "sh test.sh"
+    }
+   },
+   {
+    "reply": "Eli and Dee are on it.",
+    "until": [
+     "eli",
+     "dee"
+    ]
+   },
+   {
+    "send_message": {
+     "agent_id": "@dee",
+     "message": "sh build.sh"
+    }
+   },
+   {
+    "reply": "Dee is on it.",
+    "until": [
+     "dee"
+    ]
+   },
+   {
+    "send_message": {
+     "agent_id": "@dee",
+     "message": "sh serve.sh &"
+    }
+   },
+   {
+    "reply": "Dee is on it.",
+    "until": [
+     "dee"
+    ]
+   },
+   {
+    "send_message": {
+     "agent_id": "@cy",
+     "message": "sed -i \"s/sh build.sh/sh build.sh --profile/\" package.json"
+    },
+    "say": "Cy edits package.json's build line in a Workspace of its own and keeps it open.",
+    "phase": "checkout 75%"
+   },
+   {
+    "reply": "Cy is on it.",
+    "until": [
+     "cy"
+    ]
+   },
+   {
+    "send_message": {
+     "agent_id": "@ben",
+     "message": "sed -i \"s/sh build.sh/sh build.sh --lint/\" package.json"
+    },
+    "say": "Ben changes the same line and commits first."
+   },
+   {
+    "reply": "Ben is on it.",
+    "until": [
+     "ben"
+    ]
+   },
+   {
+    "send_message": {
+     "agent_id": "@cy",
+     "message": "commit"
+    }
+   },
+   {
+    "reply": "Cy is on it.",
+    "until": [
+     "cy"
+    ]
+   },
+   {
+    "send_message": {
+     "agent_id": "@cy",
+     "message": "cat package.json"
+    }
+   },
+   {
+    "reply": "Cy is on it.",
+    "until": [
+     "cy"
+    ]
+   },
+   {
+    "send_message": {
+     "agent_id": "@cy",
+     "message": "sed -i '/--lint\\|^<<<<<<<\\|^=======\\|^>>>>>>>/d' package.json"
+    }
+   },
+   {
+    "reply": "Cy is on it.",
+    "until": [
+     "cy"
+    ]
+   },
+   {
+    "send_message": {
+     "agent_id": "@ben",
+     "message": "cat package.json"
+    }
+   },
+   {
+    "reply": "Ben is on it.",
+    "until": [
+     "ben"
+    ]
+   },
+   {
+    "send_message": {
+     "agent_id": "@eli",
+     "message": "echo \"export const rank = (hits) => hits.sort();\" > lib/rank.ts"
+    },
+    "phase": "search 75%"
+   },
+   {
+    "send_message": {
+     "agent_id": "@dee",
+     "message": "sed -i \"s/<h1>Search</<h1>Search the shop</\" app/search/page.tsx"
+    }
+   },
+   {
+    "reply": "Eli and Dee are on it.",
+    "until": [
+     "eli",
+     "dee"
+    ]
+   },
+   {
+    "send_message": {
+     "agent_id": "@dee",
+     "message": "curl -s http://localhost:3000/search"
+    }
+   },
+   {
+    "reply": "Dee is on it.",
+    "until": [
+     "dee"
+    ]
+   },
+   {
+    "bash": {
+     "description": "fork search-try from search",
+     "command": "# Fork search-try from search, for a risky try\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\ntry {\n  const r = await lf.branch.fork(\"search-try\", \"search\");\n  console.log(r.kind, r.branch);\n} finally {\n  await lf.close();\n}\nJS"
+    },
+    "expect": [
+     "branch.fork:Forked"
+    ]
+   },
+   {
+    "send_message": {
+     "agent_id": "@eli",
+     "message": "rm -r lib && sh test.sh"
+    }
+   },
+   {
+    "reply": "Eli is on it.",
+    "until": [
+     "eli"
+    ]
+   },
+   {
+    "send_message": {
+     "agent_id": "@eli",
+     "message": "sh test.sh"
+    }
+   },
+   {
+    "reply": "Eli is on it.",
+    "until": [
+     "eli"
+    ]
+   },
+   {
+    "send_message": {
+     "agent_id": "@ava",
+     "message": "echo \"export const currency = 'EUR';\" > lib/currency.ts"
+    },
+    "phase": "checkout 100%"
+   },
+   {
+    "send_message": {
+     "agent_id": "@ben",
+     "message": "sed -i \"s/<h1>Cart</<h1>Your cart</\" app/cart/page.tsx"
+    }
+   },
+   {
+    "send_message": {
+     "agent_id": "@cy",
+     "message": "echo \"export const tax = 0.2;\" > lib/tax.ts"
+    }
+   },
+   {
+    "reply": "Ava, Ben and Cy are on it.",
+    "until": [
+     "ava",
+     "ben",
+     "cy"
+    ]
+   },
+   {
+    "send_message": {
+     "agent_id": "@cy",
+     "message": "sed -i \"s/0.2/0.21/\" lib/tax.ts"
+    }
+   },
+   {
+    "send_message": {
+     "agent_id": "@ava",
+     "message": "echo \"# Checkout\" > CHECKOUT.md"
+    }
+   },
+   {
+    "reply": "Cy and Ava are on it.",
+    "until": [
+     "cy",
+     "ava"
+    ]
+   },
+   {
+    "send_message": {
+     "agent_id": "@ben",
+     "message": "sed -i \"s#<body>{children}</body>#<body><a href=\\\"/cart\\\">Cart</a>{children}</body>#\" app/layout.tsx"
+    }
+   },
+   {
+    "send_message": {
+     "agent_id": "@ava",
+     "message": "sh build.sh"
+    }
+   },
+   {
+    "reply": "Ben and Ava are on it.",
+    "until": [
+     "ben",
+     "ava"
+    ]
+   },
+   {
+    "send_message": {
+     "agent_id": "@cy",
+     "message": "sh test.sh"
+    }
+   },
+   {
+    "send_message": {
+     "agent_id": "@ben",
+     "message": "sh test.sh"
+    }
+   },
+   {
+    "send_message": {
+     "agent_id": "@ava",
+     "message": "sh test.sh"
+    }
+   },
+   {
+    "reply": "Cy, Ben and Ava are on it.",
+    "until": [
+     "cy",
+     "ben",
+     "ava"
+    ]
+   },
+   {
+    "send_message": {
+     "agent_id": "@eli",
+     "message": "sed -i \"s/new Map()/new Map([['cart', 1]])/\" lib/index.ts"
+    },
+    "phase": "search 100%"
+   },
+   {
+    "send_message": {
+     "agent_id": "@dee",
+     "message": "echo \"export const debounce = 300;\" > lib/debounce.ts"
+    }
+   },
+   {
+    "reply": "Eli and Dee are on it.",
+    "until": [
+     "eli",
+     "dee"
+    ]
+   },
+   {
+    "send_message": {
+     "agent_id": "@eli",
+     "message": "echo \"export const stem = (w) => w.replace(/s$/, '');\" > lib/stem.ts"
+    }
+   },
+   {
+    "send_message": {
+     "agent_id": "@dee",
+     "message": "sh test.sh"
+    }
+   },
+   {
+    "reply": "Eli and Dee are on it.",
+    "until": [
+     "eli",
+     "dee"
+    ]
+   },
+   {
+    "send_message": {
+     "agent_id": "@dee",
+     "message": "sed -i \"s#<body>{children}</body>#<body><a href=\\\"/search\\\">Search</a>{children}</body>#\" app/layout.tsx"
+    }
+   },
+   {
+    "send_message": {
+     "agent_id": "@eli",
+     "message": "sh build.sh"
+    }
+   },
+   {
+    "reply": "Dee and Eli are on it.",
+    "until": [
+     "dee",
+     "eli"
+    ]
+   },
+   {
+    "send_message": {
+     "agent_id": "@dee",
+     "message": "stop"
+    }
+   },
+   {
+    "reply": "Dee is on it.",
+    "until": [
+     "dee"
+    ]
+   },
+   {
+    "bash": {
+     "description": "merge checkout search as release",
+     "command": "# Merge checkout and search into a new Branch release\nnode --input-type=module <<'JS'\nconst { LayerFS, isRefusal } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\ntry {\n  try {\n    const m = await lf.branch.merge(\"checkout\", \"search\", \"release\");\n    console.log(m.kind, m.branch);\n  } catch (error) {\n    if (!isRefusal(error, \"Conflict\")) throw error;\n    console.log(`${error.code}: ${error.message}`);\n    for (const c of error.detail?.conflicts ?? []) {\n      console.log(`  ${c.path}`);\n      for (const h of c.hunks ?? []) {\n        for (const t of h.ours ?? []) console.log(`    ours   ${t.trim()}`);\n        for (const t of h.theirs ?? []) console.log(`    theirs ${t.trim()}`);\n      }\n    }\n  }\n} finally {\n  await lf.close();\n}\nJS"
+    },
+    "phase": "Integrate",
+    "expect": [
+     "branch.merge:Conflict"
+    ]
+   },
+   {
+    "bash": {
+     "description": "fs on checkout: edit app/layout.tsx \"<a href=\\\"/cart\\\">Cart</a>\" \"<a …",
+     "command": "# Edit /app/layout.tsx on checkout: both nav links, so the merge agrees\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\ntry {\n  const r = await lf.fs.edit(\"checkout\", \"/app/layout.tsx\", \"<a href=\\\"/cart\\\">Cart</a>\", \"<a href=\\\"/cart\\\">Cart</a><a href=\\\"/search\\\">Search</a>\", \"lead: link Cart and Search in /app/layout.tsx\");\n  console.log(r.kind);\n} finally {\n  await lf.close();\n}\nJS"
+    },
+    "expect": [
+     "fs.edit:Committed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "fs on search: edit app/layout.tsx \"<a href=\\\"/search\\\">Search</a>\" \"<…",
+     "command": "# Edit /app/layout.tsx on search: both nav links, so the merge agrees\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\ntry {\n  const r = await lf.fs.edit(\"search\", \"/app/layout.tsx\", \"<a href=\\\"/search\\\">Search</a>\", \"<a href=\\\"/cart\\\">Cart</a><a href=\\\"/search\\\">Search</a>\", \"lead: link Cart and Search in /app/layout.tsx\");\n  console.log(r.kind);\n} finally {\n  await lf.close();\n}\nJS"
+    },
+    "expect": [
+     "fs.edit:Committed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "merge checkout search as release",
+     "command": "# Merge checkout and search into release again, now that both sides agree\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\ntry {\n  const m = await lf.branch.merge(\"checkout\", \"search\", \"release\");\n  console.log(m.kind, m.branch, m.fastForward ? \"· fast-forward\" : \"\", m.lww?.length ? `· last writer won ${m.lww.length} path(s)` : \"\");\n} finally {\n  await lf.close();\n}\nJS"
+    },
+    "expect": [
+     "branch.merge:Merged"
+    ]
+   },
+   {
+    "bash": {
+     "description": "sh build.sh && sh test.sh",
+     "command": "# Build and test release in a Sandbox and Workspace of my own, then commit, unmount and close\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\ntry {\n  const { sandbox } = await lf.sandbox.create();\n  const ws = await lf.workspace.mount(sandbox, \"release\");\n  try {\n    const cmd = \"sh build.sh && sh test.sh\";\n    const run = await lf.workspace.exec(ws, cmd);\n    process.stdout.write(`${run.stdout}${run.stderr}`);\n    console.log(`exit ${run.exitCode}`);\n    const c = await lf.workspace.commit(ws, `lead: ${cmd} (exit ${run.exitCode})`);\n    console.log(c.kind, c.merged ? \"· my Workspace was stale: merged with the head\" : \"\", c.lww?.length ? `· last writer won ${c.lww.length} path(s)` : \"\");\n  } finally {\n    await lf.workspace.unmount(ws);\n    await lf.sandbox.close(sandbox);\n  }\n} finally {\n  await lf.close();\n}\nJS"
+    },
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "publish release",
+     "command": "# Publish release to main\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\ntry {\n  const r = await lf.branch.publish(\"release\");\n  console.log(r.kind, r.overwrote?.length ? `· overwrote ${r.overwrote.length} Layer(s) of main` : \"\");\n} finally {\n  await lf.close();\n}\nJS"
+    },
+    "expect": [
+     "branch.publish:Added"
+    ]
+   },
+   {
+    "bash": {
+     "description": "fs on main: blame package.json",
+     "command": "# Blame /package.json on main: which call wrote each line\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\ntry {\n  const b = await lf.fs.blame(\"main\", \"/package.json\");\n  for (const l of b.lines) console.log(`${String(l.n).padStart(3)} │ ${String(l.message ?? \"\").slice(0, 56).padEnd(56)} │ ${l.text}`);\n  console.log(`from ${b.versions} saved version(s)`);\n} finally {\n  await lf.close();\n}\nJS"
+    },
+    "expect": [
+     "fs.blame:ok"
+    ]
+   },
+   {
+    "reply": "release is on main with checkout and search, built and tested; blame credits each line to the call that wrote it."
+   }
+  ],
+  "ava": [
+   {
+    "reply": "Ava here, ready on checkout."
+   },
+   {
+    "bash": {
+     "description": "sh install.sh",
+     "command": "# Ava: run it on checkout in a Sandbox and Workspace of my own, then commit, unmount and close\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\ntry {\n  const { sandbox } = await lf.sandbox.create();\n  const ws = await lf.workspace.mount(sandbox, \"checkout\");\n  try {\n    const cmd = \"sh install.sh\";\n    const run = await lf.workspace.exec(ws, cmd);\n    process.stdout.write(`${run.stdout}${run.stderr}`);\n    console.log(`exit ${run.exitCode}`);\n    const c = await lf.workspace.commit(ws, `ava: ${cmd} (exit ${run.exitCode})`);\n    console.log(c.kind, c.merged ? \"· my Workspace was stale: merged with the head\" : \"\", c.lww?.length ? `· last writer won ${c.lww.length} path(s)` : \"\");\n  } finally {\n    await lf.workspace.unmount(ws);\n    await lf.sandbox.close(sandbox);\n  }\n} finally {\n  await lf.close();\n}\nJS"
+    },
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "reply": "Committed on checkout."
+   },
+   {
+    "bash": {
+     "description": "sh test.sh",
+     "command": "# Ava: run it on checkout in a Sandbox and Workspace of my own, then commit, unmount and close\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\ntry {\n  const { sandbox } = await lf.sandbox.create();\n  const ws = await lf.workspace.mount(sandbox, \"checkout\");\n  try {\n    const cmd = \"sh test.sh\";\n    const run = await lf.workspace.exec(ws, cmd);\n    process.stdout.write(`${run.stdout}${run.stderr}`);\n    console.log(`exit ${run.exitCode}`);\n    const c = await lf.workspace.commit(ws, `ava: ${cmd} (exit ${run.exitCode})`);\n    console.log(c.kind, c.merged ? \"· my Workspace was stale: merged with the head\" : \"\", c.lww?.length ? `· last writer won ${c.lww.length} path(s)` : \"\");\n  } finally {\n    await lf.workspace.unmount(ws);\n    await lf.sandbox.close(sandbox);\n  }\n} finally {\n  await lf.close();\n}\nJS"
+    },
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:UpToDate",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "reply": "Nothing to commit: up to date."
+   },
+   {
+    "bash": {
+     "description": "sh build.sh",
+     "command": "# Ava: run it on checkout in a Sandbox and Workspace of my own, then commit, unmount and close\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\ntry {\n  const { sandbox } = await lf.sandbox.create();\n  const ws = await lf.workspace.mount(sandbox, \"checkout\");\n  try {\n    const cmd = \"sh build.sh\";\n    const run = await lf.workspace.exec(ws, cmd);\n    process.stdout.write(`${run.stdout}${run.stderr}`);\n    console.log(`exit ${run.exitCode}`);\n    const c = await lf.workspace.commit(ws, `ava: ${cmd} (exit ${run.exitCode})`);\n    console.log(c.kind, c.merged ? \"· my Workspace was stale: merged with the head\" : \"\", c.lww?.length ? `· last writer won ${c.lww.length} path(s)` : \"\");\n  } finally {\n    await lf.workspace.unmount(ws);\n    await lf.sandbox.close(sandbox);\n  }\n} finally {\n  await lf.close();\n}\nJS"
+    },
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "reply": "Committed on checkout."
+   },
+   {
+    "bash": {
+     "description": "echo \"export const currency = 'EUR';\" > lib/currency.ts",
+     "command": "# Ava: run it on checkout in a Sandbox and Workspace of my own, then commit, unmount and close\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\ntry {\n  const { sandbox } = await lf.sandbox.create();\n  const ws = await lf.workspace.mount(sandbox, \"checkout\");\n  try {\n    const cmd = \"echo \\\"export const currency = 'EUR';\\\" > lib/currency.ts\";\n    const run = await lf.workspace.exec(ws, cmd);\n    process.stdout.write(`${run.stdout}${run.stderr}`);\n    console.log(`exit ${run.exitCode}`);\n    const c = await lf.workspace.commit(ws, `ava: ${cmd} (exit ${run.exitCode})`);\n    console.log(c.kind, c.merged ? \"· my Workspace was stale: merged with the head\" : \"\", c.lww?.length ? `· last writer won ${c.lww.length} path(s)` : \"\");\n  } finally {\n    await lf.workspace.unmount(ws);\n    await lf.sandbox.close(sandbox);\n  }\n} finally {\n  await lf.close();\n}\nJS"
+    },
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "reply": "Committed on checkout: my Workspace was stale, so it merged with the head."
+   },
+   {
+    "bash": {
+     "description": "echo \"# Checkout\" > CHECKOUT.md",
+     "command": "# Ava: run it on checkout in a Sandbox and Workspace of my own, then commit, unmount and close\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\ntry {\n  const { sandbox } = await lf.sandbox.create();\n  const ws = await lf.workspace.mount(sandbox, \"checkout\");\n  try {\n    const cmd = \"echo \\\"# Checkout\\\" > CHECKOUT.md\";\n    const run = await lf.workspace.exec(ws, cmd);\n    process.stdout.write(`${run.stdout}${run.stderr}`);\n    console.log(`exit ${run.exitCode}`);\n    const c = await lf.workspace.commit(ws, `ava: ${cmd} (exit ${run.exitCode})`);\n    console.log(c.kind, c.merged ? \"· my Workspace was stale: merged with the head\" : \"\", c.lww?.length ? `· last writer won ${c.lww.length} path(s)` : \"\");\n  } finally {\n    await lf.workspace.unmount(ws);\n    await lf.sandbox.close(sandbox);\n  }\n} finally {\n  await lf.close();\n}\nJS"
+    },
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "reply": "Committed on checkout: my Workspace was stale, so it merged with the head."
+   },
+   {
+    "bash": {
+     "description": "sh build.sh",
+     "command": "# Ava: run it on checkout in a Sandbox and Workspace of my own, then commit, unmount and close\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\ntry {\n  const { sandbox } = await lf.sandbox.create();\n  const ws = await lf.workspace.mount(sandbox, \"checkout\");\n  try {\n    const cmd = \"sh build.sh\";\n    const run = await lf.workspace.exec(ws, cmd);\n    process.stdout.write(`${run.stdout}${run.stderr}`);\n    console.log(`exit ${run.exitCode}`);\n    const c = await lf.workspace.commit(ws, `ava: ${cmd} (exit ${run.exitCode})`);\n    console.log(c.kind, c.merged ? \"· my Workspace was stale: merged with the head\" : \"\", c.lww?.length ? `· last writer won ${c.lww.length} path(s)` : \"\");\n  } finally {\n    await lf.workspace.unmount(ws);\n    await lf.sandbox.close(sandbox);\n  }\n} finally {\n  await lf.close();\n}\nJS"
+    },
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "reply": "Committed on checkout: my Workspace was stale, so it merged with the head."
+   },
+   {
+    "bash": {
+     "description": "sh test.sh",
+     "command": "# Ava: run it on checkout in a Sandbox and Workspace of my own, then commit, unmount and close\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\ntry {\n  const { sandbox } = await lf.sandbox.create();\n  const ws = await lf.workspace.mount(sandbox, \"checkout\");\n  try {\n    const cmd = \"sh test.sh\";\n    const run = await lf.workspace.exec(ws, cmd);\n    process.stdout.write(`${run.stdout}${run.stderr}`);\n    console.log(`exit ${run.exitCode}`);\n    const c = await lf.workspace.commit(ws, `ava: ${cmd} (exit ${run.exitCode})`);\n    console.log(c.kind, c.merged ? \"· my Workspace was stale: merged with the head\" : \"\", c.lww?.length ? `· last writer won ${c.lww.length} path(s)` : \"\");\n  } finally {\n    await lf.workspace.unmount(ws);\n    await lf.sandbox.close(sandbox);\n  }\n} finally {\n  await lf.close();\n}\nJS"
+    },
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:UpToDate",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "reply": "Nothing to commit: up to date."
+   }
+  ],
+  "ben": [
+   {
+    "reply": "Ben here, ready on checkout."
+   },
+   {
+    "bash": {
+     "description": "ls node_modules",
+     "command": "# Ben: run it on checkout in a Sandbox and Workspace of my own, then commit, unmount and close\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\ntry {\n  const { sandbox } = await lf.sandbox.create();\n  const ws = await lf.workspace.mount(sandbox, \"checkout\");\n  try {\n    const cmd = \"ls node_modules\";\n    const run = await lf.workspace.exec(ws, cmd);\n    process.stdout.write(`${run.stdout}${run.stderr}`);\n    console.log(`exit ${run.exitCode}`);\n    const c = await lf.workspace.commit(ws, `ben: ${cmd} (exit ${run.exitCode})`);\n    console.log(c.kind, c.merged ? \"· my Workspace was stale: merged with the head\" : \"\", c.lww?.length ? `· last writer won ${c.lww.length} path(s)` : \"\");\n  } finally {\n    await lf.workspace.unmount(ws);\n    await lf.sandbox.close(sandbox);\n  }\n} finally {\n  await lf.close();\n}\nJS"
+    },
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:UpToDate",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "reply": "Nothing to commit: up to date."
+   },
+   {
+    "bash": {
+     "description": "mkdir -p app/cart && echo \"export default function Cart() { return <m…",
+     "command": "# Ben: run it on checkout in a Sandbox and Workspace of my own, then commit, unmount and close\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\ntry {\n  const { sandbox } = await lf.sandbox.create();\n  const ws = await lf.workspace.mount(sandbox, \"checkout\");\n  try {\n    const cmd = \"mkdir -p app/cart && echo \\\"export default function Cart() { return <main><h1>Cart</h1></main>; }\\\" > app/cart/page.tsx\";\n    const run = await lf.workspace.exec(ws, cmd);\n    process.stdout.write(`${run.stdout}${run.stderr}`);\n    console.log(`exit ${run.exitCode}`);\n    const c = await lf.workspace.commit(ws, `ben: ${cmd} (exit ${run.exitCode})`);\n    console.log(c.kind, c.merged ? \"· my Workspace was stale: merged with the head\" : \"\", c.lww?.length ? `· last writer won ${c.lww.length} path(s)` : \"\");\n  } finally {\n    await lf.workspace.unmount(ws);\n    await lf.sandbox.close(sandbox);\n  }\n} finally {\n  await lf.close();\n}\nJS"
+    },
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "reply": "Committed on checkout."
+   },
+   {
+    "bash": {
+     "description": "mkdir -p lib && echo \"export const total = (items) => items.length;\" …",
+     "command": "# Ben: run it on checkout in a Sandbox and Workspace of my own, then commit, unmount and close\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\ntry {\n  const { sandbox } = await lf.sandbox.create();\n  const ws = await lf.workspace.mount(sandbox, \"checkout\");\n  try {\n    const cmd = \"mkdir -p lib && echo \\\"export const total = (items) => items.length;\\\" > lib/cart.ts\";\n    const run = await lf.workspace.exec(ws, cmd);\n    process.stdout.write(`${run.stdout}${run.stderr}`);\n    console.log(`exit ${run.exitCode}`);\n    const c = await lf.workspace.commit(ws, `ben: ${cmd} (exit ${run.exitCode})`);\n    console.log(c.kind, c.merged ? \"· my Workspace was stale: merged with the head\" : \"\", c.lww?.length ? `· last writer won ${c.lww.length} path(s)` : \"\");\n  } finally {\n    await lf.workspace.unmount(ws);\n    await lf.sandbox.close(sandbox);\n  }\n} finally {\n  await lf.close();\n}\nJS"
+    },
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "reply": "Committed on checkout."
+   },
+   {
+    "bash": {
+     "description": "sh test.sh",
+     "command": "# Ben: run it on checkout in a Sandbox and Workspace of my own, then commit, unmount and close\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\ntry {\n  const { sandbox } = await lf.sandbox.create();\n  const ws = await lf.workspace.mount(sandbox, \"checkout\");\n  try {\n    const cmd = \"sh test.sh\";\n    const run = await lf.workspace.exec(ws, cmd);\n    process.stdout.write(`${run.stdout}${run.stderr}`);\n    console.log(`exit ${run.exitCode}`);\n    const c = await lf.workspace.commit(ws, `ben: ${cmd} (exit ${run.exitCode})`);\n    console.log(c.kind, c.merged ? \"· my Workspace was stale: merged with the head\" : \"\", c.lww?.length ? `· last writer won ${c.lww.length} path(s)` : \"\");\n  } finally {\n    await lf.workspace.unmount(ws);\n    await lf.sandbox.close(sandbox);\n  }\n} finally {\n  await lf.close();\n}\nJS"
+    },
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:UpToDate",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "reply": "Nothing to commit: up to date."
+   },
+   {
+    "bash": {
+     "description": "sed -i \"s/sh build.sh/sh build.sh --lint/\" package.json",
+     "command": "# Ben: run it on checkout in a Sandbox and Workspace of my own, then commit, unmount and close\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\ntry {\n  const { sandbox } = await lf.sandbox.create();\n  const ws = await lf.workspace.mount(sandbox, \"checkout\");\n  try {\n    const cmd = \"sed -i \\\"s/sh build.sh/sh build.sh --lint/\\\" package.json\";\n    const run = await lf.workspace.exec(ws, cmd);\n    process.stdout.write(`${run.stdout}${run.stderr}`);\n    console.log(`exit ${run.exitCode}`);\n    const c = await lf.workspace.commit(ws, `ben: ${cmd} (exit ${run.exitCode})`);\n    console.log(c.kind, c.merged ? \"· my Workspace was stale: merged with the head\" : \"\", c.lww?.length ? `· last writer won ${c.lww.length} path(s)` : \"\");\n  } finally {\n    await lf.workspace.unmount(ws);\n    await lf.sandbox.close(sandbox);\n  }\n} finally {\n  await lf.close();\n}\nJS"
+    },
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "reply": "Committed on checkout."
+   },
+   {
+    "bash": {
+     "description": "cat package.json",
+     "command": "# Ben: run it on checkout in a Sandbox and Workspace of my own, then commit, unmount and close\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\ntry {\n  const { sandbox } = await lf.sandbox.create();\n  const ws = await lf.workspace.mount(sandbox, \"checkout\");\n  try {\n    const cmd = \"cat package.json\";\n    const run = await lf.workspace.exec(ws, cmd);\n    process.stdout.write(`${run.stdout}${run.stderr}`);\n    console.log(`exit ${run.exitCode}`);\n    const c = await lf.workspace.commit(ws, `ben: ${cmd} (exit ${run.exitCode})`);\n    console.log(c.kind, c.merged ? \"· my Workspace was stale: merged with the head\" : \"\", c.lww?.length ? `· last writer won ${c.lww.length} path(s)` : \"\");\n  } finally {\n    await lf.workspace.unmount(ws);\n    await lf.sandbox.close(sandbox);\n  }\n} finally {\n  await lf.close();\n}\nJS"
+    },
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:UpToDate",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "reply": "Nothing to commit: up to date."
+   },
+   {
+    "bash": {
+     "description": "sed -i \"s/<h1>Cart</<h1>Your cart</\" app/cart/page.tsx",
+     "command": "# Ben: run it on checkout in a Sandbox and Workspace of my own, then commit, unmount and close\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\ntry {\n  const { sandbox } = await lf.sandbox.create();\n  const ws = await lf.workspace.mount(sandbox, \"checkout\");\n  try {\n    const cmd = \"sed -i \\\"s/<h1>Cart</<h1>Your cart</\\\" app/cart/page.tsx\";\n    const run = await lf.workspace.exec(ws, cmd);\n    process.stdout.write(`${run.stdout}${run.stderr}`);\n    console.log(`exit ${run.exitCode}`);\n    const c = await lf.workspace.commit(ws, `ben: ${cmd} (exit ${run.exitCode})`);\n    console.log(c.kind, c.merged ? \"· my Workspace was stale: merged with the head\" : \"\", c.lww?.length ? `· last writer won ${c.lww.length} path(s)` : \"\");\n  } finally {\n    await lf.workspace.unmount(ws);\n    await lf.sandbox.close(sandbox);\n  }\n} finally {\n  await lf.close();\n}\nJS"
+    },
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "reply": "Committed on checkout."
+   },
+   {
+    "bash": {
+     "description": "sed -i \"s#<body>{children}</body>#<body><a href=\\\"/cart\\\">Cart</a>{ch…",
+     "command": "# Ben: run it on checkout in a Sandbox and Workspace of my own, then commit, unmount and close\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\ntry {\n  const { sandbox } = await lf.sandbox.create();\n  const ws = await lf.workspace.mount(sandbox, \"checkout\");\n  try {\n    const cmd = \"sed -i \\\"s#<body>{children}</body>#<body><a href=\\\\\\\"/cart\\\\\\\">Cart</a>{children}</body>#\\\" app/layout.tsx\";\n    const run = await lf.workspace.exec(ws, cmd);\n    process.stdout.write(`${run.stdout}${run.stderr}`);\n    console.log(`exit ${run.exitCode}`);\n    const c = await lf.workspace.commit(ws, `ben: ${cmd} (exit ${run.exitCode})`);\n    console.log(c.kind, c.merged ? \"· my Workspace was stale: merged with the head\" : \"\", c.lww?.length ? `· last writer won ${c.lww.length} path(s)` : \"\");\n  } finally {\n    await lf.workspace.unmount(ws);\n    await lf.sandbox.close(sandbox);\n  }\n} finally {\n  await lf.close();\n}\nJS"
+    },
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "reply": "Committed on checkout."
+   },
+   {
+    "bash": {
+     "description": "sh test.sh",
+     "command": "# Ben: run it on checkout in a Sandbox and Workspace of my own, then commit, unmount and close\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\ntry {\n  const { sandbox } = await lf.sandbox.create();\n  const ws = await lf.workspace.mount(sandbox, \"checkout\");\n  try {\n    const cmd = \"sh test.sh\";\n    const run = await lf.workspace.exec(ws, cmd);\n    process.stdout.write(`${run.stdout}${run.stderr}`);\n    console.log(`exit ${run.exitCode}`);\n    const c = await lf.workspace.commit(ws, `ben: ${cmd} (exit ${run.exitCode})`);\n    console.log(c.kind, c.merged ? \"· my Workspace was stale: merged with the head\" : \"\", c.lww?.length ? `· last writer won ${c.lww.length} path(s)` : \"\");\n  } finally {\n    await lf.workspace.unmount(ws);\n    await lf.sandbox.close(sandbox);\n  }\n} finally {\n  await lf.close();\n}\nJS"
+    },
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:UpToDate",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "reply": "Nothing to commit: up to date."
+   }
+  ],
+  "cy": [
+   {
+    "reply": "Cy here, ready on checkout."
+   },
+   {
+    "bash": {
+     "description": "mkdir -p app/api && echo \"export async function GET() { return Respon…",
+     "command": "# Cy: run it on checkout in a Sandbox and Workspace of my own, then commit, unmount and close\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\ntry {\n  const { sandbox } = await lf.sandbox.create();\n  const ws = await lf.workspace.mount(sandbox, \"checkout\");\n  try {\n    const cmd = \"mkdir -p app/api && echo \\\"export async function GET() { return Response.json({ items: [] }); }\\\" > app/api/route.ts\";\n    const run = await lf.workspace.exec(ws, cmd);\n    process.stdout.write(`${run.stdout}${run.stderr}`);\n    console.log(`exit ${run.exitCode}`);\n    const c = await lf.workspace.commit(ws, `cy: ${cmd} (exit ${run.exitCode})`);\n    console.log(c.kind, c.merged ? \"· my Workspace was stale: merged with the head\" : \"\", c.lww?.length ? `· last writer won ${c.lww.length} path(s)` : \"\");\n  } finally {\n    await lf.workspace.unmount(ws);\n    await lf.sandbox.close(sandbox);\n  }\n} finally {\n  await lf.close();\n}\nJS"
+    },
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "reply": "Committed on checkout: my Workspace was stale, so it merged with the head."
+   },
+   {
+    "bash": {
+     "description": "sed -i \"s/items: \\[\\]/items: await load()/\" app/api/route.ts",
+     "command": "# Cy: run it on checkout in a Sandbox and Workspace of my own, then commit, unmount and close\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\ntry {\n  const { sandbox } = await lf.sandbox.create();\n  const ws = await lf.workspace.mount(sandbox, \"checkout\");\n  try {\n    const cmd = \"sed -i \\\"s/items: \\\\[\\\\]/items: await load()/\\\" app/api/route.ts\";\n    const run = await lf.workspace.exec(ws, cmd);\n    process.stdout.write(`${run.stdout}${run.stderr}`);\n    console.log(`exit ${run.exitCode}`);\n    const c = await lf.workspace.commit(ws, `cy: ${cmd} (exit ${run.exitCode})`);\n    console.log(c.kind, c.merged ? \"· my Workspace was stale: merged with the head\" : \"\", c.lww?.length ? `· last writer won ${c.lww.length} path(s)` : \"\");\n  } finally {\n    await lf.workspace.unmount(ws);\n    await lf.sandbox.close(sandbox);\n  }\n} finally {\n  await lf.close();\n}\nJS"
+    },
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "reply": "Committed on checkout: my Workspace was stale, so it merged with the head."
+   },
+   {
+    "bash": {
+     "description": "cat app/api/route.ts",
+     "command": "# Cy: run it on checkout in a Sandbox and Workspace of my own, then commit, unmount and close\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\ntry {\n  const { sandbox } = await lf.sandbox.create();\n  const ws = await lf.workspace.mount(sandbox, \"checkout\");\n  try {\n    const cmd = \"cat app/api/route.ts\";\n    const run = await lf.workspace.exec(ws, cmd);\n    process.stdout.write(`${run.stdout}${run.stderr}`);\n    console.log(`exit ${run.exitCode}`);\n    const c = await lf.workspace.commit(ws, `cy: ${cmd} (exit ${run.exitCode})`);\n    console.log(c.kind, c.merged ? \"· my Workspace was stale: merged with the head\" : \"\", c.lww?.length ? `· last writer won ${c.lww.length} path(s)` : \"\");\n  } finally {\n    await lf.workspace.unmount(ws);\n    await lf.sandbox.close(sandbox);\n  }\n} finally {\n  await lf.close();\n}\nJS"
+    },
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:UpToDate",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "reply": "Nothing to commit: up to date."
+   },
+   {
+    "bash": {
+     "description": "sh build.sh",
+     "command": "# Cy: run it on checkout in a Sandbox and Workspace of my own, then commit, unmount and close\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\ntry {\n  const { sandbox } = await lf.sandbox.create();\n  const ws = await lf.workspace.mount(sandbox, \"checkout\");\n  try {\n    const cmd = \"sh build.sh\";\n    const run = await lf.workspace.exec(ws, cmd);\n    process.stdout.write(`${run.stdout}${run.stderr}`);\n    console.log(`exit ${run.exitCode}`);\n    const c = await lf.workspace.commit(ws, `cy: ${cmd} (exit ${run.exitCode})`);\n    console.log(c.kind, c.merged ? \"· my Workspace was stale: merged with the head\" : \"\", c.lww?.length ? `· last writer won ${c.lww.length} path(s)` : \"\");\n  } finally {\n    await lf.workspace.unmount(ws);\n    await lf.sandbox.close(sandbox);\n  }\n} finally {\n  await lf.close();\n}\nJS"
+    },
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "reply": "Committed on checkout: my Workspace was stale, so it merged with the head and the last writer won the build output."
+   },
+   {
+    "bash": {
+     "description": "Edit the build line in a Workspace I keep open",
+     "command": "# Cy: edit the build line in a Workspace I keep open, in a Sandbox of its own\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\ntry {\n  const { sandbox } = await lf.sandbox.create();\n  const ws = await lf.workspace.mount(sandbox, \"checkout\");\n  const cmd = \"sed -i \\\"s/sh build.sh/sh build.sh --profile/\\\" package.json\";\n  const run = await lf.workspace.exec(ws, cmd);\n  process.stdout.write(`${run.stdout}${run.stderr}`);\n  console.log(`exit ${run.exitCode}`);\n  console.log(JSON.stringify({ sandbox: ws.sandbox, path: ws.path }));\n} finally {\n  await lf.close();\n}\nJS"
+    },
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0"
+    ]
+   },
+   {
+    "reply": "Edited package.json in a Workspace I keep open; not committed yet."
+   },
+   {
+    "bash": {
+     "description": "Commit my Workspace",
+     "command": "# Cy: commit the Workspace I kept open\nnode --input-type=module <<'JS'\nconst { LayerFS, isRefusal } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\ntry {\n  const [{ sandbox, path }] = (await lf.sandbox.list_workspaces(\"{{sandbox}}\")).items;\n  const ws = { sandbox, path };\n  try {\n    const c = await lf.workspace.commit(ws, \"cy: sed -i \\\"s/sh build.sh/sh build.sh --profile/\\\" package.json\");\n    console.log(c.kind);\n  } catch (error) {\n    if (!isRefusal(error, \"Conflict\")) throw error;\n    console.log(`${error.code}: ${error.message}`);\n    for (const c of error.detail?.conflicts ?? []) console.log(`  ${c.path}`);\n    console.log(`nothing committed; the markers are in ${path}, which stays mounted`);\n  }\n} finally {\n  await lf.close();\n}\nJS"
+    },
+    "expect": [
+     "workspace.commit:Conflict"
+    ]
+   },
+   {
+    "reply": "Conflict: nothing committed, and my Workspace is kept with the markers."
+   },
+   {
+    "bash": {
+     "description": "cat package.json",
+     "command": "# Cy: look at the markers in the Workspace I kept open\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\ntry {\n  const [{ sandbox, path }] = (await lf.sandbox.list_workspaces(\"{{sandbox}}\")).items;\n  const ws = { sandbox, path };\n  const cmd = \"cat package.json\";\n  const run = await lf.workspace.exec(ws, cmd);\n  process.stdout.write(`${run.stdout}${run.stderr}`);\n  console.log(`exit ${run.exitCode}`);\n} finally {\n  await lf.close();\n}\nJS"
+    },
+    "expect": [
+     "workspace.exec:exit:0"
+    ]
+   },
+   {
+    "reply": "The markers are in package.json: Ben's --lint against my --profile."
+   },
+   {
+    "bash": {
+     "description": "Keep --profile, commit and unmount",
+     "command": "# Cy: keep --profile, commit, unmount, and close the Sandbox I kept for it\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\ntry {\n  const [{ sandbox, path }] = (await lf.sandbox.list_workspaces(\"{{sandbox}}\")).items;\n  const ws = { sandbox, path };\n  const cmd = \"sed -i '/--lint\\\\|^<<<<<<<\\\\|^=======\\\\|^>>>>>>>/d' package.json\";\n  const run = await lf.workspace.exec(ws, cmd);\n  process.stdout.write(`${run.stdout}${run.stderr}`);\n  console.log(`exit ${run.exitCode}`);\n  const c = await lf.workspace.commit(ws, \"cy: keep --profile over ben's --lint\");\n  console.log(c.kind);\n  await lf.workspace.unmount(ws);\n  console.log((await lf.sandbox.close(sandbox)).kind);\n} finally {\n  await lf.close();\n}\nJS"
+    },
+    "expect": [
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "reply": "Committed on checkout."
+   },
+   {
+    "bash": {
+     "description": "echo \"export const tax = 0.2;\" > lib/tax.ts",
+     "command": "# Cy: run it on checkout in a Sandbox and Workspace of my own, then commit, unmount and close\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\ntry {\n  const { sandbox } = await lf.sandbox.create();\n  const ws = await lf.workspace.mount(sandbox, \"checkout\");\n  try {\n    const cmd = \"echo \\\"export const tax = 0.2;\\\" > lib/tax.ts\";\n    const run = await lf.workspace.exec(ws, cmd);\n    process.stdout.write(`${run.stdout}${run.stderr}`);\n    console.log(`exit ${run.exitCode}`);\n    const c = await lf.workspace.commit(ws, `cy: ${cmd} (exit ${run.exitCode})`);\n    console.log(c.kind, c.merged ? \"· my Workspace was stale: merged with the head\" : \"\", c.lww?.length ? `· last writer won ${c.lww.length} path(s)` : \"\");\n  } finally {\n    await lf.workspace.unmount(ws);\n    await lf.sandbox.close(sandbox);\n  }\n} finally {\n  await lf.close();\n}\nJS"
+    },
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "reply": "Committed on checkout: my Workspace was stale, so it merged with the head."
+   },
+   {
+    "bash": {
+     "description": "sed -i \"s/0.2/0.21/\" lib/tax.ts",
+     "command": "# Cy: run it on checkout in a Sandbox and Workspace of my own, then commit, unmount and close\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\ntry {\n  const { sandbox } = await lf.sandbox.create();\n  const ws = await lf.workspace.mount(sandbox, \"checkout\");\n  try {\n    const cmd = \"sed -i \\\"s/0.2/0.21/\\\" lib/tax.ts\";\n    const run = await lf.workspace.exec(ws, cmd);\n    process.stdout.write(`${run.stdout}${run.stderr}`);\n    console.log(`exit ${run.exitCode}`);\n    const c = await lf.workspace.commit(ws, `cy: ${cmd} (exit ${run.exitCode})`);\n    console.log(c.kind, c.merged ? \"· my Workspace was stale: merged with the head\" : \"\", c.lww?.length ? `· last writer won ${c.lww.length} path(s)` : \"\");\n  } finally {\n    await lf.workspace.unmount(ws);\n    await lf.sandbox.close(sandbox);\n  }\n} finally {\n  await lf.close();\n}\nJS"
+    },
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "reply": "Committed on checkout."
+   },
+   {
+    "bash": {
+     "description": "sh test.sh",
+     "command": "# Cy: run it on checkout in a Sandbox and Workspace of my own, then commit, unmount and close\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\ntry {\n  const { sandbox } = await lf.sandbox.create();\n  const ws = await lf.workspace.mount(sandbox, \"checkout\");\n  try {\n    const cmd = \"sh test.sh\";\n    const run = await lf.workspace.exec(ws, cmd);\n    process.stdout.write(`${run.stdout}${run.stderr}`);\n    console.log(`exit ${run.exitCode}`);\n    const c = await lf.workspace.commit(ws, `cy: ${cmd} (exit ${run.exitCode})`);\n    console.log(c.kind, c.merged ? \"· my Workspace was stale: merged with the head\" : \"\", c.lww?.length ? `· last writer won ${c.lww.length} path(s)` : \"\");\n  } finally {\n    await lf.workspace.unmount(ws);\n    await lf.sandbox.close(sandbox);\n  }\n} finally {\n  await lf.close();\n}\nJS"
+    },
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:UpToDate",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "reply": "Nothing to commit: up to date."
+   }
+  ],
+  "dee": [
+   {
+    "reply": "Dee here, ready on search."
+   },
+   {
+    "bash": {
+     "description": "sh install.sh",
+     "command": "# Dee: run it on search in a Sandbox and Workspace of my own, then commit, unmount and close\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\ntry {\n  const { sandbox } = await lf.sandbox.create();\n  const ws = await lf.workspace.mount(sandbox, \"search\");\n  try {\n    const cmd = \"sh install.sh\";\n    const run = await lf.workspace.exec(ws, cmd);\n    process.stdout.write(`${run.stdout}${run.stderr}`);\n    console.log(`exit ${run.exitCode}`);\n    const c = await lf.workspace.commit(ws, `dee: ${cmd} (exit ${run.exitCode})`);\n    console.log(c.kind, c.merged ? \"· my Workspace was stale: merged with the head\" : \"\", c.lww?.length ? `· last writer won ${c.lww.length} path(s)` : \"\");\n  } finally {\n    await lf.workspace.unmount(ws);\n    await lf.sandbox.close(sandbox);\n  }\n} finally {\n  await lf.close();\n}\nJS"
+    },
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "reply": "Committed on search."
+   },
+   {
+    "bash": {
+     "description": "mkdir -p app/search && echo 'import { index } from \"@/lib/index\"; exp…",
+     "command": "# Dee: run it on search in a Sandbox and Workspace of my own, then commit, unmount and close\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\ntry {\n  const { sandbox } = await lf.sandbox.create();\n  const ws = await lf.workspace.mount(sandbox, \"search\");\n  try {\n    const cmd = \"mkdir -p app/search && echo 'import { index } from \\\"@/lib/index\\\"; export default function Search() { return <main><h1>Search</h1></main>; }' > app/search/page.tsx\";\n    const run = await lf.workspace.exec(ws, cmd);\n    process.stdout.write(`${run.stdout}${run.stderr}`);\n    console.log(`exit ${run.exitCode}`);\n    const c = await lf.workspace.commit(ws, `dee: ${cmd} (exit ${run.exitCode})`);\n    console.log(c.kind, c.merged ? \"· my Workspace was stale: merged with the head\" : \"\", c.lww?.length ? `· last writer won ${c.lww.length} path(s)` : \"\");\n  } finally {\n    await lf.workspace.unmount(ws);\n    await lf.sandbox.close(sandbox);\n  }\n} finally {\n  await lf.close();\n}\nJS"
+    },
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "reply": "Committed on search: my Workspace was stale, so it merged with the head."
+   },
+   {
+    "bash": {
+     "description": "sh test.sh",
+     "command": "# Dee: run it on search in a Sandbox and Workspace of my own, then commit, unmount and close\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\ntry {\n  const { sandbox } = await lf.sandbox.create();\n  const ws = await lf.workspace.mount(sandbox, \"search\");\n  try {\n    const cmd = \"sh test.sh\";\n    const run = await lf.workspace.exec(ws, cmd);\n    process.stdout.write(`${run.stdout}${run.stderr}`);\n    console.log(`exit ${run.exitCode}`);\n    const c = await lf.workspace.commit(ws, `dee: ${cmd} (exit ${run.exitCode})`);\n    console.log(c.kind, c.merged ? \"· my Workspace was stale: merged with the head\" : \"\", c.lww?.length ? `· last writer won ${c.lww.length} path(s)` : \"\");\n  } finally {\n    await lf.workspace.unmount(ws);\n    await lf.sandbox.close(sandbox);\n  }\n} finally {\n  await lf.close();\n}\nJS"
+    },
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:UpToDate",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "reply": "Nothing to commit: up to date."
+   },
+   {
+    "bash": {
+     "description": "sh build.sh",
+     "command": "# Dee: run it on search in a Sandbox and Workspace of my own, then commit, unmount and close\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\ntry {\n  const { sandbox } = await lf.sandbox.create();\n  const ws = await lf.workspace.mount(sandbox, \"search\");\n  try {\n    const cmd = \"sh build.sh\";\n    const run = await lf.workspace.exec(ws, cmd);\n    process.stdout.write(`${run.stdout}${run.stderr}`);\n    console.log(`exit ${run.exitCode}`);\n    const c = await lf.workspace.commit(ws, `dee: ${cmd} (exit ${run.exitCode})`);\n    console.log(c.kind, c.merged ? \"· my Workspace was stale: merged with the head\" : \"\", c.lww?.length ? `· last writer won ${c.lww.length} path(s)` : \"\");\n  } finally {\n    await lf.workspace.unmount(ws);\n    await lf.sandbox.close(sandbox);\n  }\n} finally {\n  await lf.close();\n}\nJS"
+    },
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "reply": "Committed on search."
+   },
+   {
+    "bash": {
+     "description": "sh serve.sh &",
+     "command": "# Dee: start the server in the background, in a Workspace and Sandbox that stay up until I stop it\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\ntry {\n  const { LayerFSBackend } = await import(\"@layerfs/backend\");\n  const be = LayerFSBackend.of(lf);\n  const { sandbox } = await lf.sandbox.create();\n  const ws = await lf.workspace.mount(sandbox, \"search\");\n  const p = await be.daemon.process.start(ws, \"sh serve.sh\");\n  console.log(JSON.stringify({ sandbox: ws.sandbox, path: ws.path, process: p.process, kind: p.kind }));\n} finally {\n  await lf.close();\n}\nJS"
+    },
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "backend.daemon.process.start:running"
+    ]
+   },
+   {
+    "reply": "The server is running; its Workspace stays mounted."
+   },
+   {
+    "bash": {
+     "description": "sed -i \"s/<h1>Search</<h1>Search the shop</\" app/search/page.tsx",
+     "command": "# Dee: run it on search in a Sandbox and Workspace of my own, then commit, unmount and close\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\ntry {\n  const { sandbox } = await lf.sandbox.create();\n  const ws = await lf.workspace.mount(sandbox, \"search\");\n  try {\n    const cmd = \"sed -i \\\"s/<h1>Search</<h1>Search the shop</\\\" app/search/page.tsx\";\n    const run = await lf.workspace.exec(ws, cmd);\n    process.stdout.write(`${run.stdout}${run.stderr}`);\n    console.log(`exit ${run.exitCode}`);\n    const c = await lf.workspace.commit(ws, `dee: ${cmd} (exit ${run.exitCode})`);\n    console.log(c.kind, c.merged ? \"· my Workspace was stale: merged with the head\" : \"\", c.lww?.length ? `· last writer won ${c.lww.length} path(s)` : \"\");\n  } finally {\n    await lf.workspace.unmount(ws);\n    await lf.sandbox.close(sandbox);\n  }\n} finally {\n  await lf.close();\n}\nJS"
+    },
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "reply": "Committed on search."
+   },
+   {
+    "bash": {
+     "description": "curl -s http://localhost:3000/search",
+     "command": "# Dee: a Workspace of my own in the server's Sandbox, where it listens; run, commit, unmount\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\ntry {\n  const ws = await lf.workspace.mount(\"{{sandbox}}\", \"search\");\n  try {\n    const cmd = \"curl -s http://localhost:3000/search\";\n    const run = await lf.workspace.exec(ws, cmd);\n    process.stdout.write(`${run.stdout}${run.stderr}`);\n    console.log(`exit ${run.exitCode}`);\n    const c = await lf.workspace.commit(ws, `dee: ${cmd} (exit ${run.exitCode})`);\n    console.log(c.kind, c.merged ? \"· my Workspace was stale: merged with the head\" : \"\", c.lww?.length ? `· last writer won ${c.lww.length} path(s)` : \"\");\n  } finally {\n    await lf.workspace.unmount(ws);\n  }\n} finally {\n  await lf.close();\n}\nJS"
+    },
+    "expect": [
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:UpToDate",
+     "workspace.unmount:Unmounted"
+    ]
+   },
+   {
+    "reply": "Nothing to commit: up to date."
+   },
+   {
+    "bash": {
+     "description": "echo \"export const debounce = 300;\" > lib/debounce.ts",
+     "command": "# Dee: run it on search in a Sandbox and Workspace of my own, then commit, unmount and close\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\ntry {\n  const { sandbox } = await lf.sandbox.create();\n  const ws = await lf.workspace.mount(sandbox, \"search\");\n  try {\n    const cmd = \"echo \\\"export const debounce = 300;\\\" > lib/debounce.ts\";\n    const run = await lf.workspace.exec(ws, cmd);\n    process.stdout.write(`${run.stdout}${run.stderr}`);\n    console.log(`exit ${run.exitCode}`);\n    const c = await lf.workspace.commit(ws, `dee: ${cmd} (exit ${run.exitCode})`);\n    console.log(c.kind, c.merged ? \"· my Workspace was stale: merged with the head\" : \"\", c.lww?.length ? `· last writer won ${c.lww.length} path(s)` : \"\");\n  } finally {\n    await lf.workspace.unmount(ws);\n    await lf.sandbox.close(sandbox);\n  }\n} finally {\n  await lf.close();\n}\nJS"
+    },
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "reply": "Committed on search."
+   },
+   {
+    "bash": {
+     "description": "sh test.sh",
+     "command": "# Dee: run it on search in a Sandbox and Workspace of my own, then commit, unmount and close\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\ntry {\n  const { sandbox } = await lf.sandbox.create();\n  const ws = await lf.workspace.mount(sandbox, \"search\");\n  try {\n    const cmd = \"sh test.sh\";\n    const run = await lf.workspace.exec(ws, cmd);\n    process.stdout.write(`${run.stdout}${run.stderr}`);\n    console.log(`exit ${run.exitCode}`);\n    const c = await lf.workspace.commit(ws, `dee: ${cmd} (exit ${run.exitCode})`);\n    console.log(c.kind, c.merged ? \"· my Workspace was stale: merged with the head\" : \"\", c.lww?.length ? `· last writer won ${c.lww.length} path(s)` : \"\");\n  } finally {\n    await lf.workspace.unmount(ws);\n    await lf.sandbox.close(sandbox);\n  }\n} finally {\n  await lf.close();\n}\nJS"
+    },
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:UpToDate",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "reply": "Nothing to commit: up to date."
+   },
+   {
+    "bash": {
+     "description": "sed -i \"s#<body>{children}</body>#<body><a href=\\\"/search\\\">Search</a…",
+     "command": "# Dee: run it on search in a Sandbox and Workspace of my own, then commit, unmount and close\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\ntry {\n  const { sandbox } = await lf.sandbox.create();\n  const ws = await lf.workspace.mount(sandbox, \"search\");\n  try {\n    const cmd = \"sed -i \\\"s#<body>{children}</body>#<body><a href=\\\\\\\"/search\\\\\\\">Search</a>{children}</body>#\\\" app/layout.tsx\";\n    const run = await lf.workspace.exec(ws, cmd);\n    process.stdout.write(`${run.stdout}${run.stderr}`);\n    console.log(`exit ${run.exitCode}`);\n    const c = await lf.workspace.commit(ws, `dee: ${cmd} (exit ${run.exitCode})`);\n    console.log(c.kind, c.merged ? \"· my Workspace was stale: merged with the head\" : \"\", c.lww?.length ? `· last writer won ${c.lww.length} path(s)` : \"\");\n  } finally {\n    await lf.workspace.unmount(ws);\n    await lf.sandbox.close(sandbox);\n  }\n} finally {\n  await lf.close();\n}\nJS"
+    },
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "reply": "Committed on search."
+   },
+   {
+    "bash": {
+     "description": "stop",
+     "command": "# Dee: stop the server, unmount its Workspace (dropping its dev cache) and close its Sandbox\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\ntry {\n  const { LayerFSBackend } = await import(\"@layerfs/backend\");\n  const be = LayerFSBackend.of(lf);\n  const procs = (await be.daemon.process.list()).items.filter((p) => String(p.sandbox) === \"{{sandbox}}\" && p.status === \"running\");\n  for (const p of procs) console.log(p.id, (await be.daemon.process.cancel(p.id)).kind);\n  for (const w of (await lf.sandbox.list_workspaces(\"{{sandbox}}\")).items) {\n    await lf.workspace.unmount({ sandbox: w.sandbox, path: w.path }, true);\n    console.log(`unmounted ${w.path}; its uncommitted dev cache discarded`);\n  }\n  console.log((await lf.sandbox.close(\"{{sandbox}}\")).kind);\n} finally {\n  await lf.close();\n}\nJS"
+    },
+    "expect": [
+     "backend.daemon.process.cancel:Stopped",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "reply": "Server stopped; its Workspace is unmounted."
+   }
+  ],
+  "eli": [
+   {
+    "reply": "Eli here, ready on search."
+   },
+   {
+    "bash": {
+     "description": "ls node_modules",
+     "command": "# Eli: run it on search in a Sandbox and Workspace of my own, then commit, unmount and close\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\ntry {\n  const { sandbox } = await lf.sandbox.create();\n  const ws = await lf.workspace.mount(sandbox, \"search\");\n  try {\n    const cmd = \"ls node_modules\";\n    const run = await lf.workspace.exec(ws, cmd);\n    process.stdout.write(`${run.stdout}${run.stderr}`);\n    console.log(`exit ${run.exitCode}`);\n    const c = await lf.workspace.commit(ws, `eli: ${cmd} (exit ${run.exitCode})`);\n    console.log(c.kind, c.merged ? \"· my Workspace was stale: merged with the head\" : \"\", c.lww?.length ? `· last writer won ${c.lww.length} path(s)` : \"\");\n  } finally {\n    await lf.workspace.unmount(ws);\n    await lf.sandbox.close(sandbox);\n  }\n} finally {\n  await lf.close();\n}\nJS"
+    },
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:UpToDate",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "reply": "Nothing to commit: up to date."
+   },
+   {
+    "bash": {
+     "description": "mkdir -p lib && echo \"export const index = new Map();\" > lib/index.ts",
+     "command": "# Eli: run it on search in a Sandbox and Workspace of my own, then commit, unmount and close\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\ntry {\n  const { sandbox } = await lf.sandbox.create();\n  const ws = await lf.workspace.mount(sandbox, \"search\");\n  try {\n    const cmd = \"mkdir -p lib && echo \\\"export const index = new Map();\\\" > lib/index.ts\";\n    const run = await lf.workspace.exec(ws, cmd);\n    process.stdout.write(`${run.stdout}${run.stderr}`);\n    console.log(`exit ${run.exitCode}`);\n    const c = await lf.workspace.commit(ws, `eli: ${cmd} (exit ${run.exitCode})`);\n    console.log(c.kind, c.merged ? \"· my Workspace was stale: merged with the head\" : \"\", c.lww?.length ? `· last writer won ${c.lww.length} path(s)` : \"\");\n  } finally {\n    await lf.workspace.unmount(ws);\n    await lf.sandbox.close(sandbox);\n  }\n} finally {\n  await lf.close();\n}\nJS"
+    },
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "reply": "Committed on search."
+   },
+   {
+    "bash": {
+     "description": "echo \"export const tokenize = (s) => s.toLowerCase().split(' ');\" > l…",
+     "command": "# Eli: run it on search in a Sandbox and Workspace of my own, then commit, unmount and close\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\ntry {\n  const { sandbox } = await lf.sandbox.create();\n  const ws = await lf.workspace.mount(sandbox, \"search\");\n  try {\n    const cmd = \"echo \\\"export const tokenize = (s) => s.toLowerCase().split(' ');\\\" > lib/tokenize.ts\";\n    const run = await lf.workspace.exec(ws, cmd);\n    process.stdout.write(`${run.stdout}${run.stderr}`);\n    console.log(`exit ${run.exitCode}`);\n    const c = await lf.workspace.commit(ws, `eli: ${cmd} (exit ${run.exitCode})`);\n    console.log(c.kind, c.merged ? \"· my Workspace was stale: merged with the head\" : \"\", c.lww?.length ? `· last writer won ${c.lww.length} path(s)` : \"\");\n  } finally {\n    await lf.workspace.unmount(ws);\n    await lf.sandbox.close(sandbox);\n  }\n} finally {\n  await lf.close();\n}\nJS"
+    },
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "reply": "Committed on search."
+   },
+   {
+    "bash": {
+     "description": "echo \"export const rank = (hits) => hits.sort();\" > lib/rank.ts",
+     "command": "# Eli: run it on search in a Sandbox and Workspace of my own, then commit, unmount and close\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\ntry {\n  const { sandbox } = await lf.sandbox.create();\n  const ws = await lf.workspace.mount(sandbox, \"search\");\n  try {\n    const cmd = \"echo \\\"export const rank = (hits) => hits.sort();\\\" > lib/rank.ts\";\n    const run = await lf.workspace.exec(ws, cmd);\n    process.stdout.write(`${run.stdout}${run.stderr}`);\n    console.log(`exit ${run.exitCode}`);\n    const c = await lf.workspace.commit(ws, `eli: ${cmd} (exit ${run.exitCode})`);\n    console.log(c.kind, c.merged ? \"· my Workspace was stale: merged with the head\" : \"\", c.lww?.length ? `· last writer won ${c.lww.length} path(s)` : \"\");\n  } finally {\n    await lf.workspace.unmount(ws);\n    await lf.sandbox.close(sandbox);\n  }\n} finally {\n  await lf.close();\n}\nJS"
+    },
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "reply": "Committed on search: my Workspace was stale, so it merged with the head."
+   },
+   {
+    "bash": {
+     "description": "rm -r lib && sh test.sh",
+     "command": "# Eli: run it on search-try in a Sandbox and Workspace of my own, then commit, unmount and close\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\ntry {\n  const { sandbox } = await lf.sandbox.create();\n  const ws = await lf.workspace.mount(sandbox, \"search-try\");\n  try {\n    const cmd = \"rm -r lib && sh test.sh\";\n    const run = await lf.workspace.exec(ws, cmd);\n    process.stdout.write(`${run.stdout}${run.stderr}`);\n    console.log(`exit ${run.exitCode}`);\n    const c = await lf.workspace.commit(ws, `eli: ${cmd} (exit ${run.exitCode})`);\n    console.log(c.kind, c.merged ? \"· my Workspace was stale: merged with the head\" : \"\", c.lww?.length ? `· last writer won ${c.lww.length} path(s)` : \"\");\n  } finally {\n    await lf.workspace.unmount(ws);\n    await lf.sandbox.close(sandbox);\n  }\n} finally {\n  await lf.close();\n}\nJS"
+    },
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:1",
+     "workspace.commit:Committed",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "reply": "The command failed (1); committed on search-try."
+   },
+   {
+    "bash": {
+     "description": "sh test.sh",
+     "command": "# Eli: run it on search in a Sandbox and Workspace of my own, then commit, unmount and close\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\ntry {\n  const { sandbox } = await lf.sandbox.create();\n  const ws = await lf.workspace.mount(sandbox, \"search\");\n  try {\n    const cmd = \"sh test.sh\";\n    const run = await lf.workspace.exec(ws, cmd);\n    process.stdout.write(`${run.stdout}${run.stderr}`);\n    console.log(`exit ${run.exitCode}`);\n    const c = await lf.workspace.commit(ws, `eli: ${cmd} (exit ${run.exitCode})`);\n    console.log(c.kind, c.merged ? \"· my Workspace was stale: merged with the head\" : \"\", c.lww?.length ? `· last writer won ${c.lww.length} path(s)` : \"\");\n  } finally {\n    await lf.workspace.unmount(ws);\n    await lf.sandbox.close(sandbox);\n  }\n} finally {\n  await lf.close();\n}\nJS"
+    },
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:UpToDate",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "reply": "Nothing to commit: up to date."
+   },
+   {
+    "bash": {
+     "description": "sed -i \"s/new Map()/new Map([['cart', 1]])/\" lib/index.ts",
+     "command": "# Eli: run it on search in a Sandbox and Workspace of my own, then commit, unmount and close\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\ntry {\n  const { sandbox } = await lf.sandbox.create();\n  const ws = await lf.workspace.mount(sandbox, \"search\");\n  try {\n    const cmd = \"sed -i \\\"s/new Map()/new Map([['cart', 1]])/\\\" lib/index.ts\";\n    const run = await lf.workspace.exec(ws, cmd);\n    process.stdout.write(`${run.stdout}${run.stderr}`);\n    console.log(`exit ${run.exitCode}`);\n    const c = await lf.workspace.commit(ws, `eli: ${cmd} (exit ${run.exitCode})`);\n    console.log(c.kind, c.merged ? \"· my Workspace was stale: merged with the head\" : \"\", c.lww?.length ? `· last writer won ${c.lww.length} path(s)` : \"\");\n  } finally {\n    await lf.workspace.unmount(ws);\n    await lf.sandbox.close(sandbox);\n  }\n} finally {\n  await lf.close();\n}\nJS"
+    },
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "reply": "Committed on search: my Workspace was stale, so it merged with the head."
+   },
+   {
+    "bash": {
+     "description": "echo \"export const stem = (w) => w.replace(/s$/, '');\" > lib/stem.ts",
+     "command": "# Eli: run it on search in a Sandbox and Workspace of my own, then commit, unmount and close\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\ntry {\n  const { sandbox } = await lf.sandbox.create();\n  const ws = await lf.workspace.mount(sandbox, \"search\");\n  try {\n    const cmd = \"echo \\\"export const stem = (w) => w.replace(/s$/, '');\\\" > lib/stem.ts\";\n    const run = await lf.workspace.exec(ws, cmd);\n    process.stdout.write(`${run.stdout}${run.stderr}`);\n    console.log(`exit ${run.exitCode}`);\n    const c = await lf.workspace.commit(ws, `eli: ${cmd} (exit ${run.exitCode})`);\n    console.log(c.kind, c.merged ? \"· my Workspace was stale: merged with the head\" : \"\", c.lww?.length ? `· last writer won ${c.lww.length} path(s)` : \"\");\n  } finally {\n    await lf.workspace.unmount(ws);\n    await lf.sandbox.close(sandbox);\n  }\n} finally {\n  await lf.close();\n}\nJS"
+    },
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "reply": "Committed on search."
+   },
+   {
+    "bash": {
+     "description": "sh build.sh",
+     "command": "# Eli: run it on search in a Sandbox and Workspace of my own, then commit, unmount and close\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\ntry {\n  const { sandbox } = await lf.sandbox.create();\n  const ws = await lf.workspace.mount(sandbox, \"search\");\n  try {\n    const cmd = \"sh build.sh\";\n    const run = await lf.workspace.exec(ws, cmd);\n    process.stdout.write(`${run.stdout}${run.stderr}`);\n    console.log(`exit ${run.exitCode}`);\n    const c = await lf.workspace.commit(ws, `eli: ${cmd} (exit ${run.exitCode})`);\n    console.log(c.kind, c.merged ? \"· my Workspace was stale: merged with the head\" : \"\", c.lww?.length ? `· last writer won ${c.lww.length} path(s)` : \"\");\n  } finally {\n    await lf.workspace.unmount(ws);\n    await lf.sandbox.close(sandbox);\n  }\n} finally {\n  await lf.close();\n}\nJS"
+    },
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "reply": "Committed on search: my Workspace was stale, so it merged with the head."
+   }
+  ]
+ }
+}

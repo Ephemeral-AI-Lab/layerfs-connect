@@ -1,8 +1,18 @@
 import { FolderOpen } from 'lucide-react'
 import { siCloudflare, siGoogledrive, siMinio, siPostgresql, siSqlite } from 'simple-icons'
 
-import type { Database, Provider } from '@/data/storage'
 import { cn } from '@/lib/utils'
+
+/** Where a local Store's file could be copied to and from, once LayerFS has remotes. */
+export type Provider = 'google-drive' | 's3' | 'r2' | 'minio' | 'folder'
+
+export const PROVIDER_LABEL: Record<Provider, string> = {
+  'google-drive': 'Google Drive',
+  s3: 'Amazon S3',
+  r2: 'Cloudflare R2',
+  minio: 'MinIO',
+  folder: 'Folder',
+}
 
 type SimpleIcon = { title: string; path: string }
 
@@ -64,10 +74,10 @@ export function ProviderIcon({ provider, size }: { provider: Provider; size?: ke
   )
 }
 
-export function DatabaseIcon({ db, size }: { db: Database; size?: keyof typeof TILE }) {
+export function DatabaseIcon({ kind, size }: { kind: 'sqlite' | 'postgres'; size?: keyof typeof TILE }) {
   return (
     <Tile size={size}>
-      <Mark icon={db.kind === 'sqlite' ? siSqlite : siPostgresql} />
+      <Mark icon={kind === 'sqlite' ? siSqlite : siPostgresql} />
     </Tile>
   )
 }

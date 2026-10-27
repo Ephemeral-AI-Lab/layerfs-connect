@@ -1,0 +1,7 @@
+[
+ {
+  "op": "write",
+  "path": "/scripts/check-shutdown.mjs",
+  "content": "import assert from 'node:assert/strict';\nimport {mkdtemp,rm} from 'node:fs/promises';\nimport {tmpdir} from 'node:os';\nimport path from 'node:path';\nconst directory=await mkdtemp(path.join(tmpdir(),'crew-shutdown-'));\nprocess.env.CREW_DATA_DIR=directory;\nconst {startServer}=await import('./acceptance-runtime.mjs');\nlet server;\ntry{\n  server=await startServer();\n  const response=await fetch(server.url+'/api/v1/health',{signal:AbortSignal.timeout(5000)});\n  assert.equal((await response.json()).ok,true);\n  await server.stop();\n  server=null;\n  console.log(JSON.stringify({ok:true,checks:['real server readiness','HTTP health','bounded SIGTERM clean exit']}));\n}finally{\n  if(server)await server.stop();\n  await rm(directory,{recursive:true,force:true});\n}\n"
+ }
+]

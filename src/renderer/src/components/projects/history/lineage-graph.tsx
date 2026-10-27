@@ -1,16 +1,15 @@
 import { ChevronRight, CornerDownRight, Ellipsis, GitFork, GitMerge, Upload } from 'lucide-react'
 import { type KeyboardEvent, useEffect, useMemo, useRef } from 'react'
 
-import { AGENT_DOT } from '@/components/app-sidebar'
 import { laneColor } from '@/components/projects/history/branch-tree'
 import { Unavailable } from '@/components/storage/unavailable'
 import { Button } from '@/components/ui/button'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { type ForkBranch, type ForkTree, type HistoryCommit, type Layer, ancestry } from '@/data/forks'
-import type { Project } from '@/data/sample'
+import { agentColor, shortId, when } from '@/data/format'
 import { cn } from '@/lib/utils'
 
-const HOST = 'Needs the LayerFS host process'
+const BY_HAND = "Connect's runs fork, merge and publish; doing it by hand is not available yet"
 const ROW = 40
 const LANE = 16
 const PAD = 12
@@ -19,10 +18,10 @@ const PAD = 12
 export type HistoryItem = { kind: 'commit' | 'layer'; id: string }
 
 type Row =
-  | { kind: 'commit'; lane: number; minutes: number; commit: HistoryCommit; forks: string[] }
-  | { kind: 'layer'; lane: 0; minutes: number; layer: Layer; dim: boolean; forks: string[] }
-  | { kind: 'earlier'; lane: number; minutes: number; count: number; of: string }
-  | { kind: 'empty'; lane: number; minutes: number }
+  | { kind: 'commit'; lane: number; at: number; commit: HistoryCommit; forks: string[] }
+  | { kind: 'layer'; lane: 0; at: number; layer: Layer; dim: boolean; forks: string[] }
+  | { kind: 'earlier'; lane: number; at: number; count: number; of: string }
+  | { kind: 'empty'; lane: number; at: number }
 
 /** The focused Branch's rows and its ancestors' rows up to each fork point, newest first. */
 function lineageRows(tree: ForkTree, path: ForkBranch[]): Row[] {
@@ -38,26 +37,27 @@ function lineageRows(tree: ForkTree, path: ForkBranch[]): Row[] {
       tree.layers.forEach((layer, i) => {
         // Newer Layers show main moving on; keep two older ones, fold the rest.
         if (forkIndex >= 0 && i > forkIndex + 2) return
-        rows.push({ kind: 'layer', lane: 0, minutes: layer.minutes, layer, dim: forkIndex >= 0 && i < forkIndex, forks: forksAt(layer.id, child?.name) })
+        rows.push({ kind: 'layer', lane: 0, at: layer.at, layer, dim: forkIndex >= 0 && i < forkIndex, forks: forksAt(layer.id, child?.name) })
       })
       const folded = forkIndex >= 0 ? tree.layers.length - (forkIndex + 3) : 0
-      if (folded > 0) rows.push({ kind: 'earlier', lane: 0, minutes: Infinity, count: folded, of: 'Layers on main' })
+      if (folded > 0) rows.push({ kind: 'earlier', lane: 0, at: -Infinity, count: folded, of: 'Layers on main' })
+      // Commits made on main itself, if LayerFS lists any, sit on its lane too.
+      for (const commit of b.commits) rows.push({ kind: 'commit', lane: 0, at: commit.at, commit, forks: forksAt(commit.id, child?.name) })
       return
     }
     const oldestFirst = [...b.commits].reverse()
     const upTo = child ? oldestFirst.findIndex((c) => c.id === child.forkedFrom?.id) : oldestFirst.length - 1
     for (const commit of oldestFirst.slice(0, upTo + 1))
-      rows.push({ kind: 'commit', lane, minutes: commit.minutes, commit, forks: forksAt(commit.id, child?.name) })
-    if (lane === last && b.commits.length === 0) rows.push({ kind: 'empty', lane, minutes: -1 })
+      rows.push({ kind: 'commit', lane, at: commit.at, commit, forks: forksAt(commit.id, child?.name) })
+    if (lane === last && b.commits.length === 0) rows.push({ kind: 'empty', lane, at: Infinity })
   })
-  // Fewest minutes ago first: newest at the top.
-  return rows.sort((a, b) => a.minutes - b.minutes)
+  // Newest at the top; a stable sort keeps LayerFS's order among equal times.
+  return rows.sort((a, b) => b.at - a.at)
 }
 
 const rowId = (r: Row) => (r.kind === 'commit' ? r.commit.id : r.kind === 'layer' ? r.layer.id : undefined)
 
 interface LineageGraphProps {
-  project: Project
   tree: ForkTree
   focus: string
   onFocus: (name: string) => void
@@ -65,7 +65,7 @@ interface LineageGraphProps {
   onSelect: (item: HistoryItem) => void
 }
 
-export function LineageGraph({ project, tree, focus, onFocus, selected, onSelect }: LineageGraphProps) {
+export function LineageGraph({ tree, focus, onFocus, selected, onSelect }: LineageGraphProps) {
   const path = useMemo(() => ancestry(tree, focus), [tree, focus])
   const rows = useMemo(() => lineageRows(tree, path), [tree, path])
   const branch = path[path.length - 1]
@@ -166,22 +166,22 @@ export function LineageGraph({ project, tree, focus, onFocus, selected, onSelect
           <p title={branch.forkedFrom ? `Forked from ${parent?.name} at ${branch.forkedFrom.id}` : undefined} className="min-w-0 flex-1 truncate text-xs text-muted-foreground">
             {branch.name === 'main'
               ? `${tree.layers.length} Layer${tree.layers.length === 1 ? '' : 's'} · the published line new mounts start from`
-              : `Forked from ${parent?.name} at ${branch.forkedFrom?.id} · ${branch.commits.length} Commit${branch.commits.length === 1 ? '' : 's'} · ${branch.children.length} fork${branch.children.length === 1 ? '' : 's'}${branch.state === 'merged' ? ' · merged' : branch.state === 'published' ? ` · published as ${branch.publishedAs}` : ''}`}
+              : `Forked from ${parent?.name}${branch.forkedFrom ? ` at ${shortId(branch.forkedFrom.id)}` : ''} · ${branch.commits.length} Commit${branch.commits.length === 1 ? '' : 's'} · ${branch.children.length} fork${branch.children.length === 1 ? '' : 's'}${branch.state === 'merged' ? ' · merged' : branch.state === 'published' ? ` · published${branch.publishedAs ? ` as ${shortId(branch.publishedAs)}` : ''}` : ''}`}
           </p>
           <div className="flex shrink-0 gap-1">
-            <Unavailable reason={HOST}>
+            <Unavailable reason={BY_HAND}>
               <Button variant="ghost" size="sm" disabled>
                 <GitFork /> Fork
               </Button>
             </Unavailable>
             {parent && (
               <>
-                <Unavailable reason={`Merging into ${parent.name} needs the LayerFS host process`}>
+                <Unavailable reason={BY_HAND}>
                   <Button variant="outline" size="sm" disabled>
                     <GitMerge /> Merge
                   </Button>
                 </Unavailable>
-                <Unavailable reason={HOST}>
+                <Unavailable reason={BY_HAND}>
                   <Button size="sm" disabled>
                     <Upload /> Publish
                   </Button>
@@ -251,7 +251,6 @@ export function LineageGraph({ project, tree, focus, onFocus, selected, onSelect
               row={r}
               top={i * ROW}
               indent={width}
-              project={project}
               tree={tree}
               selected={rowId(r) === selected?.id}
               label={firstOfLane.get(i)}
@@ -269,7 +268,6 @@ interface RowLineProps {
   row: Row
   top: number
   indent: number
-  project: Project
   tree: ForkTree
   selected: boolean
   /** The Branch whose lane starts on this row, labelled once. */
@@ -278,7 +276,7 @@ interface RowLineProps {
   onFocus: (name: string) => void
 }
 
-function RowLine({ row, top, indent, project, tree, selected, label, onSelect, onFocus }: RowLineProps) {
+function RowLine({ row, top, indent, tree, selected, label, onSelect, onFocus }: RowLineProps) {
   const style = { top, height: ROW, paddingLeft: indent + 4 }
   if (row.kind === 'earlier' || row.kind === 'empty')
     return (
@@ -289,7 +287,8 @@ function RowLine({ row, top, indent, project, tree, selected, label, onSelect, o
 
   const id = row.kind === 'commit' ? row.commit.id : row.layer.id
   const message = row.kind === 'commit' ? row.commit.message : row.layer.message
-  const when = row.kind === 'commit' ? row.commit.ago : row.layer.ago
+  const age = row.kind === 'commit' ? row.commit.ago : row.layer.ago
+  const at = row.kind === 'commit' ? row.commit.at : row.layer.at
   const by = row.kind === 'commit' ? row.commit.by : undefined
   const dim = row.kind === 'layer' && row.dim
   const shownForks = row.forks.slice(0, 1)
@@ -308,7 +307,9 @@ function RowLine({ row, top, indent, project, tree, selected, label, onSelect, o
           selected ? 'bg-accent' : 'hover:bg-muted/60',
         )}
       >
-        <span className={cn('w-9 shrink-0 font-mono text-xs', dim ? 'text-faint' : 'text-foreground')}>{id}</span>
+        <span title={id} className={cn('w-[4.25rem] shrink-0 font-mono text-xs', dim ? 'text-faint' : 'text-foreground')}>
+          {shortId(id)}
+        </span>
         {label && label.name !== 'main' && (
           <span
             role="link"
@@ -325,12 +326,15 @@ function RowLine({ row, top, indent, project, tree, selected, label, onSelect, o
         )}
         {row.kind === 'commit' && (
           <span
-            title={by ? `${by.agent} · ${project.sessions.find((s) => s.id === by.session)?.title ?? by.session}` : 'Made outside Connect'}
-            className={cn('size-1.5 shrink-0 rounded-full', by ? AGENT_DOT[by.agent] : 'ring-1 ring-faint')}
+            title={by ?? 'No agent recorded'}
+            className={cn('size-1.5 shrink-0 rounded-full', !by && 'ring-1 ring-faint')}
+            style={by ? { background: agentColor(tree.agents, by) } : undefined}
           />
         )}
         <span className={cn('min-w-0 flex-1 truncate text-[13px]', dim && 'text-faint')}>{message}</span>
-        <span className="shrink-0 text-right text-xs whitespace-nowrap text-faint">{when.replace(' ago', '')}</span>
+        <span title={when(at)} className="shrink-0 text-right text-xs whitespace-nowrap text-faint">
+          {age.replace(' ago', '')}
+        </span>
       </button>
       {shownForks.length > 0 && (
         <span className="flex shrink-0 items-center gap-1">

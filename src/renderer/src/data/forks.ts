@@ -1,28 +1,44 @@
-// A project's Branches as a fork tree, with main as its line of Layers, the
-// way project.list_branches and branch.list_commits report them. LayerFS
-// lists each Branch with `forkedFrom`, a Commit or a Layer; Connect derives
-// the parent from it: a Layer means main, a Commit means the Branch whose
-// history holds that Commit. Forks nest to any depth. Sample data until the
-// host process serves the real ones.
+// A project's Branches as a fork tree, with main as its line of Layers, built
+// from what the host reads from LayerFS: project.list_branches (each Branch's
+// parent, `forkedFrom` and state), the Layers on main, and
+// branch.list_commits per Branch. LayerFS records no author; a Commit's agent
+// comes from the run's trace (the call that made it), when a run made it.
 
-import { CHANGES, type Commit, type FileChange, MESSAGES } from '@/data/repo'
-import type { Agent, Project } from '@/data/sample'
+import type { BranchInfo, CommitInfo, ProjectState, RunDetail } from '@shared/host-api'
+
+import { ago, toMs } from '@/data/format'
 
 export type BranchState = 'open' | 'merged' | 'published'
 
-export interface HistoryCommit extends Commit {
+export interface FileChange {
+  path: string
+  /** added, modified, deleted … as LayerFS reports it. */
+  kind: string
+}
+
+export interface HistoryCommit {
+  id: string
   branch: string
-  /** Minutes ago; ids rise with time. */
-  minutes: number
+  message: string
+  /** Epoch ms; 0 when LayerFS did not say. */
+  at: number
+  ago: string
+  parent: string | null
+  /** A merge Commit's second parent. */
+  merged: string | null
+  kind: string | null
+  /** The run's agent whose call made it; absent when the trace does not say. */
+  by?: string
+  changes: FileChange[]
 }
 
 /** One publication on main. */
 export interface Layer {
   id: string
-  minutes: number
+  at: number
   ago: string
   message: string
-  /** The Branch whose publish made this Layer; absent for Init and older ones. */
+  /** The Branch whose publish made this Layer; absent for Init. */
   from?: string
   changes: FileChange[]
 }
@@ -34,13 +50,13 @@ export interface ForkBranch {
   depth: number
   /** What LayerFS records: the Layer or Commit the Branch was forked at. */
   forkedFrom?: { kind: 'layer' | 'commit'; id: string }
-  /** Its own Commits, newest first. main has none: it moves by Layers. */
+  /** Its own Commits, newest first. */
   commits: HistoryCommit[]
   state: BranchState
   /** The Layer its publish made. */
   publishedAs?: string
-  /** The Connect session working on it. */
-  session?: string
+  /** The run's agent that made most of its Commits. */
+  agent?: string
   children: string[]
 }
 
@@ -51,262 +67,135 @@ export interface ForkTree {
   /** Depth-first, oldest fork first, starting with main. */
   order: string[]
   commits: Map<string, HistoryCommit>
+  /** The run's agents, root first: their place picks their colour. */
+  agents: string[]
+  /** Agents with a call in flight right now. */
+  busy: Set<string>
 }
 
-export interface Branch {
-  name: string
-  head: string
-  /** Commits on it that its parent does not have. */
-  ahead: number
-  published?: boolean
+const stateOf = (s: string): BranchState => (s === 'merged' || s === 'published' ? s : 'open')
+
+/** Which agent's call made each Commit, from the run's trace. */
+export function authorsOf(run: RunDetail | undefined): Map<string, string> {
+  const by = new Map<string, string>()
+  for (const step of run?.steps ?? []) for (const call of step.calls) if (call.commit) by.set(call.commit, call.agent)
+  return by
 }
 
-interface Spec {
-  name: string
-  /** For main's children, a Layer counted back from the newest (-1 is the newest);
-   * otherwise the index of the parent's Commit, oldest first. */
-  at: number
-  n: number
-  state?: BranchState
-  agent?: Agent
-  kids?: Spec[]
-}
+/** Builds the tree. `commits` holds each Branch's list_commits answer, newest first. */
+export function buildForkTree(state: ProjectState, commits: Record<string, CommitInfo[]>, run?: RunDetail): ForkTree {
+  const now = Date.now()
+  const authors = authorsOf(run)
+  const time = (at: number | null) => toMs(at) ?? 0
 
-const TEMPLATE: Spec[] = [
-  {
-    name: 'spike/search',
-    at: -8,
-    n: 3,
-    kids: [{ name: 'search/index', at: 2, n: 4, kids: [{ name: 'search/ranking', at: 3, n: 2 }] }],
-  },
-  {
-    name: 'feature/checkout',
-    at: -6,
-    n: 4,
-    state: 'published',
-    kids: [
-      { name: 'checkout/address-form', at: 1, n: 3, state: 'merged' },
-      {
-        name: 'checkout/payment',
-        at: 2,
-        n: 5,
-        agent: 'builder',
-        kids: [
-          { name: 'payment/stripe-mock', at: 1, n: 2, state: 'merged' },
-          {
-            name: 'payment/refunds',
-            at: 3,
-            n: 3,
-            kids: [
-              {
-                name: 'refunds/partial',
-                at: 1,
-                n: 2,
-                kids: [{ name: 'refunds/partial-tests', at: 1, n: 1, agent: 'tester' }],
-              },
-            ],
-          },
-        ],
-      },
-    ],
-  },
-  { name: 'fix/cart-total', at: -4, n: 2, state: 'published' },
-  {
-    name: 'review/cart-api',
-    at: -3,
-    n: 2,
-    agent: 'reviewer',
-    kids: [{ name: 'review/cart-api-notes', at: 1, n: 1 }],
-  },
-  {
-    name: 'tests/flaky',
-    at: -2,
-    n: 3,
-    kids: [
-      { name: 'tests/flaky-retry', at: 0, n: 2, state: 'merged' },
-      { name: 'tests/flaky-seed', at: 1, n: 2 },
-    ],
-  },
-  { name: 'docs/api', at: -1, n: 2, agent: 'docs' },
-]
+  const layerIds = new Set(state.layers.map((l) => l.id))
+  const all = new Map<string, HistoryCommit>()
+  const ownerOf = new Map<string, string>()
+  const branchInfo = new Map<string, BranchInfo>(state.branches.map((b) => [b.name, b]))
+  if (!branchInfo.has('main'))
+    branchInfo.set('main', { name: 'main', head: state.layers[0]?.id ?? null, parent: null, forkedFrom: null, state: 'open', commits: 0 })
 
-/** How many of the template's top-level Branches each sample project has. */
-const TOP_LEVEL: Record<string, number> = { shop: 6, wayfare: 5, quarry: 4, depot: 2, 'docs-site': 1, archive: 0 }
-
-const STEPS = [
-  'Start {t}',
-  'Sketch {t}',
-  'Wire {t} into the page',
-  'Test {t}',
-  'Fix a {t} edge case',
-  'Tidy {t}',
-  'Cover {t} in test.sh',
-]
-
-const LAYER_GAP = 45
-
-export function ago(minutes: number): string {
-  const m = Math.round(minutes)
-  if (m < 1) return 'just now'
-  if (m < 60) return `${m} min ago`
-  if (m < 24 * 60) return `${Math.round(m / 60)} h ago`
-  if (m < 48 * 60) return 'yesterday'
-  return `${Math.round(m / (24 * 60))} days ago`
-}
-
-function hash(text: string) {
-  let h = 0
-  for (const ch of text) h = (h * 31 + ch.charCodeAt(0)) >>> 0
-  return h
-}
-
-const headNumber = (project: Project) => Number(project.lastCommit.id.replace(/\D/g, '')) || 1
-
-function build(project: Project): ForkTree {
-  const layerCount = Math.min(Math.max(Math.round(headNumber(project) / 2), 1), 20)
-  const layers: Layer[] = Array.from({ length: layerCount }, (_, i) => {
-    const minutes = (layerCount - i) * LAYER_GAP + 3
-    return {
-      id: `L${i + 1}`,
-      minutes,
-      ago: ago(minutes),
-      message: i === 0 ? 'Init' : (MESSAGES[(layerCount - 1 - i) % (MESSAGES.length - 1)] ?? 'Update files'),
-      changes: i === 0 ? [{ path: '/', added: 120, removed: 0 }] : (CHANGES[(i * 5) % (CHANGES.length - 1)] ?? []),
+  // A Branch's list_commits may reach back past its fork point into its
+  // parent's history; each Commit belongs to the Branch that made it.
+  for (const [name, list] of Object.entries(commits)) {
+    for (const c of list) {
+      const branch = c.branch && branchInfo.has(c.branch) ? c.branch : name
+      if (all.has(c.id) && branch !== name) continue
+      all.set(c.id, {
+        id: c.id,
+        branch,
+        message: c.message || '(no message)',
+        at: time(c.at),
+        ago: ago(c.at, now),
+        parent: c.parent,
+        merged: c.merged ?? null,
+        kind: c.kind ?? null,
+        by: authors.get(c.id),
+        changes: (c.changes ?? []).map((ch) => ({ path: ch.path, kind: ch.kind })),
+      })
+      ownerOf.set(c.id, branch)
     }
-  })
+  }
 
   const branches = new Map<string, ForkBranch>()
-  const order: string[] = ['main']
-  const all: HistoryCommit[] = []
-  branches.set('main', { name: 'main', depth: 0, commits: [], state: 'open', children: [] })
-
-  const place = (spec: Spec, parent: ForkBranch) => {
-    let forkedFrom: ForkBranch['forkedFrom']
-    let forkMinutes: number
-    let endMinutes = 0
-    let publishedAs: string | undefined
-    if (parent.name === 'main') {
-      const index = Math.min(Math.max(layerCount + spec.at, 0), layerCount - 1)
-      forkedFrom = { kind: 'layer', id: layers[index].id }
-      forkMinutes = layers[index].minutes
-      // A published Branch's Commits come before the Layer its publish made.
-      if (spec.state === 'published' && index + 1 < layerCount) {
-        publishedAs = layers[index + 1].id
-        endMinutes = layers[index + 1].minutes
-        layers[index + 1].from = spec.name
-        layers[index + 1].message = `Publish ${spec.name}`
-      }
-    } else {
-      const oldestFirst = [...parent.commits].reverse()
-      const at = oldestFirst[Math.min(spec.at, oldestFirst.length - 1)]
-      forkedFrom = { kind: 'commit', id: at.id }
-      forkMinutes = at.minutes
-    }
-
-    const session = spec.agent ? project.sessions.find((s) => s.agent === spec.agent) : undefined
-    const topic = (spec.name.split('/').pop() ?? spec.name).replace(/-/g, ' ')
-    const seed = hash(spec.name)
-    const commits: HistoryCommit[] = Array.from({ length: spec.n }, (_, j) => {
-      const minutes = endMinutes + ((forkMinutes - endMinutes) * (spec.n - j)) / (spec.n + 1)
-      const other = project.sessions[(seed + j) % project.sessions.length]
-      const by = session
-        ? { session: session.id, agent: session.agent }
-        : j % 3 === 2 || !other
-          ? undefined
-          : { session: other.id, agent: other.agent }
-      return {
-        id: '',
-        branch: spec.name,
-        minutes,
-        ago: ago(minutes),
-        message: (j === 0 ? STEPS[0] : STEPS[1 + ((seed + j) % (STEPS.length - 1))]).replace('{t}', topic),
-        by,
-        changes: CHANGES[(seed + j) % (CHANGES.length - 1)] ?? [],
-      }
-    }).reverse()
-    all.push(...commits)
-
-    const node: ForkBranch = {
-      name: spec.name,
-      parent: parent.name,
-      depth: parent.depth + 1,
-      forkedFrom,
-      commits,
-      state: spec.state ?? 'open',
-      publishedAs,
-      session: session?.id,
+  for (const info of branchInfo.values()) {
+    const own = [...all.values()].filter((c) => c.branch === info.name).sort((a, b) => b.at - a.at)
+    // A Branch with no recorded fork point forked where its oldest Commit's parent is.
+    const from = info.forkedFrom ?? (info.name === 'main' ? null : (own[own.length - 1]?.parent ?? null))
+    const counts = new Map<string, number>()
+    for (const c of own) if (c.by) counts.set(c.by, (counts.get(c.by) ?? 0) + 1)
+    branches.set(info.name, {
+      name: info.name,
+      depth: 0,
+      forkedFrom: from ? { kind: layerIds.has(from) ? 'layer' : 'commit', id: from } : undefined,
+      commits: own,
+      state: info.name === 'main' ? 'open' : stateOf(info.state),
+      agent: [...counts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0],
       children: [],
-    }
-    branches.set(node.name, node)
-    parent.children.push(node.name)
-    order.push(node.name)
-    for (const kid of spec.kids ?? []) place(kid, node)
+    })
   }
 
-  const top = TOP_LEVEL[project.key] ?? 2
-  for (const spec of top > 0 ? TEMPLATE.slice(-top) : []) place(spec, branches.get('main')!)
-
-  // Commit ids rise with time; the newest is the project's last Commit.
-  const byAge = [...all].sort((a, b) => b.minutes - a.minutes)
-  const first = Math.max(headNumber(project), byAge.length) - byAge.length + 1
-  byAge.forEach((c, i) => {
-    c.id = `c${first + i}`
-  })
-  // Fork points were taken before ids existed; resolve them now.
+  // Parent: what LayerFS says, else the Branch holding the fork point, else main.
   for (const b of branches.values()) {
-    if (b.forkedFrom?.kind === 'commit') {
-      const parent = branches.get(b.parent ?? '')
-      const oldestFirst = parent ? [...parent.commits].reverse() : []
-      const spec = findSpec(b.name)
-      const at = oldestFirst[Math.min(spec?.at ?? 0, oldestFirst.length - 1)]
-      if (at) b.forkedFrom = { kind: 'commit', id: at.id }
+    if (b.name === 'main') continue
+    const said = branchInfo.get(b.name)?.parent
+    const holder = b.forkedFrom?.kind === 'commit' ? ownerOf.get(b.forkedFrom.id) : 'main'
+    b.parent = said && branches.has(said) && said !== b.name ? said : holder && holder !== b.name ? holder : 'main'
+  }
+  // A cycle in what was reported would never reach main: such a Branch hangs off main.
+  for (const b of branches.values()) {
+    const seen = new Set<string>()
+    for (let n: ForkBranch | undefined = b; n?.parent; n = branches.get(n.parent)) {
+      if (seen.has(n.name)) {
+        b.parent = 'main'
+        break
+      }
+      seen.add(n.name)
     }
   }
+
+  const layers: Layer[] = state.layers
+    .map((l) => {
+      const from = l.from && branches.has(l.from) ? l.from : l.from ? ownerOf.get(l.from) : undefined
+      return { id: l.id, at: time(l.at), ago: ago(l.at, now), message: l.message || 'Publish', from, changes: [] }
+    })
+    .sort((a, b) => b.at - a.at)
+  for (const l of [...layers].reverse()) {
+    const b = l.from ? branches.get(l.from) : undefined
+    if (b && b.name !== 'main' && !b.publishedAs) b.publishedAs = l.id
+  }
+
+  // The fork point's time, for ordering siblings oldest first.
+  const forkTime = (b: ForkBranch) =>
+    b.forkedFrom ? (all.get(b.forkedFrom.id)?.at ?? layers.find((l) => l.id === b.forkedFrom?.id)?.at ?? 0) : 0
+  for (const b of branches.values()) if (b.parent) branches.get(b.parent)?.children.push(b.name)
+  for (const b of branches.values())
+    b.children.sort((x, y) => forkTime(branches.get(x)!) - forkTime(branches.get(y)!) || x.localeCompare(y))
+
+  const order: string[] = []
+  const walk = (name: string, depth: number) => {
+    const b = branches.get(name)
+    if (!b || order.includes(name)) return
+    b.depth = depth
+    order.push(name)
+    for (const kid of b.children) walk(kid, depth + 1)
+  }
+  walk('main', 0)
 
   return {
-    layers: [...layers].reverse(),
+    layers,
     branches,
     order,
-    commits: new Map(all.map((c) => [c.id, c])),
+    commits: all,
+    agents: run?.agents.map((a) => a.name) ?? [],
+    busy: new Set(run?.agents.filter((a) => a.state === 'running').map((a) => a.name) ?? []),
   }
-}
-
-function findSpec(name: string, specs: Spec[] = TEMPLATE): Spec | undefined {
-  for (const s of specs) {
-    if (s.name === name) return s
-    const found = findSpec(name, s.kids ?? [])
-    if (found) return found
-  }
-  return undefined
-}
-
-const cache = new Map<string, ForkTree>()
-
-export function forkTreeFor(project: Project): ForkTree {
-  let tree = cache.get(project.key)
-  if (!tree) {
-    tree = build(project)
-    cache.set(project.key, tree)
-  }
-  return tree
 }
 
 /** main, then each Branch from main down to `name`. */
 export function ancestry(tree: ForkTree, name: string): ForkBranch[] {
   const path: ForkBranch[] = []
-  for (let b = tree.branches.get(name); b; b = b.parent ? tree.branches.get(b.parent) : undefined) path.unshift(b)
+  for (let b = tree.branches.get(name); b && !path.includes(b); b = b.parent ? tree.branches.get(b.parent) : undefined)
+    path.unshift(b)
   return path
-}
-
-/** Branches that are not merged away, for ref pickers and counts. */
-export function branchesFor(project: Project): Branch[] {
-  const tree = forkTreeFor(project)
-  return tree.order
-    .map((name) => tree.branches.get(name)!)
-    .filter((b) => b.state !== 'merged')
-    .map((b) =>
-      b.name === 'main'
-        ? { name: 'main', head: tree.layers[0]?.id ?? 'L1', ahead: 0, published: true }
-        : { name: b.name, head: b.commits[0]?.id ?? b.forkedFrom?.id ?? '', ahead: b.commits.length },
-    )
 }

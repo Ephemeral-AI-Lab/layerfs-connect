@@ -8,7 +8,10 @@ export default defineConfig({
   preload: {},
   renderer: {
     resolve: {
-      alias: { '@': resolve(import.meta.dirname, 'src/renderer/src') },
+      alias: {
+        '@': resolve(import.meta.dirname, 'src/renderer/src'),
+        '@shared': resolve(import.meta.dirname, 'src/shared'),
+      },
     },
     plugins: [react(), tailwindcss()],
   },

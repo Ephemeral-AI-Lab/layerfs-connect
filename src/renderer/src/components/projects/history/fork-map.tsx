@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { laneColor } from '@/components/projects/history/branch-tree'
 import { Button } from '@/components/ui/button'
 import { type ForkBranch, type ForkTree, ancestry } from '@/data/forks'
-import type { Project } from '@/data/sample'
+import { agentColor, shortId, when } from '@/data/format'
 
 const LANE = 34
 const PAD_LEFT = 44
@@ -36,7 +36,7 @@ function lanesFor(tree: ForkTree, shown: Set<string>, x: (id?: string) => number
     if (!b || !shown.has(name)) return
     const from = x(b.forkedFrom?.id) - 4
     const end = Math.max(b.commits[0] ? x(b.commits[0].id) : 0, from + step * 1.4)
-    const to = end + 10 + labelWidth(b) + (b.session ? 16 : 0) + 8
+    const to = end + 10 + labelWidth(b) + (b.agent ? 16 : 0) + 8
     let k = b.parent && b.parent !== 'main' ? (level.get(b.parent) ?? 0) + 1 : 1
     while ((used[side][k] ?? []).some(([a, z]) => from < z && to > a)) k++
     ;(used[side][k] ??= []).push([from, to])
@@ -65,7 +65,8 @@ function lanesFor(tree: ForkTree, shown: Set<string>, x: (id?: string) => number
 }
 
 interface ForkMapProps {
-  project: Project
+  /** Names the drawing for screen readers. */
+  title: string
   tree: ForkTree
   focus: string
   shown: Set<string>
@@ -75,19 +76,22 @@ interface ForkMapProps {
 }
 
 /** History over time: main's Layers along a spine, each fork leaving its parent where it forked. */
-export function ForkMap({ project, tree, focus, shown, onOpen, autoplay }: ForkMapProps) {
-  // Every Layer and Commit, oldest first; x is the event's place in that order.
+export function ForkMap({ title, tree, focus, shown, onOpen, autoplay }: ForkMapProps) {
+  // Every Layer and Commit, oldest first by LayerFS's times; x is the event's
+  // place in that order, so bursts and quiet stretches take the same room.
   const events = useMemo(
     () =>
-      [...tree.layers.map((l) => ({ id: l.id, minutes: l.minutes })), ...[...tree.commits.values()].map((c) => ({ id: c.id, minutes: c.minutes }))].sort(
-        (a, b) => b.minutes - a.minutes,
-      ),
+      [
+        ...[...tree.layers].reverse().map((l) => ({ id: l.id, at: l.at })),
+        ...[...tree.commits.values()].map((c) => ({ id: c.id, at: c.at })).sort((a, b) => a.at - b.at),
+      ].sort((a, b) => a.at - b.at),
     [tree],
   )
   const order = useMemo(() => new Map(events.map((e, i) => [e.id, i])), [events])
   const lit = useMemo(() => new Set(ancestry(tree, focus).map((b) => b.name)), [tree, focus])
 
-  const [zoom, setZoom] = useState(1)
+  // A short history starts zoomed in, so it fills more of the view.
+  const [zoom, setZoom] = useState(() => (events.length < 20 ? 3 : events.length < 40 ? 2 : 1))
   const step = STEPS[zoom]
   const last = events.length - 1
   const [cut, setCut] = useState(autoplay ? 0 : last)
@@ -134,9 +138,18 @@ export function ForkMap({ project, tree, focus, shown, onOpen, autoplay }: ForkM
     const own = [...b.commits].reverse().filter((c) => seen(c.id))
     const bend = step * 1.4
     const endX = Math.max(own.length > 0 ? x(own[own.length - 1].id) : 0, fx + bend)
-    const session = b.session ? project.sessions.find((s) => s.id === b.session) : undefined
-    return [{ b, y, parentY, color: laneColor(b.depth), fx, own, endX, bend, on: lit.has(b.name), quiet: b.state === 'merged', session }]
+    return [{ b, y, parentY, color: laneColor(b.depth), fx, own, endX, bend, on: lit.has(b.name), quiet: b.state === 'merged' }]
   })
+  // Merge Commits: a thin curve from the merged-in Commit to the merge.
+  const merges = [...tree.commits.values()].flatMap((c) => {
+    const src = c.merged ? tree.commits.get(c.merged) : undefined
+    const to = lanes.get(c.branch)
+    const from = src ? lanes.get(src.branch) : undefined
+    if (!src || !to || !from || !seen(c.id) || !seen(src.id)) return []
+    if (to.b.name !== 'main' && !seen(to.b.forkedFrom?.id)) return []
+    return [{ id: c.id, x1: x(src.id), y1: from.y, x2: x(c.id), y2: to.y, color: laneColor(from.b.depth) }]
+  })
+  const cutAt = events[cut]?.at
 
   const play = () => {
     if (playing) return setPlaying(false)
@@ -148,11 +161,11 @@ export function ForkMap({ project, tree, focus, shown, onOpen, autoplay }: ForkM
     <div className="flex min-h-0 flex-1 flex-col">
       <div className="flex items-center gap-3 border-b px-4 py-2">
         <span className="font-mono text-xs">
-          main @ {head?.id ?? '—'}
+          main @ {head ? shortId(head.id) : '—'}
           <span className="text-muted-foreground">
             {' '}
             · {commitsSoFar} Commit{commitsSoFar === 1 ? '' : 's'}
-            {cut < last ? ' · replay' : ''}
+            {cut < last ? ` · replay at ${cutAt ? new Date(cutAt).toLocaleTimeString() : 'start'}` : ''}
           </span>
         </span>
         <span className="ml-auto text-xs text-faint">Click a Branch to open its lineage</span>
@@ -171,7 +184,7 @@ export function ForkMap({ project, tree, focus, shown, onOpen, autoplay }: ForkM
       </div>
 
       <div ref={box} className="relative min-h-0 flex-1 overflow-auto">
-        <svg width={width} height={height} role="img" aria-label={`Fork timeline of ${project.key}`} className="block">
+        <svg width={width} height={height} role="img" aria-label={title} className="block">
           {/* Layer guides */}
           {visibleLayers.map((l) => (
             <line key={`g-${l.id}`} x1={x(l.id)} x2={x(l.id)} y1={PAD_Y / 2} y2={height - PAD_Y / 2} stroke="var(--border)" strokeWidth={1} opacity={0.5} />
@@ -183,7 +196,18 @@ export function ForkMap({ project, tree, focus, shown, onOpen, autoplay }: ForkM
           </text>
 
           {/* Branch lanes, drawn before main so the spine sits on top */}
-          {drawn.map(({ b, y, parentY, color, fx, own, endX, bend, on, quiet, session }) => (
+          {merges.map((m) => (
+            <path
+              key={`m-${m.id}`}
+              d={`M${m.x1} ${m.y1} C${(m.x1 + m.x2) / 2} ${m.y1} ${(m.x1 + m.x2) / 2} ${m.y2} ${m.x2} ${m.y2}`}
+              fill="none"
+              stroke={m.color}
+              strokeWidth={1.5}
+              strokeDasharray="4 3"
+              opacity={0.8}
+            />
+          ))}
+          {drawn.map(({ b, y, parentY, color, fx, own, endX, bend, on, quiet }) => (
             <g key={b.name} opacity={quiet ? 0.5 : 1}>
               <path
                 d={`M${fx} ${parentY} C${fx + bend * 0.55} ${parentY} ${fx + bend * 0.45} ${y} ${fx + bend} ${y} L${endX} ${y}`}
@@ -204,16 +228,16 @@ export function ForkMap({ project, tree, focus, shown, onOpen, autoplay }: ForkM
               {own.map((c) =>
                 forkPoints.has(c.id) ? (
                   <circle key={c.id} cx={x(c.id)} cy={y} r={4.5} fill="var(--card)" stroke={color} strokeWidth={2}>
-                    <title>{`${c.id} · ${c.message} · ${c.ago}`}</title>
+                    <title>{`${shortId(c.id)} · ${c.message} · ${when(c.at)}${c.by ? ` · ${c.by}` : ''}`}</title>
                   </circle>
                 ) : (
                   <circle key={c.id} cx={x(c.id)} cy={y} r={3.5} fill={color}>
-                    <title>{`${c.id} · ${c.message} · ${c.ago}`}</title>
+                    <title>{`${shortId(c.id)} · ${c.message} · ${when(c.at)}${c.by ? ` · ${c.by}` : ''}`}</title>
                   </circle>
                 ),
               )}
-              {session?.busy && cut >= last && (
-                <circle cx={endX} cy={y} r={6} fill="none" stroke={`var(--agent-${session.agent})`} strokeWidth={2}>
+              {b.agent && tree.busy.has(b.agent) && cut >= last && (
+                <circle cx={endX} cy={y} r={6} fill="none" stroke={agentColor(tree.agents, b.agent)} strokeWidth={2}>
                   <animate attributeName="r" values="5;10;5" dur="1.6s" repeatCount="indefinite" />
                   <animate attributeName="opacity" values="1;0.2;1" dur="1.6s" repeatCount="indefinite" />
                 </circle>
@@ -231,15 +255,15 @@ export function ForkMap({ project, tree, focus, shown, onOpen, autoplay }: ForkM
           {visibleLayers.map((l) => (
             <g key={l.id}>
               <rect x={x(l.id) - 3} y={mainY - 7} width={6} height={14} rx={1.5} fill={l.from ? laneColor(tree.branches.get(l.from)?.depth ?? 1) : 'var(--primary)'} stroke="var(--card)" strokeWidth={1}>
-                <title>{`${l.id} · ${l.message} · ${l.ago}`}</title>
+                <title>{`${shortId(l.id)} · ${l.message} · ${when(l.at)}`}</title>
               </rect>
               <text x={x(l.id) + 5} y={mainY - 10} className="fill-muted-foreground font-mono text-[10px]">
-                {l.id}
+                L{tree.layers.length - tree.layers.indexOf(l)}
               </text>
             </g>
           ))}
           {/* Labels last, so no lane draws over them */}
-          {drawn.map(({ b, y, color, endX, on, quiet, session }) => {
+          {drawn.map(({ b, y, color, endX, on, quiet }) => {
             const w = labelWidth(b)
             const focused = b.name === focus
             return (
@@ -258,9 +282,9 @@ export function ForkMap({ project, tree, focus, shown, onOpen, autoplay }: ForkM
                 <text x={8} y={14} className="font-mono text-[11px]" fill={focused ? 'var(--card)' : color}>
                   {labelText(b)}
                 </text>
-                {session && (
-                  <circle cx={w + 9} cy={10} r={3.5} fill={session.busy ? `var(--agent-${session.agent})` : 'var(--idle)'}>
-                    <title>{session.title}</title>
+                {b.agent && (
+                  <circle cx={w + 9} cy={10} r={3.5} fill={agentColor(tree.agents, b.agent)}>
+                    <title>{b.agent}</title>
                   </circle>
                 )}
               </g>

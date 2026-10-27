@@ -1,0 +1,7 @@
+[
+ {
+  "op": "write",
+  "path": "/packages/server/src/modules/insight/routes.js",
+  "content": "import {registerOptionRoutes} from './options.js';\nimport {registerDashboardRoutes} from './dashboards.js';\nimport {registerTransferRoutes} from './transfer.js';\nimport {registerSearchRoutes} from './search-routes.js';\nimport {registerFilterRoutes} from './filter-routes.js';\nimport {persistActivity,listActivity} from './activity.js';\nimport {notifyActivity,registerNotificationRoutes} from './notifications.js';\nimport {registerSubscriptionRoutes} from './subscriptions.js';\nimport {registerDigestRoutes} from './digests.js';\nexport function registerRoutes(ctx) {\n  const unsubscribe=ctx.bus.subscribe(event=>{\n    const activity=persistActivity(ctx,event);\n    if(activity)notifyActivity(ctx,event,activity);\n  });\n  (ctx.cleanups??=[]).push(unsubscribe);\n  ctx.app.get('/api/v1/activity',ctx.requireAuth,(req,res)=>res.json(listActivity(ctx,req,req.query)));\n  registerSubscriptionRoutes(ctx);\n  registerNotificationRoutes(ctx);\n  registerDigestRoutes(ctx);\n  registerSearchRoutes(ctx);\n  registerFilterRoutes(ctx);\n  registerDashboardRoutes(ctx);\n  registerTransferRoutes(ctx);\n  registerOptionRoutes(ctx);\n}\n"
+ }
+]

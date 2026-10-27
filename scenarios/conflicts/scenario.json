@@ -1,0 +1,148 @@
+{
+ "type": "layerfs-scenario",
+ "version": 3,
+ "title": "Conflicts",
+ "blurb": "Both conflict kinds, resolved. A Workspace on feature changes the page heading while an fs edit changes the same line on the Branch, so its commit is refused Conflict and leaves markers; the agent keeps its own line, clears the markers and commits. Then header edits that line too, so merging feature and header is refused until header agrees, and the merge is published.",
+ "order": 3,
+ "tags": [
+  "cli",
+  "conflicts",
+  "merge",
+  "publish"
+ ],
+ "fixture": "../../fixtures/demo-workspace",
+ "agents": {
+  "root": [
+   {
+    "phase": "Workspace conflict",
+    "bash": {
+     "description": "Fork feature",
+     "command": "layerfs branch fork feature"
+    },
+    "expect": [
+     "branch.fork:Forked"
+    ]
+   },
+   {
+    "bash": {
+     "description": "sb1: open a Workspace on feature and change the heading",
+     "command": "layerfs sandbox create | tee sandbox.json\nlayerfs workspace mount \"$(jq -r .sandbox sandbox.json)\" feature | tee mount.json\nlayerfs workspace exec \"$(jq -r .ws mount.json)\" \"sed -i 's/Hello world/Hello from the Workspace/' app/page.tsx\" --stream"
+    },
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0"
+    ],
+    "note": "The Workspace and its Sandbox stay up with the uncommitted edit: the conflict is shown across the next steps."
+   },
+   {
+    "bash": {
+     "description": "fs on feature: edit app/page.tsx \"Hello world\" \"Hello from fs\"",
+     "command": "layerfs fs edit feature /app/page.tsx --old 'Hello world' --new 'Hello from fs' -m \"edit /app/page.tsx\""
+    },
+    "expect": [
+     "fs.edit:Committed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "sb1: commit",
+     "command": "layerfs workspace commit {{ws}} -m \"sb1: change the heading\""
+    },
+    "expect": [
+     "workspace.commit:Conflict"
+    ],
+    "exit": 125
+   },
+   {
+    "bash": {
+     "description": "sb1: cat app/page.tsx",
+     "command": "layerfs workspace exec {{ws}} \"cat app/page.tsx\" --stream"
+    },
+    "expect": [
+     "workspace.exec:exit:0"
+    ]
+   },
+   {
+    "bash": {
+     "description": "sb1: keep the Workspace's heading, clear the markers and commit",
+     "command": "layerfs workspace exec {{ws}} \"sed -i '/Hello from fs\\|^<<<<<<<\\|^=======\\|^>>>>>>>/d' app/page.tsx\" --stream\nlayerfs workspace commit {{ws}} -m \"sb1: keep the Workspace's heading\""
+    },
+    "expect": [
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "sb1: unmount and close the Sandbox",
+     "command": "layerfs workspace unmount {{ws}}\nlayerfs sandbox close {{sandbox}}"
+    },
+    "expect": [
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "phase": "Branch conflict",
+    "bash": {
+     "description": "Fork header",
+     "command": "layerfs branch fork header"
+    },
+    "expect": [
+     "branch.fork:Forked"
+    ]
+   },
+   {
+    "bash": {
+     "description": "fs on header: edit app/page.tsx \"Hello world\" \"Hello from header\"",
+     "command": "layerfs fs edit header /app/page.tsx --old 'Hello world' --new 'Hello from header' -m \"edit /app/page.tsx\""
+    },
+    "expect": [
+     "fs.edit:Committed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "Merge feature and header as release",
+     "command": "layerfs branch merge feature header release"
+    },
+    "expect": [
+     "branch.merge:Conflict"
+    ],
+    "exit": 125
+   },
+   {
+    "bash": {
+     "description": "fs on header: edit app/page.tsx \"Hello from header\" \"Hello from the Workspace\"",
+     "command": "layerfs fs edit header /app/page.tsx --old 'Hello from header' --new 'Hello from the Workspace' -m \"edit /app/page.tsx\""
+    },
+    "expect": [
+     "fs.edit:Committed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "Merge feature and header as release",
+     "command": "layerfs branch merge feature header release"
+    },
+    "expect": [
+     "branch.merge:Merged"
+    ]
+   },
+   {
+    "phase": "Publish",
+    "bash": {
+     "description": "Publish release",
+     "command": "layerfs branch publish release"
+    },
+    "expect": [
+     "branch.publish:Added"
+    ]
+   },
+   {
+    "reply": "Both conflicts are resolved and release is on main."
+   }
+  ]
+ }
+}

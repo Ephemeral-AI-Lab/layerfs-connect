@@ -1,15 +1,5 @@
-import {
-  ArrowDown,
-  ArrowUp,
-  Check,
-  HardDrive,
-  KeyRound,
-  type LucideIcon,
-  TriangleAlert,
-  Unplug,
-} from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 
-import type { Database, Health, SyncState } from '@/data/storage'
 import { cn } from '@/lib/utils'
 
 export type Tone = 'neutral' | 'success' | 'info' | 'warning' | 'danger'
@@ -64,51 +54,4 @@ export function Chip({ tone, icon: Icon, live, className, children }: ChipProps)
 
 export function Dot({ tone, label }: { tone: Tone; label: string }) {
   return <span role="img" aria-label={label} className={cn('size-2 shrink-0 rounded-full', DOT[tone])} />
-}
-
-interface Status {
-  tone: Tone
-  icon?: LucideIcon
-  live?: boolean
-  label: string
-  /** For the narrow list: a few characters. */
-  short?: string
-}
-
-const SYNC: Record<SyncState['state'], (s: SyncState) => Status> = {
-  'in-sync': () => ({ tone: 'success', icon: Check, label: 'In sync' }),
-  ahead: (s) => {
-    const n = s.state === 'ahead' ? s.commits : 0
-    if (n === 0) return { tone: 'info', icon: ArrowUp, label: 'Not pushed yet', short: 'New' }
-    return { tone: 'info', icon: ArrowUp, label: `${n} Commit${n === 1 ? '' : 's'} to push`, short: `${n}` }
-  },
-  behind: () => ({ tone: 'info', icon: ArrowDown, label: 'Remote is newer', short: 'Pull' }),
-  diverged: () => ({ tone: 'danger', icon: TriangleAlert, label: 'Both changed', short: 'Conflict' }),
-}
-
-const HEALTH: Record<Health, Status> = {
-  connected: { tone: 'success', live: true, label: 'Live' },
-  'needs-sign-in': { tone: 'warning', icon: KeyRound, label: 'Needs sign-in' },
-  unreachable: { tone: 'danger', icon: Unplug, label: 'Unreachable' },
-  'not-checked': { tone: 'neutral', label: 'Not checked' },
-}
-
-/** One status per database: its sync state, or its connection for PostgreSQL. */
-export function databaseStatus(db: Database): Status {
-  if (db.kind === 'postgres') return HEALTH[db.health]
-  if (!db.sync) return { tone: 'neutral', icon: HardDrive, label: 'Local only' }
-  return SYNC[db.sync.status.state](db.sync.status)
-}
-
-export function StatusChip({ status, compact }: { status: Status; compact?: boolean }) {
-  return (
-    <Chip tone={status.tone} icon={status.icon} live={status.live}>
-      {compact ? (status.short ?? status.label) : status.label}
-    </Chip>
-  )
-}
-
-export function HealthChip({ health }: { health: Health }) {
-  const status = health === 'connected' ? { ...HEALTH.connected, live: false, icon: Check, label: 'Connected' } : HEALTH[health]
-  return <StatusChip status={status} />
 }

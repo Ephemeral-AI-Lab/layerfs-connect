@@ -1,0 +1,7 @@
+[
+ {
+  "op": "write",
+  "path": "/src/server.js",
+  "content": "import express from 'express';\nimport { Store } from './store.js';\nimport { catalogRoutes } from './catalog.js';\nimport { Carts, cartRoutes } from './cart.js';\nimport { discountRoutes } from './discounts.js';\nimport { checkoutRoutes } from './checkout.js';\nimport { orderRoutes } from './orders.js';\nimport { adminRoutes } from './admin.js';\nexport function createApp({ dataDir = new URL('../data/', import.meta.url).pathname, adminToken = process.env.ADMIN_TOKEN } = {}) {\n  const app = express();\n  const store = new Store(dataDir);\n  const carts = new Carts(store);\n  app.use(express.json());\n  app.get('/health', (req, res) => res.json({ status: 'ok' }));\n  app.use('/api', catalogRoutes(store));\n  app.use('/api', cartRoutes(carts));\n  app.use('/api', discountRoutes(carts));\n  app.use('/api', checkoutRoutes(store,carts));\n  app.use('/api', orderRoutes(store));\n  app.use('/api', adminRoutes(store,adminToken));\n  app.use(express.static(new URL('../dist/', import.meta.url).pathname));\n  app.use((req, res) => res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Route not found' } }));\n  app.use((error, req, res, next) => res.status(error.status || 400).json({ error: { code: error.code || 'INVALID_INPUT', message: error.message } }));\n  return app;\n}\n"
+ }
+]

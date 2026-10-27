@@ -1,0 +1,96 @@
+{
+ "type": "layerfs-scenario",
+ "version": 3,
+ "title": "One Sandbox, two Workspaces",
+ "blurb": "Two Branches share one Sandbox: their Workspaces have separate overlays, a slow site build runs as a background process while an fs write makes the docs Workspace stale, and teardown is explicit: unmount refuses Busy and Dirty, closing refuses MountsActive, and the Sandbox closes once both Workspaces are gone.",
+ "order": 4,
+ "tags": [
+  "sdk",
+  "sandbox",
+  "background"
+ ],
+ "fixture": "../../fixtures/demo-workspace",
+ "agents": {
+  "root": [
+   {
+    "bash": {
+     "description": "Fork docs and site; mount both in one new Sandbox",
+     "command": "# two Branches, two Workspaces, one Sandbox\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\ntry {\n  console.log(\"fork docs\", (await lf.branch.fork(\"docs\")).kind);\n  console.log(\"fork site\", (await lf.branch.fork(\"site\")).kind);\n  const { sandbox } = await lf.sandbox.create();\n  const docs = await lf.workspace.mount(sandbox, \"docs\");\n  const site = await lf.workspace.mount(sandbox, \"site\");\n  console.log(JSON.stringify({ sandbox, docs: docs.path, site: site.path }));\n  const guide = await lf.workspace.exec(docs, \"mkdir -p docs && cp README.md docs/guide.md && sed -i 's/Website/Guide/' docs/guide.md && cat docs/guide.md\");\n  console.log(`docs$ write docs/guide.md\\n${guide.stdout}${guide.stderr}`);\n  const install = await lf.workspace.exec(site, \"sh install.sh\");\n  console.log(`site$ sh install.sh\\n${install.stdout}${install.stderr}`);\n  const look = await lf.workspace.exec(site, \"test -f docs/guide.md && echo 'site sees docs/guide.md' || echo 'site cannot see docs/guide.md: separate overlays'\");\n  console.log(`site$ test -f docs/guide.md\\n${look.stdout}${look.stderr}`);\n} finally {\n  await lf.close();\n}\nJS\n"
+    },
+    "phase": "Set up",
+    "say": "Two Branches, each with a Workspace: both in one Sandbox started for them.",
+    "expect": [
+     "branch.fork:Forked",
+     "branch.fork:Forked",
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.exec:exit:0",
+     "workspace.exec:exit:0"
+    ],
+    "note": "docs and site share Sandbox 1, which has room for 16 Workspaces. The overlays are separate: site cannot see docs/guide.md. The Sandbox and both Workspaces stay up until Teardown; later steps find them with sandbox.list_workspaces."
+   },
+   {
+    "bash": {
+     "description": "Build site in the background",
+     "command": "# start the slow build as a Sandbox process and wait for it here\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst { LayerFSBackend } = await import(\"@layerfs/backend\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\nconst be = LayerFSBackend.of(lf);\ntry {\n  const { items } = await lf.sandbox.list_workspaces(\"{{sandbox}}\");\n  const siteAt = items.find((w) => w.branch === \"site\");\n  const site = { sandbox: siteAt.sandbox, path: siteAt.path };\n  const build = await be.daemon.process.start(site, \"timeout 60 sh -c 'exec 9<README.md; touch .build-ready; while [ ! -f .build-release ]; do sleep 0.05; done; sh build.sh --slow'\");\n  console.log(`start sh build.sh --slow → ${build.kind} (${build.process})`);\n  const deadline = Date.now() + 70000;\n  let status = \"running\";\n  while (status === \"running\") {\n    if (Date.now() >= deadline) throw new Error(\"background build did not finish within 70 seconds\");\n    await new Promise((resolve) => setTimeout(resolve, 2000));\n    status = (await be.daemon.process.list()).items.find((p) => p.id === build.process)?.status ?? \"gone\";\n  }\n  console.log(`build ${status}`);\n  const out = await lf.workspace.exec(site, \"cat .next/BUILD_ID && ls .next/server/app\");\n  console.log(`${out.stdout}${out.stderr}`);\n} finally {\n  await lf.close();\n}\nJS\n",
+     "run_in_background": true
+    },
+    "phase": "Work",
+    "say": "The site build is slow. I'll leave it to a background job and keep working.",
+    "as": "build",
+    "expect": [
+     "backend.daemon.process.start:running",
+     "workspace.exec:exit:0"
+    ]
+   },
+   {
+    "bash": {
+     "description": "Write on docs; try to unmount site",
+     "command": "# an fs write beside a mounted Workspace; unmount of a building one\nnode --input-type=module <<'JS'\nconst { LayerFS, isRefusal } = await import(\"@layerfs/agent\");\nconst { LayerFSBackend } = await import(\"@layerfs/backend\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\nconst be = LayerFSBackend.of(lf);\ntry {\n  console.log(\"fs.write CHANGELOG.md on docs (docs is mounted) →\", (await lf.fs.write(\"docs\", \"/CHANGELOG.md\", \"- docs guide\\n\", \"changelog\")).kind);\n  const { items } = await lf.sandbox.list_workspaces(\"{{sandbox}}\");\n  const siteAt = items.find((w) => w.branch === \"site\");\n  const site = { sandbox: siteAt.sandbox, path: siteAt.path };\n  const ready = await lf.workspace.exec(site, \"timeout 20 sh -c 'until [ -f .build-ready ]; do sleep 0.05; done'\");\n  if (ready.exitCode !== 0) throw new Error(\"background build did not become ready within 20 seconds\");\n  // The build touches .build-ready before its start call returns; unmount refuses Busy only for a listed process.\n  const listedBy = Date.now() + 20000;\n  while (!(await be.daemon.process.list()).items.some((p) => p.sandbox === site.sandbox && p.path === site.path && p.status === \"running\")) {\n    if (Date.now() >= listedBy) throw new Error(\"background build was not listed as running within 20 seconds\");\n    await new Promise((resolve) => setTimeout(resolve, 100));\n  }\n  let refusedBusy = false;\n  try {\n    await lf.workspace.unmount(site);\n  } catch (error) {\n    if (!isRefusal(error, \"Busy\")) throw error;\n    refusedBusy = true;\n    console.log(`unmount site while it builds → refused ${error.code}: ${error.message}`);\n  }\n  if (!refusedBusy) throw new Error(\"unmount must refuse Busy while the build holds its file open\");\n  const released = await lf.workspace.exec(site, \"touch .build-release\");\n  if (released.exitCode !== 0) throw new Error(\"could not release the ready build\");\n} finally {\n  await lf.close();\n}\nJS\n"
+    },
+    "phase": "Refusals",
+    "say": "Meanwhile: a quick changelog on docs without the shell, and what teardown refuses while a build is in flight.",
+    "expect": [
+     "fs.write:Committed",
+     "workspace.unmount:Busy"
+    ],
+    "note": "The fs write leaves docs stale. Readiness waits until the background build owns an open file and is listed as running; unmount is attempted once and must refuse Busy before the build is released. Both readiness and the held build have explicit deadlines."
+   },
+   {
+    "say": "Now I wait for the build.",
+    "job_output": {
+     "job_id": "@build",
+     "wait": true,
+     "timeout_ms": 60000
+    }
+   },
+   {
+    "bash": {
+     "description": "Commit docs; unmount both; close the Sandbox",
+     "command": "# teardown, one explicit step at a time\nnode --input-type=module <<'JS'\nconst { LayerFS, isRefusal } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\ntry {\n  const { items } = await lf.sandbox.list_workspaces(\"{{sandbox}}\");\n  const docsAt = items.find((w) => w.branch === \"docs\");\n  const docs = { sandbox: docsAt.sandbox, path: docsAt.path };\n  const siteAt = items.find((w) => w.branch === \"site\");\n  const site = { sandbox: siteAt.sandbox, path: siteAt.path };\n  const c = await lf.workspace.commit(docs, \"docs guide\");\n  console.log(`commit docs → ${c.kind}${c.merged ? \" (merged with the head first)\" : \"\"}`);\n  console.log(\"unmount docs →\", (await lf.workspace.unmount(docs)).kind);\n  try {\n    await lf.sandbox.close(\"{{sandbox}}\");\n  } catch (error) {\n    if (!isRefusal(error, \"MountsActive\")) throw error;\n    console.log(`close Sandbox {{sandbox}} → refused ${error.code}: ${error.message}`);\n  }\n  try {\n    await lf.workspace.unmount(site);\n  } catch (error) {\n    if (!isRefusal(error, \"Dirty\")) throw error;\n    console.log(`unmount site → refused ${error.code}: ${(error.detail?.changed ?? []).slice(0, 4).join(\", \")}`);\n  }\n  console.log(\"unmount site, discarding the build output →\", (await lf.workspace.unmount(site, true)).kind);\n  console.log(\"close Sandbox {{sandbox}} →\", (await lf.sandbox.close(\"{{sandbox}}\")).kind);\n  try {\n    await lf.sandbox.close(\"{{sandbox}}\");\n  } catch (error) {\n    if (!isRefusal(error, \"NoSuchSandbox\")) throw error;\n    console.log(`close Sandbox {{sandbox}} again → refused ${error.code}`);\n  }\n  console.log(\"fs.write README.md on docs →\", (await lf.fs.write(\"docs\", \"/README.md\", \"# Website docs\\n\", \"docs readme\")).kind);\n  console.log(\"docs /:\", (await lf.fs.list(\"docs\", \"/\")).items.map((e) => e.name).join(\" \"));\n} finally {\n  await lf.close();\n}\nJS\n"
+    },
+    "phase": "Teardown",
+    "say": "The build is done. Committing docs, unmounting both, then closing the Sandbox.",
+    "expect": [
+     "workspace.commit:Committed",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:MountsActive",
+     "workspace.unmount:Dirty",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed",
+     "sandbox.close:NoSuchSandbox",
+     "fs.write:Committed"
+    ],
+    "note": "Commit merges the stale docs Workspace with the head, keeping CHANGELOG.md and the guide. The Sandbox cannot close while site is still mounted. Unmount never drops work silently: site's build output needs an explicit discard. With no Workspace left, the Sandbox is closed; closing it again is refused NoSuchSandbox."
+   },
+   {
+    "job_list": {}
+   },
+   {
+    "reply": "docs has the guide and the changelog; site's build output was discarded on purpose. One Sandbox held both Workspaces, every teardown step was explicit, and the Sandbox was closed at the end."
+   }
+  ]
+ }
+}

@@ -1,0 +1,135 @@
+import type { RunSummary } from '@shared/host-api'
+import { ChevronRight, Play, RotateCw, TriangleAlert } from 'lucide-react'
+
+import { Progress, RunDot } from '@/components/runs/run-badges'
+import { RUN_LABEL, RUN_TONE, ago, clock, duration, isLive, runLabel } from '@/components/runs/run-format'
+import { useNow } from '@/components/runs/use-run'
+import { useRuns, useStartRun } from '@/components/runs/use-runs'
+import { Button } from '@/components/ui/button'
+import { Skeleton } from '@/components/ui/skeleton'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { cn } from '@/lib/utils'
+
+interface RunListProps {
+  demo: string
+  onOpenRun: (runId: string) => void
+}
+
+/** A demo project's runs, newest first, with a New run button. */
+export function RunList({ demo, onOpenRun }: RunListProps) {
+  const { runs, error, loading, reload } = useRuns(demo)
+  const { start, starting, error: refused, clearError } = useStartRun((run) => onOpenRun(run.id))
+  const anyLive = runs?.some((r) => isLive(r.state)) ?? false
+  const now = useNow(anyLive)
+
+  return (
+    <section aria-label="Runs" className="rounded-xl border bg-card">
+      <header className="flex items-center gap-2 px-5 pt-4 pb-3">
+        <h3 className="text-sm font-semibold">Runs</h3>
+        {runs && <span className="text-xs text-faint">{runs.length}</span>}
+        <Button size="sm" className="ml-auto" onClick={() => void start(demo)} disabled={starting !== null}>
+          <Play /> {starting ? 'Starting…' : 'New run'}
+        </Button>
+      </header>
+
+      {refused && (
+        <div role="alert" className="mx-5 mb-3 flex items-start gap-2 rounded-lg bg-destructive/10 px-3 py-2 text-[13px] text-destructive ring-1 ring-destructive/25 ring-inset">
+          <TriangleAlert aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
+          <span className="min-w-0 flex-1">Could not start a run: {refused.message}</span>
+          <button type="button" onClick={clearError} className="text-xs font-medium underline-offset-2 hover:underline">
+            Dismiss
+          </button>
+        </div>
+      )}
+
+      {error && !runs ? (
+        <div className="flex flex-col items-center gap-2 px-5 pt-3 pb-7 text-center">
+          <p className="text-sm font-medium">Could not load the runs</p>
+          <p className="max-w-sm text-xs text-muted-foreground">{error.message}</p>
+          <Button variant="outline" size="sm" onClick={reload}>
+            <RotateCw /> Try again
+          </Button>
+        </div>
+      ) : loading || !runs ? (
+        <div className="flex flex-col gap-2 px-5 pb-5">
+          {[0, 1, 2].map((i) => (
+            <Skeleton key={i} className="h-9" />
+          ))}
+        </div>
+      ) : runs.length === 0 ? (
+        <div className="flex flex-col items-center gap-1.5 px-5 pt-3 pb-7 text-center">
+          <p className="text-sm font-medium">No runs yet</p>
+          <p className="max-w-sm text-xs text-muted-foreground">
+            A run Inits a fresh LayerFS project from this demo’s fixture and plays its agents live on the real backend.
+          </p>
+        </div>
+      ) : (
+        <Table>
+          <TableHeader>
+            <TableRow className="hover:bg-transparent">
+              <TableHead className="pl-5 text-xs text-faint">Run</TableHead>
+              <TableHead className="text-xs text-faint">Started</TableHead>
+              <TableHead className="text-xs text-faint">Duration</TableHead>
+              <TableHead className="text-xs text-faint">Steps</TableHead>
+              <TableHead className="text-xs text-faint">Project</TableHead>
+              <TableHead className="pr-5 text-xs text-faint">
+                <span className="sr-only">Open</span>
+              </TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {runs.map((run) => (
+              <RunRow key={run.id} run={run} now={now} onOpen={() => onOpenRun(run.id)} />
+            ))}
+          </TableBody>
+        </Table>
+      )}
+    </section>
+  )
+}
+
+function RunRow({ run, now, onOpen }: { run: RunSummary; now: number; onOpen: () => void }) {
+  const live = isLive(run.state)
+  return (
+    <TableRow
+      tabIndex={0}
+      onClick={onOpen}
+      onKeyDown={(e) => e.key === 'Enter' && onOpen()}
+      className="cursor-pointer align-top outline-none focus-visible:bg-muted/50"
+    >
+      <TableCell className="pl-5">
+        <span className="flex items-center gap-2.5">
+          <RunDot state={run.state} />
+          <span className="font-medium">{runLabel(run)}</span>
+          <span className={cn('text-xs', run.state === 'failed' ? 'text-destructive' : 'text-muted-foreground')}>
+            {RUN_LABEL[run.state]}
+            {live && run.phase ? ` · ${run.phase}` : ''}
+          </span>
+        </span>
+        {run.error && (
+          <p title={run.error} className="mt-1 max-w-md truncate pl-[18px] text-xs text-destructive">
+            {run.error}
+          </p>
+        )}
+      </TableCell>
+      <TableCell className="text-muted-foreground" title={clock(run.started)}>
+        {ago(run.started, now)}
+      </TableCell>
+      <TableCell className="text-muted-foreground tabular-nums">{duration((run.ended ?? now) - run.started)}</TableCell>
+      <TableCell>
+        <span className="flex items-center gap-2">
+          <Progress done={run.done} of={run.of} tone={RUN_TONE[run.state]} className="w-20" />
+          <span className="text-xs text-muted-foreground tabular-nums">
+            {run.done}/{run.of}
+          </span>
+        </span>
+      </TableCell>
+      <TableCell>
+        <code className="font-mono text-xs text-muted-foreground">{run.project}</code>
+      </TableCell>
+      <TableCell className="pr-5 text-right">
+        <ChevronRight aria-hidden="true" className="ml-auto size-4 text-faint" />
+      </TableCell>
+    </TableRow>
+  )
+}

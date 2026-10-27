@@ -1,0 +1,183 @@
+{
+ "type": "layerfs-scenario",
+ "version": 3,
+ "title": "Tour",
+ "blurb": "One agent builds a small site on a feature Branch: fs edits, an install and a failing build fixed and rebuilt in Workspaces, a server that keeps unmount refused Busy until it is stopped, a stale Workspace that merges on commit, two Workspaces in one Sandbox, and two publishes, the second overwriting the first.",
+ "order": 1,
+ "tags": [
+  "sdk",
+  "background",
+  "sandbox",
+  "publish"
+ ],
+ "fixture": "../../fixtures/demo-workspace",
+ "agents": {
+  "root": [
+   {
+    "bash": {
+     "description": "Fork feature-home from main",
+     "command": "# fork feature-home from main\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\ntry {\n  const r = await lf.branch.fork(\"feature-home\");\n  console.log(r.kind, r.branch);\n} finally {\n  await lf.close();\n}\nJS\n"
+    },
+    "phase": "Fork",
+    "expect": [
+     "branch.fork:Forked"
+    ]
+   },
+   {
+    "bash": {
+     "description": "Edit the home page's heading on feature-home",
+     "command": "# one fs edit, one Commit\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\ntry {\n  const r = await lf.fs.edit(\"feature-home\", \"/app/page.tsx\", \"Hello world\", \"Welcome to LayerFS\", \"edit /app/page.tsx\");\n  console.log(r.kind);\n} finally {\n  await lf.close();\n}\nJS\n"
+    },
+    "phase": "Write with fs",
+    "expect": [
+     "fs.edit:Committed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "Add app/about/page.tsx on feature-home",
+     "command": "# a folder and a page, each its own Commit\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\ntry {\n  console.log((await lf.fs.mkdir(\"feature-home\", \"/app/about\", \"mkdir /app/about\")).kind);\n  const page = \"export default function Page() {\\n  return <main><h1>We're building with LayerFS</h1></main>;\\n}\\n\";\n  console.log((await lf.fs.write(\"feature-home\", \"/app/about/page.tsx\", page, \"write /app/about/page.tsx\")).kind);\n} finally {\n  await lf.close();\n}\nJS\n"
+    },
+    "expect": [
+     "fs.mkdir:Committed",
+     "fs.write:Committed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "List feature-home's /app",
+     "command": "# a read needs no Workspace\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\ntry {\n  const { items } = await lf.fs.list(\"feature-home\", \"/app\");\n  for (const e of items) console.log(e.type, e.name);\n} finally {\n  await lf.close();\n}\nJS\n"
+    },
+    "say": "Reads need no Workspace either: fs.list shows the Branch's /app as committed."
+   },
+   {
+    "bash": {
+     "description": "Install and build in a Workspace",
+     "command": "# install and build in a Workspace of feature-home; commit even the failed build\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\ntry {\n  const { sandbox } = await lf.sandbox.create();\n  const ws = await lf.workspace.mount(sandbox, \"feature-home\");\n  console.log(`Sandbox ${sandbox}, Workspace ${ws.path}`);\n  const install = await lf.workspace.exec(ws, \"sh install.sh\");\n  console.log(`$ sh install.sh\\n${install.stdout}${install.stderr}[exit ${install.exitCode}]`);\n  const build = await lf.workspace.exec(ws, \"sh build.sh\");\n  console.log(`$ sh build.sh\\n${build.stdout}${build.stderr}[exit ${build.exitCode}]`);\n  const c = await lf.workspace.commit(ws, `sh install.sh; sh build.sh (exit ${build.exitCode})`);\n  console.log(\"commit\", c.kind);\n  await lf.workspace.unmount(ws);\n  await lf.sandbox.close(sandbox);\n} finally {\n  await lf.close();\n}\nJS\n"
+    },
+    "phase": "Build",
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.exec:exit:1",
+     "workspace.commit:Committed",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "Escape the apostrophe and build again",
+     "command": "# fix the lint error, build, commit the build\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\ntry {\n  const { sandbox } = await lf.sandbox.create();\n  const ws = await lf.workspace.mount(sandbox, \"feature-home\");\n  const fix = await lf.workspace.exec(ws, \"sed -i \\\"s/We're/We\\\\&apos;re/\\\" app/about/page.tsx\");\n  console.log(`$ sed …\\n[exit ${fix.exitCode}]`);\n  const build = await lf.workspace.exec(ws, \"sh build.sh\");\n  console.log(`$ sh build.sh\\n${build.stdout}${build.stderr}[exit ${build.exitCode}]`);\n  const c = await lf.workspace.commit(ws, `escape the apostrophe; sh build.sh (exit ${build.exitCode})`);\n  console.log(JSON.stringify({ kind: c.kind, head: c.head }));\n  await lf.workspace.unmount(ws);\n  await lf.sandbox.close(sandbox);\n} finally {\n  await lf.close();\n}\nJS\n"
+    },
+    "phase": "Commit",
+    "commits": [
+     "build"
+    ],
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "Serve the site; unmount while it runs",
+     "command": "# start the server in the background; unmount is refused while it runs\nnode --input-type=module <<'JS'\nconst { LayerFS, isRefusal } = await import(\"@layerfs/agent\");\nconst { LayerFSBackend } = await import(\"@layerfs/backend\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\nconst be = LayerFSBackend.of(lf);\ntry {\n  const { sandbox } = await lf.sandbox.create();\n  const ws = await lf.workspace.mount(sandbox, \"feature-home\");\n  const server = await be.daemon.process.start(ws, \"sh serve.sh\");\n  console.log(server.kind, server.process);\n  try {\n    await lf.workspace.unmount(ws);\n  } catch (error) {\n    if (!isRefusal(error, \"Busy\")) throw error;\n    console.log(`unmount refused ${error.code}: ${error.message}`);\n  }\n  console.log(\"stop\", (await be.daemon.process.cancel(server.process)).kind);\n  console.log(\"commit\", (await lf.workspace.commit(ws, \"sh serve.sh: dev cache\")).kind);\n  await lf.workspace.unmount(ws);\n  await lf.sandbox.close(sandbox);\n} finally {\n  await lf.close();\n}\nJS\n"
+    },
+    "phase": "Serve",
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "backend.daemon.process.start:running",
+     "workspace.unmount:Busy",
+     "backend.daemon.process.cancel:Stopped",
+     "workspace.commit:Committed|UpToDate",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ],
+    "note": "A running process owns its Workspace: unmount is refused Busy until the server is stopped."
+   },
+   {
+    "bash": {
+     "description": "Write CHANGELOG.md while a Workspace is mounted, then commit it",
+     "command": "# the fs write moves the head after the mount; the commit merges with it\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\ntry {\n  const { sandbox } = await lf.sandbox.create();\n  const ws = await lf.workspace.mount(sandbox, \"feature-home\");\n  console.log(\"fs.write CHANGELOG.md\", (await lf.fs.write(\"feature-home\", \"/CHANGELOG.md\", \"- about page\", \"write /CHANGELOG.md\")).kind);\n  const r = await lf.workspace.exec(ws, \"echo \\\"PORT=3000\\\" > .env.example\");\n  console.log(`$ echo \"PORT=3000\" > .env.example\\n[exit ${r.exitCode}]`);\n  const c = await lf.workspace.commit(ws, \"add .env.example\");\n  console.log(\"commit\", c.kind, c.merged ? \"· was stale, merged with the head first\" : \"\");\n  await lf.workspace.unmount(ws);\n  await lf.sandbox.close(sandbox);\n} finally {\n  await lf.close();\n}\nJS\n"
+    },
+    "phase": "Stale Workspace",
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "fs.write:Committed",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ],
+    "note": "The fs write lands after the mount, so the Workspace is stale; its commit merges with the head and keeps CHANGELOG.md."
+   },
+   {
+    "bash": {
+     "description": "Two Workspaces of feature-home in one Sandbox",
+     "command": "# a second Workspace of the same Branch in the same Sandbox\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\ntry {\n  const { sandbox } = await lf.sandbox.create();\n  const first = await lf.workspace.mount(sandbox, \"feature-home\");\n  const second = await lf.workspace.mount(sandbox, \"feature-home\");\n  console.log(`Sandbox ${sandbox}: ${first.path} and ${second.path}`);\n  const r = await lf.workspace.exec(second, \"echo \\\"Built with LayerFS\\\" >> README.md\");\n  console.log(`$ echo \"Built with LayerFS\" >> README.md\\n[exit ${r.exitCode}]`);\n  console.log(\"commit\", (await lf.workspace.commit(second, \"README: built with LayerFS\")).kind);\n  await lf.workspace.unmount(first);\n  await lf.workspace.unmount(second);\n  await lf.sandbox.close(sandbox);\n} finally {\n  await lf.close();\n}\nJS\n"
+    },
+    "phase": "Split",
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed",
+     "workspace.unmount:Unmounted",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "Fork header from the build Commit",
+     "command": "# a second Branch from an earlier Commit of feature-home\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\ntry {\n  const r = await lf.branch.fork(\"header\", \"{{commit:build}}\");\n  console.log(r.kind, r.branch);\n} finally {\n  await lf.close();\n}\nJS\n"
+    },
+    "phase": "Second Branch",
+    "expect": [
+     "branch.fork:Forked"
+    ]
+   },
+   {
+    "bash": {
+     "description": "Write app/header.tsx on header",
+     "command": "# one file on header\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\ntry {\n  console.log((await lf.fs.write(\"header\", \"/app/header.tsx\", \"export const Header = () => <header/>;\", \"write /app/header.tsx\")).kind);\n} finally {\n  await lf.close();\n}\nJS\n"
+    },
+    "expect": [
+     "fs.write:Committed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "Publish feature-home",
+     "command": "# main shows feature-home\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\ntry {\n  const r = await lf.branch.publish(\"feature-home\");\n  console.log(r.kind, `overwrote ${r.overwrote?.length ?? 0} Layer(s) of main`);\n} finally {\n  await lf.close();\n}\nJS\n"
+    },
+    "phase": "Publish",
+    "expect": [
+     "branch.publish:Added"
+    ]
+   },
+   {
+    "bash": {
+     "description": "Publish header",
+     "command": "# main shows header: feature-home's Layer is overwritten\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\ntry {\n  const r = await lf.branch.publish(\"header\");\n  console.log(r.kind, `overwrote ${r.overwrote?.length ?? 0} Layer(s) of main`);\n} finally {\n  await lf.close();\n}\nJS\n"
+    },
+    "expect": [
+     "branch.publish:Added"
+    ]
+   },
+   {
+    "reply": "main has header's files only: publish overwrites, and feature-home's Layer stays in history. Merge first to keep both."
+   }
+  ]
+ }
+}

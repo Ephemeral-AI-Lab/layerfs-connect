@@ -1,0 +1,1579 @@
+{
+ "type": "layerfs-scenario",
+ "version": 3,
+ "title": "Depot",
+ "blurb": "A builder agent writes Depot, a Rust inventory service (a four-crate Cargo workspace: domain, store, HTTP server and CLI) with a browser client. Milestone by milestone it fetches the locked dependencies, builds and tests each crate and runs Python acceptance tests against the server; it works on a registry and a web Branch in parallel and merges them, then runs a release candidate of clean builds, tests, docs, Clippy, rustfmt and packaging, and checks the published main once more.",
+ "order": 8,
+ "tags": [
+  "sdk",
+  "rust",
+  "publish",
+  "merge"
+ ],
+ "fixture": "seed.json",
+ "agents": {
+  "root": [
+   {
+    "bash": {
+     "description": "M1: scaffold frozen four-package workspace, health and CLI",
+     "command": "# M1: scaffold frozen four-package workspace, health and CLI\nnode --input-type=module <<'JS'\nimport { readFileSync } from \"node:fs\";\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\ntry {\n  let r;\n  console.log((await lf.branch.fork(\"implementation\")).kind);\n  r = await lf.fs.apply(\"implementation\", JSON.parse(readFileSync(\"{{scenario}}/changes/001.json\", \"utf8\")), \"M1 scaffold frozen four-package workspace, health and CLI\");\n  console.log(JSON.stringify({ kind: r.kind, head: r.head }));\n} finally {\n  await lf.close();\n}\nJS"
+    },
+    "phase": "m1",
+    "note": "record 004-m1-scaffold",
+    "expect": [
+     "branch.fork:Forked",
+     "fs.apply:Committed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "M1: fetch",
+     "command": "# M1: fetch\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\nlet sandbox, ws;\ntry {\n  let r;\n  ({ sandbox } = await lf.sandbox.create());\n  ws = await lf.workspace.mount(sandbox, \"implementation\");\n  await lf.workspace.exec(ws, \"CARGO_HOME=$PWD/.cargo-home timeout 110 cargo fetch --locked\", \"fetch\", { stdout: process.stdout, stderr: process.stderr });\n  r = await lf.workspace.commit(ws, \"M1 fetch (exit 0)\");\n  console.log(JSON.stringify({ kind: r.kind, head: r.head }));\n} finally {\n  if (ws) await lf.workspace.unmount(ws);\n  if (sandbox) await lf.sandbox.close(sandbox);\n  await lf.close();\n}\nJS",
+     "timeoutMs": 200000
+    },
+    "phase": "m1",
+    "note": "record 005-m1-dependency-fetch",
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed|UpToDate",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "M1: build-domain",
+     "command": "# M1: build-domain\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\nlet sandbox, ws;\ntry {\n  let r;\n  ({ sandbox } = await lf.sandbox.create());\n  ws = await lf.workspace.mount(sandbox, \"implementation\");\n  await lf.workspace.exec(ws, \"CARGO_HOME=$PWD/.cargo-home timeout 110 cargo build --locked --offline -p depot-domain\", \"build-domain\", { stdout: process.stdout, stderr: process.stderr });\n  r = await lf.workspace.commit(ws, \"M1 build-domain (exit 0)\");\n  console.log(JSON.stringify({ kind: r.kind, head: r.head }));\n} finally {\n  if (ws) await lf.workspace.unmount(ws);\n  if (sandbox) await lf.sandbox.close(sandbox);\n  await lf.close();\n}\nJS",
+     "timeoutMs": 200000
+    },
+    "phase": "m1",
+    "note": "record 006-m1-domain-first-build",
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed|UpToDate",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "M1: build-store",
+     "command": "# M1: build-store\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\nlet sandbox, ws;\ntry {\n  let r;\n  ({ sandbox } = await lf.sandbox.create());\n  ws = await lf.workspace.mount(sandbox, \"implementation\");\n  await lf.workspace.exec(ws, \"CARGO_HOME=$PWD/.cargo-home timeout 110 cargo build --locked --offline -p depot-store\", \"build-store\", { stdout: process.stdout, stderr: process.stderr });\n  r = await lf.workspace.commit(ws, \"M1 build-store (exit 0)\");\n  console.log(JSON.stringify({ kind: r.kind, head: r.head }));\n} finally {\n  if (ws) await lf.workspace.unmount(ws);\n  if (sandbox) await lf.sandbox.close(sandbox);\n  await lf.close();\n}\nJS",
+     "timeoutMs": 200000
+    },
+    "phase": "m1",
+    "note": "record 007-m1-store-first-build",
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed|UpToDate",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "M1: build-server",
+     "command": "# M1: build-server\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\nlet sandbox, ws;\ntry {\n  let r;\n  ({ sandbox } = await lf.sandbox.create());\n  ws = await lf.workspace.mount(sandbox, \"implementation\");\n  await lf.workspace.exec(ws, \"CARGO_HOME=$PWD/.cargo-home timeout 110 cargo build --locked --offline -p depot-server\", \"build-server\", { stdout: process.stdout, stderr: process.stderr });\n  r = await lf.workspace.commit(ws, \"M1 build-server (exit 0)\");\n  console.log(JSON.stringify({ kind: r.kind, head: r.head }));\n} finally {\n  if (ws) await lf.workspace.unmount(ws);\n  if (sandbox) await lf.sandbox.close(sandbox);\n  await lf.close();\n}\nJS",
+     "timeoutMs": 200000
+    },
+    "phase": "m1",
+    "note": "record 008-m1-server-first-build",
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed|UpToDate",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "M1: build-cli",
+     "command": "# M1: build-cli\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\nlet sandbox, ws;\ntry {\n  let r;\n  ({ sandbox } = await lf.sandbox.create());\n  ws = await lf.workspace.mount(sandbox, \"implementation\");\n  await lf.workspace.exec(ws, \"CARGO_HOME=$PWD/.cargo-home timeout 110 cargo build --locked --offline -p depot-cli\", \"build-cli\", { stdout: process.stdout, stderr: process.stderr });\n  r = await lf.workspace.commit(ws, \"M1 build-cli (exit 0)\");\n  console.log(JSON.stringify({ kind: r.kind, head: r.head }));\n} finally {\n  if (ws) await lf.workspace.unmount(ws);\n  if (sandbox) await lf.sandbox.close(sandbox);\n  await lf.close();\n}\nJS",
+     "timeoutMs": 200000
+    },
+    "phase": "m1",
+    "note": "record 009-m1-cli-first-build",
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed|UpToDate",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "M1: unchanged-build",
+     "command": "# M1: unchanged-build\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\nlet sandbox, ws;\ntry {\n  let r;\n  ({ sandbox } = await lf.sandbox.create());\n  ws = await lf.workspace.mount(sandbox, \"implementation\");\n  await lf.workspace.exec(ws, \"CARGO_HOME=$PWD/.cargo-home timeout 110 cargo build --locked --offline -p depot-cli\", \"unchanged-build\", { stdout: process.stdout, stderr: process.stderr });\n  r = await lf.workspace.commit(ws, \"M1 unchanged-build (exit 0)\");\n  console.log(JSON.stringify({ kind: r.kind, head: r.head }));\n} finally {\n  if (ws) await lf.workspace.unmount(ws);\n  if (sandbox) await lf.sandbox.close(sandbox);\n  await lf.close();\n}\nJS",
+     "timeoutMs": 200000
+    },
+    "phase": "m1",
+    "note": "record 010-m1-unchanged-build",
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed|UpToDate",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "M1: health-test",
+     "command": "# M1: health-test\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\nlet sandbox, ws;\ntry {\n  let r;\n  ({ sandbox } = await lf.sandbox.create());\n  ws = await lf.workspace.mount(sandbox, \"implementation\");\n  await lf.workspace.exec(ws, \"timeout 110 python3 tests/health.py\", \"health-test\", { stdout: process.stdout, stderr: process.stderr });\n  r = await lf.workspace.commit(ws, \"M1 health-test (exit 0)\");\n  console.log(JSON.stringify({ kind: r.kind, head: r.head }));\n} finally {\n  if (ws) await lf.workspace.unmount(ws);\n  if (sandbox) await lf.sandbox.close(sandbox);\n  await lf.close();\n}\nJS",
+     "timeoutMs": 200000
+    },
+    "phase": "m1",
+    "note": "record 011-m1-health-cli (with 012-publish-m1)",
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed|UpToDate",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "M1: publish implementation to main",
+     "command": "# M1: publish implementation to main\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\ntry {\n  console.log((await lf.branch.publish(\"implementation\")).kind);\n} finally {\n  await lf.close();\n}\nJS"
+    },
+    "phase": "publish",
+    "note": "record 012-publish-m1",
+    "expect": [
+     "branch.publish:Added"
+    ]
+   },
+   {
+    "bash": {
+     "description": "M2: reservation catalog, streamed immutable objects and recovery protocol",
+     "command": "# M2: reservation catalog, streamed immutable objects and recovery protocol\nnode --input-type=module <<'JS'\nimport { readFileSync } from \"node:fs\";\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\ntry {\n  let r;\n  r = await lf.fs.apply(\"implementation\", JSON.parse(readFileSync(\"{{scenario}}/changes/010.json\", \"utf8\")), \"M2 reservation catalog, streamed immutable objects and recovery protocol\");\n  console.log(JSON.stringify({ kind: r.kind, head: r.head }));\n} finally {\n  await lf.close();\n}\nJS"
+    },
+    "phase": "m2",
+    "note": "record 013-m2-store",
+    "expect": [
+     "fs.apply:Committed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "M2: store-test-preparation",
+     "command": "# M2: store-test-preparation\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\nlet sandbox, ws;\ntry {\n  let r;\n  ({ sandbox } = await lf.sandbox.create());\n  ws = await lf.workspace.mount(sandbox, \"implementation\");\n  await lf.workspace.exec(ws, \"CARGO_HOME=$PWD/.cargo-home timeout 110 cargo test --locked --offline -p depot-store --no-run\", \"store-test-preparation\", { stdout: process.stdout, stderr: process.stderr });\n  r = await lf.workspace.commit(ws, \"M2 store-test-preparation (exit 0)\");\n  console.log(JSON.stringify({ kind: r.kind, head: r.head }));\n} finally {\n  if (ws) await lf.workspace.unmount(ws);\n  if (sandbox) await lf.sandbox.close(sandbox);\n  await lf.close();\n}\nJS",
+     "timeoutMs": 200000
+    },
+    "phase": "m2",
+    "note": "record 014-m2-test-prepare",
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed|UpToDate",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "M2: store-tests",
+     "command": "# M2: store-tests\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\nlet sandbox, ws;\ntry {\n  let r;\n  ({ sandbox } = await lf.sandbox.create());\n  ws = await lf.workspace.mount(sandbox, \"implementation\");\n  await lf.workspace.exec(ws, \"CARGO_HOME=$PWD/.cargo-home timeout 60 cargo test --locked --offline -p depot-store\", \"store-tests\", { stdout: process.stdout, stderr: process.stderr });\n  r = await lf.workspace.commit(ws, \"M2 store-tests (exit 0)\");\n  console.log(JSON.stringify({ kind: r.kind, head: r.head }));\n} finally {\n  if (ws) await lf.workspace.unmount(ws);\n  if (sandbox) await lf.sandbox.close(sandbox);\n  await lf.close();\n}\nJS",
+     "timeoutMs": 150000
+    },
+    "phase": "m2",
+    "note": "record 015-m2-store-tests",
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "M2: source-edit-rebuild",
+     "command": "# M2: source-edit-rebuild\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\nlet sandbox, ws;\ntry {\n  let r;\n  ({ sandbox } = await lf.sandbox.create());\n  ws = await lf.workspace.mount(sandbox, \"implementation\");\n  await lf.workspace.exec(ws, \"timeout 110 bash -c 'printf \\\"\\\\n// Stream publication reserves identity before accepting body bytes.\\\\n\\\" >> crates/depot-store/src/storage.rs; CARGO_HOME=$PWD/.cargo-home cargo build --locked --offline -p depot-store'\", \"source-edit-rebuild\", { stdout: process.stdout, stderr: process.stderr });\n  r = await lf.workspace.commit(ws, \"M2 source-edit-rebuild (exit 0)\");\n  console.log(JSON.stringify({ kind: r.kind, head: r.head }));\n} finally {\n  if (ws) await lf.workspace.unmount(ws);\n  if (sandbox) await lf.sandbox.close(sandbox);\n  await lf.close();\n}\nJS",
+     "timeoutMs": 200000
+    },
+    "phase": "m2",
+    "note": "record 016-m2-source-edit-rebuild (with 017-publish-m2)",
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "M2: publish implementation to main",
+     "command": "# M2: publish implementation to main\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\ntry {\n  console.log((await lf.branch.publish(\"implementation\")).kind);\n} finally {\n  await lf.close();\n}\nJS"
+    },
+    "phase": "publish",
+    "note": "record 017-publish-m2",
+    "expect": [
+     "branch.publish:Added"
+    ]
+   },
+   {
+    "bash": {
+     "description": "M3: streamed HTTP and CLI artifact operations",
+     "command": "# M3: streamed HTTP and CLI artifact operations\nnode --input-type=module <<'JS'\nimport { readFileSync } from \"node:fs\";\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\ntry {\n  let r;\n  r = await lf.fs.apply(\"implementation\", JSON.parse(readFileSync(\"{{scenario}}/changes/015.json\", \"utf8\")), \"M3 streamed HTTP and CLI artifact operations\");\n  console.log(JSON.stringify({ kind: r.kind, head: r.head }));\n} finally {\n  await lf.close();\n}\nJS"
+    },
+    "phase": "m3",
+    "note": "record 018-m3-api-cli",
+    "expect": [
+     "fs.apply:Committed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "M3: build-server",
+     "command": "# M3: build-server\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\nlet sandbox, ws;\ntry {\n  let r;\n  ({ sandbox } = await lf.sandbox.create());\n  ws = await lf.workspace.mount(sandbox, \"implementation\");\n  await lf.workspace.exec(ws, \"CARGO_HOME=$PWD/.cargo-home timeout 110 cargo build --locked --offline -p depot-server\", \"build-server\", { stdout: process.stdout, stderr: process.stderr });\n  r = await lf.workspace.commit(ws, \"M3 build-server (exit 0)\");\n  console.log(JSON.stringify({ kind: r.kind, head: r.head }));\n} finally {\n  if (ws) await lf.workspace.unmount(ws);\n  if (sandbox) await lf.sandbox.close(sandbox);\n  await lf.close();\n}\nJS",
+     "timeoutMs": 200000
+    },
+    "phase": "m3",
+    "note": "record 019-m3-server-build",
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed|UpToDate",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "M3: build-cli",
+     "command": "# M3: build-cli\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\nlet sandbox, ws;\ntry {\n  let r;\n  ({ sandbox } = await lf.sandbox.create());\n  ws = await lf.workspace.mount(sandbox, \"implementation\");\n  await lf.workspace.exec(ws, \"CARGO_HOME=$PWD/.cargo-home timeout 110 cargo build --locked --offline -p depot-cli\", \"build-cli\", { stdout: process.stdout, stderr: process.stderr });\n  r = await lf.workspace.commit(ws, \"M3 build-cli (exit 0)\");\n  console.log(JSON.stringify({ kind: r.kind, head: r.head }));\n} finally {\n  if (ws) await lf.workspace.unmount(ws);\n  if (sandbox) await lf.sandbox.close(sandbox);\n  await lf.close();\n}\nJS",
+     "timeoutMs": 200000
+    },
+    "phase": "m3",
+    "note": "record 020-m3-cli-build",
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed|UpToDate",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "M3: api-cli-smoke",
+     "command": "# M3: api-cli-smoke\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\nlet sandbox, ws;\ntry {\n  let r;\n  ({ sandbox } = await lf.sandbox.create());\n  ws = await lf.workspace.mount(sandbox, \"implementation\");\n  await lf.workspace.exec(ws, \"timeout 110 python3 tests/smoke.py\", \"api-cli-smoke\", { stdout: process.stdout, stderr: process.stderr });\n  r = await lf.workspace.commit(ws, \"M3 api-cli-smoke (exit 0)\");\n  console.log(JSON.stringify({ kind: r.kind, head: r.head }));\n} finally {\n  if (ws) await lf.workspace.unmount(ws);\n  if (sandbox) await lf.sandbox.close(sandbox);\n  await lf.close();\n}\nJS",
+     "timeoutMs": 200000
+    },
+    "phase": "m3",
+    "note": "record 021-m3-api-cli-smoke (with 022-publish-m3-fork)",
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "M3: publish implementation to main, fork registry and fork web-recovery",
+     "command": "# M3: publish implementation to main, fork registry and fork web-recovery\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\ntry {\n  console.log((await lf.branch.publish(\"implementation\")).kind);\n  console.log((await lf.branch.fork(\"registry\")).kind);\n  console.log((await lf.branch.fork(\"web-recovery\")).kind);\n} finally {\n  await lf.close();\n}\nJS"
+    },
+    "phase": "publish",
+    "note": "record 022-publish-m3-fork",
+    "expect": [
+     "branch.publish:Added",
+     "branch.fork:Forked",
+     "branch.fork:Forked"
+    ]
+   },
+   {
+    "bash": {
+     "description": "M4: registry correctness acceptance and bounded server lifecycle",
+     "command": "# M4: registry correctness acceptance and bounded server lifecycle\nnode --input-type=module <<'JS'\nimport { readFileSync } from \"node:fs\";\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\ntry {\n  let r;\n  r = await lf.fs.apply(\"registry\", JSON.parse(readFileSync(\"{{scenario}}/changes/020.json\", \"utf8\")), \"M4 registry correctness acceptance and bounded server lifecycle\");\n  console.log(JSON.stringify({ kind: r.kind, head: r.head }));\n} finally {\n  await lf.close();\n}\nJS"
+    },
+    "phase": "registry",
+    "note": "record 023-registry-correctness",
+    "expect": [
+     "fs.apply:Committed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "M5: browser repository and immutable-version workflow",
+     "command": "# M5: browser repository and immutable-version workflow\nnode --input-type=module <<'JS'\nimport { readFileSync } from \"node:fs\";\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\ntry {\n  let r;\n  r = await lf.fs.apply(\"web-recovery\", JSON.parse(readFileSync(\"{{scenario}}/changes/021.json\", \"utf8\")), \"M5 browser repository and immutable-version workflow\");\n  console.log(JSON.stringify({ kind: r.kind, head: r.head }));\n} finally {\n  await lf.close();\n}\nJS"
+    },
+    "phase": "web",
+    "note": "record 024-web-interface",
+    "expect": [
+     "fs.apply:Committed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "M4: registry acceptance",
+     "command": "# M4: registry acceptance\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\nlet sandbox, ws;\ntry {\n  let r;\n  ({ sandbox } = await lf.sandbox.create());\n  ws = await lf.workspace.mount(sandbox, \"registry\");\n  await lf.workspace.exec(ws, \"timeout 60 python3 tests/registry.py\", \"M4 registry acceptance\", { stdout: process.stdout, stderr: process.stderr });\n  r = await lf.workspace.commit(ws, \"M4 registry acceptance (exit 0)\");\n  console.log(JSON.stringify({ kind: r.kind, head: r.head }));\n} finally {\n  if (ws) await lf.workspace.unmount(ws);\n  if (sandbox) await lf.sandbox.close(sandbox);\n  await lf.close();\n}\nJS",
+     "timeoutMs": 150000
+    },
+    "phase": "registry",
+    "note": "record 025-registry-tests",
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "M5: deterministic restart fault, interrupted-upload and Chromium acceptance",
+     "command": "# M5: deterministic restart fault, interrupted-upload and Chromium acceptance\nnode --input-type=module <<'JS'\nimport { readFileSync } from \"node:fs\";\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\ntry {\n  let r;\n  r = await lf.fs.apply(\"web-recovery\", JSON.parse(readFileSync(\"{{scenario}}/changes/023.json\", \"utf8\")), \"M5 deterministic restart fault, interrupted-upload and Chromium acceptance\");\n  console.log(JSON.stringify({ kind: r.kind, head: r.head }));\n} finally {\n  await lf.close();\n}\nJS"
+    },
+    "phase": "web",
+    "note": "record 026-web-recovery-tests",
+    "expect": [
+     "fs.apply:Committed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "M4: same-Branch Workspace a source test",
+     "command": "# M4: same-Branch Workspace a source test\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\nlet sandbox, ws1, ws2;\ntry {\n  let r;\n  ({ sandbox } = await lf.sandbox.create());\n  ws1 = await lf.workspace.mount(sandbox, \"registry\");\n  ws2 = await lf.workspace.mount(sandbox, \"registry\");\n  await lf.workspace.exec(ws1, \"timeout 20 bash -c 'printf %s I1t0ZXN0XQpmbiB3b3Jrc3BhY2VfYV9wcmVzZXJ2ZXNfdmFsaWRfb3BhcXVlX25hbWVzKCl7YXNzZXJ0IShkZXBvdF9kb21haW46OmlkZW50aWZpZXIoIkJ1aWxkXzMzNy52MSIpLmlzX29rKCkpO30K | base64 -d > crates/depot-domain/tests/workspace_a.rs'\", \"same-Branch Workspace a\", { stdout: process.stdout, stderr: process.stderr });\n  r = await lf.workspace.commit(ws1, \"M4 same-Branch Workspace a source test (exit 0)\");\n  console.log(JSON.stringify({ kind: r.kind, head: r.head }));\n  await lf.workspace.exec(ws2, \"timeout 20 bash -c 'printf %s I1t0ZXN0XQpmbiB3b3Jrc3BhY2VfYl9wcmVzZXJ2ZXNfcGFnaW5hdGlvbl92YWxpZGF0aW9uKCl7YXNzZXJ0IShkZXBvdF9kb21haW46OnBhZ2luYXRpb24oU29tZSgiMCIpLE5vbmUpLmlzX2VycigpKTt9Cg== | base64 -d > crates/depot-domain/tests/workspace_b.rs'\", \"same-Branch Workspace b\", { stdout: process.stdout, stderr: process.stderr });\n  r = await lf.workspace.commit(ws2, \"M4 same-Branch Workspace b source test (exit 0)\");\n  console.log(JSON.stringify({ kind: r.kind, head: r.head }));\n} finally {\n  if (ws1) await lf.workspace.unmount(ws1);\n  if (ws2) await lf.workspace.unmount(ws2);\n  if (sandbox) await lf.sandbox.close(sandbox);\n  await lf.close();\n}\nJS",
+     "timeoutMs": 130000
+    },
+    "phase": "registry",
+    "note": "record 027-registry-workspace-a (with 028-registry-workspace-b)",
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed",
+     "workspace.unmount:Unmounted",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "M5: full fixture, CLI and retained-remount acceptance stages",
+     "command": "# M5: full fixture, CLI and retained-remount acceptance stages\nnode --input-type=module <<'JS'\nimport { readFileSync } from \"node:fs\";\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\ntry {\n  let r;\n  r = await lf.fs.apply(\"web-recovery\", JSON.parse(readFileSync(\"{{scenario}}/changes/026.json\", \"utf8\")), \"M5 full fixture, CLI and retained-remount acceptance stages\");\n  console.log(JSON.stringify({ kind: r.kind, head: r.head }));\n} finally {\n  await lf.close();\n}\nJS"
+    },
+    "phase": "web",
+    "note": "record 029-web-full-acceptance",
+    "expect": [
+     "fs.apply:Committed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "M4: domain-prepare",
+     "command": "# M4: domain-prepare\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\nlet sandbox, ws;\ntry {\n  let r;\n  ({ sandbox } = await lf.sandbox.create());\n  ws = await lf.workspace.mount(sandbox, \"registry\");\n  await lf.workspace.exec(ws, \"CARGO_HOME=$PWD/.cargo-home timeout 110 cargo test --locked --offline -p depot-domain --no-run\", \"M4 domain-prepare\", { stdout: process.stdout, stderr: process.stderr });\n  r = await lf.workspace.commit(ws, \"M4 domain-prepare (exit 0)\");\n  console.log(JSON.stringify({ kind: r.kind, head: r.head }));\n} finally {\n  if (ws) await lf.workspace.unmount(ws);\n  if (sandbox) await lf.sandbox.close(sandbox);\n  await lf.close();\n}\nJS",
+     "timeoutMs": 200000
+    },
+    "phase": "registry",
+    "note": "record 030-registry-domain-test-prepare",
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed|UpToDate",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "M4: domain-tests",
+     "command": "# M4: domain-tests\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\nlet sandbox, ws;\ntry {\n  let r;\n  ({ sandbox } = await lf.sandbox.create());\n  ws = await lf.workspace.mount(sandbox, \"registry\");\n  await lf.workspace.exec(ws, \"CARGO_HOME=$PWD/.cargo-home timeout 60 cargo test --locked --offline -p depot-domain\", \"M4 domain-tests\", { stdout: process.stdout, stderr: process.stderr });\n  r = await lf.workspace.commit(ws, \"M4 domain-tests (exit 0)\");\n  console.log(JSON.stringify({ kind: r.kind, head: r.head }));\n} finally {\n  if (ws) await lf.workspace.unmount(ws);\n  if (sandbox) await lf.sandbox.close(sandbox);\n  await lf.close();\n}\nJS",
+     "timeoutMs": 150000
+    },
+    "phase": "registry",
+    "note": "record 031-registry-domain-tests (with 032-publish-m4)",
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed|UpToDate",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "M4: publish registry to main",
+     "command": "# M4: publish registry to main\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\ntry {\n  console.log((await lf.branch.publish(\"registry\")).kind);\n} finally {\n  await lf.close();\n}\nJS"
+    },
+    "phase": "publish",
+    "note": "record 032-publish-m4",
+    "expect": [
+     "branch.publish:Added"
+    ]
+   },
+   {
+    "bash": {
+     "description": "Merge registry and web-recovery into combined",
+     "command": "# Merge registry and web-recovery into combined\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\ntry {\n  let r;\n  r = await lf.branch.merge(\"registry\", \"web-recovery\", \"combined\", \"M5 combine registry correctness, UI and recovery sources\");\n  console.log(JSON.stringify({ kind: r.kind, head: r.head }));\n} finally {\n  await lf.close();\n}\nJS"
+    },
+    "phase": "merge",
+    "note": "record 033-merge-registry-web",
+    "expect": [
+     "branch.merge:Merged"
+    ]
+   },
+   {
+    "bash": {
+     "description": "M5: merged-rebuild",
+     "command": "# M5: merged-rebuild\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\nlet sandbox, ws;\ntry {\n  let r;\n  ({ sandbox } = await lf.sandbox.create());\n  ws = await lf.workspace.mount(sandbox, \"combined\");\n  await lf.workspace.exec(ws, \"CARGO_HOME=$PWD/.cargo-home timeout 110 cargo build --locked --offline -p depot-server\", \"M5 merged-rebuild\", { stdout: process.stdout, stderr: process.stderr });\n  r = await lf.workspace.commit(ws, \"M5 merged-rebuild (exit 0)\");\n  console.log(JSON.stringify({ kind: r.kind, head: r.head }));\n} finally {\n  if (ws) await lf.workspace.unmount(ws);\n  if (sandbox) await lf.sandbox.close(sandbox);\n  await lf.close();\n}\nJS",
+     "timeoutMs": 200000
+    },
+    "phase": "m5",
+    "note": "record 034-m5-merged-rebuild",
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed|UpToDate",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "M5: merged-registry-recovery",
+     "command": "# M5: merged-registry-recovery\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\nlet sandbox, ws;\ntry {\n  let r;\n  ({ sandbox } = await lf.sandbox.create());\n  ws = await lf.workspace.mount(sandbox, \"combined\");\n  await lf.workspace.exec(ws, \"timeout 60 bash -c 'python3 tests/registry.py && python3 tests/recovery.py'\", \"M5 merged-registry-recovery\", { stdout: process.stdout, stderr: process.stderr });\n  r = await lf.workspace.commit(ws, \"M5 merged-registry-recovery (exit 0)\");\n  console.log(JSON.stringify({ kind: r.kind, head: r.head }));\n} finally {\n  if (ws) await lf.workspace.unmount(ws);\n  if (sandbox) await lf.sandbox.close(sandbox);\n  await lf.close();\n}\nJS",
+     "timeoutMs": 150000
+    },
+    "phase": "m5",
+    "note": "record 035-m5-merged-registry-recovery",
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "M5: browser",
+     "command": "# M5: browser\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\nlet sandbox, ws;\ntry {\n  let r;\n  ({ sandbox } = await lf.sandbox.create());\n  ws = await lf.workspace.mount(sandbox, \"combined\");\n  await lf.workspace.exec(ws, \"timeout 60 python3 tests/browser.py\", \"M5 browser\", { stdout: process.stdout, stderr: process.stderr });\n  r = await lf.workspace.commit(ws, \"M5 browser (exit 0)\");\n  console.log(JSON.stringify({ kind: r.kind, head: r.head }));\n} finally {\n  if (ws) await lf.workspace.unmount(ws);\n  if (sandbox) await lf.sandbox.close(sandbox);\n  await lf.close();\n}\nJS",
+     "timeoutMs": 150000
+    },
+    "phase": "m5",
+    "note": "record 036-m5-chromium-browser (with 037-publish-m5)",
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "M5: publish combined to main",
+     "command": "# M5: publish combined to main\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\ntry {\n  console.log((await lf.branch.publish(\"combined\")).kind);\n} finally {\n  await lf.close();\n}\nJS"
+    },
+    "phase": "publish",
+    "note": "record 037-publish-m5",
+    "expect": [
+     "branch.publish:Added"
+    ]
+   },
+   {
+    "bash": {
+     "description": "M6: complete operation/recovery/acceptance docs and source packaging metadata",
+     "command": "# M6: complete operation/recovery/acceptance docs and source packaging metadata\nnode --input-type=module <<'JS'\nimport { readFileSync } from \"node:fs\";\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\ntry {\n  let r;\n  r = await lf.fs.apply(\"combined\", JSON.parse(readFileSync(\"{{scenario}}/changes/035.json\", \"utf8\")), \"M6 complete operation/recovery/acceptance docs and source packaging metadata\");\n  console.log(JSON.stringify({ kind: r.kind, head: r.head }));\n} finally {\n  await lf.close();\n}\nJS"
+    },
+    "phase": "m6",
+    "note": "record 038-m6-docs-packaging",
+    "expect": [
+     "fs.apply:Committed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "M6: verify reader visibility across active streaming publication",
+     "command": "# M6: verify reader visibility across active streaming publication\nnode --input-type=module <<'JS'\nimport { readFileSync } from \"node:fs\";\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\ntry {\n  let r;\n  r = await lf.fs.apply(\"combined\", JSON.parse(readFileSync(\"{{scenario}}/changes/036.json\", \"utf8\")), \"M6 verify reader visibility across active streaming publication\");\n  console.log(JSON.stringify({ kind: r.kind, head: r.head }));\n} finally {\n  await lf.close();\n}\nJS"
+    },
+    "phase": "m6",
+    "note": "record 039-m6-reader-stream-boundary",
+    "expect": [
+     "fs.apply:Committed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "M6 candidate: format",
+     "command": "# M6 candidate: format\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\nlet sandbox, ws;\ntry {\n  let r;\n  ({ sandbox } = await lf.sandbox.create());\n  ws = await lf.workspace.mount(sandbox, \"combined\");\n  await lf.workspace.exec(ws, \"CARGO_HOME=$PWD/.cargo-home timeout 20 cargo fmt --all\", \"M6 candidate format\", { stdout: process.stdout, stderr: process.stderr });\n  r = await lf.workspace.commit(ws, \"M6 candidate format (exit 0)\");\n  console.log(JSON.stringify({ kind: r.kind, head: r.head }));\n} finally {\n  if (ws) await lf.workspace.unmount(ws);\n  if (sandbox) await lf.sandbox.close(sandbox);\n  await lf.close();\n}\nJS",
+     "timeoutMs": 110000
+    },
+    "phase": "m6",
+    "note": "record 040-m6-candidate",
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "M6 candidate: frozen-fixtures",
+     "command": "# M6 candidate: frozen-fixtures\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\nlet sandbox, ws;\ntry {\n  let r;\n  ({ sandbox } = await lf.sandbox.create());\n  ws = await lf.workspace.mount(sandbox, \"combined\");\n  await lf.workspace.exec(ws, \"timeout 60 python3 tests/fixtures.py\", \"M6 candidate frozen-fixtures\", { stdout: process.stdout, stderr: process.stderr });\n  r = await lf.workspace.commit(ws, \"M6 candidate frozen-fixtures (exit 0)\");\n  console.log(JSON.stringify({ kind: r.kind, head: r.head }));\n} finally {\n  if (ws) await lf.workspace.unmount(ws);\n  if (sandbox) await lf.sandbox.close(sandbox);\n  await lf.close();\n}\nJS",
+     "timeoutMs": 150000
+    },
+    "phase": "m6",
+    "note": "record 041-m6-candidate",
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "M6 candidate: clean-build-depot-domain",
+     "command": "# M6 candidate: clean-build-depot-domain\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\nlet sandbox, ws;\ntry {\n  let r;\n  ({ sandbox } = await lf.sandbox.create());\n  ws = await lf.workspace.mount(sandbox, \"combined\");\n  await lf.workspace.exec(ws, \"timeout 110 bash -c 'rm -rf target; CARGO_HOME=$PWD/.cargo-home cargo build --locked --offline -p depot-domain'\", \"M6 candidate clean-build-depot-domain\", { stdout: process.stdout, stderr: process.stderr });\n  r = await lf.workspace.commit(ws, \"M6 candidate clean-build-depot-domain (exit 0)\");\n  console.log(JSON.stringify({ kind: r.kind, head: r.head }));\n} finally {\n  if (ws) await lf.workspace.unmount(ws);\n  if (sandbox) await lf.sandbox.close(sandbox);\n  await lf.close();\n}\nJS",
+     "timeoutMs": 200000
+    },
+    "phase": "m6",
+    "note": "record 042-m6-candidate",
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed|UpToDate",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "M6 candidate: clean-build-depot-store",
+     "command": "# M6 candidate: clean-build-depot-store\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\nlet sandbox, ws;\ntry {\n  let r;\n  ({ sandbox } = await lf.sandbox.create());\n  ws = await lf.workspace.mount(sandbox, \"combined\");\n  await lf.workspace.exec(ws, \"CARGO_HOME=$PWD/.cargo-home timeout 110 cargo build --locked --offline -p depot-store\", \"M6 candidate clean-build-depot-store\", { stdout: process.stdout, stderr: process.stderr });\n  r = await lf.workspace.commit(ws, \"M6 candidate clean-build-depot-store (exit 0)\");\n  console.log(JSON.stringify({ kind: r.kind, head: r.head }));\n} finally {\n  if (ws) await lf.workspace.unmount(ws);\n  if (sandbox) await lf.sandbox.close(sandbox);\n  await lf.close();\n}\nJS",
+     "timeoutMs": 200000
+    },
+    "phase": "m6",
+    "note": "record 043-m6-candidate",
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed|UpToDate",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "M6 candidate: clean-build-depot-server",
+     "command": "# M6 candidate: clean-build-depot-server\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\nlet sandbox, ws;\ntry {\n  let r;\n  ({ sandbox } = await lf.sandbox.create());\n  ws = await lf.workspace.mount(sandbox, \"combined\");\n  await lf.workspace.exec(ws, \"CARGO_HOME=$PWD/.cargo-home timeout 110 cargo build --locked --offline -p depot-server\", \"M6 candidate clean-build-depot-server\", { stdout: process.stdout, stderr: process.stderr });\n  r = await lf.workspace.commit(ws, \"M6 candidate clean-build-depot-server (exit 0)\");\n  console.log(JSON.stringify({ kind: r.kind, head: r.head }));\n} finally {\n  if (ws) await lf.workspace.unmount(ws);\n  if (sandbox) await lf.sandbox.close(sandbox);\n  await lf.close();\n}\nJS",
+     "timeoutMs": 200000
+    },
+    "phase": "m6",
+    "note": "record 044-m6-candidate",
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed|UpToDate",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "M6 candidate: clean-build-depot-cli",
+     "command": "# M6 candidate: clean-build-depot-cli\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\nlet sandbox, ws;\ntry {\n  let r;\n  ({ sandbox } = await lf.sandbox.create());\n  ws = await lf.workspace.mount(sandbox, \"combined\");\n  await lf.workspace.exec(ws, \"CARGO_HOME=$PWD/.cargo-home timeout 110 cargo build --locked --offline -p depot-cli\", \"M6 candidate clean-build-depot-cli\", { stdout: process.stdout, stderr: process.stderr });\n  r = await lf.workspace.commit(ws, \"M6 candidate clean-build-depot-cli (exit 0)\");\n  console.log(JSON.stringify({ kind: r.kind, head: r.head }));\n} finally {\n  if (ws) await lf.workspace.unmount(ws);\n  if (sandbox) await lf.sandbox.close(sandbox);\n  await lf.close();\n}\nJS",
+     "timeoutMs": 200000
+    },
+    "phase": "m6",
+    "note": "record 045-m6-candidate",
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed|UpToDate",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "M6 candidate: prepare-depot-domain",
+     "command": "# M6 candidate: prepare-depot-domain\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\nlet sandbox, ws;\ntry {\n  let r;\n  ({ sandbox } = await lf.sandbox.create());\n  ws = await lf.workspace.mount(sandbox, \"combined\");\n  await lf.workspace.exec(ws, \"CARGO_HOME=$PWD/.cargo-home timeout 110 cargo test --locked --offline -p depot-domain --no-run\", \"M6 candidate prepare-depot-domain\", { stdout: process.stdout, stderr: process.stderr });\n  r = await lf.workspace.commit(ws, \"M6 candidate prepare-depot-domain (exit 0)\");\n  console.log(JSON.stringify({ kind: r.kind, head: r.head }));\n} finally {\n  if (ws) await lf.workspace.unmount(ws);\n  if (sandbox) await lf.sandbox.close(sandbox);\n  await lf.close();\n}\nJS",
+     "timeoutMs": 200000
+    },
+    "phase": "m6",
+    "note": "record 046-m6-candidate",
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed|UpToDate",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "M6 candidate: prepare-depot-store",
+     "command": "# M6 candidate: prepare-depot-store\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\nlet sandbox, ws;\ntry {\n  let r;\n  ({ sandbox } = await lf.sandbox.create());\n  ws = await lf.workspace.mount(sandbox, \"combined\");\n  await lf.workspace.exec(ws, \"CARGO_HOME=$PWD/.cargo-home timeout 110 cargo test --locked --offline -p depot-store --no-run\", \"M6 candidate prepare-depot-store\", { stdout: process.stdout, stderr: process.stderr });\n  r = await lf.workspace.commit(ws, \"M6 candidate prepare-depot-store (exit 0)\");\n  console.log(JSON.stringify({ kind: r.kind, head: r.head }));\n} finally {\n  if (ws) await lf.workspace.unmount(ws);\n  if (sandbox) await lf.sandbox.close(sandbox);\n  await lf.close();\n}\nJS",
+     "timeoutMs": 200000
+    },
+    "phase": "m6",
+    "note": "record 047-m6-candidate",
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed|UpToDate",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "M6 candidate: prepare-depot-server",
+     "command": "# M6 candidate: prepare-depot-server\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\nlet sandbox, ws;\ntry {\n  let r;\n  ({ sandbox } = await lf.sandbox.create());\n  ws = await lf.workspace.mount(sandbox, \"combined\");\n  await lf.workspace.exec(ws, \"CARGO_HOME=$PWD/.cargo-home timeout 110 cargo test --locked --offline -p depot-server --no-run\", \"M6 candidate prepare-depot-server\", { stdout: process.stdout, stderr: process.stderr });\n  r = await lf.workspace.commit(ws, \"M6 candidate prepare-depot-server (exit 0)\");\n  console.log(JSON.stringify({ kind: r.kind, head: r.head }));\n} finally {\n  if (ws) await lf.workspace.unmount(ws);\n  if (sandbox) await lf.sandbox.close(sandbox);\n  await lf.close();\n}\nJS",
+     "timeoutMs": 200000
+    },
+    "phase": "m6",
+    "note": "record 048-m6-candidate",
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed|UpToDate",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "M6 candidate: prepare-depot-cli",
+     "command": "# M6 candidate: prepare-depot-cli\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\nlet sandbox, ws;\ntry {\n  let r;\n  ({ sandbox } = await lf.sandbox.create());\n  ws = await lf.workspace.mount(sandbox, \"combined\");\n  await lf.workspace.exec(ws, \"CARGO_HOME=$PWD/.cargo-home timeout 110 cargo test --locked --offline -p depot-cli --no-run\", \"M6 candidate prepare-depot-cli\", { stdout: process.stdout, stderr: process.stderr });\n  r = await lf.workspace.commit(ws, \"M6 candidate prepare-depot-cli (exit 0)\");\n  console.log(JSON.stringify({ kind: r.kind, head: r.head }));\n} finally {\n  if (ws) await lf.workspace.unmount(ws);\n  if (sandbox) await lf.sandbox.close(sandbox);\n  await lf.close();\n}\nJS",
+     "timeoutMs": 200000
+    },
+    "phase": "m6",
+    "note": "record 049-m6-candidate",
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed|UpToDate",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "M6 candidate: test-depot-domain",
+     "command": "# M6 candidate: test-depot-domain\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\nlet sandbox, ws;\ntry {\n  let r;\n  ({ sandbox } = await lf.sandbox.create());\n  ws = await lf.workspace.mount(sandbox, \"combined\");\n  await lf.workspace.exec(ws, \"CARGO_HOME=$PWD/.cargo-home timeout 60 cargo test --locked --offline -p depot-domain\", \"M6 candidate test-depot-domain\", { stdout: process.stdout, stderr: process.stderr });\n  r = await lf.workspace.commit(ws, \"M6 candidate test-depot-domain (exit 0)\");\n  console.log(JSON.stringify({ kind: r.kind, head: r.head }));\n} finally {\n  if (ws) await lf.workspace.unmount(ws);\n  if (sandbox) await lf.sandbox.close(sandbox);\n  await lf.close();\n}\nJS",
+     "timeoutMs": 150000
+    },
+    "phase": "m6",
+    "note": "record 050-m6-candidate",
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed|UpToDate",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "M6 candidate: test-depot-store",
+     "command": "# M6 candidate: test-depot-store\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\nlet sandbox, ws;\ntry {\n  let r;\n  ({ sandbox } = await lf.sandbox.create());\n  ws = await lf.workspace.mount(sandbox, \"combined\");\n  await lf.workspace.exec(ws, \"CARGO_HOME=$PWD/.cargo-home timeout 60 cargo test --locked --offline -p depot-store\", \"M6 candidate test-depot-store\", { stdout: process.stdout, stderr: process.stderr });\n  r = await lf.workspace.commit(ws, \"M6 candidate test-depot-store (exit 0)\");\n  console.log(JSON.stringify({ kind: r.kind, head: r.head }));\n} finally {\n  if (ws) await lf.workspace.unmount(ws);\n  if (sandbox) await lf.sandbox.close(sandbox);\n  await lf.close();\n}\nJS",
+     "timeoutMs": 150000
+    },
+    "phase": "m6",
+    "note": "record 051-m6-candidate",
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed|UpToDate",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "M6 candidate: test-depot-server",
+     "command": "# M6 candidate: test-depot-server\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\nlet sandbox, ws;\ntry {\n  let r;\n  ({ sandbox } = await lf.sandbox.create());\n  ws = await lf.workspace.mount(sandbox, \"combined\");\n  await lf.workspace.exec(ws, \"CARGO_HOME=$PWD/.cargo-home timeout 60 cargo test --locked --offline -p depot-server\", \"M6 candidate test-depot-server\", { stdout: process.stdout, stderr: process.stderr });\n  r = await lf.workspace.commit(ws, \"M6 candidate test-depot-server (exit 0)\");\n  console.log(JSON.stringify({ kind: r.kind, head: r.head }));\n} finally {\n  if (ws) await lf.workspace.unmount(ws);\n  if (sandbox) await lf.sandbox.close(sandbox);\n  await lf.close();\n}\nJS",
+     "timeoutMs": 150000
+    },
+    "phase": "m6",
+    "note": "record 052-m6-candidate",
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed|UpToDate",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "M6 candidate: test-depot-cli",
+     "command": "# M6 candidate: test-depot-cli\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\nlet sandbox, ws;\ntry {\n  let r;\n  ({ sandbox } = await lf.sandbox.create());\n  ws = await lf.workspace.mount(sandbox, \"combined\");\n  await lf.workspace.exec(ws, \"CARGO_HOME=$PWD/.cargo-home timeout 60 cargo test --locked --offline -p depot-cli\", \"M6 candidate test-depot-cli\", { stdout: process.stdout, stderr: process.stderr });\n  r = await lf.workspace.commit(ws, \"M6 candidate test-depot-cli (exit 0)\");\n  console.log(JSON.stringify({ kind: r.kind, head: r.head }));\n} finally {\n  if (ws) await lf.workspace.unmount(ws);\n  if (sandbox) await lf.sandbox.close(sandbox);\n  await lf.close();\n}\nJS",
+     "timeoutMs": 150000
+    },
+    "phase": "m6",
+    "note": "record 053-m6-candidate",
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed|UpToDate",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "M6 candidate: doc-depot-domain",
+     "command": "# M6 candidate: doc-depot-domain\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\nlet sandbox, ws;\ntry {\n  let r;\n  ({ sandbox } = await lf.sandbox.create());\n  ws = await lf.workspace.mount(sandbox, \"combined\");\n  await lf.workspace.exec(ws, \"CARGO_HOME=$PWD/.cargo-home timeout 60 cargo test --locked --offline -p depot-domain --doc\", \"M6 candidate doc-depot-domain\", { stdout: process.stdout, stderr: process.stderr });\n  r = await lf.workspace.commit(ws, \"M6 candidate doc-depot-domain (exit 0)\");\n  console.log(JSON.stringify({ kind: r.kind, head: r.head }));\n} finally {\n  if (ws) await lf.workspace.unmount(ws);\n  if (sandbox) await lf.sandbox.close(sandbox);\n  await lf.close();\n}\nJS",
+     "timeoutMs": 150000
+    },
+    "phase": "m6",
+    "note": "record 054-m6-candidate",
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed|UpToDate",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "M6 candidate: doc-depot-store",
+     "command": "# M6 candidate: doc-depot-store\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\nlet sandbox, ws;\ntry {\n  let r;\n  ({ sandbox } = await lf.sandbox.create());\n  ws = await lf.workspace.mount(sandbox, \"combined\");\n  await lf.workspace.exec(ws, \"CARGO_HOME=$PWD/.cargo-home timeout 60 cargo test --locked --offline -p depot-store --doc\", \"M6 candidate doc-depot-store\", { stdout: process.stdout, stderr: process.stderr });\n  r = await lf.workspace.commit(ws, \"M6 candidate doc-depot-store (exit 0)\");\n  console.log(JSON.stringify({ kind: r.kind, head: r.head }));\n} finally {\n  if (ws) await lf.workspace.unmount(ws);\n  if (sandbox) await lf.sandbox.close(sandbox);\n  await lf.close();\n}\nJS",
+     "timeoutMs": 150000
+    },
+    "phase": "m6",
+    "note": "record 055-m6-candidate",
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed|UpToDate",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "M6 candidate: clippy-depot-domain",
+     "command": "# M6 candidate: clippy-depot-domain\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\nlet sandbox, ws;\ntry {\n  let r;\n  ({ sandbox } = await lf.sandbox.create());\n  ws = await lf.workspace.mount(sandbox, \"combined\");\n  await lf.workspace.exec(ws, \"CARGO_HOME=$PWD/.cargo-home timeout 110 cargo clippy --locked --offline -p depot-domain --all-targets -- -D warnings\", \"M6 candidate clippy-depot-domain\", { stdout: process.stdout, stderr: process.stderr });\n  r = await lf.workspace.commit(ws, \"M6 candidate clippy-depot-domain (exit 0)\");\n  console.log(JSON.stringify({ kind: r.kind, head: r.head }));\n} finally {\n  if (ws) await lf.workspace.unmount(ws);\n  if (sandbox) await lf.sandbox.close(sandbox);\n  await lf.close();\n}\nJS",
+     "timeoutMs": 200000
+    },
+    "phase": "m6",
+    "note": "record 056-m6-candidate",
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed|UpToDate",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "M6 candidate: clippy-depot-store",
+     "command": "# M6 candidate: clippy-depot-store\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\nlet sandbox, ws;\ntry {\n  let r;\n  ({ sandbox } = await lf.sandbox.create());\n  ws = await lf.workspace.mount(sandbox, \"combined\");\n  await lf.workspace.exec(ws, \"CARGO_HOME=$PWD/.cargo-home timeout 110 cargo clippy --locked --offline -p depot-store --all-targets -- -D warnings\", \"M6 candidate clippy-depot-store\", { stdout: process.stdout, stderr: process.stderr });\n  r = await lf.workspace.commit(ws, \"M6 candidate clippy-depot-store (exit 0)\");\n  console.log(JSON.stringify({ kind: r.kind, head: r.head }));\n} finally {\n  if (ws) await lf.workspace.unmount(ws);\n  if (sandbox) await lf.sandbox.close(sandbox);\n  await lf.close();\n}\nJS",
+     "timeoutMs": 200000
+    },
+    "phase": "m6",
+    "note": "record 057-m6-candidate",
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed|UpToDate",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "M6 candidate: clippy-depot-server",
+     "command": "# M6 candidate: clippy-depot-server\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\nlet sandbox, ws;\ntry {\n  let r;\n  ({ sandbox } = await lf.sandbox.create());\n  ws = await lf.workspace.mount(sandbox, \"combined\");\n  await lf.workspace.exec(ws, \"CARGO_HOME=$PWD/.cargo-home timeout 110 cargo clippy --locked --offline -p depot-server --all-targets -- -D warnings\", \"M6 candidate clippy-depot-server\", { stdout: process.stdout, stderr: process.stderr });\n  r = await lf.workspace.commit(ws, \"M6 candidate clippy-depot-server (exit 0)\");\n  console.log(JSON.stringify({ kind: r.kind, head: r.head }));\n} finally {\n  if (ws) await lf.workspace.unmount(ws);\n  if (sandbox) await lf.sandbox.close(sandbox);\n  await lf.close();\n}\nJS",
+     "timeoutMs": 200000
+    },
+    "phase": "m6",
+    "note": "record 058-m6-candidate",
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed|UpToDate",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "M6 candidate: clippy-depot-cli",
+     "command": "# M6 candidate: clippy-depot-cli\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\nlet sandbox, ws;\ntry {\n  let r;\n  ({ sandbox } = await lf.sandbox.create());\n  ws = await lf.workspace.mount(sandbox, \"combined\");\n  await lf.workspace.exec(ws, \"CARGO_HOME=$PWD/.cargo-home timeout 110 cargo clippy --locked --offline -p depot-cli --all-targets -- -D warnings\", \"M6 candidate clippy-depot-cli\", { stdout: process.stdout, stderr: process.stderr });\n  r = await lf.workspace.commit(ws, \"M6 candidate clippy-depot-cli (exit 0)\");\n  console.log(JSON.stringify({ kind: r.kind, head: r.head }));\n} finally {\n  if (ws) await lf.workspace.unmount(ws);\n  if (sandbox) await lf.sandbox.close(sandbox);\n  await lf.close();\n}\nJS",
+     "timeoutMs": 200000
+    },
+    "phase": "m6",
+    "note": "record 059-m6-candidate",
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed|UpToDate",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "M6 candidate: format-check",
+     "command": "# M6 candidate: format-check\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\nlet sandbox, ws;\ntry {\n  let r;\n  ({ sandbox } = await lf.sandbox.create());\n  ws = await lf.workspace.mount(sandbox, \"combined\");\n  await lf.workspace.exec(ws, \"CARGO_HOME=$PWD/.cargo-home timeout 20 cargo fmt --all -- --check\", \"M6 candidate format-check\", { stdout: process.stdout, stderr: process.stderr });\n  r = await lf.workspace.commit(ws, \"M6 candidate format-check (exit 0)\");\n  console.log(JSON.stringify({ kind: r.kind, head: r.head }));\n} finally {\n  if (ws) await lf.workspace.unmount(ws);\n  if (sandbox) await lf.sandbox.close(sandbox);\n  await lf.close();\n}\nJS",
+     "timeoutMs": 110000
+    },
+    "phase": "m6",
+    "note": "record 060-m6-candidate",
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed|UpToDate",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "M6 candidate: package-listings",
+     "command": "# M6 candidate: package-listings\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\nlet sandbox, ws;\ntry {\n  let r;\n  ({ sandbox } = await lf.sandbox.create());\n  ws = await lf.workspace.mount(sandbox, \"combined\");\n  await lf.workspace.exec(ws, \"timeout 110 bash -c 'set -e; CARGO_HOME=$PWD/.cargo-home timeout 30 cargo package --list --locked --allow-dirty -p depot-domain; CARGO_HOME=$PWD/.cargo-home timeout 30 cargo package --list --locked --allow-dirty -p depot-store; CARGO_HOME=$PWD/.cargo-home timeout 30 cargo package --list --locked --allow-dirty -p depot-server; CARGO_HOME=$PWD/.cargo-home timeout 30 cargo package --list --locked --allow-dirty -p depot-cli'\", \"M6 candidate package-listings\", { stdout: process.stdout, stderr: process.stderr });\n  r = await lf.workspace.commit(ws, \"M6 candidate package-listings (exit 0)\");\n  console.log(JSON.stringify({ kind: r.kind, head: r.head }));\n} finally {\n  if (ws) await lf.workspace.unmount(ws);\n  if (sandbox) await lf.sandbox.close(sandbox);\n  await lf.close();\n}\nJS",
+     "timeoutMs": 200000
+    },
+    "phase": "m6",
+    "note": "record 061-m6-candidate",
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed|UpToDate",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "M6 candidate: registry-recovery-health",
+     "command": "# M6 candidate: registry-recovery-health\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\nlet sandbox, ws;\ntry {\n  let r;\n  ({ sandbox } = await lf.sandbox.create());\n  ws = await lf.workspace.mount(sandbox, \"combined\");\n  await lf.workspace.exec(ws, \"timeout 60 bash -c 'set -e; python3 tests/health.py; python3 tests/smoke.py; python3 tests/registry.py; python3 tests/recovery.py'\", \"M6 candidate registry-recovery-health\", { stdout: process.stdout, stderr: process.stderr });\n  r = await lf.workspace.commit(ws, \"M6 candidate registry-recovery-health (exit 0)\");\n  console.log(JSON.stringify({ kind: r.kind, head: r.head }));\n} finally {\n  if (ws) await lf.workspace.unmount(ws);\n  if (sandbox) await lf.sandbox.close(sandbox);\n  await lf.close();\n}\nJS",
+     "timeoutMs": 150000
+    },
+    "phase": "m6",
+    "note": "record 062-m6-candidate",
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "M6 candidate: core-fixtures",
+     "command": "# M6 candidate: core-fixtures\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\nlet sandbox, ws;\ntry {\n  let r;\n  ({ sandbox } = await lf.sandbox.create());\n  ws = await lf.workspace.mount(sandbox, \"combined\");\n  await lf.workspace.exec(ws, \"timeout 110 python3 tests/full.py core candidate\", \"M6 candidate core-fixtures\", { stdout: process.stdout, stderr: process.stderr });\n  r = await lf.workspace.commit(ws, \"M6 candidate core-fixtures (exit 0)\");\n  console.log(JSON.stringify({ kind: r.kind, head: r.head }));\n} finally {\n  if (ws) await lf.workspace.unmount(ws);\n  if (sandbox) await lf.sandbox.close(sandbox);\n  await lf.close();\n}\nJS",
+     "timeoutMs": 200000
+    },
+    "phase": "m6",
+    "note": "record 063-m6-candidate",
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "M6 candidate: large-v1",
+     "command": "# M6 candidate: large-v1\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\nlet sandbox, ws;\ntry {\n  let r;\n  ({ sandbox } = await lf.sandbox.create());\n  ws = await lf.workspace.mount(sandbox, \"combined\");\n  await lf.workspace.exec(ws, \"timeout 110 python3 tests/full.py large-v1 candidate\", \"M6 candidate large-v1\", { stdout: process.stdout, stderr: process.stderr });\n  r = await lf.workspace.commit(ws, \"M6 candidate large-v1 (exit 0)\");\n  console.log(JSON.stringify({ kind: r.kind, head: r.head }));\n} finally {\n  if (ws) await lf.workspace.unmount(ws);\n  if (sandbox) await lf.sandbox.close(sandbox);\n  await lf.close();\n}\nJS",
+     "timeoutMs": 200000
+    },
+    "phase": "m6",
+    "note": "record 064-m6-candidate",
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "M6 candidate: large-identical",
+     "command": "# M6 candidate: large-identical\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\nlet sandbox, ws;\ntry {\n  let r;\n  ({ sandbox } = await lf.sandbox.create());\n  ws = await lf.workspace.mount(sandbox, \"combined\");\n  await lf.workspace.exec(ws, \"timeout 110 python3 tests/full.py large-identical candidate\", \"M6 candidate large-identical\", { stdout: process.stdout, stderr: process.stderr });\n  r = await lf.workspace.commit(ws, \"M6 candidate large-identical (exit 0)\");\n  console.log(JSON.stringify({ kind: r.kind, head: r.head }));\n} finally {\n  if (ws) await lf.workspace.unmount(ws);\n  if (sandbox) await lf.sandbox.close(sandbox);\n  await lf.close();\n}\nJS",
+     "timeoutMs": 200000
+    },
+    "phase": "m6",
+    "note": "record 065-m6-candidate",
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "M6 candidate: large-v2",
+     "command": "# M6 candidate: large-v2\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\nlet sandbox, ws;\ntry {\n  let r;\n  ({ sandbox } = await lf.sandbox.create());\n  ws = await lf.workspace.mount(sandbox, \"combined\");\n  await lf.workspace.exec(ws, \"timeout 110 python3 tests/full.py large-v2 candidate\", \"M6 candidate large-v2\", { stdout: process.stdout, stderr: process.stderr });\n  r = await lf.workspace.commit(ws, \"M6 candidate large-v2 (exit 0)\");\n  console.log(JSON.stringify({ kind: r.kind, head: r.head }));\n} finally {\n  if (ws) await lf.workspace.unmount(ws);\n  if (sandbox) await lf.sandbox.close(sandbox);\n  await lf.close();\n}\nJS",
+     "timeoutMs": 200000
+    },
+    "phase": "m6",
+    "note": "record 066-m6-candidate",
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "M6 candidate: cli",
+     "command": "# M6 candidate: cli\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\nlet sandbox, ws;\ntry {\n  let r;\n  ({ sandbox } = await lf.sandbox.create());\n  ws = await lf.workspace.mount(sandbox, \"combined\");\n  await lf.workspace.exec(ws, \"timeout 60 python3 tests/full.py cli candidate\", \"M6 candidate cli\", { stdout: process.stdout, stderr: process.stderr });\n  r = await lf.workspace.commit(ws, \"M6 candidate cli (exit 0)\");\n  console.log(JSON.stringify({ kind: r.kind, head: r.head }));\n} finally {\n  if (ws) await lf.workspace.unmount(ws);\n  if (sandbox) await lf.sandbox.close(sandbox);\n  await lf.close();\n}\nJS",
+     "timeoutMs": 150000
+    },
+    "phase": "m6",
+    "note": "record 067-m6-candidate",
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "M6 candidate: browser",
+     "command": "# M6 candidate: browser\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\nlet sandbox, ws;\ntry {\n  let r;\n  ({ sandbox } = await lf.sandbox.create());\n  ws = await lf.workspace.mount(sandbox, \"combined\");\n  await lf.workspace.exec(ws, \"timeout 60 python3 tests/browser.py\", \"M6 candidate browser\", { stdout: process.stdout, stderr: process.stderr });\n  r = await lf.workspace.commit(ws, \"M6 candidate browser (exit 0)\");\n  console.log(JSON.stringify({ kind: r.kind, head: r.head }));\n} finally {\n  if (ws) await lf.workspace.unmount(ws);\n  if (sandbox) await lf.sandbox.close(sandbox);\n  await lf.close();\n}\nJS",
+     "timeoutMs": 150000
+    },
+    "phase": "m6",
+    "note": "record 068-m6-candidate (with 069-m6-candidate)",
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "M6 candidate: fresh-remount",
+     "command": "# M6 candidate: fresh-remount\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\nlet sandbox, ws;\ntry {\n  let r;\n  ({ sandbox } = await lf.sandbox.create());\n  ws = await lf.workspace.mount(sandbox, \"combined\");\n  await lf.workspace.exec(ws, \"timeout 60 python3 tests/full.py remount candidate\", \"M6 candidate fresh-remount\", { stdout: process.stdout, stderr: process.stderr });\n  r = await lf.workspace.commit(ws, \"M6 candidate fresh-remount (exit 0)\");\n  console.log(JSON.stringify({ kind: r.kind, head: r.head }));\n} finally {\n  if (ws) await lf.workspace.unmount(ws);\n  if (sandbox) await lf.sandbox.close(sandbox);\n  await lf.close();\n}\nJS",
+     "timeoutMs": 150000
+    },
+    "phase": "m6",
+    "note": "record 070-m6-candidate (with 069-m6-candidate, 071-publish-m6-fork-final)",
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "M6: publish combined to main and fork final-main-acceptance",
+     "command": "# M6: publish combined to main and fork final-main-acceptance\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\ntry {\n  console.log((await lf.branch.publish(\"combined\")).kind);\n  console.log((await lf.branch.fork(\"final-main-acceptance\")).kind);\n} finally {\n  await lf.close();\n}\nJS"
+    },
+    "phase": "publish",
+    "note": "record 071-publish-m6-fork-final",
+    "expect": [
+     "branch.publish:Added",
+     "branch.fork:Forked"
+    ]
+   },
+   {
+    "bash": {
+     "description": "Final main: locked-fetch",
+     "command": "# Final main: locked-fetch\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\nlet sandbox, ws;\ntry {\n  let r;\n  ({ sandbox } = await lf.sandbox.create());\n  ws = await lf.workspace.mount(sandbox, \"final-main-acceptance\");\n  await lf.workspace.exec(ws, \"CARGO_HOME=$PWD/.cargo-home timeout 110 cargo fetch --locked --offline\", \"final-main locked-fetch\", { stdout: process.stdout, stderr: process.stderr });\n  r = await lf.workspace.commit(ws, \"final-main acceptance locked-fetch (exit 0)\");\n  console.log(JSON.stringify({ kind: r.kind, head: r.head }));\n} finally {\n  if (ws) await lf.workspace.unmount(ws);\n  if (sandbox) await lf.sandbox.close(sandbox);\n  await lf.close();\n}\nJS",
+     "timeoutMs": 200000
+    },
+    "phase": "final",
+    "note": "record 072-final-main",
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed|UpToDate",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "Final main: clean-build-depot-domain",
+     "command": "# Final main: clean-build-depot-domain\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\nlet sandbox, ws;\ntry {\n  let r;\n  ({ sandbox } = await lf.sandbox.create());\n  ws = await lf.workspace.mount(sandbox, \"final-main-acceptance\");\n  await lf.workspace.exec(ws, \"timeout 110 bash -c 'rm -rf target; CARGO_HOME=$PWD/.cargo-home cargo build --locked --offline -p depot-domain'\", \"final-main clean-build-depot-domain\", { stdout: process.stdout, stderr: process.stderr });\n  r = await lf.workspace.commit(ws, \"final-main acceptance clean-build-depot-domain (exit 0)\");\n  console.log(JSON.stringify({ kind: r.kind, head: r.head }));\n} finally {\n  if (ws) await lf.workspace.unmount(ws);\n  if (sandbox) await lf.sandbox.close(sandbox);\n  await lf.close();\n}\nJS",
+     "timeoutMs": 200000
+    },
+    "phase": "final",
+    "note": "record 073-final-main",
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed|UpToDate",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "Final main: clean-build-depot-store",
+     "command": "# Final main: clean-build-depot-store\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\nlet sandbox, ws;\ntry {\n  let r;\n  ({ sandbox } = await lf.sandbox.create());\n  ws = await lf.workspace.mount(sandbox, \"final-main-acceptance\");\n  await lf.workspace.exec(ws, \"CARGO_HOME=$PWD/.cargo-home timeout 110 cargo build --locked --offline -p depot-store\", \"final-main clean-build-depot-store\", { stdout: process.stdout, stderr: process.stderr });\n  r = await lf.workspace.commit(ws, \"final-main acceptance clean-build-depot-store (exit 0)\");\n  console.log(JSON.stringify({ kind: r.kind, head: r.head }));\n} finally {\n  if (ws) await lf.workspace.unmount(ws);\n  if (sandbox) await lf.sandbox.close(sandbox);\n  await lf.close();\n}\nJS",
+     "timeoutMs": 200000
+    },
+    "phase": "final",
+    "note": "record 074-final-main",
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed|UpToDate",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "Final main: clean-build-depot-server",
+     "command": "# Final main: clean-build-depot-server\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\nlet sandbox, ws;\ntry {\n  let r;\n  ({ sandbox } = await lf.sandbox.create());\n  ws = await lf.workspace.mount(sandbox, \"final-main-acceptance\");\n  await lf.workspace.exec(ws, \"CARGO_HOME=$PWD/.cargo-home timeout 110 cargo build --locked --offline -p depot-server\", \"final-main clean-build-depot-server\", { stdout: process.stdout, stderr: process.stderr });\n  r = await lf.workspace.commit(ws, \"final-main acceptance clean-build-depot-server (exit 0)\");\n  console.log(JSON.stringify({ kind: r.kind, head: r.head }));\n} finally {\n  if (ws) await lf.workspace.unmount(ws);\n  if (sandbox) await lf.sandbox.close(sandbox);\n  await lf.close();\n}\nJS",
+     "timeoutMs": 200000
+    },
+    "phase": "final",
+    "note": "record 075-final-main",
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed|UpToDate",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "Final main: clean-build-depot-cli",
+     "command": "# Final main: clean-build-depot-cli\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\nlet sandbox, ws;\ntry {\n  let r;\n  ({ sandbox } = await lf.sandbox.create());\n  ws = await lf.workspace.mount(sandbox, \"final-main-acceptance\");\n  await lf.workspace.exec(ws, \"CARGO_HOME=$PWD/.cargo-home timeout 110 cargo build --locked --offline -p depot-cli\", \"final-main clean-build-depot-cli\", { stdout: process.stdout, stderr: process.stderr });\n  r = await lf.workspace.commit(ws, \"final-main acceptance clean-build-depot-cli (exit 0)\");\n  console.log(JSON.stringify({ kind: r.kind, head: r.head }));\n} finally {\n  if (ws) await lf.workspace.unmount(ws);\n  if (sandbox) await lf.sandbox.close(sandbox);\n  await lf.close();\n}\nJS",
+     "timeoutMs": 200000
+    },
+    "phase": "final",
+    "note": "record 076-final-main",
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed|UpToDate",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "Final main: prepare-depot-domain",
+     "command": "# Final main: prepare-depot-domain\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\nlet sandbox, ws;\ntry {\n  let r;\n  ({ sandbox } = await lf.sandbox.create());\n  ws = await lf.workspace.mount(sandbox, \"final-main-acceptance\");\n  await lf.workspace.exec(ws, \"CARGO_HOME=$PWD/.cargo-home timeout 110 cargo test --locked --offline -p depot-domain --no-run\", \"final-main prepare-depot-domain\", { stdout: process.stdout, stderr: process.stderr });\n  r = await lf.workspace.commit(ws, \"final-main acceptance prepare-depot-domain (exit 0)\");\n  console.log(JSON.stringify({ kind: r.kind, head: r.head }));\n} finally {\n  if (ws) await lf.workspace.unmount(ws);\n  if (sandbox) await lf.sandbox.close(sandbox);\n  await lf.close();\n}\nJS",
+     "timeoutMs": 200000
+    },
+    "phase": "final",
+    "note": "record 077-final-main",
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed|UpToDate",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "Final main: prepare-depot-store",
+     "command": "# Final main: prepare-depot-store\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\nlet sandbox, ws;\ntry {\n  let r;\n  ({ sandbox } = await lf.sandbox.create());\n  ws = await lf.workspace.mount(sandbox, \"final-main-acceptance\");\n  await lf.workspace.exec(ws, \"CARGO_HOME=$PWD/.cargo-home timeout 110 cargo test --locked --offline -p depot-store --no-run\", \"final-main prepare-depot-store\", { stdout: process.stdout, stderr: process.stderr });\n  r = await lf.workspace.commit(ws, \"final-main acceptance prepare-depot-store (exit 0)\");\n  console.log(JSON.stringify({ kind: r.kind, head: r.head }));\n} finally {\n  if (ws) await lf.workspace.unmount(ws);\n  if (sandbox) await lf.sandbox.close(sandbox);\n  await lf.close();\n}\nJS",
+     "timeoutMs": 200000
+    },
+    "phase": "final",
+    "note": "record 078-final-main",
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed|UpToDate",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "Final main: prepare-depot-server",
+     "command": "# Final main: prepare-depot-server\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\nlet sandbox, ws;\ntry {\n  let r;\n  ({ sandbox } = await lf.sandbox.create());\n  ws = await lf.workspace.mount(sandbox, \"final-main-acceptance\");\n  await lf.workspace.exec(ws, \"CARGO_HOME=$PWD/.cargo-home timeout 110 cargo test --locked --offline -p depot-server --no-run\", \"final-main prepare-depot-server\", { stdout: process.stdout, stderr: process.stderr });\n  r = await lf.workspace.commit(ws, \"final-main acceptance prepare-depot-server (exit 0)\");\n  console.log(JSON.stringify({ kind: r.kind, head: r.head }));\n} finally {\n  if (ws) await lf.workspace.unmount(ws);\n  if (sandbox) await lf.sandbox.close(sandbox);\n  await lf.close();\n}\nJS",
+     "timeoutMs": 200000
+    },
+    "phase": "final",
+    "note": "record 079-final-main",
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed|UpToDate",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "Final main: prepare-depot-cli",
+     "command": "# Final main: prepare-depot-cli\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\nlet sandbox, ws;\ntry {\n  let r;\n  ({ sandbox } = await lf.sandbox.create());\n  ws = await lf.workspace.mount(sandbox, \"final-main-acceptance\");\n  await lf.workspace.exec(ws, \"CARGO_HOME=$PWD/.cargo-home timeout 110 cargo test --locked --offline -p depot-cli --no-run\", \"final-main prepare-depot-cli\", { stdout: process.stdout, stderr: process.stderr });\n  r = await lf.workspace.commit(ws, \"final-main acceptance prepare-depot-cli (exit 0)\");\n  console.log(JSON.stringify({ kind: r.kind, head: r.head }));\n} finally {\n  if (ws) await lf.workspace.unmount(ws);\n  if (sandbox) await lf.sandbox.close(sandbox);\n  await lf.close();\n}\nJS",
+     "timeoutMs": 200000
+    },
+    "phase": "final",
+    "note": "record 080-final-main",
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed|UpToDate",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "Final main: test-depot-domain",
+     "command": "# Final main: test-depot-domain\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\nlet sandbox, ws;\ntry {\n  let r;\n  ({ sandbox } = await lf.sandbox.create());\n  ws = await lf.workspace.mount(sandbox, \"final-main-acceptance\");\n  await lf.workspace.exec(ws, \"CARGO_HOME=$PWD/.cargo-home timeout 60 cargo test --locked --offline -p depot-domain\", \"final-main test-depot-domain\", { stdout: process.stdout, stderr: process.stderr });\n  r = await lf.workspace.commit(ws, \"final-main acceptance test-depot-domain (exit 0)\");\n  console.log(JSON.stringify({ kind: r.kind, head: r.head }));\n} finally {\n  if (ws) await lf.workspace.unmount(ws);\n  if (sandbox) await lf.sandbox.close(sandbox);\n  await lf.close();\n}\nJS",
+     "timeoutMs": 150000
+    },
+    "phase": "final",
+    "note": "record 081-final-main",
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed|UpToDate",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "Final main: test-depot-store",
+     "command": "# Final main: test-depot-store\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\nlet sandbox, ws;\ntry {\n  let r;\n  ({ sandbox } = await lf.sandbox.create());\n  ws = await lf.workspace.mount(sandbox, \"final-main-acceptance\");\n  await lf.workspace.exec(ws, \"CARGO_HOME=$PWD/.cargo-home timeout 60 cargo test --locked --offline -p depot-store\", \"final-main test-depot-store\", { stdout: process.stdout, stderr: process.stderr });\n  r = await lf.workspace.commit(ws, \"final-main acceptance test-depot-store (exit 0)\");\n  console.log(JSON.stringify({ kind: r.kind, head: r.head }));\n} finally {\n  if (ws) await lf.workspace.unmount(ws);\n  if (sandbox) await lf.sandbox.close(sandbox);\n  await lf.close();\n}\nJS",
+     "timeoutMs": 150000
+    },
+    "phase": "final",
+    "note": "record 082-final-main",
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed|UpToDate",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "Final main: test-depot-server",
+     "command": "# Final main: test-depot-server\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\nlet sandbox, ws;\ntry {\n  let r;\n  ({ sandbox } = await lf.sandbox.create());\n  ws = await lf.workspace.mount(sandbox, \"final-main-acceptance\");\n  await lf.workspace.exec(ws, \"CARGO_HOME=$PWD/.cargo-home timeout 60 cargo test --locked --offline -p depot-server\", \"final-main test-depot-server\", { stdout: process.stdout, stderr: process.stderr });\n  r = await lf.workspace.commit(ws, \"final-main acceptance test-depot-server (exit 0)\");\n  console.log(JSON.stringify({ kind: r.kind, head: r.head }));\n} finally {\n  if (ws) await lf.workspace.unmount(ws);\n  if (sandbox) await lf.sandbox.close(sandbox);\n  await lf.close();\n}\nJS",
+     "timeoutMs": 150000
+    },
+    "phase": "final",
+    "note": "record 083-final-main",
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed|UpToDate",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "Final main: test-depot-cli",
+     "command": "# Final main: test-depot-cli\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\nlet sandbox, ws;\ntry {\n  let r;\n  ({ sandbox } = await lf.sandbox.create());\n  ws = await lf.workspace.mount(sandbox, \"final-main-acceptance\");\n  await lf.workspace.exec(ws, \"CARGO_HOME=$PWD/.cargo-home timeout 60 cargo test --locked --offline -p depot-cli\", \"final-main test-depot-cli\", { stdout: process.stdout, stderr: process.stderr });\n  r = await lf.workspace.commit(ws, \"final-main acceptance test-depot-cli (exit 0)\");\n  console.log(JSON.stringify({ kind: r.kind, head: r.head }));\n} finally {\n  if (ws) await lf.workspace.unmount(ws);\n  if (sandbox) await lf.sandbox.close(sandbox);\n  await lf.close();\n}\nJS",
+     "timeoutMs": 150000
+    },
+    "phase": "final",
+    "note": "record 084-final-main",
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed|UpToDate",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "Final main: doc-depot-domain",
+     "command": "# Final main: doc-depot-domain\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\nlet sandbox, ws;\ntry {\n  let r;\n  ({ sandbox } = await lf.sandbox.create());\n  ws = await lf.workspace.mount(sandbox, \"final-main-acceptance\");\n  await lf.workspace.exec(ws, \"CARGO_HOME=$PWD/.cargo-home timeout 60 cargo test --locked --offline -p depot-domain --doc\", \"final-main doc-depot-domain\", { stdout: process.stdout, stderr: process.stderr });\n  r = await lf.workspace.commit(ws, \"final-main acceptance doc-depot-domain (exit 0)\");\n  console.log(JSON.stringify({ kind: r.kind, head: r.head }));\n} finally {\n  if (ws) await lf.workspace.unmount(ws);\n  if (sandbox) await lf.sandbox.close(sandbox);\n  await lf.close();\n}\nJS",
+     "timeoutMs": 150000
+    },
+    "phase": "final",
+    "note": "record 085-final-main",
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed|UpToDate",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "Final main: doc-depot-store",
+     "command": "# Final main: doc-depot-store\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\nlet sandbox, ws;\ntry {\n  let r;\n  ({ sandbox } = await lf.sandbox.create());\n  ws = await lf.workspace.mount(sandbox, \"final-main-acceptance\");\n  await lf.workspace.exec(ws, \"CARGO_HOME=$PWD/.cargo-home timeout 60 cargo test --locked --offline -p depot-store --doc\", \"final-main doc-depot-store\", { stdout: process.stdout, stderr: process.stderr });\n  r = await lf.workspace.commit(ws, \"final-main acceptance doc-depot-store (exit 0)\");\n  console.log(JSON.stringify({ kind: r.kind, head: r.head }));\n} finally {\n  if (ws) await lf.workspace.unmount(ws);\n  if (sandbox) await lf.sandbox.close(sandbox);\n  await lf.close();\n}\nJS",
+     "timeoutMs": 150000
+    },
+    "phase": "final",
+    "note": "record 086-final-main",
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed|UpToDate",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "Final main: clippy-depot-domain",
+     "command": "# Final main: clippy-depot-domain\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\nlet sandbox, ws;\ntry {\n  let r;\n  ({ sandbox } = await lf.sandbox.create());\n  ws = await lf.workspace.mount(sandbox, \"final-main-acceptance\");\n  await lf.workspace.exec(ws, \"CARGO_HOME=$PWD/.cargo-home timeout 110 cargo clippy --locked --offline -p depot-domain --all-targets -- -D warnings\", \"final-main clippy-depot-domain\", { stdout: process.stdout, stderr: process.stderr });\n  r = await lf.workspace.commit(ws, \"final-main acceptance clippy-depot-domain (exit 0)\");\n  console.log(JSON.stringify({ kind: r.kind, head: r.head }));\n} finally {\n  if (ws) await lf.workspace.unmount(ws);\n  if (sandbox) await lf.sandbox.close(sandbox);\n  await lf.close();\n}\nJS",
+     "timeoutMs": 200000
+    },
+    "phase": "final",
+    "note": "record 087-final-main",
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed|UpToDate",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "Final main: clippy-depot-store",
+     "command": "# Final main: clippy-depot-store\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\nlet sandbox, ws;\ntry {\n  let r;\n  ({ sandbox } = await lf.sandbox.create());\n  ws = await lf.workspace.mount(sandbox, \"final-main-acceptance\");\n  await lf.workspace.exec(ws, \"CARGO_HOME=$PWD/.cargo-home timeout 110 cargo clippy --locked --offline -p depot-store --all-targets -- -D warnings\", \"final-main clippy-depot-store\", { stdout: process.stdout, stderr: process.stderr });\n  r = await lf.workspace.commit(ws, \"final-main acceptance clippy-depot-store (exit 0)\");\n  console.log(JSON.stringify({ kind: r.kind, head: r.head }));\n} finally {\n  if (ws) await lf.workspace.unmount(ws);\n  if (sandbox) await lf.sandbox.close(sandbox);\n  await lf.close();\n}\nJS",
+     "timeoutMs": 200000
+    },
+    "phase": "final",
+    "note": "record 088-final-main",
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed|UpToDate",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "Final main: clippy-depot-server",
+     "command": "# Final main: clippy-depot-server\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\nlet sandbox, ws;\ntry {\n  let r;\n  ({ sandbox } = await lf.sandbox.create());\n  ws = await lf.workspace.mount(sandbox, \"final-main-acceptance\");\n  await lf.workspace.exec(ws, \"CARGO_HOME=$PWD/.cargo-home timeout 110 cargo clippy --locked --offline -p depot-server --all-targets -- -D warnings\", \"final-main clippy-depot-server\", { stdout: process.stdout, stderr: process.stderr });\n  r = await lf.workspace.commit(ws, \"final-main acceptance clippy-depot-server (exit 0)\");\n  console.log(JSON.stringify({ kind: r.kind, head: r.head }));\n} finally {\n  if (ws) await lf.workspace.unmount(ws);\n  if (sandbox) await lf.sandbox.close(sandbox);\n  await lf.close();\n}\nJS",
+     "timeoutMs": 200000
+    },
+    "phase": "final",
+    "note": "record 089-final-main",
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed|UpToDate",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "Final main: clippy-depot-cli",
+     "command": "# Final main: clippy-depot-cli\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\nlet sandbox, ws;\ntry {\n  let r;\n  ({ sandbox } = await lf.sandbox.create());\n  ws = await lf.workspace.mount(sandbox, \"final-main-acceptance\");\n  await lf.workspace.exec(ws, \"CARGO_HOME=$PWD/.cargo-home timeout 110 cargo clippy --locked --offline -p depot-cli --all-targets -- -D warnings\", \"final-main clippy-depot-cli\", { stdout: process.stdout, stderr: process.stderr });\n  r = await lf.workspace.commit(ws, \"final-main acceptance clippy-depot-cli (exit 0)\");\n  console.log(JSON.stringify({ kind: r.kind, head: r.head }));\n} finally {\n  if (ws) await lf.workspace.unmount(ws);\n  if (sandbox) await lf.sandbox.close(sandbox);\n  await lf.close();\n}\nJS",
+     "timeoutMs": 200000
+    },
+    "phase": "final",
+    "note": "record 090-final-main",
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed|UpToDate",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "Final main: format-check",
+     "command": "# Final main: format-check\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\nlet sandbox, ws;\ntry {\n  let r;\n  ({ sandbox } = await lf.sandbox.create());\n  ws = await lf.workspace.mount(sandbox, \"final-main-acceptance\");\n  await lf.workspace.exec(ws, \"CARGO_HOME=$PWD/.cargo-home timeout 20 cargo fmt --all -- --check\", \"final-main format-check\", { stdout: process.stdout, stderr: process.stderr });\n  r = await lf.workspace.commit(ws, \"final-main acceptance format-check (exit 0)\");\n  console.log(JSON.stringify({ kind: r.kind, head: r.head }));\n} finally {\n  if (ws) await lf.workspace.unmount(ws);\n  if (sandbox) await lf.sandbox.close(sandbox);\n  await lf.close();\n}\nJS",
+     "timeoutMs": 110000
+    },
+    "phase": "final",
+    "note": "record 091-final-main",
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed|UpToDate",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "Final main: package-listings",
+     "command": "# Final main: package-listings\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\nlet sandbox, ws;\ntry {\n  let r;\n  ({ sandbox } = await lf.sandbox.create());\n  ws = await lf.workspace.mount(sandbox, \"final-main-acceptance\");\n  await lf.workspace.exec(ws, \"timeout 110 bash -c 'set -e; CARGO_HOME=$PWD/.cargo-home timeout 30 cargo package --list --locked --allow-dirty -p depot-domain; CARGO_HOME=$PWD/.cargo-home timeout 30 cargo package --list --locked --allow-dirty -p depot-store; CARGO_HOME=$PWD/.cargo-home timeout 30 cargo package --list --locked --allow-dirty -p depot-server; CARGO_HOME=$PWD/.cargo-home timeout 30 cargo package --list --locked --allow-dirty -p depot-cli'\", \"final-main package-listings\", { stdout: process.stdout, stderr: process.stderr });\n  r = await lf.workspace.commit(ws, \"final-main acceptance package-listings (exit 0)\");\n  console.log(JSON.stringify({ kind: r.kind, head: r.head }));\n} finally {\n  if (ws) await lf.workspace.unmount(ws);\n  if (sandbox) await lf.sandbox.close(sandbox);\n  await lf.close();\n}\nJS",
+     "timeoutMs": 200000
+    },
+    "phase": "final",
+    "note": "record 092-final-main",
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed|UpToDate",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "Final main: frozen-fixtures",
+     "command": "# Final main: frozen-fixtures\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\nlet sandbox, ws;\ntry {\n  let r;\n  ({ sandbox } = await lf.sandbox.create());\n  ws = await lf.workspace.mount(sandbox, \"final-main-acceptance\");\n  await lf.workspace.exec(ws, \"timeout 60 python3 tests/fixtures.py\", \"final-main frozen-fixtures\", { stdout: process.stdout, stderr: process.stderr });\n  r = await lf.workspace.commit(ws, \"final-main acceptance frozen-fixtures (exit 0)\");\n  console.log(JSON.stringify({ kind: r.kind, head: r.head }));\n} finally {\n  if (ws) await lf.workspace.unmount(ws);\n  if (sandbox) await lf.sandbox.close(sandbox);\n  await lf.close();\n}\nJS",
+     "timeoutMs": 150000
+    },
+    "phase": "final",
+    "note": "record 093-final-main",
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed|UpToDate",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "Final main: registry-recovery-health",
+     "command": "# Final main: registry-recovery-health\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\nlet sandbox, ws;\ntry {\n  let r;\n  ({ sandbox } = await lf.sandbox.create());\n  ws = await lf.workspace.mount(sandbox, \"final-main-acceptance\");\n  await lf.workspace.exec(ws, \"timeout 60 bash -c 'set -e; python3 tests/health.py; python3 tests/smoke.py; python3 tests/registry.py; python3 tests/recovery.py'\", \"final-main registry-recovery-health\", { stdout: process.stdout, stderr: process.stderr });\n  r = await lf.workspace.commit(ws, \"final-main acceptance registry-recovery-health (exit 0)\");\n  console.log(JSON.stringify({ kind: r.kind, head: r.head }));\n} finally {\n  if (ws) await lf.workspace.unmount(ws);\n  if (sandbox) await lf.sandbox.close(sandbox);\n  await lf.close();\n}\nJS",
+     "timeoutMs": 150000
+    },
+    "phase": "final",
+    "note": "record 094-final-main",
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "Final main: core-fixtures",
+     "command": "# Final main: core-fixtures\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\nlet sandbox, ws;\ntry {\n  let r;\n  ({ sandbox } = await lf.sandbox.create());\n  ws = await lf.workspace.mount(sandbox, \"final-main-acceptance\");\n  await lf.workspace.exec(ws, \"timeout 110 python3 tests/full.py core final\", \"final-main core-fixtures\", { stdout: process.stdout, stderr: process.stderr });\n  r = await lf.workspace.commit(ws, \"final-main acceptance core-fixtures (exit 0)\");\n  console.log(JSON.stringify({ kind: r.kind, head: r.head }));\n} finally {\n  if (ws) await lf.workspace.unmount(ws);\n  if (sandbox) await lf.sandbox.close(sandbox);\n  await lf.close();\n}\nJS",
+     "timeoutMs": 200000
+    },
+    "phase": "final",
+    "note": "record 095-final-main",
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "Final main: large-v1",
+     "command": "# Final main: large-v1\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\nlet sandbox, ws;\ntry {\n  let r;\n  ({ sandbox } = await lf.sandbox.create());\n  ws = await lf.workspace.mount(sandbox, \"final-main-acceptance\");\n  await lf.workspace.exec(ws, \"timeout 110 python3 tests/full.py large-v1 final\", \"final-main large-v1\", { stdout: process.stdout, stderr: process.stderr });\n  r = await lf.workspace.commit(ws, \"final-main acceptance large-v1 (exit 0)\");\n  console.log(JSON.stringify({ kind: r.kind, head: r.head }));\n} finally {\n  if (ws) await lf.workspace.unmount(ws);\n  if (sandbox) await lf.sandbox.close(sandbox);\n  await lf.close();\n}\nJS",
+     "timeoutMs": 200000
+    },
+    "phase": "final",
+    "note": "record 096-final-main",
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "Final main: large-identical",
+     "command": "# Final main: large-identical\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\nlet sandbox, ws;\ntry {\n  let r;\n  ({ sandbox } = await lf.sandbox.create());\n  ws = await lf.workspace.mount(sandbox, \"final-main-acceptance\");\n  await lf.workspace.exec(ws, \"timeout 110 python3 tests/full.py large-identical final\", \"final-main large-identical\", { stdout: process.stdout, stderr: process.stderr });\n  r = await lf.workspace.commit(ws, \"final-main acceptance large-identical (exit 0)\");\n  console.log(JSON.stringify({ kind: r.kind, head: r.head }));\n} finally {\n  if (ws) await lf.workspace.unmount(ws);\n  if (sandbox) await lf.sandbox.close(sandbox);\n  await lf.close();\n}\nJS",
+     "timeoutMs": 200000
+    },
+    "phase": "final",
+    "note": "record 097-final-main",
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "Final main: large-v2",
+     "command": "# Final main: large-v2\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\nlet sandbox, ws;\ntry {\n  let r;\n  ({ sandbox } = await lf.sandbox.create());\n  ws = await lf.workspace.mount(sandbox, \"final-main-acceptance\");\n  await lf.workspace.exec(ws, \"timeout 110 python3 tests/full.py large-v2 final\", \"final-main large-v2\", { stdout: process.stdout, stderr: process.stderr });\n  r = await lf.workspace.commit(ws, \"final-main acceptance large-v2 (exit 0)\");\n  console.log(JSON.stringify({ kind: r.kind, head: r.head }));\n} finally {\n  if (ws) await lf.workspace.unmount(ws);\n  if (sandbox) await lf.sandbox.close(sandbox);\n  await lf.close();\n}\nJS",
+     "timeoutMs": 200000
+    },
+    "phase": "final",
+    "note": "record 098-final-main",
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "Final main: cli",
+     "command": "# Final main: cli\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\nlet sandbox, ws;\ntry {\n  let r;\n  ({ sandbox } = await lf.sandbox.create());\n  ws = await lf.workspace.mount(sandbox, \"final-main-acceptance\");\n  await lf.workspace.exec(ws, \"timeout 60 python3 tests/full.py cli final\", \"final-main cli\", { stdout: process.stdout, stderr: process.stderr });\n  r = await lf.workspace.commit(ws, \"final-main acceptance cli (exit 0)\");\n  console.log(JSON.stringify({ kind: r.kind, head: r.head }));\n} finally {\n  if (ws) await lf.workspace.unmount(ws);\n  if (sandbox) await lf.sandbox.close(sandbox);\n  await lf.close();\n}\nJS",
+     "timeoutMs": 150000
+    },
+    "phase": "final",
+    "note": "record 099-final-main",
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "Final main: browser",
+     "command": "# Final main: browser\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\nlet sandbox, ws;\ntry {\n  let r;\n  ({ sandbox } = await lf.sandbox.create());\n  ws = await lf.workspace.mount(sandbox, \"final-main-acceptance\");\n  await lf.workspace.exec(ws, \"timeout 60 python3 tests/browser.py\", \"final-main browser\", { stdout: process.stdout, stderr: process.stderr });\n  r = await lf.workspace.commit(ws, \"final-main acceptance browser (exit 0)\");\n  console.log(JSON.stringify({ kind: r.kind, head: r.head }));\n} finally {\n  if (ws) await lf.workspace.unmount(ws);\n  if (sandbox) await lf.sandbox.close(sandbox);\n  await lf.close();\n}\nJS",
+     "timeoutMs": 150000
+    },
+    "phase": "final",
+    "note": "record 100-final-main (with 101-final-main)",
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "Final main: fresh-remount",
+     "command": "# Final main: fresh-remount\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\nlet sandbox, ws;\ntry {\n  let r;\n  ({ sandbox } = await lf.sandbox.create());\n  ws = await lf.workspace.mount(sandbox, \"final-main-acceptance\");\n  await lf.workspace.exec(ws, \"timeout 60 python3 tests/full.py remount final\", \"final-main fresh-remount\", { stdout: process.stdout, stderr: process.stderr });\n  r = await lf.workspace.commit(ws, \"final-main acceptance fresh-remount (exit 0)\");\n  console.log(JSON.stringify({ kind: r.kind, head: r.head }));\n} finally {\n  if (ws) await lf.workspace.unmount(ws);\n  if (sandbox) await lf.sandbox.close(sandbox);\n  await lf.close();\n}\nJS",
+     "timeoutMs": 150000
+    },
+    "phase": "final",
+    "note": "record 102-final-main (with 101-final-main)",
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "Final main: source/binary/process audit",
+     "command": "# Final main: source/binary/process audit\nnode --input-type=module <<'JS'\nconst { LayerFS } = await import(\"@layerfs/agent\");\nconst lf = await LayerFS.open(process.env.LAYERFS_PROJECT);\nlet sandbox, ws;\ntry {\n  let r;\n  ({ sandbox } = await lf.sandbox.create());\n  ws = await lf.workspace.mount(sandbox, \"final-main-acceptance\");\n  await lf.workspace.exec(ws, `timeout 30 python3 - <<'AUDIT'\nfrom pathlib import Path\nimport json,os,hashlib,stat,subprocess\nsources={}\nfor path in Path('crates').glob('*/src/**/*.rs'):\n lines=len(path.read_text().splitlines());assert lines<=999,(str(path),lines)\n if path.name in ['lib.rs','mod.rs']:assert lines<=200,(str(path),lines)\n sources[str(path)]=lines\nbinaries={}\nfor name in ['depot-server','depot-cli']:\n p=Path('target/debug')/name;h=hashlib.sha256()\n with p.open('rb') as f:\n  while b:=f.read(65536):h.update(b)\n assert os.access(p,os.X_OK)\n binaries[name]={'bytes':p.stat().st_size,'mode':oct(stat.S_IMODE(p.stat().st_mode)),'sha256':h.hexdigest()}\nlive=[];zombies=[]\nfor p in Path('/proc').iterdir():\n if not p.name.isdigit():continue\n try:\n  name=(p/'comm').read_text().strip();state=(p/'stat').read_text().split(') ',1)[1].split()[0]\n  if name in ['depot-server','depot-cli','chromedriver','chromium']:(zombies if state=='Z' else live).append({'pid':p.name,'name':name,'state':state})\n except (OSError,IndexError):pass\nassert not live,live\nenv={**os.environ,'CARGO_HOME':str(Path('.cargo-home').resolve()),'CARGO_TARGET_DIR':str(Path('target').resolve()),'RUSTUP_HOME':'/usr/local/rustup','RUSTC_WRAPPER':'','RUSTC_WORKSPACE_WRAPPER':''}\nr=subprocess.run(['timeout','20','cargo','metadata','--locked','--offline','--no-deps','--format-version','1'],env=env,capture_output=True,text=True,timeout=22);assert r.returncode==0,r.stderr\nmetadata=json.loads(r.stdout)\ndocs={p['name']:[t['kind'] for t in p['targets']] for p in metadata['packages']}\nversions={tool:subprocess.run(['timeout','5',tool,'--version'],capture_output=True,text=True,timeout=6).stdout.strip() for tool in ['rustc','cargo','chromium','chromedriver']}\nprint(json.dumps({'source_physical_lines':sources,'retained_binaries':binaries,'live_application_browser_processes':live,'reaped_or_inert_zombies':zombies,'package_target_kinds':docs,'versions':versions},sort_keys=True))\nAUDIT`, \"final source, binary and child lifecycle audit\", { stdout: process.stdout, stderr: process.stderr });\n  r = await lf.workspace.commit(ws, \"final-main acceptance source/binary/process audit (exit 0)\");\n  console.log(JSON.stringify({ kind: r.kind, head: r.head }));\n} finally {\n  if (ws) await lf.workspace.unmount(ws);\n  if (sandbox) await lf.sandbox.close(sandbox);\n  await lf.close();\n}\nJS",
+     "timeoutMs": 120000
+    },
+    "phase": "final",
+    "note": "record 103-final-main-audit (with 104-final-state-history)",
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed|UpToDate",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   }
+  ]
+ }
+}

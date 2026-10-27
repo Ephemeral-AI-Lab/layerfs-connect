@@ -1,0 +1,7 @@
+[
+ {
+  "op": "write",
+  "path": "/packages/web/test/planning-data.test.js",
+  "content": "import { test } from 'node:test';\nimport assert from 'node:assert/strict';\nimport { loadPlanningPages } from '../src/pages/work/planning-data.js';\nimport { moveBody } from '../src/pages/work/board-state.js';\ntest('planning selectors collect every opaque cursor page and preserve list metadata', async () => {\n  const paths = [];\n  const api = { async get(path) { paths.push(path); return paths.length === 1 ? { items: [{ id: 'a' }], nextCursor: 'opaque+cursor', maxUploadBytes: 99 } : { items: [{ id: 'b' }], nextCursor: null, maxUploadBytes: 99 }; } };\n  const result = await loadPlanningPages(api, '/issues/i/attachments?labelId=label');\n  assert.deepEqual(result.items.map(item => item.id), ['a', 'b']); assert.equal(result.maxUploadBytes, 99);\n  assert(paths[1].includes('cursor=opaque%2Bcursor')); assert(paths[1].includes('labelId=label'));\n});\ntest('planning pagination refuses malformed or repeated server cursors', async () => {\n  await assert.rejects(() => loadPlanningPages({ get: async () => ({ items: [], nextCursor: 'repeat' }) }, '/projects'), /repeated/);\n  await assert.rejects(() => loadPlanningPages({ get: async () => ({ items: null }) }, '/projects'), /invalid/);\n});\ntest('keyboard within-column move preserves its after anchor', () => {\n  assert.deepEqual(moveBody({ statusId: 's', afterId: 'b' }, 'a'), { statusId: 's', afterId: 'b' });\n});\n"
+ }
+]

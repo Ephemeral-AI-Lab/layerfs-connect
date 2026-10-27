@@ -1,0 +1,113 @@
+// The Connect host's entry (README.md, "Process protocol"):
+//   node --import ./host/resolve-layerfs.js host/main.js [--state <dir>] [--port <n>]
+// It resolves Connect's settings, opens the LayerFS runtime, starts the
+// home's worker in the background when it can and it is not running (a
+// failed start is reported in status, the host keeps serving), loads the
+// demo engine (runs/) and serves HTTP on 127.0.0.1. Once it listens it
+// prints one line on stdout, {"ready":true,"url","token"}, or
+// {"ready":false,"error"} and exits 1. Logs go to stderr. It exits when
+// stdin closes or on SIGTERM, closing the runtime first; it never stops the
+// worker. While it serves, <state>/host.json (owner-only) holds the same
+// url and token and its pid, so tools on this machine can drive the running
+// app's host (tools/connect-run.mjs); it is removed at exit.
+import { readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { join } from 'node:path'
+import { APP, openRuntime, resolveSpec } from './config.js'
+import { Projects } from './projects.js'
+import { createHostServer, listen, newToken } from './server.js'
+
+/** How long shutdown may take before the process exits anyway. */
+const CLOSE_MS = 10_000
+
+const log = (line) => process.stderr.write(`${line}\n`)
+
+/** `--state <dir>` and `--port <n>` (also `--name=value`). */
+function parseArgs(argv) {
+  const options = {}
+  for (let i = 0; i < argv.length; i++) {
+    const [flag, inline] = argv[i].split(/=(.*)/s, 2)
+    if (flag !== '--state' && flag !== '--port') throw new Error(`unknown argument ${argv[i]}`)
+    const value = inline ?? argv[++i]
+    if (value === undefined) throw new Error(`${flag} needs a value`)
+    options[flag.slice(2)] = value
+  }
+  if (options.port !== undefined && !/^\d+$/.test(options.port)) throw new Error('--port must be a whole number')
+  return { state: options.state, port: options.port === undefined ? 0 : Number(options.port) }
+}
+
+/** The RunManager, or why it did not load. Loaded lazily: the engine may be absent. */
+async function loadRuns(spec) {
+  try {
+    const { RunManager } = await import('./runs/index.js')
+    return { runs: new RunManager({ spec, scenarios: join(APP, 'scenarios') }), error: null }
+  } catch (error) {
+    log(`[host] the demo engine did not load: ${error?.code === 'ERR_MODULE_NOT_FOUND' ? error.message : (error?.stack ?? error)}`)
+    return { runs: null, error: error?.message ?? String(error) }
+  }
+}
+
+/** True when host.json names another process that is still alive. */
+function liveOwner(file) {
+  try {
+    const { pid } = JSON.parse(readFileSync(file, 'utf8'))
+    if (pid === process.pid) return false
+    process.kill(pid, 0)
+    return true
+  } catch {
+    return false
+  }
+}
+
+async function main() {
+  const args = parseArgs(process.argv.slice(2))
+  const spec = args.state ? resolveSpec(args.state) : resolveSpec()
+  const runtime = await openRuntime(spec)
+  const engine = { runs: null, error: 'loading' }
+  const projects = new Projects({ spec, runs: () => engine.runs, log })
+  const token = newToken()
+  const server = createHostServer({ token, projects, runs: () => engine.runs, runsError: () => engine.error, log })
+
+  const endpoint = join(spec.state, 'host.json')
+  let owned = false
+  let closing = null
+  const shutdown = (why) => {
+    closing ??= (async () => {
+      log(`[host] closing (${why})`)
+      setTimeout(() => {
+        log('[host] shutdown took too long; exiting')
+        process.exit(1)
+      }, CLOSE_MS).unref()
+      await new Promise((resolve) => server.close(() => resolve()))
+      await Promise.resolve()
+        .then(() => engine.runs?.close?.())
+        .catch((error) => log(`[host] closing the engine: ${error?.message ?? error}`))
+      await projects.close()
+      await runtime.close().catch((error) => log(`[host] closing the runtime: ${error?.message ?? error}`))
+      if (owned) rmSync(endpoint, { force: true })
+      process.exit(0)
+    })()
+    return closing
+  }
+  process.on('SIGTERM', () => void shutdown('SIGTERM'))
+  process.on('SIGINT', () => void shutdown('SIGINT'))
+  process.stdin.on('end', () => void shutdown('stdin closed'))
+  process.stdin.on('close', () => void shutdown('stdin closed'))
+  process.stdin.resume()
+
+  Object.assign(engine, await loadRuns(spec))
+  void projects.ensureWorker()
+  const url = await listen(server, args.port)
+  // a second host (another app window on the same state) leaves the first one's file alone
+  if (!liveOwner(endpoint)) {
+    writeFileSync(endpoint, JSON.stringify({ url, token, pid: process.pid }), { mode: 0o600 })
+    owned = true
+  }
+  process.stdout.write(`${JSON.stringify({ ready: true, url, token })}\n`)
+  log(`[host] listening on ${url} (state ${spec.state}, ${spec.worker ? 'worker' : 'in-process'} Store calls)`)
+}
+
+main().catch((error) => {
+  log(`[host] did not start: ${error?.stack ?? error}`)
+  process.stdout.write(`${JSON.stringify({ ready: false, error: error?.message ?? String(error) })}\n`)
+  process.exit(1)
+})

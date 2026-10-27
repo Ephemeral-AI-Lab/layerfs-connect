@@ -1,0 +1,293 @@
+{
+ "type": "layerfs-scenario",
+ "version": 3,
+ "title": "Shop",
+ "blurb": "A builder agent grows a small Node web shop from a skeleton to an admin page over six milestones: a product catalog, carts and totals, checkout with orders and discounts, a browser storefront and an admin page. It writes each milestone's code, installs, builds and tests it in a Workspace, smoke-tests the server, merges the storefront with the orders work and publishes every milestone to main.",
+ "order": 7,
+ "tags": [
+  "cli",
+  "node",
+  "publish",
+  "merge"
+ ],
+ "fixture": "seed.json",
+ "agents": {
+  "root": [
+   {
+    "bash": {
+     "description": "M1: initialize project and skeleton",
+     "command": "# M1: initialize project and skeleton\nlayerfs branch fork skeleton\nlayerfs fs apply skeleton -m '006 M1: scaffold server, scripts, health test and merge rules' --from \"{{scenario}}/changes/001.json\""
+    },
+    "phase": "M1",
+    "note": "record 006",
+    "expect": [
+     "branch.fork:Forked",
+     "fs.apply:Committed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "M1: install dependencies",
+     "command": "# M1: install dependencies\nsb=$(layerfs sandbox create | jq -r .sandbox)\nws=$(layerfs workspace mount \"$sb\" skeleton | jq -r .ws)\nlayerfs workspace exec \"$ws\" 'timeout 100 npm install --no-audit --no-fund' -m '007 M1: install dependencies' --stream\nlayerfs workspace commit \"$ws\" -m '007 M1: npm install (exit 0)'\nlayerfs workspace unmount \"$ws\"\nlayerfs sandbox close \"$sb\"",
+     "timeoutMs": 190000
+    },
+    "phase": "M1",
+    "note": "record 007",
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "M1: test and publish skeleton",
+     "command": "# M1: test and publish skeleton\nsb=$(layerfs sandbox create | jq -r .sandbox)\nws=$(layerfs workspace mount \"$sb\" skeleton | jq -r .ws)\nlayerfs workspace exec \"$ws\" 'timeout 30 npm test' -m '008 M1: health tests' --stream\nlayerfs workspace commit \"$ws\" -m '008 M1: health tests (exit 0)'\nlayerfs workspace unmount \"$ws\"\nlayerfs sandbox close \"$sb\"\nlayerfs branch publish skeleton\nlayerfs branch fork catalog",
+     "timeoutMs": 120000
+    },
+    "phase": "M1",
+    "note": "record 008",
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed|UpToDate",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed",
+     "branch.publish:Added",
+     "branch.fork:Forked"
+    ]
+   },
+   {
+    "bash": {
+     "description": "M2: implement catalog",
+     "command": "# M2: implement catalog\nlayerfs fs apply catalog -m '009 M2: JSON store, catalog queries and structured validation' --from \"{{scenario}}/changes/004.json\""
+    },
+    "phase": "M2",
+    "note": "record 009",
+    "expect": [
+     "fs.apply:Committed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "M2: two Workspaces on the catalog Branch",
+     "command": "# M2: two Workspaces on the catalog Branch\nsb=$(layerfs sandbox create | jq -r .sandbox)\nws1=$(layerfs workspace mount \"$sb\" catalog | jq -r .ws)\nws2=$(layerfs workspace mount \"$sb\" catalog | jq -r .ws)\nIFS= read -r -d '' cmd <<'CMD'\nnode --input-type=module <<'SHOP_SEED'\nimport {writeFile} from 'node:fs/promises';\nawait writeFile('data/products.json',\"[\\n  {\\n    \\\"id\\\": \\\"mug-classic\\\",\\n    \\\"name\\\": \\\"Amber Mug\\\",\\n    \\\"description\\\": \\\"Thoughtfully made amber mug for everyday rituals.\\\",\\n    \\\"priceCents\\\": 1250,\\n    \\\"category\\\": \\\"Home\\\",\\n    \\\"stock\\\": 20,\\n    \\\"imageUrl\\\": \\\"https://placehold.co/640x480/efe9df/243b35?text=Amber%20Mug\\\"\\n  },\\n  {\\n    \\\"id\\\": \\\"notebook-blue\\\",\\n    \\\"name\\\": \\\"Blue Notebook\\\",\\n    \\\"description\\\": \\\"Thoughtfully made blue notebook for everyday rituals.\\\",\\n    \\\"priceCents\\\": 636,\\n    \\\"category\\\": \\\"Stationery\\\",\\n    \\\"stock\\\": 0,\\n    \\\"imageUrl\\\": \\\"https://placehold.co/640x480/efe9df/243b35?text=Blue%20Notebook\\\"\\n  },\\n  {\\n    \\\"id\\\": \\\"tote-canvas\\\",\\n    \\\"name\\\": \\\"Canvas Tote\\\",\\n    \\\"description\\\": \\\"Thoughtfully made canvas tote for everyday rituals.\\\",\\n    \\\"priceCents\\\": 773,\\n    \\\"category\\\": \\\"Accessories\\\",\\n    \\\"stock\\\": 1,\\n    \\\"imageUrl\\\": \\\"https://placehold.co/640x480/efe9df/243b35?text=Canvas%20Tote\\\"\\n  },\\n  {\\n    \\\"id\\\": \\\"product-4\\\",\\n    \\\"name\\\": \\\"Desk Lamp\\\",\\n    \\\"description\\\": \\\"Thoughtfully made desk lamp for everyday rituals.\\\",\\n    \\\"priceCents\\\": 910,\\n    \\\"category\\\": \\\"Wellness\\\",\\n    \\\"stock\\\": 20,\\n    \\\"imageUrl\\\": \\\"https://placehold.co/640x480/efe9df/243b35?text=Desk%20Lamp\\\"\\n  },\\n  {\\n    \\\"id\\\": \\\"product-5\\\",\\n    \\\"name\\\": \\\"Espresso Cup\\\",\\n    \\\"description\\\": \\\"Thoughtfully made espresso cup for everyday rituals.\\\",\\n    \\\"priceCents\\\": 1047,\\n    \\\"category\\\": \\\"Kitchen\\\",\\n    \\\"stock\\\": 20,\\n    \\\"imageUrl\\\": \\\"https://placehold.co/640x480/efe9df/243b35?text=Espresso%20Cup\\\"\\n  },\\n  {\\n    \\\"id\\\": \\\"product-6\\\",\\n    \\\"name\\\": \\\"Forest Journal\\\",\\n    \\\"description\\\": \\\"Thoughtfully made forest journal for everyday rituals.\\\",\\n    \\\"priceCents\\\": 1184,\\n    \\\"category\\\": \\\"Home\\\",\\n    \\\"stock\\\": 20,\\n    \\\"imageUrl\\\": \\\"https://placehold.co/640x480/efe9df/243b35?text=Forest%20Journal\\\"\\n  },\\n  {\\n    \\\"id\\\": \\\"product-7\\\",\\n    \\\"name\\\": \\\"Granite Bowl\\\",\\n    \\\"description\\\": \\\"Thoughtfully made granite bowl for everyday rituals.\\\",\\n    \\\"priceCents\\\": 1321,\\n    \\\"category\\\": \\\"Stationery\\\",\\n    \\\"stock\\\": 20,\\n    \\\"imageUrl\\\": \\\"https://placehold.co/640x480/efe9df/243b35?text=Granite%20Bowl\\\"\\n  },\\n  {\\n    \\\"id\\\": \\\"product-8\\\",\\n    \\\"name\\\": \\\"Harbor Scarf\\\",\\n    \\\"description\\\": \\\"Thoughtfully made harbor scarf for everyday rituals.\\\",\\n    \\\"priceCents\\\": 1458,\\n    \\\"category\\\": \\\"Accessories\\\",\\n    \\\"stock\\\": 20,\\n    \\\"imageUrl\\\": \\\"https://placehold.co/640x480/efe9df/243b35?text=Harbor%20Scarf\\\"\\n  },\\n  {\\n    \\\"id\\\": \\\"product-9\\\",\\n    \\\"name\\\": \\\"Indigo Pen\\\",\\n    \\\"description\\\": \\\"Thoughtfully made indigo pen for everyday rituals.\\\",\\n    \\\"priceCents\\\": 1595,\\n    \\\"category\\\": \\\"Wellness\\\",\\n    \\\"stock\\\": 20,\\n    \\\"imageUrl\\\": \\\"https://placehold.co/640x480/efe9df/243b35?text=Indigo%20Pen\\\"\\n  },\\n  {\\n    \\\"id\\\": \\\"product-10\\\",\\n    \\\"name\\\": \\\"Jade Plate\\\",\\n    \\\"description\\\": \\\"Thoughtfully made jade plate for everyday rituals.\\\",\\n    \\\"priceCents\\\": 1732,\\n    \\\"category\\\": \\\"Kitchen\\\",\\n    \\\"stock\\\": 20,\\n    \\\"imageUrl\\\": \\\"https://placehold.co/640x480/efe9df/243b35?text=Jade%20Plate\\\"\\n  },\\n  {\\n    \\\"id\\\": \\\"product-11\\\",\\n    \\\"name\\\": \\\"Knit Beanie\\\",\\n    \\\"description\\\": \\\"Thoughtfully made knit beanie for everyday rituals.\\\",\\n    \\\"priceCents\\\": 1869,\\n    \\\"category\\\": \\\"Home\\\",\\n    \\\"stock\\\": 20,\\n    \\\"imageUrl\\\": \\\"https://placehold.co/640x480/efe9df/243b35?text=Knit%20Beanie\\\"\\n  },\\n  {\\n    \\\"id\\\": \\\"product-12\\\",\\n    \\\"name\\\": \\\"Linen Napkin\\\",\\n    \\\"description\\\": \\\"Thoughtfully made linen napkin for everyday rituals.\\\",\\n    \\\"priceCents\\\": 2006,\\n    \\\"category\\\": \\\"Stationery\\\",\\n    \\\"stock\\\": 20,\\n    \\\"imageUrl\\\": \\\"https://placehold.co/640x480/efe9df/243b35?text=Linen%20Napkin\\\"\\n  },\\n  {\\n    \\\"id\\\": \\\"product-13\\\",\\n    \\\"name\\\": \\\"Maple Board\\\",\\n    \\\"description\\\": \\\"Thoughtfully made maple board for everyday rituals.\\\",\\n    \\\"priceCents\\\": 2143,\\n    \\\"category\\\": \\\"Accessories\\\",\\n    \\\"stock\\\": 20,\\n    \\\"imageUrl\\\": \\\"https://placehold.co/640x480/efe9df/243b35?text=Maple%20Board\\\"\\n  },\\n  {\\n    \\\"id\\\": \\\"product-14\\\",\\n    \\\"name\\\": \\\"Navy Bottle\\\",\\n    \\\"description\\\": \\\"Thoughtfully made navy bottle for everyday rituals.\\\",\\n    \\\"priceCents\\\": 2280,\\n    \\\"category\\\": \\\"Wellness\\\",\\n    \\\"stock\\\": 20,\\n    \\\"imageUrl\\\": \\\"https://placehold.co/640x480/efe9df/243b35?text=Navy%20Bottle\\\"\\n  },\\n  {\\n    \\\"id\\\": \\\"product-15\\\",\\n    \\\"name\\\": \\\"Oak Tray\\\",\\n    \\\"description\\\": \\\"Thoughtfully made oak tray for everyday rituals.\\\",\\n    \\\"priceCents\\\": 2417,\\n    \\\"category\\\": \\\"Kitchen\\\",\\n    \\\"stock\\\": 20,\\n    \\\"imageUrl\\\": \\\"https://placehold.co/640x480/efe9df/243b35?text=Oak%20Tray\\\"\\n  },\\n  {\\n    \\\"id\\\": \\\"product-16\\\",\\n    \\\"name\\\": \\\"Pocket Pouch\\\",\\n    \\\"description\\\": \\\"Thoughtfully made pocket pouch for everyday rituals.\\\",\\n    \\\"priceCents\\\": 2554,\\n    \\\"category\\\": \\\"Home\\\",\\n    \\\"stock\\\": 20,\\n    \\\"imageUrl\\\": \\\"https://placehold.co/640x480/efe9df/243b35?text=Pocket%20Pouch\\\"\\n  },\\n  {\\n    \\\"id\\\": \\\"product-17\\\",\\n    \\\"name\\\": \\\"Quartz Clock\\\",\\n    \\\"description\\\": \\\"Thoughtfully made quartz clock for everyday rituals.\\\",\\n    \\\"priceCents\\\": 2691,\\n    \\\"category\\\": \\\"Stationery\\\",\\n    \\\"stock\\\": 20,\\n    \\\"imageUrl\\\": \\\"https://placehold.co/640x480/efe9df/243b35?text=Quartz%20Clock\\\"\\n  },\\n  {\\n    \\\"id\\\": \\\"product-18\\\",\\n    \\\"name\\\": \\\"Reed Basket\\\",\\n    \\\"description\\\": \\\"Thoughtfully made reed basket for everyday rituals.\\\",\\n    \\\"priceCents\\\": 2828,\\n    \\\"category\\\": \\\"Accessories\\\",\\n    \\\"stock\\\": 20,\\n    \\\"imageUrl\\\": \\\"https://placehold.co/640x480/efe9df/243b35?text=Reed%20Basket\\\"\\n  },\\n  {\\n    \\\"id\\\": \\\"product-19\\\",\\n    \\\"name\\\": \\\"Stone Vase\\\",\\n    \\\"description\\\": \\\"Thoughtfully made stone vase for everyday rituals.\\\",\\n    \\\"priceCents\\\": 2965,\\n    \\\"category\\\": \\\"Wellness\\\",\\n    \\\"stock\\\": 20,\\n    \\\"imageUrl\\\": \\\"https://placehold.co/640x480/efe9df/243b35?text=Stone%20Vase\\\"\\n  },\\n  {\\n    \\\"id\\\": \\\"product-20\\\",\\n    \\\"name\\\": \\\"Tea Infuser\\\",\\n    \\\"description\\\": \\\"Thoughtfully made tea infuser for everyday rituals.\\\",\\n    \\\"priceCents\\\": 3102,\\n    \\\"category\\\": \\\"Kitchen\\\",\\n    \\\"stock\\\": 20,\\n    \\\"imageUrl\\\": \\\"https://placehold.co/640x480/efe9df/243b35?text=Tea%20Infuser\\\"\\n  },\\n  {\\n    \\\"id\\\": \\\"product-21\\\",\\n    \\\"name\\\": \\\"Urban Backpack\\\",\\n    \\\"description\\\": \\\"Thoughtfully made urban backpack for everyday rituals.\\\",\\n    \\\"priceCents\\\": 3239,\\n    \\\"category\\\": \\\"Home\\\",\\n    \\\"stock\\\": 20,\\n    \\\"imageUrl\\\": \\\"https://placehold.co/640x480/efe9df/243b35?text=Urban%20Backpack\\\"\\n  },\\n  {\\n    \\\"id\\\": \\\"product-22\\\",\\n    \\\"name\\\": \\\"Velvet Cushion\\\",\\n    \\\"description\\\": \\\"Thoughtfully made velvet cushion for everyday rituals.\\\",\\n    \\\"priceCents\\\": 3376,\\n    \\\"category\\\": \\\"Stationery\\\",\\n    \\\"stock\\\": 20,\\n    \\\"imageUrl\\\": \\\"https://placehold.co/640x480/efe9df/243b35?text=Velvet%20Cushion\\\"\\n  },\\n  {\\n    \\\"id\\\": \\\"product-23\\\",\\n    \\\"name\\\": \\\"Walnut Spoon\\\",\\n    \\\"description\\\": \\\"Thoughtfully made walnut spoon for everyday rituals.\\\",\\n    \\\"priceCents\\\": 3513,\\n    \\\"category\\\": \\\"Accessories\\\",\\n    \\\"stock\\\": 20,\\n    \\\"imageUrl\\\": \\\"https://placehold.co/640x480/efe9df/243b35?text=Walnut%20Spoon\\\"\\n  },\\n  {\\n    \\\"id\\\": \\\"product-24\\\",\\n    \\\"name\\\": \\\"Yoga Strap\\\",\\n    \\\"description\\\": \\\"Thoughtfully made yoga strap for everyday rituals.\\\",\\n    \\\"priceCents\\\": 3650,\\n    \\\"category\\\": \\\"Wellness\\\",\\n    \\\"stock\\\": 20,\\n    \\\"imageUrl\\\": \\\"https://placehold.co/640x480/efe9df/243b35?text=Yoga%20Strap\\\"\\n  },\\n  {\\n    \\\"id\\\": \\\"product-25\\\",\\n    \\\"name\\\": \\\"Zinc Planter\\\",\\n    \\\"description\\\": \\\"Thoughtfully made zinc planter for everyday rituals.\\\",\\n    \\\"priceCents\\\": 3787,\\n    \\\"category\\\": \\\"Kitchen\\\",\\n    \\\"stock\\\": 20,\\n    \\\"imageUrl\\\": \\\"https://placehold.co/640x480/efe9df/243b35?text=Zinc%20Planter\\\"\\n  },\\n  {\\n    \\\"id\\\": \\\"product-26\\\",\\n    \\\"name\\\": \\\"Aurora Candle\\\",\\n    \\\"description\\\": \\\"Thoughtfully made aurora candle for everyday rituals.\\\",\\n    \\\"priceCents\\\": 3924,\\n    \\\"category\\\": \\\"Home\\\",\\n    \\\"stock\\\": 20,\\n    \\\"imageUrl\\\": \\\"https://placehold.co/640x480/efe9df/243b35?text=Aurora%20Candle\\\"\\n  },\\n  {\\n    \\\"id\\\": \\\"product-27\\\",\\n    \\\"name\\\": \\\"Bamboo Brush\\\",\\n    \\\"description\\\": \\\"Thoughtfully made bamboo brush for everyday rituals.\\\",\\n    \\\"priceCents\\\": 4061,\\n    \\\"category\\\": \\\"Stationery\\\",\\n    \\\"stock\\\": 20,\\n    \\\"imageUrl\\\": \\\"https://placehold.co/640x480/efe9df/243b35?text=Bamboo%20Brush\\\"\\n  },\\n  {\\n    \\\"id\\\": \\\"product-28\\\",\\n    \\\"name\\\": \\\"Cedar Soap\\\",\\n    \\\"description\\\": \\\"Thoughtfully made cedar soap for everyday rituals.\\\",\\n    \\\"priceCents\\\": 4198,\\n    \\\"category\\\": \\\"Accessories\\\",\\n    \\\"stock\\\": 20,\\n    \\\"imageUrl\\\": \\\"https://placehold.co/640x480/efe9df/243b35?text=Cedar%20Soap\\\"\\n  },\\n  {\\n    \\\"id\\\": \\\"product-29\\\",\\n    \\\"name\\\": \\\"Dune Towel\\\",\\n    \\\"description\\\": \\\"Thoughtfully made dune towel for everyday rituals.\\\",\\n    \\\"priceCents\\\": 4335,\\n    \\\"category\\\": \\\"Wellness\\\",\\n    \\\"stock\\\": 20,\\n    \\\"imageUrl\\\": \\\"https://placehold.co/640x480/efe9df/243b35?text=Dune%20Towel\\\"\\n  },\\n  {\\n    \\\"id\\\": \\\"product-30\\\",\\n    \\\"name\\\": \\\"Elm Coaster\\\",\\n    \\\"description\\\": \\\"Thoughtfully made elm coaster for everyday rituals.\\\",\\n    \\\"priceCents\\\": 4472,\\n    \\\"category\\\": \\\"Kitchen\\\",\\n    \\\"stock\\\": 20,\\n    \\\"imageUrl\\\": \\\"https://placehold.co/640x480/efe9df/243b35?text=Elm%20Coaster\\\"\\n  }\\n]\\n\");\nSHOP_SEED\nCMD\nlayerfs workspace exec \"$ws1\" \"$cmd\" -m '010 M2: seed 30 products in first Workspace' --stream\nlayerfs workspace commit \"$ws1\" -m '010 M2: seed catalog (exit 0)'\nIFS= read -r -d '' cmd <<'CMD'\nnode --input-type=module <<'SHOP_TEST'\nimport {writeFile} from 'node:fs/promises';\nawait writeFile('test/catalog.test.js',\"import {test} from 'node:test';\\nimport assert from 'node:assert/strict';\\nimport {fixture} from './helpers.js';\\ntest('catalog: seed, sorting, filters, search and paging',async t=>{\\n  const {request}=await fixture(t);\\n  const all=(await request('/api/products?pageSize=50')).body;\\n  assert.equal(all.total,30); assert.ok(new Set(all.items.map(p=>p.category)).size>=4);\\n  assert.ok(all.items.some(p=>p.stock===0)); assert.ok(all.items.some(p=>p.stock===1));\\n  assert.deepEqual(all.items.map(p=>p.name),all.items.map(p=>p.name).sort((a,b)=>a.localeCompare(b)));\\n  const category=(await request('/api/products?category=Kitchen')).body;\\n  assert.equal(category.total,6); assert.ok(category.items.every(p=>p.category==='Kitchen'));\\n  const search=(await request('/api/products?q=AMBER')).body;\\n  assert.equal(search.total,1); assert.equal(search.items[0].id,'mug-classic');\\n  assert.equal((await request('/api/products?q=rituals')).body.total,30);\\n  assert.equal((await request('/api/products?page=2&pageSize=7')).body.items.length,7);\\n  assert.equal((await request('/api/products?page=999')).body.items.length,0);\\n  for(const query of ['page=0','page=-1','page=x','pageSize=0','pageSize=51','pageSize=2.2']) assert.equal((await request('/api/products?'+query)).status,400);\\n  assert.equal((await request('/api/products/missing')).status,404);\\n  assert.equal((await request('/api/products/mug-classic')).body.priceCents,1250);\\n  const categories=(await request('/api/categories')).body.items;\\n  assert.equal(categories.length,5); assert.deepEqual(categories.map(c=>c.name),categories.map(c=>c.name).sort());\\n});\\n\");\nSHOP_TEST\nCMD\nlayerfs workspace exec \"$ws2\" \"$cmd\" -m '010 M2: catalog tests in second Workspace' --stream\nlayerfs workspace commit \"$ws2\" -m '010 M2: catalog tests (exit 0)'\nlayerfs workspace unmount \"$ws1\"\nlayerfs workspace unmount \"$ws2\"\nlayerfs sandbox close \"$sb\"",
+     "timeoutMs": 310000
+    },
+    "phase": "M2",
+    "note": "record 010",
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed",
+     "workspace.unmount:Unmounted",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "M2: test and publish catalog",
+     "command": "# M2: test and publish catalog\nsb=$(layerfs sandbox create | jq -r .sandbox)\nws=$(layerfs workspace mount \"$sb\" catalog | jq -r .ws)\nlayerfs workspace exec \"$ws\" 'timeout 30 npm test' -m '011 M2: catalog and health tests' --stream\nlayerfs workspace commit \"$ws\" -m '011 M2: tests (exit 0)'\nlayerfs workspace unmount \"$ws\"\nlayerfs sandbox close \"$sb\"\nlayerfs branch publish catalog\nlayerfs branch fork cart",
+     "timeoutMs": 120000
+    },
+    "phase": "M2",
+    "note": "record 011",
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed|UpToDate",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed",
+     "branch.publish:Added",
+     "branch.fork:Forked"
+    ]
+   },
+   {
+    "bash": {
+     "description": "M3: implement carts and totals",
+     "command": "# M3: implement carts and totals\nlayerfs fs apply cart -m '012 M3: carts and integer-cent totals' --from \"{{scenario}}/changes/007-1.json\"\nlayerfs fs apply cart -m '012 M3: connect carts and static asset serving' --from \"{{scenario}}/changes/007-2.json\""
+    },
+    "phase": "M3",
+    "note": "record 012",
+    "expect": [
+     "fs.apply:Committed",
+     "fs.apply:Committed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "M3: test publish and fork parallel Branches",
+     "command": "# M3: test publish and fork parallel Branches\nsb=$(layerfs sandbox create | jq -r .sandbox)\nws=$(layerfs workspace mount \"$sb\" cart | jq -r .ws)\nlayerfs workspace exec \"$ws\" 'timeout 30 npm test' -m '013 M3: cart tests' --stream\nlayerfs workspace commit \"$ws\" -m '013 M3: all tests (exit 0)'\nlayerfs workspace unmount \"$ws\"\nlayerfs sandbox close \"$sb\"\nlayerfs branch publish cart\nlayerfs branch fork orders\nlayerfs branch fork web",
+     "timeoutMs": 120000
+    },
+    "phase": "M3",
+    "note": "record 013",
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed|UpToDate",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed",
+     "branch.publish:Added",
+     "branch.fork:Forked",
+     "branch.fork:Forked"
+    ]
+   },
+   {
+    "bash": {
+     "description": "M4: implement checkout orders and discounts",
+     "command": "# M4: implement checkout orders and discounts\nlayerfs fs apply orders -m '014 M4: discounts, serialized checkout and persisted orders' --from \"{{scenario}}/changes/009-1.json\"\nlayerfs fs apply orders -m '014 M4: connect checkout, order and discount routes' --from \"{{scenario}}/changes/009-2.json\""
+    },
+    "phase": "M4",
+    "note": "record 014",
+    "expect": [
+     "fs.apply:Committed",
+     "fs.apply:Committed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "M5: implement browser storefront",
+     "command": "# M5: implement browser storefront\nlayerfs fs apply web -m '015 M5: responsive catalog, product, cart and checkout frontend' --from \"{{scenario}}/changes/010.json\""
+    },
+    "phase": "M5",
+    "note": "record 015",
+    "expect": [
+     "fs.apply:Committed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "M4: test checkout and publish orders",
+     "command": "# M4: test checkout and publish orders\nlayerfs fs apply orders -m '016 M4: checkout concurrency, persistence and discount tests' --from \"{{scenario}}/changes/011.json\"\nsb=$(layerfs sandbox create | jq -r .sandbox)\nws=$(layerfs workspace mount \"$sb\" orders | jq -r .ws)\nlayerfs workspace exec \"$ws\" 'timeout 35 npm test' -m '016 M4: full API tests' --stream\nlayerfs workspace commit \"$ws\" -m '016 M4: full API tests (exit 0)'\nlayerfs workspace unmount \"$ws\"\nlayerfs sandbox close \"$sb\"\nlayerfs branch publish orders",
+     "timeoutMs": 125000
+    },
+    "phase": "M4",
+    "note": "record 016",
+    "expect": [
+     "fs.apply:Committed",
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed|UpToDate",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed",
+     "branch.publish:Added"
+    ]
+   },
+   {
+    "bash": {
+     "description": "M5: build test web and merge Branches",
+     "command": "# M5: build test web and merge Branches\nsb=$(layerfs sandbox create | jq -r .sandbox)\nws=$(layerfs workspace mount \"$sb\" web | jq -r .ws)\nlayerfs workspace exec \"$ws\" 'timeout 25 npm run build && timeout 25 npm test' -m '017 M5: build and test frontend' --stream\nlayerfs workspace commit \"$ws\" -m '017 M5: build and tests (exit 0)'\nlayerfs workspace unmount \"$ws\"\nlayerfs sandbox close \"$sb\"\nlayerfs branch merge orders web storefront -m '017 M5: combine checkout and storefront Branches'",
+     "timeoutMs": 115000
+    },
+    "phase": "M5",
+    "note": "record 017",
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed|UpToDate",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed",
+     "branch.merge:Merged"
+    ]
+   },
+   {
+    "bash": {
+     "description": "M5: verify and publish merged storefront",
+     "command": "# M5: verify and publish merged storefront\nsb=$(layerfs sandbox create | jq -r .sandbox)\nws=$(layerfs workspace mount \"$sb\" storefront | jq -r .ws)\nlayerfs workspace exec \"$ws\" 'timeout 30 npm test && timeout 20 npm run build' -m '018 M5: merged full suite and build' --stream\nlayerfs workspace commit \"$ws\" -m '018 M5: merged tests and build (exit 0)'\nlayerfs workspace unmount \"$ws\"\nlayerfs sandbox close \"$sb\"\nlayerfs branch publish storefront\nlayerfs branch fork admin",
+     "timeoutMs": 120000
+    },
+    "phase": "M5",
+    "note": "record 018",
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed|UpToDate",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed",
+     "branch.publish:Added",
+     "branch.fork:Forked"
+    ]
+   },
+   {
+    "bash": {
+     "description": "M6: implement admin and complete README",
+     "command": "# M6: implement admin and complete README\nlayerfs fs apply admin -m '019 M6: authenticated product admin, order listing, tests and README' --from \"{{scenario}}/changes/014-1.json\"\nlayerfs fs apply admin -m '019 M6: wire environment-token admin routes' --from \"{{scenario}}/changes/014-2.json\""
+    },
+    "phase": "M6",
+    "note": "record 019",
+    "expect": [
+     "fs.apply:Committed",
+     "fs.apply:Committed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "M6: verify admin and publish final main",
+     "command": "# M6: verify admin and publish final main\nsb=$(layerfs sandbox create | jq -r .sandbox)\nws=$(layerfs workspace mount \"$sb\" admin | jq -r .ws)\nlayerfs workspace exec \"$ws\" 'timeout 35 npm test && timeout 20 npm run build' -m '020 M6: all tests and build' --stream\nlayerfs workspace commit \"$ws\" -m '020 M6: tests and build (exit 0)'\nlayerfs workspace unmount \"$ws\"\nlayerfs sandbox close \"$sb\"\nlayerfs branch publish admin\nlayerfs branch fork acceptance",
+     "timeoutMs": 125000
+    },
+    "phase": "M6",
+    "note": "record 020",
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed|UpToDate",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed",
+     "branch.publish:Added",
+     "branch.fork:Forked"
+    ]
+   },
+   {
+    "bash": {
+     "description": "Acceptance: clean install test and build",
+     "command": "# Acceptance: clean install test and build\nsb=$(layerfs sandbox create | jq -r .sandbox)\nws=$(layerfs workspace mount \"$sb\" acceptance | jq -r .ws)\nlayerfs workspace exec \"$ws\" 'rm -rf node_modules dist && timeout 70 npm install --no-audit --no-fund && timeout 15 npm test && timeout 15 npm run build' -m '021 Acceptance: clean dependency install, test and build' --stream\nlayerfs workspace commit \"$ws\" -m '021 Acceptance: clean install, npm test and build (exit 0)'\nlayerfs workspace unmount \"$ws\"\nlayerfs sandbox close \"$sb\"",
+     "timeoutMs": 200000
+    },
+    "phase": "Acceptance",
+    "note": "record 021",
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed|UpToDate",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   },
+   {
+    "bash": {
+     "description": "Acceptance: full server purchase smoke",
+     "command": "# Acceptance: full server purchase smoke\nsb=$(layerfs sandbox create | jq -r .sandbox)\nws=$(layerfs workspace mount \"$sb\" acceptance | jq -r .ws)\nIFS= read -r -d '' cmd <<'CMD'\ntimeout 30 node --input-type=module <<'SHOP_SMOKE'\nimport {spawn} from 'node:child_process';\nimport assert from 'node:assert/strict';\nconst child=spawn(process.execPath,['src/main.js'],{env:{...process.env,PORT:'0'},stdio:['ignore','pipe','pipe']});\nconst closed=new Promise(resolve=>child.once('exit',(code,signal)=>resolve({code,signal})));\nlet output='';child.stderr.on('data',data=>process.stderr.write(data));\nconst deadline=setTimeout(()=>{child.kill('SIGKILL');},20000);\ntry {\n const port=await new Promise((resolve,reject)=>{const timer=setTimeout(()=>reject(new Error('Server readiness timeout')),5000);child.once('error',reject);child.once('exit',()=>reject(new Error('Server exited before ready')));child.stdout.on('data',data=>{output+=data;const match=output.match(/Shop listening on (\\d+)/);if(match){clearTimeout(timer);resolve(Number(match[1]));}});});\n const base='http://127.0.0.1:'+port;\n async function request(path,method='GET',body){const response=await fetch(base+path,{method,headers:{'content-type':'application/json'},body:body===undefined?undefined:JSON.stringify(body),signal:AbortSignal.timeout(5000)});const value=await response.json();assert.ok(response.ok,JSON.stringify(value));return {status:response.status,body:value};}\n assert.deepEqual((await request('/health')).body,{status:'ok'});\n const cart=(await request('/api/carts','POST')).body;\n const added=await request('/api/carts/'+cart.id+'/items','POST',{productId:'mug-classic',quantity:1});assert.equal(added.body.items.length,1);\n const order=await request('/api/checkout','POST',{cartId:cart.id,email:'smoke@example.com'});assert.equal(order.status,201);\n assert.deepEqual((await request('/api/orders/'+order.body.id)).body,order.body);\n console.log(JSON.stringify({smoke:'PASS',health:true,cart:cart.id,order:order.body.id,totalCents:order.body.totalCents}));\n} finally {child.kill('SIGTERM');const result=await closed;clearTimeout(deadline);console.log('server stopped',JSON.stringify(result));}\nSHOP_SMOKE\nCMD\nlayerfs workspace exec \"$ws\" \"$cmd\" -m '022 Acceptance: start server, purchase and read order, stop server' --stream\nlayerfs workspace commit \"$ws\" -m '022 Acceptance: end-to-end server smoke (exit 0)'\nlayerfs workspace unmount \"$ws\"\nlayerfs sandbox close \"$sb\"",
+     "timeoutMs": 120000
+    },
+    "phase": "Acceptance",
+    "note": "record 022",
+    "expect": [
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.commit:Committed",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed"
+    ]
+   }
+  ]
+ }
+}

@@ -1,64 +1,171 @@
-import { FolderPlus, GitBranch, Search } from 'lucide-react'
+import { Bot, ListOrdered, Play, Search, TriangleAlert } from 'lucide-react'
 import { useState } from 'react'
 
-import { AGENT_DOT } from '@/components/app-sidebar'
-import { LayerfsMark } from '@/components/layerfs-mark'
-import { Chip, StatusChip, databaseStatus } from '@/components/storage/chips'
-import { DatabaseIcon } from '@/components/storage/icons'
-import { Unavailable } from '@/components/storage/unavailable'
+import { LoadError } from '@/components/projects/states'
+import { Progress, RunStateBadge } from '@/components/runs/run-badges'
+import { KIND, KIND_ORDER, agentColors, isLive } from '@/components/runs/run-format'
+import { useStartRun } from '@/components/runs/use-runs'
+import { ProjectsTable } from '@/components/storage/projects-table'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { branchesFor } from '@/data/forks'
-import { PROJECTS, type Project } from '@/data/sample'
-import { type Database, type SyncLocation, databaseName } from '@/data/storage'
+import { Skeleton } from '@/components/ui/skeleton'
+import { ago } from '@/data/format'
+import { host } from '@/host/client'
+import { useHostEvents, useHostQuery } from '@/host/use-host'
 import { cn } from '@/lib/utils'
+import type { DemoSummary, RunSummary } from '@shared/host-api'
 
-type Filter = 'all' | 'active' | 'local' | 'postgres' | 'attention'
-
-const FILTERS: { id: Filter; label: string }[] = [
-  { id: 'all', label: 'All' },
-  { id: 'active', label: 'Active' },
-  { id: 'local', label: 'Local SQLite' },
-  { id: 'postgres', label: 'PostgreSQL' },
-  { id: 'attention', label: 'Needs attention' },
-]
-
-interface ProjectsHomeProps {
-  databases: Database[]
-  locations: SyncLocation[]
-  onOpen: (key: string) => void
+/** Counts by kind as one bar, widths by share. */
+export function KindBar({ kinds, className }: { kinds: DemoSummary['kinds']; className?: string }) {
+  const total = KIND_ORDER.reduce((n, k) => n + (kinds[k] ?? 0), 0)
+  if (total === 0) return null
+  const parts = KIND_ORDER.filter((k) => (kinds[k] ?? 0) > 0)
+  return (
+    <div
+      role="img"
+      aria-label={`Segments by kind: ${parts.map((k) => `${KIND[k].label} ${kinds[k]}`).join(', ')}`}
+      className={cn('flex h-1.5 gap-px overflow-hidden rounded-full bg-muted', className)}
+    >
+      {parts.map((k) => (
+        <span
+          key={k}
+          title={`${KIND[k].label} · ${kinds[k]}`}
+          className={cn('h-full', KIND[k].dot)}
+          style={{ width: `${((kinds[k] ?? 0) / total) * 100}%` }}
+        />
+      ))}
+    </div>
+  )
 }
 
-export function ProjectsHome({ databases, locations, onOpen }: ProjectsHomeProps) {
-  const [query, setQuery] = useState('')
-  const [filter, setFilter] = useState<Filter>('all')
+interface DemoCardProps {
+  demo: DemoSummary
+  latest: RunSummary | null
+  starting: boolean
+  onOpen: () => void
+  onRun: () => void
+}
 
-  const dbOf = (p: Project) => databases.find((d) => d.id === p.database)
-  const busy = (p: Project) => p.sessions.filter((s) => s.busy).length
-  const needsAttention = (p: Project) => {
-    const db = dbOf(p)
-    return db ? ['warning', 'danger', 'info'].includes(databaseStatus(db).tone) : true
-  }
-  const matches = (p: Project) => {
-    const db = dbOf(p)
-    switch (filter) {
-      case 'active':
-        return busy(p) > 0
-      case 'local':
-        return db?.kind === 'sqlite'
-      case 'postgres':
-        return db?.kind === 'postgres'
-      case 'attention':
-        return needsAttention(p)
-      default:
-        return true
-    }
-  }
-  // Busy projects first, then the rest as listed (most recent Commit first in the sample).
-  const shown = PROJECTS.filter((p) => p.key.includes(query.trim().toLowerCase()) && matches(p)).sort(
-    (a, b) => Number(busy(b) > 0) - Number(busy(a) > 0),
+function DemoCard({ demo, latest, starting, onOpen, onRun }: DemoCardProps) {
+  const colorOf = agentColors(demo.agents.map((a) => a.name))
+  const live = latest ? isLive(latest.state) : false
+  return (
+    <div className="group relative flex flex-col gap-3.5 rounded-xl border bg-card p-5 transition-[border-color,box-shadow] hover:border-foreground/20 hover:shadow-sm has-[[data-open]:focus-visible]:ring-2 has-[[data-open]:focus-visible]:ring-ring">
+      <div className="flex items-start gap-3">
+        <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-muted font-mono text-xs font-semibold text-muted-foreground tabular-nums">
+          {String(demo.order).padStart(2, '0')}
+        </span>
+        <div className="min-w-0 flex-1">
+          <button
+            type="button"
+            data-open
+            onClick={onOpen}
+            className="block max-w-full truncate text-left text-[15px] font-semibold outline-none group-hover:underline after:absolute after:inset-0 after:rounded-xl"
+          >
+            {demo.title}
+          </button>
+          <div className="truncate font-mono text-xs text-faint">{demo.id}</div>
+        </div>
+        {latest && <RunStateBadge state={latest.state} />}
+      </div>
+
+      {demo.blurb && <p className="line-clamp-2 text-[13px] text-muted-foreground">{demo.blurb}</p>}
+
+      {demo.tags.length > 0 && (
+        <div className="flex flex-wrap gap-1">
+          {demo.tags.map((t) => (
+            <span key={t} className="rounded-md bg-muted px-1.5 py-0.5 text-[11px] font-medium text-muted-foreground">
+              {t}
+            </span>
+          ))}
+        </div>
+      )}
+
+      <div className="flex flex-col gap-2">
+        <div className="flex items-center justify-between gap-3 text-xs text-muted-foreground">
+          <span className="flex min-w-0 items-center gap-1.5" title={demo.agents.map((a) => `${a.name} · ${a.steps} steps`).join('\n')}>
+            <Bot aria-hidden="true" className="size-3.5 shrink-0 text-faint" />
+            <span className="flex shrink-0 gap-1">
+              {demo.agents.slice(0, 6).map((a) => (
+                <span key={a.name} aria-hidden="true" className={cn('size-2 rounded-full', colorOf(a.name).dot)} />
+              ))}
+            </span>
+            <span className="truncate">
+              {demo.agents.length === 1 ? demo.agents[0].name : `${demo.agents.length} agents`}
+            </span>
+          </span>
+          <span className="flex shrink-0 items-center gap-1">
+            <ListOrdered aria-hidden="true" className="size-3.5 text-faint" />
+            {demo.steps} steps
+          </span>
+        </div>
+        <KindBar kinds={demo.kinds} />
+      </div>
+
+      <div className="mt-auto flex items-center gap-3 border-t pt-3">
+        <div className="min-w-0 flex-1 text-xs text-muted-foreground">
+          {latest ? (
+            live ? (
+              <div className="flex items-center gap-2">
+                <Progress done={latest.done} of={latest.of} className="w-20" />
+                <span className="truncate tabular-nums">
+                  {latest.done}/{latest.of} · {latest.project}
+                </span>
+              </div>
+            ) : (
+              <span className="block truncate">
+                {demo.runs} run{demo.runs === 1 ? '' : 's'} · last {ago(latest.ended ?? latest.started)} ·{' '}
+                <span className="font-mono">{latest.project}</span>
+              </span>
+            )
+          ) : (
+            'Not run yet'
+          )}
+        </div>
+        <Button size="sm" variant={latest ? 'outline' : 'default'} className="relative z-10" disabled={starting} onClick={onRun}>
+          <Play /> {starting ? 'Starting…' : latest ? 'Run again' : 'Run'}
+        </Button>
+      </div>
+    </div>
   )
-  const inFlight = PROJECTS.reduce((n, p) => n + busy(p), 0)
+}
+
+interface ProjectsHomeProps {
+  onOpenProject: (demo: string) => void
+  onOpenRun: (runId: string) => void
+}
+
+/** The ten demo projects, and the other LayerFS projects in Connect's home. */
+export function ProjectsHome({ onOpenProject, onOpenRun }: ProjectsHomeProps) {
+  const [query, setQuery] = useState('')
+  const demos = useHostQuery(() => host.demos(), [])
+  const projects = useHostQuery(() => host.projects(), [])
+  // Each demo's newest run, kept live from run events.
+  const [latest, setLatest] = useState<Record<string, RunSummary>>({})
+  useHostEvents((e) => {
+    if (e.type !== 'run') return
+    setLatest((all) => {
+      const was = all[e.run.demo]
+      if (was && was.id !== e.run.id && was.started > e.run.started) return all
+      return { ...all, [e.run.demo]: e.run }
+    })
+    if (e.run.state === 'starting') projects.reload()
+  })
+  const { start, starting, error, clearError } = useStartRun((run) => onOpenRun(run.id))
+
+  const latestOf = (d: DemoSummary) => {
+    const event = latest[d.id]
+    return event && (!d.latest || event.started >= d.latest.started) ? event : d.latest
+  }
+  const q = query.trim().toLowerCase()
+  const shown = (demos.data ?? [])
+    .filter((d) => !q || `${d.id} ${d.title} ${d.blurb ?? ''} ${d.tags.join(' ')}`.toLowerCase().includes(q))
+    .sort((a, b) => a.order - b.order)
+  const live = (demos.data ?? []).filter((d) => {
+    const l = latestOf(d)
+    return l && isLive(l.state)
+  }).length
+  const others = (projects.data ?? []).filter((p) => !p.run && !p.demo)
 
   return (
     <div className="h-svh overflow-y-auto">
@@ -67,19 +174,12 @@ export function ProjectsHome({ databases, locations, onOpen }: ProjectsHomeProps
           <div>
             <h1 className="text-2xl font-semibold tracking-[-0.015em]">Projects</h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              {PROJECTS.length} projects · {inFlight} calls in flight across{' '}
-              {PROJECTS.filter((p) => busy(p) > 0).length} of them
+              {demos.data
+                ? `${demos.data.length} demo projects · ${live} running now. Each run Inits a fresh LayerFS project and plays scripted agents on it.`
+                : 'Scripted demo scenarios, each played on the real LayerFS.'}
             </p>
           </div>
-          <Unavailable reason="Init needs the LayerFS host process">
-            <Button disabled>
-              <FolderPlus /> New project
-            </Button>
-          </Unavailable>
-        </header>
-
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="relative w-64">
+          <div className="relative w-64 shrink-0">
             <Search aria-hidden="true" className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-faint" />
             <Input
               aria-label="Search projects"
@@ -89,98 +189,65 @@ export function ProjectsHome({ databases, locations, onOpen }: ProjectsHomeProps
               className="pl-8"
             />
           </div>
-          <div role="radiogroup" aria-label="Filter" className="flex gap-1 rounded-lg bg-muted p-1">
-            {FILTERS.map((f) => (
-              <button
-                key={f.id}
-                type="button"
-                role="radio"
-                aria-checked={filter === f.id}
-                onClick={() => setFilter(f.id)}
-                className={cn(
-                  'rounded-md px-2.5 py-1 text-xs font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring',
-                  filter === f.id ? 'bg-card text-foreground shadow-xs' : 'text-muted-foreground hover:text-foreground',
-                )}
-              >
-                {f.label}
-              </button>
-            ))}
-          </div>
-        </div>
+        </header>
 
-        {shown.length === 0 ? (
-          <p className="rounded-xl border border-dashed px-6 py-12 text-center text-sm text-muted-foreground">
-            No projects match. Try another filter or search.
-          </p>
-        ) : (
-          <div className="grid grid-cols-[repeat(auto-fill,minmax(18rem,1fr))] gap-4">
-            {shown.map((p) => {
-              const db = dbOf(p)
-              const location = db?.kind === 'sqlite' ? locations.find((l) => l.id === db.sync?.location) : undefined
-              const calls = busy(p)
-              return (
-                <button
-                  key={p.key}
-                  type="button"
-                  onClick={() => onOpen(p.key)}
-                  className="group flex flex-col gap-4 rounded-xl border bg-card p-5 text-left outline-none transition-[border-color,box-shadow] hover:border-foreground/20 hover:shadow-sm focus-visible:ring-2 focus-visible:ring-ring"
-                >
-                  <div className="flex items-start gap-3">
-                    <LayerfsMark className="size-8 shrink-0" />
-                    <div className="min-w-0 flex-1">
-                      <div className="truncate text-[15px] font-semibold group-hover:underline">{p.key}</div>
-                      <div className="text-xs text-muted-foreground">
-                        {p.lastCommit.id} · {p.lastCommit.ago}
-                      </div>
-                    </div>
-                    {calls > 0 && (
-                      <Chip tone="info" live>
-                        {calls} in flight
-                      </Chip>
-                    )}
-                  </div>
-
-                  {db && (
-                    <div className="flex items-center gap-2.5 rounded-lg bg-muted/50 px-2.5 py-2">
-                      <DatabaseIcon db={db} size="sm" />
-                      <div className="min-w-0 flex-1">
-                        <div className="truncate text-[13px] font-medium">
-                          {db.kind === 'postgres' ? (db.label ?? databaseName(db)) : db.file}
-                        </div>
-                        <div className="truncate text-xs text-faint">
-                          {db.kind === 'postgres' ? 'PostgreSQL · live' : location ? `Synced with ${location.name}` : 'Local only'}
-                        </div>
-                      </div>
-                      <StatusChip status={databaseStatus(db)} compact />
-                    </div>
-                  )}
-
-                  <div className="mt-auto flex items-center justify-between text-xs text-muted-foreground">
-                    <span className="flex items-center gap-2">
-                      <span className="flex gap-1">
-                        {p.sessions.map((s) => (
-                          <span
-                            key={s.id}
-                            aria-hidden="true"
-                            className={cn('size-2 rounded-full', s.busy ? AGENT_DOT[s.agent] : 'bg-idle')}
-                          />
-                        ))}
-                      </span>
-                      {p.sessions.length} session{p.sessions.length === 1 ? '' : 's'}
-                    </span>
-                    <span className="flex items-center gap-3">
-                      <span className="flex items-center gap-1">
-                        <GitBranch aria-hidden="true" className="size-3.5" />
-                        {branchesFor(p).length}
-                      </span>
-                      <span className="tabular-nums">{p.size}</span>
-                    </span>
-                  </div>
-                </button>
-              )
-            })}
+        {error && (
+          <div
+            role="alert"
+            className="flex items-start gap-2 rounded-lg bg-destructive/10 px-3 py-2 text-[13px] text-destructive ring-1 ring-destructive/25 ring-inset"
+          >
+            <TriangleAlert aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
+            <span className="min-w-0 flex-1">
+              Could not start a run of {error.demo}: {error.message}
+            </span>
+            <button type="button" onClick={clearError} className="text-xs font-medium underline-offset-2 hover:underline">
+              Dismiss
+            </button>
           </div>
         )}
+
+        {!demos.data ? (
+          demos.error ? (
+            <LoadError error={demos.error} what="the demo projects" onRetry={demos.reload} />
+          ) : (
+            <div className="grid grid-cols-[repeat(auto-fill,minmax(19rem,1fr))] gap-4" aria-busy="true" aria-label="Loading projects">
+              {Array.from({ length: 6 }, (_, i) => (
+                <Skeleton key={i} className="h-60 rounded-xl" />
+              ))}
+            </div>
+          )
+        ) : shown.length === 0 ? (
+          <p className="rounded-xl border border-dashed px-6 py-12 text-center text-sm text-muted-foreground">
+            {demos.data.length === 0 ? 'The host lists no demo projects.' : 'No projects match. Try another search.'}
+          </p>
+        ) : (
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(19rem,1fr))] gap-4">
+            {shown.map((d) => (
+              <DemoCard
+                key={d.id}
+                demo={d}
+                latest={latestOf(d)}
+                starting={starting === d.id}
+                onOpen={() => onOpenProject(d.id)}
+                onRun={() => void start(d.id)}
+              />
+            ))}
+          </div>
+        )}
+
+        <section className="flex flex-col gap-2">
+          <div>
+            <h2 className="text-[13px] font-semibold">Other LayerFS projects</h2>
+            <p className="text-xs text-faint">Projects in Connect's LayerFS home that no demo run made.</p>
+          </div>
+          {projects.error && !projects.data ? (
+            <LoadError error={projects.error} what="the LayerFS projects" onRetry={projects.reload} />
+          ) : !projects.data ? (
+            <Skeleton className="h-24 rounded-xl" />
+          ) : (
+            <ProjectsTable projects={others} title="Projects" empty="Every project here was made by a demo run." />
+          )}
+        </section>
       </div>
     </div>
   )

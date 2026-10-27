@@ -1,0 +1,139 @@
+{
+ "type": "layerfs-scenario",
+ "version": 3,
+ "title": "Parallel Branches",
+ "blurb": "Two subagents fork header and footer Branches from main at the same time, each writes its component with layerfs fs write and runs the tests in a Workspace of its Branch. The lead publishes header; publish overwrites main, so footer merges main into footer-2 before the lead publishes that.",
+ "order": 2,
+ "tags": [
+  "cli",
+  "multi-agent",
+  "merge",
+  "publish"
+ ],
+ "fixture": "../../fixtures/demo-workspace",
+ "agents": {
+  "root": [
+   {
+    "phase": "Set up",
+    "say": "Two independent pieces: a header and a footer. Each subagent gets its own Branch.",
+    "subagent": {
+     "description": "header",
+     "prompt": "Fork a header Branch from main, add app/header.tsx (the site header) with fs, test the Branch in a Workspace, and report the Branch and Commit."
+    },
+    "note": "Independent work gets its own Branch; both start from main's first Layer."
+   },
+   {
+    "subagent": {
+     "description": "footer",
+     "prompt": "Fork a footer Branch from main, add app/footer.tsx (the site footer) with fs, test the Branch in a Workspace, and report the Branch and Commit."
+    }
+   },
+   {
+    "reply": "header and footer are working in parallel; I'll publish when they report.",
+    "until": [
+     "header",
+     "footer"
+    ]
+   },
+   {
+    "phase": "Publish",
+    "say": "Both are ready. Only I publish to main: header first.",
+    "bash": {
+     "description": "Publish header to main",
+     "command": "layerfs branch publish header"
+    },
+    "expect": [
+     "branch.publish:Added"
+    ],
+    "note": "main moves to a new Layer with the header."
+   },
+   {
+    "say": "main moved, and publish overwrites. footer must bring main in before I publish it.",
+    "send_message": {
+     "agent_id": "@footer",
+     "message": "I published header, so main moved. Merge main into a new footer-2 Branch and report it."
+    }
+   },
+   {
+    "reply": "Waiting for footer-2.",
+    "until": [
+     "footer"
+    ]
+   },
+   {
+    "say": "footer-2 has both. Publishing it.",
+    "bash": {
+     "description": "Publish footer-2 and check main",
+     "command": "layerfs branch publish footer-2\nlayerfs fs list main /app"
+    },
+    "expect": [
+     "branch.publish:Added",
+     "fs.list:ok"
+    ],
+    "note": "main has both changes, and nothing was overwritten."
+   },
+   {
+    "reply": "main has the header and the footer: header was published first, and footer merged main in before its publish."
+   }
+  ],
+  "header": [
+   {
+    "say": "Forking header and writing the component with fs; then a Workspace to test it.",
+    "bash": {
+     "description": "Fork header, write and test it",
+     "command": "layerfs branch fork header\nlayerfs fs write header /app/header.tsx -m \"add app/header.tsx\" <<'EOF'\nexport const Header = () => <header>LayerFS</header>;\nEOF\nsb=$(layerfs sandbox create | jq -r .sandbox)\nws=$(layerfs workspace mount \"$sb\" header | jq -r .ws)\nlayerfs workspace exec \"$ws\" \"sh test.sh && ls app\" --stream\nlayerfs workspace unmount \"$ws\"\nlayerfs sandbox close \"$sb\"\nlayerfs branch list_commits header --page-size 1"
+    },
+    "expect": [
+     "branch.fork:Forked",
+     "fs.write:Committed",
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed",
+     "branch.list_commits:ok"
+    ]
+   },
+   {
+    "reply": "Ready: Branch header, with app/header.tsx committed and the tests passing."
+   }
+  ],
+  "footer": [
+   {
+    "say": "Forking footer and writing the component with fs; then a Workspace to test it.",
+    "bash": {
+     "description": "Fork footer, write and test it",
+     "command": "layerfs branch fork footer\nlayerfs fs write footer /app/footer.tsx -m \"add app/footer.tsx\" <<'EOF'\nexport const Footer = () => <footer>© 2026</footer>;\nEOF\nsb=$(layerfs sandbox create | jq -r .sandbox)\nws=$(layerfs workspace mount \"$sb\" footer | jq -r .ws)\nlayerfs workspace exec \"$ws\" \"sh test.sh && ls app\" --stream\nlayerfs workspace unmount \"$ws\"\nlayerfs sandbox close \"$sb\"\nlayerfs branch list_commits footer --page-size 1"
+    },
+    "expect": [
+     "branch.fork:Forked",
+     "fs.write:Committed",
+     "sandbox.create:ok",
+     "workspace.mount:Mounted",
+     "workspace.exec:exit:0",
+     "workspace.unmount:Unmounted",
+     "sandbox.close:Closed",
+     "branch.list_commits:ok"
+    ]
+   },
+   {
+    "reply": "Ready: Branch footer, with app/footer.tsx committed and the tests passing."
+   },
+   {
+    "say": "Merging main into footer-2; footer itself stays as it is.",
+    "bash": {
+     "description": "Merge main into footer-2",
+     "command": "layerfs branch merge footer main footer-2 -m \"bring in the header\"\nlayerfs fs list footer-2 /app"
+    },
+    "expect": [
+     "branch.merge:Merged",
+     "fs.list:ok"
+    ],
+    "note": "a + b = c: footer and main stay as they are; footer-2 holds both files."
+   },
+   {
+    "reply": "Ready: Branch footer-2 holds the footer and main's header, with no conflicts."
+   }
+  ]
+ }
+}

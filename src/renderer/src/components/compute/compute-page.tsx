@@ -1,85 +1,51 @@
-import { Info, Play } from 'lucide-react'
-import { useState } from 'react'
+import { RotateCw, Settings2 } from 'lucide-react'
 
 import { CloudCards } from '@/components/compute/cloud-cards'
 import { DockerCard } from '@/components/compute/docker-card'
 import { NativeCard } from '@/components/compute/native-card'
-import { TargetIcon } from '@/components/compute/target-parts'
-import { Notice } from '@/components/storage/notice'
+import type { SandboxGroup } from '@/components/compute/sandbox-list'
+import { LoadError, Loading } from '@/components/projects/states'
 import { Button } from '@/components/ui/button'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
-import { Label } from '@/components/ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import {
-  type ComputeSettings,
-  DOCKER,
-  SANDBOXES,
-  type SandboxRow,
-  TARGET_LABEL,
-  type TargetId,
-  nativeInfo,
-} from '@/data/compute'
+import { host } from '@/host/client'
+import { useHostEvents, useHostQuery } from '@/host/use-host'
+import type { HostStatus } from '@shared/host-api'
 
-interface ComputePageProps {
-  settings: ComputeSettings
-  onChange: (settings: ComputeSettings) => void
-  platform: string
-  arch: string
-  onOpenSession: (id: string) => void
-  /** Dev aid: open the turn-off question for Docker. */
-  askOnOpen?: boolean
-  /** Dev aid: open the unmount question. */
-  unmountOnOpen?: boolean
+const OS: Record<HostStatus['platform'], string> = { macos: 'darwin', linux: 'linux', windows: 'win32' }
+
+function Setting({ label, value, mono = true }: { label: string; value: string | null; mono?: boolean }) {
+  return (
+    <>
+      <dt className="text-muted-foreground">{label}</dt>
+      <dd className={mono ? 'min-w-0 truncate font-mono text-[13px]' : 'min-w-0 truncate'} title={value ?? undefined}>
+        {value ?? <span className="font-sans text-warning">not set</span>}
+      </dd>
+    </>
+  )
 }
 
-const ORDER: TargetId[] = ['docker', 'native', 'modal', 'e2b', 'daytona', 'aws']
+interface ComputePageProps {
+  /** Dev aid: draw the Native card for another OS (linux, win32, darwin). */
+  platform?: string
+}
 
-export function ComputePage({
-  settings,
-  onChange,
-  platform,
-  arch,
-  onOpenSession,
-  askOnOpen,
-  unmountOnOpen,
-}: ComputePageProps) {
-  const { enabled, defaultTarget } = settings
-  const [sandboxes, setSandboxes] = useState<SandboxRow[]>(SANDBOXES)
-  // A target the user is turning off while it still has running Sandboxes.
-  const [asking, setAsking] = useState<TargetId | null>(askOnOpen ? 'docker' : null)
+export function ComputePage({ platform }: ComputePageProps) {
+  const status = useHostQuery(() => host.status(), [])
+  // Every project's Sandboxes: one state read per project, none of which starts a Sandbox.
+  const sandboxes = useHostQuery(async () => {
+    const projects = await host.projects()
+    const states = await Promise.all(
+      projects.filter((p) => p.initialized).map((p) => host.project(p.name).then((s) => ({ name: p.name, s }), () => ({ name: p.name, s: null }))),
+    )
+    const groups: SandboxGroup[] = states.flatMap(({ name, s }) => (s && s.sandboxes.length > 0 ? [{ project: name, sandboxes: s.sandboxes }] : []))
+    return { groups, failed: states.filter((x) => !x.s).map((x) => x.name) }
+  }, [])
+  // A run that starts or ends opens or closes Sandboxes.
+  useHostEvents((e) => {
+    if (e.type === 'run') sandboxes.reload()
+  })
 
-  const enabledCount = ORDER.filter((id) => enabled[id]).length
-  const running = sandboxes.filter((s) => s.running)
-  const info = nativeInfo(platform)
-
-  const lockOf = (id: TargetId): string | undefined => {
-    if (!enabled[id] && id === 'native') return info.reason
-    if (enabled[id] && defaultTarget === id) return 'Choose another default first'
-    if (enabled[id] && enabledCount === 1) return 'At least one compute stays on'
-    return undefined
-  }
-
-  const setEnabled = (id: TargetId, on: boolean) => onChange({ ...settings, enabled: { ...enabled, [id]: on } })
-
-  const toggle = (id: TargetId, on: boolean) => {
-    // Only Docker has Sandboxes in this sample.
-    if (!on && id === 'docker' && running.length > 0) setAsking(id)
-    else setEnabled(id, on)
-  }
-
-  const turnOff = (stop: boolean) => {
-    if (!asking) return
-    if (stop) setSandboxes((all) => all.map((s) => ({ ...s, running: false })))
-    setEnabled(asking, false)
-    setAsking(null)
-  }
+  const s = status.data
+  const os = platform ?? (s ? OS[s.platform] : window.connect.platform)
 
   return (
     <div className="h-svh overflow-y-auto">
@@ -88,104 +54,71 @@ export function ComputePage({
           <div>
             <h1 className="text-2xl font-semibold tracking-[-0.015em]">Compute</h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              Where sessions run commands with their Workspace mounted. Turn on the ones you use.
+              Where runs execute commands with their Workspace mounted. Docker is the one LayerFS has today.
             </p>
           </div>
-          <div className="flex shrink-0 items-center gap-3">
-            <Label htmlFor="default-target" className="text-muted-foreground">
-              <Play className="size-3.5" /> New sessions run on
-            </Label>
-            <Select
-              value={defaultTarget}
-              onValueChange={(id) => onChange({ ...settings, defaultTarget: id as TargetId })}
-            >
-              <SelectTrigger id="default-target" className="w-40">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent align="end">
-                {ORDER.filter((id) => enabled[id]).map((id) => (
-                  <SelectItem key={id} value={id}>
-                    <span className="[&>span]:size-5 [&>span]:rounded [&>span]:text-[8px] [&_svg]:size-3">
-                      <TargetIcon id={id} os={platform} size="sm" />
-                    </span>
-                    {TARGET_LABEL[id]}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              status.reload()
+              sandboxes.reload()
+            }}
+          >
+            <RotateCw /> Refresh
+          </Button>
         </header>
 
-        <section className="flex flex-col gap-3">
-          <div>
-            <h2 className="text-[13px] font-semibold">This machine</h2>
-            <p className="text-xs text-faint">
-              Detected {info.os} · {arch}
-            </p>
-          </div>
-          {!enabled.docker && running.length > 0 && (
-            <Notice tone="warning" icon={Info} title="Docker is off, but Sandboxes are still running">
-              {running.length} keep going until their sessions end. No new Sandbox starts in Docker.
-            </Notice>
-          )}
-          <DockerCard
-            docker={DOCKER}
-            sandboxes={sandboxes}
-            enabled={enabled.docker}
-            isDefault={defaultTarget === 'docker'}
-            locked={lockOf('docker')}
-            onToggle={(on) => toggle('docker', on)}
-            boxNeedsDocker={platform !== 'linux'}
-            onOpenSession={onOpenSession}
-            unmountOnOpen={unmountOnOpen}
-          />
-          <NativeCard
-            platform={platform}
-            arch={arch}
-            enabled={enabled.native}
-            locked={lockOf('native')}
-            onToggle={(on) => toggle('native', on)}
-          />
-        </section>
+        {!s ? (
+          status.error ? (
+            <LoadError error={status.error} what="the compute status" onRetry={status.reload} />
+          ) : (
+            <Loading label="Asking Docker and the worker" />
+          )
+        ) : (
+          <>
+            <section className="flex flex-col gap-3">
+              <div>
+                <h2 className="text-[13px] font-semibold">This machine</h2>
+                <p className="text-xs text-faint">
+                  {s.platform === 'macos' ? 'macOS' : s.platform === 'windows' ? 'Windows' : 'Linux'} · {window.connect.arch}
+                </p>
+              </div>
+              <DockerCard status={s} groups={sandboxes.data?.groups} failed={sandboxes.data?.failed ?? []} />
+              {sandboxes.error && <LoadError error={sandboxes.error} what="the Sandboxes" onRetry={sandboxes.reload} />}
+              <NativeCard platform={os} arch={window.connect.arch} />
+            </section>
 
-        <section className="flex flex-col gap-3">
-          <div>
-            <h2 className="text-[13px] font-semibold">Cloud sandboxes</h2>
-            <p className="text-xs text-faint">
-              They can't open a local SQLite file, so they run projects in PostgreSQL databases.
-            </p>
-          </div>
-          <CloudCards enabled={enabled} defaultTarget={defaultTarget} lockOf={lockOf} onToggle={toggle} />
-        </section>
+            <section className="flex flex-col gap-3">
+              <div>
+                <h2 className="text-[13px] font-semibold">Cloud sandboxes</h2>
+                <p className="text-xs text-faint">They can't open a local SQLite file, so they wait on PostgreSQL storage too.</p>
+              </div>
+              <CloudCards />
+            </section>
 
-        <p className="flex items-center gap-2 text-xs text-faint">
-          <Info aria-hidden="true" className="size-3.5" />
-          Sample data. Detection, Sandboxes and cloud providers wait on the LayerFS host process.
-        </p>
+            <section className="flex flex-col gap-3">
+              <div>
+                <h2 className="flex items-center gap-1.5 text-[13px] font-semibold">
+                  <Settings2 aria-hidden="true" className="size-3.5" /> Settings
+                </h2>
+                <p className="text-xs text-faint">
+                  Read only here. Edit <span className="font-mono">{s.settings.state}/settings.json</span> and restart Connect.
+                </p>
+              </div>
+              <dl className="grid grid-cols-[9rem_minmax(0,1fr)] gap-x-4 gap-y-2.5 rounded-xl border bg-card px-5 py-4 text-sm">
+                <Setting label="Settings file" value={`${s.settings.state}/settings.json`} />
+                <Setting label="LayerFS home" value={s.settings.home} />
+                <Setting label="Sandbox image" value={s.settings.image} />
+                <Setting label="LayerFS bundle" value={s.settings.bundle} />
+                <Setting label="Docker socket" value={s.settings.docker} />
+                <Setting label="Name prefix" value={s.settings.containerPrefix} />
+                {s.missing.length > 0 && <Setting label="Still missing" value={s.missing.join(', ')} mono={false} />}
+              </dl>
+            </section>
+          </>
+        )}
       </div>
-
-      <Dialog open={asking !== null} onOpenChange={(open) => !open && setAsking(null)}>
-        <DialogContent className="gap-5 p-6 sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Turn off {asking ? TARGET_LABEL[asking] : ''}?</DialogTitle>
-            <DialogDescription>
-              {running.length} Sandbox{running.length === 1 ? ' is' : 'es are'} running (
-              {[...new Set(running.map((s) => s.project))].join(', ')}). New sessions won't start here either way.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="ghost" onClick={() => setAsking(null)}>
-              Cancel
-            </Button>
-            <Button variant="outline" onClick={() => turnOff(false)}>
-              Let them finish
-            </Button>
-            <Button variant="destructive" onClick={() => turnOff(true)}>
-              Stop them
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   )
 }

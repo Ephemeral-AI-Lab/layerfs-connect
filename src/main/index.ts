@@ -1,9 +1,79 @@
-// Electron main process: windows, menus and updates only. pi and LayerFS
-// will run in a separate host process, never here.
+// Electron main process: windows, menus and updates only. LayerFS runs in the
+// Connect host, a separate Node process (host/README.md) this process starts
+// before the first window: system node runs host/main.js, which prints one
+// ready line with its address and token. The window gets that address (or
+// why there is none) as --connect-host=<JSON>; the renderer then talks to the
+// host over HTTP, never through Electron IPC. The host exits when its stdin
+// closes, and is killed on quit.
 
+import { spawn, type ChildProcess } from 'node:child_process'
 import { writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
+import { createInterface } from 'node:readline'
 import { BrowserWindow, app, nativeTheme, shell } from 'electron'
+
+type HostAddress = { url: string; token: string } | { error: string }
+
+/** How long the host may take to print its ready line. */
+const READY_MS = 20_000
+
+let hostProcess: ChildProcess | null = null
+let hostAddress: HostAddress = { error: 'The Connect host has not started.' }
+
+/** Starts the host and answers its address, or why there is none. Never throws. */
+function startHost(): Promise<HostAddress> {
+  const dir = join(app.getAppPath(), 'host')
+  const node = process.env.LAYERFS_CONNECT_NODE || 'node'
+  return new Promise((resolve) => {
+    let settled = false
+    let lastErr = ''
+    const done = (address: HostAddress) => {
+      if (settled) return
+      settled = true
+      clearTimeout(timer)
+      if ('error' in address) console.error(`[host] ${address.error}`)
+      resolve(address)
+    }
+    // stdin stays piped: the host exits when it closes (this process died)
+    const child = spawn(node, ['--import', join(dir, 'resolve-layerfs.js'), join(dir, 'main.js')], {
+      stdio: ['pipe', 'pipe', 'pipe'],
+    })
+    hostProcess = child
+    const timer = setTimeout(() => done({ error: `The Connect host did not start within ${READY_MS / 1000} s.` }), READY_MS)
+    child.on('error', (error) => done({ error: `The Connect host could not start (${node}): ${error.message}` }))
+    child.on('exit', (code, signal) => {
+      if (hostProcess === child) hostProcess = null
+      console.error(`[host] exited (${signal ?? `code ${code}`})`)
+      done({ error: `The Connect host exited before it was ready (${signal ?? `code ${code}`})${lastErr ? `: ${lastErr}` : ''}` })
+    })
+    createInterface({ input: child.stderr! }).on('line', (line) => {
+      console.error(`[host] ${line.replace(/^\[host\] /, '')}`)
+      if (line.trim()) lastErr = line.trim()
+    })
+    const lines = createInterface({ input: child.stdout! })
+    lines.once('line', (line) => {
+      try {
+        const ready = JSON.parse(line) as { ready?: boolean; url?: string; token?: string; error?: string }
+        if (ready.ready && ready.url && ready.token) {
+          console.log(`[host] ready at ${ready.url}`)
+          done({ url: ready.url, token: ready.token })
+        } else done({ error: ready.error ?? 'The Connect host did not start.' })
+      } catch {
+        done({ error: `The Connect host printed an unexpected line: ${line.slice(0, 200)}` })
+      }
+      // later stdout lines are logs too
+      lines.on('line', (more) => console.log(`[host] ${more}`))
+    })
+  })
+}
+
+function stopHost() {
+  const child = hostProcess
+  if (!child) return
+  hostProcess = null
+  child.stdin?.end()
+  child.kill('SIGTERM')
+}
 
 function createWindow(): BrowserWindow {
   const win = new BrowserWindow({
@@ -18,6 +88,7 @@ function createWindow(): BrowserWindow {
       preload: join(__dirname, '../preload/index.js'),
       sandbox: true,
       contextIsolation: true,
+      additionalArguments: [`--connect-host=${JSON.stringify(hostAddress)}`],
     },
   })
 
@@ -28,6 +99,14 @@ function createWindow(): BrowserWindow {
     void shell.openExternal(url)
     return { action: 'deny' }
   })
+
+  // Dev aid: CONNECT_DEBUG_HOST=1 logs the host address the renderer got.
+  if (!app.isPackaged && process.env.CONNECT_DEBUG_HOST === '1') {
+    win.webContents.once('did-finish-load', async () => {
+      const seen = await win.webContents.executeJavaScript('JSON.stringify(window.connect.host)')
+      console.log(`[debug] renderer window.connect.host = ${String(seen).replace(/"token":"[0-9a-f]+"/, '"token":"<hex>"')}`)
+    })
+  }
 
   // Dev aid: CONNECT_SHOT=<file.png> saves the loaded window, then quits.
   const shot = process.env.CONNECT_SHOT
@@ -61,10 +140,11 @@ function createWindow(): BrowserWindow {
   return win
 }
 
-void app.whenReady().then(() => {
+void app.whenReady().then(async () => {
   // Dev aid: CONNECT_THEME=dark or light overrides the system setting.
   const theme = process.env.CONNECT_THEME
   if (!app.isPackaged && (theme === 'dark' || theme === 'light')) nativeTheme.themeSource = theme
+  hostAddress = await startHost()
   createWindow()
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
@@ -74,3 +154,5 @@ void app.whenReady().then(() => {
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit()
 })
+
+app.on('will-quit', stopHost)

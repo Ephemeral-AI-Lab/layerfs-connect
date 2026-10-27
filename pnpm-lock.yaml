@@ -32,6 +32,18 @@ importers:
       '@fontsource-variable/inter':
         specifier: 5.3.0
         version: 5.3.0
+      '@layerfs/agent':
+        specifier: link:../layerfs/api/agent/sdk
+        version: link:../layerfs/api/agent/sdk
+      '@layerfs/backend':
+        specifier: link:../layerfs/api/backend
+        version: link:../layerfs/api/backend
+      '@layerfs/cli':
+        specifier: link:../layerfs/api/agent/cli
+        version: link:../layerfs/api/agent/cli
+      '@layerfs/runtime':
+        specifier: link:../layerfs/api/runtime
+        version: link:../layerfs/api/runtime
       '@lezer/highlight':
         specifier: 1.2.5
         version: 1.2.5
