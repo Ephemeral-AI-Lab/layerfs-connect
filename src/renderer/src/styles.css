@@ -95,6 +95,10 @@
   --lane-2: #138a7a;
   --lane-3: #c04878;
   --lane-4: #6a5ad0;
+  /* A Commit by how it was made (Store page): a file call, a Workspace commit, a merge. */
+  --commit-fs: #6a72d8;
+  --commit-exec: #c4502a;
+  --commit-merge: #0f9483;
   /* Code highlighting in the file view. */
   --hl-comment: #8b8b94;
   --hl-keyword: #6352c8;
@@ -150,6 +154,9 @@
   --lane-2: #3cc0ad;
   --lane-3: #e57aa3;
   --lane-4: #9b8ef2;
+  --commit-fs: #7a80e8;
+  --commit-exec: #d06a45;
+  --commit-merge: #2aa896;
   --hl-comment: #71717a;
   --hl-keyword: #a99cf5;
   --hl-string: #6fd3a5;
@@ -184,5 +191,72 @@
 @media (prefers-reduced-motion: reduce) {
   .flow-dash {
     animation: none;
+  }
+}
+
+/* Storage tab: charts draw in from the left, lines trace themselves, bars
+   grow from the baseline; the history-to-disk flow keeps moving. */
+@keyframes reveal-x {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+.reveal-x {
+  animation: reveal-x 1.1s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes draw-line {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+.draw-line {
+  stroke-dasharray: 1;
+  animation: draw-line 1.2s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes grow-up {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+.grow-up {
+  transform-origin: bottom;
+  animation: grow-up 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes slide-across {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(300%);
+  }
+}
+@keyframes flow-along {
+  to {
+    stroke-dashoffset: -24;
+  }
+}
+.flow-along {
+  stroke-dasharray: 2 10;
+  stroke-linecap: round;
+  animation: flow-along 1.2s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .reveal-x,
+  .draw-line,
+  .grow-up,
+  .flow-along {
+    animation: none;
+  }
+  .draw-line {
+    stroke-dasharray: none;
   }
 }

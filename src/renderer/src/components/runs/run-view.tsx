@@ -9,7 +9,7 @@ import { Fragment, type ReactNode, useMemo } from 'react'
 
 import { AgentSwitcher, type SwitcherAgent } from '@/components/runs/agent-switcher'
 import { Conversation } from '@/components/runs/conversation'
-import { ProjectStorage } from '@/components/projects/project-storage'
+import { ProjectSandboxes, ProjectStorage } from '@/components/projects/project-storage'
 import { LiveTab } from '@/components/runs/live-tab'
 import { SessionHint, Spinner } from '@/components/runs/run-badges'
 import { activity, agentColors, isLive, stepKey, plural } from '@/components/runs/run-format'
@@ -21,7 +21,7 @@ import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { HostError } from '@/host/client'
 
-export type RunTab = 'live' | 'conversation' | 'history' | 'storage'
+export type RunTab = 'live' | 'conversation' | 'history' | 'storage' | 'sandboxes'
 
 interface RunPanelProps {
   runId: string
@@ -204,6 +204,7 @@ function RunBody({ run, demo, views, tab, onTab, picked, onAgent: setPicked, his
     )
   if (tab === 'history') return <ProjectHistory run={run} historyInit={historyInit} />
   if (tab === 'storage') return <ProjectStorage run={run} />
+  if (tab === 'sandboxes') return <ProjectSandboxes run={run} />
 
   const empty = live ? (
     <div className="flex flex-col items-center gap-2 py-20 text-center text-sm text-muted-foreground">

@@ -4,7 +4,9 @@
 //   list          runtime.project.list(), each marked with the run that made it
 //   state         runtime.project.get_state(name): Branches, Commits, Layers and
 //                 the running Sandboxes' Workspaces, one read that starts no
-//                 Sandbox; runtime.sandbox.list() adds each container's state
+//                 Sandbox; runtime.sandbox.list() adds each container's state;
+//                 backend.store.project.get_storage() the Store's totals, and
+//                 each Commit record its own added bytes
 //   commits       branch.list_commits, newest first, and each Commit's changed
 //                 paths from branch.diff_commits against its parent
 //   listDir/file  fs.list, fs.stat and fs.read
@@ -249,7 +251,8 @@ export class Projects {
     })
     let newest = null
     for (const c of byId.values()) if (typeof c.time === 'number' && (!newest || c.time > newest.time)) newest = c
-    const store = { path: record.volume ? storeFile(record.volume) : null, bytes: await this.storeBytes(record.volume) }
+    const [bytes, totals] = await Promise.all([this.storeBytes(record.volume), this.storeTotals(name)])
+    const store = { path: record.volume ? storeFile(record.volume) : null, bytes }
     return {
       project: this.summary(record, this.madeBy()),
       branches,
@@ -258,6 +261,17 @@ export class Projects {
       last: newest ? commitInfo(newest) : null,
       commits: byId.size,
       store,
+      storage: totals && storeStats(totals, st, branches, byId),
+    }
+  }
+
+  /** backend.store.project.get_storage, or null (logged) when the Store cannot answer. */
+  async storeTotals(name) {
+    try {
+      return await this.use(name, ({ backend }) => backend.store.project.get_storage())
+    } catch (error) {
+      this.log(`[host] Store totals of ${name}: ${error?.message ?? error}`)
+      return null
     }
   }
 
@@ -501,6 +515,39 @@ export class Projects {
   /** Closes every client (the runtime is the caller's). */
   async close() {
     await Promise.all([...this.clients.keys()].map((name) => this.forget(name)))
+  }
+}
+
+const count = (n) => (typeof n === 'number' && Number.isFinite(n) ? n : 0)
+
+/** StoreStats: get_storage's totals, main's newest Layer, and each Commit's added bytes (its record's statistics). */
+function storeStats(t, st, branches, byId) {
+  const head = branches.find((b) => b.name === 'main')?.head
+  const layer = (st.layers ?? []).find((l) => l.id === head)
+  const commits = [...byId.values()]
+    .map((c) => ({
+      id: c.id,
+      branch: c.branch ?? '',
+      message: c.message ?? '',
+      at: typeof c.time === 'number' ? c.time : null,
+      kind: c.via ?? null,
+      logical: count(c.logical),
+      canonical: count(c.newCanonical),
+      stored: count(c.newStored),
+    }))
+    .sort((a, b) => (a.at ?? 0) - (b.at ?? 0))
+  return {
+    logical: count(t.logical),
+    canonical: count(t.canonical),
+    stored: count(t.stored),
+    metadata: count(t.metadata),
+    file: count(t.file),
+    free: count(t.free),
+    dedupe: typeof t.dedupe === 'number' ? t.dedupe : null,
+    compression: typeof t.compression === 'number' ? t.compression : null,
+    init: t.init ? { files: count(t.init.files), bytes: count(t.init.bytes), stored: count(t.init.stored), millis: count(t.init.millis) } : null,
+    main: typeof layer?.logical === 'number' ? layer.logical : null,
+    commits,
   }
 }
 

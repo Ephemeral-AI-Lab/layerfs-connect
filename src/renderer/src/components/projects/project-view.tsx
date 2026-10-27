@@ -1,5 +1,5 @@
 // A demo project and its sessions. The project page is the demo's LayerFS
-// project: its Live view, History and Storage, read from the newest session
+// project: its Live view, History, Storage and Sandboxes, read from the newest session
 // (each session is one replay, which starts the project again from the
 // demo's fixture), and the list of Sessions. A session page is one replay:
 // its conversation, agent by agent. Both carry the small replay control,
@@ -24,12 +24,13 @@ import { useHostQuery } from '@/host/use-host'
 import { cn } from '@/lib/utils'
 import type { RunSummary } from '@shared/host-api'
 
-type ProjectTab = 'live' | 'history' | 'storage' | 'sessions' | 'script'
+type ProjectTab = 'live' | 'history' | 'storage' | 'sandboxes' | 'sessions' | 'script'
 
 const PROJECT_TABS: { id: ProjectTab; label: string }[] = [
   { id: 'live', label: 'Live' },
   { id: 'history', label: 'History' },
   { id: 'storage', label: 'Storage' },
+  { id: 'sandboxes', label: 'Sandboxes' },
 ]
 
 /** Tab names in `#projects/<demo>/<tab>` hashes (old names too), and where each went. */
@@ -38,6 +39,7 @@ function openingTab(initial?: string): { tab?: ProjectTab; history?: HistoryInit
     case 'live':
     case 'history':
     case 'storage':
+    case 'sandboxes':
     case 'sessions':
     case 'script':
       return { tab: initial }
@@ -51,8 +53,7 @@ function openingTab(initial?: string): { tab?: ProjectTab; history?: HistoryInit
     case 'replay':
       return { tab: 'history', history: { view: 'map', autoplay: initial === 'replay' } }
     case 'work':
-    case 'sandboxes':
-      return { tab: 'storage' }
+      return { tab: 'sandboxes' }
     case 'conversation':
     case 'trace':
       return { tab: 'live' }
@@ -161,7 +162,7 @@ interface ProjectPageProps extends PageParts {
   historyInit: HistoryInit
 }
 
-/** The project: Live, History and Storage from its newest session, then Sessions and Script. */
+/** The project: Live, History, Storage and Sandboxes from its newest session, then Sessions and Script. */
 function ProjectPage({ demo, title, runs, runsError, onPick, onBack, tab, onTab: setTab, historyInit: history, action, refusal }: ProjectPageProps) {
   // The project holds its newest session's state; sessions from before one project per demo played elsewhere.
   const current = runs?.find((r) => r.project === demo)
@@ -203,7 +204,7 @@ function ProjectPage({ demo, title, runs, runsError, onPick, onBack, tab, onTab:
           ) : (
             <>
               A session Inits the LayerFS project <span className="font-mono text-foreground">{demo}</span> from the demo’s fixture and plays
-              its scripted agents on it. Its Live view, History and Storage show here.
+              its scripted agents on it. Its Live view, History, Storage and Sandboxes show here.
             </>
           )}
         </Empty>

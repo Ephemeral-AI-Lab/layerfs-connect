@@ -92,6 +92,48 @@ export interface ProjectState {
   commits: number
   /** The project's Store file (in its Docker volume) and its bytes with the WAL; null when unreadable. */
   store: { path: string | null; bytes: number | null }
+  /** What the Store holds and what it costs (backend.store.project.get_storage); null when unreadable. */
+  storage: StoreStats | null
+}
+
+/**
+ * The Store's totals, in bytes. `logical` is every Commit and Layer counted
+ * as a full snapshot; `canonical` the distinct content after dedupe;
+ * `stored` that content compressed; `metadata` metadata packs plus SQLite
+ * space outside packs (it overlaps `stored`: do not add them).
+ */
+export interface StoreStats {
+  logical: number
+  canonical: number
+  stored: number
+  metadata: number
+  /** SQLite pages in bytes, free pages included. */
+  file: number
+  free: number
+  /** logical / canonical; null when canonical is 0. */
+  dedupe: number | null
+  /** canonical / stored; null when stored is 0. */
+  compression: number | null
+  /** What Init imported, recorded once; null before Init records it. */
+  init: { files: number; bytes: number; stored: number; millis: number } | null
+  /** main's newest Layer as a full snapshot; null when the Layer is not in the answer. */
+  main: number | null
+  /** Every Commit read, oldest first, with the bytes its Save added. */
+  commits: CommitStorage[]
+}
+
+export interface CommitStorage {
+  id: string
+  branch: string
+  message: string
+  at: number | null
+  /** exec (a Workspace commit), fs (a file call) or merge. */
+  kind: string | null
+  /** The whole tree's bytes at this Commit. */
+  logical: number
+  /** Distinct new content this Commit added, and the same compressed. */
+  canonical: number
+  stored: number
 }
 
 // ---------- Demos (scenarios) ----------

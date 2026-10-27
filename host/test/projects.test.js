@@ -74,6 +74,13 @@ test('state: main and feature-home, the Init Layer, the Sandboxes', async () => 
   assert.equal(st.layers.at(-1).message, 'Init')
   assert.ok(Array.isArray(st.sandboxes))
   for (const s of st.sandboxes) assert.ok(s.id && s.state && Array.isArray(s.workspaces))
+  // the Store's totals; main's head Layer is a full snapshot
+  assert.ok(st.storage)
+  assert.ok(st.storage.logical > 0 && st.storage.canonical > 0)
+  assert.equal(typeof st.storage.main, 'number')
+  assert.ok(st.storage.init && st.storage.init.files > 0)
+  assert.equal(st.storage.commits.length, st.commits)
+  for (const c of st.storage.commits) assert.equal(typeof c.stored, 'number')
 })
 
 test('commits: newest first, as CommitInfo; main has none (its history is Layers)', async () => {
