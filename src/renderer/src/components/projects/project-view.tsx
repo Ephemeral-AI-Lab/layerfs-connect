@@ -288,9 +288,11 @@ function SessionPage({ run, title, agent, onAgent, onProject }: SessionPageProps
       <button
         type="button"
         onClick={onProject}
-        className="-ml-1 truncate rounded px-1 text-muted-foreground outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
+        title={`Open ${title}`}
+        className="ml-3 flex min-w-0 items-center gap-1.5 rounded px-1 text-muted-foreground outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
       >
-        {title}
+        <LfsProject aria-hidden="true" className="size-3.5 shrink-0" />
+        <span className="truncate">{title}</span>
       </button>
       {/* the page is the session's: named for screen readers, shown on hover over its agents */}
       <h1 className="sr-only">{runLabel(run)}</h1>

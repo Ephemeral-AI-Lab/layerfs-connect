@@ -29,14 +29,12 @@ interface AgentSwitcherProps {
 /** The agent in the breadcrumb, opening to every agent of the run (parent → child). */
 export function AgentSwitcher({ agents, value, onChange, colorOf }: AgentSwitcherProps) {
   const nodes = treeOrder(agents, (a) => a.name, (a) => a.parent)
-  const current = agents.find((a) => a.name === value)
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
         aria-label="Agent"
         className="flex h-7 items-center gap-1.5 rounded-md px-1.5 text-sm font-medium text-foreground outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring data-[state=open]:bg-muted"
       >
-        {current?.state && <AgentDot state={current.state} />}
         {value}
         <ChevronsUpDown aria-hidden="true" className="size-3.5 text-muted-foreground" />
       </DropdownMenuTrigger>
