@@ -4,19 +4,21 @@ import type { AgentState, RunState, SegmentKind, StepResult } from '@shared/host
 
 import type { Tone } from '@/components/storage/chips'
 
+// Passed and failed are the scenario's verdict, for the backend and its tests:
+// the UI shows both as an ended session.
 export const RUN_TONE: Record<RunState, Tone> = {
   starting: 'info',
   running: 'info',
-  passed: 'success',
-  failed: 'danger',
+  passed: 'neutral',
+  failed: 'neutral',
   stopped: 'warning',
 }
 
 export const RUN_LABEL: Record<RunState, string> = {
   starting: 'Starting',
   running: 'Running',
-  passed: 'Passed',
-  failed: 'Failed',
+  passed: 'Ended',
+  failed: 'Ended',
   stopped: 'Stopped',
 }
 

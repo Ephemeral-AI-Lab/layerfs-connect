@@ -1,4 +1,4 @@
-import { Ban, Check, ChevronDown, CornerDownRight, MessageSquareReply, Send, Wrench, X } from 'lucide-react'
+import { Ban, ChevronDown, CornerDownRight, MessageSquareReply, Send, Wrench } from 'lucide-react'
 import { memo, useEffect, useState } from 'react'
 
 import { KindChip, Spinner } from '@/components/runs/run-badges'
@@ -115,8 +115,8 @@ export function ReplyText({ text, at, stream }: { text: string; at?: number | nu
   )
 }
 
-/** A group's state line: "Done in 1 s", "Failed after 2 s", "Running…". */
-function groupState(entries: Entry[]): { label: React.ReactNode; tone: 'run' | 'ok' | 'bad' | 'stop' | 'script' } {
+/** A group's state line: "Done in 1 s", "Stopped after 2 s", "Running…". Pass or fail is the scenario's, not shown. */
+function groupState(entries: Entry[]): { label: React.ReactNode; tone: 'run' | 'ok' | 'stop' | 'script' } {
   const results = entries.map((e) => e.result).filter((r) => r !== undefined)
   if (results.length === 0) {
     const n = entries.length
@@ -126,7 +126,6 @@ function groupState(entries: Entry[]): { label: React.ReactNode; tone: 'run' | '
   const last = Math.max(...results.map((r) => r.ended ?? r.started))
   const took = duration(Math.max(0, last - first))
   if (results.some((r) => r.state === 'running')) return { label: 'Running…', tone: 'run' }
-  if (results.some((r) => r.state === 'failed')) return { label: `Failed after ${took}`, tone: 'bad' }
   if (results.some((r) => r.state === 'stopped')) return { label: `Stopped after ${took}`, tone: 'stop' }
   return { label: `Done in ${took}`, tone: 'ok' }
 }
@@ -163,7 +162,7 @@ export const CallsFold = memo(function CallsFold({ id, entries, folds, onToggle 
           <span
             className={cn(
               'flex shrink-0 items-center gap-1.5',
-              state.tone === 'bad' ? 'text-destructive' : state.tone === 'stop' ? 'text-warning' : 'text-muted-foreground',
+              state.tone === 'stop' ? 'text-warning' : 'text-muted-foreground',
             )}
           >
             {state.tone === 'run' && <Spinner className="size-3" />}
@@ -242,7 +241,7 @@ function StepRow({ entry, open, onToggle }: StepRowProps) {
         className="group flex w-full min-w-0 items-center gap-2.5 px-3 py-2 text-left outline-none hover:bg-muted/40 focus-visible:bg-muted/60"
       >
         <RowMark entry={entry} />
-        <span className={cn('min-w-0 flex-1 truncate text-[13px]', r?.state === 'failed' && 'text-destructive')} title={titleOf(entry)}>
+        <span className="min-w-0 flex-1 truncate text-[13px]" title={titleOf(entry)}>
           {titleOf(entry)}
         </span>
         <span className="hidden min-w-0 shrink items-center gap-1 overflow-hidden md:flex">
@@ -267,19 +266,12 @@ function StepRow({ entry, open, onToggle }: StepRowProps) {
   )
 }
 
-/** A row's status: a spinner, a check, a cross, a stop, or a dot in a script. */
+/** A row's status: a spinner while it runs, a stop, else a dot. Pass or fail is the scenario's, not shown. */
 function RowMark({ entry }: { entry: Entry }) {
   const r = entry.result
-  if (!r) return <span aria-hidden="true" className="mx-1 size-1.5 shrink-0 rounded-full bg-faint/60" />
-  if (r.state === 'running') return <Spinner className="size-3.5" />
-  const Icon = r.state === 'ok' ? Check : r.state === 'failed' ? X : Ban
-  return (
-    <Icon
-      aria-label={r.state}
-      className={cn('size-3.5 shrink-0', r.state === 'ok' ? 'text-success' : r.state === 'failed' ? 'text-destructive' : 'text-warning')}
-      strokeWidth={2.5}
-    />
-  )
+  if (r?.state === 'running') return <Spinner className="size-3.5" />
+  if (r?.state === 'stopped') return <Ban aria-label="stopped" className="size-3.5 shrink-0 text-warning" strokeWidth={2.5} />
+  return <span aria-hidden="true" className="mx-1 size-1.5 shrink-0 rounded-full bg-faint/60" />
 }
 
 /** One call opened: what it does, its segments, LayerFS calls, checks and output. */
@@ -331,7 +323,6 @@ export function ThreadChip({ entry, colorOf, onOpenAgent }: ChipProps) {
   const other = targetOf(view) ?? '?'
   const verb = view?.tool === 'subagent' ? 'Started' : view?.tool === 'interrupt_agent' ? 'Interrupted' : 'Message to'
   const text = view?.tool === 'send_message' ? view.text.replace(/\s+/g, ' ').trim() : ''
-  const failed = result?.state === 'failed'
   return (
     <button
       type="button"
@@ -339,7 +330,6 @@ export function ThreadChip({ entry, colorOf, onOpenAgent }: ChipProps) {
       title={view?.tool === 'send_message' ? view.text : `Show ${other}'s conversation`}
       className={cn(
         'flex w-fit max-w-full min-w-0 items-center gap-1.5 rounded-full border bg-card px-3 py-1 text-[13px] text-muted-foreground outline-none hover:border-input hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring',
-        failed && 'border-destructive/40 text-destructive',
       )}
     >
       <CornerDownRight aria-hidden="true" className="size-3.5 shrink-0 text-faint" />

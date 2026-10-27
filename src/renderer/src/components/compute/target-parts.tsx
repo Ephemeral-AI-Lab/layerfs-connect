@@ -1,25 +1,16 @@
 import { Star } from 'lucide-react'
-import { type SimpleIcon, siApple, siDocker, siLinux, siModal } from 'simple-icons'
+import { siApple, siDocker, siLinux, siModal } from 'simple-icons'
 
 import { Chip } from '@/components/storage/chips'
-import { Tile } from '@/components/storage/icons'
+import { AWS_MARK, brandColor, Mark, Tile } from '@/components/storage/icons'
 import type { TargetId } from '@/data/compute'
 import { cn } from '@/lib/utils'
 
-function Mark({ icon }: { icon: SimpleIcon }) {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true" className="fill-current">
-      <path d={icon.path} />
-    </svg>
-  )
-}
-
-/** simple-icons carries no Windows, AWS, E2B or Daytona marks; those get monograms. */
-const MONOGRAM: Partial<Record<TargetId | 'win32', string>> = {
-  e2b: 'E2B',
-  daytona: 'D',
-  aws: 'AWS',
-  win32: 'Win',
+/** simple-icons carries no Windows, E2B or Daytona marks; those get monograms in their brand colour. */
+const MONOGRAM: Partial<Record<TargetId | 'win32', { text: string; hex: string }>> = {
+  e2b: { text: 'E2B', hex: 'FF8800' },
+  daytona: { text: 'D', hex: '000000' },
+  win32: { text: 'Win', hex: '0078D4' },
 }
 
 /** A target's tile. Native takes the mark of the OS it runs on. */
@@ -28,20 +19,24 @@ export function TargetIcon({ id, os, size = 'md' }: { id: TargetId; os?: string;
   const mark =
     id === 'docker'
       ? siDocker
-      : id === 'modal'
-        ? siModal
-        : id === 'native' && os === 'linux'
-          ? siLinux
-          : id === 'native' && os !== 'win32'
-            ? siApple
-            : undefined
+      : id === 'aws'
+        ? AWS_MARK
+        : id === 'modal'
+          ? siModal
+          : id === 'native' && os === 'linux'
+            ? siLinux
+            : id === 'native' && os !== 'win32'
+              ? siApple
+              : undefined
+  const mono = MONOGRAM[key]
+  const brand = mono && brandColor(mono.hex)
   return (
     <Tile size={size}>
       {mark ? (
         <Mark icon={mark} />
       ) : (
-        <span aria-hidden="true" className="font-semibold tracking-tight">
-          {MONOGRAM[key]}
+        <span aria-hidden="true" className={cn('font-semibold tracking-tight', brand?.className)} style={brand?.style}>
+          {mono?.text}
         </span>
       )}
     </Tile>

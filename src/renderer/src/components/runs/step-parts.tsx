@@ -1,5 +1,5 @@
 import type { CheckResult, StepResult, StepView, TraceCall } from '@shared/host-api'
-import { Check, ChevronRight, CircleDashed, Scissors, X } from 'lucide-react'
+import { ChevronRight, Scissors } from 'lucide-react'
 import { useState } from 'react'
 
 import { KindChip } from '@/components/runs/run-badges'
@@ -173,19 +173,13 @@ export function CallStrip({ calls }: { calls: TraceCall[] }) {
 
 type Mark = 'ok' | 'bad' | 'wait'
 
-function CheckChip({ mark, children, title }: { mark: Mark; children: React.ReactNode; title?: string }) {
-  const Icon = mark === 'ok' ? Check : mark === 'bad' ? X : CircleDashed
+// The mark is the scenario's pass or fail; the UI leaves it out and shows the chip plain.
+function CheckChip({ children, title }: { mark: Mark; children: React.ReactNode; title?: string }) {
   return (
     <span
       title={title}
-      className={cn(
-        'inline-flex h-5 items-center gap-1 rounded-md px-1.5 font-mono text-[11px] whitespace-nowrap ring-1 ring-inset',
-        mark === 'ok' && 'bg-success/10 text-success ring-success/20',
-        mark === 'bad' && 'bg-destructive/10 text-destructive ring-destructive/25',
-        mark === 'wait' && 'bg-muted text-muted-foreground ring-foreground/10',
-      )}
+      className="inline-flex h-5 items-center gap-1 rounded-md bg-muted px-1.5 font-mono text-[11px] whitespace-nowrap text-muted-foreground ring-1 ring-foreground/10 ring-inset"
     >
-      <Icon aria-hidden="true" className="size-3" strokeWidth={2.5} />
       {children}
     </span>
   )
@@ -239,7 +233,7 @@ export function CheckChips({ view, result }: { view?: StepView; result: StepResu
     <div className="flex flex-col gap-1.5">
       {chips.length > 0 && <div className="flex flex-wrap items-center gap-1">{chips}</div>}
       {failures.map((c) => (
-        <p key={c.name} className="text-xs text-destructive">
+        <p key={c.name} className="text-xs text-muted-foreground">
           <span className="font-medium">{c.name}:</span> {c.detail}
         </p>
       ))}

@@ -4,7 +4,6 @@ import { useState } from 'react'
 import { LayerfsMark } from '@/components/layerfs-mark'
 import { LfsBranch, LfsCommit, LfsStore } from '@/components/lfs-icons'
 import { LoadError } from '@/components/projects/states'
-import { RunStateBadge } from '@/components/runs/run-badges'
 import { isLive, plural, runLabel } from '@/components/runs/run-format'
 import { useStartRun } from '@/components/runs/use-runs'
 import { Chip } from '@/components/storage/chips'
@@ -49,12 +48,10 @@ function ProjectCard({ demo, latest, starting, onOpen, onNewSession }: ProjectCa
             {s?.last ? `${shortId(s.last.id)} · ${ago(s.last.at)}` : <span className="font-mono text-faint">{demo.id}</span>}
           </div>
         </div>
-        {live ? (
+        {live && (
           <Chip tone="info" live>
             {runLabel(latest!)} playing
           </Chip>
-        ) : (
-          latest && <RunStateBadge state={latest.state} />
         )}
       </div>
 

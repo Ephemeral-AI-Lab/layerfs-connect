@@ -1,5 +1,5 @@
 import type { AgentState, RunState, RunSummary, SegmentKind } from '@shared/host-api'
-import { Ban, Check, LoaderCircle, X } from 'lucide-react'
+import { Ban, LoaderCircle } from 'lucide-react'
 
 import { AGENT_TONE, KIND, KIND_ORDER, RUN_LABEL, RUN_TONE, ago, isLive, runLabel } from '@/components/runs/run-format'
 import { Chip, type Tone } from '@/components/storage/chips'
@@ -39,11 +39,9 @@ export function AgentDot({ state }: { state: AgentState }) {
   return <StateDot tone={AGENT_TONE[state]} live={state === 'running'} label={state} />
 }
 
-const RUN_ICON = { passed: Check, failed: X, stopped: Ban } as const
-
 export function RunStateBadge({ state }: { state: RunState }) {
   const live = state === 'running' || state === 'starting'
-  const icon = live ? undefined : RUN_ICON[state]
+  const icon = state === 'stopped' ? Ban : undefined
   return (
     <Chip tone={RUN_TONE[state]} live={live} icon={icon}>
       {RUN_LABEL[state]}

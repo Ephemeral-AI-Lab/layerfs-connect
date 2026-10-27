@@ -8,7 +8,6 @@ import { useRuns, useStartRun } from '@/components/runs/use-runs'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { cn } from '@/lib/utils'
 
 interface RunListProps {
   demo: string
@@ -100,15 +99,8 @@ function RunRow({ run, now, onOpen }: { run: RunSummary; now: number; onOpen: ()
         <span className="flex items-center gap-2.5">
           <RunDot state={run.state} />
           <span className="font-medium">{runLabel(run)}</span>
-          <span className={cn('text-xs', run.state === 'failed' ? 'text-destructive' : 'text-muted-foreground')}>
-            {RUN_LABEL[run.state]}
-          </span>
+          {(isLive(run.state) || run.state === 'stopped') && <span className="text-xs text-muted-foreground">{RUN_LABEL[run.state]}</span>}
         </span>
-        {run.error && (
-          <p title={run.error} className="mt-1 max-w-md truncate pl-[18px] text-xs text-destructive">
-            {run.error}
-          </p>
-        )}
       </TableCell>
       <TableCell className="text-muted-foreground" title={clock(run.started)}>
         {ago(run.started, now)}
