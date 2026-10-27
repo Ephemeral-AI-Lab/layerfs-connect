@@ -184,8 +184,14 @@ export type RunState = 'starting' | 'running' | 'passed' | 'failed' | 'stopped'
 export interface RunSummary {
   id: string
   demo: string
-  /** The LayerFS project this run made from the demo's fixture. */
+  /**
+   * The LayerFS project this run replayed on: the demo's own project (named
+   * after it), reset by each replay. Runs from before one project per demo
+   * name their own project (`<demo>-<n>`).
+   */
   project: string
+  /** The replay's number among its demo's (1, 2, …); null on runs from before one project per demo. */
+  replay: number | null
   state: RunState
   started: number
   ended: number | null
@@ -194,6 +200,8 @@ export interface RunSummary {
   done: number
   of: number
   phase: string | null
+  /** The agents started so far: the replay's sessions. */
+  agents: AgentRun[]
 }
 
 export type AgentState = 'waiting' | 'running' | 'idle' | 'done' | 'failed' | 'stopped'
@@ -259,6 +267,43 @@ export interface RunDetail extends RunSummary {
   captured: Record<string, string>
   /** Final checks after the root's last step (final.json and the like). */
   checks: CheckResult[]
+  /** What the agents hold in LayerFS now, from their trace lines. */
+  live: RunLive
+}
+
+/** A LayerFS call an agent has started and not finished. */
+export interface RunningCall {
+  id: string
+  agent: string
+  method: string
+  sandbox: string | null
+  path: string | null
+  branch: string | null
+  /** workspace.exec's command, cut to 240 characters. */
+  command: string | null
+  start: number
+}
+
+/** A Workspace an agent mounted and has not unmounted. */
+export interface LiveMount {
+  sandbox: string
+  path: string
+  branch: string | null
+  agent: string
+  since: number
+  /** Commits made from it so far. */
+  commits: number
+  /** Its last finished exec. */
+  last: { command: string | null; kind: string | null; at: number } | null
+}
+
+export interface RunLive {
+  running: RunningCall[]
+  mounts: LiveMount[]
+  /** Sandboxes the agents made (sandbox.create), still open. */
+  sandboxes: { id: string; agent: string; at: number }[]
+  /** Each agent's last finished call. */
+  last: Record<string, { method: string; ok: boolean; code: string | null; at: number }>
 }
 
 /** One server-sent event on /api/events. */
@@ -269,3 +314,4 @@ export type RunEvent =
   | { type: 'call'; run: string; call: TraceCall }
   | { type: 'message'; run: string; message: RunDetail['messages'][number] }
   | { type: 'checks'; run: string; checks: CheckResult[] }
+  | { type: 'live'; run: string; live: RunLive }

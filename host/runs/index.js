@@ -4,7 +4,10 @@
 //   runs.run(id) · runs.stop(id) · runs.on('event', …) · await runs.close()
 // Scenarios load with tools/lib/scenario.mjs (dsh-layerfs's checks, renamed)
 // and reload when their scenario.json changes; one that does not load is left
-// out and reported by loadErrors(). Runs live in <spec.runs>/<runId>/; their
+// out and reported by loadErrors(). A demo has one LayerFS project, named
+// after it; each run is a replay that resets it (run.js), so one run of a
+// demo plays at a time and only its newest run's project state is there.
+// Runs live in <spec.runs>/<runId>/; their
 // run.json records survive a host restart, and a run still playing at a
 // restart reads as failed (interrupted). At most two runs play at once.
 import { EventEmitter } from 'node:events'
@@ -20,7 +23,7 @@ export { LIMIT_MS } from './run.js'
 export const MAX_PLAYING = 2
 const SCENARIOS = fileURLToPath(new URL('../../scenarios/', import.meta.url))
 const ACTIVE = new Set(['starting', 'running'])
-const SUMMARY = ['id', 'demo', 'project', 'state', 'started', 'ended', 'error', 'done', 'of', 'phase']
+const SUMMARY = ['id', 'demo', 'project', 'state', 'started', 'ended', 'error', 'done', 'of', 'phase', 'agents', 'replay']
 
 const refuse = (code, status, message) => Object.assign(new Error(message), { code, status })
 
@@ -35,8 +38,13 @@ async function optional(path) {
 }
 
 export class RunManager extends EventEmitter {
-  constructor({ spec, scenarios = SCENARIOS }) {
+  /**
+   * @param {object} o
+   * @param {(project: string) => Promise<void>} [o.beforeRemove] called before a replay removes its demo's project (to close clients of it)
+   */
+  constructor({ spec, scenarios = SCENARIOS, beforeRemove = async () => {} }) {
     super()
+    this.beforeRemove = beforeRemove
     this.spec = spec
     this.dir = scenarios
     /** scenario id -> { mtime, demo?, views?, error? } */
@@ -133,6 +141,8 @@ export class RunManager extends EventEmitter {
   async sweep() {
     for (const record of this.records.values()) {
       if (record.state === 'passed' || ACTIVE.has(record.state) || record.swept !== false || !record.volume || hostAlive(record.host)) continue
+      // an earlier replay's project was removed by a newer one: nothing of it is left to close
+      if (this.newestOf(record.project)?.id !== record.id) continue
       try {
         await closeRunSandboxes(this.spec, record)
       } catch (e) {
@@ -149,7 +159,14 @@ export class RunManager extends EventEmitter {
     return [...this.live.values()].filter((r) => ACTIVE.has(r.state)).length + this.starting
   }
 
-  /** Starts a run of demo `id`: Inits a fresh project `<id>-<n>` from its fixture, then plays it. */
+  /** The newest run recorded on LayerFS project `name`. */
+  newestOf(name) {
+    let newest = null
+    for (const r of this.allRuns()) if (r.project === name && (!newest || r.started > newest.started)) newest = r
+    return newest
+  }
+
+  /** Starts a replay of demo `id` on its project `id`: reset (removed, then Inited from the fixture), then played. */
   async start(id) {
     const c = this.load().find((x) => x.demo.id === id)
     if (!c) throw refuse('NotFound', 404, `no demo named ${id}`)
@@ -160,13 +177,13 @@ export class RunManager extends EventEmitter {
     let run
     try {
       if (c.demo.scenario.seed && !(await optional('../seed.js'))) throw refuse('NotReady', 409, `${id} is a seed demo, and host/seed.js is not there yet`)
-      const runtime = await openRuntime(this.spec)
-      const taken = new Set((await runtime.project.list()).map((p) => p.name))
-      for (const r of this.allRuns()) taken.add(r.project)
-      let n = 1
-      while (taken.has(`${id}-${n}`)) n++
+      if (this.allRuns().some((r) => r.project === id && ACTIVE.has(r.state))) throw refuse('Busy', 409, `${id} is replaying now; stop it before replaying again`)
+      // the startup sweep may still be closing an interrupted replay's Sandboxes on this project
+      await this.sweeping
+      await openRuntime(this.spec)
       const started = Date.now()
-      const record = { id: `${id}-${started.toString(36)}`, demo: id, project: `${id}-${n}`, state: 'starting', started }
+      const replay = 1 + Math.max(0, ...this.allRuns().filter((r) => r.demo === id).map((r) => r.replay ?? 0))
+      const record = { id: `${id}-${started.toString(36)}`, demo: id, project: id, replay, state: 'starting', started }
       run = new Run({
         spec: this.spec,
         demo: c.demo,
@@ -174,6 +191,7 @@ export class RunManager extends EventEmitter {
         emit: (event) => this.emit('event', event),
         loadSeed: () => optional('../seed.js'),
         loadChecks: () => optional('../checks/index.js'),
+        beforeRemove: this.beforeRemove,
       })
       this.live.set(run.id, run)
     } finally {
@@ -201,7 +219,7 @@ export class RunManager extends EventEmitter {
     const live = this.live.get(id)
     if (live) return live.detail()
     const r = this.records.get(id)
-    return r ? { ...pick(r), agents: r.agents ?? [], steps: r.steps ?? [], messages: r.messages ?? [], captured: r.captured ?? {}, checks: r.checks ?? [] } : null
+    return r ? { ...pick(r), steps: r.steps ?? [], messages: r.messages ?? [], captured: r.captured ?? {}, checks: r.checks ?? [], live: r.live ?? EMPTY_LIVE } : null
   }
 
   stop(id) {
@@ -224,7 +242,8 @@ export class RunManager extends EventEmitter {
   }
 }
 
-const pick = (r) => Object.fromEntries(SUMMARY.map((k) => [k, r[k] ?? null]))
+const EMPTY_LIVE = { running: [], mounts: [], sandboxes: [], last: {} }
+const pick = (r) => ({ ...Object.fromEntries(SUMMARY.map((k) => [k, r[k] ?? null])), agents: r.agents ?? [] })
 
 /** True when `pid` is another live process (the host that wrote a run's record). */
 function hostAlive(pid) {

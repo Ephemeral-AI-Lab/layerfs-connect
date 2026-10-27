@@ -94,7 +94,7 @@ errors are `{ code, message }` with a 4xx/5xx status. CORS allows any origin
 | `DELETE /api/projects/:name` | `{ removed: true }` (runtime removal, confirm by name) |
 | `GET /api/demos` | `DemoSummary[]` |
 | `GET /api/demos/:id` | `DemoDetail` (every agent's steps, parsed) |
-| `POST /api/demos/:id/runs` | `RunSummary`: Inits a fresh project from the fixture, then runs |
+| `POST /api/demos/:id/runs` | `RunSummary`: a replay. Resets the demo's project `<id>` (removed if there, Inited again from the fixture), then plays; 409 while the demo replays |
 | `GET /api/runs?demo=` | `RunSummary[]`, newest first |
 | `GET /api/runs/:id` | `RunDetail` |
 | `POST /api/runs/:id/stop` | `RunSummary` |
@@ -116,18 +116,32 @@ runs.on('event', (e) => …)  // RunEvent
 await runs.close()
 ```
 
-A run: Init a fresh project `<demo>-<n>` from the demo's fixture (seed demos
-write their seed out first), make the run folder
+A run is a replay. Each demo has one LayerFS project, named after it
+(`tour`, `crew`, …). A replay removes that project if it is there (its
+Sandboxes stopped; the host's open client of it is closed first), Inits it
+again from the demo's fixture (seed demos write their seed out first), makes
+the run folder
 `runs/<runId>/` (`work/` is every agent's bash cwd, `traces/<agent>.jsonl`
-the SDK trace per agent, `run.json` the record), then play the root agent.
+the SDK trace per agent, `run.json` the record), then plays the root agent.
+Each agent is a session of the project. Only the newest replay's Branches,
+Commits and Sandboxes are in the project; earlier replays keep their record
+(conversation, trace, checks).
 Semantics follow dsh-layerfs exactly (its `packages/mock/src`: scenario.js,
 plan.js, progress.js, expect.js; dsh's tool schemas for subagent,
 send_message, job_* and bash). One attempt per call, nothing retried; a
-failed step fails the run; a run has 15 minutes. Two runs may play at once.
+failed step fails the run; a run has 15 minutes. Two replays (of different
+demos) may play at once.
+
+The run follows its agents' trace start and end lines
+([`runs/live.js`](runs/live.js)): the calls running now, the Sandboxes each
+agent made and the Workspaces it mounted (with each one's last exec and
+Commit count). `RunDetail.live` holds them and a `live` event carries them,
+at most every 120 ms; the renderer's Live tab draws them.
 A run that does not pass closes its project's Sandboxes (background
 processes cancelled, Workspaces unmounted with discard) and records
 `swept: true`; a host that starts finds any run left unswept by a host that
-was killed and sweeps it once.
+was killed and sweeps it once (only the newest run on a project: an
+earlier replay's project is gone).
 
 ## The parser (`parse/`)
 

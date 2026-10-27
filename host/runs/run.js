@@ -1,5 +1,7 @@
-// One run of a demo on the real LayerFS: Init a fresh project from the
-// demo's fixture (a seed demo's seed written out first), then play the
+// One run (a replay) of a demo on the real LayerFS. A demo has one LayerFS
+// project, named after it: a replay removes the project if it is there
+// (its Sandboxes stopped), Inits it again from the demo's fixture (a seed
+// demo's seed written out first), then plays the
 // agents (agent.js, tools.js) in <runDir>/work with the SDK tracing each
 // agent's calls to <runDir>/traces/<agent>.jsonl. The run passes when root's
 // last step is done and the final checks (host/checks) pass; the first failed
@@ -14,11 +16,13 @@ import { Agent } from './agent.js'
 import { Job } from './jobs.js'
 import { callCodes, inOrder } from '../../tools/lib/expect.mjs'
 import { Tools } from './tools.js'
+import { LiveState } from './live.js'
 import { traceCall, Traces } from './traces.js'
 
 export const LIMIT_MS = 15 * 60 * 1000
 const WATCH_MS = 250
 const SAVE_MS = 300
+const LIVE_MS = 120
 const RESOLVE = fileURLToPath(new URL('../resolve-layerfs.js', import.meta.url))
 const CLI = join(API, 'agent', 'cli', 'src', 'layerfs.js')
 const ACTIVE = new Set(['starting', 'running'])
@@ -35,13 +39,14 @@ export class Run {
    * @param {object} o.record what run.json holds so far (id, demo, project, …)
    * @param {(event: object) => void} o.emit
    */
-  constructor({ spec, demo, record, emit, loadSeed, loadChecks }) {
+  constructor({ spec, demo, record, emit, loadSeed, loadChecks, beforeRemove = async () => {} }) {
     this.spec = spec
     this.source = demo
     this.scenario = demo.scenario
     this.emit = emit
     this.loadSeed = loadSeed
     this.loadChecks = loadChecks
+    this.beforeRemove = beforeRemove
     Object.assign(this, { steps: [], messages: [], captured: {}, checks: [], phase: null, error: null, ended: null }, record)
     this.dir = join(spec.runs, this.id)
     this.work = join(this.dir, 'work')
@@ -54,7 +59,12 @@ export class Run {
     this.byLabel = new Map()
     this.closing = false
     this.tools = new Tools(this)
-    this.traces = new Traces((line, agent) => this.call(line, agent))
+    this.live = new LiveState()
+    this.liveTimer = null
+    this.traces = new Traces(
+      (line, agent) => this.call(line, agent),
+      (line, agent) => this.callStarted(line, agent),
+    )
     this.agents = new Map()
     for (const [name, steps] of Object.entries(this.scenario.agents)) this.agents.set(name, new Agent(this, name, steps))
     for (const [child, parent] of this.scenario.parents) this.agents.get(child).parent = this.agents.get(parent)
@@ -77,6 +87,7 @@ export class Run {
       id: this.id,
       demo: this.source.id,
       project: this.project,
+      replay: this.replay ?? null,
       state: this.state,
       started: this.started,
       ended: this.ended,
@@ -84,17 +95,18 @@ export class Run {
       done: agents.reduce((n, a) => n + a.index, 0),
       of: agents.reduce((n, a) => n + a.steps.length, 0),
       phase: this.phase,
+      agents: agents.map((a) => a.view()),
     }
   }
 
   detail() {
     return {
       ...this.summary(),
-      agents: [...this.agents.values()].map((a) => a.view()),
       steps: this.steps,
       messages: this.messages,
       captured: this.captured,
       checks: this.checks,
+      live: this.live.view(),
     }
   }
 
@@ -198,6 +210,25 @@ export class Run {
     const call = traceCall(line, agent)
     this.byLabel.get(call.step)?.calls.push(call)
     this.emit({ type: 'call', run: this.id, call })
+    this.live.ended(line, agent)
+    this.liveChanged()
+  }
+
+  /** A call's start line: it shows as running until its end line. */
+  callStarted(line, agent) {
+    this.live.started(line, agent)
+    this.liveChanged()
+  }
+
+  /** Sends the live state at most every LIVE_MS. */
+  liveChanged(now = false) {
+    if (!now) {
+      this.liveTimer ??= setTimeout(() => this.liveChanged(true), LIVE_MS)
+      return
+    }
+    clearTimeout(this.liveTimer)
+    this.liveTimer = null
+    this.emit({ type: 'live', run: this.id, live: this.live.view() })
   }
 
   // ---------- processes ----------
@@ -298,6 +329,17 @@ export class Run {
     }
     if (!folder) throw Object.assign(new Error('the demo names no fixture'), { code: 'InvalidInput' })
     const runtime = await openRuntime(this.spec)
+    const found = (await runtime.project.list()).find((p) => p.name === this.project)
+    if (found) {
+      // the demo's project holds an earlier replay: remove it, its Sandboxes stopped
+      this.phase = 'Resetting the project'
+      this.changed(true)
+      await this.beforeRemove(this.project)
+      const volume = found.volume ?? (await initVolume(runtime, this.project, this.spec.prefix))
+      await runtime.project.remove(this.project, { confirm: this.project, stopSandboxes: true, ...(volume ? { volume } : {}) })
+    }
+    this.phase = 'Init'
+    this.changed(true)
     let job = await runtime.project.start_init(this.project, folder, scenario.image ? { image: scenario.image } : {})
     while (!job.ended) {
       await pause(WATCH_MS)
@@ -306,6 +348,7 @@ export class Run {
     if (job.step !== 'done') throw Object.assign(new Error(`Init failed: ${job.error?.message ?? 'unknown'}`), { code: job.error?.code ?? 'Failed' })
     this.volume = job.project?.volume ?? null
     this.image = job.project?.image ?? scenario.image ?? null
+    this.phase = null
     this.save(true)
   }
 
@@ -368,6 +411,8 @@ export class Run {
     clearTimeout(this.limit)
     this.stopWork(state === 'passed' ? 'killed: the run ended' : `killed: the run ${state}`)
     this.traces.stop()
+    this.live.stopped()
+    this.liveChanged(true)
     for (const step of this.steps) if (step.state === 'running') Object.assign(step, { state: 'stopped', ended: this.ended })
     for (const agent of this.agents.values()) if (!['done', 'failed'].includes(agent.state)) agent.setState(state === 'passed' ? agent.state : 'stopped')
     this.changed(true)
@@ -386,6 +431,18 @@ export class Run {
       this.save(true)
     }
   }
+}
+
+/**
+ * The Store volume of a project whose Init was cut off before the runtime
+ * recorded it (a host closed mid-Init): the one volume named
+ * `<prefix><name>-store-…`, as Init names it. Null unless exactly one.
+ */
+async function initVolume(runtime, name, prefix) {
+  const start = `${prefix}${name}-store-`
+  const rows = await runtime.platform.docker(runtime.settings, ['volume', 'ls', '--format', '{{.Name}}'])
+  const found = rows.split('\n').filter((v) => v.startsWith(start))
+  return found.length === 1 ? found[0] : null
 }
 
 /**

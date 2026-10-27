@@ -25,6 +25,20 @@ export function useRuns(demo?: string): LiveRuns {
   useEffect(() => setRuns(undefined), [demo])
 
   useHostEvents((e) => {
+    if (e.type === 'agent') {
+      // an agent's state moved: its run's sessions follow
+      setRuns((all) => {
+        const i = all?.findIndex((r) => r.id === e.run) ?? -1
+        if (!all || i < 0) return all
+        const run = all[i]
+        const j = run.agents.findIndex((a) => a.name === e.agent.name)
+        const agents = j < 0 ? [...run.agents, e.agent] : run.agents.map((a, k) => (k === j ? e.agent : a))
+        const next = all.slice()
+        next[i] = { ...run, agents }
+        return next
+      })
+      return
+    }
     if (e.type !== 'run' || (demo && e.run.demo !== demo)) return
     setRuns((all) => {
       if (!all) return all

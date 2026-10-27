@@ -7,7 +7,7 @@ import { useStartRun } from '@/components/runs/use-runs'
 import { Button } from '@/components/ui/button'
 import { host } from '@/host/client'
 
-/** Stop (while live) and Run again, with what went wrong. */
+/** Stop (while live) and Replay (reset the project, play again), with what went wrong. */
 export function useRunActions(run: RunDetail, onOpenRun?: (runId: string) => void) {
   const [stopping, setStopping] = useState(false)
   const [stopError, setStopError] = useState<string>()
@@ -35,7 +35,7 @@ export function useRunActions(run: RunDetail, onOpenRun?: (runId: string) => voi
 
 export type RunActions = ReturnType<typeof useRunActions>
 
-/** Stop while the run plays, Run again once it ended. */
+/** Stop while the replay plays, Replay once it ended. */
 export function RunActionButton({ actions, className }: { actions: RunActions; className?: string }) {
   return actions.live ? (
     <Button variant="ghost" size="sm" onClick={() => void actions.stop()} disabled={actions.stopping} className={className}>
@@ -43,7 +43,7 @@ export function RunActionButton({ actions, className }: { actions: RunActions; c
     </Button>
   ) : (
     <Button variant="ghost" size="sm" onClick={actions.runAgain} disabled={actions.starting} className={className}>
-      <RotateCw /> {actions.starting ? 'Starting…' : 'Run again'}
+      <RotateCw /> {actions.starting ? 'Starting…' : 'Replay'}
     </Button>
   )
 }

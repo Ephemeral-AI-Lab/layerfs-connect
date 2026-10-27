@@ -64,7 +64,7 @@ fixtures/demo-workspace/   the fixture the hand-written seven Init from
   SDK); at most one workload, `node` or `rust`, where real builds run; one to
   three topics from `conflicts`, `merge`, `publish`, `multi-agent`,
   `background`, `sandbox`. Anything else is refused.
-- `fixture`: what a run Inits its fresh project `<demo>-<n>` from, relative
+- `fixture`: what a replay Inits the demo's project `<demo>` from, relative
   to the folder. A folder, or a seed file (`*.json`) that a run first writes
   out with [`host/seed.js`](../host/seed.js) `writeSeed(seed, dir)`.
 - `image`: optional runtime image digest; `{{image}}` in a command names it.

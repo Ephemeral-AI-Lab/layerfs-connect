@@ -155,7 +155,9 @@ const AGENT_COLORS: AgentColor[] = [
 
 /** A stable colour per agent name, by its position in `names`. */
 export function agentColors(names: string[]): (name: string) => AgentColor {
-  const index = new Map(names.map((n, i) => [n, i]))
+  // a name listed twice keeps its first place
+  const index = new Map<string, number>()
+  for (const n of names) if (!index.has(n)) index.set(n, index.size)
   return (name) => {
     let i = index.get(name)
     if (i === undefined) {
@@ -203,10 +205,14 @@ export const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' :
 export const stepKey = (agent: string, index: number) => `${agent}:${index}`
 
 /** "run 3" from the run's project "<demo>-3", else the run id. */
-export function runLabel(run: { id: string; project: string }): string {
+export function runLabel(run: { id: string; project: string; replay?: number | null }): string {
+  if (run.replay) return `replay ${run.replay}`
   const n = run.project.match(/-(\d+)$/)?.[1]
   return n ? `run ${n}` : run.id
 }
+
+/** True for a run from before one project per demo: it made its own project (`<demo>-<n>`). */
+export const ownProject = (run: { demo: string; project: string }) => run.project !== run.demo
 
 /** The step number people read, from a step's index. */
 export const stepNo = (index: number) => index + 1

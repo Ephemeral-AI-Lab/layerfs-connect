@@ -25,6 +25,7 @@ export function applyEvents(run: RunDetail, events: RunEvent[], orphans: Map<str
   let agents = run.agents
   let messages = run.messages
   let checks = run.checks
+  let live = run.live
   let ownSteps = false
   let index: Map<string, number> | null = null
   const indexOf = () => (index ??= new Map(steps.map((s, i) => [stepKey(s.agent, s.index), i])))
@@ -77,9 +78,12 @@ export function applyEvents(run: RunDetail, events: RunEvent[], orphans: Map<str
       case 'checks':
         checks = e.checks
         break
+      case 'live':
+        live = e.live
+        break
     }
   }
-  return { ...run, ...summary, id: run.id, steps, agents, messages, checks }
+  return { ...run, ...summary, id: run.id, steps, agents, messages, checks, live }
 }
 
 export interface LiveRun {

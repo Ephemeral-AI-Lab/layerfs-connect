@@ -4,7 +4,8 @@
 // read stopped, on a timer and whenever a step ends (the SDK writes a call's
 // line before the call returns, so a finished bash call's lines are all
 // there by then). Finished lines are kept by step label for the expect
-// check and handed on as TraceCall objects.
+// check and handed on as TraceCall objects; start lines (LAYERFS_TRACE_START)
+// are handed on too, so the live view shows calls still running.
 import { closeSync, existsSync, openSync, readSync, statSync } from 'node:fs'
 
 const CHUNK = 1 << 20
@@ -31,9 +32,13 @@ export function traceCall(line, agent) {
 }
 
 export class Traces {
-  /** @param {(line: object, agent: string) => void} onLine called once per finished line */
-  constructor(onLine) {
+  /**
+   * @param {(line: object, agent: string) => void} onLine called once per finished line
+   * @param {(line: object, agent: string) => void} [onStart] called once per call's start line
+   */
+  constructor(onLine, onStart = () => {}) {
     this.onLine = onLine
+    this.onStart = onStart
     /** agent -> { file, offset, rest } */
     this.files = new Map()
     /** step label -> finished lines */
@@ -74,7 +79,8 @@ export class Traces {
     } catch {
       return
     }
-    if (line?.layerfs_trace !== 1 || line.phase === 'start') return
+    if (line?.layerfs_trace !== 1) return
+    if (line.phase === 'start') return this.onStart(line, agent)
     const label = line.step ?? ''
     if (!this.byStep.has(label)) this.byStep.set(label, [])
     this.byStep.get(label).push(line)

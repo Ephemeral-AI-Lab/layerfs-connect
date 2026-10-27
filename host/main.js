@@ -39,10 +39,10 @@ function parseArgs(argv) {
 }
 
 /** The RunManager, or why it did not load. Loaded lazily: the engine may be absent. */
-async function loadRuns(spec) {
+async function loadRuns(spec, projects) {
   try {
     const { RunManager } = await import('./runs/index.js')
-    return { runs: new RunManager({ spec, scenarios: join(APP, 'scenarios') }), error: null }
+    return { runs: new RunManager({ spec, scenarios: join(APP, 'scenarios'), beforeRemove: (name) => projects.forget(name) }), error: null }
   } catch (error) {
     log(`[host] the demo engine did not load: ${error?.code === 'ERR_MODULE_NOT_FOUND' ? error.message : (error?.stack ?? error)}`)
     return { runs: null, error: error?.message ?? String(error) }
@@ -98,7 +98,7 @@ async function main() {
   process.stdin.on('close', () => void shutdown('stdin closed'))
   process.stdin.resume()
 
-  Object.assign(engine, await loadRuns(spec))
+  Object.assign(engine, await loadRuns(spec, projects))
   void projects.ensureWorker()
   const url = await listen(server, args.port)
   // a second host (another app window on the same state) leaves the first one's file alone

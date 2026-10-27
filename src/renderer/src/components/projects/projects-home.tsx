@@ -123,7 +123,7 @@ function DemoCard({ demo, latest, starting, onOpen, onRun }: DemoCardProps) {
           )}
         </div>
         <Button size="sm" variant={latest ? 'outline' : 'default'} className="relative z-10" disabled={starting} onClick={onRun}>
-          <Play /> {starting ? 'Starting…' : latest ? 'Run again' : 'Run'}
+          <Play /> {starting ? 'Starting…' : 'Replay'}
         </Button>
       </div>
     </div>
@@ -175,7 +175,7 @@ export function ProjectsHome({ onOpenProject, onOpenRun }: ProjectsHomeProps) {
             <h1 className="text-2xl font-semibold tracking-[-0.015em]">Projects</h1>
             <p className="mt-1 text-sm text-muted-foreground">
               {demos.data
-                ? `${demos.data.length} demo projects · ${live} running now. Each run Inits a fresh LayerFS project and plays scripted agents on it.`
+                ? `${demos.data.length} demo projects · ${live} running now. Each has one LayerFS project; a replay resets it and plays the scripted agents, each a session.`
                 : 'Scripted demo scenarios, each played on the real LayerFS.'}
             </p>
           </div>
