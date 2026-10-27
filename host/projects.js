@@ -61,6 +61,21 @@ function checkPath(path) {
   }
 }
 
+/**
+ * Every Branch of the project (project.list_branches, page by page): one page
+ * stops short of the size asked (92 of 134 on a crew project), so a single
+ * read misses the newest Branches.
+ */
+async function listBranches(layerfs) {
+  const all = []
+  for (let pos = 0; pos !== null; ) {
+    const page = await layerfs.project.list_branches(PAGE, pos)
+    all.push(...page.items)
+    pos = page.hasMore && page.items.length ? (page.nextPagePos ?? pos + page.items.length) : null
+  }
+  return all
+}
+
 /** Runs `fn` over `items`, `width` at a time. */
 async function each(items, width, fn) {
   let next = 0
@@ -238,6 +253,12 @@ export class Projects {
         return []
       }),
     ])
+    // get_state lists 64 Branches at most (moreBranches): History needs them all
+    if (st.moreBranches) {
+      const seen = new Set((st.branches ?? []).map((b) => b.name))
+      const rest = (await this.use(name, ({ layerfs }) => listBranches(layerfs))).filter((b) => !seen.has(b.name))
+      st.branches = [...(st.branches ?? []), ...rest.map(({ name, head, base, forkedFrom }) => ({ name, head, base, forkedFrom }))]
+    }
     const byId = new Map((st.commits ?? []).map((c) => [c.id, c]))
     const branches = await this.branchInfos(name, st, byId)
     const layers = (st.layers ?? []).map((l) => {
@@ -321,15 +342,15 @@ export class Projects {
     const cut = list.filter((b) => counts.get(b.name) === null)
     if (cut.length) {
       await this.use(name, async ({ layerfs }) => {
-        for (const b of cut) {
+        await each(cut, WIDTH, async (b) => {
           for (let pos = 0; pos !== null; ) {
             const page = await layerfs.branch.list_commits(b.name, PAGE, pos)
             for (const c of page.items) if (!byId.has(c.id)) byId.set(c.id, c)
             pos = page.hasMore ? (page.nextPagePos ?? pos + page.items.length) : null
           }
-          counts.set(b.name, own(b))
-        }
+        })
       })
+      for (const b of cut) counts.set(b.name, own(b))
     }
     const published = new Set((st.layers ?? []).map((l) => l.sourceBranch).filter(Boolean))
     const merges = [...byId.values()].filter((c) => c.via === 'merge')
@@ -356,8 +377,8 @@ export class Projects {
     return this.use(name, async (client) => {
       // list_commits walks first parents past the fork into the parent Branch's
       // Commits (labelled with this Branch); keep this Branch's own, as BranchInfo.commits counts them
-      const forks = await client.layerfs.project.list_branches(PAGE, 0)
-      const fork = forks.items.find((b) => b.name === branch)?.forkedFrom ?? null
+      const forks = await listBranches(client.layerfs)
+      const fork = forks.find((b) => b.name === branch)?.forkedFrom ?? null
       const page = await client.layerfs.branch.list_commits(branch, limit, 0)
       const own = []
       for (const c of page.items) {

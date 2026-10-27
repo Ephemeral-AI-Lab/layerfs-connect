@@ -1,5 +1,5 @@
-import { GitCommitVertical, Network } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { CircleAlert, GitCommitVertical, Network, X } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
 
 import { Segmented, type SegmentedOption } from '@/components/motion'
 import { type BranchFilter, BranchTree, visibleBranches } from '@/components/projects/history/branch-tree'
@@ -99,6 +99,8 @@ function HistoryBody({ project, tree, initialBranch, initialView = 'lineage', au
   const focus = tree.branches.has(focusState) ? focusState : 'main'
   const [picked, setSelected] = useState<HistoryItem | undefined>(() => (branchOf(tree, initialItem) ? initialItem : undefined))
   const selected = picked ?? headOf(tree, focus)
+  // a linked Commit or Layer this tree does not have: said so, and opened once a later read has it
+  const [missing, setMissing] = useState<HistoryItem | undefined>(() => (initialItem && !branchOf(tree, initialItem) ? initialItem : undefined))
   const [view, setView] = useState<HistoryView>(initialItem ? 'lineage' : initialView)
   const [query, setQuery] = useState('')
   const [filter, setFilter] = useState<BranchFilter>('all')
@@ -111,15 +113,22 @@ function HistoryBody({ project, tree, initialBranch, initialView = 'lineage', au
   const expanded = useMemo(() => new Set(tree.order.filter((n) => !collapsed.has(n))), [tree, collapsed])
   const shown = useMemo(() => visibleBranches(tree, query, filter), [tree, query, filter])
 
-  const setFocus = (name: string) => {
+  const setFocus = (name: string, item?: HistoryItem) => {
     setFocusState(name)
-    setSelected(undefined)
+    setSelected(item)
+    setMissing(undefined)
     setCollapsed((all) => {
       const next = new Set(all)
       for (const b of ancestry(tree, name)) next.delete(b.name)
       return next
     })
   }
+
+  const found = branchOf(tree, missing)
+  useEffect(() => {
+    if (found && missing) setFocus(found, missing)
+    // once, when a later read brings the item
+  }, [found])
 
   const branches = [...tree.branches.values()]
   const open = branches.filter((b) => b.name !== 'main' && b.state === 'open').length
@@ -149,6 +158,7 @@ function HistoryBody({ project, tree, initialBranch, initialView = 'lineage', au
         </span>
         <Segmented aria-label="View" value={view} onChange={setView} options={VIEWS} />
       </div>
+      {missing && <MissingNote item={missing} onDismiss={() => setMissing(undefined)} />}
 
       {view === 'lineage' ? (
         <div key="lineage" className="hist-swap grid min-h-0 flex-1 grid-cols-[15.5rem_minmax(0,1fr)_18rem]">
@@ -198,6 +208,22 @@ function HistoryBody({ project, tree, initialBranch, initialView = 'lineage', au
           />
         </div>
       )}
+    </div>
+  )
+}
+
+/** A linked Commit or Layer History cannot find: said, not swapped for another Branch's head. */
+function MissingNote({ item, onDismiss }: { item: HistoryItem; onDismiss: () => void }) {
+  const kind = item.kind === 'layer' ? 'Layer' : 'Commit'
+  return (
+    <div role="status" className="flex items-center gap-2 border-b bg-amber-500/10 px-3 py-1.5 text-xs text-amber-900 dark:text-amber-200">
+      <CircleAlert className="size-3.5 shrink-0" />
+      <span className="min-w-0 flex-1">
+        {kind} <HashChip id={item.id} className="mx-0.5 text-[11px]" /> is not in this project&apos;s history. It may not be read yet (it opens when it is), or its Branch was removed.
+      </span>
+      <button type="button" onClick={onDismiss} aria-label="Dismiss" className="rounded p-0.5 hover:bg-amber-500/20">
+        <X className="size-3.5" />
+      </button>
     </div>
   )
 }

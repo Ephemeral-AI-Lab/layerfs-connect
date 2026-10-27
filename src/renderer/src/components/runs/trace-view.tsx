@@ -6,7 +6,7 @@
 // the newest; "Load earlier" reads the page before. While the session plays,
 // its events re-read the loaded rows (at most once a second).
 import type { TracePage, TraceRecord, TraceWrite } from '@shared/host-api'
-import { ChevronDown, ChevronRight, CircleAlert, Flag, Layers, Search, X } from 'lucide-react'
+import { ArrowUpRight, ChevronDown, ChevronRight, CircleAlert, Flag, Layers, Search, X } from 'lucide-react'
 import { createContext, Fragment, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 
 import { LfsBranch, LfsCommit, LfsFork, LfsLayer, LfsMerge, LfsProject, LfsWorkspace } from '@/components/lfs-icons'
@@ -420,7 +420,7 @@ function Row({ r, started, open, onOpen, callsOpen, onCalls }: { r: TraceRecord;
             </span>
           )}
           {r.kind === 'tool' && r.exitCode !== null && r.exitCode !== undefined && r.exitCode !== 0 && <span className="text-destructive">exit {r.exitCode}</span>}
-          {!!r.writes?.length && <CheckpointChip r={r} writes={r.writes} />}
+          {!!r.writes?.length && <CheckpointChip r={r} writes={r.writes} onOpen={onOpen} />}
           {!!r.calls && (
             <button
               type="button"
@@ -503,6 +503,10 @@ function writeSummary(w: TraceWrite): string {
   }
 }
 
+/** A link into the project's History: a filled pill that fills in on hover, so it reads as clickable. */
+const LINK_PILL =
+  'inline-flex shrink-0 cursor-pointer items-center gap-0.5 rounded-full bg-primary/15 px-1.5 leading-5 font-semibold text-primary underline decoration-primary/40 decoration-dotted underline-offset-2 outline-none transition-colors hover:bg-primary hover:text-primary-foreground hover:no-underline focus-visible:ring-2 focus-visible:ring-ring'
+
 /** Checkpoint numbers as ranges: [3, 4, 7] → "#3–#4, #7". */
 function numbers(ns: number[]): string {
   const parts: string[] = []
@@ -520,9 +524,8 @@ function numbers(ns: number[]): string {
  * (a Branch write, Workspace commit or merge), the Layer a publish added to
  * main (a scenario run's publish: its trunk Branch), a fork's new Branch.
  */
-function HistoryLink({ w, open }: { w: TraceWrite; open?: (at: HistoryTarget) => void }) {
-  const at: HistoryTarget | null =
-    w.status !== 'ok'
+function historyTarget(w: TraceWrite): HistoryTarget | null {
+  return w.status !== 'ok'
       ? null
       : w.kind === 'publish'
         ? w.layer
@@ -537,6 +540,10 @@ function HistoryLink({ w, open }: { w: TraceWrite; open?: (at: HistoryTarget) =>
           : w.kind === 'fork' && w.branch
             ? { branch: w.branch }
             : null
+}
+
+function HistoryLink({ w, open }: { w: TraceWrite; open?: (at: HistoryTarget) => void }) {
+  const at = historyTarget(w)
   const id = at?.layer ?? at?.commit ?? null
   const Icon = at?.layer ? LfsLayer : at?.commit ? LfsCommit : LfsBranch
   const label = id ? shortId(id) : (at?.branch ?? null)
@@ -554,28 +561,67 @@ function HistoryLink({ w, open }: { w: TraceWrite; open?: (at: HistoryTarget) =>
       type="button"
       onClick={() => open(at)}
       title={title}
-      className="flex shrink-0 items-center gap-1 rounded px-0.5 font-mono text-primary underline-offset-2 outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"
+      className={`${LINK_PILL} font-mono`}
     >
       <Icon aria-hidden="true" className="size-3" />
       {label}
+      <ArrowUpRight aria-hidden="true" className="size-3" />
     </button>
   )
 }
 
 /** A tool row's mark: the session's auto-checkpoints its writes made, and any refused writes. */
-function CheckpointChip({ r, writes }: { r: TraceRecord; writes: TraceWrite[] }) {
+function CheckpointChip({ r, writes, onOpen }: { r: TraceRecord; writes: TraceWrite[]; onOpen: () => void }) {
+  const open = useContext(OpenHistory)
   const made = r.checkpoints ?? []
+  // up to four numbers, each a link to its place in History; more, and the chip opens the row's list of them
+  const links = open && made.length <= 4 ? writes.filter((w) => w.checkpoint !== null) : null
   const refused = writes.filter((w) => w.checkpoint === null).length
   const title = writes.map((w) => `${w.checkpoint !== null ? `#${w.checkpoint}` : 'refused'} ${WRITE[w.kind].label}: ${writeSummary(w)}${w.status === 'failed' ? ` (${w.outcome})` : ''}`).join('\n')
   return (
-    <span className="flex items-center gap-1" title={title}>
+    <span className="flex items-center gap-1">
       {made.length > 0 && (
-        <span className="flex items-center gap-1 rounded-full bg-primary/[0.07] px-1.5 font-medium text-primary ring-1 ring-primary/25 ring-inset">
+        <span className="flex items-center gap-1 font-medium text-primary">
           <Flag aria-hidden="true" className="size-3" />
-          {made.length === 1 ? 'Auto-checkpoint' : 'Auto-checkpoints'} {numbers(made)}
+          <span className="mr-0.5">{made.length === 1 ? 'Auto-checkpoint' : 'Auto-checkpoints'}</span>
+          {links
+            ? links.map((w, i) => {
+                const at = historyTarget(w)
+                return (
+                  <Fragment key={w.checkpoint}>
+                    {i > 0 && ' '}
+                    {at ? (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          open?.(at)
+                        }}
+                        title={`Open #${w.checkpoint} in the project’s History — ${WRITE[w.kind].label}: ${writeSummary(w)}`}
+                        className={LINK_PILL}
+                      >
+                        #{w.checkpoint}
+                        <ArrowUpRight aria-hidden="true" className="size-3" />
+                      </button>
+                    ) : (
+                      `#${w.checkpoint}`
+                    )}
+                  </Fragment>
+                )
+              })
+            : (
+                <button type="button" onClick={onOpen} title="Show its checkpoints, each a link to History" className={LINK_PILL}>
+                  {numbers(made)}
+                  <ChevronDown aria-hidden="true" className="size-3" />
+                </button>
+              )}
         </span>
       )}
-      {refused > 0 && <span className="rounded-full px-1.5 text-destructive ring-1 ring-destructive/25 ring-inset">{refused} refused</span>}
+      {refused > 0 && (
+        <span className="rounded-full px-1.5 text-destructive ring-1 ring-destructive/25 ring-inset" title={title}>
+          {refused} refused
+        </span>
+      )}
     </span>
   )
 }

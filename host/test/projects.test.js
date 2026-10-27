@@ -97,6 +97,24 @@ test('commits: newest first, as CommitInfo; main has none (its history is Layers
   await assert.rejects(projects.commits(NAME, 'no-such-branch'), { code: 'NoSuchBranch' })
 })
 
+test('state and Commit reads see every Branch, past get_state\'s 64 and one list_branches page', async () => {
+  const lf = await withProjectEnv(spec, await projects.record(NAME), () => LayerFS.open(NAME))
+  const extra = Array.from({ length: 100 }, (_, i) => `wide-${String(i).padStart(3, '0')}`)
+  try {
+    for (const name of extra) await lf.branch.fork(name, 'feature-home')
+  } finally {
+    await lf.close()
+  }
+  const st = await projects.state(NAME)
+  const names = new Set(st.branches.map((b) => b.name))
+  for (const name of ['main', 'feature-home', ...extra]) assert.ok(names.has(name), `${name} listed`)
+  assert.equal(st.branches.length, names.size)
+  const last = st.branches.find((b) => b.name === extra.at(-1))
+  assert.equal(last.parent, 'main')
+  assert.equal(last.forkedFrom, st.branches.find((b) => b.name === 'feature-home').forkedFrom)
+  assert.deepEqual(await projects.commits(NAME, extra.at(-1)), [])
+})
+
 test('listDir: the root folder with kinds and file sizes', async () => {
   const entries = await projects.listDir(NAME, 'feature-home', '/')
   const pkg = entries.find((e) => e.name === 'package.json')
