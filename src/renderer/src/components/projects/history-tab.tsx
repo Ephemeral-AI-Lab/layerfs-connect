@@ -21,19 +21,23 @@ const VIEWS: SegmentedOption<HistoryView>[] = [
 
 /** The Map in 3D (three.js), loaded only when it is asked for. */
 const Citadel = lazy(() => import('@/components/projects/history/citadel'))
+/** The Map as a game: the castle built by the heroes, replayable (three.js, loaded on demand). */
+const CastleGame = lazy(() => import('@/components/projects/history/game/castle-game'))
 
-type MapLook = '2d' | '3d'
+type MapLook = '2d' | '3d' | 'game'
 const LOOK_KEY = 'connect.timeline.view'
 const LOOKS = [
   { value: '2d' as const, label: '2D' },
   { value: '3d' as const, label: '3D' },
+  { value: 'game' as const, label: 'Game' },
 ]
 
 /** The Map's look, kept on this machine (2D when nothing is kept). */
 function useMapLook(): [MapLook, (v: MapLook) => void] {
   const [look, setLook] = useState<MapLook>(() => {
     try {
-      return localStorage.getItem(LOOK_KEY) === '3d' ? '3d' : '2d'
+      const kept = localStorage.getItem(LOOK_KEY)
+      return kept === '3d' || kept === 'game' ? kept : '2d'
     } catch {
       return '2d'
     }
@@ -231,7 +235,11 @@ function HistoryBody({ project, tree, initialBranch, initialView = 'lineage', au
         </div>
       ) : (
         <div key="map" className="hist-swap flex min-h-0 flex-1 flex-col">
-          {look === '3d' ? (
+          {look === 'game' ? (
+            <Suspense fallback={<Loading label="Loading the castle game" />}>
+              <CastleGame tree={tree} onOpen={openBranch} autoplay={autoplay} />
+            </Suspense>
+          ) : look === '3d' ? (
             <Suspense fallback={<Loading label="Loading the 3D view" />}>
               <Citadel tree={tree} focus={focus} shown={shown} onOpen={openBranch} />
             </Suspense>
