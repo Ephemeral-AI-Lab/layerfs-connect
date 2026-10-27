@@ -19,7 +19,7 @@ import { fileURLToPath } from 'node:url'
 import { compileScenario } from '../../tools/lib/scenario.mjs'
 import { missing, openRuntime } from '../config.js'
 import { closeRunSandboxes, Launch, Run } from './run.js'
-import { piLog, trajectory } from './trajectory.js'
+import { piLog, trajectory, writeNotes } from './trajectory.js'
 import { demoViews } from './views.js'
 
 export { LIMIT_MS } from './run.js'
@@ -256,15 +256,16 @@ export class RunManager extends EventEmitter {
     const name = agent || root
     if (!run.agents.some((a) => a.name === name)) throw refuse('NotFound', 404, `run ${id} has no agent named ${name}`)
     const agents = run.agents.map((a) => ({ name: a.name, parent: a.parent, state: a.state }))
+    const notes = writeNotes(join(this.spec.runs, id))
     if (run.kind === 'live') {
       const pi = piLog(join(this.spec.runs, id), name)
-      return { ...trajectory({ run, agent: name, pi, before, limit }), agents }
+      return { ...trajectory({ run, agent: name, pi, notes, before, limit }), agents }
     }
     const views = this.load().find((c) => c.demo.id === run.demo)?.views
     const script = views?.script[name] ?? []
     const session = run.session ? views?.summary.sessions?.find((s) => s.name === run.session) : null
     const prompt = name === root ? (session?.prompt ?? views?.summary.agents.find((a) => a.name === name)?.prompt ?? views?.summary.prompt ?? null) : null
-    return { ...trajectory({ run, agent: name, scriptView: (i) => script[i], prompt, title: views?.summary.title ?? null, before, limit }), agents }
+    return { ...trajectory({ run, agent: name, scriptView: (i) => script[i], prompt, title: views?.summary.title ?? null, notes, before, limit }), agents }
   }
 
   stop(id) {

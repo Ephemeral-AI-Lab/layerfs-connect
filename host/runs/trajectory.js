@@ -24,11 +24,29 @@
 //   subagent  a subagent started, with its task
 //   layerfs   one LayerFS call inside a tool call (`parent` is the tool row)
 //   check     a final check of the run (root only)
+// A tool row lists the writes its LayerFS calls made (`writes`): every call
+// that changes the project's store (traces.js WRITES), refused ones too.
+// Kinds: 'file', a Branch file op (fs.write, fs.apply, fs.edit, fs.mkdir,
+// fs.rm, fs.mv, fs.cp) committing straight to its Branch; 'workspace',
+// workspace.commit saving a Workspace's changes to the Branch it was mounted
+// on (the latest workspace.mount of that Sandbox and path before it); 'fork',
+// 'merge', 'publish' and 'init'. A scenario run plays on its own trunk
+// (scope.js): its script's publish forks the next trunk <folder>.main.<k>
+// from the Branch it publishes, so that fork reads as a publish to `trunk`.
+// Runs recorded before calls kept these details read them back from the
+// trace files (writeNotes).
+// Every successful write is an auto-checkpoint, numbered across the whole
+// session (all its agents) in the order the writes ended (`checkpoint`). A
+// tool call lists its checkpoints' numbers (`checkpoints`); they need not be
+// consecutive, since other agents checkpoint in between. Refused writes
+// change nothing: listed, not numbered. The page says how many the session
+// has (`checkpoints`).
 // A turn opens with a user message (or a parent's task); `step` numbers the
 // requests. Text fields are cut to PREVIEW characters; the run's detail holds
 // the rest.
-import { existsSync, readdirSync, readFileSync } from 'node:fs'
+import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
 import { join } from 'node:path'
+import { WRITES, writeNote } from './traces.js'
 
 const PREVIEW = 4000
 const PAGE = 400
@@ -39,6 +57,88 @@ const cut = (text) => {
 }
 const firstLine = (text) => String(text ?? '').split('\n').find((l) => l.trim() && !l.trim().startsWith('#'))?.trim() ?? ''
 const textOf = (content) => (typeof content === 'string' ? content : Array.isArray(content) ? content.filter((c) => c.type === 'text').map((c) => c.text).join('\n') : '')
+
+/** call id -> writeNote of every write in a run's trace files, for calls recorded without one. */
+const notesCache = new Map()
+export function writeNotes(runDir) {
+  const dir = join(runDir, 'traces')
+  const out = new Map()
+  if (!existsSync(dir)) return out
+  for (const file of readdirSync(dir).filter((f) => f.endsWith('.jsonl'))) {
+    const path = join(dir, file)
+    let size = 0
+    try {
+      size = statSync(path).size
+    } catch {
+      continue
+    }
+    let notes = notesCache.get(path)
+    if (!notes || notes.size !== size) {
+      const ids = new Map()
+      for (const line of readFileSync(path, 'utf8').split('\n')) {
+        const method = /"method":"([a-z_.]+)"/.exec(line)?.[1]
+        if (!method || !WRITES[method] || line.includes('"phase":"start"')) continue
+        try {
+          const l = JSON.parse(line)
+          ids.set(String(l.id), writeNote(l))
+        } catch {
+          // a line being written
+        }
+      }
+      notes = { size, ids }
+      notesCache.set(path, notes)
+    }
+    for (const [id, note] of notes.ids) out.set(id, note)
+  }
+  return out
+}
+
+/** call id -> the write it made (see the top of this file), over every agent of the run. */
+function writeLedger(run, notes) {
+  const calls = run.steps.flatMap((s) => s.calls).sort((a, b) => Date.parse(a.start) - Date.parse(b.start))
+  const mounted = new Map()
+  const out = new Map()
+  for (const c of calls) {
+    if (c.method === 'workspace.mount' && c.ok && c.sandbox && c.path && c.branch) mounted.set(`${c.sandbox}:${c.path}`, c.branch)
+    let kind = WRITES[c.method]
+    if (!kind) continue
+    const at = Date.parse(c.start) || null
+    const where = `${c.sandbox}:${c.path}`
+    // a mount the trace does not show (another session's, or before the run): the run's own record of it
+    const fallback = () =>
+      run.live?.mounts
+        ?.filter((m) => m.sandbox === c.sandbox && m.path === c.path && (at === null || m.since <= at))
+        .sort((a, b) => b.since - a.since)[0]?.branch ?? null
+    const note = { ...(notes.get(c.id) ?? {}), ...Object.fromEntries(Object.entries(c).filter(([, v]) => v != null)) }
+    const trunk = kind === 'fork' && run.folder && new RegExp(`^${run.folder.replace(/[.]/g, '\\.')}\\.main\\.\\d+$`).test(c.branch ?? '') ? c.branch : null
+    if (trunk) kind = 'publish'
+    out.set(c.id, {
+      kind,
+      method: c.method,
+      status: c.ok === null ? 'running' : c.ok ? 'ok' : 'failed',
+      outcome: c.ok === false ? (c.code ?? 'failed') : (c.kind ?? null),
+      commit: typeof c.commit === 'string' ? c.commit : null,
+      branch: kind === 'workspace' ? (mounted.get(where) ?? fallback()) : kind === 'merge' ? (note.name ?? c.branch ?? null) : trunk ? (note.from ?? null) : (c.branch ?? null),
+      trunk,
+      path: kind === 'file' ? (c.path ?? null) : null,
+      workspace: kind === 'workspace' ? where : null,
+      from: note.from ?? null,
+      onto: note.onto ?? null,
+      with: note.with ?? null,
+      layer: note.layer ?? null,
+      message: note.message ?? null,
+      sizes: note.sizes ?? null,
+      start: at,
+      ms: c.ms ?? null,
+      checkpoint: null,
+    })
+  }
+  // the session's auto-checkpoints: its successful writes, in the order they ended
+  const done = [...out.values()].filter((w) => w.status === 'ok').sort((a, b) => (a.start ?? 0) + (a.ms ?? 0) - ((b.start ?? 0) + (b.ms ?? 0)))
+  done.forEach((w, i) => (w.checkpoint = i + 1))
+  out.checkpoints = done.length
+  return out
+}
 
 /** pi's log of one agent: every entry of its session files, oldest file first; null when it has none. */
 export function piLog(runDir, agent) {
@@ -69,12 +169,14 @@ export function piLog(runDir, agent) {
  * @param {string | null} [o.title]   the scenario's title
  * @param {object[] | null} [o.pi]    pi's log of the agent (piLog)
  */
-export function trajectory({ run, agent, scriptView = () => undefined, prompt = null, title = null, pi = null, before = null, limit = PAGE }) {
-  const records = pi ? fromPi({ run, agent, pi }) : fromScript({ run, agent, scriptView, prompt, title })
+export function trajectory({ run, agent, scriptView = () => undefined, prompt = null, title = null, pi = null, notes = new Map(), before = null, limit = PAGE }) {
+  const ledger = writeLedger(run, notes)
+  const records = pi ? fromPi({ run, agent, pi, ledger }) : fromScript({ run, agent, scriptView, prompt, title, ledger })
   if (agent === (run.agents.find((a) => a.parent === null)?.name ?? 'root')) ending(run, records)
+  for (const r of records) if (r.writes?.length) r.checkpoints = r.writes.map((w) => w.checkpoint).filter((n) => n !== null)
   const end = before === null ? records.length : Math.max(0, Math.min(Number(before), records.length))
   const from = Math.max(0, end - Math.max(1, Number(limit) || PAGE))
-  return { agent, kind: pi ? 'live' : 'replay', total: records.length, from, records: records.slice(from, end) }
+  return { agent, kind: pi ? 'live' : 'replay', total: records.length, from, records: records.slice(from, end), checkpoints: ledger.checkpoints }
 }
 
 /** What reached `agent`, oldest first, each with who it is from as a row sees it. */
@@ -108,7 +210,7 @@ function messageRow(m, turn, id) {
 const stepStatus = (s) => (s.state === 'ok' ? 'ok' : s.state)
 
 /** A step's call as rows: the call, then its LayerFS calls. */
-function callRows(agent, s, view, turn, step) {
+function callRows(agent, s, view, turn, step, ledger) {
   const v = view ?? {}
   const tool = v.tool ?? 'bash'
   const id = `t:${agent}:${s.index}`
@@ -130,6 +232,7 @@ function callRows(agent, s, view, turn, step) {
       checks: (s.checks ?? []).map((c) => ({ name: c.name, ok: c.ok, detail: cut(c.detail) })),
       background: v.background === true,
       calls: s.calls.length,
+      writes: s.calls.map((c) => ledger.get(c.id)).filter(Boolean),
       status: stepStatus(s),
       start: s.started,
       ms,
@@ -145,6 +248,7 @@ function callRows(agent, s, view, turn, step) {
       title: c.method,
       outcome: c.ok === null ? null : c.ok ? (c.kind ?? 'ok') : (c.code ?? 'failed'),
       args: Object.fromEntries(['branch', 'sandbox', 'path', 'commit'].filter((k) => c[k]).map((k) => [k, c[k]])),
+      writeKind: ledger.get(c.id)?.kind ?? null,
       status: c.ok === null ? 'running' : c.ok ? 'ok' : 'failed',
       start: Date.parse(c.start) || null,
       ms: c.ms ?? null,
@@ -154,7 +258,7 @@ function callRows(agent, s, view, turn, step) {
 }
 
 /** A replay's rows (and a live session's without pi's log): the script's steps and the messages, in time. */
-function fromScript({ run, agent, scriptView, prompt, title }) {
+function fromScript({ run, agent, scriptView, prompt, title, ledger }) {
   const rows = []
   const isRoot = run.agents.find((a) => a.name === agent)?.parent == null
   const steps = run.steps.filter((s) => s.agent === agent).sort((a, b) => a.index - b.index)
@@ -198,13 +302,13 @@ function fromScript({ run, agent, scriptView, prompt, title }) {
       return
     }
     rows.push({ id: `a:${agent}:${s.index}`, kind: 'assistant', turn, step, title: v?.say ? firstLine(v.say) : '', text: cut(v?.say ?? null), toolOnly: !v?.say, scripted: run.kind !== 'live', phase: v?.phase ?? null, status: 'ok', start: s.started, ms: null })
-    rows.push(...callRows(agent, s, v, turn, step))
+    rows.push(...callRows(agent, s, v, turn, step, ledger))
   })
   return rows
 }
 
 /** A live agent's rows: pi's log in order, each tool call taking the agent's next step. */
-function fromPi({ run, agent, pi }) {
+function fromPi({ run, agent, pi, ledger }) {
   const rows = []
   const calls = run.steps.filter((s) => s.agent === agent && s.view?.tool !== 'reply').sort((a, b) => a.index - b.index)
   const waiting = incoming(run, agent)
@@ -277,7 +381,7 @@ function fromPi({ run, agent, pi }) {
       for (const call of toolCalls) {
         const s = calls.shift()
         if (s) {
-          const made = callRows(agent, s, s.view, turn, step)
+          const made = callRows(agent, s, s.view, turn, step, ledger)
           byCall.set(call.id, made[0])
           rows.push(...made)
           continue
@@ -295,7 +399,7 @@ function fromPi({ run, agent, pi }) {
     }
   })
   // steps pi's log does not show yet (it is written as each message ends)
-  for (const s of calls) rows.push(...callRows(agent, s, s.view, turn || 1, step))
+  for (const s of calls) rows.push(...callRows(agent, s, s.view, turn || 1, step, ledger))
   return rows
 }
 

@@ -66,6 +66,9 @@ export interface HistoryInit {
   branch?: string
   view?: HistoryView
   autoplay?: boolean
+  /** A Commit or Layer to open on, selected (the Trace's auto-checkpoints link here). */
+  commit?: string
+  layer?: string
 }
 
 /** History: the project's history (tree, lineage, Map), and its files. */
@@ -86,6 +89,7 @@ export function RunHistoryTab({ run, project, init }: { run: RunDetail; project:
                 initialBranch={init?.branch}
                 initialView={init?.view}
                 autoplay={init?.autoplay}
+                initialItem={init?.commit ? { kind: 'commit', id: init.commit } : init?.layer ? { kind: 'layer', id: init.layer } : undefined}
               />
             ) : (
               <FilesTab key={s.project.name} project={s.project.name} branches={s.branches} tick={project.tick} initialBranch={init?.branch} />

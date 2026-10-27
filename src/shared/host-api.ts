@@ -311,6 +311,14 @@ export interface TraceCall {
   sandbox?: string | null
   path?: string | null
   commit?: string | null
+  /** A write (host/runs/traces.js WRITES): its message or why it was refused (cut), sizes, and the Branches it named. */
+  message?: string | null
+  sizes?: { logical: number | null; stored: number | null } | null
+  from?: string | null
+  onto?: string | null
+  with?: string | null
+  name?: string | null
+  layer?: string | null
 }
 
 export interface CheckResult {
@@ -335,6 +343,43 @@ export interface StepResult {
   output?: string
   calls: TraceCall[]
   checks: CheckResult[]
+}
+
+/**
+ * A call that changed the project's store (its Branches, Commits, Layers):
+ *   file       a Branch file op (fs.write, fs.apply, fs.edit, fs.mkdir, fs.rm,
+ *              fs.mv, fs.cp), committed straight to its Branch
+ *   workspace  workspace.commit: a mounted Workspace's changes, saved to its Branch
+ *   fork       branch.fork: a new Branch `branch` from `from`
+ *   merge      branch.merge: `onto` and `with` merged into a new Branch `branch`
+ *   publish    branch.publish: `branch` added to main as Layer `layer` (in a
+ *              scenario run, a fork of its next trunk `trunk` from `branch`)
+ *   init       project.init
+ * Refused ones too (status 'failed', `outcome` its code, `message` why).
+ * Every successful write is an auto-checkpoint, numbered across the session
+ * (all its agents) in the order writes ended; a refused one has none.
+ */
+export interface TraceWrite {
+  kind: 'file' | 'workspace' | 'fork' | 'merge' | 'publish' | 'init'
+  method: string
+  status: 'ok' | 'failed' | 'running'
+  outcome: string | null
+  commit: string | null
+  branch: string | null
+  path: string | null
+  workspace: string | null
+  from: string | null
+  onto: string | null
+  with: string | null
+  layer: string | null
+  /** publish in a scenario run: the run's trunk Branch (<folder>.main.<k>) it went to instead of main. */
+  trunk: string | null
+  message: string | null
+  sizes: { logical: number | null; stored: number | null } | null
+  start: number | null
+  ms: number | null
+  /** Its auto-checkpoint number in the session; null when refused. */
+  checkpoint: number | null
 }
 
 /** One row of a session's Trace (host/runs/trajectory.js): what one agent was given and did. */
@@ -373,6 +418,12 @@ export interface TraceRecord {
   checks?: { name: string; ok: boolean; detail: string }[]
   background?: boolean
   calls?: number
+  /** tool: the writes its LayerFS calls made, in order. */
+  writes?: TraceWrite[]
+  /** tool: the session's auto-checkpoints its writes made, ascending; other agents' may fall between. */
+  checkpoints?: number[]
+  /** layerfs: the kind of write this call is. */
+  writeKind?: TraceWrite['kind'] | null
   /** layerfs: the tool row it ran in. */
   parent?: string
   outcome?: string | null
@@ -387,6 +438,8 @@ export interface TracePage {
   from: number
   records: TraceRecord[]
   agents: { name: string; parent: string | null; state: string }[]
+  /** How many auto-checkpoints the whole session made (all agents). */
+  checkpoints?: number
 }
 
 export interface RunDetail extends RunSummary {

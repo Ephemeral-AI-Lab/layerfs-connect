@@ -21,7 +21,7 @@ import { ReplayControl } from '@/components/runs/replay-control'
 import { RunList } from '@/components/runs/run-list'
 import type { HistoryInit } from '@/components/runs/run-project-tabs'
 import { RunPanel } from '@/components/runs/run-view'
-import { TraceView } from '@/components/runs/trace-view'
+import { type HistoryTarget, TraceView } from '@/components/runs/trace-view'
 import { useNow } from '@/components/runs/use-run'
 import { useRuns, useStartRun } from '@/components/runs/use-runs'
 import { ago, bytes } from '@/data/format'
@@ -94,6 +94,8 @@ export function ProjectView({ demo, runId, agent, onPick, initialTab, initialBra
   const title = detail.data?.title ?? demo
   const [opening] = useState(() => openingTab(initialTab))
   const [tab, setTab] = useState<ProjectTab>(opening.tab ?? 'live')
+  // a Trace auto-checkpoint opened: the project's History, on its Commit (or Layer, or Branch)
+  const [historyAt, setHistoryAt] = useState<HistoryTarget>()
   const replay = (
     <ReplayControl
       runs={runs}
@@ -128,6 +130,11 @@ export function ProjectView({ demo, runId, agent, onPick, initialTab, initialBra
         agent={agent}
         onAgent={(name) => onPick({ run: session.id, agent: name })}
         onProject={() => onPick({})}
+        onOpenHistory={(at) => {
+          setHistoryAt(at)
+          setTab('history')
+          onPick({})
+        }}
       />
     ) : (
       <Loading label={runs ? `No session ${runId}` : 'Reading the sessions'} className="h-svh" />
@@ -143,7 +150,7 @@ export function ProjectView({ demo, runId, agent, onPick, initialTab, initialBra
       onBack={onBack}
       tab={tab}
       onTab={(t) => viewTransition(() => setTab(t), 'tab')}
-      historyInit={{ ...opening.history, branch: initialBranch }}
+      historyInit={historyAt ? { part: 'history', ...historyAt } : { ...opening.history, branch: initialBranch }}
       action={replay}
       refusal={refusal}
     />
@@ -323,10 +330,11 @@ interface SessionPageProps {
   agent?: string
   onAgent: (name: string) => void
   onProject: () => void
+  onOpenHistory: (at: HistoryTarget) => void
 }
 
 /** One session (replay): its conversation, agent by agent, under a one-row breadcrumb header. */
-function SessionPage({ run, title, agent, onAgent, onProject }: SessionPageProps) {
+function SessionPage({ run, title, agent, onAgent, onProject, onOpenHistory }: SessionPageProps) {
   const live = isLive(run.state)
   const now = useNow(live)
   const [view, setView] = useState<'conversation' | 'trace'>('conversation')
@@ -382,7 +390,7 @@ function SessionPage({ run, title, agent, onAgent, onProject }: SessionPageProps
           onAgent={onAgent}
           lead={lead}
           tabs={tabs}
-          pane={view === 'trace' ? (shown: string) => <TraceView runId={run.id} agent={shown} live={live} started={run.started} /> : undefined}
+          pane={view === 'trace' ? (shown: string) => <TraceView runId={run.id} agent={shown} live={live} started={run.started} onOpenHistory={onOpenHistory} /> : undefined}
           meta={meta}
         />
       </div>

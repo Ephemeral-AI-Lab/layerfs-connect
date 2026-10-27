@@ -28,6 +28,47 @@ export function traceCall(line, agent) {
     sandbox: pick('sandbox'),
     path: pick('path'),
     commit: typeof line.commit === 'string' ? line.commit : null,
+    // a call that changes the project's store: what it did (the Trace tab lists them)
+    ...(WRITES[line.method] ? writeNote(line) : {}),
+  }
+}
+
+/**
+ * The SDK methods that change a project's store (its Branches, Commits and
+ * Layers), by the kind the Trace tab shows. Every other method reads it, or
+ * changes only Sandboxes and Workspaces (sandbox.create/close,
+ * workspace.mount/unmount/exec): those save nothing until workspace.commit.
+ */
+export const WRITES = Object.freeze({
+  'fs.write': 'file',
+  'fs.apply': 'file',
+  'fs.edit': 'file',
+  'fs.mkdir': 'file',
+  'fs.rm': 'file',
+  'fs.mv': 'file',
+  'fs.cp': 'file',
+  'workspace.commit': 'workspace',
+  'branch.fork': 'fork',
+  'branch.merge': 'merge',
+  'branch.publish': 'publish',
+  'project.init': 'init',
+})
+
+/** What a write's trace line says beyond the call: its message (or why it was refused), sizes, and the Branches it named. */
+export function writeNote(line) {
+  const args = line.args ?? {}
+  const sizes = line.sizes && typeof line.sizes === 'object' ? line.sizes : null
+  const str = (v) => (typeof v === 'string' ? v : null)
+  const message = line.ok === false ? str(line.message) : str(args.message)
+  return {
+    message: message ? message.slice(0, 500) : null,
+    sizes: sizes ? { logical: sizes.logical ?? null, stored: sizes.newStored ?? null } : null,
+    // fork: the Branch it forked from; merge: the two it merged and the one it made; publish: the Layer it added
+    from: str(args.from),
+    onto: line.method === 'branch.merge' ? str(args.branch) : null,
+    with: str(args.with),
+    name: str(args.name),
+    layer: str(line.layer),
   }
 }
 

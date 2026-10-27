@@ -46,6 +46,8 @@ interface HistoryTabProps {
   initialView?: HistoryView
   /** Dev aid: open the Map already replaying. */
   autoplay?: boolean
+  /** A Commit or Layer to open on: its Branch focused (main for a Layer), it selected. */
+  initialItem?: HistoryItem
 }
 
 export function HistoryTab({ project, runId, tick = 0, ...rest }: HistoryTabProps) {
@@ -61,7 +63,14 @@ export function HistoryTab({ project, runId, tick = 0, ...rest }: HistoryTabProp
     if (q.error) return <LoadError error={q.error} what="this project's history" onRetry={q.reload} />
     return <Loading label="Reading Branches and Commits" />
   }
-  return <HistoryBody key={project} project={project} tree={tree} {...rest} />
+  return <HistoryBody key={`${project}:${rest.initialItem?.id ?? ''}`} project={project} tree={tree} {...rest} />
+}
+
+/** Where a Commit or Layer is in the tree: its Branch, or null when the tree does not have it (yet). */
+function branchOf(tree: ForkTree, item?: HistoryItem): string | null {
+  if (!item) return null
+  if (item.kind === 'commit') return tree.commits.get(item.id)?.branch ?? null
+  return tree.layers.some((l) => l.id === item.id) ? 'main' : null
 }
 
 interface HistoryBodyProps {
@@ -70,10 +79,13 @@ interface HistoryBodyProps {
   initialBranch?: string
   initialView?: HistoryView
   autoplay?: boolean
+  initialItem?: HistoryItem
 }
 
-function HistoryBody({ project, tree, initialBranch, initialView = 'lineage', autoplay }: HistoryBodyProps) {
+function HistoryBody({ project, tree, initialBranch, initialView = 'lineage', autoplay, initialItem }: HistoryBodyProps) {
   const firstFocus = () => {
+    const at = branchOf(tree, initialItem)
+    if (at) return at
     if (initialBranch && tree.branches.has(initialBranch)) return initialBranch
     // The Branch an agent is working on now, else the one with the newest Commit.
     const busy = tree.order.find((n) => {
@@ -85,9 +97,9 @@ function HistoryBody({ project, tree, initialBranch, initialView = 'lineage', au
   }
   const [focusState, setFocusState] = useState(firstFocus)
   const focus = tree.branches.has(focusState) ? focusState : 'main'
-  const [picked, setSelected] = useState<HistoryItem | undefined>()
+  const [picked, setSelected] = useState<HistoryItem | undefined>(() => (branchOf(tree, initialItem) ? initialItem : undefined))
   const selected = picked ?? headOf(tree, focus)
-  const [view, setView] = useState<HistoryView>(initialView)
+  const [view, setView] = useState<HistoryView>(initialItem ? 'lineage' : initialView)
   const [query, setQuery] = useState('')
   const [filter, setFilter] = useState<BranchFilter>('all')
   // Merged Branches with forks start folded; everything else, including

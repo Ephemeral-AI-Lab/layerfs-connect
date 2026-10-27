@@ -5,13 +5,15 @@
 // a search keeps the matching rows (and opens their turns). Pages load from
 // the newest; "Load earlier" reads the page before. While the session plays,
 // its events re-read the loaded rows (at most once a second).
-import type { TracePage, TraceRecord } from '@shared/host-api'
-import { ChevronDown, ChevronRight, CircleAlert, Layers, Search, X } from 'lucide-react'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import type { TracePage, TraceRecord, TraceWrite } from '@shared/host-api'
+import { ChevronDown, ChevronRight, CircleAlert, Flag, Layers, Search, X } from 'lucide-react'
+import { createContext, Fragment, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 
+import { LfsBranch, LfsCommit, LfsFork, LfsLayer, LfsMerge, LfsProject, LfsWorkspace } from '@/components/lfs-icons'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { duration, plural } from '@/components/runs/run-format'
+import { bytes, shortId } from '@/data/format'
 import { host } from '@/host/client'
 import { highlight, highlightOutput, type Token } from '@/lib/highlight'
 import { useHostEvents } from '@/host/use-host'
@@ -20,6 +22,16 @@ import type { RunEvent } from '@shared/host-api'
 const PAGE = 300
 const MAX = 3000
 
+/** Where a link from the Trace opens the project's History: a Commit, a Layer on main, or a Branch. */
+export interface HistoryTarget {
+  commit?: string
+  layer?: string
+  branch?: string
+}
+
+/** Opens the project's History on a checkpoint; absent where the Trace is not under a project. */
+const OpenHistory = createContext<((at: HistoryTarget) => void) | undefined>(undefined)
+
 interface Props {
   runId: string
   agent: string
@@ -27,6 +39,8 @@ interface Props {
   live: boolean
   /** When the session started: rows show their time from it. */
   started: number
+  /** Opens the project's History on an auto-checkpoint's Commit. */
+  onOpenHistory?: (at: HistoryTarget) => void
 }
 
 const KIND: Record<TraceRecord['kind'], { label: string; tone: string }> = {
@@ -45,7 +59,20 @@ const tokens = (n: number) => (n >= 10_000 ? `${(n / 1000).toFixed(0)}k` : n >= 
 const offset = (at: number | null, started: number) => (at === null ? '' : `+${duration(at - started)}`)
 
 function matches(r: TraceRecord, q: string): boolean {
-  const hay = [r.title, r.text, r.output, r.thinking, r.error, r.tool, r.outcome, r.from, r.child, ...Object.values(r.args ?? {})]
+  const hay = [
+    r.title,
+    r.text,
+    r.output,
+    r.thinking,
+    r.error,
+    r.tool,
+    r.outcome,
+    r.from,
+    r.child,
+    ...Object.values(r.args ?? {}),
+    ...(r.writes ?? []).flatMap((w) => [w.message, w.branch, w.path, w.commit, w.from, w.onto, w.with, w.method]),
+    ...(r.checkpoints ?? []).map((n) => `auto-checkpoint #${n}`),
+  ]
   return hay.some((v) => typeof v === 'string' && v.toLowerCase().includes(q))
 }
 
@@ -129,7 +156,7 @@ function turnsOf(records: TraceRecord[]): Turn[] {
   return out
 }
 
-export function TraceView({ runId, agent, live, started }: Props) {
+export function TraceView({ runId, agent, live, started, onOpenHistory }: Props) {
   const { page, error, earlier, loadingEarlier } = useTrace(runId, agent, live)
   const [query, setQuery] = useState('')
   const [showCalls, setShowCalls] = useState(false)
@@ -168,7 +195,11 @@ export function TraceView({ runId, agent, live, started }: Props) {
     let output = 0
     let cost = 0
     let model = 0
+    const writes: Partial<Record<TraceWrite['kind'], number>> = {}
+    let checkpoints = 0
     for (const r of records) {
+      checkpoints += r.checkpoints?.length ?? 0
+      for (const w of r.writes ?? []) if (w.status === 'ok') writes[w.kind] = (writes[w.kind] ?? 0) + 1
       if (r.usage) (input += r.usage.input + r.usage.cacheRead), (output += r.usage.output), (cost += r.usage.cost)
       if (r.kind === 'assistant' && r.ms !== null) model += r.ms
     }
@@ -183,6 +214,8 @@ export function TraceView({ runId, agent, live, started }: Props) {
       output,
       cost,
       model,
+      writes,
+      checkpoints,
     }
   }, [records, allTurns])
 
@@ -205,6 +238,7 @@ export function TraceView({ runId, agent, live, started }: Props) {
   if (!page) return <p className="px-8 py-10 text-center text-sm text-muted-foreground">Reading the trace…</p>
 
   return (
+    <OpenHistory.Provider value={onOpenHistory}>
     <div className="mx-auto flex w-full max-w-[1000px] flex-col gap-3 px-8 pt-3 pb-12">
       {/* the toolbar: what the agent did in numbers, then fold and search */}
       <div className="sticky top-0 z-10 -mx-2 flex flex-col gap-2 bg-background/90 px-2 pt-1 pb-2 backdrop-blur">
@@ -216,6 +250,14 @@ export function TraceView({ runId, agent, live, started }: Props) {
           <Stat label={plural(totals.requests, page.kind === 'live' ? 'request' : 'step')} />
           <Stat label={plural(totals.tools, 'tool call')} />
           <Stat label={plural(totals.layerfs, 'LayerFS call')} />
+          {totals.checkpoints > 0 && (
+            <Stat
+              label={`${plural(totals.checkpoints, 'auto-checkpoint')}${page.checkpoints && page.checkpoints > totals.checkpoints ? ` of ${page.checkpoints} in the session` : ''} (${WRITE_ORDER.filter((k) => totals.writes[k])
+                .map((k) => `${totals.writes[k]} ${WRITE[k].short}`)
+                .join(' · ')})`}
+              title="Auto-checkpoints: each write that changed the project's store (Branch file op, Workspace commit, fork, merge, publish), numbered across the session's agents in the order they ended; refused writes are not counted"
+            />
+          )}
           {page.kind === 'live' && totals.requests > 0 && (
             <>
               <Stat label={`${tokens(totals.input)} in · ${tokens(totals.output)} out`} title="Tokens: input (with cache reads) and output" />
@@ -308,6 +350,7 @@ export function TraceView({ runId, agent, live, started }: Props) {
         )
       })}
     </div>
+    </OpenHistory.Provider>
   )
 }
 
@@ -353,7 +396,7 @@ function Row({ r, started, open, onOpen, callsOpen, onCalls }: { r: TraceRecord;
   const nested = r.kind === 'layerfs'
   const label = r.kind === 'assistant' && r.scripted ? 'Script' : r.kind === 'assistant' && r.final ? 'Reply' : r.kind === 'tool' && r.tool && r.tool !== 'bash' ? r.tool : k.label
   const tone = r.kind === 'check' && r.status === 'failed' ? 'text-destructive bg-destructive/10 ring-destructive/20' : k.tone
-  const hasDetail = Boolean(r.text || r.output || r.thinking || r.error || r.checks?.length || (r.args && Object.keys(r.args).length) || r.sections?.length || r.usage)
+  const hasDetail = Boolean(r.text || r.output || r.thinking || r.error || r.checks?.length || r.writes?.length || (r.args && Object.keys(r.args).length) || r.sections?.length || r.usage)
   return (
     <li className={`group/row border-b border-border/40 last:border-b-0 ${nested ? 'bg-foreground/[0.015]' : ''}`}>
       <div className={`flex items-center gap-2 py-1.5 pr-3 text-[13px] ${nested ? 'pl-12' : 'pl-3'}`}>
@@ -366,6 +409,7 @@ function Row({ r, started, open, onOpen, callsOpen, onCalls }: { r: TraceRecord;
           className={`min-w-0 flex-1 truncate text-left ${nested ? 'font-mono text-xs' : ''} ${hasDetail ? 'cursor-pointer hover:text-primary' : 'cursor-default'} ${!r.title ? 'text-muted-foreground italic' : ''}`}
         >
           {headline(r)}
+          {nested && r.writeKind && <WriteIcon kind={r.writeKind} className="mr-1 inline-block size-3 align-[-2px] text-primary" />}
           {nested && r.outcome && <span className={`ml-2 not-italic ${r.status === 'failed' ? 'text-destructive' : 'text-faint'}`}>{r.outcome}</span>}
           {nested && r.args && Object.keys(r.args).length > 0 && <span className="ml-2 text-faint">{Object.values(r.args).join(' ')}</span>}
         </button>
@@ -376,6 +420,7 @@ function Row({ r, started, open, onOpen, callsOpen, onCalls }: { r: TraceRecord;
             </span>
           )}
           {r.kind === 'tool' && r.exitCode !== null && r.exitCode !== undefined && r.exitCode !== 0 && <span className="text-destructive">exit {r.exitCode}</span>}
+          {!!r.writes?.length && <CheckpointChip r={r} writes={r.writes} />}
           {!!r.calls && (
             <button
               type="button"
@@ -423,6 +468,203 @@ function Code({ lines }: { lines: Token[][] }) {
   )
 }
 
+/** The kinds of write, as the Trace tab names them. */
+const WRITE: Record<TraceWrite['kind'], { label: string; short: string; tone: string; hint: string }> = {
+  file: { label: 'Branch write', short: 'file', tone: 'bg-agent-docs/10 text-agent-docs ring-agent-docs/25', hint: 'a Branch file op, committed straight to the Branch' },
+  workspace: { label: 'Workspace commit', short: 'Workspace', tone: 'bg-primary/10 text-primary ring-primary/20', hint: 'the Workspace’s changes, saved to the Branch it is mounted on' },
+  fork: { label: 'Fork', short: 'fork', tone: 'bg-agent-builder/10 text-agent-builder ring-agent-builder/25', hint: 'a new Branch' },
+  merge: { label: 'Merge', short: 'merge', tone: 'bg-agent-reviewer/10 text-agent-reviewer ring-agent-reviewer/25', hint: 'two Branches merged into a new one' },
+  publish: { label: 'Publish', short: 'publish', tone: 'bg-agent-tester/10 text-agent-tester ring-agent-tester/25', hint: 'a Branch added to main as a Layer' },
+  init: { label: 'Init', short: 'init', tone: 'bg-foreground/[0.06] text-foreground/80 ring-foreground/15', hint: 'the project made from a folder' },
+}
+const WRITE_ORDER: TraceWrite['kind'][] = ['file', 'workspace', 'fork', 'merge', 'publish', 'init']
+
+function WriteIcon({ kind, className }: { kind: TraceWrite['kind']; className?: string }) {
+  const Icon = kind === 'fork' ? LfsFork : kind === 'merge' ? LfsMerge : kind === 'publish' ? LfsLayer : kind === 'init' ? LfsProject : LfsCommit
+  return <Icon aria-hidden="true" className={className} />
+}
+
+/** One line of what a write did. */
+function writeSummary(w: TraceWrite): string {
+  const b = w.branch ?? '?'
+  switch (w.kind) {
+    case 'fork':
+      return `${b} from ${w.from ?? 'main'}`
+    case 'merge':
+      return `${w.onto ?? '?'} + ${w.with ?? '?'} → ${b}`
+    case 'publish':
+      return `${b} → ${w.trunk ?? 'main'}`
+    case 'file':
+      return `${b} ${w.path ?? ''}`.trim()
+    case 'workspace':
+      return `${b} from ${w.workspace ?? '?'}`
+    default:
+      return b
+  }
+}
+
+/** Checkpoint numbers as ranges: [3, 4, 7] → "#3–#4, #7". */
+function numbers(ns: number[]): string {
+  const parts: string[] = []
+  for (let i = 0; i < ns.length;) {
+    let j = i
+    while (j + 1 < ns.length && ns[j + 1] === ns[j] + 1) j++
+    parts.push(j > i ? `#${ns[i]}–#${ns[j]}` : `#${ns[i]}`)
+    i = j + 1
+  }
+  return parts.join(', ')
+}
+
+/**
+ * A checkpoint's place in the project's history, as a link to it: its Commit
+ * (a Branch write, Workspace commit or merge), the Layer a publish added to
+ * main (a scenario run's publish: its trunk Branch), a fork's new Branch.
+ */
+function HistoryLink({ w, open }: { w: TraceWrite; open?: (at: HistoryTarget) => void }) {
+  const at: HistoryTarget | null =
+    w.status !== 'ok'
+      ? null
+      : w.kind === 'publish'
+        ? w.layer
+          ? { layer: w.layer }
+          : w.trunk
+            ? { branch: w.trunk, commit: w.commit ?? undefined }
+            : w.commit
+              ? { commit: w.commit }
+              : null
+        : w.commit
+          ? { commit: w.commit, branch: w.branch ?? undefined }
+          : w.kind === 'fork' && w.branch
+            ? { branch: w.branch }
+            : null
+  const id = at?.layer ?? at?.commit ?? null
+  const Icon = at?.layer ? LfsLayer : at?.commit ? LfsCommit : LfsBranch
+  const label = id ? shortId(id) : (at?.branch ?? null)
+  if (!at || !label) return w.commit ? <span className="shrink-0 font-mono text-faint">{shortId(w.commit)}</span> : null
+  const title = `${at.layer ? `Layer ${at.layer}` : at.commit ? `Commit ${at.commit}` : `Branch ${at.branch}`}${open ? ' — open it in the project’s History' : ''}`
+  if (!open)
+    return (
+      <span className="flex shrink-0 items-center gap-1 font-mono text-foreground" title={title}>
+        <Icon aria-hidden="true" className="size-3 text-faint" />
+        {label}
+      </span>
+    )
+  return (
+    <button
+      type="button"
+      onClick={() => open(at)}
+      title={title}
+      className="flex shrink-0 items-center gap-1 rounded px-0.5 font-mono text-primary underline-offset-2 outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"
+    >
+      <Icon aria-hidden="true" className="size-3" />
+      {label}
+    </button>
+  )
+}
+
+/** A tool row's mark: the session's auto-checkpoints its writes made, and any refused writes. */
+function CheckpointChip({ r, writes }: { r: TraceRecord; writes: TraceWrite[] }) {
+  const made = r.checkpoints ?? []
+  const refused = writes.filter((w) => w.checkpoint === null).length
+  const title = writes.map((w) => `${w.checkpoint !== null ? `#${w.checkpoint}` : 'refused'} ${WRITE[w.kind].label}: ${writeSummary(w)}${w.status === 'failed' ? ` (${w.outcome})` : ''}`).join('\n')
+  return (
+    <span className="flex items-center gap-1" title={title}>
+      {made.length > 0 && (
+        <span className="flex items-center gap-1 rounded-full bg-primary/[0.07] px-1.5 font-medium text-primary ring-1 ring-primary/25 ring-inset">
+          <Flag aria-hidden="true" className="size-3" />
+          {made.length === 1 ? 'Auto-checkpoint' : 'Auto-checkpoints'} {numbers(made)}
+        </span>
+      )}
+      {refused > 0 && <span className="rounded-full px-1.5 text-destructive ring-1 ring-destructive/25 ring-inset">{refused} refused</span>}
+    </span>
+  )
+}
+
+/**
+ * A tool call's writes: each successful one an auto-checkpoint of the session,
+ * and refused attempts (which changed nothing). Numbers skipped between two of
+ * its checkpoints are other agents' writes, made meanwhile.
+ */
+function Writes({ writes, checkpoints }: { writes: TraceWrite[]; checkpoints: number[] }) {
+  const open = useContext(OpenHistory)
+  // after each checkpoint, the session's checkpoints made before this call's next one
+  const gapAfter = new Map<number, [number, number]>()
+  checkpoints.forEach((n, i) => {
+    const next = checkpoints[i + 1]
+    if (next !== undefined && next > n + 1) gapAfter.set(n, [n + 1, next - 1])
+  })
+  return (
+    <div className="flex flex-col gap-1">
+      <span className="text-[10px] font-semibold tracking-wide text-faint uppercase">{checkpoints.length ? `${checkpoints.length === 1 ? 'Auto-checkpoint' : 'Auto-checkpoints'} ${numbers(checkpoints)}` : 'Refused writes'}</span>
+      <ol className="flex flex-col divide-y divide-border/50 rounded-md bg-foreground/[0.04] text-xs">
+        {writes.map((w, i) => {
+          const k = WRITE[w.kind]
+          const failed = w.status === 'failed'
+          const gap = w.checkpoint !== null ? gapAfter.get(w.checkpoint) : undefined
+          return (
+            <Fragment key={`${w.method}:${w.start}:${i}`}>
+              <li className={`flex flex-col gap-0.5 px-2.5 py-1.5 ${failed ? 'bg-destructive/[0.05]' : ''}`}>
+                <div className="flex min-w-0 items-center gap-2">
+                  <span className={`w-8 shrink-0 font-mono tabular-nums ${failed ? 'text-destructive' : 'text-primary'}`} title={w.checkpoint === null ? 'Refused: changed nothing' : `Auto-checkpoint ${w.checkpoint} of the session`}>
+                    {w.checkpoint !== null ? `#${w.checkpoint}` : '—'}
+                  </span>
+                  <span className={`shrink-0 rounded px-1 text-[10px] font-semibold tracking-wide uppercase ring-1 ring-inset ${k.tone}`} title={`${w.method}: ${k.hint}`}>
+                    {k.label}
+                  </span>
+                  <HistoryLink w={w} open={open} />
+                  {w.kind === 'merge' ? (
+                    <span className="flex min-w-0 items-center gap-1 text-muted-foreground">
+                      <LfsMerge aria-hidden="true" className="size-3 shrink-0 text-faint" />
+                      <span className="truncate font-mono">
+                        {w.onto ?? '?'} + {w.with ?? '?'} → {w.branch ?? '?'}
+                      </span>
+                    </span>
+                  ) : (
+                    <span className="flex min-w-0 items-center gap-1 text-muted-foreground">
+                      <LfsBranch aria-hidden="true" className="size-3 shrink-0 text-faint" />
+                      <span className="truncate font-mono">{w.branch ?? 'Branch unknown'}</span>
+                    </span>
+                  )}
+                  {w.kind === 'fork' && w.from && <span className="shrink-0 font-mono text-faint">from {w.from}</span>}
+                  {w.kind === 'publish' && (
+                    <span className="shrink-0 text-faint" title={w.trunk ? 'A scenario run publishes to its own trunk Branch, which joins main once the run passed' : undefined}>
+                      → {w.trunk ? `${w.trunk} (the run's main)` : 'main'}
+                      {w.layer ? ` as Layer ${shortId(w.layer)}` : ''}
+                    </span>
+                  )}
+                  {w.kind === 'file' && w.path && <span className="min-w-0 truncate font-mono text-muted-foreground">{w.path}</span>}
+                  {w.kind === 'workspace' && w.workspace && (
+                    <span className="flex min-w-0 items-center gap-1 text-muted-foreground" title="Sandbox:path of the Workspace">
+                      <LfsWorkspace aria-hidden="true" className="size-3 shrink-0 text-faint" />
+                      <span className="truncate font-mono">{w.workspace}</span>
+                    </span>
+                  )}
+                  <span className="ml-auto flex shrink-0 items-center gap-2 text-faint tabular-nums">
+                    {w.outcome && <span className={failed ? 'font-medium text-destructive' : ''}>{w.outcome}</span>}
+                    {w.kind === 'file' && <span className="font-mono">{w.method}</span>}
+                    {w.sizes?.stored != null && <span title={`${w.sizes.logical ?? '?'} bytes in the tree, ${w.sizes.stored} new bytes stored`}>+{bytes(w.sizes.stored)}</span>}
+                    {w.ms !== null && <span>{duration(w.ms)}</span>}
+                  </span>
+                </div>
+                {w.message && (
+                  <p className={`truncate pl-0.5 ${failed ? 'text-destructive' : 'text-foreground/85'}`} title={w.message}>
+                    {w.message}
+                  </p>
+                )}
+              </li>
+              {gap && (
+                <li className="px-2.5 py-1 text-[11px] text-faint italic">
+                  {gap[0] === gap[1] ? `#${gap[0]}` : `#${gap[0]}–#${gap[1]}`} in between: {gap[1] - gap[0] + 1 === 1 ? 'another agent’s checkpoint' : 'other agents’ checkpoints'}, made meanwhile
+                </li>
+              )}
+            </Fragment>
+          )
+        })}
+      </ol>
+    </div>
+  )
+}
+
 function Detail({ r }: { r: TraceRecord }) {
   const command = r.kind === 'tool' && r.text ? highlight(r.text.replace(/\n$/, ''), r.tool === 'bash' || !r.tool ? 'bash' : 'text') : null
   const output = r.output ? highlightOutput(r.output.replace(/\n$/, '')) : null
@@ -449,6 +691,7 @@ function Detail({ r }: { r: TraceRecord }) {
       ) : (
         r.text && <Block label={textLabel}>{r.text}</Block>
       )}
+      {r.writes && r.writes.length > 0 && <Writes writes={r.writes} checkpoints={r.checkpoints ?? []} />}
       {output && (
         <Block label="Output" mono>
           <Code lines={output} />
