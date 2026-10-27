@@ -1,5 +1,5 @@
 import type { DemoSummary, RunSummary } from '@shared/host-api'
-import { ChevronRight, Cpu, Database, Layers, LoaderCircle, type LucideIcon, RotateCcw, RotateCw, Unplug } from 'lucide-react'
+import { Cpu, Database, Folder, FolderOpen, Layers, LoaderCircle, type LucideIcon, RotateCcw, RotateCw, Unplug } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 
 import { LayerfsMark } from '@/components/layerfs-mark'
@@ -11,7 +11,6 @@ import {
   Sidebar,
   SidebarContent,
   SidebarGroup,
-  SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuAction,
@@ -114,11 +113,8 @@ export function AppSidebar({ selected, onSelect, storageCount, computeCount }: A
           </SidebarMenu>
         </SidebarGroup>
 
-        <SidebarGroup className="px-3 pt-4">
-          <SidebarGroupLabel className="gap-2 px-3 text-[13px] font-normal text-faint">
-            <LayerfsMark className="size-3.5" />
-            Demo projects
-          </SidebarGroupLabel>
+        {/* each demo is a project folder of its own, beside the pages */}
+        <SidebarGroup className="mt-1 border-t border-sidebar-border px-3 pt-3">
           {unreachable ? (
             <HostNotice
               title={unreachable instanceof HostError && unreachable.status > 0 ? 'Demos unavailable' : 'Host unreachable'}
@@ -225,7 +221,7 @@ function DemoItem({ demo, runs, open, selected, starting, refused, onToggle, onS
           onSelect({ kind: 'project', id: demo.id })
           if (!open) onToggle()
         }}
-        className="h-9 gap-2 pl-8 text-[14px] font-medium"
+        className="h-9 gap-2 pl-10 text-[14px] font-medium"
       >
         <span className="min-w-0 flex-1 truncate">{demo.title}</span>
         {live ? (
@@ -241,9 +237,9 @@ function DemoItem({ demo, runs, open, selected, starting, refused, onToggle, onS
         onClick={onToggle}
         aria-label={open ? `Hide ${demo.title}'s sessions` : `Show ${demo.title}'s sessions`}
         aria-expanded={open}
-        className="top-2 right-auto left-2 text-faint"
+        className="top-2 right-auto left-2.5 text-muted-foreground"
       >
-        <ChevronRight className={cn('size-3.5! transition-transform', open && 'rotate-90')} />
+        {open ? <FolderOpen className="size-4!" /> : <Folder className="size-4!" />}
       </SidebarMenuAction>
       <SidebarMenuAction
         showOnHover
@@ -257,7 +253,7 @@ function DemoItem({ demo, runs, open, selected, starting, refused, onToggle, onS
       </SidebarMenuAction>
 
       {open && (
-        <SidebarMenuSub className="mr-0 ml-[18px] gap-0.5 pr-0">
+        <SidebarMenuSub className="mr-0 ml-[19px] gap-0.5 pr-0">
           {refused && (
             <li role="alert" className="px-2 py-1 text-xs text-destructive">
               {refused}
