@@ -13,7 +13,7 @@ import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { compileScenario } from '../../tools/lib/scenario.mjs'
 import { missing, openRuntime } from '../config.js'
-import { Run } from './run.js'
+import { closeRunSandboxes, Run } from './run.js'
 import { demoViews } from './views.js'
 
 export { LIMIT_MS } from './run.js'
@@ -46,6 +46,7 @@ export class RunManager extends EventEmitter {
     this.records = new Map()
     this.starting = 0
     this.loadRecords()
+    this.sweeping = this.sweep()
   }
 
   // ---------- demos ----------
@@ -124,6 +125,26 @@ export class RunManager extends EventEmitter {
     }
   }
 
+  /**
+   * Closes the Sandboxes of each run a host left without closing them (it
+   * stopped or was killed before its cleanup finished). Once per run: the
+   * record's `swept` is set whatever the outcome.
+   */
+  async sweep() {
+    for (const record of this.records.values()) {
+      if (record.state === 'passed' || ACTIVE.has(record.state) || record.swept !== false || !record.volume || hostAlive(record.host)) continue
+      try {
+        await closeRunSandboxes(this.spec, record)
+      } catch (e) {
+        console.error(`[runs] ${record.id}: closing Sandboxes: ${e.message}`)
+      }
+      record.swept = true
+      const file = join(this.spec.runs, record.id, 'run.json')
+      writeFileSync(`${file}.tmp`, JSON.stringify(record))
+      renameSync(`${file}.tmp`, file)
+    }
+  }
+
   playing() {
     return [...this.live.values()].filter((r) => ACTIVE.has(r.state)).length + this.starting
   }
@@ -198,7 +219,7 @@ export class RunManager extends EventEmitter {
   async close() {
     const playing = [...this.live.values()].filter((r) => ACTIVE.has(r.state))
     for (const run of playing) run.end('failed', 'interrupted: the host closed')
-    await Promise.all(playing.map((r) => r.finished))
+    await Promise.all([...playing.map((r) => r.finished), this.sweeping])
     for (const run of this.live.values()) run.save(true)
   }
 }

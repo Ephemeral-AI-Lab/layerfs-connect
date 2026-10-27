@@ -82,6 +82,8 @@ export function buildThread({ agent, parent, children, entries, incoming }: Thre
   let lo = 0
   // A message sent the instant a step starts is what that step answers, once per turn.
   let heard = false
+  // The phase last shown: a divider marks only a change.
+  let phase: string | undefined
 
   const push = (item: Item) => {
     // A turn closes with a reply; what comes next opens the next one.
@@ -109,9 +111,9 @@ export function buildThread({ agent, parent, children, entries, incoming }: Thre
     if (!e.result && n === 0) for (let i = 0; i < messages.length; i++) if (!used[i]) receive(i)
 
     const v = e.view
-    if (v?.phase) {
-      const last = turn?.items[turn.items.length - 1]
-      if (!(last?.type === 'phase' && last.phase === v.phase)) push({ type: 'phase', key: `p:${e.key}`, phase: v.phase })
+    if (v?.phase && v.phase !== phase) {
+      phase = v.phase
+      push({ type: 'phase', key: `p:${e.key}`, phase: v.phase })
     }
     const tool = v?.tool ?? (e.result?.output !== undefined && !e.result.calls.length ? 'reply' : 'bash')
     if (v?.say && tool !== 'reply') push({ type: 'say', key: `t:${e.key}`, text: v.say })

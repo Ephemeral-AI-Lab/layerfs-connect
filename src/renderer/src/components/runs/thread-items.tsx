@@ -1,4 +1,4 @@
-import { Ban, Check, ChevronDown, CornerDownRight, MessageSquareReply, Send, SquareTerminal, Wrench, X } from 'lucide-react'
+import { Ban, Check, ChevronDown, CornerDownRight, MessageSquareReply, Send, Wrench, X } from 'lucide-react'
 import { memo } from 'react'
 
 import { KindChip, Spinner } from '@/components/runs/run-badges'
@@ -7,6 +7,7 @@ import { SegmentList } from '@/components/runs/segments'
 import { CallStrip, CheckChips, OutputBlock } from '@/components/runs/step-parts'
 import { type Entry, type Message, type Sender, kindCounts, targetOf } from '@/components/runs/thread'
 import { cn } from '@/lib/utils'
+import type { SegmentKind } from '@shared/host-api'
 
 /** A quiet divider where the scenario's phase changes. */
 export function PhaseLine({ phase }: { phase: string }) {
@@ -90,66 +91,152 @@ function groupState(entries: Entry[]): { label: React.ReactNode; tone: 'run' | '
 
 export const groupFailed = (entries: Entry[]) => entries.some((e) => e.result?.state === 'failed')
 
+/** Rows a long group shows before "Show N more". */
+const ROWS = 6
+
 interface CallsFoldProps {
+  /** The group's key: its "show all" fold. A row's own key is `s:<entry key>`. */
+  id: string
   entries: Entry[]
-  open: boolean
-  onToggle: () => void
+  folds: Map<string, boolean>
+  onToggle: (key: string, fallback: boolean) => void
 }
 
-/** A turn's tool calls folded to one line, opening to each call. */
-export const CallsFold = memo(function CallsFold({ entries, open, onToggle }: CallsFoldProps) {
+/**
+ * A turn's tool calls: one compact row per call (what it did, its LayerFS
+ * calls, how long it took), each opening to its detail. Several calls get a
+ * summary line above them; a long group shows its first rows and
+ * "Show N more". A failed call opens by default.
+ */
+export const CallsFold = memo(function CallsFold({ id, entries, folds, onToggle }: CallsFoldProps) {
   const state = groupState(entries)
-  const kinds = kindCounts(entries)
+  const failed = groupFailed(entries)
+  const all = folds.get(id) ?? failed
+  const shown = all || entries.length <= ROWS ? entries : entries.slice(0, ROWS - 1)
+  const hidden = entries.length - shown.length
   return (
-    <div className={cn('flex flex-col', !open && 'border-b border-border/70')}>
-      <button type="button" aria-expanded={open} onClick={onToggle} className="group flex w-full min-w-0 items-center gap-3 py-2.5 text-left outline-none">
-        <span
-          className={cn(
-            'flex shrink-0 items-center gap-1.5 text-sm group-hover:text-foreground group-focus-visible:text-foreground',
-            state.tone === 'bad' ? 'text-destructive' : state.tone === 'stop' ? 'text-warning' : 'text-muted-foreground',
-          )}
-        >
-          {state.tone === 'run' && <Spinner />}
-          {state.label}
-          <ChevronDown aria-hidden="true" className={cn('size-3.5 text-faint transition-transform', open && 'rotate-180')} />
-        </span>
-        <span className="flex min-w-0 items-center gap-x-2.5 overflow-hidden text-xs whitespace-nowrap text-faint">
-          {kinds.slice(0, 5).map(([kind, n]) => (
-            <span key={kind} className="flex items-center gap-1">
-              <span aria-hidden="true" className={cn('size-1.5 rounded-full', KIND[kind].dot)} />
-              {KIND[kind].label} ×{n}
-            </span>
-          ))}
-        </span>
-      </button>
-      {open && (
-        <ol className="mb-2 flex flex-col gap-3 border-l-2 border-border/70 pt-1 pb-1 pl-4">
-          {entries.map((e) => (
-            <li key={e.key}>
-              <StepDetail entry={e} />
-            </li>
-          ))}
-        </ol>
+    <div className="flex flex-col gap-1.5">
+      {entries.length > 1 && (
+        <div className="flex min-w-0 items-center gap-2 px-1 text-xs whitespace-nowrap text-faint">
+          <span
+            className={cn(
+              'flex shrink-0 items-center gap-1.5',
+              state.tone === 'bad' ? 'text-destructive' : state.tone === 'stop' ? 'text-warning' : 'text-muted-foreground',
+            )}
+          >
+            {state.tone === 'run' && <Spinner className="size-3" />}
+            {state.label}
+          </span>
+          <span aria-hidden="true">·</span>
+          <span className="shrink-0">{entries.length} calls</span>
+          <span className="flex min-w-0 items-center gap-x-2 overflow-hidden">
+            {kindCounts(entries)
+              .slice(0, 5)
+              .map(([kind, n]) => (
+                <span key={kind} className="flex items-center gap-1">
+                  <span aria-hidden="true" className={cn('size-1.5 rounded-full', KIND[kind].dot)} />
+                  {KIND[kind].label} {n}
+                </span>
+              ))}
+          </span>
+        </div>
       )}
+      <ol className="divide-y divide-border/60 overflow-hidden rounded-xl border border-border/70 bg-card">
+        {shown.map((e) => {
+          const fallback = e.result?.state === 'failed'
+          return (
+            <StepRow
+              key={e.key}
+              entry={e}
+              open={folds.get(`s:${e.key}`) ?? fallback}
+              onToggle={() => onToggle(`s:${e.key}`, fallback)}
+            />
+          )
+        })}
+        {hidden > 0 && (
+          <li>
+            <button
+              type="button"
+              onClick={() => onToggle(id, failed)}
+              className="flex w-full items-center gap-1.5 px-3 py-1.5 text-left text-xs text-muted-foreground outline-none hover:bg-muted/50 hover:text-foreground focus-visible:bg-muted/60"
+            >
+              <ChevronDown aria-hidden="true" className="size-3.5" />
+              Show {hidden} more call{hidden === 1 ? '' : 's'}
+            </button>
+          </li>
+        )}
+      </ol>
     </div>
   )
 })
 
-function StepMark({ entry }: { entry: Entry }) {
+/** The distinct LayerFS calls a step's script makes, in order. */
+function callsOf(entry: Entry): { call: string; kind: SegmentKind }[] {
+  const seen = new Map<string, SegmentKind>()
+  for (const seg of entry.view?.segments ?? []) if (seg.call && !seen.has(seg.call)) seen.set(seg.call, seg.kind)
+  return [...seen].map(([call, kind]) => ({ call, kind }))
+}
+
+/** A step's one-line title: its description, else its command's first line. */
+const titleOf = (entry: Entry) =>
+  entry.view?.description || entry.view?.text.split('\n').find((l) => l.trim() && !l.startsWith('#'))?.trim() || entry.view?.tool || 'bash'
+
+interface StepRowProps {
+  entry: Entry
+  open: boolean
+  onToggle: () => void
+}
+
+/** One call: status, what it did, its LayerFS calls and duration; opens to the detail. */
+function StepRow({ entry, open, onToggle }: StepRowProps) {
+  const calls = callsOf(entry)
   const r = entry.result
-  if (!r) return null
-  if (r.state === 'running') return <Spinner />
+  return (
+    <li>
+      <button
+        type="button"
+        aria-expanded={open}
+        onClick={onToggle}
+        className="group flex w-full min-w-0 items-center gap-2.5 px-3 py-2 text-left outline-none hover:bg-muted/40 focus-visible:bg-muted/60"
+      >
+        <RowMark entry={entry} />
+        <span className={cn('min-w-0 flex-1 truncate text-[13px]', r?.state === 'failed' && 'text-destructive')} title={titleOf(entry)}>
+          {titleOf(entry)}
+        </span>
+        <span className="hidden min-w-0 shrink items-center gap-1 overflow-hidden md:flex">
+          {calls.slice(0, 3).map((c) => (
+            <KindChip key={c.call} kind={c.kind}>
+              {c.call}
+            </KindChip>
+          ))}
+          {calls.length > 3 && <span className="text-[11px] text-faint">+{calls.length - 3}</span>}
+        </span>
+        <span className="w-14 shrink-0 text-right text-xs text-faint tabular-nums">
+          {r?.ended ? duration(r.ended - r.started) : null}
+        </span>
+        <ChevronDown aria-hidden="true" className={cn('size-3.5 shrink-0 text-faint transition-transform group-hover:text-muted-foreground', open && 'rotate-180')} />
+      </button>
+      {open && (
+        <div className="border-t border-border/60 bg-muted/25 px-3 py-3 dark:bg-muted/15">
+          <StepDetail entry={entry} />
+        </div>
+      )}
+    </li>
+  )
+}
+
+/** A row's status: a spinner, a check, a cross, a stop, or a dot in a script. */
+function RowMark({ entry }: { entry: Entry }) {
+  const r = entry.result
+  if (!r) return <span aria-hidden="true" className="mx-1 size-1.5 shrink-0 rounded-full bg-faint/60" />
+  if (r.state === 'running') return <Spinner className="size-3.5" />
   const Icon = r.state === 'ok' ? Check : r.state === 'failed' ? X : Ban
   return (
-    <span
-      className={cn(
-        'flex shrink-0 items-center gap-1 text-xs tabular-nums',
-        r.state === 'ok' ? 'text-muted-foreground' : r.state === 'failed' ? 'text-destructive' : 'text-warning',
-      )}
-    >
-      <Icon aria-hidden="true" className={cn('size-3.5', r.state === 'ok' && 'text-success')} strokeWidth={2.5} />
-      {r.ended ? duration(r.ended - r.started) : null}
-    </span>
+    <Icon
+      aria-label={r.state}
+      className={cn('size-3.5 shrink-0', r.state === 'ok' ? 'text-success' : r.state === 'failed' ? 'text-destructive' : 'text-warning')}
+      strokeWidth={2.5}
+    />
   )
 }
 
@@ -157,17 +244,14 @@ function StepMark({ entry }: { entry: Entry }) {
 function StepDetail({ entry }: { entry: Entry }) {
   const { view, result } = entry
   const bash = !view || view.tool === 'bash'
-  const Icon = bash ? SquareTerminal : Wrench
   return (
     <div className="flex flex-col gap-2">
-      <div className="flex min-w-0 items-center gap-2">
-        <Icon aria-hidden="true" className="size-3.5 shrink-0 text-muted-foreground" />
-        <span className="min-w-0 flex-1 truncate text-[13px] font-medium" title={view?.description}>
-          {view?.description ?? (bash ? 'bash' : view.tool)}
-        </span>
-        {view && <KindChip kind={view.kind} />}
-        <StepMark entry={entry} />
-      </div>
+      {!bash && (
+        <div className="flex min-w-0 items-center gap-2 text-[13px] text-muted-foreground">
+          <Wrench aria-hidden="true" className="size-3.5 shrink-0" />
+          {view?.tool}
+        </div>
+      )}
       {view?.note && <p className="text-xs text-muted-foreground italic">{view.note}</p>}
       {view && view.segments.length > 0 && <SegmentList segments={view.segments} />}
       {result ? (

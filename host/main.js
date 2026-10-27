@@ -17,9 +17,12 @@ import { Projects } from './projects.js'
 import { createHostServer, listen, newToken } from './server.js'
 
 /** How long shutdown may take before the process exits anyway. */
-const CLOSE_MS = 10_000
+const CLOSE_MS = 30_000
 
 const log = (line) => process.stderr.write(`${line}\n`)
+// Once the app has quit, its end of these pipes is gone: a write must not end
+// the shutdown that closes the runs' Sandboxes.
+for (const stream of [process.stdout, process.stderr]) stream.on('error', () => {})
 
 /** `--state <dir>` and `--port <n>` (also `--name=value`). */
 function parseArgs(argv) {

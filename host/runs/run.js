@@ -107,7 +107,7 @@ export class Run {
     clearTimeout(this.saveTimer)
     this.saveTimer = null
     const file = join(this.dir, 'run.json')
-    const value = { ...this.detail(), volume: this.volume ?? null, image: this.image ?? null, dir: this.dir, scenarioDir: this.source.folder, host: process.pid }
+    const value = { ...this.detail(), volume: this.volume ?? null, image: this.image ?? null, dir: this.dir, scenarioDir: this.source.folder, host: process.pid, swept: this.swept ?? false }
     mkdirSync(this.dir, { recursive: true })
     writeFileSync(`${file}.tmp`, JSON.stringify(value))
     renameSync(`${file}.tmp`, file)
@@ -377,38 +377,48 @@ export class Run {
     cleanup.finally(() => this.resolveFinished())
   }
 
-  /**
-   * Unmounts (discarding) every Workspace still mounted in the run's project
-   * and closes its Sandboxes: what an agent ends with, done for the agents a
-   * failed or stopped run cut off. Each call once; a refusal is logged.
-   */
+  /** Closes the run's Sandboxes once; `swept` in run.json says it was tried. */
   async closeSandboxes() {
-    if (!this.volume) return
-    await openRuntime(this.spec)
-    const { LayerFS } = await import('@layerfs/agent')
-    const project = { name: this.project, volume: this.volume, image: this.image }
-    const lf = await withProjectEnv(this.spec, project, () => LayerFS.open(this.project))
     try {
-      // background processes keep their Workspace Busy: cancel each once, then wait (bounded) until none runs
-      const { LayerFSBackend } = await import('@layerfs/backend')
-      const be = LayerFSBackend.of(lf)
-      const running = async () => (await be.daemon.process.list(1000, 0)).items.filter((p) => RUNNING.has(p.state ?? p.status))
-      for (const p of await running().catch(() => [])) {
-        await be.daemon.process.cancel(p.process ?? p.id).catch((e) => console.error(`[runs] ${this.id}: cancel ${p.process ?? p.id}: ${e.message}`))
-      }
-      for (const until = Date.now() + 10_000; Date.now() < until && (await running().catch(() => [])).length; ) await pause(250)
-      const { items } = await lf.project.list_sandboxes(1000, 0)
-      for (const { sandbox } of items) {
-        try {
-          const mounted = await lf.sandbox.list_workspaces(sandbox, 1000, 0)
-          for (const w of mounted.items) await lf.workspace.unmount({ sandbox, path: w.path }, true)
-          await lf.sandbox.close(sandbox)
-        } catch (e) {
-          console.error(`[runs] ${this.id}: Sandbox ${sandbox}: ${e.code ?? ''} ${e.message}`)
-        }
-      }
+      await closeRunSandboxes(this.spec, { id: this.id, project: this.project, volume: this.volume, image: this.image })
     } finally {
-      await lf.close()
+      this.swept = true
+      this.save(true)
     }
+  }
+}
+
+/**
+ * Unmounts (discarding) every Workspace still mounted in a run's project and
+ * closes its Sandboxes: what an agent ends with, done for the agents a failed,
+ * stopped or interrupted run cut off. Each call once; a refusal is logged.
+ */
+export async function closeRunSandboxes(spec, { id, project: name, volume, image }) {
+  if (!volume) return
+  await openRuntime(spec)
+  const { LayerFS } = await import('@layerfs/agent')
+  const project = { name, volume, image }
+  const lf = await withProjectEnv(spec, project, () => LayerFS.open(name))
+  try {
+    // background processes keep their Workspace Busy: cancel each once, then wait (bounded) until none runs
+    const { LayerFSBackend } = await import('@layerfs/backend')
+    const be = LayerFSBackend.of(lf)
+    const running = async () => (await be.daemon.process.list(1000, 0)).items.filter((p) => RUNNING.has(p.state ?? p.status))
+    for (const p of await running().catch(() => [])) {
+      await be.daemon.process.cancel(p.process ?? p.id).catch((e) => console.error(`[runs] ${id}: cancel ${p.process ?? p.id}: ${e.message}`))
+    }
+    for (const until = Date.now() + 10_000; Date.now() < until && (await running().catch(() => [])).length; ) await pause(250)
+    const { items } = await lf.project.list_sandboxes(1000, 0)
+    for (const { sandbox } of items) {
+      try {
+        const mounted = await lf.sandbox.list_workspaces(sandbox, 1000, 0)
+        for (const w of mounted.items) await lf.workspace.unmount({ sandbox, path: w.path }, true)
+        await lf.sandbox.close(sandbox)
+      } catch (e) {
+        console.error(`[runs] ${id}: Sandbox ${sandbox}: ${e.code ?? ''} ${e.message}`)
+      }
+    }
+  } finally {
+    await lf.close()
   }
 }

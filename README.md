@@ -78,5 +78,6 @@ node tools/connect-run.mjs start tour merge
 
 Dev aids: `CONNECT_VIEW=<hash>` opens a page (`projects/<demo>[/<tab>]`,
 `runs/<run id>`, `storage`, `compute`); `CONNECT_SHOT=<file.png>` saves a
-screenshot once loaded, then quits (`CONNECT_SHOT_DELAY` waits longer);
+screenshot once loaded, then quits (`CONNECT_SHOT_DELAY` waits longer;
+`CONNECT_EVAL=<js>` runs in the page first and prints its result);
 `CONNECT_THEME=dark|light`.

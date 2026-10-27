@@ -121,6 +121,8 @@ function createWindow(): BrowserWindow {
           )
           await new Promise((resolve) => setTimeout(resolve, 300))
         }
+        // CONNECT_EVAL=<js> runs in the page first (awaited) and prints its result.
+        if (process.env.CONNECT_EVAL) console.log(`[eval] ${await win.webContents.executeJavaScript(process.env.CONNECT_EVAL)}`)
         const image = await win.webContents.capturePage()
         await writeFile(shot, image.toPNG())
         app.quit()

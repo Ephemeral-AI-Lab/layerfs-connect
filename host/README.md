@@ -72,8 +72,8 @@ live host on a state folder also writes `<state>/host.json` (owner-only:
 `url`, `token`, `pid`), which `tools/connect-run.mjs` reads; it is removed at
 exit. A run's record names the host playing it (`host`: its pid), so a second
 host on the same state leaves that run alone. Logs go to stderr. It exits
-when stdin closes (the Electron parent died) or on SIGTERM, closing the
-runtime first. It does not stop the worker on exit.
+when stdin closes (the Electron parent died) or on SIGTERM, ending its runs
+(and closing their Sandboxes) and the runtime first, within 30 s. It does not stop the worker on exit.
 
 ## HTTP API
 
@@ -124,6 +124,10 @@ Semantics follow dsh-layerfs exactly (its `packages/mock/src`: scenario.js,
 plan.js, progress.js, expect.js; dsh's tool schemas for subagent,
 send_message, job_* and bash). One attempt per call, nothing retried; a
 failed step fails the run; a run has 15 minutes. Two runs may play at once.
+A run that does not pass closes its project's Sandboxes (background
+processes cancelled, Workspaces unmounted with discard) and records
+`swept: true`; a host that starts finds any run left unswept by a host that
+was killed and sweeps it once.
 
 ## The parser (`parse/`)
 

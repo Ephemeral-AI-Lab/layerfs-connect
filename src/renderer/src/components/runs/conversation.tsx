@@ -2,12 +2,12 @@ import { memo, useCallback, useState } from 'react'
 
 import type { AgentColor } from '@/components/runs/run-format'
 import type { Item, Turn } from '@/components/runs/thread'
-import { CallsFold, PhaseLine, ReceivedCard, ReplyText, SayText, ThreadChip, groupFailed } from '@/components/runs/thread-items'
+import { CallsFold, PhaseLine, ReceivedCard, ReplyText, SayText, ThreadChip } from '@/components/runs/thread-items'
 import { Windowed, WindowedScroller } from '@/components/runs/windowed-list'
 import { cn } from '@/lib/utils'
 
 /** Folds the reader opened or closed, by item key; the rest keep their default. */
-type Folds = Map<string, boolean>
+export type Folds = Map<string, boolean>
 
 interface TurnProps {
   turn: Turn
@@ -34,7 +34,7 @@ function blocks(items: Item[]): Block[] {
 
 const TurnView = memo(function TurnView({ turn, folds, onToggle, colorOf, onOpenAgent, script }: TurnProps) {
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-3">
       {blocks(turn.items).map((item) => {
         switch (item.type) {
           case 'chips':
@@ -62,17 +62,8 @@ const TurnView = memo(function TurnView({ turn, folds, onToggle, colorOf, onOpen
           }
           case 'say':
             return <SayText key={item.key} text={item.text} />
-          case 'calls': {
-            const fallback = groupFailed(item.entries)
-            return (
-              <CallsFold
-                key={item.key}
-                entries={item.entries}
-                open={folds.get(item.key) ?? fallback}
-                onToggle={() => onToggle(item.key, fallback)}
-              />
-            )
-          }
+          case 'calls':
+            return <CallsFold key={item.key} id={item.key} entries={item.entries} folds={folds} onToggle={onToggle} />
           case 'chip':
             return null
           case 'reply':
@@ -84,7 +75,7 @@ const TurnView = memo(function TurnView({ turn, folds, onToggle, colorOf, onOpen
 })
 
 // A turn's height before it was ever drawn: a received card, a fold line, a reply.
-const ESTIMATE = 170
+const ESTIMATE = 110
 
 interface ConversationProps {
   turns: Turn[]
@@ -117,7 +108,7 @@ export function Conversation({ turns, colorOf, onOpenAgent, live, script, empty,
   const version = `${turns.length}:${last?.items.length}:${last?.items[last.items.length - 1]?.key}`
   return (
     <WindowedScroller follow={live} startAtEnd={!script} version={version} className={cn('h-full overflow-y-auto', className)}>
-      <div className="mx-auto flex w-full max-w-[1000px] flex-col gap-9 px-8 pt-8 pb-10">
+      <div className="mx-auto flex w-full max-w-[1000px] flex-col gap-6 px-8 pt-6 pb-10">
         {turns.length === 0 && empty}
         {turns.map((turn) => (
           <Windowed key={turn.key} id={turn.key} estimate={ESTIMATE}>
