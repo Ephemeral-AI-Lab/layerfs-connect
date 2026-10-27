@@ -15,6 +15,7 @@
 //     carrying the reply's text
 //   - an agent whose steps are done answers a message with "Done." (dsh)
 // The first failure fails the run; nothing is retried.
+import { setTimeout as pause } from 'node:timers/promises'
 import { Seen } from './seen.js'
 
 export class Agent {
@@ -39,15 +40,27 @@ export class Agent {
     this.jobs = new Map()
     this.cwd = run.work
     this.turning = false
+    /** When its state last changed, and when its current pause before a step began (null between). */
+    this.since = Date.now()
+    this.thinking = null
   }
 
   view() {
-    return { name: this.name, parent: this.parent?.name ?? null, state: this.state, done: this.index, of: this.steps.length }
+    return {
+      name: this.name,
+      parent: this.parent?.name ?? null,
+      state: this.state,
+      done: this.index,
+      of: this.steps.length,
+      since: this.since,
+      thinking: this.thinking,
+    }
   }
 
   setState(state) {
     if (this.state === state) return
     this.state = state
+    this.since = Date.now()
     this.run.agentChanged(this)
   }
 
@@ -108,6 +121,8 @@ export class Agent {
           this.run.progress(this)
           continue
         }
+        await this.think()
+        if (this.run.over) return
         if (step.kind === 'reply') return this.reply(step, index)
         const ok = await this.run.tools.call(this, step, index)
         if (!ok || this.run.over) return
@@ -121,6 +136,21 @@ export class Agent {
       // a message may have come while the turn ended (in the same call stack)
       this.wake()
     }
+  }
+
+  /**
+   * A model's pause before its next step, as a live agent has: one bounded
+   * wait (Run.thinkMs). It adds time between calls only; each LayerFS call
+   * keeps its own timing.
+   */
+  async think() {
+    const ms = this.run.thinkMs()
+    if (ms <= 0) return
+    this.thinking = Date.now()
+    this.run.agentChanged(this)
+    await pause(ms)
+    this.thinking = null
+    this.run.agentChanged(this)
   }
 
   reply(step, index) {

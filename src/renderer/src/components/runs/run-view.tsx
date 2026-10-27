@@ -2,7 +2,7 @@
 // the project's Live, History and Storage, read from the newest session, on
 // the project page. The page header above names the project or session;
 // these only add what is theirs (the Conversation's agent switcher).
-import type { DemoDetail, RunDetail, StepView } from '@shared/host-api'
+import type { DemoDetail, RunDetail, RunSummary, StepView } from '@shared/host-api'
 import { Gauge, RotateCw, TriangleAlert } from 'lucide-react'
 import { useMemo } from 'react'
 
@@ -11,11 +11,11 @@ import { Conversation } from '@/components/runs/conversation'
 import { ProjectStorage } from '@/components/projects/project-storage'
 import { LiveTab } from '@/components/runs/live-tab'
 import { Spinner } from '@/components/runs/run-badges'
-import { agentColors, stepKey } from '@/components/runs/run-format'
-import { RunActionButton, useRunActions } from '@/components/runs/run-actions'
+import { activity, agentColors, isLive, stepKey } from '@/components/runs/run-format'
+import { ThinkingLine } from '@/components/runs/thread-items'
 import { type HistoryInit, RunHistoryTab, useRunProject } from '@/components/runs/run-project-tabs'
 import { type Entry, buildThread, threadSize } from '@/components/runs/thread'
-import { useRun } from '@/components/runs/use-run'
+import { useNow, useRun } from '@/components/runs/use-run'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { HostError } from '@/host/client'
@@ -27,16 +27,16 @@ interface RunPanelProps {
   tab: RunTab
   /** Switches the page's tab (a Live session opens its agent's conversation). */
   onTab?: (tab: RunTab) => void
-  /** Opens a session started with New session. */
-  onOpenRun?: (runId: string) => void
-  /** The agent (session) shown; root when absent. */
+  /** The agent shown; root when absent. */
   agent?: string
+  /** Live: the project's sessions, which decide when this one goes idle. */
+  sessions?: RunSummary[]
   onAgent: (name: string) => void
   historyInit?: HistoryInit
 }
 
 /** A run's tab, live: loads the run once and follows its events. */
-export function RunPanel({ runId, tab, onTab, onOpenRun, agent, onAgent, historyInit }: RunPanelProps) {
+export function RunPanel({ runId, tab, onTab, agent, onAgent, historyInit, sessions }: RunPanelProps) {
   const live = useRun(runId)
   if (live.run)
     return (
@@ -46,10 +46,10 @@ export function RunPanel({ runId, tab, onTab, onOpenRun, agent, onAgent, history
         views={live.views}
         tab={tab}
         onTab={onTab}
-        onOpenRun={onOpenRun}
         picked={agent}
         onAgent={onAgent}
         historyInit={historyInit}
+        sessions={sessions}
       />
     )
   if (live.error) return <RunError error={live.error} onRetry={live.reload} />
@@ -88,18 +88,22 @@ interface BodyProps {
   views: Map<string, StepView>
   tab: RunTab
   onTab?: (tab: RunTab) => void
-  onOpenRun?: (runId: string) => void
   picked?: string
   onAgent: (name: string) => void
   historyInit?: HistoryInit
+  sessions?: RunSummary[]
 }
 
-function RunBody({ run, demo, views, tab, onTab, onOpenRun, picked, onAgent: setPicked, historyInit }: BodyProps) {
+function RunBody({ run, demo, views, tab, onTab, picked, onAgent: setPicked, historyInit, sessions }: BodyProps) {
   const root = run.agents.find((a) => a.parent === null)?.name ?? demo?.agents.find((a) => a.prompt === null)?.name ?? 'root'
-  const actions = useRunActions(run, onOpenRun)
+  const live = isLive(run.state)
 
   // Only the agents started so far: a subagent appears when its parent starts it, as in a live session.
-  const agents = useMemo<SwitcherAgent[]>(() => run.agents.map((a) => ({ ...a })), [run.agents])
+  const now = useNow(live)
+  const agents = useMemo<SwitcherAgent[]>(
+    () => run.agents.map((a) => ({ ...a, activity: activity(a, run.live.running.find((c) => c.agent === a.name), now) })),
+    [run.agents, run.live.running, now],
+  )
   const agent = picked && agents.some((a) => a.name === picked) ? picked : root
   const namesKey = [...(demo?.agents.map((a) => a.name) ?? []), ...run.agents.map((a) => a.name)].join('\u0000')
   const colorOf = useMemo(() => agentColors([...new Set(namesKey.split('\u0000'))]), [namesKey])
@@ -117,9 +121,11 @@ function RunBody({ run, demo, views, tab, onTab, onOpenRun, picked, onAgent: set
       children: new Set(agents.filter((a) => a.parent === agent).map((a) => a.name)),
       entries,
       incoming: run.messages.filter((m) => m.to === agent),
+      prompt: agent === root ? demo?.prompt : null,
     })
-  }, [run.steps, run.messages, views, agent, agents])
+  }, [run.steps, run.messages, views, agent, agents, root, demo?.prompt])
   const steps = useMemo(() => run.steps.filter((s) => s.agent === agent).length, [run.steps, agent])
+  const shown = run.agents.find((a) => a.name === agent)
 
   if (tab === 'live')
     return (
@@ -127,6 +133,7 @@ function RunBody({ run, demo, views, tab, onTab, onOpenRun, picked, onAgent: set
         run={run}
         agents={agents}
         colorOf={colorOf}
+        sessions={sessions}
         onOpenAgent={(name) => {
           setPicked(name)
           onTab?.('conversation')
@@ -136,7 +143,7 @@ function RunBody({ run, demo, views, tab, onTab, onOpenRun, picked, onAgent: set
   if (tab === 'history') return <ProjectHistory run={run} historyInit={historyInit} />
   if (tab === 'storage') return <ProjectStorage run={run} />
 
-  const empty = actions.live ? (
+  const empty = live ? (
     <div className="flex flex-col items-center gap-2 py-20 text-center text-sm text-muted-foreground">
       <Spinner className="size-5" />
       {run.state === 'starting' ? (
@@ -156,7 +163,6 @@ function RunBody({ run, demo, views, tab, onTab, onOpenRun, picked, onAgent: set
       <div className="shrink-0 px-8 pt-3">
         <div className="mx-auto flex w-full max-w-[1000px] items-center gap-3">
           <AgentSwitcher agents={agents} value={agent} onChange={setPicked} colorOf={colorOf} />
-          {actions.error && <span className="ml-auto max-w-80 truncate text-xs text-destructive">{actions.error}</span>}
         </div>
         {run.error && (
           <div
@@ -169,19 +175,21 @@ function RunBody({ run, demo, views, tab, onTab, onOpenRun, picked, onAgent: set
         )}
       </div>
       <div className="flex min-h-0 flex-1 flex-col">
-        <Conversation key={agent} turns={turns} colorOf={colorOf} onOpenAgent={setPicked} live={actions.live} empty={empty} />
+        <Conversation
+          key={agent}
+          turns={turns}
+          colorOf={colorOf}
+          onOpenAgent={setPicked}
+          live={live}
+          empty={empty}
+          footer={live && shown?.thinking ? <ThinkingLine /> : null}
+        />
       </div>
       <div className="shrink-0 px-8 pb-3">
-        <div className="mx-auto flex w-full max-w-[1000px] flex-col items-center gap-2">
-          <div className="flex w-full items-center gap-3 rounded-2xl border bg-card py-1.5 pr-1.5 pl-4 shadow-xs">
-            <span className="min-w-0 flex-1 truncate text-sm text-faint">Scripted session · replies come from the scenario</span>
-            <RunActionButton actions={actions} className="text-muted-foreground" />
-          </div>
-          <span className="flex items-center gap-1.5 text-xs text-faint tabular-nums">
-            <Gauge aria-hidden="true" className="size-3.5" />
-            {threadSize(turns, steps)}
-          </span>
-        </div>
+        <span className="mx-auto flex w-fit items-center gap-1.5 text-xs text-faint tabular-nums">
+          <Gauge aria-hidden="true" className="size-3.5" />
+          {threadSize(turns, steps)}
+        </span>
       </div>
     </div>
   )

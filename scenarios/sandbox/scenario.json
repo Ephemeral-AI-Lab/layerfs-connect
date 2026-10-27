@@ -3,6 +3,7 @@
  "version": 3,
  "title": "One Sandbox, two Workspaces",
  "blurb": "Two Branches share one Sandbox: their Workspaces have separate overlays, a slow site build runs as a background process while an fs write makes the docs Workspace stale, and teardown is explicit: unmount refuses Busy and Dirty, closing refuses MountsActive, and the Sandbox closes once both Workspaces are gone.",
+ "prompt": "Use one Sandbox for both the site and the docs Branches. Run the slow site build in the background while you update the docs, then tear everything down cleanly: unmount both Workspaces and close the Sandbox.",
  "order": 4,
  "tags": [
   "sdk",

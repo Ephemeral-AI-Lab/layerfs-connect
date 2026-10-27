@@ -166,6 +166,8 @@ export interface DemoSummary {
   id: string
   title: string
   blurb: string | null
+  /** What the user asked root: the conversation's opening message. */
+  prompt: string | null
   order: number
   tags: string[]
   agents: DemoAgent[]
@@ -219,6 +221,10 @@ export interface AgentRun {
   state: AgentState
   done: number
   of: number
+  /** When its state last changed (absent on runs recorded before it was kept). */
+  since?: number
+  /** When its current pause before a step began; null between pauses. */
+  thinking?: number | null
 }
 
 /** One LayerFS call from a trace line. */

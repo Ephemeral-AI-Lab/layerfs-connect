@@ -3,6 +3,7 @@
  "version": 3,
  "title": "Conflicts",
  "blurb": "Both conflict kinds, resolved. A Workspace on feature changes the page heading while an fs edit changes the same line on the Branch, so its commit is refused Conflict and leaves markers; the agent keeps its own line, clears the markers and commits. Then header edits that line too, so merging feature and header is refused until header agrees, and the merge is published.",
+ "prompt": "Change the page heading on feature, and resolve whatever conflicts that causes with the edits already on the Branch and on header. Keep our line, then merge feature and header and publish the result.",
  "order": 3,
  "tags": [
   "cli",

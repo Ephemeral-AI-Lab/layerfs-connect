@@ -1,5 +1,5 @@
 import { Ban, Check, ChevronDown, CornerDownRight, MessageSquareReply, Send, Wrench, X } from 'lucide-react'
-import { memo } from 'react'
+import { memo, useEffect, useState } from 'react'
 
 import { KindChip, Spinner } from '@/components/runs/run-badges'
 import { type AgentColor, KIND, clock, duration } from '@/components/runs/run-format'
@@ -9,14 +9,50 @@ import { type Entry, type Message, type Sender, kindCounts, targetOf } from '@/c
 import { cn } from '@/lib/utils'
 import type { SegmentKind } from '@shared/host-api'
 
-/** A quiet divider where the scenario's phase changes. */
-export function PhaseLine({ phase }: { phase: string }) {
+/** The user's request, as a chat shows what you sent. */
+export function UserMessage({ text }: { text: string }) {
   return (
-    <div role="separator" className="flex items-center gap-3 py-1">
-      <span className="h-px flex-1 bg-border/70" />
-      <span className="text-[11px] font-medium tracking-wide text-faint uppercase">{phase}</span>
-      <span className="h-px flex-1 bg-border/70" />
+    <div className="flex justify-end">
+      <p className="max-w-[80%] rounded-2xl bg-muted px-4 py-2.5 text-[15px] leading-relaxed whitespace-pre-wrap">{text}</p>
     </div>
+  )
+}
+
+/** Words shown per tick and the tick: about 20 words a second, a model's pace. */
+const STREAM_TOKENS = 2
+const STREAM_MS = 45
+
+/**
+ * `text`, streamed word by word when `stream` is true as it mounts (text
+ * that arrived while the reader watched); whole otherwise. A later change of
+ * `stream` does not restart or cut it.
+ */
+function Streamed({ text, stream }: { text: string; stream?: boolean }) {
+  const [animate] = useState(!!stream)
+  const tokens = animate ? text.split(/(\s+)/) : []
+  const [shown, setShown] = useState(0)
+  const done = !animate || shown >= tokens.length
+  useEffect(() => {
+    if (done) return
+    const t = setInterval(() => setShown((n) => n + STREAM_TOKENS), STREAM_MS)
+    return () => clearInterval(t)
+  }, [done])
+  if (done) return <>{text}</>
+  return (
+    <>
+      {tokens.slice(0, shown).join('')}
+      <span aria-hidden="true" className="ml-0.5 inline-block h-[1em] w-[2px] translate-y-[2px] animate-pulse bg-foreground/60" />
+    </>
+  )
+}
+
+/** The agent between steps: a model thinking. */
+export function ThinkingLine() {
+  return (
+    <p role="status" className="flex items-center gap-2 text-sm text-muted-foreground">
+      <Spinner className="size-3.5" />
+      <span className="animate-pulse">Thinking…</span>
+    </p>
   )
 }
 
@@ -59,15 +95,21 @@ export function ReceivedCard({ message, sender, script, open, onToggle }: Receiv
 }
 
 /** Plain text the agent says before its calls. */
-export function SayText({ text }: { text: string }) {
-  return <p className="text-[15px] leading-relaxed whitespace-pre-wrap">{text}</p>
+export function SayText({ text, stream }: { text: string; stream?: boolean }) {
+  return (
+    <p className="text-[15px] leading-relaxed whitespace-pre-wrap">
+      <Streamed text={text} stream={stream} />
+    </p>
+  )
 }
 
 /** The agent's reply: body text, with its time under it. */
-export function ReplyText({ text, at }: { text: string; at?: number | null }) {
+export function ReplyText({ text, at, stream }: { text: string; at?: number | null; stream?: boolean }) {
   return (
     <div className="flex flex-col gap-2">
-      <p className="text-[15px] leading-relaxed whitespace-pre-wrap">{text}</p>
+      <p className="text-[15px] leading-relaxed whitespace-pre-wrap">
+        <Streamed text={text} stream={stream} />
+      </p>
       {at ? <span className="text-xs text-faint tabular-nums">{clock(at)}</span> : null}
     </div>
   )

@@ -1,8 +1,8 @@
-import { memo, useCallback, useState } from 'react'
+import { memo, useCallback, useEffect, useRef, useState } from 'react'
 
 import type { AgentColor } from '@/components/runs/run-format'
 import type { Item, Turn } from '@/components/runs/thread'
-import { CallsFold, PhaseLine, ReceivedCard, ReplyText, SayText, ThreadChip } from '@/components/runs/thread-items'
+import { CallsFold, ReceivedCard, ReplyText, SayText, ThreadChip, UserMessage } from '@/components/runs/thread-items'
 import { Windowed, WindowedScroller } from '@/components/runs/windowed-list'
 import { cn } from '@/lib/utils'
 
@@ -16,6 +16,8 @@ interface TurnProps {
   colorOf: (name: string) => AgentColor
   onOpenAgent?: (name: string) => void
   script?: boolean
+  /** True for an item that arrived while the reader watched: its text streams in. */
+  fresh: (key: string) => boolean
 }
 
 type Block = Item | { type: 'chips'; key: string; items: Extract<Item, { type: 'chip' }>[] }
@@ -32,7 +34,7 @@ function blocks(items: Item[]): Block[] {
   return out
 }
 
-const TurnView = memo(function TurnView({ turn, folds, onToggle, colorOf, onOpenAgent, script }: TurnProps) {
+const TurnView = memo(function TurnView({ turn, folds, onToggle, colorOf, onOpenAgent, script, fresh }: TurnProps) {
   return (
     <div className="flex flex-col gap-3">
       {blocks(turn.items).map((item) => {
@@ -45,8 +47,8 @@ const TurnView = memo(function TurnView({ turn, folds, onToggle, colorOf, onOpen
                 ))}
               </div>
             )
-          case 'phase':
-            return <PhaseLine key={item.key} phase={item.phase} />
+          case 'user':
+            return <UserMessage key={item.key} text={item.text} />
           case 'received': {
             const open = folds.get(item.key) ?? false
             return (
@@ -61,13 +63,13 @@ const TurnView = memo(function TurnView({ turn, folds, onToggle, colorOf, onOpen
             )
           }
           case 'say':
-            return <SayText key={item.key} text={item.text} />
+            return <SayText key={item.key} text={item.text} stream={fresh(item.key)} />
           case 'calls':
             return <CallsFold key={item.key} id={item.key} entries={item.entries} folds={folds} onToggle={onToggle} />
           case 'chip':
             return null
           case 'reply':
-            return <ReplyText key={item.key} text={item.text} at={item.entry.result?.ended ?? item.entry.result?.started} />
+            return <ReplyText key={item.key} text={item.text} at={item.entry.result?.ended ?? item.entry.result?.started} stream={fresh(item.key)} />
         }
       })}
     </div>
@@ -104,6 +106,13 @@ export function Conversation({ turns, colorOf, onOpenAgent, live, script, empty,
       }),
     [],
   )
+  // What was there when the thread opened is shown whole; what arrives later, while it plays, streams in once.
+  const seen = useRef<Set<string> | null>(null)
+  seen.current ??= new Set(turns.flatMap((t) => t.items.map((i) => i.key)))
+  useEffect(() => {
+    for (const t of turns) for (const i of t.items) seen.current?.add(i.key)
+  }, [turns])
+  const fresh = useCallback((key: string) => live && !seen.current?.has(key), [live])
   const last = turns[turns.length - 1]
   const version = `${turns.length}:${last?.items.length}:${last?.items[last.items.length - 1]?.key}`
   return (
@@ -112,7 +121,7 @@ export function Conversation({ turns, colorOf, onOpenAgent, live, script, empty,
         {turns.length === 0 && empty}
         {turns.map((turn) => (
           <Windowed key={turn.key} id={turn.key} estimate={ESTIMATE}>
-            <TurnView turn={turn} folds={folds} onToggle={onToggle} colorOf={colorOf} onOpenAgent={onOpenAgent} script={script} />
+            <TurnView turn={turn} folds={folds} onToggle={onToggle} colorOf={colorOf} onOpenAgent={onOpenAgent} script={script} fresh={fresh} />
           </Windowed>
         ))}
         {footer}

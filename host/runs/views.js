@@ -20,6 +20,7 @@ export function demoViews({ id, scenario, raw }) {
       id,
       title: scenario.title,
       blurb: scenario.blurb || null,
+      prompt: scenario.prompt || null,
       order: scenario.order ?? 1000,
       tags: scenario.tags,
       agents,

@@ -3,6 +3,7 @@
  "version": 3,
  "title": "Checkpoints",
  "blurb": "A small history replay in four ranges. In each range two subagents fork lanes of their own from main and write a folder of two files with layerfs fs; the lead merges the lanes, publishes the range to main and checks that main lists every file written so far.",
+ "prompt": "Build up main in four ranges. In each range have two subagents fork lanes of their own and write a folder of two files each, then merge the lanes, publish the range and check that main lists every file written so far.",
  "order": 10,
  "tags": [
   "cli",

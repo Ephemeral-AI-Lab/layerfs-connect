@@ -58,7 +58,8 @@ fixtures/demo-workspace/   the fixture the hand-written seven Init from
   "agents": { "root": [Step, …], "<child>": [Step, …] } }
 ```
 
-- `title` (required), `blurb`, `order` (an integer; the list is sorted by it).
+- `title` (required), `blurb`, `prompt` (the user's request to root: its
+  conversation opens with it), `order` (an integer; the list is sorted by it).
 - `tags`: exactly one form, `cli` (every bash step is plain `layerfs …`
   lines; no SDK) or `sdk` (every bash step is one inline Node script on the
   SDK); at most one workload, `node` or `rust`, where real builds run; one to

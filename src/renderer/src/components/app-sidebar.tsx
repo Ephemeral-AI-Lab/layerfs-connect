@@ -1,8 +1,9 @@
 import type { DemoSummary, RunSummary } from '@shared/host-api'
-import { Cpu, Database, Folder, FolderOpen, Layers, LoaderCircle, type LucideIcon, Plus, RotateCw, Unplug } from 'lucide-react'
+import { Cpu, Folder, FolderOpen, LoaderCircle, Plus, RotateCw, Unplug } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 
 import { LayerfsMark } from '@/components/layerfs-mark'
+import { LfsProject, LfsStore } from '@/components/lfs-icons'
 import { RunDot } from '@/components/runs/run-badges'
 import { ago, isLive, runLabel } from '@/components/runs/run-format'
 import { useRuns, useStartRun } from '@/components/runs/use-runs'
@@ -35,7 +36,7 @@ export type Selection = { kind: 'nav'; id: NavId } | { kind: 'project'; id: stri
 interface NavItem {
   id: NavId
   label: string
-  icon: LucideIcon
+  icon: React.ComponentType<{ className?: string }>
   count?: number
 }
 
@@ -74,8 +75,8 @@ export function AppSidebar({ selected, onSelect, storageCount, computeCount }: A
   const { start, starting, error: refused } = useStartRun((run) => onSelect({ kind: 'project', id: run.demo }))
 
   const nav: NavItem[] = [
-    { id: 'projects', label: 'Projects', icon: Layers, count: demos.data?.length },
-    { id: 'storage', label: 'Storage', icon: Database, count: storageCount },
+    { id: 'projects', label: 'Projects', icon: LfsProject, count: demos.data?.length },
+    { id: 'storage', label: 'Storage', icon: LfsStore, count: storageCount },
     { id: 'compute', label: 'Compute', icon: Cpu, count: computeCount },
   ]
   const unreachable = demos.error ?? (runsError && !runs ? runsError : undefined)
@@ -233,7 +234,7 @@ function DemoItem({ demo, runs, open, selected, starting, refused, onToggle, onS
                 <button type="button" onClick={() => onSelect({ kind: 'project', id: demo.id, run: r.id })} className="w-full">
                   <RunDot state={r.state} />
                   <span className="min-w-0 flex-1 truncate text-left">{runLabel(r)}</span>
-                  <span className="text-[11px] text-faint tabular-nums">{isLive(r.state) ? `${r.done} steps` : ago(r.ended ?? r.started)}</span>
+                  <span className="text-[11px] text-faint tabular-nums">{isLive(r.state) ? 'live' : ago(r.ended ?? r.started)}</span>
                 </button>
               </SidebarMenuSubButton>
             </SidebarMenuSubItem>

@@ -16,6 +16,8 @@
 //                   @layerfs/agent and @layerfs/backend imports (the engine's
 //                   resolve hook finds them), DSH_LAYERFS_<NAME> becomes
 //                   LAYERFS_<NAME>, the fixture path moves under fixtures/
+//                   and the demo's opening prompt (lib/prompts.mjs) follows
+//                   its blurb
 //   CONVERSION.md   prose naming dsh's host and plugin
 // Nothing else changes: steps, expects, exits, commits, placeholders, the
 // shell and the JS stay as they are. A DSH_ name with no mapping stops the port.
@@ -23,6 +25,7 @@ import { execFileSync } from 'node:child_process'
 import { chmodSync, existsSync, mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs'
 import { dirname, join, relative, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { ROOT_PROMPTS } from './lib/prompts.mjs'
 import { NAMES as REPLAYS } from './replay/convert.mjs'
 
 const APP = resolve(dirname(fileURLToPath(import.meta.url)), '..')
@@ -104,11 +107,20 @@ function walk(value, counts) {
   return value
 }
 
-/** A scenario.json's text, ported: parsed, rewritten, written back in its own layout (indent 1). */
-export function portScenario(text, counts = {}) {
+/** A scenario.json's text, ported: parsed, rewritten, given `prompt` after its blurb, written back in its own layout (indent 1). */
+export function portScenario(text, counts = {}, prompt = null) {
   const value = JSON.parse(text)
   if (`${JSON.stringify(value, null, 1)}\n` !== text) throw new Error('not in the one-space JSON layout a round trip keeps')
-  return `${JSON.stringify(walk(value, counts), null, 1)}\n`
+  const ported = walk(value, counts)
+  if (!prompt) return `${JSON.stringify(ported, null, 1)}\n`
+  const out = {}
+  for (const [k, v] of Object.entries(ported)) {
+    if (k === 'prompt') continue
+    out[k] = v
+    if (k === 'blurb') out.prompt = prompt
+  }
+  out.prompt ??= prompt
+  return `${JSON.stringify(out, null, 1)}\n`
 }
 
 /** A CONVERSION.md's text, ported. */
@@ -134,7 +146,8 @@ export function plan(from) {
     const to = path.startsWith('demo-workspace/') ? `fixtures/${path}` : path
     let bytes = readFileSync(src)
     const counts = {}
-    if (/^scenarios\/[^/]+\/scenario\.json$/.test(path)) bytes = Buffer.from(portScenario(bytes.toString('utf8'), counts))
+    const id = path.match(/^scenarios\/([^/]+)\/scenario\.json$/)?.[1]
+    if (id) bytes = Buffer.from(portScenario(bytes.toString('utf8'), counts, ROOT_PROMPTS[id] ?? null))
     else if (/(^|\/)CONVERSION\.md$/.test(path)) bytes = Buffer.from(portProse(bytes.toString('utf8'), counts))
     else if (/\bDSH_[A-Z_]+/.test(bytes.toString('latin1'))) throw new Error(`${path} names a DSH_ setting and has no rewrite rule`)
     out.push({ path: to, bytes, mode, counts })

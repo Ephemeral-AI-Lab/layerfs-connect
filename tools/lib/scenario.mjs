@@ -91,11 +91,12 @@ export function compileScenario(raw, { name, folder, where = name }) {
   }
   if (!isAbsolute(folder)) folder = resolve(folder)
   if (!isObject(raw)) fail('', 'must be an object')
-  only(raw, ['type', 'version', 'title', 'blurb', 'order', 'tags', 'fixture', 'image', 'agents'], '', fail)
+  only(raw, ['type', 'version', 'title', 'blurb', 'prompt', 'order', 'tags', 'fixture', 'image', 'agents'], '', fail)
   if (raw.type !== TYPE) fail('type', `must be "${TYPE}"`)
   if (raw.version !== 3) fail('version', 'must be 3')
   if (typeof raw.title !== 'string' || !raw.title) fail('title', 'must be a non-empty string')
   if (raw.blurb !== undefined && typeof raw.blurb !== 'string') fail('blurb', 'must be a string')
+  if (raw.prompt !== undefined && (typeof raw.prompt !== 'string' || !raw.prompt.trim())) fail('prompt', 'must be a non-empty string')
   if (raw.order !== undefined && !Number.isInteger(raw.order)) fail('order', 'must be an integer')
   const { tags, form } = checkTags(raw.tags, fail)
   if (raw.image !== undefined && (typeof raw.image !== 'string' || !IMAGE.test(raw.image))) fail('image', 'is a runtime image digest, sha256:<64 hex>')
@@ -149,7 +150,7 @@ export function compileScenario(raw, { name, folder, where = name }) {
   const all = Object.values(agents).flat()
   const calls = [...new Set(all.flatMap((s) => s.expect ?? []).map(methodOf).filter(Boolean))].sort()
   const counts = { agents: Object.keys(agents).length, steps: all.filter((s) => s.kind === 'call').length, calls }
-  return { name, title: raw.title, blurb: raw.blurb ?? '', order: raw.order ?? null, tags, form, counts, fixture, seed, image: raw.image ?? null, agents, prompts, parents, templates }
+  return { name, title: raw.title, blurb: raw.blurb ?? '', prompt: raw.prompt ?? null, order: raw.order ?? null, tags, form, counts, fixture, seed, image: raw.image ?? null, agents, prompts, parents, templates }
 }
 
 /** The tags: exactly one form, at most one workload, one to three topics, nothing else. */

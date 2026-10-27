@@ -3,6 +3,7 @@
  "version": 3,
  "title": "5 agents",
  "blurb": "A lead forks checkout and search and hands one command at a time to five subagents, three on checkout and two on search. Every command runs in a Sandbox and Workspace of its own and commits: stale Workspaces merge with the head, and .lww settles node_modules and build output. Cy keeps a Workspace open while Ben commits the same package.json line, gets a Conflict and resolves it; Dee serves the search pages from a background process and curls them; Eli's risky delete goes to a fork. The lead's merge conflicts on the layout, is fixed on both Branches, then built, tested, published and blamed.",
+ "prompt": "Fork checkout and search from main and hand the work to five subagents, one command at a time: three on checkout and two on search. Have them commit as they go, resolve any conflicts, then merge, build, test and publish the result.",
  "order": 5,
  "tags": [
   "sdk",

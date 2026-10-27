@@ -66,6 +66,8 @@ import { tmpdir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { readSeed } from '../../host/seed.js'
+import { ROOT_PROMPTS } from '../lib/prompts.mjs'
+
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..')
 /** The replays this converter writes; tools/port-scenarios.mjs leaves their folders to it. */
@@ -760,7 +762,7 @@ function convert(name, repo, rev, outDir) {
   writeFileSync(join(folder, 'final.json'), finalText)
 
   const { tags, blurb } = META[name]
-  const scenario = { type: 'layerfs-scenario', version: 3, title: old.title, blurb, order: old.order, tags, fixture: 'seed.json', agents: scenarioAgents }
+  const scenario = { type: 'layerfs-scenario', version: 3, title: old.title, blurb, prompt: ROOT_PROMPTS[name], order: old.order, tags, fixture: 'seed.json', agents: scenarioAgents }
   writeFileSync(join(folder, 'scenario.json'), `${JSON.stringify(scenario, null, 1)}\n`)
 
   // ---------------------------------------------------------------- summary

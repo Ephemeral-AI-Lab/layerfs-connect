@@ -1,5 +1,5 @@
-// One agent's conversation, as a chat reads it: turns that open with the
-// messages the agent received, then its words and folded tool calls, and
+// One agent's conversation, as a chat reads it: root's opens with the
+// user's request; turns open with the messages the agent received, then its words and folded tool calls, and
 // close with its reply. Built from a run (steps with results, messages) or
 // from a demo's script alone (no results, only the subagent's prompt).
 import type { RunDetail, SegmentKind, StepResult, StepView } from '@shared/host-api'
@@ -18,7 +18,7 @@ export interface Entry {
 export type Sender = 'parent' | 'child' | 'other'
 
 export type Item =
-  | { type: 'phase'; key: string; phase: string }
+  | { type: 'user'; key: string; text: string }
   | { type: 'received'; key: string; message: Message; sender: Sender }
   | { type: 'say'; key: string; text: string }
   | { type: 'calls'; key: string; entries: Entry[] }
@@ -70,10 +70,12 @@ interface ThreadInput {
   entries: Entry[]
   /** Messages sent to this agent, in any order. */
   incoming: Message[]
+  /** The user's request that opens root's conversation. */
+  prompt?: string | null
 }
 
 /** Builds an agent's turns. Messages go before the step they precede in time; replies an agent waits for go right after its waiting reply. */
-export function buildThread({ agent, parent, children, entries, incoming }: ThreadInput): Turn[] {
+export function buildThread({ agent, parent, children, entries, incoming, prompt }: ThreadInput): Turn[] {
   const messages = incoming.filter((m) => m.from !== agent).sort((a, b) => a.at - b.at)
   const used = new Array<boolean>(messages.length).fill(false)
   const turns: Turn[] = []
@@ -82,12 +84,10 @@ export function buildThread({ agent, parent, children, entries, incoming }: Thre
   let lo = 0
   // A message sent the instant a step starts is what that step answers, once per turn.
   let heard = false
-  // The phase last shown: a divider marks only a change.
-  let phase: string | undefined
 
   const push = (item: Item) => {
     // A turn closes with a reply; what comes next opens the next one.
-    if (!turn || (closed && item.type !== 'phase')) {
+    if (!turn || closed) {
       turn = { key: item.key, items: [] }
       turns.push(turn)
       closed = false
@@ -103,6 +103,8 @@ export function buildThread({ agent, parent, children, entries, incoming }: Thre
     while (lo < messages.length && used[lo]) lo++
   }
 
+  if (prompt) push({ type: 'user', key: 'u:prompt', text: prompt })
+
   entries.forEach((e, n) => {
     const started = e.result?.started
     if (started !== undefined)
@@ -111,10 +113,6 @@ export function buildThread({ agent, parent, children, entries, incoming }: Thre
     if (!e.result && n === 0) for (let i = 0; i < messages.length; i++) if (!used[i]) receive(i)
 
     const v = e.view
-    if (v?.phase && v.phase !== phase) {
-      phase = v.phase
-      push({ type: 'phase', key: `p:${e.key}`, phase: v.phase })
-    }
     const tool = v?.tool ?? (e.result?.output !== undefined && !e.result.calls.length ? 'reply' : 'bash')
     if (v?.say && tool !== 'reply') push({ type: 'say', key: `t:${e.key}`, text: v.say })
 

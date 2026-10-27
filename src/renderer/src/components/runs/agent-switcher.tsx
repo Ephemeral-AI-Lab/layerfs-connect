@@ -10,10 +10,13 @@ import { cn } from '@/lib/utils'
 export interface SwitcherAgent {
   name: string
   parent: string | null
-  /** A run's agent: its state and progress. A script's: its step count. */
+  /** A run's agent: its state, and what it is doing now (run-format's activity). A script's: its step count. */
   state?: AgentState
   done?: number
   of: number
+  since?: number
+  thinking?: number | null
+  activity?: string
 }
 
 interface AgentSwitcherProps {
@@ -46,7 +49,7 @@ export function AgentSwitcher({ agents, value, onChange, colorOf }: AgentSwitche
             <span aria-hidden="true" className={cn('size-2 shrink-0 rounded-full', colorOf(a.name).dot)} />
             <span className={cn('min-w-0 flex-1 truncate', a.name === value && 'font-medium')}>{a.name}</span>
             {a.state && <AgentDot state={a.state} />}
-            <span className="text-[11px] text-faint tabular-nums">{plural(a.done ?? 0, 'step')}</span>
+            <span className="max-w-48 truncate text-[11px] text-faint tabular-nums">{a.state ? (a.activity ?? '') : plural(a.of, 'step')}</span>
             <Check aria-hidden="true" className={cn('size-3.5', a.name === value ? 'text-foreground' : 'invisible')} />
           </DropdownMenuItem>
         ))}

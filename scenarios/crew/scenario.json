@@ -3,6 +3,7 @@
  "version": 3,
  "title": "Crew",
  "blurb": "A lead and five agents build one issue-tracking application together: people and organizations, work boards, search and insight, each lane on Branches of its own. The agents write their code and install, build and test it in Workspaces; the lead forks fresh Branches from main and from their Commits, merges the lanes into integration Branches, checks them and publishes them to main.",
+ "prompt": "Build an issue-tracking application with five agents: people and organizations, work boards, search and insight. Give each lane its own Branches, have them install, build and test their code, merge the lanes into integration Branches, check them and publish to main.",
  "order": 9,
  "tags": [
   "cli",

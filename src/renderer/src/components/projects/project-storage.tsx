@@ -2,9 +2,9 @@
 // SQLite file in its Docker volume) with its size, what the Store holds
 // (Layers, Branches, Commits), and the Sandboxes open on it now.
 import type { ProjectState, RunDetail } from '@shared/host-api'
-import { Box, Database } from 'lucide-react'
 
 import { SandboxList } from '@/components/compute/sandbox-list'
+import { LfsSandbox, LfsStore } from '@/components/lfs-icons'
 import { Empty, LoadError, Loading } from '@/components/projects/states'
 import { isLive } from '@/components/runs/run-format'
 import { useRunProject } from '@/components/runs/run-project-tabs'
@@ -25,7 +25,7 @@ function StoreCard({ s }: { s: ProjectState }) {
     <section className="rounded-xl border bg-card">
       <header className="flex items-start gap-3 px-5 pt-4">
         <Tile>
-          <Database aria-hidden="true" />
+          <LfsStore className="size-5" />
         </Tile>
         <div className="min-w-0 flex-1">
           <h3 className="text-sm font-semibold">Local SQLite Store</h3>
@@ -82,7 +82,7 @@ export function ProjectStorage({ run }: { run: RunDetail }) {
                   <SandboxList groups={[{ project: s.project.name, sandboxes: s.sandboxes }]} showProject={false} />
                 </div>
               ) : (
-                <Empty icon={Box} title="No Sandboxes open">
+                <Empty icon={LfsSandbox} title="No Sandboxes open">
                   {isLive(run.state)
                     ? 'A Sandbox opens when an agent first mounts a Workspace.'
                     : 'The session’s Sandboxes have closed; its Workspaces were unmounted with them.'}

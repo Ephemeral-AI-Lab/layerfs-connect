@@ -1,21 +1,23 @@
 // A demo project and its sessions. The project page is the demo's LayerFS
 // project: its Live view, History and Storage, read from the newest session
 // (each session is one replay, which starts the project again from the
-// demo's fixture), then the list of Sessions and the demo's Script. A session
-// page is one replay: its conversation, agent by agent.
-import { ChevronLeft, Layers, Plus, TriangleAlert } from 'lucide-react'
+// demo's fixture), and the list of Sessions. A session page is one replay:
+// its conversation, agent by agent. Both carry the small replay control,
+// whose menu opens the scenario.
+import { ChevronLeft, TriangleAlert } from 'lucide-react'
 import { useState } from 'react'
 
+import { LfsProject } from '@/components/lfs-icons'
 import { Empty, Loading } from '@/components/projects/states'
 import { DemoScript } from '@/components/runs/demo-script'
 import { RunStateBadge } from '@/components/runs/run-badges'
 import { duration, isLive, ownProject, plural, runLabel } from '@/components/runs/run-format'
+import { ReplayControl } from '@/components/runs/replay-control'
 import { RunList } from '@/components/runs/run-list'
 import type { HistoryInit } from '@/components/runs/run-project-tabs'
 import { RunPanel } from '@/components/runs/run-view'
 import { useNow } from '@/components/runs/use-run'
 import { useRuns, useStartRun } from '@/components/runs/use-runs'
-import { Button } from '@/components/ui/button'
 import { ago, bytes } from '@/data/format'
 import { host } from '@/host/client'
 import { useHostQuery } from '@/host/use-host'
@@ -84,15 +86,19 @@ export function ProjectView({ demo, runId, agent, onPick, initialTab, initialBra
   const { runs, error: runsError } = useRuns(demo)
   const { start, starting, error: refused, clearError } = useStartRun((run) => onPick({ run: run.id }))
   const title = detail.data?.title ?? demo
-  const playing = runs?.find((r) => isLive(r.state))
-  const newSession = (
-    <Button
-      onClick={() => void start(demo)}
-      disabled={starting !== null || !!playing}
-      title={playing ? `${runLabel(playing)} is playing` : `Start ${demo} again from the demo's fixture and play the scenario as a new session`}
-    >
-      <Plus /> {starting ? 'Starting…' : 'New session'}
-    </Button>
+  const [opening] = useState(() => openingTab(initialTab))
+  const [tab, setTab] = useState<ProjectTab>(opening.tab ?? 'live')
+  const replay = (
+    <ReplayControl
+      runs={runs}
+      onReplay={() => void start(demo)}
+      starting={starting !== null}
+      onOpenRun={(id) => onPick({ run: id })}
+      onViewScenario={() => {
+        setTab('script')
+        onPick({})
+      }}
+    />
   )
   const refusal = refused && (
     <div
@@ -116,7 +122,7 @@ export function ProjectView({ demo, runId, agent, onPick, initialTab, initialBra
         agent={agent}
         onAgent={(name) => onPick({ run: session.id, agent: name })}
         onProject={() => onPick({})}
-        action={newSession}
+        action={replay}
         refusal={refusal}
       />
     ) : (
@@ -131,9 +137,10 @@ export function ProjectView({ demo, runId, agent, onPick, initialTab, initialBra
       runsError={runsError}
       onPick={onPick}
       onBack={onBack}
-      initialTab={initialTab}
-      initialBranch={initialBranch}
-      action={newSession}
+      tab={tab}
+      onTab={setTab}
+      historyInit={{ ...opening.history, branch: initialBranch }}
+      action={replay}
       refusal={refusal}
     />
   )
@@ -151,19 +158,17 @@ interface ProjectPageProps extends PageParts {
   runsError: Error | undefined
   onPick: (pick: ProjectPick) => void
   onBack: () => void
-  initialTab?: string
-  initialBranch?: string
+  tab: ProjectTab
+  onTab: (tab: ProjectTab) => void
+  historyInit: HistoryInit
 }
 
 /** The project: Live, History and Storage from its newest session, then Sessions and Script. */
-function ProjectPage({ demo, title, runs, runsError, onPick, onBack, initialTab, initialBranch, action, refusal }: ProjectPageProps) {
-  const [opening] = useState(() => openingTab(initialTab))
-  const [tab, setTab] = useState<ProjectTab>(opening.tab ?? 'live')
+function ProjectPage({ demo, title, runs, runsError, onPick, onBack, tab, onTab: setTab, historyInit: history, action, refusal }: ProjectPageProps) {
   // The project holds its newest session's state; sessions from before one project per demo played elsewhere.
   const current = runs?.find((r) => r.project === demo)
   const state = useHostQuery(() => host.project(demo), [demo, current?.id, current?.state])
   const s = state.data?.project.name === demo ? state.data : undefined
-  const history: HistoryInit = { ...opening.history, branch: initialBranch }
 
   const facts = s
     ? [
@@ -188,13 +193,13 @@ function ProjectPage({ demo, title, runs, runsError, onPick, onBack, initialTab,
         key={current.id}
         runId={current.id}
         tab={tab}
-        onOpenRun={(id) => onPick({ run: id })}
         onAgent={(name) => onPick({ run: current.id, agent: name })}
         historyInit={history}
+        sessions={runs?.filter((r) => r.project === demo)}
       />
     ) : runs || runsError ? (
       <div className="mx-auto w-full max-w-[1000px] px-8 py-8">
-        <Empty icon={Layers} title={runsError ? 'Sessions are not readable right now' : `${title} has no sessions yet`} action={action}>
+        <Empty icon={LfsProject} title={runsError ? 'Sessions are not readable right now' : `${title} has no sessions yet`} action={action}>
           {runsError ? (
             runsError.message
           ) : (
@@ -244,9 +249,11 @@ function ProjectPage({ demo, title, runs, runsError, onPick, onBack, initialTab,
           <TabButton active={tab === 'sessions'} onClick={() => setTab('sessions')} quiet>
             Sessions{runs ? <span className="ml-1 text-faint">{runs.length}</span> : null}
           </TabButton>
-          <TabButton active={tab === 'script'} onClick={() => setTab('script')} quiet>
-            Script
-          </TabButton>
+          {tab === 'script' && (
+            <TabButton active onClick={() => setTab('script')} quiet>
+              Scenario
+            </TabButton>
+          )}
         </nav>
       </header>
       <div className="flex min-h-0 flex-1 flex-col">{body}</div>
@@ -274,8 +281,7 @@ function SessionPage({ run, title, agent, onAgent, onProject, action, refusal }:
             <h1 className="truncate text-xl font-semibold tracking-[-0.015em]">{runLabel(run)}</h1>
             <RunStateBadge state={run.state} />
             <span className="truncate text-xs text-muted-foreground tabular-nums">
-              {plural(run.done, 'step')} · {duration((run.ended ?? now) - run.started)} · started {ago(run.started, now)}
-              {live && run.phase ? ` · ${run.phase}` : ''}
+              {duration((run.ended ?? now) - run.started)} · started {ago(run.started, now)}
             </span>
             {ownProject(run) && <ProjectChip name={run.project} />}
           </div>
@@ -296,7 +302,7 @@ function ProjectChip({ name }: { name: string }) {
       title={`The LayerFS project ${name}`}
       className="flex shrink-0 items-center gap-1 rounded-md bg-muted px-1.5 py-0.5 font-mono text-[12px] text-muted-foreground"
     >
-      <Layers aria-hidden="true" className="size-3" />
+      <LfsProject className="size-3.5" />
       {name}
     </span>
   )

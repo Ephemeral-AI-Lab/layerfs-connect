@@ -3,6 +3,7 @@
  "version": 3,
  "title": "Tour",
  "blurb": "One agent builds a small site on a feature Branch: fs edits, an install and a failing build fixed and rebuilt in Workspaces, a server that keeps unmount refused Busy until it is stopped, a stale Workspace that merges on commit, two Workspaces in one Sandbox, and two publishes, the second overwriting the first.",
+ "prompt": "Build the small site on a feature-home Branch: edit the home page, add an about page, install and build it in a Workspace (fix the build if it fails), run the server and check it, then publish feature-home and a header Branch to main.",
  "order": 1,
  "tags": [
   "sdk",

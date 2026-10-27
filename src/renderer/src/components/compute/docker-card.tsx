@@ -1,7 +1,8 @@
-import { Box, Check, Info, TriangleAlert, Unplug } from 'lucide-react'
+import { Check, Info, TriangleAlert, Unplug } from 'lucide-react'
 
 import { type SandboxGroup, SandboxList } from '@/components/compute/sandbox-list'
 import { DefaultChip, TargetHeader, TargetIcon } from '@/components/compute/target-parts'
+import { LfsSandbox } from '@/components/lfs-icons'
 import { Loading } from '@/components/projects/states'
 import { Chip } from '@/components/storage/chips'
 import { workerChip } from '@/components/storage/local-detail'
@@ -126,7 +127,7 @@ export function DockerCard({ status, groups, failed }: DockerCardProps) {
           <Loading label="Reading each project's Sandboxes" className="py-8" />
         ) : all.length === 0 ? (
           <p className="flex items-center gap-2 px-5 pt-2 pb-5 text-sm text-muted-foreground">
-            <Box aria-hidden="true" className="size-4 text-faint" />
+            <LfsSandbox className="size-4" />
             No Sandboxes. A run starts one when its first command mounts a Workspace.
           </p>
         ) : (

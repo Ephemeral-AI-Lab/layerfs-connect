@@ -4,14 +4,14 @@
 // (RunDetail.live, kept current by the host's events); the project's state
 // (Branches, Layers, open Sandboxes) is reread every two seconds while the
 // replay plays.
-import type { LiveMount, ProjectState, RunDetail, RunningCall } from '@shared/host-api'
-import { Box, FolderOpen, GitBranch } from 'lucide-react'
+import type { LiveMount, ProjectState, RunDetail, RunSummary, RunningCall } from '@shared/host-api'
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 
 import { LayerfsMark } from '@/components/layerfs-mark'
+import { LfsBranch, LfsSandbox, LfsWorkspace } from '@/components/lfs-icons'
 import type { SwitcherAgent } from '@/components/runs/agent-switcher'
 import { AgentDot, Spinner } from '@/components/runs/run-badges'
-import { type AgentColor, ago, duration, isLive, plural } from '@/components/runs/run-format'
+import { type AgentColor, activity, ago, duration, isIdle, isLive, runLabel } from '@/components/runs/run-format'
 import { treeOrder } from '@/components/runs/thread'
 import { useNow } from '@/components/runs/use-run'
 import { host } from '@/host/client'
@@ -25,7 +25,12 @@ interface LiveTabProps {
   agents: SwitcherAgent[]
   colorOf: (name: string) => AgentColor
   onOpenAgent: (name: string) => void
+  /** The project's sessions, newest first: a newer one sends this one idle. */
+  sessions?: RunSummary[]
 }
+
+/** An agent still at work in its session: started and not finished. */
+const activeAgent = (a: { parent: string | null; state?: string }) => !a.parent || !['done', 'failed', 'stopped'].includes(a.state ?? '')
 
 /** The project's state, reread every POLL_MS while the replay plays. */
 function useLiveProject(run: RunDetail) {
@@ -81,10 +86,12 @@ function sandboxViews(state: ProjectState | undefined, run: RunDetail): SandboxV
   return [...out.values()].sort((a, b) => Number(a.id) - Number(b.id) || a.id.localeCompare(b.id))
 }
 
-export function LiveTab({ run, agents, colorOf, onOpenAgent }: LiveTabProps) {
+export function LiveTab({ run, agents, colorOf, onOpenAgent, sessions = [] }: LiveTabProps) {
   const state = useLiveProject(run)
   const live = isLive(run.state)
-  const now = useNow(live)
+  // ticks slowly after the session ends too, so it goes idle on time
+  const now = useNow(true, live ? 1000 : 10_000)
+  const idle = isIdle(run, sessions, now)
   const sandboxes = useMemo(() => sandboxViews(state, run), [state, run])
   const running = run.live.running
   const runningOf = useMemo(() => {
@@ -102,7 +109,7 @@ export function LiveTab({ run, agents, colorOf, onOpenAgent }: LiveTabProps) {
   const commits = state?.branches.reduce((n, b) => n + b.commits, 0) ?? 0
 
   return (
-    <div className="h-full overflow-y-auto">
+    <div className="h-full overflow-y-auto [overflow-anchor:none]">
       <div className="mx-auto flex w-full max-w-[1240px] flex-col gap-5 px-8 py-6">
         <section aria-label="Live" className="rounded-2xl border bg-card/60">
           <header className="flex items-center gap-3 border-b px-6 py-3">
@@ -118,7 +125,9 @@ export function LiveTab({ run, agents, colorOf, onOpenAgent }: LiveTabProps) {
                   </>
                 )
               ) : (
-                `${run.state === 'passed' ? 'Passed' : run.state === 'failed' ? 'Failed' : 'Stopped'} ${ago(run.ended ?? run.started, now)} · Workspaces unmounted, Sandboxes closed · History keeps its Commits`
+                idle
+                  ? `No session working · the last ended ${ago(run.ended ?? run.started, now)}`
+                  : `${runLabel(run)} ended ${ago(run.ended ?? run.started, now)} · Workspaces unmounted, Sandboxes closed · History keeps its Commits`
               )}
             </p>
             <span className="shrink-0 text-xs text-faint">Local SQLite Store · Docker Sandboxes</span>
@@ -134,6 +143,7 @@ export function LiveTab({ run, agents, colorOf, onOpenAgent }: LiveTabProps) {
             now={now}
             colorOf={colorOf}
             onOpenAgent={onOpenAgent}
+            others={sessions.filter((r) => r.id !== run.id)}
           />
 
           <footer className="flex flex-wrap items-end gap-x-8 gap-y-3 border-t px-6 py-4">
@@ -178,6 +188,7 @@ interface GraphProps {
   now: number
   colorOf: (name: string) => AgentColor
   onOpenAgent: (name: string) => void
+  others: RunSummary[]
 }
 
 interface Edge {
@@ -198,14 +209,18 @@ const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)'
 /** Store calls: the ones that do not run in a Workspace. */
 const storeCall = (c: RunningCall) => !c.method.startsWith('workspace.') && !c.method.startsWith('sandbox.')
 
-function FlowGraph({ run, state, agents, sandboxes, runningOf, execOn, now, colorOf, onOpenAgent }: GraphProps) {
+function FlowGraph({ run, state, agents, sandboxes, runningOf, execOn, now, colorOf, onOpenAgent, others }: GraphProps) {
   const box = useRef<HTMLDivElement>(null)
   const [edges, setEdges] = useState<Edge[]>([])
-  const nodes = useMemo(() => treeOrder(agents, (a) => a.name, (a) => a.parent), [agents])
+  // a working session: its root and the subagents still at work; an idle one is not shown
+  const idle = isIdle(run, others, now)
+  const shown = useMemo(() => (idle ? [] : agents.filter(activeAgent)), [agents, idle])
+  const nodes = useMemo(() => treeOrder(shown, (a) => a.name, (a) => a.parent), [shown])
 
   // Edges follow the cards, so they are measured after layout.
   const shape = [
-    agents.map((a) => `${a.name}:${a.state}:${(runningOf.get(a.name) ?? []).filter(storeCall).length}`).join(','),
+    shown.map((a) => `${a.name}:${a.state}:${(runningOf.get(a.name) ?? []).filter(storeCall).length}`).join(','),
+    idle,
     sandboxes.map((s) => `${s.id}[${s.workspaces.map((w) => `${w.key}:${w.mount?.agent ?? ''}:${execOn.has(w.key)}`).join(',')}]`).join(','),
   ].join('|')
   useLayoutEffect(() => {
@@ -223,7 +238,9 @@ function FlowGraph({ run, state, agents, sandboxes, runningOf, execOn, now, colo
       const hubOut = at('hub', 'right')
       if (!hubIn || !hubOut) return
       const next: Edge[] = []
-      for (const a of agents) {
+      const none = at('session-none', 'right')
+      if (none) next.push({ id: 'session-none', d: curve(none, hubIn) })
+      for (const a of shown) {
         const from = at(`agent-${a.name}`, 'right')
         if (!from || a.state === undefined || a.state === 'waiting') continue
         const active = (runningOf.get(a.name) ?? []).some(storeCall)
@@ -289,7 +306,17 @@ function FlowGraph({ run, state, agents, sandboxes, runningOf, execOn, now, colo
         </svg>
 
         <div className="relative z-10 flex flex-col gap-3">
-          <ColumnLabel>Agents</ColumnLabel>
+          <ColumnLabel>Sessions</ColumnLabel>
+          {idle ? (
+            <div
+              data-anchor="session-none"
+              className="flex items-center gap-2.5 rounded-xl border border-dashed px-3.5 py-3 text-xs text-muted-foreground"
+            >
+              No session working. Replay starts one.
+            </div>
+          ) : (
+            <SessionLabel run={run} />
+          )}
           {nodes.map(({ item: a, depth }) => (
             <SessionNode
               key={a.name}
@@ -315,7 +342,7 @@ function FlowGraph({ run, state, agents, sandboxes, runningOf, execOn, now, colo
               data-anchor="sandbox-none"
               className="flex items-center gap-2.5 rounded-xl border border-dashed px-3.5 py-3 text-xs text-muted-foreground"
             >
-              <Box aria-hidden="true" className="size-4 shrink-0 text-faint" />
+              <LfsSandbox className="size-4" />
               No Sandbox open. One opens when an agent creates it to mount a Workspace.
             </div>
           ) : (
@@ -324,6 +351,16 @@ function FlowGraph({ run, state, agents, sandboxes, runningOf, execOn, now, colo
         </div>
       </div>
     </div>
+  )
+}
+
+/** A working session's name above its agents: "Session 7 · playing", or when it ended. */
+function SessionLabel({ run }: { run: RunSummary }) {
+  return (
+    <span className="flex items-center gap-1.5 px-1 py-0.5 text-xs text-muted-foreground">
+      <span className="font-medium text-foreground">{runLabel(run)}</span>
+      {isLive(run.state) ? 'playing' : `ended ${ago(run.ended ?? run.started)}`}
+    </span>
   )
 }
 
@@ -339,6 +376,7 @@ function callTarget(c: { branch?: string | null; path?: string | null; sandbox?:
 
 function SessionNode({
   agent,
+  anchor,
   depth,
   calls,
   last,
@@ -347,6 +385,8 @@ function SessionNode({
   onOpen,
 }: {
   agent: SwitcherAgent
+  /** Where edges attach; agent-<name> by default. */
+  anchor?: string
   depth: number
   calls: RunningCall[]
   last: RunDetail['live']['last'][string] | undefined
@@ -360,7 +400,7 @@ function SessionNode({
   return (
     <button
       type="button"
-      data-anchor={`agent-${agent.name}`}
+      data-anchor={anchor ?? `agent-${agent.name}`}
       onClick={onOpen}
       title={`Open ${agent.name}'s conversation`}
       style={{ marginLeft: Math.min(depth, 3) * 12 }}
@@ -375,7 +415,6 @@ function SessionNode({
         </span>
         <span className="min-w-0 flex-1 truncate text-sm font-medium">{agent.name}</span>
         <AgentDot state={state} />
-        <span className="text-[11px] text-faint tabular-nums">{plural(agent.done ?? 0, 'step')}</span>
       </span>
       <span className="flex min-w-0 items-center gap-1.5 pl-8 text-xs text-muted-foreground">
         {call ? (
@@ -385,13 +424,13 @@ function SessionNode({
             <span className="min-w-0 truncate font-mono text-faint">{callTarget(call)}</span>
             <span className="ml-auto shrink-0 tabular-nums">{duration(now - call.start)}</span>
           </>
-        ) : last ? (
+        ) : agent.thinking || state === 'running' || state === 'idle' || !last ? (
+          <span className="text-faint tabular-nums">{activity(agent, undefined, now)}</span>
+        ) : (
           <>
             <span className={cn('shrink-0 font-mono', last.ok ? '' : 'text-destructive')}>{last.method}</span>
             <span className="truncate text-faint">{last.ok ? '' : `${last.code ?? 'failed'} · `}{ago(last.at, now)}</span>
           </>
-        ) : (
-          <span className="text-faint">{state === 'running' ? 'thinking in bash…' : state}</span>
         )}
       </span>
     </button>
@@ -421,7 +460,7 @@ function HubNode({ run, state }: { run: RunDetail; state: ProjectState | undefin
         <ul className="flex max-h-40 w-full flex-col gap-1 overflow-y-auto border-t pt-2.5 text-left">
           {open.map((b) => (
             <li key={b.name} className="flex min-w-0 items-center gap-1.5 text-xs">
-              <GitBranch aria-hidden="true" className="size-3 shrink-0 text-faint" />
+              <LfsBranch className="size-3.5" />
               <span className="min-w-0 flex-1 truncate">{b.name}</span>
               <span className="shrink-0 text-faint tabular-nums">{b.commits}</span>
             </li>
@@ -450,7 +489,7 @@ function SandboxNode({
       className={cn('overflow-hidden rounded-xl border bg-card', busy && 'border-foreground/25 shadow-sm')}
     >
       <div className="flex items-center gap-2 px-3.5 py-2.5">
-        <Box aria-hidden="true" className="size-4 shrink-0 text-muted-foreground" />
+        <LfsSandbox className="size-4" />
         <span className="shrink-0 text-sm font-medium">Sandbox {sandbox.id}</span>
         {sandbox.name && <span className="min-w-0 truncate font-mono text-[11px] text-faint">{sandbox.name}</span>}
         <span className="ml-auto shrink-0 text-xs text-faint">
@@ -459,7 +498,7 @@ function SandboxNode({
       </div>
       {sandbox.workspaces.length === 0 ? (
         <div className="flex items-center gap-2 border-t bg-muted/30 px-3.5 py-2 text-xs text-faint">
-          <FolderOpen aria-hidden="true" className="size-3.5 shrink-0" />
+          <LfsWorkspace className="size-3.5" />
           No Workspace mounted
         </div>
       ) : (
@@ -469,11 +508,11 @@ function SandboxNode({
           return (
             <div key={w.key} data-anchor={`ws-${w.key}`} className="flex flex-col gap-1 border-t bg-muted/30 px-3.5 py-2 text-xs">
               <span className="flex min-w-0 items-center gap-2">
-                <FolderOpen aria-hidden="true" className="size-3.5 shrink-0 text-faint" />
+                <LfsWorkspace className="size-3.5" />
                 <span className="shrink-0 font-mono">{w.path}</span>
                 {w.branch && (
                   <span className="flex min-w-0 items-center gap-1 truncate text-muted-foreground">
-                    <GitBranch aria-hidden="true" className="size-3 shrink-0" />
+                    <LfsBranch className="size-3.5" />
                     <span className="truncate">{w.branch}</span>
                   </span>
                 )}

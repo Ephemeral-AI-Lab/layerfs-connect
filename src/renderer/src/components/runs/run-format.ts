@@ -38,6 +38,24 @@ export const STEP_TONE: Record<StepResult['state'], Tone> = {
 
 export const isLive = (state: RunState) => state === 'starting' || state === 'running'
 
+/** How long an ended session stays active in Live before it goes idle. */
+export const IDLE_AFTER_MS = 5 * 60 * 1000
+
+/**
+ * True when a session is idle: it ended over IDLE_AFTER_MS ago, or a newer
+ * session of its demo has started (a replay resets the project, so it sends
+ * every earlier session idle at once).
+ */
+export function isIdle(
+  run: { demo: string; state: RunState; started: number; ended: number | null },
+  runs: readonly { demo: string; started: number }[] | undefined,
+  now: number,
+): boolean {
+  if (isLive(run.state)) return false
+  if (runs?.some((r) => r.demo === run.demo && r.started > run.started)) return true
+  return now - (run.ended ?? run.started) > IDLE_AFTER_MS
+}
+
 export interface KindStyle {
   label: string
   /** What the kind covers, for the legend. */
@@ -178,6 +196,35 @@ export function duration(ms: number | null | undefined): string {
   const rest = Math.round(s % 60)
   if (m < 60) return `${m} m ${String(rest).padStart(2, '0')} s`
   return `${Math.floor(m / 60)} h ${String(m % 60).padStart(2, '0')} m`
+}
+
+/**
+ * What an agent is doing now and for how long: its LayerFS call in flight
+ * ("workspace.exec · 2.2 s"), "thinking · 1.4 s" between steps, "idle · 1 m 05 s"
+ * while it waits, "done" once finished.
+ */
+export function activity(
+  a: { state?: AgentState; since?: number; thinking?: number | null },
+  call: { method: string; start: number } | undefined,
+  now: number,
+): string {
+  if (call) return `${call.method} · ${duration(now - call.start)}`
+  if (a.thinking) return `thinking · ${duration(now - a.thinking)}`
+  const since = a.since ? ` · ${duration(now - a.since)}` : ''
+  switch (a.state) {
+    case 'running':
+      return 'working'
+    case 'idle':
+      return `idle${since}`
+    case 'waiting':
+      return 'not started'
+    case 'done':
+      return a.since ? `done · ${ago(a.since, now)}` : 'done'
+    case undefined:
+      return ''
+    default:
+      return a.state
+  }
 }
 
 /** "12:04:31" for today, else "Oct 26, 12:04". */

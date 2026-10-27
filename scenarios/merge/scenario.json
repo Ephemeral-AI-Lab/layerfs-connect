@@ -3,6 +3,7 @@
  "version": 3,
  "title": "Commit & merge",
  "blurb": "One agent on two Branches: a stale Workspace's commit merges cleanly, an fs edit of the same line makes a commit refuse Conflict until the markers are fixed in the Workspace, two Branches merge into a new one, a merge conflict is fixed on its source Branch, and the result is published.",
+ "prompt": "Work on two Branches: commit from a Workspace that has gone stale, fix any Conflict an edit to the same line causes, merge the two Branches into a new one, fix the merge conflict on its source Branch and publish the result.",
  "order": 4,
  "tags": [
   "sdk",

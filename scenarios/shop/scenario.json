@@ -3,6 +3,7 @@
  "version": 3,
  "title": "Shop",
  "blurb": "A builder agent grows a small Node web shop from a skeleton to an admin page over six milestones: a product catalog, carts and totals, checkout with orders and discounts, a browser storefront and an admin page. It writes each milestone's code, installs, builds and tests it in a Workspace, smoke-tests the server, merges the storefront with the orders work and publishes every milestone to main.",
+ "prompt": "Grow the web shop from its skeleton over six milestones: a product catalog, carts and totals, checkout with orders and discounts, a browser storefront and an admin page. Install, build and test each milestone in a Workspace and publish it to main.",
  "order": 7,
  "tags": [
   "cli",

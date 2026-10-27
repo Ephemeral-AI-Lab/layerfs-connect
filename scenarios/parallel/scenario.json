@@ -3,6 +3,7 @@
  "version": 3,
  "title": "Parallel Branches",
  "blurb": "Two subagents fork header and footer Branches from main at the same time, each writes its component with layerfs fs write and runs the tests in a Workspace of its Branch. The lead publishes header; publish overwrites main, so footer merges main into footer-2 before the lead publishes that.",
+ "prompt": "Split the header and footer work between two subagents, each on its own Branch forked from main. Have them write their component and run the tests, then publish both to main without losing either one.",
  "order": 2,
  "tags": [
   "cli",

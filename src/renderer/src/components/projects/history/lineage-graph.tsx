@@ -1,6 +1,7 @@
-import { ChevronRight, CornerDownRight, Ellipsis, GitFork, GitMerge, Upload } from 'lucide-react'
+import { ChevronRight, CornerDownRight, Ellipsis } from 'lucide-react'
 import { type KeyboardEvent, useEffect, useMemo, useRef } from 'react'
 
+import { LfsFork, LfsMerge, LfsPublish } from '@/components/lfs-icons'
 import { laneColor } from '@/components/projects/history/branch-tree'
 import { Unavailable } from '@/components/storage/unavailable'
 import { Button } from '@/components/ui/button'
@@ -171,19 +172,19 @@ export function LineageGraph({ tree, focus, onFocus, selected, onSelect }: Linea
           <div className="flex shrink-0 gap-1">
             <Unavailable reason={BY_HAND}>
               <Button variant="ghost" size="sm" disabled>
-                <GitFork /> Fork
+                <LfsFork /> Fork
               </Button>
             </Unavailable>
             {parent && (
               <>
                 <Unavailable reason={BY_HAND}>
                   <Button variant="outline" size="sm" disabled>
-                    <GitMerge /> Merge
+                    <LfsMerge /> Merge
                   </Button>
                 </Unavailable>
                 <Unavailable reason={BY_HAND}>
                   <Button size="sm" disabled>
-                    <Upload /> Publish
+                    <LfsPublish /> Publish
                   </Button>
                 </Unavailable>
               </>

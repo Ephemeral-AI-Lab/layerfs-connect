@@ -55,11 +55,12 @@ export function KindChip({ kind, children, className }: { kind: SegmentKind; chi
   return (
     <span
       className={cn(
-        'inline-flex h-5 shrink-0 items-center rounded-md px-1.5 font-mono text-[11px] font-medium whitespace-nowrap ring-1 ring-inset',
+        'inline-flex h-5 shrink-0 items-center gap-1.5 rounded-full pr-2 pl-1.5 font-mono text-[11px] font-medium whitespace-nowrap ring-1 ring-inset',
         KIND[kind].chip,
         className,
       )}
     >
+      <span aria-hidden="true" className={cn('size-1.5 shrink-0 rounded-full', KIND[kind].dot)} />
       {children ?? KIND[kind].label}
     </span>
   )
@@ -84,19 +85,3 @@ export function KindLegend({ kinds, counts, className }: { kinds?: SegmentKind[]
 export const Spinner = ({ className }: { className?: string }) => (
   <LoaderCircle aria-label="Running" className={cn('size-3.5 shrink-0 animate-spin text-primary', className)} />
 )
-
-/** A thin progress bar. */
-export function Progress({ done, of, tone = 'info', className }: { done: number; of: number; tone?: Tone; className?: string }) {
-  const pct = of > 0 ? Math.min(100, (done / of) * 100) : 0
-  return (
-    <div
-      role="progressbar"
-      aria-valuemin={0}
-      aria-valuemax={of}
-      aria-valuenow={done}
-      className={cn('h-1.5 overflow-hidden rounded-full bg-muted', className)}
-    >
-      <div className={cn('h-full rounded-full transition-[width] duration-500', DOT[tone])} style={{ width: `${pct}%` }} />
-    </div>
-  )
-}

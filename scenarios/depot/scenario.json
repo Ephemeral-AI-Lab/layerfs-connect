@@ -3,6 +3,7 @@
  "version": 3,
  "title": "Depot",
  "blurb": "A builder agent writes Depot, a Rust inventory service (a four-crate Cargo workspace: domain, store, HTTP server and CLI) with a browser client. Milestone by milestone it fetches the locked dependencies, builds and tests each crate and runs Python acceptance tests against the server; it works on a registry and a web Branch in parallel and merges them, then runs a release candidate of clean builds, tests, docs, Clippy, rustfmt and packaging, and checks the published main once more.",
+ "prompt": "Write Depot, a Rust inventory service: a Cargo workspace with domain, store, HTTP server and CLI crates, plus a browser client. Build and test it milestone by milestone, run the acceptance tests against the server, and finish with a clean release candidate on main.",
  "order": 8,
  "tags": [
   "sdk",

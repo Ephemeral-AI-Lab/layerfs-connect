@@ -1,5 +1,6 @@
-import { CloudOff, Link2, Server, TriangleAlert } from 'lucide-react'
+import { CloudOff, Link2, TriangleAlert } from 'lucide-react'
 
+import { LfsWorker } from '@/components/lfs-icons'
 import { Chip, type Tone } from '@/components/storage/chips'
 import { DatabaseIcon, Tile } from '@/components/storage/icons'
 import { Notice } from '@/components/storage/notice'
@@ -38,7 +39,7 @@ export function WorkerSection({ status }: { status: HostStatus }) {
     <section className="rounded-xl border bg-card">
       <header className="flex items-start gap-3 px-5 pt-4">
         <Tile>
-          <Server aria-hidden="true" />
+          <LfsWorker className="size-5" />
         </Tile>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">

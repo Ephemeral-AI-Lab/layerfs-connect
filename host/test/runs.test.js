@@ -14,7 +14,7 @@ import { Run } from '../runs/run.js'
 
 const root = mkdtempSync(join(tmpdir(), 'lfc-runs-test-'))
 after(() => rmSync(root, { recursive: true, force: true }))
-const spec = { state: root, home: join(root, 'home'), runs: join(root, 'runs'), image: 'sha256:' + '0'.repeat(64), bundle: null, daemon: '/x/layerfs-daemon', docker: '/var/run/docker.sock', prefix: 'lfc-test-', worker: false }
+const spec = { state: root, home: join(root, 'home'), runs: join(root, 'runs'), image: 'sha256:' + '0'.repeat(64), bundle: null, daemon: '/x/layerfs-daemon', docker: '/var/run/docker.sock', prefix: 'lfc-test-', worker: false, think: false }
 mkdirSync(spec.runs, { recursive: true })
 
 /** A trace line for the current step, as the SDK writes it. */

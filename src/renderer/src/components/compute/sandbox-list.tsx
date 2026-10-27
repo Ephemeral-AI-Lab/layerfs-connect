@@ -1,7 +1,8 @@
-import { ChevronRight, FolderOpen, GitBranch } from 'lucide-react'
+import { ChevronRight } from 'lucide-react'
 import { useState } from 'react'
 
 import { LayerfsMark } from '@/components/layerfs-mark'
+import { LfsBranch, LfsWorkspace } from '@/components/lfs-icons'
 import { Chip, type Tone } from '@/components/storage/chips'
 import { shortDigest } from '@/data/format'
 import { cn } from '@/lib/utils'
@@ -127,11 +128,11 @@ export function SandboxList({ groups, showProject = true }: SandboxListProps) {
                     <div key={ws.ws} role="row" className={cn(ROW, 'border-t border-dashed py-2 pr-5 pl-5')}>
                       <span />
                       <span className="flex min-w-0 items-center gap-2 pl-5">
-                        <FolderOpen aria-hidden="true" className="size-3.5 shrink-0 text-faint" />
+                        <LfsWorkspace className="size-3.5" />
                         <span className="truncate font-mono text-xs">{ws.path}</span>
                       </span>
                       <span className="col-span-3 flex min-w-0 items-center gap-1.5 text-[13px]">
-                        <GitBranch aria-hidden="true" className="size-3.5 shrink-0 text-faint" />
+                        <LfsBranch className="size-3.5" />
                         <span className="truncate">{ws.branch || 'unknown Branch'}</span>
                       </span>
                     </div>

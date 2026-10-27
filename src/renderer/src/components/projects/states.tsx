@@ -1,4 +1,4 @@
-import { LoaderCircle, type LucideIcon, RotateCw, Unplug } from 'lucide-react'
+import { LoaderCircle, RotateCw, Unplug } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { HostError } from '@/host/client'
@@ -58,7 +58,7 @@ export function LoadError({ error, what, onRetry, className }: LoadErrorProps) {
 }
 
 interface EmptyProps {
-  icon: LucideIcon
+  icon: React.ComponentType<{ className?: string }>
   title: string
   children?: React.ReactNode
   action?: React.ReactNode

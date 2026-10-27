@@ -103,9 +103,15 @@
   --hl-function: #2d5bb5;
   --hl-type: #a86a10;
   --hl-property: #2d3a9a;
+  /* the LayerFS icon tones (assets/icons): light = committed, dark = live */
+  --lfs-light: #93b1e0;
+  --lfs-dark: #2f5bb5;
+  --lfs-warn: #e0a030;
+  --lfs-surface: var(--card);
 }
 
 .dark {
+  --lfs-dark: #6f93e6;
   --background: #111113;
   --foreground: #ededef;
   --card: #18181b;

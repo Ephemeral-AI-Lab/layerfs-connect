@@ -89,7 +89,6 @@ export function RunList({ demo, onOpenRun }: RunListProps) {
 }
 
 function RunRow({ run, now, onOpen }: { run: RunSummary; now: number; onOpen: () => void }) {
-  const live = isLive(run.state)
   return (
     <TableRow
       tabIndex={0}
@@ -103,7 +102,6 @@ function RunRow({ run, now, onOpen }: { run: RunSummary; now: number; onOpen: ()
           <span className="font-medium">{runLabel(run)}</span>
           <span className={cn('text-xs', run.state === 'failed' ? 'text-destructive' : 'text-muted-foreground')}>
             {RUN_LABEL[run.state]}
-            {live && run.phase ? ` · ${run.phase}` : ''}
           </span>
         </span>
         {run.error && (

@@ -20,6 +20,11 @@ import { LiveState } from './live.js'
 import { traceCall, Traces } from './traces.js'
 
 export const LIMIT_MS = 15 * 60 * 1000
+// Each step waits a random third to all of a per-step bound first: 3 s, or
+// less when the run's steps would otherwise pause longer than 5 minutes in
+// all (crew's 967 steps get about 0.3 s), well inside LIMIT_MS.
+const THINK_MAX_MS = 3000
+const THINK_BUDGET_MS = 5 * 60 * 1000
 const WATCH_MS = 250
 const SAVE_MS = 300
 const LIVE_MS = 120
@@ -148,6 +153,13 @@ export class Run {
         return previous?.until?.length ? `${a.name} waits for ${a.unsettled(previous.until).join(' and ')}` : `${a.name} waits for a message`
       })
     this.fail(`stuck: no agent can go on (${waits.join('; ')})`)
+  }
+
+  /** How long an agent pauses before its next step: random, bounded per step and over the run; none when spec.think is false (tests). */
+  thinkMs() {
+    if (this.spec.think === false) return 0
+    this.thinkHi ??= Math.min(THINK_MAX_MS, THINK_BUDGET_MS / Math.max(1, [...this.agents.values()].reduce((n, a) => n + a.steps.length, 0)))
+    return this.thinkHi * (1 / 3 + (2 / 3) * Math.random())
   }
 
   progress(agent) {

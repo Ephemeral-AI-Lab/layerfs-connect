@@ -1,9 +1,10 @@
-import { Database, GitBranch, GitCommitHorizontal, Plus, Search, TriangleAlert } from 'lucide-react'
+import { Plus, Search, TriangleAlert } from 'lucide-react'
 import { useState } from 'react'
 
 import { LayerfsMark } from '@/components/layerfs-mark'
+import { LfsBranch, LfsCommit, LfsStore } from '@/components/lfs-icons'
 import { LoadError } from '@/components/projects/states'
-import { Progress, RunStateBadge } from '@/components/runs/run-badges'
+import { RunStateBadge } from '@/components/runs/run-badges'
 import { isLive, plural, runLabel } from '@/components/runs/run-format'
 import { useStartRun } from '@/components/runs/use-runs'
 import { Chip } from '@/components/storage/chips'
@@ -60,7 +61,7 @@ function ProjectCard({ demo, latest, starting, onOpen, onNewSession }: ProjectCa
       {demo.blurb && <p className="line-clamp-2 text-[13px] text-muted-foreground">{demo.blurb}</p>}
 
       <div className="flex items-center gap-2.5 rounded-lg bg-muted/50 px-2.5 py-2">
-        <Database aria-hidden="true" className="size-4 shrink-0 text-faint" />
+        <LfsStore className="size-4" />
         <div className="min-w-0 flex-1">
           <div className="truncate text-[13px] font-medium">
             Local SQLite <span className="font-normal text-muted-foreground">· {s ? bytes(s.store.bytes) : missing ? 'not created yet' : '…'}</span>
@@ -79,10 +80,10 @@ function ProjectCard({ demo, latest, starting, onOpen, onNewSession }: ProjectCa
 
       {s?.last && (
         <div className="flex min-w-0 items-center gap-2 text-xs">
-          <GitCommitHorizontal aria-hidden="true" className="size-3.5 shrink-0 text-faint" />
+          <LfsCommit className="size-3.5" />
           <span className="min-w-0 flex-1 truncate">{s.last.message || 'Commit'}</span>
           <span className="flex shrink-0 items-center gap-1 text-muted-foreground">
-            <GitBranch aria-hidden="true" className="size-3" />
+            <LfsBranch className="size-3.5" />
             {s.last.branch}
           </span>
         </div>
@@ -91,10 +92,9 @@ function ProjectCard({ demo, latest, starting, onOpen, onNewSession }: ProjectCa
       <div className="mt-auto flex items-center gap-3 border-t pt-3">
         <div className="min-w-0 flex-1 text-xs text-muted-foreground">
           {live && latest ? (
-            <div className="flex items-center gap-2">
-              <Progress done={latest.done} of={latest.of} className="w-20" />
-              <span className="truncate tabular-nums">{plural(latest.done, 'step')}</span>
-            </div>
+            <span className="block truncate">
+              {plural(demo.runs, 'session')} · one playing since {ago(latest.started)}
+            </span>
           ) : latest ? (
             <span className="block truncate">
               {plural(demo.runs, 'session')} · last {ago(latest.ended ?? latest.started)}
