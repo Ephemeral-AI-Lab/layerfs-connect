@@ -1,8 +1,7 @@
 // A demo project: one LayerFS project, named after the demo, and its sessions
 // (the agents of its replay), on one page as dsh lays out a session. The
 // header names the demo and its LayerFS project and picks the replay; one tab
-// row shows that replay's Live view, Conversation, Trace, Work and History,
-// then the demo's Replays and Script. A replay resets the project first, so
+// row shows that replay's Live view, Conversation and History, then the demo's Replays and Script. A replay resets the project first, so
 // only the newest replay's Branches, Commits and Sandboxes are there.
 import { ChevronLeft, Layers, RotateCcw, TriangleAlert } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
@@ -30,8 +29,6 @@ export type ProjectTab = RunTab | 'runs' | 'script'
 const RUN_TABS: { id: RunTab; label: string }[] = [
   { id: 'live', label: 'Live' },
   { id: 'conversation', label: 'Conversation' },
-  { id: 'trace', label: 'Trace' },
-  { id: 'work', label: 'Work' },
   { id: 'history', label: 'History' },
 ]
 
@@ -40,8 +37,6 @@ function openingTab(initial?: string): { tab?: ProjectTab; history?: HistoryInit
   switch (initial) {
     case 'live':
     case 'conversation':
-    case 'trace':
-    case 'work':
     case 'history':
     case 'runs':
     case 'script':
@@ -54,9 +49,12 @@ function openingTab(initial?: string): { tab?: ProjectTab; history?: HistoryInit
     case 'map':
     case 'replay':
       return { tab: 'history', history: { view: 'map', autoplay: initial === 'replay' } }
+    case 'trace':
+      return { tab: 'conversation' }
+    case 'work':
     case 'storage':
     case 'sandboxes':
-      return { tab: 'work' }
+      return { tab: 'live' }
     default:
       return {}
   }
@@ -149,7 +147,7 @@ export function ProjectView({ demo, runId, agent, onPick, initialTab, initialBra
   // A session picked in the sidebar opens its conversation.
   const seenAgent = useRef(agent)
   useEffect(() => {
-    if (agent && agent !== seenAgent.current && tab !== 'trace') setTab('conversation')
+    if (agent && agent !== seenAgent.current) setTab('conversation')
     seenAgent.current = agent
   }, [agent, tab])
 

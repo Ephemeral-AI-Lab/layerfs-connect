@@ -214,8 +214,5 @@ export function runLabel(run: { id: string; project: string; replay?: number | n
 /** True for a run from before one project per demo: it made its own project (`<demo>-<n>`). */
 export const ownProject = (run: { demo: string; project: string }) => run.project !== run.demo
 
-/** The step number people read, from a step's index. */
-export const stepNo = (index: number) => index + 1
-
 /** A call's milliseconds: one decimal under 10 ms, whole above. */
 export const ms = (n: number | null | undefined) => (n === null || n === undefined ? '–' : n < 10 ? n.toFixed(1) : String(Math.round(n)))

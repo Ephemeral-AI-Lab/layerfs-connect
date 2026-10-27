@@ -1,5 +1,4 @@
-// One replay's tabs on the project page: Live, Conversation, Trace, Work and
-// History. The page header above names the demo, the replay and its state;
+// One replay's tabs on the project page: Live, Conversation and History. The page header above names the demo, the replay and its state;
 // these tabs only add what is theirs (the Conversation's agent switcher). The
 // agent shown is the page's (the sidebar's sessions pick it too).
 import type { DemoDetail, RunDetail, StepView } from '@shared/host-api'
@@ -12,20 +11,19 @@ import { LiveTab } from '@/components/runs/live-tab'
 import { Spinner } from '@/components/runs/run-badges'
 import { agentColors, stepKey } from '@/components/runs/run-format'
 import { RunActionButton, useRunActions } from '@/components/runs/run-actions'
-import { type HistoryInit, RunHistoryTab, WorkTab, useRunProject } from '@/components/runs/run-project-tabs'
+import { type HistoryInit, RunHistoryTab, useRunProject } from '@/components/runs/run-project-tabs'
 import { type Entry, buildThread, threadSize } from '@/components/runs/thread'
-import { TraceTab } from '@/components/runs/trace-tab'
 import { useRun } from '@/components/runs/use-run'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { HostError } from '@/host/client'
 
-export type RunTab = 'live' | 'conversation' | 'trace' | 'work' | 'history'
+export type RunTab = 'live' | 'conversation' | 'history'
 
 interface RunPanelProps {
   runId: string
   tab: RunTab
-  /** Switches the page's tab (a Trace row opens its agent's conversation). */
+  /** Switches the page's tab (a Live session opens its agent's conversation). */
   onTab?: (tab: RunTab) => void
   /** Opens a replay started with Replay. */
   onOpenRun?: (runId: string) => void
@@ -134,22 +132,8 @@ function RunBody({ run, demo, views, tab, onTab, onOpenRun, picked, onAgent: set
     })
   }, [run.steps, run.messages, views, agent, agents])
   const steps = useMemo(() => run.steps.filter((s) => s.agent === agent).length, [run.steps, agent])
-  const calls = useMemo(() => run.steps.flatMap((s) => s.calls), [run.steps])
 
-  if (tab === 'trace')
-    return (
-      <TraceTab
-        calls={calls}
-        checks={run.checks}
-        live={actions.live}
-        colorOf={colorOf}
-        onOpenStep={(step) => {
-          setPicked(step.slice(0, step.lastIndexOf(':')))
-          onTab?.('conversation')
-        }}
-      />
-    )
-  if (replacedBy && (tab === 'live' || tab === 'work' || tab === 'history')) return <Replaced run={run} tab={tab} replacedBy={replacedBy} />
+  if (replacedBy && (tab === 'live' || tab === 'history')) return <Replaced run={run} tab={tab} replacedBy={replacedBy} />
   if (tab === 'live')
     return (
       <LiveTab
@@ -162,7 +146,7 @@ function RunBody({ run, demo, views, tab, onTab, onOpenRun, picked, onAgent: set
         }}
       />
     )
-  if (tab === 'work' || tab === 'history') return <ProjectTabs run={run} tab={tab} historyInit={historyInit} />
+  if (tab === 'history') return <ProjectHistory run={run} historyInit={historyInit} />
 
   const empty = actions.live ? (
     <div className="flex flex-col items-center gap-2 py-20 text-center text-sm text-muted-foreground">
@@ -217,14 +201,14 @@ function RunBody({ run, demo, views, tab, onTab, onOpenRun, picked, onAgent: set
 
 /** Live, Work or History of an earlier replay: its project state was reset by a newer one. */
 function Replaced({ run, tab, replacedBy }: { run: RunDetail; tab: RunTab; replacedBy: NonNullable<RunPanelProps['replacedBy']> }) {
-  const what = tab === 'live' ? 'Live follows' : tab === 'work' ? 'Work shows' : 'History shows'
+  const what = tab === 'live' ? 'Live follows' : 'History shows'
   return (
     <div className="flex flex-col items-center justify-center gap-3 px-8 py-20 text-center">
       <History aria-hidden="true" className="size-6 text-faint" />
       <h2 className="text-[15px] font-semibold">An earlier replay</h2>
       <p className="max-w-md text-sm text-muted-foreground">
         Each replay resets <span className="font-mono text-foreground">{run.project}</span> and plays it again, so this
-        replay's Branches, Commits and Sandboxes are gone; its Conversation and Trace are kept. {what}{' '}
+        replay's Branches, Commits and Sandboxes are gone; its Conversation is kept. {what}{' '}
         {replacedBy.label}, the one the project holds now.
       </p>
       <Button variant="outline" size="sm" onClick={replacedBy.onOpen}>
@@ -234,7 +218,7 @@ function Replaced({ run, tab, replacedBy }: { run: RunDetail; tab: RunTab; repla
   )
 }
 
-function ProjectTabs({ run, tab, historyInit }: { run: RunDetail; tab: 'work' | 'history'; historyInit?: HistoryInit }) {
+function ProjectHistory({ run, historyInit }: { run: RunDetail; historyInit?: HistoryInit }) {
   const project = useRunProject(run)
-  return tab === 'work' ? <WorkTab run={run} project={project} /> : <RunHistoryTab run={run} project={project} init={historyInit} />
+  return <RunHistoryTab run={run} project={project} init={historyInit} />
 }

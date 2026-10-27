@@ -26,7 +26,7 @@ const startBranch = startBranchParts?.join('/') || undefined
 const [startRun, startRunPart] = startPage === 'runs' ? startRest : []
 const [sessionDemo, sessionAgent] = startPage === 'sessions' ? startRest : []
 /** Tab names a hash may carry; anything else after a run id is an agent. */
-const TAB_NAMES = ['live', 'conversation', 'trace', 'work', 'history', 'runs', 'replays', 'script']
+const TAB_NAMES = ['live', 'conversation', 'trace', 'work', 'history', 'runs', 'replays', 'script'] // trace and work: old names
 const runTab = startRunPart && TAB_NAMES.includes(startRunPart) ? startRunPart : undefined
 
 /** A selection before the runs are read: a hash's run names no demo yet. */
