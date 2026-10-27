@@ -4,6 +4,7 @@ import { CloudCards } from '@/components/compute/cloud-cards'
 import { DockerCard } from '@/components/compute/docker-card'
 import { NativeCard } from '@/components/compute/native-card'
 import type { SandboxGroup } from '@/components/compute/sandbox-list'
+import { PageHeader } from '@/components/motion/page-header'
 import { LoadError, Loading } from '@/components/projects/states'
 import { Button } from '@/components/ui/button'
 import { host } from '@/host/client'
@@ -49,14 +50,12 @@ export function ComputePage({ platform }: ComputePageProps) {
 
   return (
     <div className="h-svh overflow-y-auto">
-      <div className="mx-auto flex max-w-5xl flex-col gap-8 px-8 pt-7 pb-10">
-        <header className="flex items-end justify-between gap-6">
-          <div>
-            <h1 className="text-2xl font-semibold tracking-[-0.015em]">Compute</h1>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Where runs execute commands with their Workspace mounted. Docker is the one LayerFS has today.
-            </p>
-          </div>
+      <PageHeader
+        sticky
+        width="max-w-5xl"
+        title="Compute"
+        description="Where runs execute commands with their Workspace mounted. Docker is the one LayerFS has today."
+        actions={
           <Button
             variant="outline"
             size="sm"
@@ -67,8 +66,9 @@ export function ComputePage({ platform }: ComputePageProps) {
           >
             <RotateCw /> Refresh
           </Button>
-        </header>
-
+        }
+      />
+      <div className="mx-auto flex max-w-5xl flex-col gap-8 px-8 pt-2 pb-10">
         {!s ? (
           status.error ? (
             <LoadError error={status.error} what="the compute status" onRetry={status.reload} />

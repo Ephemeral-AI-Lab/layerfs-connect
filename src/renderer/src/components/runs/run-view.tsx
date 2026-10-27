@@ -9,6 +9,8 @@ import { Fragment, type ReactNode, useMemo } from 'react'
 
 import { AgentSwitcher, type SwitcherAgent } from '@/components/runs/agent-switcher'
 import { Conversation } from '@/components/runs/conversation'
+import { PageHeader } from '@/components/motion/page-header'
+import { TabBar } from '@/components/motion/tabs'
 import { ProjectSandboxes, ProjectStorage } from '@/components/projects/project-storage'
 import { LiveTab } from '@/components/runs/live-tab'
 import { SessionHint, Spinner } from '@/components/runs/run-badges'
@@ -77,9 +79,9 @@ export function RunPanel({ runId, tab, onTab, agent, onAgent, onOpenSession, his
   return (
     <>
       {bar}
-      <div aria-busy="true" aria-label="Loading the run" className="mx-auto flex w-full max-w-[1000px] flex-col gap-5 px-8 py-8">
+      <div aria-busy="true" aria-label="Loading the run" className="stagger mx-auto flex w-full max-w-[1000px] flex-col gap-5 px-8 py-8">
         {[0, 1, 2].map((i) => (
-          <div key={i} className="flex flex-col gap-3">
+          <div key={i} className="flex flex-col gap-3" style={{ opacity: 1 - i * 0.25 }}>
             <Skeleton className="h-12 rounded-xl" />
             <Skeleton className="h-4 w-40" />
             <Skeleton className="h-4 w-3/4" />
@@ -90,19 +92,21 @@ export function RunPanel({ runId, tab, onTab, agent, onAgent, onOpenSession, his
   )
 }
 
-/** The session page's header, one row as in dsh: project / root / … / agent ⇕, then facts on the right. */
+/** The session page's header, one row as in dsh: project / root / … / agent ⇕, then facts on the right, then its tabs. */
 function SessionBar({ lead, meta, tabs, children }: { lead: ReactNode; meta?: ReactNode; tabs?: ReactNode; children?: ReactNode }) {
   return (
-    <header className="flex shrink-0 flex-col border-b px-8">
-      <div className="flex h-12 items-center gap-1 pt-1">
-        <nav aria-label="Breadcrumb" className="flex min-w-0 flex-1 items-center gap-1 text-sm">
+    <PageHeader
+      size="md"
+      className="[&>div]:pt-1"
+      eyebrow={
+        <nav aria-label="Breadcrumb" className="reveal flex min-w-0 flex-1 items-center gap-1 text-sm">
           {lead}
           {children}
         </nav>
-        {meta && <span className="shrink-0 truncate pl-4 text-xs text-muted-foreground tabular-nums">{meta}</span>}
-      </div>
-      {tabs && <nav className="flex items-end gap-6">{tabs}</nav>}
-    </header>
+      }
+      actions={meta && <span className="truncate pl-4 text-xs text-muted-foreground tabular-nums">{meta}</span>}
+      tabs={tabs && <TabBar aria-label="Session">{tabs}</TabBar>}
+    />
   )
 }
 

@@ -2,24 +2,15 @@ import type { AgentState, RunState, RunSummary, SegmentKind } from '@shared/host
 import { Ban, LoaderCircle } from 'lucide-react'
 
 import { AGENT_TONE, KIND, KIND_ORDER, RUN_LABEL, RUN_TONE, ago, isLive, runLabel } from '@/components/runs/run-format'
-import { Chip, type Tone } from '@/components/storage/chips'
+import { Chip, DOT, type Tone } from '@/components/storage/chips'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
 
-const DOT: Record<Tone, string> = {
-  neutral: 'bg-idle',
-  success: 'bg-success',
-  info: 'bg-primary',
-  warning: 'bg-warning',
-  danger: 'bg-destructive',
-}
-
-/** A state dot; it pulses while live. */
+/** A state dot; while live it glows and sends out a ring (`pulse-ring`), at rest it is still. */
 export function StateDot({ tone, live, label, className }: { tone: Tone; live?: boolean; label: string; className?: string }) {
   return (
     <span role="img" aria-label={label} title={label} className={cn('relative flex size-2 shrink-0', className)}>
-      {live && <span className={cn('absolute inset-0 animate-ping rounded-full opacity-60', DOT[tone])} />}
-      <span className={cn('relative size-2 rounded-full', DOT[tone])} />
+      <span className={cn('size-2 rounded-full transition-colors duration-(--dur-base)', DOT[tone], live && 'pulse-ring')} />
     </span>
   )
 }

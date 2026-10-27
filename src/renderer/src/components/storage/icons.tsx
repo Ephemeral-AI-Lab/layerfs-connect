@@ -61,12 +61,12 @@ const TILE = {
   lg: 'size-11 rounded-xl [&_svg]:size-[22px] text-[13px]',
 }
 
-/** A quiet square that holds one glyph, so every source lines up. */
+/** A quiet square that holds one glyph, so every source lines up: a small lit layer. */
 export function Tile({ size = 'md', className, children }: { size?: keyof typeof TILE; className?: string; children: React.ReactNode }) {
   return (
     <span
       className={cn(
-        'inline-flex shrink-0 items-center justify-center bg-muted text-foreground/80 ring-1 ring-foreground/5 ring-inset',
+        'inline-flex shrink-0 items-center justify-center bg-muted bg-linear-to-b from-card/70 to-transparent text-foreground/80 shadow-[var(--highlight),var(--elev-1)] ring-1 ring-foreground/[0.07] ring-inset dark:from-white/[0.04]',
         TILE[size],
         className,
       )}

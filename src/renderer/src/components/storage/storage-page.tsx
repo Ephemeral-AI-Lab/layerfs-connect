@@ -1,6 +1,7 @@
 import { HardDrive, Info, Plus } from 'lucide-react'
 import { useState } from 'react'
 
+import { PageHeader } from '@/components/motion/page-header'
 import { LoadError, Loading } from '@/components/projects/states'
 import { Chip } from '@/components/storage/chips'
 import { DatabaseIcon, PROVIDER_LABEL, type Provider, ProviderIcon, Tile } from '@/components/storage/icons'
@@ -64,19 +65,17 @@ export function StoragePage({ initialId, onOpenRun }: StoragePageProps) {
 
   return (
     <div className="flex h-svh flex-col">
-      <header className="flex items-center justify-between gap-4 px-8 pt-7 pb-6">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-[-0.015em]">Storage</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Where projects' history lives. Each LayerFS project is one SQLite Store, in its own Docker volume.
-          </p>
-        </div>
-        <Unavailable reason={NOT_YET}>
-          <Button disabled>
-            <Plus /> Add storage
-          </Button>
-        </Unavailable>
-      </header>
+      <PageHeader
+        title="Storage"
+        description="Where projects' history lives. Each LayerFS project is one SQLite Store, in its own Docker volume."
+        actions={
+          <Unavailable reason={NOT_YET}>
+            <Button disabled>
+              <Plus /> Add storage
+            </Button>
+          </Unavailable>
+        }
+      />
 
       <div className="flex min-h-0 flex-1 gap-6 px-8">
         <nav aria-label="Storage" className="w-72 shrink-0 overflow-y-auto pb-8">

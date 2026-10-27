@@ -2,6 +2,7 @@ import { useState } from 'react'
 
 import { AppSidebar, type NavId, type Selection } from '@/components/app-sidebar'
 import { ComputePage } from '@/components/compute/compute-page'
+import { viewTransition } from '@/components/motion/view-transition'
 import { ProjectView } from '@/components/projects/project-view'
 import { ProjectsHome } from '@/components/projects/projects-home'
 import { useRuns } from '@/components/runs/use-runs'
@@ -33,8 +34,15 @@ function opening(): Opening {
   return { kind: 'nav', id: page ?? 'projects' }
 }
 
+/** Which page a selection shows; a change of page cross-fades (an agent switch within a session does not). */
+const pageOf = (s: Opening) => (s.kind === 'nav' ? s.id : s.kind === 'run' ? `run:${s.id}` : `project:${s.id}:${s.run ?? ''}`)
+
 export function App() {
-  const [picked, setSelected] = useState<Opening>(opening)
+  const [picked, setPicked] = useState<Opening>(opening)
+  const setSelected = (next: Opening) => {
+    if (pageOf(next) === pageOf(picked)) setPicked(next)
+    else viewTransition(() => setPicked(next))
+  }
   const { runs } = useRuns()
 
   // A session opens under its project; its demo comes from the runs.
@@ -57,7 +65,7 @@ export function App() {
     <TooltipProvider>
       <SidebarProvider>
         <AppSidebar selected={selected} onSelect={setSelected} />
-        <main className="min-w-0 flex-1 bg-background">
+        <main className="canvas vt-page min-w-0 flex-1">
           {page === 'storage' && <StoragePage initialId={startId} onOpenRun={openRun} />}
           {page === 'projects' && <ProjectsHome onOpenProject={openProject} onOpenRun={openRun} />}
           {selected.kind === 'project' && (
@@ -73,7 +81,8 @@ export function App() {
             />
           )}
           {picked.kind === 'run' && !pickedRun && (
-            <div className="flex h-svh items-center justify-center text-sm text-muted-foreground">
+            <div role="status" className="flex h-svh items-center justify-center gap-2 text-sm text-muted-foreground">
+              {!runs && <span aria-hidden="true" className="pulse-ring size-1.5 rounded-full bg-primary text-primary" />}
               {runs ? `No session ${picked.id}.` : 'Reading the sessions…'}
             </div>
           )}

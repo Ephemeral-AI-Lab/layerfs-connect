@@ -8,6 +8,9 @@ import { Activity, ChevronLeft, TriangleAlert } from 'lucide-react'
 import { useState } from 'react'
 
 import { LfsProject } from '@/components/lfs-icons'
+import { PageHeader } from '@/components/motion/page-header'
+import { Tab, TabBar } from '@/components/motion/tabs'
+import { viewTransition } from '@/components/motion/view-transition'
 import { Empty, Loading } from '@/components/projects/states'
 import { DemoScript } from '@/components/runs/demo-script'
 import { RunStateBadge } from '@/components/runs/run-badges'
@@ -21,7 +24,6 @@ import { useRuns, useStartRun } from '@/components/runs/use-runs'
 import { ago, bytes } from '@/data/format'
 import { host } from '@/host/client'
 import { useHostQuery } from '@/host/use-host'
-import { cn } from '@/lib/utils'
 import type { RunSummary } from '@shared/host-api'
 
 type ProjectTab = 'live' | 'history' | 'storage' | 'sandboxes' | 'sessions' | 'script'
@@ -137,7 +139,7 @@ export function ProjectView({ demo, runId, agent, onPick, initialTab, initialBra
       onPick={onPick}
       onBack={onBack}
       tab={tab}
-      onTab={setTab}
+      onTab={(t) => viewTransition(() => setTab(t), 'tab')}
       historyInit={{ ...opening.history, branch: initialBranch }}
       action={replay}
       refusal={refusal}
@@ -214,49 +216,52 @@ function ProjectPage({ demo, title, runs, runsError, onPick, onBack, tab, onTab:
       <Loading label="Reading the sessions" />
     )
 
+  const playing = current && isLive(current.state)
   return (
     <div className="flex h-svh min-h-0 flex-col">
-      <header className="flex shrink-0 flex-col gap-2.5 px-8 pt-4">
-        <BackLink onClick={onBack}>Projects</BackLink>
-        <div className="flex items-center gap-4">
-          <div className="min-w-0 flex-1">
-            <div className="flex min-w-0 items-center gap-3">
-              <h1 className="truncate text-xl font-semibold tracking-[-0.015em]">{title}</h1>
-              <ProjectChip name={demo} />
-              {current && isLive(current.state) && (
-                <button type="button" onClick={() => onPick({ run: current.id })} className="flex items-center gap-2 text-xs text-primary hover:underline">
-                  <RunStateBadge state={current.state} /> {runLabel(current)} playing
-                </button>
-              )}
-            </div>
-            <p className="mt-1 truncate text-xs text-muted-foreground">
-              {s ? facts.join(' · ') : state.error && current ? state.error.message : 'Local SQLite Store · Docker Sandboxes'}
-            </p>
-          </div>
-          {action}
-        </div>
+      <PageHeader
+        size="md"
+        eyebrow={<BackLink onClick={onBack}>Projects</BackLink>}
+        title={title}
+        badges={
+          <>
+            <ProjectChip name={demo} />
+            {playing && (
+              <button
+                type="button"
+                onClick={() => onPick({ run: current.id })}
+                className="flex items-center gap-2 rounded-md text-xs font-medium text-primary outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <RunStateBadge state={current.state} /> {runLabel(current)} playing
+              </button>
+            )}
+          </>
+        }
+        description={s ? facts.join(' · ') : state.error && current ? state.error.message : 'Local SQLite Store · Docker Sandboxes'}
+        actions={action}
+        tabs={
+          <TabBar aria-label="Project">
+            {PROJECT_TABS.map((t) => (
+              <Tab key={t.id} active={tab === t.id} onClick={() => setTab(t.id)}>
+                {t.id === 'live' && playing && <span aria-hidden="true" className="pulse-ring mr-1.5 inline-block size-1.5 rounded-full bg-primary text-primary" />}
+                {t.label}
+              </Tab>
+            ))}
+            <span aria-hidden="true" className="mb-2.5 ml-auto h-4 w-px bg-border" />
+            <Tab active={tab === 'sessions'} onClick={() => setTab('sessions')} quiet>
+              Sessions{runs ? <span className="ml-1 font-normal text-faint tabular-nums">{runs.length}</span> : null}
+            </Tab>
+            {tab === 'script' && (
+              <Tab active onClick={() => setTab('script')} quiet className="animate-in fade-in slide-in-from-left-1">
+                Scenario
+              </Tab>
+            )}
+          </TabBar>
+        }
+      >
         {refusal}
-        <nav aria-label="Project" className="flex items-end gap-6 border-b">
-          {PROJECT_TABS.map((t) => (
-            <TabButton key={t.id} active={tab === t.id} onClick={() => setTab(t.id)}>
-              {t.id === 'live' && current && isLive(current.state) && (
-                <span aria-hidden="true" className="mr-1.5 inline-block size-1.5 animate-pulse rounded-full bg-primary align-middle" />
-              )}
-              {t.label}
-            </TabButton>
-          ))}
-          <span aria-hidden="true" className="mb-2.5 ml-auto h-4 w-px bg-border" />
-          <TabButton active={tab === 'sessions'} onClick={() => setTab('sessions')} quiet>
-            Sessions{runs ? <span className="ml-1 text-faint">{runs.length}</span> : null}
-          </TabButton>
-          {tab === 'script' && (
-            <TabButton active onClick={() => setTab('script')} quiet>
-              Scenario
-            </TabButton>
-          )}
-        </nav>
-      </header>
-      <div className="flex min-h-0 flex-1 flex-col">{body}</div>
+      </PageHeader>
+      <div className="vt-panel flex min-h-0 flex-1 flex-col">{body}</div>
     </div>
   )
 }
@@ -277,12 +282,12 @@ function SessionPage({ run, title, agent, onAgent, onProject }: SessionPageProps
   const [view, setView] = useState<'conversation' | 'trace'>('conversation')
   const tabs = (
     <>
-      <TabButton active={view === 'conversation'} onClick={() => setView('conversation')}>
+      <Tab active={view === 'conversation'} onClick={() => viewTransition(() => setView('conversation'), 'tab')}>
         Conversation
-      </TabButton>
-      <TabButton active={view === 'trace'} onClick={() => setView('trace')}>
+      </Tab>
+      <Tab active={view === 'trace'} onClick={() => viewTransition(() => setView('trace'), 'tab')}>
         Trace
-      </TabButton>
+      </Tab>
     </>
   )
   const lead = (
@@ -291,9 +296,9 @@ function SessionPage({ run, title, agent, onAgent, onProject }: SessionPageProps
         type="button"
         onClick={onProject}
         title={`Open ${title}`}
-        className="-ml-1 flex min-w-0 items-center gap-1.5 rounded px-1 text-muted-foreground outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
+        className="group/crumb -ml-1 flex min-w-0 items-center gap-1.5 rounded px-1 text-muted-foreground outline-none transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
       >
-        <LfsProject aria-hidden="true" className="size-3.5 shrink-0" />
+        <LfsProject aria-hidden="true" className="size-3.5 shrink-0 transition-transform duration-(--dur-base) ease-out-expo group-hover/crumb:-translate-x-0.5" />
         <span className="truncate">{title}</span>
       </button>
       {/* the page is the session's: named for screen readers, shown on hover over its agents */}
@@ -302,7 +307,7 @@ function SessionPage({ run, title, agent, onAgent, onProject }: SessionPageProps
   )
   return (
     <div className="flex h-svh min-h-0 flex-col">
-      <div className="flex min-h-0 flex-1 flex-col">
+      <div className="vt-panel flex min-h-0 flex-1 flex-col">
         <RunPanel
           key={run.id}
           runId={run.id}
@@ -334,7 +339,7 @@ function ProjectChip({ name }: { name: string }) {
   return (
     <span
       title={`The LayerFS project ${name}`}
-      className="flex shrink-0 items-center gap-1 rounded-md bg-muted px-1.5 py-0.5 font-mono text-[12px] text-muted-foreground"
+      className="flex shrink-0 items-center gap-1 rounded-md bg-muted px-1.5 py-0.5 font-mono text-[12px] text-muted-foreground ring-1 ring-foreground/[0.06] ring-inset"
     >
       <LfsProject className="size-3.5" />
       {name}
@@ -347,28 +352,9 @@ function BackLink({ onClick, children }: { onClick: () => void; children: React.
     <button
       type="button"
       onClick={onClick}
-      className="-ml-1 flex w-fit items-center gap-1 rounded text-[13px] text-muted-foreground outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
+      className="group/back -ml-1 flex w-fit items-center gap-1 rounded text-[13px] text-muted-foreground outline-none transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
     >
-      <ChevronLeft className="size-4" /> {children}
-    </button>
-  )
-}
-
-function TabButton({ active, quiet, onClick, children }: { active: boolean; quiet?: boolean; onClick: () => void; children: React.ReactNode }) {
-  return (
-    <button
-      type="button"
-      aria-current={active ? 'page' : undefined}
-      onClick={onClick}
-      className={cn(
-        '-mb-px border-b-2 pt-1 pb-2.5 outline-none focus-visible:text-foreground',
-        quiet ? 'text-[13px]' : 'text-sm',
-        active
-          ? 'border-primary font-medium text-primary'
-          : cn('border-transparent hover:text-foreground', quiet ? 'text-faint' : 'text-muted-foreground'),
-      )}
-    >
-      {children}
+      <ChevronLeft className="size-4 transition-transform duration-(--dur-base) ease-out-expo group-hover/back:-translate-x-0.5" /> {children}
     </button>
   )
 }

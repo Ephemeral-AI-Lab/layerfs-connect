@@ -1,9 +1,12 @@
 import type { DemoSummary, RunSummary } from '@shared/host-api'
-import { Cpu, Folder, FolderOpen, LoaderCircle, Plus, RotateCw, Unplug } from 'lucide-react'
+import { ChevronRight, Cpu, Folder, FolderOpen, LoaderCircle, Plus, RotateCw, Unplug } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 
 import { ConnectMark } from '@/components/connect-mark'
 import { LfsProject, LfsStore } from '@/components/lfs-icons'
+import { Collapse } from '@/components/motion/collapse'
+import { useIndicator } from '@/components/motion/indicator'
+import { revealStyle } from '@/components/motion/reveal'
 import { RunDot } from '@/components/runs/run-badges'
 import { ago, isLive, runLabel } from '@/components/runs/run-format'
 import { useRuns, useStartRun } from '@/components/runs/use-runs'
@@ -23,6 +26,7 @@ import {
 } from '@/components/ui/sidebar'
 import { HostError, host } from '@/host/client'
 import { useHostQuery } from '@/host/use-host'
+import { cn } from '@/lib/utils'
 
 export type NavId = 'projects' | 'storage' | 'compute'
 
@@ -81,69 +85,91 @@ export function AppSidebar({ selected, onSelect, storageCount, computeCount }: A
   ]
   const unreachable = demos.error ?? (runsError && !runs ? runsError : undefined)
 
+  // One highlight for the whole tree, gliding to whichever row is active.
+  const { container, indicator } = useIndicator<HTMLDivElement>()
+
   return (
     <Sidebar collapsible="none" className="h-svh border-r border-sidebar-border">
       <SidebarHeader className="px-3 pt-5 pb-2">
-        <div className="flex items-center gap-3 px-2">
-          <ConnectMark className="size-10 shrink-0" />
-          <div className="leading-tight">
-            <div className="text-[17px] font-semibold tracking-[-0.01em]">LayerFS Connect</div>
-            <div className="text-[13px] text-faint">Demo replays on real LayerFS</div>
+        <div className="group/brand flex items-center gap-2.5 px-1.5">
+          <span className="relative flex size-10 shrink-0 items-center justify-center">
+            <span aria-hidden="true" className="absolute inset-1 rounded-full bg-brand opacity-25 blur-lg transition-opacity duration-(--dur-slow) group-hover/brand:opacity-45 dark:opacity-30" />
+            <span className="surface relative flex size-10 items-center justify-center rounded-xl">
+              <ConnectMark className="size-7 transition-transform duration-(--dur-slow) ease-out-expo group-hover/brand:scale-[1.06] group-hover/brand:-rotate-3" />
+            </span>
+          </span>
+          <div className="min-w-0 leading-tight">
+            <div className="text-[16px] font-semibold tracking-[-0.015em]">LayerFS Connect</div>
+            <div className="text-[12px] text-faint">Demo replays on real LayerFS</div>
           </div>
         </div>
       </SidebarHeader>
 
       <SidebarContent className="gap-0 pb-6">
-        <SidebarGroup className="px-3 pt-3 pb-2">
-          <SidebarMenu className="gap-1">
-            {nav.map((item) => (
-              <SidebarMenuItem key={item.id}>
-                <SidebarMenuButton
-                  isActive={selected.kind === 'nav' && selected.id === item.id}
-                  onClick={() => onSelect({ kind: 'nav', id: item.id })}
-                  className="h-10 gap-3 px-3 text-[15px] font-medium [&_svg]:size-[18px] [&_svg]:text-muted-foreground"
-                >
-                  <item.icon />
-                  <span className="flex-1">{item.label}</span>
-                  {item.count !== undefined && <span className="text-[13px] font-normal text-faint">{item.count}</span>}
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            ))}
-          </SidebarMenu>
-        </SidebarGroup>
-
-        {/* each demo is a project folder of its own, beside the pages */}
-        <SidebarGroup className="mt-1 border-t border-sidebar-border px-3 pt-3">
-          {unreachable ? (
-            <HostNotice
-              title={unreachable instanceof HostError && unreachable.status > 0 ? 'Demos unavailable' : 'Host unreachable'}
-              message={unreachable.message}
-              onRetry={() => {
-                demos.reload()
-                reloadRuns()
-              }}
-            />
-          ) : (
-            <SidebarMenu className="gap-0.5">
-              {demos.loading && !demos.data
-                ? Array.from({ length: 5 }, (_, i) => <SidebarMenuSkeleton key={i} className="h-9" />)
-                : ordered.map((demo) => (
-                    <DemoItem
-                      key={demo.id}
-                      demo={demo}
-                      runs={byDemo.get(demo.id) ?? []}
-                      open={open.has(demo.id)}
-                      selected={selected}
-                      starting={starting === demo.id}
-                      refused={refused?.demo === demo.id ? refused.message : undefined}
-                      onToggle={() => toggle(demo.id)}
-                      onSelect={onSelect}
-                      onStart={() => void start(demo.id)}
-                    />
-                  ))}
+        <div ref={container} className="relative">
+          <span
+            ref={indicator}
+            aria-hidden="true"
+            className="indicator rounded-md bg-sidebar-accent shadow-[var(--highlight),var(--elev-1)] ring-1 ring-foreground/[0.05] before:absolute before:inset-y-2 before:-left-px before:w-[3px] before:rounded-full before:bg-brand before:shadow-[0_0_8px_0_var(--glow-strong)] dark:ring-white/[0.04]"
+          />
+          <SidebarGroup className="px-3 pt-3 pb-2">
+            <SidebarMenu className="gap-1">
+              {nav.map((item) => {
+                const active = selected.kind === 'nav' && selected.id === item.id
+                return (
+                  <SidebarMenuItem key={item.id}>
+                    <SidebarMenuButton
+                      isActive={active}
+                      onClick={() => onSelect({ kind: 'nav', id: item.id })}
+                      className={cn(
+                        'h-10 gap-3 px-3 text-[15px] font-medium [&_svg]:size-[18px] [&_svg]:transition-colors [&_svg]:duration-(--dur-base)',
+                        active ? '[&_svg]:text-primary' : '[&_svg]:text-muted-foreground',
+                      )}
+                    >
+                      <item.icon />
+                      <span className="flex-1">{item.label}</span>
+                      {item.count !== undefined && <span className="text-[13px] font-normal text-faint tabular-nums">{item.count}</span>}
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                )
+              })}
             </SidebarMenu>
-          )}
-        </SidebarGroup>
+          </SidebarGroup>
+
+          {/* each demo is a project folder of its own, beside the pages */}
+          <SidebarGroup className="mt-1 px-3 pt-3 before:absolute before:inset-x-5 before:top-0 before:h-px before:bg-linear-to-r before:from-transparent before:via-sidebar-border before:to-transparent">
+            {unreachable ? (
+              <HostNotice
+                title={unreachable instanceof HostError && unreachable.status > 0 ? 'Demos unavailable' : 'Host unreachable'}
+                message={unreachable.message}
+                onRetry={() => {
+                  demos.reload()
+                  reloadRuns()
+                }}
+              />
+            ) : (
+              <SidebarMenu className="gap-0.5">
+                {demos.loading && !demos.data
+                  ? Array.from({ length: 5 }, (_, i) => <SidebarMenuSkeleton key={i} className="h-9" />)
+                  : ordered.map((demo, i) => (
+                      <DemoItem
+                        key={demo.id}
+                        index={i}
+                        demo={demo}
+                        runs={byDemo.get(demo.id) ?? []}
+                        open={open.has(demo.id)}
+                        selected={selected}
+                        starting={starting === demo.id}
+                        refused={refused?.demo === demo.id ? refused.message : undefined}
+                        onToggle={() => toggle(demo.id)}
+                        onSelect={onSelect}
+                        onStart={() => void start(demo.id)}
+                      />
+                    ))}
+              </SidebarMenu>
+            )}
+          </SidebarGroup>
+        </div>
       </SidebarContent>
     </Sidebar>
   )
@@ -151,7 +177,7 @@ export function AppSidebar({ selected, onSelect, storageCount, computeCount }: A
 
 function HostNotice({ title, message, onRetry }: { title: string; message: string; onRetry: () => void }) {
   return (
-    <div role="status" className="mx-1 flex flex-col gap-1.5 rounded-lg border border-dashed px-3 py-2.5">
+    <div role="status" className="reveal mx-1 flex flex-col gap-1.5 rounded-lg border border-dashed border-warning/30 bg-warning/[0.04] px-3 py-2.5">
       <span className="flex items-center gap-1.5 text-[13px] font-medium text-foreground">
         <Unplug aria-hidden="true" className="size-3.5 text-warning" />
         {title}
@@ -171,6 +197,8 @@ function HostNotice({ title, message, onRetry }: { title: string; message: strin
 }
 
 interface DemoItemProps {
+  /** Its place in the list, for the entrance stagger. */
+  index: number
   demo: DemoSummary
   /** The demo's runs (its sessions), newest first. */
   runs: RunSummary[]
@@ -186,15 +214,16 @@ interface DemoItemProps {
 /** Sessions a folder lists before "Show all". */
 const SHOWN = 6
 
-/** A project folder: its LayerFS project, and under it its sessions, one per replay. */
-function DemoItem({ demo, runs, open, selected, starting, refused, onToggle, onSelect, onStart }: DemoItemProps) {
+/** A project folder: its LayerFS project, and under it its sessions, one per replay. A folder with a playing session glows. */
+function DemoItem({ index, demo, runs, open, selected, starting, refused, onToggle, onSelect, onStart }: DemoItemProps) {
   const [all, setAll] = useState(false)
   const live = runs.find((r) => isLive(r.state))
   const newest = runs[0]
   const here = selected.kind === 'project' && selected.id === demo.id
   const shown = all ? runs : runs.slice(0, SHOWN)
+  const FolderIcon = open ? FolderOpen : Folder
   return (
-    <SidebarMenuItem>
+    <SidebarMenuItem className="reveal" style={revealStyle(index)}>
       <SidebarMenuButton
         isActive={here && !selected.run}
         onClick={() => {
@@ -205,57 +234,85 @@ function DemoItem({ demo, runs, open, selected, starting, refused, onToggle, onS
       >
         <span className="min-w-0 flex-1 truncate">{demo.title}</span>
         {live ? (
-          <span className="flex items-center gap-1.5 text-[12px] font-normal text-primary" title="A session is playing">
+          <span className="flex items-center gap-1.5 text-[11px] font-medium text-primary" title="A session is playing">
+            <span className="text-brand">live</span>
             <RunDot state={live.state} />
           </span>
         ) : newest ? (
-          <RunDot state={newest.state} className="opacity-70" />
+          <RunDot state={newest.state} className="opacity-60" />
         ) : null}
       </SidebarMenuButton>
       <SidebarMenuAction
         onClick={onToggle}
         aria-label={open ? `Hide ${demo.title}'s sessions` : `Show ${demo.title}'s sessions`}
         aria-expanded={open}
-        className="top-2 right-auto left-2.5 text-muted-foreground"
+        className="group/folder top-2 right-auto left-2.5 text-muted-foreground"
       >
-        {open ? <FolderOpen className="size-4!" /> : <Folder className="size-4!" />}
+        <ChevronRight
+          aria-hidden="true"
+          className="chevron absolute -left-2 size-3! text-faint opacity-0 transition-[opacity,transform] group-hover/menu-item:opacity-100 group-focus-visible/folder:opacity-100"
+        />
+        <FolderIcon key={open ? 'open' : 'shut'} className={cn('size-4! animate-in zoom-in-75 duration-200', live && 'text-primary')} />
       </SidebarMenuAction>
 
-      {open && (
-        <SidebarMenuSub className="mr-0 ml-[19px] gap-0.5 pr-0">
+      <Collapse open={open} appear={false}>
+        <SidebarMenuSub className="mr-0 ml-[19px] gap-0.5 pt-0.5 pr-0">
           {refused && (
-            <li role="alert" className="px-2 py-1 text-xs text-destructive">
+            <li role="alert" className="px-2 py-1 text-xs text-destructive animate-in fade-in slide-in-from-top-1">
               {refused}
             </li>
           )}
-          {shown.map((r) => (
-            <SidebarMenuSubItem key={r.id}>
-              <SidebarMenuSubButton asChild isActive={here && selected.run === r.id} className="h-8 text-[13px]">
-                <button type="button" onClick={() => onSelect({ kind: 'project', id: demo.id, run: r.id })} className="w-full">
-                  <RunDot state={r.state} />
-                  <span className="min-w-0 flex-1 truncate text-left">{runLabel(r)}</span>
-                  <span className="text-[11px] text-faint tabular-nums">{isLive(r.state) ? 'live' : ago(r.ended ?? r.started)}</span>
-                </button>
-              </SidebarMenuSubButton>
-            </SidebarMenuSubItem>
-          ))}
+          {shown.map((r) => {
+            const playing = isLive(r.state)
+            return (
+              <SidebarMenuSubItem key={r.id}>
+                <SidebarMenuSubButton
+                  asChild
+                  isActive={here && selected.run === r.id}
+                  className={cn('h-8 text-[13px]', playing && 'bg-primary/[0.06] text-foreground ring-1 ring-primary/20 ring-inset live-glow')}
+                >
+                  <button type="button" onClick={() => onSelect({ kind: 'project', id: demo.id, run: r.id })} className="w-full">
+                    <RunDot state={r.state} />
+                    <span className="min-w-0 flex-1 truncate text-left">{runLabel(r)}</span>
+                    <span className={cn('text-[11px] tabular-nums', playing ? 'font-medium text-primary' : 'text-faint')}>
+                      {playing ? 'live' : ago(r.ended ?? r.started)}
+                    </span>
+                  </button>
+                </SidebarMenuSubButton>
+              </SidebarMenuSubItem>
+            )
+          })}
           {runs.length > SHOWN && (
             <li>
-              <button type="button" onClick={() => setAll(!all)} className="px-2 py-1 text-xs text-muted-foreground hover:text-foreground">
+              <button
+                type="button"
+                onClick={() => setAll(!all)}
+                className="rounded px-2 py-1 text-xs text-muted-foreground outline-none transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-sidebar-ring"
+              >
                 {all ? 'Show fewer' : `Show all ${runs.length}`}
               </button>
             </li>
           )}
           <SidebarMenuSubItem>
             <SidebarMenuSubButton asChild className="h-7 text-xs text-muted-foreground">
-              <button type="button" onClick={onStart} disabled={starting || !!live} className="w-full" title={live ? 'A session is playing' : 'Reset the project and play the scenario as a new session'}>
-                {starting ? <LoaderCircle className="size-3.5! animate-spin" /> : <Plus className="size-3.5! text-muted-foreground!" />}
+              <button
+                type="button"
+                onClick={onStart}
+                disabled={starting || !!live}
+                className="group/new w-full"
+                title={live ? 'A session is playing' : 'Reset the project and play the scenario as a new session'}
+              >
+                {starting ? (
+                  <LoaderCircle className="size-3.5! animate-spin text-primary!" />
+                ) : (
+                  <Plus className="size-3.5! text-muted-foreground! transition-transform duration-(--dur-base) ease-out-expo group-hover/new:rotate-90 group-hover/new:text-primary!" />
+                )}
                 <span>{starting ? 'Starting…' : 'New session'}</span>
               </button>
             </SidebarMenuSubButton>
           </SidebarMenuSubItem>
         </SidebarMenuSub>
-      )}
+      </Collapse>
     </SidebarMenuItem>
   )
 }

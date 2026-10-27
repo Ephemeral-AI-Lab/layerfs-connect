@@ -3,6 +3,7 @@ import { useState } from 'react'
 
 import { LayerfsMark } from '@/components/layerfs-mark'
 import { LfsBranch, LfsCommit, LfsStore } from '@/components/lfs-icons'
+import { PageHeader } from '@/components/motion/page-header'
 import { LoadError } from '@/components/projects/states'
 import { isLive, plural, runLabel } from '@/components/runs/run-format'
 import { useStartRun } from '@/components/runs/use-runs'
@@ -147,28 +148,33 @@ export function ProjectsHome({ onOpenProject, onOpenRun }: ProjectsHomeProps) {
 
   return (
     <div className="h-svh overflow-y-auto">
-      <div className="mx-auto flex max-w-6xl flex-col gap-6 px-8 pt-7 pb-10">
-        <header className="flex items-end justify-between gap-6">
-          <div>
-            <h1 className="text-2xl font-semibold tracking-[-0.015em]">Projects</h1>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {demos.data
-                ? `${demos.data.length} projects · ${live} playing now. Each is one LayerFS project; a new session starts it again from the demo's fixture and plays its scripted agents.`
-                : 'Scripted demo scenarios, each played on the real LayerFS.'}
-            </p>
-          </div>
-          <div className="relative w-64 shrink-0">
-            <Search aria-hidden="true" className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-faint" />
+      <PageHeader
+        sticky
+        width="max-w-6xl"
+        title="Projects"
+        badges={live > 0 && <Chip tone="info" live>{live} playing</Chip>}
+        description={
+          demos.data
+            ? `${demos.data.length} projects · ${live} playing now. Each is one LayerFS project; a new session starts it again from the demo's fixture and plays its scripted agents.`
+            : 'Scripted demo scenarios, each played on the real LayerFS.'
+        }
+        actions={
+          <div className="group/search relative w-64 shrink-0">
+            <Search
+              aria-hidden="true"
+              className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-faint transition-colors group-focus-within/search:text-primary"
+            />
             <Input
               aria-label="Search projects"
               placeholder="Search projects"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              className="pl-8"
+              className="bg-card/70 pl-8 shadow-[var(--highlight),var(--elev-1)] backdrop-blur-sm"
             />
           </div>
-        </header>
-
+        }
+      />
+      <div className="mx-auto flex max-w-6xl flex-col gap-6 px-8 pt-2 pb-10">
         {error && (
           <div
             role="alert"

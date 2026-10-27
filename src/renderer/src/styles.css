@@ -46,6 +46,20 @@
   --color-agent-reviewer: var(--agent-reviewer);
   --color-agent-tester: var(--agent-tester);
   --color-agent-docs: var(--agent-docs);
+  /* Luminous layers (phase 1): brand light, glow, elevation, motion. */
+  --color-brand-1: var(--brand-1);
+  --color-brand-2: var(--brand-2);
+  --color-brand-3: var(--brand-3);
+  --color-glow: var(--glow);
+  --shadow-elev-1: var(--elev-1);
+  --shadow-elev-2: var(--elev-2);
+  --shadow-elev-3: var(--elev-3);
+  --shadow-highlight: var(--highlight);
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-out-soft: cubic-bezier(0.25, 0.8, 0.35, 1);
+  --animate-reveal: reveal var(--dur-slow) var(--ease-out-expo) backwards;
+  --animate-shimmer: shimmer 1.6s linear infinite;
+  --animate-float: float 4s ease-in-out infinite;
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -112,6 +126,33 @@
   --lfs-dark: #2f5bb5;
   --lfs-warn: #e0a030;
   --lfs-surface: var(--card);
+  /* Brand light: the primary indigo, extended to violet and sky. Use sparingly:
+     active indicators, primary actions, live states, hero numbers, focus. */
+  --brand-1: #4050c8;
+  --brand-2: #7a4fd6;
+  --brand-3: #1c9bd6;
+  --brand-gradient: linear-gradient(120deg, var(--brand-1), var(--brand-2) 55%, var(--brand-3));
+  --glow: color-mix(in oklab, var(--primary) 32%, transparent);
+  --glow-strong: color-mix(in oklab, var(--primary) 55%, transparent);
+  /* Elevation: 1 resting card, 2 hovered or raised, 3 popovers and dialogs. */
+  --elev-1: 0 1px 2px rgb(20 22 48 / 0.05), 0 1px 1px rgb(20 22 48 / 0.03);
+  --elev-2: 0 6px 16px -4px rgb(20 22 48 / 0.1), 0 2px 4px -2px rgb(20 22 48 / 0.06);
+  --elev-3: 0 20px 44px -14px rgb(20 22 48 / 0.22), 0 8px 16px -8px rgb(20 22 48 / 0.1);
+  /* A card's top inner highlight, the lit edge of a layer. */
+  --highlight: inset 0 1px 0 0 rgb(255 255 255 / 0.75);
+  --surface-sheen: linear-gradient(to bottom, rgb(255 255 255 / 0.6), transparent 3rem);
+  /* Motion: fast for hover and press, base for state, slow for entrances, xslow for count-ups and draws. */
+  --dur-fast: 150ms;
+  --dur-base: 240ms;
+  --dur-slow: 400ms;
+  --dur-xslow: 800ms;
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-out-soft: cubic-bezier(0.25, 0.8, 0.35, 1);
+  --stagger: 40ms;
+  /* The main canvas's ambient light and dot grid. */
+  --ambient-1: color-mix(in oklab, var(--brand-2) 9%, transparent);
+  --ambient-2: color-mix(in oklab, var(--brand-3) 8%, transparent);
+  --grid-dot: color-mix(in oklab, var(--foreground) 11%, transparent);
 }
 
 .dark {
@@ -164,6 +205,19 @@
   --hl-function: #8fb2f2;
   --hl-type: #e3b562;
   --hl-property: #c3c9f7;
+  --brand-1: #7b88e8;
+  --brand-2: #a483f2;
+  --brand-3: #52bdf0;
+  --glow: color-mix(in oklab, var(--primary) 40%, transparent);
+  --glow-strong: color-mix(in oklab, var(--primary) 65%, transparent);
+  --elev-1: 0 1px 2px rgb(0 0 0 / 0.35), 0 0 0 0.5px rgb(0 0 0 / 0.2);
+  --elev-2: 0 8px 20px -6px rgb(0 0 0 / 0.55), 0 2px 6px -2px rgb(0 0 0 / 0.4);
+  --elev-3: 0 24px 56px -16px rgb(0 0 0 / 0.7), 0 10px 20px -10px rgb(0 0 0 / 0.5);
+  --highlight: inset 0 1px 0 0 rgb(255 255 255 / 0.06);
+  --surface-sheen: linear-gradient(to bottom, rgb(255 255 255 / 0.03), transparent 3rem);
+  --ambient-1: color-mix(in oklab, var(--brand-2) 11%, transparent);
+  --ambient-2: color-mix(in oklab, var(--brand-3) 7%, transparent);
+  --grid-dot: color-mix(in oklab, var(--foreground) 8%, transparent);
 }
 
 @layer base {
@@ -172,6 +226,27 @@
   }
   body {
     @apply bg-background text-foreground antialiased;
+    font-feature-settings: 'cv11', 'ss01';
+  }
+  ::selection {
+    background: color-mix(in oklab, var(--primary) 26%, transparent);
+  }
+  /* Thin, rounded scrollbars that only show their thumb. */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track,
+  ::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    border: 3px solid transparent;
+    border-radius: 999px;
+    background: color-mix(in oklab, var(--foreground) 14%, transparent) content-box;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: color-mix(in oklab, var(--foreground) 26%, transparent);
   }
   html {
     @apply font-sans;
@@ -263,4 +338,393 @@
   .draw-line {
     stroke-dasharray: none;
   }
+}
+
+/* ===================================================================
+   Luminous layers: the shared surfaces and motion classes.
+   React helpers that drive them live in components/motion/.
+   =================================================================== */
+
+@property --live-angle {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+
+@keyframes reveal {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+@keyframes reveal-scale {
+  from {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+}
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes shimmer {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -100% 0;
+  }
+}
+@keyframes float {
+  50% {
+    transform: translateY(-3px);
+  }
+}
+@keyframes pulse-ring {
+  from {
+    transform: scale(1);
+    opacity: 0.55;
+  }
+  to {
+    transform: scale(2.8);
+    opacity: 0;
+  }
+}
+@keyframes live-spin {
+  to {
+    --live-angle: 360deg;
+  }
+}
+@keyframes live-breathe {
+  50% {
+    box-shadow:
+      0 0 0 1px color-mix(in oklab, var(--primary) 30%, transparent),
+      0 0 22px -6px var(--glow-strong);
+  }
+}
+@keyframes sheen {
+  from {
+    transform: translateX(-120%) skewX(-18deg);
+  }
+  to {
+    transform: translateX(220%) skewX(-18deg);
+  }
+}
+@keyframes page-out {
+  to {
+    opacity: 0;
+  }
+}
+@keyframes page-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+@layer components {
+  /* The main canvas: a faint light from the top and a dot grid that fades out. */
+  .canvas {
+    position: relative;
+    isolation: isolate;
+    background-color: var(--background);
+    background-image:
+      radial-gradient(56rem 26rem at 88% -8%, var(--ambient-1), transparent 70%),
+      radial-gradient(44rem 22rem at 18% -14%, var(--ambient-2), transparent 70%);
+  }
+  .canvas::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background-image: radial-gradient(circle at 1px 1px, var(--grid-dot) 1px, transparent 0);
+    background-size: 22px 22px;
+    mask-image: radial-gradient(90rem 34rem at 60% -4rem, #000, transparent 75%);
+  }
+
+  /* A card: a layer with a hairline edge, a lit top and resting elevation. */
+  .surface {
+    border: 1px solid var(--border);
+    background-color: var(--card);
+    background-image: var(--surface-sheen);
+    box-shadow: var(--highlight), var(--elev-1);
+  }
+  .surface-raised {
+    border: 1px solid var(--border);
+    background-color: var(--card);
+    background-image: var(--surface-sheen);
+    box-shadow: var(--highlight), var(--elev-2);
+  }
+  /* A card that answers the pointer: lifts and tints its edge. */
+  .card-hover {
+    transition:
+      transform var(--dur-base) var(--ease-out-expo),
+      box-shadow var(--dur-base) var(--ease-out-soft),
+      border-color var(--dur-base) var(--ease-out-soft);
+  }
+  .card-hover:hover {
+    transform: translateY(-2px);
+    border-color: color-mix(in oklab, var(--primary) 32%, var(--border));
+    box-shadow: var(--highlight), var(--elev-2);
+  }
+  /* A light that follows the pointer; pair with onPointerMove={spotlight}. */
+  .spotlight {
+    position: relative;
+    isolation: isolate;
+  }
+  .spotlight::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: inherit;
+    pointer-events: none;
+    opacity: 0;
+    background: radial-gradient(20rem circle at var(--mx, 50%) var(--my, 0%), color-mix(in oklab, var(--primary) 9%, transparent), transparent 65%);
+    transition: opacity var(--dur-base) var(--ease-out-soft);
+  }
+  .spotlight:hover::after {
+    opacity: 1;
+  }
+
+  /* Entrances: fade and rise; --i staggers siblings, capped at 10 steps. */
+  .reveal {
+    animation: reveal var(--dur-slow) var(--ease-out-expo) backwards;
+    animation-delay: calc(min(var(--i, 0), 10) * var(--stagger));
+  }
+  .reveal-scale {
+    animation: reveal-scale var(--dur-slow) var(--ease-out-expo) backwards;
+    animation-delay: calc(min(var(--i, 0), 10) * var(--stagger));
+  }
+  /* Every child reveals in turn, by its place among its siblings. */
+  .stagger > * {
+    animation: reveal var(--dur-slow) var(--ease-out-expo) backwards;
+    animation-delay: calc(min(var(--i, 0), 10) * var(--stagger));
+    animation-delay: calc((min(sibling-index(), 11) - 1) * var(--stagger));
+  }
+
+  /* Expand and collapse: a grid row from 0fr to 1fr (see <Collapse>; not Tailwind's `collapse`). */
+  .collapsible {
+    display: grid;
+    grid-template-rows: 0fr;
+    opacity: 0;
+    transition:
+      grid-template-rows var(--dur-base) var(--ease-out-expo),
+      opacity var(--dur-base) var(--ease-out-soft);
+  }
+  .collapsible > * {
+    min-height: 0;
+    overflow: hidden;
+  }
+  .collapsible[data-open='true'] {
+    grid-template-rows: 1fr;
+    opacity: 1;
+    @starting-style {
+      grid-template-rows: 0fr;
+      opacity: 0;
+    }
+  }
+  /* A chevron that turns a quarter when its control is expanded. */
+  .chevron {
+    transition: transform var(--dur-base) var(--ease-out-expo);
+  }
+  [aria-expanded='true'] > .chevron,
+  [aria-expanded='true'] .chevron,
+  .chevron[data-open='true'] {
+    transform: rotate(90deg);
+  }
+
+  /* A sliding indicator (see useIndicator): placed by JS, glides once placed. */
+  .indicator {
+    position: absolute;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    opacity: 0;
+  }
+  .indicator[data-placed] {
+    opacity: 1;
+  }
+  .indicator[data-glide] {
+    transition:
+      transform var(--dur-base) var(--ease-out-expo),
+      width var(--dur-base) var(--ease-out-expo),
+      height var(--dur-base) var(--ease-out-expo),
+      opacity var(--dur-fast) linear;
+  }
+
+  /* Loading placeholders: a light that sweeps across. */
+  .shimmer {
+    background-color: var(--muted);
+    background-image: linear-gradient(
+      100deg,
+      transparent 30%,
+      color-mix(in oklab, var(--foreground) 6%, transparent) 50%,
+      transparent 70%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.6s linear infinite;
+  }
+  .drift {
+    animation: float 4s ease-in-out infinite;
+  }
+
+  /* Live: a dot that glows and sends out a ring. Colour comes from currentColor. */
+  .pulse-ring {
+    position: relative;
+    box-shadow: 0 0 8px 0 color-mix(in oklab, currentColor 70%, transparent);
+  }
+  .pulse-ring::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: currentColor;
+    animation: pulse-ring 1.6s var(--ease-out-soft) infinite;
+  }
+  /* Live: a surface whose edge carries a turning band of brand light. */
+  .live-border {
+    position: relative;
+    isolation: isolate;
+    box-shadow:
+      0 0 0 1px color-mix(in oklab, var(--primary) 18%, transparent),
+      0 0 18px -8px var(--glow);
+  }
+  .live-border::before {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    z-index: 1;
+    padding: 1px;
+    border-radius: inherit;
+    pointer-events: none;
+    background: conic-gradient(
+      from var(--live-angle),
+      transparent 0 50%,
+      var(--brand-1) 66%,
+      var(--brand-2) 78%,
+      var(--brand-3) 90%,
+      transparent 100%
+    );
+    mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    mask-composite: exclude;
+    animation: live-spin 3.2s linear infinite;
+  }
+  /* Live: a soft glow that breathes, for chips and small surfaces. */
+  .live-glow {
+    box-shadow:
+      0 0 0 1px color-mix(in oklab, var(--primary) 20%, transparent),
+      0 0 12px -6px var(--glow);
+    animation: live-breathe 2.4s ease-in-out infinite;
+  }
+  /* Brand light as text, for hero numbers. */
+  .text-brand {
+    background: var(--brand-gradient);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .bg-brand {
+    background-image: var(--brand-gradient);
+  }
+
+  /* The primary button: brand light, a lit top edge and a sheen that passes on hover. */
+  .btn-primary {
+    position: relative;
+    overflow: hidden;
+    background-image: linear-gradient(to bottom, rgb(255 255 255 / 0.14), transparent);
+    box-shadow:
+      inset 0 1px 0 0 rgb(255 255 255 / 0.22),
+      0 1px 2px color-mix(in oklab, var(--primary) 40%, transparent),
+      0 0 0 0 var(--glow);
+  }
+  .btn-primary:hover:not(:disabled) {
+    box-shadow:
+      inset 0 1px 0 0 rgb(255 255 255 / 0.22),
+      0 2px 8px -2px color-mix(in oklab, var(--primary) 60%, transparent),
+      0 0 16px -4px var(--glow);
+  }
+  .btn-primary::after {
+    content: '';
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 45%;
+    pointer-events: none;
+    background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.28), transparent);
+    transform: translateX(-120%) skewX(-18deg);
+  }
+  .btn-primary:hover:not(:disabled)::after {
+    animation: sheen 0.7s var(--ease-out-soft);
+  }
+
+  /* The page header: sticky and frosted once content scrolls under it (see <PageHeader>). */
+  .page-header {
+    transition:
+      background-color var(--dur-base) var(--ease-out-soft),
+      box-shadow var(--dur-base) var(--ease-out-soft),
+      border-color var(--dur-base) var(--ease-out-soft);
+    border-bottom: 1px solid transparent;
+  }
+  .page-header[data-stuck] {
+    background-color: color-mix(in oklab, var(--background) 74%, transparent);
+    backdrop-filter: blur(14px) saturate(1.5);
+    border-bottom-color: var(--border);
+    box-shadow: 0 6px 18px -12px rgb(0 0 0 / 0.18);
+  }
+}
+
+/* Page and tab switches (viewTransition() in components/motion). The sidebar
+   stays put; the page cross-fades and rises; a tab switch moves only its panel. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+}
+::view-transition-old(page),
+::view-transition-old(panel) {
+  animation: page-out 120ms var(--ease-out-soft) both;
+}
+::view-transition-new(page),
+::view-transition-new(panel) {
+  animation: page-in 320ms var(--ease-out-expo) both;
+}
+::view-transition-group(page),
+::view-transition-group(panel) {
+  animation-duration: 320ms;
+  animation-timing-function: var(--ease-out-expo);
+}
+html:active-view-transition-type(tab)::view-transition-old(page) {
+  display: none;
+}
+html:active-view-transition-type(tab)::view-transition-new(page) {
+  animation: none;
+}
+
+/* Reduced motion: everything settles at once; Live's flash stays, short. */
+@media (prefers-reduced-motion: reduce) {
+  *:not(.live-flash),
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    animation-delay: 0ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+}
+
+/* A tab's body: moves on its own in a 'tab' view transition. One per page. */
+.vt-panel {
+  view-transition-name: panel;
+}
+main.vt-page {
+  view-transition-name: page;
 }
