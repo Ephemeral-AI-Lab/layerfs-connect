@@ -105,17 +105,34 @@ export function WindowedScroller({ follow, version, startAtEnd, className, child
     if (el) el.scrollTop = el.scrollHeight
   }
 
+  // Only the reader unpins: a scroll right after their wheel, key, touch or
+  // pointer. Scrolls from layout (an item drawn above, anchoring) do not.
   useEffect(() => {
     const el = scroller.current
     if (!el) return
+    let userAt = 0
+    const user = () => {
+      userAt = performance.now()
+      // A finished list starts at its end only until the reader acts, so a
+      // fold opened near the end grows downward instead of jumping to the end.
+      if (!followRef.current) pinned.current = false
+    }
     const onScroll = () => {
       const atEnd = el.scrollHeight - el.scrollTop - el.clientHeight < 96
-      pinned.current = atEnd
-      setAway(!atEnd)
+      if (atEnd) pinned.current = true
+      else if (performance.now() - userAt < 500) pinned.current = false
+      else if (pinned.current && (followRef.current || startAtEnd)) toEnd()
+      setAway(!pinned.current && !atEnd)
     }
+    const events = ['wheel', 'keydown', 'touchmove', 'pointerdown'] as const
+    for (const e of events) el.addEventListener(e, user, { passive: true })
     el.addEventListener('scroll', onScroll, { passive: true })
-    return () => el.removeEventListener('scroll', onScroll)
-  }, [])
+    return () => {
+      for (const e of events) el.removeEventListener(e, user)
+      el.removeEventListener('scroll', onScroll)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [startAtEnd])
 
   // Content grows as items arrive and render: keep the end in view while pinned.
   useEffect(() => {
@@ -150,7 +167,7 @@ export function WindowedScroller({ follow, version, startAtEnd, className, child
           }}
           className="absolute bottom-4 left-1/2 -translate-x-1/2 rounded-full bg-card shadow-md"
         >
-          <ArrowDown /> Follow the latest step
+          <ArrowDown /> Jump to the latest
         </Button>
       )}
     </div>

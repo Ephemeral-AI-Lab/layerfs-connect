@@ -3,7 +3,7 @@ import { Check, CircleDashed, X } from 'lucide-react'
 import { useMemo, useState } from 'react'
 
 import { KindChip } from '@/components/runs/run-badges'
-import { type AgentColor, KIND, KIND_ORDER, methodKind, stepNo } from '@/components/runs/run-format'
+import { type AgentColor, KIND, KIND_ORDER, methodKind, ms, stepNo } from '@/components/runs/run-format'
 import { Windowed, WindowedScroller } from '@/components/runs/windowed-list'
 import { cn } from '@/lib/utils'
 
@@ -173,7 +173,7 @@ export function TraceTab({ calls, checks, live, colorOf, onOpenStep }: TraceTabP
                           {c.ok === null ? '…' : c.ok ? (c.kind ?? 'ok') : (c.code ?? c.kind ?? 'failed')}
                         </span>
                         <span role="cell" className="text-right text-muted-foreground tabular-nums">
-                          {c.ms ?? '–'}
+                          {ms(c.ms)}
                         </span>
                       </div>
                     )

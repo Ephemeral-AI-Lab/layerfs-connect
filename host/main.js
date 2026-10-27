@@ -53,8 +53,9 @@ function liveOwner(file) {
     if (pid === process.pid) return false
     process.kill(pid, 0)
     return true
-  } catch {
-    return false
+  } catch (error) {
+    // EPERM: the process exists but this one may not signal it (another user, a sandbox)
+    return error?.code === 'EPERM'
   }
 }
 

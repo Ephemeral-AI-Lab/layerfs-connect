@@ -3,7 +3,7 @@ import { Check, ChevronRight, CircleDashed, Scissors, X } from 'lucide-react'
 import { useState } from 'react'
 
 import { KindChip } from '@/components/runs/run-badges'
-import { duration, methodKind } from '@/components/runs/run-format'
+import { duration, methodKind, ms } from '@/components/runs/run-format'
 import { cn } from '@/lib/utils'
 
 const OUTPUT_LINES = 40
@@ -150,7 +150,7 @@ export function CallStrip({ calls }: { calls: TraceCall[] }) {
                   <td className="px-2 py-1">
                     <CallResult call={c} />
                   </td>
-                  <td className="px-2 py-1 text-muted-foreground tabular-nums">{c.ms ?? '–'}</td>
+                  <td className="px-2 py-1 text-muted-foreground tabular-nums">{ms(c.ms)}</td>
                   <td className="px-2 py-1 text-muted-foreground">{c.branch ?? ''}</td>
                   <td className="px-2 py-1 text-muted-foreground" title={c.commit ?? undefined}>
                     {short(c.commit) ?? ''}

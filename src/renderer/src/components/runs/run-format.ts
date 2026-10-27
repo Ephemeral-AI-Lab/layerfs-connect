@@ -210,3 +210,6 @@ export function runLabel(run: { id: string; project: string }): string {
 
 /** The step number people read, from a step's index. */
 export const stepNo = (index: number) => index + 1
+
+/** A call's milliseconds: one decimal under 10 ms, whole above. */
+export const ms = (n: number | null | undefined) => (n === null || n === undefined ? '–' : n < 10 ? n.toFixed(1) : String(Math.round(n)))

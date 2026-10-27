@@ -29,7 +29,7 @@ import { cn } from '@/lib/utils'
 export type NavId = 'projects' | 'storage' | 'compute'
 
 /** What the sidebar has selected: a page, one demo project, or one run (a session of it). */
-export type Selection = { kind: 'nav'; id: NavId } | { kind: 'project'; id: string } | { kind: 'run'; id: string }
+export type Selection = { kind: 'nav'; id: NavId } | { kind: 'project'; id: string } | { kind: 'run'; id: string; demo?: string }
 
 interface NavItem {
   id: NavId
@@ -74,7 +74,7 @@ export function AppSidebar({ selected, onSelect, storageCount, computeCount }: A
       return next
     })
 
-  const { start, starting, error: refused } = useStartRun((run) => onSelect({ kind: 'run', id: run.id }))
+  const { start, starting, error: refused } = useStartRun((run) => onSelect({ kind: 'run', id: run.id, demo: run.demo }))
   const anyLive = runs?.some((r) => isLive(r.state)) ?? false
   const now = useNow(true, anyLive ? 15_000 : 60_000)
 
@@ -237,7 +237,7 @@ function DemoItem({ demo, runs, now, open, selected, starting, refused, onToggle
           {shown.map((run) => (
             <SidebarMenuSubItem key={run.id}>
               <SidebarMenuSubButton asChild isActive={selected.kind === 'run' && selected.id === run.id} className="h-8 text-[13px]">
-                <button type="button" onClick={() => onSelect({ kind: 'run', id: run.id })} className="w-full">
+                <button type="button" onClick={() => onSelect({ kind: 'run', id: run.id, demo: run.demo })} className="w-full">
                   <RunDot state={run.state} />
                   <span className="flex-1 text-left">{runLabel(run)}</span>
                   <span className="text-[11px] text-faint tabular-nums">{isLive(run.state) ? `${run.done}/${run.of}` : ago(run.ended ?? run.started, now)}</span>
