@@ -178,19 +178,23 @@
   }
 }
 
-/* Projects page: a dashed edge that flows while a call is in flight. */
-@keyframes flow-dash {
+/* Live: a Branch row, Workspace or folded card rings in the colour of the
+   agent whose call just reached it (live-flow.ts sets --flash). */
+@keyframes live-flash {
+  from {
+    background-color: color-mix(in oklab, var(--flash) 16%, transparent);
+    box-shadow: inset 0 0 0 1.5px var(--flash);
+  }
   to {
-    stroke-dashoffset: -20;
+    box-shadow: inset 0 0 0 1.5px transparent;
   }
 }
-.flow-dash {
-  stroke-dasharray: 4 6;
-  animation: flow-dash 0.9s linear infinite;
+.live-flash {
+  animation: live-flash 1.2s ease-out;
 }
 @media (prefers-reduced-motion: reduce) {
-  .flow-dash {
-    animation: none;
+  .live-flash {
+    animation-duration: 0.4s;
   }
 }
 

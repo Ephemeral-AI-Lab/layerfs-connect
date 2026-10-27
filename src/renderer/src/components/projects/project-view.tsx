@@ -193,6 +193,7 @@ function ProjectPage({ demo, title, runs, runsError, onPick, onBack, tab, onTab:
         runId={current.id}
         tab={tab}
         onAgent={(name) => onPick({ run: current.id, agent: name })}
+        onOpenSession={(run, name) => onPick({ run, agent: name })}
         historyInit={history}
         sessions={runs?.filter((r) => r.project === demo)}
       />

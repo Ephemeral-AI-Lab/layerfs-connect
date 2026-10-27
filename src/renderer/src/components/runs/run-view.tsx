@@ -33,6 +33,8 @@ interface RunPanelProps {
   /** Live: the project's sessions, which decide when this one goes idle. */
   sessions?: RunSummary[]
   onAgent: (name: string) => void
+  /** Live: opens an agent of another session of the project. */
+  onOpenSession?: (run: string, agent: string) => void
   historyInit?: HistoryInit
   /** Conversation: the breadcrumb's start (project / session) and the row's trailing facts. */
   lead?: ReactNode
@@ -43,7 +45,7 @@ interface RunPanelProps {
 }
 
 /** A run's tab, live: loads the run once and follows its events. */
-export function RunPanel({ runId, tab, onTab, agent, onAgent, historyInit, sessions, lead, meta, tabs, pane }: RunPanelProps) {
+export function RunPanel({ runId, tab, onTab, agent, onAgent, onOpenSession, historyInit, sessions, lead, meta, tabs, pane }: RunPanelProps) {
   const live = useRun(runId)
   if (live.run)
     return (
@@ -55,6 +57,7 @@ export function RunPanel({ runId, tab, onTab, agent, onAgent, historyInit, sessi
         onTab={onTab}
         picked={agent}
         onAgent={onAgent}
+        onOpenSession={onOpenSession}
         historyInit={historyInit}
         sessions={sessions}
         lead={lead}
@@ -135,6 +138,7 @@ interface BodyProps {
   onTab?: (tab: RunTab) => void
   picked?: string
   onAgent: (name: string) => void
+  onOpenSession?: (run: string, agent: string) => void
   historyInit?: HistoryInit
   sessions?: RunSummary[]
   lead?: ReactNode
@@ -143,7 +147,7 @@ interface BodyProps {
   pane?: ReactNode
 }
 
-function RunBody({ run, demo, views, tab, onTab, picked, onAgent: setPicked, historyInit, sessions, lead, meta, tabs, pane }: BodyProps) {
+function RunBody({ run, demo, views, tab, onTab, picked, onAgent: setPicked, onOpenSession, historyInit, sessions, lead, meta, tabs, pane }: BodyProps) {
   const root = run.agents.find((a) => a.parent === null)?.name ?? demo?.agents.find((a) => a.prompt === null)?.name ?? 'root'
   const live = isLive(run.state)
 
@@ -196,6 +200,7 @@ function RunBody({ run, demo, views, tab, onTab, picked, onAgent: setPicked, his
         agents={agents}
         colorOf={colorOf}
         sessions={sessions}
+        onOpenSession={onOpenSession}
         onOpenAgent={(name) => {
           setPicked(name)
           onTab?.('conversation')
