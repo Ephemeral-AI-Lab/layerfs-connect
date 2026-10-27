@@ -10,7 +10,7 @@ import { join } from 'node:path'
 import { after, test } from 'node:test'
 import { compileScenario } from '../../tools/lib/scenario.mjs'
 import { RunManager } from '../runs/index.js'
-import { Run } from '../runs/run.js'
+import { Launch, Run } from '../runs/run.js'
 
 const root = mkdtempSync(join(tmpdir(), 'lfc-runs-test-'))
 after(() => rmSync(root, { recursive: true, force: true }))
@@ -233,4 +233,85 @@ test('a run still playing at a restart reads as failed (interrupted)', () => {
   assert.equal(r.agents[0].state, 'stopped')
   assert.equal(runs.runs('tour')[0].id, 'old-run')
   assert.deepEqual(runs.demos(), [])
+})
+
+/** Plays a scenario of sessions (`sessions`, scenario.json form) as one launch, as RunManager.start does; Init skipped. */
+async function playLaunch(sessions) {
+  const id = `t${++n}`
+  const folder = join(root, 'scenarios', id)
+  mkdirSync(folder, { recursive: true })
+  const raw = { type: 'layerfs-scenario', version: 3, title: id, tags: ['cli', 'multi-agent'], sessions }
+  const scenario = compileScenario(raw, { name: id, folder })
+  const launch = new Launch(`${id}-launch`)
+  const started = Date.now()
+  const runs = []
+  const events = []
+  scenario.sessions.forEach((s, i) => {
+    const record = { id: `${launch.id}-${s.name}`, demo: id, project: `${id}-1`, replay: i + 1, session: s.name, launch: launch.id, state: 'starting', started }
+    runs.push(new Run({ spec, demo: { id, folder, scenario: s.scenario }, record, emit: (e) => events.push(e), loadSeed: async () => null, loadChecks: async () => null, launch, after: runs[0] ?? null }))
+  })
+  let inits = 0
+  runs[0].init = async () => {
+    inits++
+    // the others are still waiting for this Init
+    assert.ok(runs.slice(1).every((r) => r.state === 'starting'))
+  }
+  await Promise.all(runs.map((r) => r.play()))
+  return { runs, details: runs.map((r) => r.detail()), inits, launch }
+}
+
+const session = (lead, child, childSteps) => ({
+  prompt: `Session ${lead}.`,
+  agents: {
+    [lead]: [{ subagent: { description: child, prompt: `Do the ${child} part.` } }, { reply: `${child} works.`, until: [child] }, bash(`echo ${lead} merged`), { reply: `${lead} is done.` }],
+    [child]: childSteps,
+  },
+})
+
+test('sessions: one launch, one Init, every session plays on it at once with its own root', async () => {
+  const { details, inits } = await playLaunch({
+    one: session('one', 'ann', [bash('sleep 0.3; echo ann'), { reply: 'ann ready.' }]),
+    two: session('two', 'bob', [bash('sleep 0.3; echo bob'), { reply: 'bob ready.' }]),
+  })
+  assert.equal(inits, 1)
+  for (const d of details) assert.equal(d.state, 'passed', d.error)
+  assert.deepEqual(details.map((d) => d.session), ['one', 'two'])
+  assert.deepEqual(details.map((d) => d.agents.map((a) => `${a.name}<${a.parent}`)), [['one<null', 'ann<one'], ['two<null', 'bob<two']])
+  assert.equal(details[0].launch, details[1].launch)
+  // they overlap: each session's child ran while the other's did
+  const [a, b] = details.map((d) => d.steps.find((s) => s.agent !== d.session))
+  assert.ok(a.started < b.ended && b.started < a.ended, 'the sessions played at the same time')
+  assert.ok(details[0].messages.some((m) => m.from === 'ann' && m.to === 'one' && m.text === 'ann ready.'))
+  assert.ok(!details[0].messages.some((m) => ['two', 'bob'].includes(m.from)), 'a session sees only its own messages')
+})
+
+test('sessions: one that fails stops the others, and the launch closes its Sandboxes once', async () => {
+  const { details, launch } = await playLaunch({
+    one: session('one', 'ann', [bash('exit 1', { description: 'fails' }), { reply: 'never.' }]),
+    two: session('two', 'bob', [bash('sleep 5'), { reply: 'never either.' }]),
+  })
+  assert.equal(details[0].state, 'failed')
+  assert.match(details[0].error, /ann\[0\] \(fails\)/)
+  assert.equal(details[1].state, 'stopped')
+  assert.equal(details[1].error, 'stopped: session one failed')
+  assert.ok(details[1].ended - details[1].started < 4000, 'bob was killed, not waited for')
+  assert.ok(launch.closing, 'the launch closed the project once')
+})
+
+test('sessions: three, one fails: each other one names it as the cause', async () => {
+  const { details } = await playLaunch({
+    one: session('one', 'ann', [bash('exit 1', { description: 'fails' }), { reply: 'never.' }]),
+    two: session('two', 'bob', [bash('sleep 5'), { reply: 'never either.' }]),
+    six: session('six', 'cat', [bash('sleep 5'), { reply: 'nor this.' }]),
+  })
+  assert.deepEqual(details.map((d) => d.state), ['failed', 'stopped', 'stopped'])
+  assert.deepEqual(details.slice(1).map((d) => d.error), ['stopped: session one failed', 'stopped: session one failed'])
+})
+
+test('sessions: a launch counts once against the runs playing at once', () => {
+  const runs = new RunManager({ spec, scenarios: join(root, 'none') })
+  runs.live.set('a', { state: 'running', launch: 'L' })
+  runs.live.set('b', { state: 'running', launch: 'L' })
+  runs.live.set('c', { state: 'running', launch: null, id: 'c' })
+  assert.equal(runs.playing(), 2)
 })

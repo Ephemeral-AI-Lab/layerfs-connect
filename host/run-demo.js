@@ -1,6 +1,6 @@
 // Headless: runs one demo through the engine on the real LayerFS and prints
 // one line per finished step, then the final checks. Exit 0 only when the
-// run passed.
+// run passed (for a scenario of several sessions: every session's run).
 //   node --import ./host/resolve-layerfs.js host/run-demo.js <demo> [--state <dir>] [--scenarios <dir>]
 import { resolveSpec } from './config.js'
 import { RunManager } from './runs/index.js'
@@ -30,38 +30,43 @@ if (!demo) {
 }
 
 let runId = null
+let ids = new Set()
 const pending = []
 runs.on('event', (event) => {
   if (!runId) return pending.push(event)
   show(event)
 })
 const show = (event) => {
-  if (event.type === 'step' && event.run === runId && event.step.state !== 'running') {
+  if (event.type === 'step' && ids.has(event.run) && event.step.state !== 'running') {
     const s = event.step
     const view = demo.script[s.agent]?.[s.index]
     const ms = s.ended && s.started ? s.ended - s.started : 0
     const failed = s.checks?.find((c) => !c.ok)
     console.log(`${s.agent.padEnd(10)} ${String(s.index).padStart(4)}  ${(view?.kind ?? '?').padEnd(9)} ${s.state.padEnd(7)} ${String(ms).padStart(6)} ms  ${view?.description ?? view?.tool ?? ''}${failed ? `  ✗ ${failed.name}: ${failed.detail}` : ''}`)
   }
-  if (event.type === 'run' && event.run.id === runId && event.run.state === 'running' && !shown) {
-    shown = true
-    console.log(`project ${event.run.project} ready; playing ${event.run.of} steps`)
+  if (event.type === 'run' && ids.has(event.run.id) && event.run.state === 'running' && !shown.has(event.run.id)) {
+    shown.add(event.run.id)
+    console.log(`project ${event.run.project} ready; ${event.run.session ? `session ${event.run.session} ` : ''}playing ${event.run.of} steps`)
   }
 }
-let shown = false
+const shown = new Set()
 
 const started = await runs.start(id)
 runId = started.id
+const launch = runs.launchOf(runId).map((r) => r.id)
+ids = new Set(launch)
 for (const e of pending.splice(0)) show(e)
-console.log(`run ${runId}: demo ${id}, project ${started.project}`)
+for (const rid of launch) console.log(`run ${rid}: demo ${id}, project ${started.project}`)
 process.on('SIGINT', () => runs.stop(runId))
 process.on('SIGTERM', () => runs.stop(runId))
 
-const live = runs.live.get(runId)
-await live.finished
-const detail = runs.run(runId)
-for (const c of detail.checks) console.log(`check ${c.name}: ${c.ok ? 'ok' : 'FAILED'} ${c.detail}`)
-console.log(`${detail.state}${detail.error ? `: ${detail.error}` : ''} (${detail.done}/${detail.of} steps, ${((detail.ended - detail.started) / 1000).toFixed(1)} s)`)
+await Promise.all(launch.map((rid) => runs.live.get(rid).finished))
+const details = launch.map((rid) => runs.run(rid))
+for (const detail of details) {
+  const who = detail.session ? `${detail.session}: ` : ''
+  for (const c of detail.checks) console.log(`${who}check ${c.name}: ${c.ok ? 'ok' : 'FAILED'} ${c.detail}`)
+  console.log(`${who}${detail.state}${detail.error ? `: ${detail.error}` : ''} (${detail.done}/${detail.of} steps, ${((detail.ended - detail.started) / 1000).toFixed(1)} s)`)
+}
 await runs.close()
 if (spec.runtime) await (await spec.runtime).close()
-process.exit(detail.state === 'passed' ? 0 : 1)
+process.exit(details.every((d) => d.state === 'passed') ? 0 : 1)

@@ -8,14 +8,17 @@ import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { test } from 'node:test'
 import { fileURLToPath } from 'node:url'
-import { loadScenarios, SDK_SCRIPT } from '../../tools/lib/scenario.mjs'
+import { compileScenario, loadScenarios, SDK_SCRIPT } from '../../tools/lib/scenario.mjs'
+import { demoViews } from '../runs/views.js'
 import { checkFolder, forkFailures } from '../../tools/replay/check.mjs'
 import { NAMES as REPLAYS } from '../../tools/replay/convert.mjs'
 import { plan, quoteOf, rewrite } from '../../tools/port-scenarios.mjs'
 
 const APP = fileURLToPath(new URL('../../', import.meta.url))
 const SCENARIOS = join(APP, 'scenarios')
-const IDS = ['tour', 'parallel', 'conflicts', 'merge', 'sandbox', 'agents', 'shop', 'depot', 'crew', 'checkpoints']
+const IDS = ['tour', 'parallel', 'conflicts', 'merge', 'sandbox', 'agents', 'teams', 'shop', 'depot', 'crew', 'checkpoints']
+/** Scenarios written in Connect, not ported from dsh-layerfs. */
+const OWN = ['teams']
 const DSH = join(APP, '..', 'dsh-layerfs')
 const LAYERFS = join(APP, '..', 'layerfs')
 const REV = '0c7d9c47c1^'
@@ -28,7 +31,7 @@ const hasRev = () => {
   }
 }
 
-test('the ten scenarios load, in order, with their fixtures', () => {
+test('the eleven scenarios load, in order, with their fixtures', () => {
   const all = loadScenarios(SCENARIOS)
   assert.deepEqual([...all.keys()], IDS)
   for (const s of all.values()) {
@@ -120,10 +123,47 @@ test('the hand-written scenarios and the fixture are what a port of dsh-layerfs 
     for (const name of readdirSync(dir, { withFileTypes: true })) {
       const path = `${rel}/${name.name}`
       if (name.isDirectory()) walk(join(dir, name.name), path)
-      else if (!ported.has(path) && path !== 'scenarios/README.md' && !REPLAYS.some((id) => path.startsWith(`scenarios/${id}/`))) extra.push(path)
+      else if (!ported.has(path) && path !== 'scenarios/README.md' && ![...REPLAYS, ...OWN].some((id) => path.startsWith(`scenarios/${id}/`))) extra.push(path)
     }
   }
   walk(SCENARIOS, 'scenarios')
   walk(join(APP, 'fixtures/demo-workspace'), 'fixtures/demo-workspace')
   assert.deepEqual(extra, [])
+})
+
+test('teams: three sessions, each a lead named after it with two subagents', () => {
+  const s = loadScenarios(SCENARIOS).get('teams')
+  assert.deepEqual(
+    s.sessions.map((x) => [x.name, x.scenario.root, Object.keys(x.scenario.agents)]),
+    [
+      ['checkout', 'checkout', ['checkout', 'cart', 'pay']],
+      ['search', 'search', ['search', 'index', 'results']],
+      ['docs', 'docs', ['docs', 'guide', 'faq']],
+    ],
+  )
+  for (const x of s.sessions) {
+    assert.ok(x.prompt)
+    assert.deepEqual([...x.scenario.parents.values()], [x.name, x.name])
+  }
+  assert.equal(s.counts.agents, 9)
+  const raw = JSON.parse(readFileSync(join(SCENARIOS, 'teams', 'scenario.json'), 'utf8'))
+  const { summary, script } = demoViews({ id: 'teams', scenario: s, raw })
+  assert.deepEqual(Object.keys(script).sort(), ['cart', 'checkout', 'docs', 'faq', 'guide', 'index', 'pay', 'results', 'search'])
+  assert.deepEqual(summary.sessions.map((x) => x.agents), [['checkout', 'cart', 'pay'], ['search', 'index', 'results'], ['docs', 'guide', 'faq']])
+  // a lead's last reply is its own (said to the user); a subagent's goes to its lead
+  assert.equal(script.checkout.at(-1).kind, 'local')
+  assert.equal(script.cart.at(-1).kind, 'subagent')
+})
+
+test('a scenario of sessions: refusals', () => {
+  const base = { type: 'layerfs-scenario', version: 3, title: 'x', tags: ['cli', 'multi-agent'] }
+  const lead = (name, child) => ({ prompt: `p ${name}`, agents: { [name]: [{ subagent: { description: child, prompt: `do ${child}` } }, { reply: 'ok' }], [child]: [{ reply: 'done' }] } })
+  const compile = (raw) => compileScenario({ ...base, ...raw }, { name: 'x', folder: SCENARIOS })
+  assert.equal(compile({ sessions: { a: lead('a', 'c1'), b: lead('b', 'c2') } }).sessions.length, 2)
+  assert.throws(() => compile({ sessions: { a: lead('a', 'c1') } }), /two or more sessions/)
+  assert.throws(() => compile({ sessions: { a: lead('a', 'c1'), b: lead('b', 'c1') } }), /also an agent of session a/)
+  assert.throws(() => compile({ agents: { root: [{ reply: 'x' }] }, sessions: { a: lead('a', 'c1'), b: lead('b', 'c2') } }), /agents or sessions, not both/)
+  assert.throws(() => compile({ prompt: 'p', sessions: { a: lead('a', 'c1'), b: lead('b', 'c2') } }), /a prompt per session/)
+  assert.throws(() => compile({ sessions: { a: { prompt: 'p', agents: { root: [{ reply: 'x' }] } }, b: lead('b', 'c2') } }), /steps of a, the session's own agent/)
+  assert.throws(() => compile({ sessions: { a: { agents: lead('a', 'c1').agents }, b: lead('b', 'c2') } }), /sessions\.a\.prompt/)
 })

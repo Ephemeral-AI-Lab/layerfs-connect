@@ -79,8 +79,12 @@ export function checkRun({ record, byAgent, bad, source }, scenariosDir) {
   if (!name || !existsSync(join(folder, 'scenario.json'))) {
     throw Object.assign(new Error(`the run played ${name}, and ${folder} holds no scenario.json`), { usage: true })
   }
-  const scenario = loadScenario(folder)
+  const loaded = loadScenario(folder)
   const failures = []
+  // a run of a scenario of sessions plays one session: its agents only
+  const session = loaded.sessions && loaded.sessions.find((s) => s.name === record.session)
+  if (loaded.sessions && !session) throw Object.assign(new Error(`${name} is a scenario of sessions, and the run names no session of it (${record.session ?? 'none'})`), { usage: true })
+  const scenario = session ? session.scenario : loaded
   const notes = []
   if (record.state === 'passed') notes.push(`run: passed${record.ended ? ` in ${((record.ended - record.started) / 1000).toFixed(1)} s` : ''}`)
   else failures.push(`run: ${record.state}${record.error ? ` (${record.error})` : ''}`)

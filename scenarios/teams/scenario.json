@@ -1,0 +1,544 @@
+{
+  "type": "layerfs-scenario",
+  "version": 3,
+  "title": "3 sessions",
+  "blurb": "Three sessions start at once on one project: checkout, search and docs. Each lead starts two subagents; every subagent forks its own Branch from main, writes its page with fs, then opens a Sandbox of its own to add data in a Workspace, test and commit. Each lead merges its two Branches into the session's Branch and tests it in its own Sandbox.",
+  "order": 6,
+  "tags": [
+    "cli",
+    "multi-agent",
+    "merge",
+    "sandbox"
+  ],
+  "fixture": "../../fixtures/demo-workspace",
+  "sessions": {
+    "checkout": {
+      "prompt": "Build the checkout pages: a cart page and a payment page, each by its own subagent on its own Branch, then bring them together on a checkout Branch and test it. Other sessions work on the same project at the same time; stay on your own Branches.",
+      "agents": {
+        "checkout": [
+          {
+            "phase": "Split",
+            "say": "Two pieces of the checkout, one subagent each, each on its own Branch.",
+            "subagent": {
+              "description": "cart",
+              "prompt": "Fork a cart Branch from main, write the cart page at app/cart/page.tsx with fs, then in a Sandbox of your own add its data in a Workspace, test, commit, and report the Branch."
+            }
+          },
+          {
+            "subagent": {
+              "description": "pay",
+              "prompt": "Fork a pay Branch from main, write the payment page at app/pay/page.tsx with fs, then in a Sandbox of your own add its data in a Workspace, test, commit, and report the Branch."
+            }
+          },
+          {
+            "reply": "cart and pay are working in parallel; I'll merge when both report.",
+            "until": [
+              "cart",
+              "pay"
+            ]
+          },
+          {
+            "phase": "Merge",
+            "say": "Both are ready. Merging cart and pay into a new checkout Branch; main stays as it is.",
+            "bash": {
+              "description": "Merge cart and pay into checkout",
+              "command": "layerfs branch merge cart pay checkout -m \"checkout: cart + pay\"\nlayerfs fs list checkout /app"
+            },
+            "expect": [
+              "branch.merge:Merged",
+              "fs.list:ok"
+            ],
+            "note": "Each session merges only its own Branches, so the sessions never meet on main."
+          },
+          {
+            "phase": "Test",
+            "say": "Testing checkout in a Sandbox of mine.",
+            "bash": {
+              "description": "Test checkout in a Workspace",
+              "command": "layerfs sandbox create | tee sandbox-checkout.json\nlayerfs workspace mount \"$(jq -r .sandbox sandbox-checkout.json)\" checkout | tee ws-checkout.json\nlayerfs workspace exec \"$(jq -r .ws ws-checkout.json)\" \"sh test.sh && ls app/cart app/pay\" --stream"
+            },
+            "expect": [
+              "sandbox.create:ok",
+              "workspace.mount:Mounted",
+              "workspace.exec:exit:0"
+            ]
+          },
+          {
+            "say": "Tests pass. Unmounting and closing my Sandbox.",
+            "bash": {
+              "description": "Unmount and close my Sandbox",
+              "command": "layerfs workspace unmount {{ws}}\nlayerfs sandbox close {{sandbox}}"
+            },
+            "expect": [
+              "workspace.unmount:Unmounted",
+              "sandbox.close:Closed"
+            ]
+          },
+          {
+            "reply": "Branch checkout holds cart and pay, merged with no conflicts and tested; every Sandbox of this session is closed."
+          }
+        ],
+        "cart": [
+          {
+            "phase": "Write",
+            "say": "Forking cart from main and writing the cart page with fs.",
+            "bash": {
+              "description": "Fork cart and write its page",
+              "command": "layerfs branch fork cart\nlayerfs fs mkdir cart /app/cart -m \"cart: folder\"\nlayerfs fs write cart /app/cart/page.tsx -m \"cart: add app/cart/page.tsx\" <<'EOF'\nexport default function Page() {\n  return <h1>Cart</h1>;\n}\nEOF"
+            },
+            "expect": [
+              "branch.fork:Forked",
+              "fs.mkdir:Committed",
+              "fs.write:Committed"
+            ]
+          },
+          {
+            "phase": "Test",
+            "say": "A Sandbox of my own, and a Workspace of cart in it; I keep both open while I work.",
+            "bash": {
+              "description": "Open a Sandbox and mount cart",
+              "command": "layerfs sandbox create | tee sandbox-cart.json\nlayerfs workspace mount \"$(jq -r .sandbox sandbox-cart.json)\" cart | tee ws-cart.json\nlayerfs workspace exec \"$(jq -r .ws ws-cart.json)\" \"sh test.sh\" --stream"
+            },
+            "expect": [
+              "sandbox.create:ok",
+              "workspace.mount:Mounted",
+              "workspace.exec:exit:0"
+            ],
+            "note": "Each subagent of each session has its own Sandbox: Live shows them all open at once."
+          },
+          {
+            "say": "Adding the page's data in the Workspace, then testing and committing it.",
+            "bash": {
+              "description": "Add app/cart/data.ts in the Workspace and commit",
+              "command": "layerfs workspace exec {{ws}} \"printf 'export const items = 0;\\\\n' > app/cart/data.ts && sh test.sh\" --stream\nlayerfs workspace commit {{ws}} -m \"cart: add app/cart/data.ts\""
+            },
+            "expect": [
+              "workspace.exec:exit:0",
+              "workspace.commit:Committed"
+            ]
+          },
+          {
+            "say": "Done here: unmounting and closing my Sandbox.",
+            "bash": {
+              "description": "Unmount and close my Sandbox",
+              "command": "layerfs workspace unmount {{ws}}\nlayerfs sandbox close {{sandbox}}"
+            },
+            "expect": [
+              "workspace.unmount:Unmounted",
+              "sandbox.close:Closed"
+            ]
+          },
+          {
+            "reply": "Ready: Branch cart, with app/cart/page.tsx and data.ts committed and the tests passing."
+          }
+        ],
+        "pay": [
+          {
+            "phase": "Write",
+            "say": "Forking pay from main and writing the payment page with fs.",
+            "bash": {
+              "description": "Fork pay and write its page",
+              "command": "layerfs branch fork pay\nlayerfs fs mkdir pay /app/pay -m \"pay: folder\"\nlayerfs fs write pay /app/pay/page.tsx -m \"pay: add app/pay/page.tsx\" <<'EOF'\nexport default function Page() {\n  return <h1>Payment</h1>;\n}\nEOF"
+            },
+            "expect": [
+              "branch.fork:Forked",
+              "fs.mkdir:Committed",
+              "fs.write:Committed"
+            ]
+          },
+          {
+            "phase": "Test",
+            "say": "A Sandbox of my own, and a Workspace of pay in it; I keep both open while I work.",
+            "bash": {
+              "description": "Open a Sandbox and mount pay",
+              "command": "layerfs sandbox create | tee sandbox-pay.json\nlayerfs workspace mount \"$(jq -r .sandbox sandbox-pay.json)\" pay | tee ws-pay.json\nlayerfs workspace exec \"$(jq -r .ws ws-pay.json)\" \"sh test.sh\" --stream"
+            },
+            "expect": [
+              "sandbox.create:ok",
+              "workspace.mount:Mounted",
+              "workspace.exec:exit:0"
+            ],
+            "note": "Each subagent of each session has its own Sandbox: Live shows them all open at once."
+          },
+          {
+            "say": "Adding the page's data in the Workspace, then testing and committing it.",
+            "bash": {
+              "description": "Add app/pay/data.ts in the Workspace and commit",
+              "command": "layerfs workspace exec {{ws}} \"printf 'export const methods = 2;\\\\n' > app/pay/data.ts && sh test.sh\" --stream\nlayerfs workspace commit {{ws}} -m \"pay: add app/pay/data.ts\""
+            },
+            "expect": [
+              "workspace.exec:exit:0",
+              "workspace.commit:Committed"
+            ]
+          },
+          {
+            "say": "Done here: unmounting and closing my Sandbox.",
+            "bash": {
+              "description": "Unmount and close my Sandbox",
+              "command": "layerfs workspace unmount {{ws}}\nlayerfs sandbox close {{sandbox}}"
+            },
+            "expect": [
+              "workspace.unmount:Unmounted",
+              "sandbox.close:Closed"
+            ]
+          },
+          {
+            "reply": "Ready: Branch pay, with app/pay/page.tsx and data.ts committed and the tests passing."
+          }
+        ]
+      }
+    },
+    "search": {
+      "prompt": "Build search: an index page and a results page, each by its own subagent on its own Branch, then bring them together on a search Branch and test it. Other sessions work on the same project at the same time; stay on your own Branches.",
+      "agents": {
+        "search": [
+          {
+            "phase": "Split",
+            "say": "Two pieces of search, one subagent each, each on its own Branch.",
+            "subagent": {
+              "description": "index",
+              "prompt": "Fork a index Branch from main, write the search index page at app/index/page.tsx with fs, then in a Sandbox of your own add its data in a Workspace, test, commit, and report the Branch."
+            }
+          },
+          {
+            "subagent": {
+              "description": "results",
+              "prompt": "Fork a results Branch from main, write the results page at app/results/page.tsx with fs, then in a Sandbox of your own add its data in a Workspace, test, commit, and report the Branch."
+            }
+          },
+          {
+            "reply": "index and results are working in parallel; I'll merge when both report.",
+            "until": [
+              "index",
+              "results"
+            ]
+          },
+          {
+            "phase": "Merge",
+            "say": "Both are ready. Merging index and results into a new search Branch; main stays as it is.",
+            "bash": {
+              "description": "Merge index and results into search",
+              "command": "layerfs branch merge index results search -m \"search: index + results\"\nlayerfs fs list search /app"
+            },
+            "expect": [
+              "branch.merge:Merged",
+              "fs.list:ok"
+            ],
+            "note": "Each session merges only its own Branches, so the sessions never meet on main."
+          },
+          {
+            "phase": "Test",
+            "say": "Testing search in a Sandbox of mine.",
+            "bash": {
+              "description": "Test search in a Workspace",
+              "command": "layerfs sandbox create | tee sandbox-search.json\nlayerfs workspace mount \"$(jq -r .sandbox sandbox-search.json)\" search | tee ws-search.json\nlayerfs workspace exec \"$(jq -r .ws ws-search.json)\" \"sh test.sh && ls app/index app/results\" --stream"
+            },
+            "expect": [
+              "sandbox.create:ok",
+              "workspace.mount:Mounted",
+              "workspace.exec:exit:0"
+            ]
+          },
+          {
+            "say": "Tests pass. Unmounting and closing my Sandbox.",
+            "bash": {
+              "description": "Unmount and close my Sandbox",
+              "command": "layerfs workspace unmount {{ws}}\nlayerfs sandbox close {{sandbox}}"
+            },
+            "expect": [
+              "workspace.unmount:Unmounted",
+              "sandbox.close:Closed"
+            ]
+          },
+          {
+            "reply": "Branch search holds index and results, merged with no conflicts and tested; every Sandbox of this session is closed."
+          }
+        ],
+        "index": [
+          {
+            "phase": "Write",
+            "say": "Forking index from main and writing the search index page with fs.",
+            "bash": {
+              "description": "Fork index and write its page",
+              "command": "layerfs branch fork index\nlayerfs fs mkdir index /app/index -m \"index: folder\"\nlayerfs fs write index /app/index/page.tsx -m \"index: add app/index/page.tsx\" <<'EOF'\nexport default function Page() {\n  return <h1>Search index</h1>;\n}\nEOF"
+            },
+            "expect": [
+              "branch.fork:Forked",
+              "fs.mkdir:Committed",
+              "fs.write:Committed"
+            ]
+          },
+          {
+            "phase": "Test",
+            "say": "A Sandbox of my own, and a Workspace of index in it; I keep both open while I work.",
+            "bash": {
+              "description": "Open a Sandbox and mount index",
+              "command": "layerfs sandbox create | tee sandbox-index.json\nlayerfs workspace mount \"$(jq -r .sandbox sandbox-index.json)\" index | tee ws-index.json\nlayerfs workspace exec \"$(jq -r .ws ws-index.json)\" \"sh test.sh\" --stream"
+            },
+            "expect": [
+              "sandbox.create:ok",
+              "workspace.mount:Mounted",
+              "workspace.exec:exit:0"
+            ],
+            "note": "Each subagent of each session has its own Sandbox: Live shows them all open at once."
+          },
+          {
+            "say": "Adding the page's data in the Workspace, then testing and committing it.",
+            "bash": {
+              "description": "Add app/index/data.ts in the Workspace and commit",
+              "command": "layerfs workspace exec {{ws}} \"printf 'export const fields = 2;\\\\n' > app/index/data.ts && sh test.sh\" --stream\nlayerfs workspace commit {{ws}} -m \"index: add app/index/data.ts\""
+            },
+            "expect": [
+              "workspace.exec:exit:0",
+              "workspace.commit:Committed"
+            ]
+          },
+          {
+            "say": "Done here: unmounting and closing my Sandbox.",
+            "bash": {
+              "description": "Unmount and close my Sandbox",
+              "command": "layerfs workspace unmount {{ws}}\nlayerfs sandbox close {{sandbox}}"
+            },
+            "expect": [
+              "workspace.unmount:Unmounted",
+              "sandbox.close:Closed"
+            ]
+          },
+          {
+            "reply": "Ready: Branch index, with app/index/page.tsx and data.ts committed and the tests passing."
+          }
+        ],
+        "results": [
+          {
+            "phase": "Write",
+            "say": "Forking results from main and writing the results page with fs.",
+            "bash": {
+              "description": "Fork results and write its page",
+              "command": "layerfs branch fork results\nlayerfs fs mkdir results /app/results -m \"results: folder\"\nlayerfs fs write results /app/results/page.tsx -m \"results: add app/results/page.tsx\" <<'EOF'\nexport default function Page() {\n  return <h1>Results</h1>;\n}\nEOF"
+            },
+            "expect": [
+              "branch.fork:Forked",
+              "fs.mkdir:Committed",
+              "fs.write:Committed"
+            ]
+          },
+          {
+            "phase": "Test",
+            "say": "A Sandbox of my own, and a Workspace of results in it; I keep both open while I work.",
+            "bash": {
+              "description": "Open a Sandbox and mount results",
+              "command": "layerfs sandbox create | tee sandbox-results.json\nlayerfs workspace mount \"$(jq -r .sandbox sandbox-results.json)\" results | tee ws-results.json\nlayerfs workspace exec \"$(jq -r .ws ws-results.json)\" \"sh test.sh\" --stream"
+            },
+            "expect": [
+              "sandbox.create:ok",
+              "workspace.mount:Mounted",
+              "workspace.exec:exit:0"
+            ],
+            "note": "Each subagent of each session has its own Sandbox: Live shows them all open at once."
+          },
+          {
+            "say": "Adding the page's data in the Workspace, then testing and committing it.",
+            "bash": {
+              "description": "Add app/results/data.ts in the Workspace and commit",
+              "command": "layerfs workspace exec {{ws}} \"printf 'export const pageSize = 20;\\\\n' > app/results/data.ts && sh test.sh\" --stream\nlayerfs workspace commit {{ws}} -m \"results: add app/results/data.ts\""
+            },
+            "expect": [
+              "workspace.exec:exit:0",
+              "workspace.commit:Committed"
+            ]
+          },
+          {
+            "say": "Done here: unmounting and closing my Sandbox.",
+            "bash": {
+              "description": "Unmount and close my Sandbox",
+              "command": "layerfs workspace unmount {{ws}}\nlayerfs sandbox close {{sandbox}}"
+            },
+            "expect": [
+              "workspace.unmount:Unmounted",
+              "sandbox.close:Closed"
+            ]
+          },
+          {
+            "reply": "Ready: Branch results, with app/results/page.tsx and data.ts committed and the tests passing."
+          }
+        ]
+      }
+    },
+    "docs": {
+      "prompt": "Write the docs: a guide page and an FAQ page, each by its own subagent on its own Branch, then bring them together on a docs Branch and test it. Other sessions work on the same project at the same time; stay on your own Branches.",
+      "agents": {
+        "docs": [
+          {
+            "phase": "Split",
+            "say": "Two pieces of the docs, one subagent each, each on its own Branch.",
+            "subagent": {
+              "description": "guide",
+              "prompt": "Fork a guide Branch from main, write the guide page at app/guide/page.tsx with fs, then in a Sandbox of your own add its data in a Workspace, test, commit, and report the Branch."
+            }
+          },
+          {
+            "subagent": {
+              "description": "faq",
+              "prompt": "Fork a faq Branch from main, write the FAQ page at app/faq/page.tsx with fs, then in a Sandbox of your own add its data in a Workspace, test, commit, and report the Branch."
+            }
+          },
+          {
+            "reply": "guide and faq are working in parallel; I'll merge when both report.",
+            "until": [
+              "guide",
+              "faq"
+            ]
+          },
+          {
+            "phase": "Merge",
+            "say": "Both are ready. Merging guide and faq into a new docs Branch; main stays as it is.",
+            "bash": {
+              "description": "Merge guide and faq into docs",
+              "command": "layerfs branch merge guide faq docs -m \"docs: guide + faq\"\nlayerfs fs list docs /app"
+            },
+            "expect": [
+              "branch.merge:Merged",
+              "fs.list:ok"
+            ],
+            "note": "Each session merges only its own Branches, so the sessions never meet on main."
+          },
+          {
+            "phase": "Test",
+            "say": "Testing docs in a Sandbox of mine.",
+            "bash": {
+              "description": "Test docs in a Workspace",
+              "command": "layerfs sandbox create | tee sandbox-docs.json\nlayerfs workspace mount \"$(jq -r .sandbox sandbox-docs.json)\" docs | tee ws-docs.json\nlayerfs workspace exec \"$(jq -r .ws ws-docs.json)\" \"sh test.sh && ls app/guide app/faq\" --stream"
+            },
+            "expect": [
+              "sandbox.create:ok",
+              "workspace.mount:Mounted",
+              "workspace.exec:exit:0"
+            ]
+          },
+          {
+            "say": "Tests pass. Unmounting and closing my Sandbox.",
+            "bash": {
+              "description": "Unmount and close my Sandbox",
+              "command": "layerfs workspace unmount {{ws}}\nlayerfs sandbox close {{sandbox}}"
+            },
+            "expect": [
+              "workspace.unmount:Unmounted",
+              "sandbox.close:Closed"
+            ]
+          },
+          {
+            "reply": "Branch docs holds guide and faq, merged with no conflicts and tested; every Sandbox of this session is closed."
+          }
+        ],
+        "guide": [
+          {
+            "phase": "Write",
+            "say": "Forking guide from main and writing the guide page with fs.",
+            "bash": {
+              "description": "Fork guide and write its page",
+              "command": "layerfs branch fork guide\nlayerfs fs mkdir guide /app/guide -m \"guide: folder\"\nlayerfs fs write guide /app/guide/page.tsx -m \"guide: add app/guide/page.tsx\" <<'EOF'\nexport default function Page() {\n  return <h1>Guide</h1>;\n}\nEOF"
+            },
+            "expect": [
+              "branch.fork:Forked",
+              "fs.mkdir:Committed",
+              "fs.write:Committed"
+            ]
+          },
+          {
+            "phase": "Test",
+            "say": "A Sandbox of my own, and a Workspace of guide in it; I keep both open while I work.",
+            "bash": {
+              "description": "Open a Sandbox and mount guide",
+              "command": "layerfs sandbox create | tee sandbox-guide.json\nlayerfs workspace mount \"$(jq -r .sandbox sandbox-guide.json)\" guide | tee ws-guide.json\nlayerfs workspace exec \"$(jq -r .ws ws-guide.json)\" \"sh test.sh\" --stream"
+            },
+            "expect": [
+              "sandbox.create:ok",
+              "workspace.mount:Mounted",
+              "workspace.exec:exit:0"
+            ],
+            "note": "Each subagent of each session has its own Sandbox: Live shows them all open at once."
+          },
+          {
+            "say": "Adding the page's data in the Workspace, then testing and committing it.",
+            "bash": {
+              "description": "Add app/guide/data.ts in the Workspace and commit",
+              "command": "layerfs workspace exec {{ws}} \"printf 'export const chapters = 4;\\\\n' > app/guide/data.ts && sh test.sh\" --stream\nlayerfs workspace commit {{ws}} -m \"guide: add app/guide/data.ts\""
+            },
+            "expect": [
+              "workspace.exec:exit:0",
+              "workspace.commit:Committed"
+            ]
+          },
+          {
+            "say": "Done here: unmounting and closing my Sandbox.",
+            "bash": {
+              "description": "Unmount and close my Sandbox",
+              "command": "layerfs workspace unmount {{ws}}\nlayerfs sandbox close {{sandbox}}"
+            },
+            "expect": [
+              "workspace.unmount:Unmounted",
+              "sandbox.close:Closed"
+            ]
+          },
+          {
+            "reply": "Ready: Branch guide, with app/guide/page.tsx and data.ts committed and the tests passing."
+          }
+        ],
+        "faq": [
+          {
+            "phase": "Write",
+            "say": "Forking faq from main and writing the FAQ page with fs.",
+            "bash": {
+              "description": "Fork faq and write its page",
+              "command": "layerfs branch fork faq\nlayerfs fs mkdir faq /app/faq -m \"faq: folder\"\nlayerfs fs write faq /app/faq/page.tsx -m \"faq: add app/faq/page.tsx\" <<'EOF'\nexport default function Page() {\n  return <h1>FAQ</h1>;\n}\nEOF"
+            },
+            "expect": [
+              "branch.fork:Forked",
+              "fs.mkdir:Committed",
+              "fs.write:Committed"
+            ]
+          },
+          {
+            "phase": "Test",
+            "say": "A Sandbox of my own, and a Workspace of faq in it; I keep both open while I work.",
+            "bash": {
+              "description": "Open a Sandbox and mount faq",
+              "command": "layerfs sandbox create | tee sandbox-faq.json\nlayerfs workspace mount \"$(jq -r .sandbox sandbox-faq.json)\" faq | tee ws-faq.json\nlayerfs workspace exec \"$(jq -r .ws ws-faq.json)\" \"sh test.sh\" --stream"
+            },
+            "expect": [
+              "sandbox.create:ok",
+              "workspace.mount:Mounted",
+              "workspace.exec:exit:0"
+            ],
+            "note": "Each subagent of each session has its own Sandbox: Live shows them all open at once."
+          },
+          {
+            "say": "Adding the page's data in the Workspace, then testing and committing it.",
+            "bash": {
+              "description": "Add app/faq/data.ts in the Workspace and commit",
+              "command": "layerfs workspace exec {{ws}} \"printf 'export const questions = 3;\\\\n' > app/faq/data.ts && sh test.sh\" --stream\nlayerfs workspace commit {{ws}} -m \"faq: add app/faq/data.ts\""
+            },
+            "expect": [
+              "workspace.exec:exit:0",
+              "workspace.commit:Committed"
+            ]
+          },
+          {
+            "say": "Done here: unmounting and closing my Sandbox.",
+            "bash": {
+              "description": "Unmount and close my Sandbox",
+              "command": "layerfs workspace unmount {{ws}}\nlayerfs sandbox close {{sandbox}}"
+            },
+            "expect": [
+              "workspace.unmount:Unmounted",
+              "sandbox.close:Closed"
+            ]
+          },
+          {
+            "reply": "Ready: Branch faq, with app/faq/page.tsx and data.ts committed and the tests passing."
+          }
+        ]
+      }
+    }
+  }
+}

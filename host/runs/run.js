@@ -7,6 +7,12 @@
 // last step is done and the final checks (host/checks) pass; the first failed
 // step, a stop or the 15-minute limit ends it. The record (run.json) is
 // written whole, through a temporary file, as the run changes.
+//
+// A scenario of several sessions plays as one launch: a run per session, its
+// root agent named after the session. The launch's first run resets the
+// project; the others wait for its Init and play on the same project. They
+// end together: once one fails or stops, the others stop, and the project's
+// Sandboxes are closed once, after the last has ended.
 import { chmodSync, mkdirSync, renameSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { setTimeout as pause } from 'node:timers/promises'
@@ -43,8 +49,10 @@ export class Run {
    * @param {{ id, folder, scenario }} o.demo the loaded scenario and its folder
    * @param {object} o.record what run.json holds so far (id, demo, project, …)
    * @param {(event: object) => void} o.emit
+   * @param {Run} [o.after] the launch's run that resets the project: this one waits for its Init
+   * @param {Launch} [o.launch] the launch this run's session belongs to
    */
-  constructor({ spec, demo, record, emit, loadSeed, loadChecks, beforeRemove = async () => {} }) {
+  constructor({ spec, demo, record, emit, loadSeed, loadChecks, beforeRemove = async () => {}, after = null, launch = null }) {
     this.spec = spec
     this.source = demo
     this.scenario = demo.scenario
@@ -52,6 +60,8 @@ export class Run {
     this.loadSeed = loadSeed
     this.loadChecks = loadChecks
     this.beforeRemove = beforeRemove
+    this.after = after
+    this.group = launch
     Object.assign(this, { steps: [], messages: [], captured: {}, checks: [], phase: null, error: null, ended: null }, record)
     this.dir = join(spec.runs, this.id)
     this.work = join(this.dir, 'work')
@@ -73,7 +83,12 @@ export class Run {
     this.agents = new Map()
     for (const [name, steps] of Object.entries(this.scenario.agents)) this.agents.set(name, new Agent(this, name, steps))
     for (const [child, parent] of this.scenario.parents) this.agents.get(child).parent = this.agents.get(parent)
+    this.root = this.scenario.root ?? 'root'
     this.finished = new Promise((resolve) => (this.resolveFinished = resolve))
+    // settles once the project is Inited (or the run ended first): the launch's other sessions wait for it
+    this.ready = new Promise((resolve, reject) => Object.assign(this, { resolveReady: resolve, rejectReady: reject }))
+    this.ready.catch(() => {})
+    launch?.runs.push(this)
   }
 
   get over() {
@@ -93,6 +108,8 @@ export class Run {
       demo: this.source.id,
       project: this.project,
       replay: this.replay ?? null,
+      session: this.session ?? null,
+      launch: this.launch ?? null,
       state: this.state,
       started: this.started,
       ended: this.ended,
@@ -320,14 +337,17 @@ export class Run {
       const shim = join(this.bin, 'layerfs')
       writeFileSync(shim, `#!/bin/sh\nexec node --import ${q(RESOLVE)} ${q(CLI)} "$@"\n`)
       chmodSync(shim, 0o755)
-      await this.init()
+      if (this.after) await this.joinInit()
+      else await this.init()
+      this.resolveReady()
       if (this.over) return
       this.state = 'running'
       this.changed(true)
       for (const agent of this.agents.values()) this.traces.follow(agent.name, join(this.traceDir, `${agent.name}.jsonl`))
       this.traces.start()
-      this.agents.get('root').turn()
+      this.agents.get(this.root).turn()
     } catch (error) {
+      this.rejectReady(error)
       this.fail(`${error.code ? `${error.code}: ` : ''}${error.message}`)
     }
     await this.finished
@@ -361,6 +381,21 @@ export class Run {
     if (job.step !== 'done') throw Object.assign(new Error(`Init failed: ${job.error?.message ?? 'unknown'}`), { code: job.error?.code ?? 'Failed' })
     this.volume = job.project?.volume ?? null
     this.image = job.project?.image ?? scenario.image ?? null
+    this.phase = null
+    this.save(true)
+  }
+
+  /** Another session of the launch resets the project: wait for its Init, then play on what it made. */
+  async joinInit() {
+    this.phase = 'Init'
+    this.changed(true)
+    try {
+      await this.after.ready
+    } catch (error) {
+      throw Object.assign(new Error(`session ${this.after.session ?? this.after.id} did not Init the project: ${error.message}`), { code: error.code })
+    }
+    this.volume = this.after.volume
+    this.image = this.after.image
     this.phase = null
     this.save(true)
   }
@@ -416,7 +451,8 @@ export class Run {
     this.end('stopped', 'stopped')
   }
 
-  end(state, error) {
+  /** Ends the run; `cause` is set when another session of the launch ended it (so it ends no others). */
+  end(state, error, cause = null) {
     if (!ACTIVE.has(this.state)) return
     this.state = state
     this.error = error
@@ -430,6 +466,13 @@ export class Run {
     // an agent never started stays waiting, so it stays unlisted
     for (const agent of this.agents.values()) if (!['done', 'failed', 'waiting'].includes(agent.state)) agent.setState(state === 'passed' ? agent.state : 'stopped')
     this.changed(true)
+    this.rejectReady(new Error(error ?? state))
+    // the launch's sessions share the project: one cut short stops the others (a host closing interrupts them all alike)
+    if (state !== 'passed' && this.group && !cause) {
+      const interrupted = state === 'failed' && String(error).startsWith('interrupted')
+      const why = interrupted ? error : `stopped: session ${this.session ?? this.id} ${state === 'stopped' ? 'was stopped' : 'failed'}`
+      for (const other of this.group.runs) if (other !== this) other.end(interrupted ? 'failed' : 'stopped', why, this)
+    }
     // a run cut short leaves its scripts' Workspaces mounted, so their Sandboxes never go idle
     const cleanup = state === 'passed' ? Promise.resolve() : this.closeSandboxes().catch((e) => console.error(`[runs] ${this.id}: closing Sandboxes: ${e.message}`))
     this.cleanup = cleanup
@@ -439,11 +482,32 @@ export class Run {
   /** Closes the run's Sandboxes once; `swept` in run.json says it was tried. */
   async closeSandboxes() {
     try {
-      await closeRunSandboxes(this.spec, { id: this.id, project: this.project, volume: this.volume, image: this.image })
+      if (this.group) await this.group.closeSandboxes(this.spec)
+      else await closeRunSandboxes(this.spec, { id: this.id, project: this.project, volume: this.volume, image: this.image })
     } finally {
       this.swept = true
       this.save(true)
     }
+  }
+}
+
+/**
+ * The runs of one launch of a scenario of several sessions: they share the
+ * project, so its Sandboxes are closed once, when every one has ended.
+ */
+export class Launch {
+  constructor(id) {
+    this.id = id
+    /** @type {Run[]} */
+    this.runs = []
+    this.closing = null
+  }
+
+  closeSandboxes(spec) {
+    // a run that ends cut short ends the others first (Run.end), so none still plays here
+    const first = this.runs[0]
+    this.closing ??= closeRunSandboxes(spec, { id: this.id, project: first.project, volume: first.volume, image: first.image })
+    return this.closing
   }
 }
 

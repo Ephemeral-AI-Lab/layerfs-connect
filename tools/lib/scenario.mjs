@@ -85,13 +85,14 @@ export function loadScenario(folder) {
 }
 
 /** Checks a parsed scenario and compiles it. */
-export function compileScenario(raw, { name, folder, where = name }) {
+export function compileScenario(raw, { name, folder, where = name, root = 'root' }) {
   const fail = (path, message) => {
     throw new ScenarioError(`${where} ${path}`, message)
   }
   if (!isAbsolute(folder)) folder = resolve(folder)
   if (!isObject(raw)) fail('', 'must be an object')
-  only(raw, ['type', 'version', 'title', 'blurb', 'prompt', 'order', 'tags', 'fixture', 'image', 'agents'], '', fail)
+  only(raw, ['type', 'version', 'title', 'blurb', 'prompt', 'order', 'tags', 'fixture', 'image', 'agents', 'sessions'], '', fail)
+  if (raw.sessions !== undefined) return compileSessions(raw, { name, folder, where, fail })
   if (raw.type !== TYPE) fail('type', `must be "${TYPE}"`)
   if (raw.version !== 3) fail('version', 'must be 3')
   if (typeof raw.title !== 'string' || !raw.title) fail('title', 'must be a non-empty string')
@@ -117,7 +118,7 @@ export function compileScenario(raw, { name, folder, where = name }) {
       fixture = at
     }
   }
-  if (!isObject(raw.agents) || !Array.isArray(raw.agents.root)) fail('agents', "must hold a root agent's steps")
+  if (!isObject(raw.agents) || !Array.isArray(raw.agents[root])) fail('agents', root === 'root' ? "must hold a root agent's steps" : `must hold the steps of ${root}, the session's own agent`)
 
   const prompts = new Map()
   const parents = new Map()
@@ -132,10 +133,10 @@ export function compileScenario(raw, { name, folder, where = name }) {
   }
   for (const [child, parent] of parents) {
     if (!agents[child]) fail(`agents.${parent}`, `starts ${child}, which has no steps under agents`)
-    if (child === 'root') fail(`agents.${parent}`, "root is the run's own agent and cannot be started")
+    if (child === root) fail(`agents.${parent}`, `${root} is the run's own agent and cannot be started`)
   }
   for (const agent of Object.keys(agents)) {
-    if (agent !== 'root' && !parents.has(agent)) fail(`agents.${agent}`, 'no subagent step starts this agent')
+    if (agent !== root && !parents.has(agent)) fail(`agents.${agent}`, 'no subagent step starts this agent')
   }
   for (const { ref, at } of used) if (!produced.has(ref)) fail(at, `{{commit:${ref}}} names a Commit no step's commits lists`)
 
@@ -150,7 +151,45 @@ export function compileScenario(raw, { name, folder, where = name }) {
   const all = Object.values(agents).flat()
   const calls = [...new Set(all.flatMap((s) => s.expect ?? []).map(methodOf).filter(Boolean))].sort()
   const counts = { agents: Object.keys(agents).length, steps: all.filter((s) => s.kind === 'call').length, calls }
-  return { name, title: raw.title, blurb: raw.blurb ?? '', prompt: raw.prompt ?? null, order: raw.order ?? null, tags, form, counts, fixture, seed, image: raw.image ?? null, agents, prompts, parents, templates }
+  return { name, title: raw.title, blurb: raw.blurb ?? '', prompt: raw.prompt ?? null, order: raw.order ?? null, tags, form, counts, fixture, seed, image: raw.image ?? null, root, agents, prompts, parents, templates, sessions: null }
+}
+
+/**
+ * A scenario of several sessions on one project: `sessions` in place of
+ * `agents`, `{ "<session>": { prompt, agents: { "<session>": [Step…], "<child>": … } } }`.
+ * Each session is its own run with its own root agent, named after the
+ * session; a launch resets the project once and starts every session
+ * together. Each compiles as a scenario of its own (the same checks), and
+ * agent names are unique over all sessions. The result also holds every
+ * agent merged (`agents`, `prompts`, `parents`, `templates`), for the tools
+ * that read a scenario's steps whole.
+ */
+function compileSessions(raw, { name, folder, where, fail }) {
+  if (raw.agents !== undefined) fail('sessions', 'a scenario has agents or sessions, not both')
+  if (raw.prompt !== undefined) fail('prompt', "a scenario of sessions has a prompt per session, not one")
+  if (!isObject(raw.sessions) || Object.keys(raw.sessions).length < 2) fail('sessions', 'must hold two or more sessions')
+  const { sessions: _, ...common } = raw
+  const sessions = []
+  const owner = new Map()
+  for (const [session, value] of Object.entries(raw.sessions)) {
+    const at = `sessions.${session}`
+    if (!NAME.test(session)) fail(at, 'a session name is lowercase letters, digits and -')
+    if (!isObject(value)) fail(at, 'must be an object')
+    only(value, ['prompt', 'agents'], at, fail)
+    if (typeof value.prompt !== 'string' || !value.prompt.trim()) fail(`${at}.prompt`, "must be a non-empty string: the user's request to the session")
+    const scenario = compileScenario({ ...common, prompt: value.prompt, agents: value.agents }, { name, folder, where: `${where} ${at}`, root: session })
+    for (const agent of Object.keys(scenario.agents)) {
+      if (owner.has(agent)) fail(`${at}.agents.${agent}`, `is also an agent of session ${owner.get(agent)}: agent names are unique over the sessions`)
+      owner.set(agent, session)
+    }
+    sessions.push({ name: session, prompt: value.prompt, scenario })
+  }
+  const first = sessions[0].scenario
+  const merged = (key) => new Map(sessions.flatMap((s) => [...s.scenario[key]]))
+  const agents = Object.assign({}, ...sessions.map((s) => s.scenario.agents))
+  const calls = [...new Set(sessions.flatMap((s) => s.scenario.counts.calls))].sort()
+  const counts = { agents: Object.keys(agents).length, steps: sessions.reduce((n, s) => n + s.scenario.counts.steps, 0), calls, sessions: sessions.length }
+  return { ...first, prompt: null, root: null, counts, agents, prompts: merged('prompts'), parents: merged('parents'), templates: sessions.flatMap((s) => s.scenario.templates), sessions }
 }
 
 /** The tags: exactly one form, at most one workload, one to three topics, nothing else. */

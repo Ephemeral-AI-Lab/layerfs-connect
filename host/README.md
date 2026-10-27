@@ -123,14 +123,18 @@ again from the demo's fixture (seed demos write their seed out first), makes
 the run folder
 `runs/<runId>/` (`work/` is every agent's bash cwd, `traces/<agent>.jsonl`
 the SDK trace per agent, `run.json` the record), then plays the root agent.
-Each agent is a session of the project. Only the newest replay's Branches,
+Each agent is a session of the project. A scenario of several sessions
+(scenarios/README.md) starts a run per session as one launch (`Launch` in
+run.js): the first resets the project, the others wait for its Init, all
+play on it at once, a cut-short one stops the others, and the project's
+Sandboxes are closed once. Only the newest replay's Branches,
 Commits and Sandboxes are in the project; earlier replays keep their record
 (conversation, trace, checks).
 Semantics follow dsh-layerfs exactly (its `packages/mock/src`: scenario.js,
 plan.js, progress.js, expect.js; dsh's tool schemas for subagent,
 send_message, job_* and bash). One attempt per call, nothing retried; a
 failed step fails the run; a run has 15 minutes. Two replays (of different
-demos) may play at once.
+demos) may play at once; a launch's sessions count as one.
 
 The run follows its agents' trace start and end lines
 ([`runs/live.js`](runs/live.js)): the calls running now, the Sandboxes each

@@ -13,22 +13,28 @@ const scenarios = readdirSync(SCENARIOS)
   .filter((d) => existsSync(join(SCENARIOS, d, 'scenario.json')))
   .map((d) => [d, JSON.parse(readFileSync(join(SCENARIOS, d, 'scenario.json'), 'utf8'))])
 
+/** Every agent of a scenario: [agent, steps, its run's root]; a scenario of sessions has a root per session. */
+const agentsOf = (s) =>
+  s.sessions
+    ? Object.entries(s.sessions).flatMap(([root, session]) => Object.entries(session.agents).map(([agent, list]) => [agent, list, root]))
+    : Object.entries(s.agents).map(([agent, list]) => [agent, list, 'root'])
+
 const lineCount = (text) => {
   const lines = text.split('\n')
   if (lines.length > 1 && lines.at(-1) === '') lines.pop()
   return lines.length
 }
 
-test('all ten scenarios are there', () => {
-  assert.equal(scenarios.length, 10)
+test('all eleven scenarios are there', () => {
+  assert.equal(scenarios.length, 11)
 })
 
 test('every step: lines covered once, in order, text matching', () => {
   let steps = 0
   for (const [name, s] of scenarios) {
-    for (const [agent, list] of Object.entries(s.agents)) {
+    for (const [agent, list, root] of agentsOf(s)) {
       list.forEach((step, index) => {
-        const view = stepView(step, index, agent)
+        const view = stepView(step, index, agent, root)
         const where = `${name} ${agent}[${index}]`
         steps++
         assert.ok(view.segments.length > 0, where)
@@ -55,12 +61,12 @@ test('every step: lines covered once, in order, text matching', () => {
 
 test('no bash step that calls LayerFS comes out all local', () => {
   for (const [name, s] of scenarios) {
-    for (const [agent, list] of Object.entries(s.agents)) {
+    for (const [agent, list, root] of agentsOf(s)) {
       list.forEach((step, index) => {
         if (!step.bash) return
         const { command } = step.bash
         if (!/\blayerfs |\blf\./.test(command)) return
-        const view = stepView(step, index, agent)
+        const view = stepView(step, index, agent, root)
         assert.ok(view.segments.some((seg) => seg.kind !== 'local'), `${name} ${agent}[${index}] is all local`)
         assert.notEqual(view.kind, 'local', `${name} ${agent}[${index}]`)
       })
@@ -71,10 +77,10 @@ test('no bash step that calls LayerFS comes out all local', () => {
 test('every `layerfs` command and lf./be. call of every step is found', () => {
   // counted independently with a regex over the scripts' lines, against the segments' lines
   for (const [name, s] of scenarios) {
-    for (const [agent, list] of Object.entries(s.agents)) {
+    for (const [agent, list, root] of agentsOf(s)) {
       list.forEach((step, index) => {
         if (!step.bash) return
-        const view = stepView(step, index, agent)
+        const view = stepView(step, index, agent, root)
         const lines = view.text.split('\n')
         lines.forEach((line, k) => {
           const m = /^\s*(?:[a-z]+=\$\()?layerfs ([a-z_]+) ([a-z_]+)/.exec(line) ?? /\b(?:lf|be)\.([a-z_]+)\.([a-z_]+)\(/.exec(line)
@@ -87,7 +93,7 @@ test('every `layerfs` command and lf./be. call of every step is found', () => {
   }
 })
 
-const step = (name, agent, index) => scenarios.find(([n]) => n === name)[1].agents[agent][index]
+const step = (name, agent, index) => agentsOf(scenarios.find(([n]) => n === name)[1]).find(([a]) => a === agent)[1][index]
 const signature = (name, agent, index) => {
   const view = stepView(step(name, agent, index), index, agent)
   return { kind: view.kind, segments: view.segments.map((s) => `${s.lines.join('-')} ${s.form} ${s.call ?? s.kind}${s.detail ? ` «${s.detail}»` : ''}`) }

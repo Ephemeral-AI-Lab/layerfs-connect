@@ -9,21 +9,23 @@
 // demo plays at a time and only its newest run's project state is there.
 // Runs live in <spec.runs>/<runId>/; their
 // run.json records survive a host restart, and a run still playing at a
-// restart reads as failed (interrupted). At most two runs play at once.
+// restart reads as failed (interrupted). At most two launches play at once.
+// A scenario of several sessions starts a run per session as one launch
+// (run.js, Launch): the first resets the project, and all play on it at once.
 import { EventEmitter } from 'node:events'
 import { existsSync, readdirSync, readFileSync, renameSync, statSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { compileScenario } from '../../tools/lib/scenario.mjs'
 import { missing, openRuntime } from '../config.js'
-import { closeRunSandboxes, Run } from './run.js'
+import { closeRunSandboxes, Launch, Run } from './run.js'
 import { demoViews } from './views.js'
 
 export { LIMIT_MS } from './run.js'
 export const MAX_PLAYING = 2
 const SCENARIOS = fileURLToPath(new URL('../../scenarios/', import.meta.url))
 const ACTIVE = new Set(['starting', 'running'])
-const SUMMARY = ['id', 'demo', 'project', 'state', 'started', 'ended', 'error', 'done', 'of', 'phase', 'agents', 'replay']
+const SUMMARY = ['id', 'demo', 'project', 'state', 'started', 'ended', 'error', 'done', 'of', 'phase', 'agents', 'replay', 'session', 'launch']
 
 const refuse = (code, status, message) => Object.assign(new Error(message), { code, status })
 
@@ -155,8 +157,9 @@ export class RunManager extends EventEmitter {
     }
   }
 
+  /** Launches playing: the sessions of one launch count once. */
   playing() {
-    return [...this.live.values()].filter((r) => ACTIVE.has(r.state)).length + this.starting
+    return new Set([...this.live.values()].filter((r) => ACTIVE.has(r.state)).map((r) => r.launch ?? r.id)).size + this.starting
   }
 
   /** The newest run recorded on LayerFS project `name`. */
@@ -174,7 +177,7 @@ export class RunManager extends EventEmitter {
     if (gaps.length) throw refuse('NotConfigured', 409, `LayerFS is not configured: set ${gaps.join(' and ')} in Settings`)
     if (this.playing() >= MAX_PLAYING) throw refuse('Busy', 409, `${MAX_PLAYING} runs are playing; stop one or wait for one to end`)
     this.starting++
-    let run
+    let runs
     try {
       if (c.demo.scenario.seed && !(await optional('../seed.js'))) throw refuse('NotReady', 409, `${id} is a seed demo, and host/seed.js is not there yet`)
       if (this.allRuns().some((r) => r.project === id && ACTIVE.has(r.state))) throw refuse('Busy', 409, `${id} is replaying now; stop it before replaying again`)
@@ -182,24 +185,43 @@ export class RunManager extends EventEmitter {
       await this.sweeping
       await openRuntime(this.spec)
       const started = Date.now()
-      const replay = 1 + Math.max(0, ...this.allRuns().filter((r) => r.demo === id).map((r) => r.replay ?? 0))
-      const record = { id: `${id}-${started.toString(36)}`, demo: id, project: id, replay, state: 'starting', started }
-      run = new Run({
+      const base = Math.max(0, ...this.allRuns().filter((r) => r.demo === id).map((r) => r.replay ?? 0))
+      const common = {
         spec: this.spec,
-        demo: c.demo,
-        record,
         emit: (event) => this.emit('event', event),
         loadSeed: () => optional('../seed.js'),
         loadChecks: () => optional('../checks/index.js'),
         beforeRemove: this.beforeRemove,
-      })
-      this.live.set(run.id, run)
+      }
+      const sessions = c.demo.scenario.sessions
+      if (!sessions) {
+        const record = { id: `${id}-${started.toString(36)}`, demo: id, project: id, replay: base + 1, state: 'starting', started }
+        runs = [new Run({ ...common, demo: c.demo, record })]
+      } else {
+        // one run per session, started together (the same `started`, so none reads as an older session of the others)
+        const launch = new Launch(`${id}-${started.toString(36)}`)
+        runs = []
+        sessions.forEach((s, i) => {
+          const record = { id: `${launch.id}-${s.name}`, demo: id, project: id, replay: base + 1 + i, session: s.name, launch: launch.id, state: 'starting', started }
+          runs.push(new Run({ ...common, demo: { ...c.demo, scenario: s.scenario }, record, launch, after: runs[0] ?? null }))
+        })
+      }
+      for (const run of runs) this.live.set(run.id, run)
     } finally {
       this.starting--
     }
-    run.changed(true)
-    run.play().catch((error) => run.fail(error.message))
-    return run.summary()
+    for (const run of runs) {
+      run.changed(true)
+      run.play().catch((error) => run.fail(error.message))
+    }
+    return runs[0].summary()
+  }
+
+  /** The runs of `id`'s launch (itself alone for a run of one session), first first. */
+  launchOf(id) {
+    const run = this.live.get(id) ?? this.records.get(id)
+    if (!run?.launch) return run ? [run] : []
+    return [...this.live.values(), ...this.records.values()].filter((r, i, all) => r.launch === run.launch && all.findIndex((x) => x.id === r.id) === i).sort((a, b) => (a.replay ?? 0) - (b.replay ?? 0))
   }
 
   allRuns() {

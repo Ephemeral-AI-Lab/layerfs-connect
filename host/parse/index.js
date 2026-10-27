@@ -27,9 +27,10 @@ const ref = (id) => String(id ?? '').replace(/^@/, '')
 
 /**
  * A step as the views show it. `step` is a scenario.json step ({ bash: … },
- * { reply: … }, …); `agent` its agent's name (default root).
+ * { reply: … }, …); `agent` its agent's name (default root), and `root` the
+ * run's own agent (a session of a several-session scenario names it).
  */
-export function stepView(step, index, agent = 'root') {
+export function stepView(step, index, agent = 'root', root = 'root') {
   const view = { index }
   for (const key of ['say', 'phase', 'note']) if (typeof step[key] === 'string') view[key] = step[key]
   if (Array.isArray(step.expect)) view.expect = step.expect
@@ -39,8 +40,8 @@ export function stepView(step, index, agent = 'root') {
     view.text = String(step.reply)
     const until = Array.isArray(step.until) && step.until.length ? step.until : null
     if (until) view.until = until
-    const kind = until || agent !== 'root' ? 'subagent' : 'local'
-    view.segments = [whole(kind, 'reply', view.text, until ? until.join(', ') : agent !== 'root' ? agent : undefined)]
+    const kind = until || agent !== root ? 'subagent' : 'local'
+    view.segments = [whole(kind, 'reply', view.text, until ? until.join(', ') : agent !== root ? agent : undefined)]
     view.kind = kind
     return view
   }

@@ -204,6 +204,14 @@ export interface DemoAgent {
   steps: number
 }
 
+export interface DemoSession {
+  name: string
+  /** What the user asked the session's root agent (named `name`). */
+  prompt: string
+  /** Its agents, root first. */
+  agents: string[]
+}
+
 export interface DemoSummary {
   id: string
   title: string
@@ -213,6 +221,12 @@ export interface DemoSummary {
   order: number
   tags: string[]
   agents: DemoAgent[]
+  /**
+   * A demo of several sessions: each is a run of its own, started together on
+   * the demo's project; its root agent is named after it and starts with its
+   * prompt. Null for a demo of one session.
+   */
+  sessions?: DemoSession[] | null
   /** Total steps over every agent. */
   steps: number
   /** Counts by segment kind over every step. */
@@ -242,6 +256,10 @@ export interface RunSummary {
   project: string
   /** The replay's number among its demo's (1, 2, …); null on runs from before one project per demo. */
   replay: number | null
+  /** A demo of several sessions: the session this run plays (its root agent's name); null otherwise. */
+  session?: string | null
+  /** A demo of several sessions: the launch that started its sessions together; null otherwise. */
+  launch?: string | null
   state: RunState
   started: number
   ended: number | null

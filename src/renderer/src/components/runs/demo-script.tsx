@@ -69,6 +69,8 @@ function Script({ demo }: { demo: DemoDetail }) {
       children: new Set(agents.filter((a) => a.parent === agent).map((a) => a.name)),
       entries,
       incoming: prompt ? [{ at: 0, from: parent ?? 'root', to: agent, text: prompt }] : [],
+      // a demo of several sessions: each session's root opens with what the user asked it
+      prompt: demo.sessions?.find((s) => s.name === agent)?.prompt ?? null,
     })
   }, [steps, agent, demo, parents, agents])
 

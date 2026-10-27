@@ -174,9 +174,9 @@ function RunBody({ run, demo, views, tab, onTab, picked, onAgent: setPicked, onO
       children: new Set(agents.filter((a) => a.parent === agent).map((a) => a.name)),
       entries,
       incoming: run.messages.filter((m) => m.to === agent),
-      prompt: agent === root ? demo?.prompt : null,
+      prompt: agent === root ? (demo?.sessions?.find((s) => s.name === root)?.prompt ?? demo?.prompt) : null,
     })
-  }, [run.steps, run.messages, views, agent, agents, root, demo?.prompt])
+  }, [run.steps, run.messages, views, agent, agents, root, demo?.prompt, demo?.sessions])
   const steps = useMemo(() => run.steps.filter((s) => s.agent === agent).length, [run.steps, agent])
   const shown = run.agents.find((a) => a.name === agent)
   // the agent's ancestors, root first, and how many of its subagents (at any depth) are running

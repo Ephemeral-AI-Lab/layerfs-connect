@@ -18,7 +18,9 @@ come from dsh-layerfs (`scenarios/`, `demo-workspace/`, `tools/replay`,
   [Replay fixes](#replay-fixes)).
 
 `host/test/scenarios.test.js` checks both: the seven against a fresh port,
-the three against a fresh conversion.
+the three against a fresh conversion. **teams** is written in Connect, not
+ported (see [Several sessions](#several-sessions)).
+
 
 | Id | Order | Form | Fixture | Agents | Steps | Written by |
 | --- | ---: | --- | --- | ---: | ---: | --- |
@@ -28,6 +30,7 @@ the three against a fresh conversion.
 | merge | 4 | sdk | demo-workspace | 1 | 13 | hand |
 | sandbox | 4 | sdk | demo-workspace | 1 | 6 | hand |
 | agents | 5 | sdk | demo-workspace | 6 | 113 | hand |
+| teams | 6 | cli | demo-workspace | 3 × 3 | 39 | hand, in Connect |
 | shop | 7 | cli | seed.json | 1 | 17 | `tools/replay/convert.mjs` |
 | depot | 8 | sdk | seed.json | 1 | 97 | `tools/replay/convert.mjs` |
 | crew | 9 | cli | seed.json | 6 | 560 | `tools/replay/convert.mjs` |
@@ -74,6 +77,40 @@ fixtures/demo-workspace/   the fixture the hand-written seven Init from
 - `agents`: `root` is the run's own agent; every other agent is started by a
   `subagent` step of its parent, with `description` equal to its name.
   Agent names are lowercase letters, digits and `-`.
+
+### Several sessions
+
+A scenario may hold `sessions` in place of `agents` (and no top-level
+`prompt`): two or more sessions, each `{ prompt, agents }`.
+
+```json
+"sessions": {
+  "checkout": { "prompt": "Build the checkout pages…",
+                "agents": { "checkout": [Step, …], "cart": [Step, …], "pay": [Step, …] } },
+  "search":   { "prompt": "…", "agents": { "search": […], "index": […], "results": […] } }
+}
+```
+
+- Each session is a run of its own (a session in the app) with its own root
+  agent, named after the session; its other agents are started by `subagent`
+  steps as usual. Each session is checked as a scenario of its own, and agent
+  names are unique over all sessions.
+- One New session starts them all at once (a launch): the first session
+  resets the project (removed, then Inited from the fixture), the others
+  wait for that Init, then all play on the same project. They share it, so
+  Branch names must not collide, and Sandbox numbers are not known ahead:
+  use `{{sandbox}}` and `{{ws}}`.
+- They end together: once one fails or is stopped, the others stop, and the
+  project's Sandboxes are closed once. A launch counts once against the two
+  replays that may play at once.
+
+**teams** (`3 sessions`): checkout, search and docs start at once. Each lead
+starts two subagents; each subagent forks its own Branch from main, writes
+its page with `fs`, opens a Sandbox of its own, adds data in a Workspace,
+tests, commits, unmounts and closes it. Each lead merges its two Branches
+into the session's Branch (`branch merge`) and tests it in its own Sandbox.
+No session writes main, so the sessions never conflict. Up to six Sandboxes
+are open at once.
 
 ### Steps
 
