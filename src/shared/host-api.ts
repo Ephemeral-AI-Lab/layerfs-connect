@@ -337,6 +337,58 @@ export interface StepResult {
   checks: CheckResult[]
 }
 
+/** One row of a session's Trace (host/runs/trajectory.js): what one agent was given and did. */
+export interface TraceRecord {
+  id: string
+  kind: 'system' | 'user' | 'context' | 'assistant' | 'tool' | 'subagent' | 'layerfs' | 'check'
+  /** 0 before the first message; a user's message or a parent's task opens the next. */
+  turn: number
+  /** The model request (or scripted step) this row belongs to. */
+  step: number | null
+  title: string
+  status: 'ok' | 'failed' | 'running' | 'stopped' | 'starting'
+  start: number | null
+  ms: number | null
+  text?: string | null
+  /** user/context: where it came from. */
+  source?: 'user' | 'parent' | 'child' | 'model' | 'host' | 'scenario'
+  from?: string
+  opens?: boolean
+  /** system/assistant: no model, the scenario's script. */
+  scripted?: boolean
+  sections?: string[] | null
+  model?: string | null
+  thinking?: string | null
+  toolOnly?: boolean
+  final?: boolean
+  phase?: string | null
+  usage?: { input: number; output: number; cacheRead: number; cacheWrite: number; reasoning: number; cost: number } | null
+  stopReason?: string | null
+  error?: string | null
+  /** tool/subagent */
+  tool?: string
+  child?: string | null
+  output?: string | null
+  exitCode?: number | null
+  checks?: { name: string; ok: boolean; detail: string }[]
+  background?: boolean
+  calls?: number
+  /** layerfs: the tool row it ran in. */
+  parent?: string
+  outcome?: string | null
+  args?: Record<string, string>
+}
+
+/** A page of one agent's Trace, newest last: records [from, from + records.length) of total. */
+export interface TracePage {
+  agent: string
+  kind: 'live' | 'replay'
+  total: number
+  from: number
+  records: TraceRecord[]
+  agents: { name: string; parent: string | null; state: string }[]
+}
+
 export interface RunDetail extends RunSummary {
   agents: AgentRun[]
   /** Every step result so far, in the order steps started. */

@@ -114,6 +114,7 @@ export function createHandler(deps) {
     if (group === 'runs') {
       if (!id && method === 'GET') return engine().runs(query.get('demo') || undefined)
       if (id && !sub && method === 'GET') return found(engine().run(id), `run ${id}`)
+      if (id && sub === 'trace' && method === 'GET') return engine().trace(id, { agent: query.get('agent'), before: query.get('before'), limit: query.get('limit') ?? undefined })
       if (id && sub === 'stop' && method === 'POST') return engine().stop(id)
       return undefined
     }

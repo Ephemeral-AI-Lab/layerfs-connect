@@ -10,6 +10,7 @@ import type {
   RunDetail,
   RunEvent,
   RunSummary,
+  TracePage,
 } from '@shared/host-api'
 
 export class HostError extends Error {
@@ -66,6 +67,8 @@ export const host = {
   startRun: (id: string) => call<RunSummary>('POST', `/api/demos/${enc(id)}/runs`),
   runs: (demo?: string) => call<RunSummary[]>('GET', `/api/runs${q({ demo })}`),
   run: (id: string) => call<RunDetail>('GET', `/api/runs/${enc(id)}`),
+  /** One agent's Trace rows, the newest `limit` before `before` (default: the end). */
+  trace: (id: string, o: { agent?: string; before?: number; limit?: number } = {}) => call<TracePage>('GET', `/api/runs/${enc(id)}/trace${q(o)}`),
   stopRun: (id: string) => call<RunSummary>('POST', `/api/runs/${enc(id)}/stop`),
 }
 

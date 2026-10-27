@@ -19,6 +19,7 @@ import { fileURLToPath } from 'node:url'
 import { compileScenario } from '../../tools/lib/scenario.mjs'
 import { missing, openRuntime } from '../config.js'
 import { closeRunSandboxes, Launch, Run } from './run.js'
+import { piLog, trajectory } from './trajectory.js'
 import { demoViews } from './views.js'
 
 export { LIMIT_MS } from './run.js'
@@ -242,6 +243,28 @@ export class RunManager extends EventEmitter {
     if (live) return live.detail()
     const r = this.records.get(id)
     return r ? { ...pick(r), steps: r.steps ?? [], messages: r.messages ?? [], captured: r.captured ?? {}, checks: r.checks ?? [], live: r.live ?? EMPTY_LIVE } : null
+  }
+
+  /**
+   * One agent's Trace rows (trajectory.js): pi's log for a live session, the
+   * scenario's script for a replay. `before`/`limit` page from the newest.
+   */
+  trace(id, { agent = null, before = null, limit = undefined } = {}) {
+    const run = this.run(id)
+    if (!run) throw refuse('NotFound', 404, `no run named ${id}`)
+    const root = run.agents.find((a) => a.parent === null)?.name ?? 'root'
+    const name = agent || root
+    if (!run.agents.some((a) => a.name === name)) throw refuse('NotFound', 404, `run ${id} has no agent named ${name}`)
+    const agents = run.agents.map((a) => ({ name: a.name, parent: a.parent, state: a.state }))
+    if (run.kind === 'live') {
+      const pi = piLog(join(this.spec.runs, id), name)
+      return { ...trajectory({ run, agent: name, pi, before, limit }), agents }
+    }
+    const views = this.load().find((c) => c.demo.id === run.demo)?.views
+    const script = views?.script[name] ?? []
+    const session = run.session ? views?.summary.sessions?.find((s) => s.name === run.session) : null
+    const prompt = name === root ? (session?.prompt ?? views?.summary.agents.find((a) => a.name === name)?.prompt ?? views?.summary.prompt ?? null) : null
+    return { ...trajectory({ run, agent: name, scriptView: (i) => script[i], prompt, title: views?.summary.title ?? null, before, limit }), agents }
   }
 
   stop(id) {

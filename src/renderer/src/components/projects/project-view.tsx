@@ -4,7 +4,7 @@
 // demo's fixture), and the list of Sessions. A session page is one replay:
 // its conversation, agent by agent. Both carry the small replay control,
 // whose menu opens the scenario.
-import { Activity, ChevronLeft, Clock, MessagesSquare, Sparkles, TriangleAlert } from 'lucide-react'
+import { Activity, ChevronLeft, Clock, MessagesSquare, TriangleAlert } from 'lucide-react'
 import { useState } from 'react'
 
 import { LfsBranch, LfsCommit, LfsLayer, LfsProject, LfsSandbox, LfsStore } from '@/components/lfs-icons'
@@ -21,6 +21,7 @@ import { ReplayControl } from '@/components/runs/replay-control'
 import { RunList } from '@/components/runs/run-list'
 import type { HistoryInit } from '@/components/runs/run-project-tabs'
 import { RunPanel } from '@/components/runs/run-view'
+import { TraceView } from '@/components/runs/trace-view'
 import { useNow } from '@/components/runs/use-run'
 import { useRuns, useStartRun } from '@/components/runs/use-runs'
 import { ago, bytes } from '@/data/format'
@@ -338,9 +339,6 @@ function SessionPage({ run, title, agent, onAgent, onProject }: SessionPageProps
       <Tab active={view === 'trace'} onClick={() => viewTransition(() => setView('trace'), 'tab')}>
         <Activity aria-hidden="true" className="mr-1.5 size-3.5 opacity-80" />
         Trace
-        <span className="ml-1.5 rounded-full bg-primary/10 px-1.5 text-[10px] leading-4 font-semibold tracking-wide text-primary uppercase ring-1 ring-primary/20 ring-inset">
-          soon
-        </span>
       </Tab>
     </>
   )
@@ -384,80 +382,9 @@ function SessionPage({ run, title, agent, onAgent, onProject }: SessionPageProps
           onAgent={onAgent}
           lead={lead}
           tabs={tabs}
-          pane={view === 'trace' ? <TracePlaceholder /> : undefined}
+          pane={view === 'trace' ? (shown: string) => <TraceView runId={run.id} agent={shown} live={live} started={run.started} /> : undefined}
           meta={meta}
         />
-      </div>
-    </div>
-  )
-}
-
-/** Trace lanes in the sketch: an agent colour each, and its calls as [start, length] in percent. */
-const SKETCH: { color: string; calls: [number, number][] }[] = [
-  { color: 'var(--primary)', calls: [[2, 9], [14, 4], [62, 7], [86, 10]] },
-  { color: 'var(--agent-builder)', calls: [[12, 16], [31, 5], [40, 12], [70, 9]] },
-  { color: 'var(--agent-docs)', calls: [[18, 6], [27, 18], [52, 6], [80, 6]] },
-  { color: 'var(--agent-tester)', calls: [[46, 10], [59, 14], [76, 8], [90, 6]] },
-]
-
-/** Trace: coming soon. A sketch of the timeline it will be: lanes of calls drawing in, a playhead sweeping across. */
-function TracePlaceholder() {
-  return (
-    <div className="mx-auto flex w-full max-w-[1000px] flex-col items-center px-8 py-10">
-      <div className="surface reveal-scale trace-sketch relative w-full overflow-hidden rounded-2xl p-6">
-        <div aria-hidden="true" className="flex flex-col gap-3">
-          {/* the time ruler */}
-          <div className="ml-24 flex justify-between pb-1 font-mono text-[10px] text-faint tabular-nums">
-            {['0 s', '15 s', '30 s', '45 s', '60 s'].map((t) => (
-              <span key={t}>{t}</span>
-            ))}
-          </div>
-          <div className="relative">
-            {SKETCH.map((lane, i) => (
-              <div key={i} className="flex h-9 items-center gap-3 border-t border-dashed border-foreground/[0.07] first:border-t-0">
-                <span className="flex w-21 shrink-0 items-center gap-2">
-                  <span className="size-2 shrink-0 rounded-full" style={{ background: lane.color }} />
-                  <span className="h-2 flex-1 rounded-full bg-foreground/[0.09]" style={{ maxWidth: `${3.5 - i * 0.4}rem` }} />
-                </span>
-                <span className="relative h-full flex-1">
-                  {lane.calls.map(([at, len], j) => (
-                    <span
-                      key={j}
-                      className="trace-bar absolute top-1/2 h-3.5 -translate-y-1/2 rounded-[4px]"
-                      style={
-                        {
-                          left: `${at}%`,
-                          width: `${len}%`,
-                          '--d': 120 + at * 9,
-                          background: `color-mix(in oklab, ${lane.color} 28%, transparent)`,
-                          boxShadow: `inset 0 0 0 1px color-mix(in oklab, ${lane.color} 45%, transparent)`,
-                        } as React.CSSProperties
-                      }
-                    />
-                  ))}
-                </span>
-              </div>
-            ))}
-            {/* the playhead sweeps the lanes (not the labels) */}
-            <div className="pointer-events-none absolute inset-y-0 right-0 left-24">
-              <div className="trace-head absolute inset-0">
-                <span className="absolute inset-y-0 -left-16 w-16 bg-linear-to-r from-transparent to-primary/10" />
-                <span className="absolute inset-y-[-6px] left-0 w-px bg-brand shadow-[0_0_10px_1px_var(--glow-strong)]" />
-                <span className="absolute -top-2 -left-[3px] size-[7px] rounded-full bg-primary shadow-[0_0_8px_0_var(--glow-strong)]" />
-              </div>
-            </div>
-          </div>
-        </div>
-        <span aria-hidden="true" className="pointer-events-none absolute inset-x-0 bottom-0 h-[42%] bg-linear-to-t from-card via-card/90 to-transparent" />
-        <div className="relative mt-1 flex flex-col items-center gap-1.5 text-center">
-          <span className="flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-0.5 text-[11px] font-semibold tracking-wide text-primary uppercase ring-1 ring-primary/20 ring-inset">
-            <Sparkles aria-hidden="true" className="size-3" /> Coming soon
-          </span>
-          <p className="text-[15px] font-semibold tracking-[-0.01em]">Trace</p>
-          <p className="max-w-sm text-xs text-pretty text-muted-foreground">
-            The session’s LayerFS calls as a timeline, agent by agent: when each ran, how long it took, and what it wrote.
-          </p>
-        </div>
       </div>
     </div>
   )

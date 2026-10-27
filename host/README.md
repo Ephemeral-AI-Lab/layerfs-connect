@@ -97,6 +97,7 @@ errors are `{ code, message }` with a 4xx/5xx status. CORS allows any origin
 | `POST /api/demos/:id/runs` | `RunSummary`: a replay. Resets the demo's project `<id>` (removed if there, Inited again from the fixture), then plays; 409 while the demo replays |
 | `GET /api/runs?demo=` | `RunSummary[]`, newest first |
 | `GET /api/runs/:id` | `RunDetail` |
+| `GET /api/runs/:id/trace?agent=&before=&limit=` | `TracePage`: one agent's Trace rows (runs/trajectory.js), newest last; `limit` (default 400) rows before `before` (default the end). A live session's model side comes from pi's log, a replay's from the scenario's script |
 | `POST /api/runs/:id/stop` | `RunSummary` |
 | `GET /api/events?token=` | `text/event-stream`, one `data: <RunEvent JSON>` per event |
 

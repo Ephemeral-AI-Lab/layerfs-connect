@@ -8,6 +8,11 @@
 // quotes with $vars inside, $( … ), operators and comments, and it hands each
 // heredoc body to its own language (node → js, `fs write x.tsx` → tsx, …).
 // The other languages go through their Lezer parsers, already in the bundle.
+// `node -e '…'` bodies read as js too.
+//
+// LayerFS operations stand out in every language: `lf.branch.fork(` in a
+// script and `layerfs branch fork` in a command take the C.lfs mark (the
+// operation's words; the receiver and `layerfs` keep their colours).
 
 import { javascriptLanguage, tsxLanguage, typescriptLanguage } from '@codemirror/lang-javascript'
 import { jsonLanguage } from '@codemirror/lang-json'
@@ -35,7 +40,49 @@ const C = {
   type: 'text-(--hl-type)',
   prop: 'text-(--hl-property)',
   variable: 'text-(--hl-type)',
+  lfs: 'font-semibold text-(--lfs-dark) bg-(--lfs-dark)/10',
 } as const
+
+/** The SDK's call groups (`lf.<group>.<method>(`, `layerfs <group> <method>`). */
+const GROUPS = 'project|branch|fs|workspace|sandbox|process|inspect|history'
+const JS_OP = new RegExp(`(?<=\\.)(?:${GROUPS})\\.[a-z_]+(?=\\s*\\()|\\bLayerFS\\.open(?=\\s*\\()`, 'g')
+const BASH_OP = new RegExp(`(?<=\\blayerfs[ \\t]+)(?:${GROUPS})[ \\t]+[a-z][\\w-]*`, 'g')
+
+/** Gives the parts of each line that `re` matches the C.lfs mark, splitting tokens at the edges. */
+function markOps(lines: Token[][], re: RegExp): Token[][] {
+  return lines.map((tokens) => {
+    const text = tokens.map((t) => t[0]).join('')
+    const spans = [...text.matchAll(re)].map((m) => [m.index, m.index + m[0].length] as const)
+    if (!spans.length) return tokens
+    const out: Token[] = []
+    let at = 0
+    for (const [part, cls] of tokens) {
+      let from = 0
+      while (from < part.length) {
+        const pos = at + from
+        const span = spans.find(([a, b]) => pos < b && pos + (part.length - from) > a)
+        if (!span) {
+          out.push([part.slice(from), cls])
+          break
+        }
+        const [a, b] = span
+        if (pos < a) {
+          out.push([part.slice(from, a - at), cls])
+          from = a - at
+          continue
+        }
+        const end = Math.min(part.length, b - at)
+        const last = out[out.length - 1]
+        // one operation spans several tokens (`branch` `.` `fork`): one span
+        if (last?.[1] === C.lfs && pos > a) last[0] += part.slice(from, end)
+        else out.push([part.slice(from, end), C.lfs])
+        from = end
+      }
+      at += part.length
+    }
+    return out
+  })
+}
 
 const classes = tagHighlighter([
   { tag: [t.comment, t.lineComment, t.blockComment], class: C.comment },
@@ -97,9 +144,10 @@ export function highlight(text: string, lang: Lang): Token[][] {
 
 function highlightNow(text: string, lang: Lang): Token[][] {
   if (text.length > MAX || lang === 'text') return plain(text)
-  if (lang === 'bash') return highlightBash(text)
+  if (lang === 'bash') return markOps(highlightBash(text), BASH_OP)
   const p = parsers[lang]
-  return p ? lezer(text, p) : plain(text)
+  if (!p) return plain(text)
+  return lang === 'js' || lang === 'ts' || lang === 'tsx' ? markOps(lezer(text, p), JS_OP) : lezer(text, p)
 }
 
 // ---------------------------------------------------------------------------
@@ -234,6 +282,22 @@ function lexBash(src: string): Lexed {
       const end = src.indexOf('\n', i)
       emit(src.slice(i, end < 0 ? n : end), C.comment)
       i = end < 0 ? n : end
+      continue
+    }
+    if (c === "'" && words.some((x) => /^(node|bun|deno)$/.test(x)) && /^(-e|-p|--eval|--print)$/.test(words[words.length - 1] ?? '')) {
+      // a script in one quote: no '…' inside it, so the quote ends the script
+      let j = src.indexOf("'", i + 1)
+      j = j < 0 ? n : j
+      emit("'", C.string)
+      const body = src.slice(i + 1, j)
+      const lang: Lang = words.some((x) => /^--input-type=module$/.test(x)) || /\b(import|await)\b/.test(body) ? 'js' : 'js'
+      if (body.length <= MAX) for (const [k, l] of highlightNow(body, lang).entries()) for (const tok of k ? [['\n', ''] as Token, ...l] : l) emit(tok[0], tok[1])
+      else emit(body, C.string)
+      if (j < n) emit("'", C.string)
+      line += countNl(src, i, j + 1)
+      words.push(body)
+      cmdPos = false
+      i = Math.min(j + 1, n)
       continue
     }
     if (c === "'" || (c === '$' && src[i + 1] === "'")) {

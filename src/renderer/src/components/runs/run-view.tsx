@@ -41,9 +41,9 @@ interface RunPanelProps {
   /** Conversation: the breadcrumb's start (project / session) and the row's trailing facts. */
   lead?: ReactNode
   meta?: ReactNode
-  /** The session page's tabs, a row under the breadcrumb; `pane` replaces the conversation (another tab). */
+  /** The session page's tabs, a row under the breadcrumb; `pane` replaces the conversation (another tab), given the agent shown. */
   tabs?: ReactNode
-  pane?: ReactNode
+  pane?: ReactNode | ((agent: string) => ReactNode)
 }
 
 /** A run's tab, live: loads the run once and follows its events. */
@@ -149,7 +149,7 @@ interface BodyProps {
   lead?: ReactNode
   meta?: ReactNode
   tabs?: ReactNode
-  pane?: ReactNode
+  pane?: ReactNode | ((agent: string) => ReactNode)
 }
 
 function RunBody({ run, demo, views, tab, onTab, picked, onAgent: setPicked, onOpenSession, historyInit, sessions, lead, meta, tabs, pane }: BodyProps) {
@@ -267,7 +267,7 @@ function RunBody({ run, demo, views, tab, onTab, picked, onAgent: setPicked, onO
         </div>
       )}
       {pane ? (
-        <div className="min-h-0 flex-1 overflow-y-auto">{pane}</div>
+        <div className="min-h-0 flex-1 overflow-y-auto">{typeof pane === 'function' ? pane(agent) : pane}</div>
       ) : (
         <>
           <div className="shrink-0 px-8">
