@@ -1,9 +1,13 @@
-import { ChevronRight, FileQuestion, FileText, Folder, FolderOpen, Link2, LoaderCircle, Search, X } from 'lucide-react'
+import '@/components/projects/history/history.css'
+
+import { ChevronRight, FileQuestion, FileText, Folder, FolderOpen, Link2, X } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
+import { Collapse, revealStyle, useIndicator } from '@/components/motion'
+
 import { CodeView } from '@/components/projects/code-view'
+import { PaneHead, SearchField } from '@/components/projects/history/parts'
 import { LoadError, Loading, explain } from '@/components/projects/states'
-import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { bytes, shortId } from '@/data/format'
 import { host } from '@/host/client'
@@ -44,6 +48,15 @@ function FileBadge({ entry }: { entry: Pick<FsEntry, 'name' | 'kind'> }) {
   )
 }
 
+/** The icon over an empty pane: a small raised tile. */
+function EmptyMark({ icon: Icon }: { icon: React.ComponentType<{ className?: string }> }) {
+  return (
+    <span className="mb-1 flex size-10 items-center justify-center rounded-xl border bg-card text-faint shadow-[var(--highlight),var(--elev-1)]">
+      <Icon aria-hidden="true" className="size-5" />
+    </span>
+  )
+}
+
 /** A folder's entries, its read in progress, or why it failed. */
 type Dir = FsEntry[] | 'loading' | Error
 
@@ -65,8 +78,9 @@ function Tree({ path, depth, dirs, open, selected, onToggle, onOpenFile }: TreeP
   const pad = { paddingLeft: `${0.5 + depth * 1 + (depth > 0 ? 1.375 : 0)}rem` }
   if (dir === undefined || dir === 'loading')
     return (
-      <p style={pad} className="flex items-center gap-2 py-1 text-xs text-faint">
-        <LoaderCircle aria-hidden="true" className="size-3 animate-spin" /> Reading…
+      <p role="status" style={pad} className="flex items-center gap-2 py-1.5 pr-3 text-xs text-faint">
+        <span aria-hidden="true" className="shimmer h-2 w-24 rounded-full" />
+        <span className="sr-only">Reading…</span>
       </p>
     )
   if (dir instanceof Error)
@@ -83,23 +97,25 @@ function Tree({ path, depth, dirs, open, selected, onToggle, onOpenFile }: TreeP
     )
   return (
     <ul role={depth === 0 ? 'tree' : 'group'} aria-label={depth === 0 ? 'Files' : undefined}>
-      {[...dir].sort(byKind).map((n) => {
+      {[...dir].sort(byKind).map((n, i) => {
         const expanded = open.has(n.path)
+        const on = n.path === selected
         return (
-          <li key={n.path} role="treeitem" aria-expanded={n.kind === 'dir' ? expanded : undefined} aria-selected={n.path === selected}>
+          <li key={n.path} role="treeitem" aria-expanded={n.kind === 'dir' ? expanded : undefined} aria-selected={on}>
             <button
               type="button"
+              data-active={on}
               onClick={() => (n.kind === 'dir' ? onToggle(n.path) : onOpenFile(n))}
               title={n.kind === 'dir' ? n.path : `${n.path} · ${bytes(n.size)}`}
-              style={{ paddingLeft: `${0.5 + depth * 1}rem` }}
+              style={revealStyle(i, { paddingLeft: `${0.5 + depth * 1}rem` })}
               className={cn(
-                'flex w-full items-center gap-2 py-1 pr-3 text-left text-[13px] outline-none focus-visible:bg-muted',
-                n.path === selected ? 'bg-accent text-accent-foreground' : 'hover:bg-muted/70',
+                'reveal flex h-7 w-full items-center gap-2 rounded-md pr-3 text-left text-[13px] outline-none transition-colors duration-(--dur-fast) focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset',
+                on ? 'text-accent-foreground' : 'hover:bg-muted/70',
               )}
             >
               {n.kind === 'dir' ? (
                 <>
-                  <ChevronRight aria-hidden="true" className={cn('size-3.5 shrink-0 text-faint transition-transform', expanded && 'rotate-90')} />
+                  <ChevronRight aria-hidden="true" data-open={expanded} className="chevron size-3.5 shrink-0 text-faint" />
                   {expanded ? (
                     <FolderOpen aria-hidden="true" className="size-4 shrink-0 text-primary/80" />
                   ) : (
@@ -115,10 +131,12 @@ function Tree({ path, depth, dirs, open, selected, onToggle, onOpenFile }: TreeP
                   <FileBadge entry={n} />
                 </>
               )}
-              <span className="truncate">{n.name}</span>
+              <span className={cn('truncate', on && 'font-medium')}>{n.name}</span>
             </button>
-            {n.kind === 'dir' && expanded && (
-              <Tree path={n.path} depth={depth + 1} dirs={dirs} open={open} selected={selected} onToggle={onToggle} onOpenFile={onOpenFile} />
+            {n.kind === 'dir' && (
+              <Collapse open={expanded} appear={false}>
+                <Tree path={n.path} depth={depth + 1} dirs={dirs} open={open} selected={selected} onToggle={onToggle} onOpenFile={onOpenFile} />
+              </Collapse>
             )}
           </li>
         )
@@ -133,15 +151,25 @@ function FileBody({ project, branch, path, tick }: { project: string; branch: st
   const data = q.data?.path === path ? q.data : undefined
   return (
     <>
-      <div className="flex items-center gap-3 border-b px-4 py-2">
-        <span className="truncate font-mono text-xs text-muted-foreground">{path}</span>
-        <span className="ml-auto shrink-0 text-xs text-faint">
+      <div className="flex h-9 shrink-0 items-center gap-3 border-b px-4">
+        <span className="min-w-0 truncate font-mono text-xs" title={path}>
+          {path
+            .split('/')
+            .filter(Boolean)
+            .map((part, i, all) => (
+              <span key={i} className={i === all.length - 1 ? 'text-foreground' : 'text-faint'}>
+                {i > 0 && <span className="px-1 text-faint/70">/</span>}
+                {part}
+              </span>
+            ))}
+        </span>
+        <span className="ml-auto shrink-0 text-xs text-faint tabular-nums">
           {data &&
             (data.text !== null ? `${data.text.split('\n').length - (data.text.endsWith('\n') ? 1 : 0)} lines · ` : '')}
           {data && `${bytes(data.size)} · `}at {branch}
         </span>
       </div>
-      <div className="min-h-0 flex-1">
+      <div key={path} className="hist-fade min-h-0 flex-1">
         {!data ? (
           q.error ? (
             <LoadError error={q.error} what={path} onRetry={q.reload} className="m-6" />
@@ -152,7 +180,7 @@ function FileBody({ project, branch, path, tick }: { project: string; branch: st
           <CodeView path={path} text={data.text} />
         ) : (
           <div className="flex h-full flex-col items-center justify-center gap-2 text-center">
-            <FileQuestion aria-hidden="true" className="size-6 text-faint" />
+            <EmptyMark icon={FileQuestion} />
             <p className="text-sm font-medium">{data.binary ? 'A binary file' : 'Too large to show'}</p>
             <p className="text-xs text-muted-foreground">
               {bytes(data.size)}
@@ -244,10 +272,13 @@ export function FilesTab({ project, branches, tick = 0, initialBranch }: FilesTa
   const matches = q ? loaded.filter((n) => n.kind !== 'dir' && n.path.toLowerCase().includes(q)).slice(0, 200) : []
   const branch = branches.find((b) => b.name === ref)
   const others = branches.filter((b) => b.name !== 'main')
+  const tree = useIndicator<HTMLDivElement>()
+  const strip = useIndicator<HTMLDivElement>({ axis: 'x' })
 
   return (
-    <div className="grid h-[calc(100svh-13.5rem)] min-h-[28rem] grid-cols-[17rem_minmax(0,1fr)] overflow-hidden rounded-2xl border bg-card">
-      <aside className="flex min-h-0 flex-col border-r">
+    <div className="hist-frame grid h-0 min-h-[28rem] flex-1 grid-cols-[17rem_minmax(0,1fr)] overflow-hidden rounded-2xl">
+      <aside aria-label="Files" className="hist-side flex min-h-0 flex-col border-r">
+        <PaneHead label="Files" count={tabs.length > 0 ? `${tabs.length} open` : undefined} />
         <div className="flex flex-col gap-2 border-b p-3">
           <Select value={ref} onValueChange={setRef}>
             <SelectTrigger aria-label="Branch" className="w-full">
@@ -280,58 +311,71 @@ export function FilesTab({ project, branches, tick = 0, initialBranch }: FilesTa
               )}
             </SelectContent>
           </Select>
-          <div className="relative">
-            <Search aria-hidden="true" className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-faint" />
-            <Input
-              aria-label="Find in opened folders"
-              placeholder="Find in opened folders"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              className="h-7 pl-7 text-[13px]"
-            />
-          </div>
+          <SearchField label="Find in opened folders" value={query} onChange={setQuery} size="sm" />
         </div>
-        <div className="min-h-0 flex-1 overflow-y-auto py-1.5">
-          {q ? (
-            matches.length === 0 ? (
-              <p className="px-4 py-3 text-xs text-muted-foreground">No file in the opened folders matches.</p>
+        <div className="min-h-0 flex-1 overflow-y-auto px-1.5 py-1.5">
+          <div ref={tree.container} className="relative isolate">
+            <span ref={tree.indicator} aria-hidden="true" className="indicator hist-row-indicator -z-10" />
+            {q ? (
+              matches.length === 0 ? (
+                <p className="hist-swap mx-1.5 mt-1.5 rounded-lg border border-dashed px-3 py-3 text-xs text-muted-foreground">
+                  No file in the opened folders matches.
+                </p>
+              ) : (
+                <ul aria-label="Matching files">
+                  {matches.map((n, i) => (
+                    <li key={n.path}>
+                      <button
+                        type="button"
+                        data-active={n.path === active}
+                        onClick={() => openFile(n)}
+                        style={revealStyle(i)}
+                        className={cn(
+                          'reveal flex h-7 w-full items-center gap-2 rounded-md px-2.5 text-left text-[13px] outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset',
+                          n.path !== active && 'hover:bg-muted/70',
+                        )}
+                      >
+                        <FileBadge entry={n} />
+                        <span className="truncate font-mono text-xs">{n.path}</span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )
             ) : (
-              <ul aria-label="Matching files">
-                {matches.map((n) => (
-                  <li key={n.path}>
-                    <button
-                      type="button"
-                      onClick={() => openFile(n)}
-                      className={cn('flex w-full items-center gap-2 px-3 py-1 text-left text-[13px] hover:bg-muted/70', n.path === active && 'bg-accent')}
-                    >
-                      <FileBadge entry={n} />
-                      <span className="truncate font-mono text-xs">{n.path}</span>
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )
-          ) : (
-            <Tree path="/" depth={0} dirs={dirs} open={open} selected={active} onToggle={toggle} onOpenFile={openFile} />
-          )}
+              <Tree path="/" depth={0} dirs={dirs} open={open} selected={active} onToggle={toggle} onOpenFile={openFile} />
+            )}
+          </div>
         </div>
       </aside>
 
       <section className="flex min-h-0 min-w-0 flex-col">
-        <div role="tablist" aria-label="Open files" className="flex min-h-10 items-end gap-0.5 overflow-x-auto border-b bg-muted/30 px-2 pt-1.5">
+        <div
+          ref={strip.container}
+          role="tablist"
+          aria-label="Open files"
+          className="relative flex h-10 shrink-0 items-center gap-0.5 overflow-x-auto border-b bg-muted/25 px-1.5"
+        >
           {tabs.map((p) => {
             const name = p.split('/').pop() ?? p
+            const on = p === active
             return (
               <div
                 key={p}
                 role="tab"
-                aria-selected={p === active}
+                aria-selected={on}
+                data-active={on}
                 className={cn(
-                  'group flex items-center gap-1.5 rounded-t-lg border border-b-0 px-3 py-1.5 text-[13px]',
-                  p === active ? 'border-border bg-card' : 'border-transparent text-muted-foreground hover:text-foreground',
+                  'reveal-scale group flex h-7 shrink-0 items-center gap-1 rounded-md pr-1 pl-2.5 text-[13px] transition-[background-color,color,box-shadow] duration-(--dur-fast)',
+                  on ? 'bg-card text-foreground shadow-[var(--highlight),var(--elev-1)] ring-1 ring-foreground/[0.06]' : 'text-muted-foreground hover:bg-muted/70 hover:text-foreground',
                 )}
               >
-                <button type="button" title={p} onClick={() => setActive(p)} className="flex items-center gap-1.5 font-mono text-xs outline-none">
+                <button
+                  type="button"
+                  title={p}
+                  onClick={() => setActive(p)}
+                  className="flex items-center gap-1.5 rounded font-mono text-xs outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
                   <FileBadge entry={{ name, kind: 'file' }} />
                   {name}
                 </button>
@@ -339,20 +383,25 @@ export function FilesTab({ project, branches, tick = 0, initialBranch }: FilesTa
                   type="button"
                   aria-label={`Close ${p}`}
                   onClick={() => closeFile(p)}
-                  className="rounded p-0.5 text-faint opacity-60 hover:bg-muted hover:opacity-100"
+                  className={cn(
+                    'rounded p-0.5 text-faint outline-none transition-opacity hover:bg-muted hover:text-foreground focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-ring',
+                    on ? 'opacity-70' : 'opacity-0 group-hover:opacity-70',
+                  )}
                 >
                   <X className="size-3" />
                 </button>
               </div>
             )
           })}
+          {tabs.length === 0 && <span className="px-2 text-xs text-faint">No files open</span>}
+          <span ref={strip.indicator} aria-hidden="true" className="indicator file-tab-indicator" />
         </div>
 
         {active ? (
           <FileBody project={project} branch={ref} path={active} tick={tick} />
         ) : (
-          <div className="flex flex-1 flex-col items-center justify-center gap-2 text-center">
-            <FileText aria-hidden="true" className="size-6 text-faint" />
+          <div className="hist-swap flex flex-1 flex-col items-center justify-center gap-2 text-center">
+            <EmptyMark icon={FileText} />
             <p className="text-sm font-medium">Open a file from the tree</p>
             <p className="text-xs text-muted-foreground">Files open read-only, at the Branch picked above the tree.</p>
           </div>

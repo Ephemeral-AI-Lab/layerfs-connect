@@ -195,9 +195,12 @@ export function duration(ms: number | null | undefined): string {
   ms = Math.max(0, ms)
   if (ms < 1000) return `${Math.round(ms)} ms`
   const s = ms / 1000
-  if (s < 60) return `${s < 10 ? s.toFixed(1) : Math.round(s)} s`
-  const m = Math.floor(s / 60)
-  const rest = Math.round(s % 60)
+  if (s < 9.95) return `${s.toFixed(1)} s`
+  // round once, before splitting, so 119.6 s reads 2 m 00 s and never 1 m 60 s
+  const total = Math.round(s)
+  if (total < 60) return `${total} s`
+  const m = Math.floor(total / 60)
+  const rest = total % 60
   if (m < 60) return `${m} m ${String(rest).padStart(2, '0')} s`
   return `${Math.floor(m / 60)} h ${String(m % 60).padStart(2, '0')} m`
 }

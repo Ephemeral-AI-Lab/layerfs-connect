@@ -1,0 +1,181 @@
+/* Storage and compute: bars that fill, gauges that draw, the history-to-disk
+   flow, Sandbox slots, live rows and the quiet "not yet" cards. Tokens come
+   from styles.css; the global reduced-motion rule settles every animation here. */
+
+/* A bar that fills from its left edge. Set --d for its delay. */
+@keyframes sc-fill-x {
+  from {
+    transform: scaleX(0);
+  }
+}
+.sc-fill-x {
+  transform-origin: left center;
+  animation: sc-fill-x var(--dur-xslow) var(--ease-out-expo) backwards;
+  animation-delay: var(--d, 0ms);
+}
+
+/* A ring that draws its arc: stroke-dashoffset eases from empty to the value set inline. */
+@keyframes sc-ring {
+  from {
+    stroke-dashoffset: 1;
+  }
+}
+.sc-ring {
+  stroke-dasharray: 1;
+  animation: sc-ring 1.1s var(--ease-out-expo) backwards;
+  animation-delay: var(--d, 0ms);
+}
+
+/* The flow's stage pillars grow from their middle; its bands wipe in from the left. */
+@keyframes sc-node {
+  from {
+    transform: scaleY(0);
+    opacity: 0;
+  }
+}
+.sc-node {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: sc-node 0.6s var(--ease-out-expo) backwards;
+  animation-delay: var(--d, 0ms);
+}
+@keyframes sc-wipe {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+.sc-wipe {
+  animation: sc-wipe 0.7s var(--ease-out-soft) backwards;
+  animation-delay: var(--d, 0ms);
+}
+/* Something that pops in once its part of the story has arrived. */
+@keyframes sc-pop {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.85);
+  }
+}
+.sc-pop {
+  animation: sc-pop var(--dur-slow) var(--ease-out-expo) backwards;
+  animation-delay: var(--d, 0ms);
+}
+@keyframes sc-fade {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+.sc-fade {
+  animation: sc-fade var(--dur-slow) var(--ease-out-expo) backwards;
+  animation-delay: var(--d, 0ms);
+}
+
+/* A Workspace slot in a Sandbox: lit in brand light when a Workspace is mounted. */
+.sc-slot {
+  background: var(--muted);
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--foreground) 6%, transparent);
+  transition:
+    background-color var(--dur-slow) var(--ease-out-soft),
+    box-shadow var(--dur-slow) var(--ease-out-soft);
+}
+.sc-slot[data-on='true'] {
+  background: linear-gradient(135deg, var(--brand-1), var(--brand-2));
+  box-shadow: 0 0 8px -2px var(--glow);
+  animation: sc-slot-in var(--dur-slow) var(--ease-out-expo) backwards;
+  animation-delay: var(--d, 0ms);
+}
+@keyframes sc-slot-in {
+  from {
+    transform: scale(0.3);
+    opacity: 0;
+  }
+}
+
+/* A connector between a Workspace and its Branch; bytes travel along it while the Sandbox runs. */
+.sc-wire {
+  position: relative;
+  height: 1px;
+  overflow: hidden;
+  background: color-mix(in oklab, var(--foreground) 12%, transparent);
+}
+.sc-wire[data-live='true']::after {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 40%;
+  background: linear-gradient(90deg, transparent, var(--brand-2), var(--brand-3), transparent);
+  animation: sc-travel 1.8s linear infinite;
+}
+@keyframes sc-travel {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(260%);
+  }
+}
+
+/* A running row: a thin brand edge on its left that breathes. */
+.sc-live-row {
+  position: relative;
+}
+.sc-live-row::before {
+  content: '';
+  position: absolute;
+  inset: 8px auto 8px 0;
+  width: 2px;
+  border-radius: 2px;
+  background: linear-gradient(to bottom, var(--brand-1), var(--brand-3));
+  box-shadow: 0 0 10px 0 var(--glow);
+  animation: sc-breathe 2.4s ease-in-out infinite;
+}
+@keyframes sc-breathe {
+  50% {
+    opacity: 0.45;
+  }
+}
+
+/* A target or storage LayerFS cannot use yet: present, calm, plainly not live. */
+.sc-soon {
+  border: 1px dashed color-mix(in oklab, var(--foreground) 16%, transparent);
+  background-color: color-mix(in oklab, var(--card) 55%, transparent);
+  background-image: repeating-linear-gradient(
+    135deg,
+    transparent 0 10px,
+    color-mix(in oklab, var(--foreground) 2.2%, transparent) 10px 11px
+  );
+}
+.sc-soon-mark {
+  filter: grayscale(1);
+  opacity: 0.6;
+  transition:
+    filter var(--dur-base) var(--ease-out-soft),
+    opacity var(--dur-base) var(--ease-out-soft);
+}
+.sc-soon:hover .sc-soon-mark {
+  filter: grayscale(0.2);
+  opacity: 0.9;
+}
+
+/* The Storage page's list indicator: a lit card behind the chosen row, with a brand edge. */
+.sc-pick {
+  border-radius: 0.6rem;
+  background-color: var(--card);
+  background-image: var(--surface-sheen);
+  box-shadow:
+    var(--highlight),
+    var(--elev-1),
+    0 0 0 1px var(--border);
+}
+.sc-pick::before {
+  content: '';
+  position: absolute;
+  inset: 9px auto 9px -1px;
+  width: 2px;
+  border-radius: 2px;
+  background: linear-gradient(to bottom, var(--brand-1), var(--brand-3));
+  box-shadow: 0 0 8px 0 var(--glow);
+}

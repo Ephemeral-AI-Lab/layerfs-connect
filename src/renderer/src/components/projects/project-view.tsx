@@ -4,17 +4,19 @@
 // demo's fixture), and the list of Sessions. A session page is one replay:
 // its conversation, agent by agent. Both carry the small replay control,
 // whose menu opens the scenario.
-import { Activity, ChevronLeft, TriangleAlert } from 'lucide-react'
+import { Activity, ChevronLeft, Clock, MessagesSquare, Sparkles, TriangleAlert } from 'lucide-react'
 import { useState } from 'react'
 
-import { LfsProject } from '@/components/lfs-icons'
+import { LfsBranch, LfsCommit, LfsLayer, LfsProject, LfsSandbox, LfsStore } from '@/components/lfs-icons'
+import { CountUp } from '@/components/motion/count-up'
+import { HeroTile, Stat, StatSkeleton } from '@/components/motion/hero'
 import { PageHeader } from '@/components/motion/page-header'
 import { Tab, TabBar } from '@/components/motion/tabs'
 import { viewTransition } from '@/components/motion/view-transition'
 import { Empty, Loading } from '@/components/projects/states'
 import { DemoScript } from '@/components/runs/demo-script'
-import { RunStateBadge } from '@/components/runs/run-badges'
-import { duration, isLive, plural, runLabel } from '@/components/runs/run-format'
+import { RunStateBadge, SessionHint } from '@/components/runs/run-badges'
+import { duration, isLive, runLabel } from '@/components/runs/run-format'
 import { ReplayControl } from '@/components/runs/replay-control'
 import { RunList } from '@/components/runs/run-list'
 import type { HistoryInit } from '@/components/runs/run-project-tabs'
@@ -171,14 +173,53 @@ function ProjectPage({ demo, title, runs, runsError, onPick, onBack, tab, onTab:
   const state = useHostQuery(() => host.project(demo), [demo, current?.id, current?.state])
   const s = state.data?.project.name === demo ? state.data : undefined
 
-  const facts = s
-    ? [
-        s.last ? `last Commit ${ago(s.last.at)} on ${s.last.branch}` : 'no Commits yet',
-        `${s.branches.length} Branch${s.branches.length === 1 ? '' : 'es'}`,
-        plural(s.commits, 'Commit'),
-        `Store ${bytes(s.store.bytes)}`,
-      ]
-    : []
+  const playing = current && isLive(current.state)
+  // The project's facts as stat pills, counting up as they arrive and as a session writes.
+  const facts = s ? (
+    <>
+      <Stat icon={LfsCommit} index={1} live={playing} title={s.last ? `Last Commit ${ago(s.last.at)} on ${s.last.branch}` : undefined}>
+        {s.last ? (
+          <>
+            {/* a narrow header keeps the time only; the title has it all */}
+            <span className="font-normal text-muted-foreground @max-[40rem]/hero:hidden">last Commit </span>
+            {ago(s.last.at)}
+            <span className="@max-[40rem]/hero:hidden">
+              <span className="font-normal text-muted-foreground"> on </span>
+              <span className="font-mono text-[11.5px]">{s.last.branch}</span>
+            </span>
+          </>
+        ) : (
+          <span className="font-normal text-muted-foreground">no Commits yet</span>
+        )}
+      </Stat>
+      <Stat icon={LfsBranch} index={2} label={s.branches.length === 1 ? 'Branch' : 'Branches'}>
+        <CountUp value={s.branches.length} />
+      </Stat>
+      <Stat icon={LfsLayer} index={3} label={s.commits === 1 ? 'Commit' : 'Commits'} live={playing}>
+        <CountUp value={s.commits} />
+      </Stat>
+      <Stat icon={LfsStore} index={4} label="Store" title={s.store.path ?? undefined}>
+        <CountUp value={s.store.bytes} format={bytes} />
+      </Stat>
+    </>
+  ) : state.error && current ? (
+    <span className="reveal truncate text-xs text-muted-foreground">{state.error.message}</span>
+  ) : current ? (
+    <>
+      {[28, 20, 22, 20].map((w, i) => (
+        <StatSkeleton key={i} className="opacity-70" style={{ width: `${w * 0.25}rem` }} />
+      ))}
+    </>
+  ) : (
+    <>
+      <Stat icon={LfsStore} index={1}>
+        <span className="font-normal">Local SQLite Store</span>
+      </Stat>
+      <Stat icon={LfsSandbox} index={2}>
+        <span className="font-normal">Docker Sandboxes</span>
+      </Stat>
+    </>
+  )
 
   const body =
     tab === 'sessions' ? (
@@ -216,12 +257,13 @@ function ProjectPage({ demo, title, runs, runsError, onPick, onBack, tab, onTab:
       <Loading label="Reading the sessions" />
     )
 
-  const playing = current && isLive(current.state)
   return (
     <div className="flex h-svh min-h-0 flex-col">
       <PageHeader
         size="md"
+        className="[&>div]:pt-3"
         eyebrow={<BackLink onClick={onBack}>Projects</BackLink>}
+        icon={<HeroTile icon={LfsProject} live={playing} />}
         title={title}
         badges={
           <>
@@ -230,26 +272,34 @@ function ProjectPage({ demo, title, runs, runsError, onPick, onBack, tab, onTab:
               <button
                 type="button"
                 onClick={() => onPick({ run: current.id })}
-                className="flex items-center gap-2 rounded-md text-xs font-medium text-primary outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"
+                title="Open the playing session"
+                className="group/playing flex shrink-0 items-center gap-2 rounded-md text-xs font-medium text-primary outline-none animate-in fade-in slide-in-from-left-1 focus-visible:ring-2 focus-visible:ring-ring"
               >
-                <RunStateBadge state={current.state} /> {runLabel(current)} playing
+                <RunStateBadge state={current.state} />
+                <span className="group-hover/playing:underline">{runLabel(current)} playing</span>
               </button>
             )}
           </>
         }
-        description={s ? facts.join(' · ') : state.error && current ? state.error.message : 'Local SQLite Store · Docker Sandboxes'}
+        facts={facts}
+        live={playing}
         actions={action}
         tabs={
           <TabBar aria-label="Project">
             {PROJECT_TABS.map((t) => (
               <Tab key={t.id} active={tab === t.id} onClick={() => setTab(t.id)}>
-                {t.id === 'live' && playing && <span aria-hidden="true" className="pulse-ring mr-1.5 inline-block size-1.5 rounded-full bg-primary text-primary" />}
+                {t.id === 'live' && playing && <span aria-hidden="true" className="pulse-ring mr-2 inline-block size-1.5 rounded-full bg-primary text-primary" />}
                 {t.label}
               </Tab>
             ))}
             <span aria-hidden="true" className="mb-2.5 ml-auto h-4 w-px bg-border" />
             <Tab active={tab === 'sessions'} onClick={() => setTab('sessions')} quiet>
-              Sessions{runs ? <span className="ml-1 font-normal text-faint tabular-nums">{runs.length}</span> : null}
+              Sessions
+              {runs ? (
+                <span className="ml-1.5 rounded-full bg-muted px-1.5 text-[11px] leading-[18px] font-medium text-muted-foreground tabular-nums ring-1 ring-foreground/[0.05] ring-inset">
+                  <CountUp value={runs.length} />
+                </span>
+              ) : null}
             </Tab>
             {tab === 'script' && (
               <Tab active onClick={() => setTab('script')} quiet className="animate-in fade-in slide-in-from-left-1">
@@ -274,7 +324,6 @@ interface SessionPageProps {
   onProject: () => void
 }
 
-/** One session (replay): its conversation, agent by agent. */
 /** One session (replay): its conversation, agent by agent, under a one-row breadcrumb header. */
 function SessionPage({ run, title, agent, onAgent, onProject }: SessionPageProps) {
   const live = isLive(run.state)
@@ -283,26 +332,45 @@ function SessionPage({ run, title, agent, onAgent, onProject }: SessionPageProps
   const tabs = (
     <>
       <Tab active={view === 'conversation'} onClick={() => viewTransition(() => setView('conversation'), 'tab')}>
+        <MessagesSquare aria-hidden="true" className="mr-1.5 size-3.5 opacity-80" />
         Conversation
       </Tab>
       <Tab active={view === 'trace'} onClick={() => viewTransition(() => setView('trace'), 'tab')}>
+        <Activity aria-hidden="true" className="mr-1.5 size-3.5 opacity-80" />
         Trace
+        <span className="ml-1.5 rounded-full bg-primary/10 px-1.5 text-[10px] leading-4 font-semibold tracking-wide text-primary uppercase ring-1 ring-primary/20 ring-inset">
+          soon
+        </span>
       </Tab>
     </>
   )
   const lead = (
     <>
+      <SessionHint run={run} now={now}>
       <button
         type="button"
         onClick={onProject}
-        title={`Open ${title}`}
-        className="group/crumb -ml-1 flex min-w-0 items-center gap-1.5 rounded px-1 text-muted-foreground outline-none transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
+        className="group/crumb -ml-1 flex min-w-0 items-center gap-2 rounded-md py-0.5 pr-1.5 pl-1 text-muted-foreground outline-none transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
       >
-        <LfsProject aria-hidden="true" className="size-3.5 shrink-0 transition-transform duration-(--dur-base) ease-out-expo group-hover/crumb:-translate-x-0.5" />
-        <span className="truncate">{title}</span>
+        <span className="surface flex size-6 shrink-0 items-center justify-center rounded-md transition-[transform,border-color] duration-(--dur-base) ease-out-expo group-hover/crumb:-translate-x-0.5 group-hover/crumb:border-primary/30">
+          <LfsProject aria-hidden="true" className="size-3.5" />
+        </span>
+        <span className="truncate font-medium">{title}</span>
       </button>
-      {/* the page is the session's: named for screen readers, shown on hover over its agents */}
+      </SessionHint>
+      {/* the page is the session's: named for screen readers, shown on hover over the project crumb */}
       <h1 className="sr-only">{runLabel(run)}</h1>
+    </>
+  )
+  const meta = (
+    <>
+      {live && <RunStateBadge state={run.state} />}
+      <span className="flex items-center gap-1">
+        <Clock aria-hidden="true" className="size-3.5 text-faint" />
+        {duration((run.ended ?? now) - run.started)}
+      </span>
+      <span aria-hidden="true" className="text-faint">·</span>
+      <span>started {ago(run.started, now)}</span>
     </>
   )
   return (
@@ -317,20 +385,80 @@ function SessionPage({ run, title, agent, onAgent, onProject }: SessionPageProps
           lead={lead}
           tabs={tabs}
           pane={view === 'trace' ? <TracePlaceholder /> : undefined}
-          meta={`${duration((run.ended ?? now) - run.started)} · started ${ago(run.started, now)}`}
+          meta={meta}
         />
       </div>
     </div>
   )
 }
 
-/** Trace: a placeholder for now. */
+/** Trace lanes in the sketch: an agent colour each, and its calls as [start, length] in percent. */
+const SKETCH: { color: string; calls: [number, number][] }[] = [
+  { color: 'var(--primary)', calls: [[2, 9], [14, 4], [62, 7], [86, 10]] },
+  { color: 'var(--agent-builder)', calls: [[12, 16], [31, 5], [40, 12], [70, 9]] },
+  { color: 'var(--agent-docs)', calls: [[18, 6], [27, 18], [52, 6], [80, 6]] },
+  { color: 'var(--agent-tester)', calls: [[46, 10], [59, 14], [76, 8], [90, 6]] },
+]
+
+/** Trace: coming soon. A sketch of the timeline it will be: lanes of calls drawing in, a playhead sweeping across. */
 function TracePlaceholder() {
   return (
-    <div className="mx-auto w-full max-w-[1000px] px-8 py-8">
-      <Empty icon={Activity} title="Trace is coming">
-        The session’s LayerFS calls as a timeline, agent by agent, will show here.
-      </Empty>
+    <div className="mx-auto flex w-full max-w-[1000px] flex-col items-center px-8 py-10">
+      <div className="surface reveal-scale trace-sketch relative w-full overflow-hidden rounded-2xl p-6">
+        <div aria-hidden="true" className="flex flex-col gap-3">
+          {/* the time ruler */}
+          <div className="ml-24 flex justify-between pb-1 font-mono text-[10px] text-faint tabular-nums">
+            {['0 s', '15 s', '30 s', '45 s', '60 s'].map((t) => (
+              <span key={t}>{t}</span>
+            ))}
+          </div>
+          <div className="relative">
+            {SKETCH.map((lane, i) => (
+              <div key={i} className="flex h-9 items-center gap-3 border-t border-dashed border-foreground/[0.07] first:border-t-0">
+                <span className="flex w-21 shrink-0 items-center gap-2">
+                  <span className="size-2 shrink-0 rounded-full" style={{ background: lane.color }} />
+                  <span className="h-2 flex-1 rounded-full bg-foreground/[0.09]" style={{ maxWidth: `${3.5 - i * 0.4}rem` }} />
+                </span>
+                <span className="relative h-full flex-1">
+                  {lane.calls.map(([at, len], j) => (
+                    <span
+                      key={j}
+                      className="trace-bar absolute top-1/2 h-3.5 -translate-y-1/2 rounded-[4px]"
+                      style={
+                        {
+                          left: `${at}%`,
+                          width: `${len}%`,
+                          '--d': 120 + at * 9,
+                          background: `color-mix(in oklab, ${lane.color} 28%, transparent)`,
+                          boxShadow: `inset 0 0 0 1px color-mix(in oklab, ${lane.color} 45%, transparent)`,
+                        } as React.CSSProperties
+                      }
+                    />
+                  ))}
+                </span>
+              </div>
+            ))}
+            {/* the playhead sweeps the lanes (not the labels) */}
+            <div className="pointer-events-none absolute inset-y-0 right-0 left-24">
+              <div className="trace-head absolute inset-0">
+                <span className="absolute inset-y-0 -left-16 w-16 bg-linear-to-r from-transparent to-primary/10" />
+                <span className="absolute inset-y-[-6px] left-0 w-px bg-brand shadow-[0_0_10px_1px_var(--glow-strong)]" />
+                <span className="absolute -top-2 -left-[3px] size-[7px] rounded-full bg-primary shadow-[0_0_8px_0_var(--glow-strong)]" />
+              </div>
+            </div>
+          </div>
+        </div>
+        <span aria-hidden="true" className="pointer-events-none absolute inset-x-0 bottom-0 h-[42%] bg-linear-to-t from-card via-card/90 to-transparent" />
+        <div className="relative mt-1 flex flex-col items-center gap-1.5 text-center">
+          <span className="flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-0.5 text-[11px] font-semibold tracking-wide text-primary uppercase ring-1 ring-primary/20 ring-inset">
+            <Sparkles aria-hidden="true" className="size-3" /> Coming soon
+          </span>
+          <p className="text-[15px] font-semibold tracking-[-0.01em]">Trace</p>
+          <p className="max-w-sm text-xs text-pretty text-muted-foreground">
+            The session’s LayerFS calls as a timeline, agent by agent: when each ran, how long it took, and what it wrote.
+          </p>
+        </div>
+      </div>
     </div>
   )
 }

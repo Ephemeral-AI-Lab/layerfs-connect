@@ -22,13 +22,13 @@ export const DOT: Record<Tone, string> = {
   danger: 'bg-destructive text-destructive',
 }
 
-/** A live chip's glow, in its tone. */
+/** A live chip's glow, in its tone: the same breathing glow (live-glow), tinted. */
 const GLOW: Record<Tone, string> = {
   neutral: '',
-  success: 'shadow-[0_0_14px_-4px_color-mix(in_oklab,var(--success)_55%,transparent)]',
+  success: 'live-glow [--live-c:var(--success)]',
   info: 'live-glow',
-  warning: 'shadow-[0_0_14px_-4px_color-mix(in_oklab,var(--warning)_55%,transparent)]',
-  danger: 'shadow-[0_0_14px_-4px_color-mix(in_oklab,var(--destructive)_55%,transparent)]',
+  warning: 'live-glow [--live-c:var(--warning)]',
+  danger: 'live-glow [--live-c:var(--destructive)]',
 }
 
 interface ChipProps {

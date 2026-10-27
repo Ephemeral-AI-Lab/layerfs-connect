@@ -13,7 +13,7 @@ import { PageHeader } from '@/components/motion/page-header'
 import { TabBar } from '@/components/motion/tabs'
 import { ProjectSandboxes, ProjectStorage } from '@/components/projects/project-storage'
 import { LiveTab } from '@/components/runs/live-tab'
-import { SessionHint, Spinner } from '@/components/runs/run-badges'
+import { Spinner } from '@/components/runs/run-badges'
 import { activity, agentColors, isLive, stepKey, plural } from '@/components/runs/run-format'
 import { ThinkingLine } from '@/components/runs/thread-items'
 import { type HistoryInit, RunHistoryTab, useRunProject } from '@/components/runs/run-project-tabs'
@@ -93,18 +93,19 @@ export function RunPanel({ runId, tab, onTab, agent, onAgent, onOpenSession, his
 }
 
 /** The session page's header, one row as in dsh: project / root / … / agent ⇕, then facts on the right, then its tabs. */
-function SessionBar({ lead, meta, tabs, children }: { lead: ReactNode; meta?: ReactNode; tabs?: ReactNode; children?: ReactNode }) {
+function SessionBar({ lead, meta, tabs, live, children }: { lead: ReactNode; meta?: ReactNode; tabs?: ReactNode; live?: boolean; children?: ReactNode }) {
   return (
     <PageHeader
       size="md"
-      className="[&>div]:pt-1"
+      live={live}
+      className="[&>div]:pt-2"
       eyebrow={
         <nav aria-label="Breadcrumb" className="reveal flex min-w-0 flex-1 items-center gap-1 text-sm">
           {lead}
           {children}
         </nav>
       }
-      actions={meta && <span className="truncate pl-4 text-xs text-muted-foreground tabular-nums">{meta}</span>}
+      actions={meta && <span className="reveal flex min-w-0 items-center gap-1.5 truncate pl-4 text-xs text-muted-foreground tabular-nums">{meta}</span>}
       tabs={tabs && <TabBar aria-label="Session">{tabs}</TabBar>}
     />
   )
@@ -112,7 +113,7 @@ function SessionBar({ lead, meta, tabs, children }: { lead: ReactNode; meta?: Re
 
 function Slash() {
   return (
-    <span aria-hidden="true" className="px-1 text-faint">
+    <span aria-hidden="true" className="px-0.5 text-[15px] font-light text-foreground/20">
       /
     </span>
   )
@@ -233,28 +234,30 @@ function RunBody({ run, demo, views, tab, onTab, picked, onAgent: setPicked, onO
   return (
     <div className="flex h-full min-h-0 flex-col">
       {lead ? (
-        <SessionBar lead={lead} meta={meta} tabs={tabs}>
+        <SessionBar lead={lead} meta={meta} tabs={tabs} live={live}>
           {chain.map((name) => (
             <Fragment key={name}>
               <Slash />
-              <SessionHint run={run} now={now}>
-                <button
-                  type="button"
-                  onClick={() => setPicked(name)}
-                  className="truncate rounded px-1 text-muted-foreground outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
-                >
-                  {name}
-                </button>
-              </SessionHint>
+              <button
+                type="button"
+                onClick={() => setPicked(name)}
+                className="truncate rounded px-1 text-muted-foreground outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                {name}
+              </button>
             </Fragment>
           ))}
           <Slash />
-          <SessionHint run={run} now={now}>
-            <span className="flex">
-              <AgentSwitcher agents={agents} value={agent} onChange={setPicked} colorOf={colorOf} />
+          {/* the session's hint sits on the project crumb, so no tooltip covers this menu */}
+          <span className="flex">
+            <AgentSwitcher agents={agents} value={agent} onChange={setPicked} colorOf={colorOf} />
+          </span>
+          {running > 0 && (
+            <span className="ml-1.5 flex shrink-0 items-center gap-1.5 rounded-full bg-primary/[0.08] px-2 py-0.5 text-xs font-medium text-primary ring-1 ring-primary/20 ring-inset animate-in fade-in">
+              <span aria-hidden="true" className="pulse-ring size-1.5 rounded-full bg-primary text-primary" />
+              {plural(running, 'subagent')} running
             </span>
-          </SessionHint>
-          {running > 0 && <span className="shrink-0 pl-1 text-muted-foreground">({plural(running, 'subagent')} running)</span>}
+          )}
         </SessionBar>
       ) : (
         <div className="shrink-0 px-8 pt-3">

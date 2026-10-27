@@ -2,9 +2,11 @@
 // and the tokens, are in styles.css: surface, surface-raised, card-hover,
 // spotlight, reveal, reveal-scale, stagger, collapsible, chevron, indicator,
 // shimmer, drift, pulse-ring, live-border, live-glow, text-brand, bg-brand,
-// btn-primary, page-header, canvas, vt-panel.
+// btn-primary, page-header, canvas, vt-panel; hero-tile, stat-pill, live-line,
+// trace-sketch, side-in.
 export { Collapse } from '@/components/motion/collapse'
 export { CountUp, useCountUp } from '@/components/motion/count-up'
+export { HeroTile, Stat, StatSkeleton } from '@/components/motion/hero'
 export { useIndicator, type IndicatorOptions } from '@/components/motion/indicator'
 export { PageHeader } from '@/components/motion/page-header'
 export { prefersReducedMotion, useReducedMotion } from '@/components/motion/reduced-motion'

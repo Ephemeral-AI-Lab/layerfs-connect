@@ -15,11 +15,27 @@ export function viewTransition(update: () => void, kind: TransitionKind = 'page'
     update()
     return
   }
-  const run = () => flushSync(update)
+  // The update runs once: from the transition, or from a timer when the page
+  // gets no frame to capture (an occluded or throttled window), so a click never waits on a frame.
+  let done = false
+  const run = () => {
+    if (done) return
+    done = true
+    flushSync(update)
+  }
+  const late = setTimeout(run, LATE_MS)
+  let t: ViewTransition
   try {
-    document.startViewTransition({ update: run, types: [kind] })
+    t = document.startViewTransition({ update: run, types: [kind] })
   } catch {
     // Chromium before typed transitions takes only the callback.
-    document.startViewTransition(run)
+    t = document.startViewTransition(run)
   }
+  void t.updateCallbackDone.finally(() => clearTimeout(late)).catch(() => {})
+  // a skipped transition (a newer one, a hidden page) is fine: the update still ran
+  t.ready.catch(() => {})
+  t.finished.catch(() => {})
 }
+
+/** How long an update may wait for the transition's first frame before it runs anyway. */
+const LATE_MS = 120

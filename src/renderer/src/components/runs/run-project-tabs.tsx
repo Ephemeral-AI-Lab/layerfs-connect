@@ -1,14 +1,16 @@
 // The History tab of a run: its LayerFS project's history and files. It
 // reuses the project page's components, given the run's project.
 import type { ProjectState, RunDetail } from '@shared/host-api'
+import { FolderTree, GitBranch } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 
+import { Segmented, type SegmentedOption } from '@/components/motion'
 import { FilesTab } from '@/components/projects/files-tab'
 import { HistoryTab, type HistoryView } from '@/components/projects/history-tab'
+import '@/components/projects/history/history.css'
 import { LoadError, Loading } from '@/components/projects/states'
 import { host } from '@/host/client'
 import { useHostQuery } from '@/host/use-host'
-import { cn } from '@/lib/utils'
 
 /** A counter that moves at most every 1.5 s while the run makes progress, so the project rereads. */
 function useProgressTick(run: RunDetail): number {
@@ -53,6 +55,11 @@ function needsProject(run: RunDetail, p: ReturnType<typeof useRunProject>, body:
 
 type HistoryPart = 'history' | 'files'
 
+const PARTS: SegmentedOption<HistoryPart>[] = [
+  { value: 'history', label: 'History', icon: GitBranch },
+  { value: 'files', label: 'Files', icon: FolderTree },
+]
+
 /** Dev aid: where History opens (its Files, a Branch, the Map, replaying). */
 export interface HistoryInit {
   part?: HistoryPart
@@ -66,39 +73,25 @@ export function RunHistoryTab({ run, project, init }: { run: RunDetail; project:
   const [part, setPart] = useState<HistoryPart>(init?.part ?? 'history')
   return (
     <div className="h-full overflow-y-auto">
-      <div className="mx-auto flex w-full max-w-7xl flex-col gap-4 px-8 py-6">
-        <div role="tablist" aria-label="History" className="flex w-fit rounded-lg bg-muted p-0.5">
-          {(['history', 'files'] as const).map((p) => (
-            <button
-              key={p}
-              type="button"
-              role="tab"
-              aria-selected={part === p}
-              onClick={() => setPart(p)}
-              className={cn(
-                'rounded-md px-3 py-1 text-[13px] outline-none focus-visible:ring-2 focus-visible:ring-ring',
-                part === p ? 'bg-card font-medium text-foreground shadow-xs' : 'text-muted-foreground hover:text-foreground',
-              )}
-            >
-              {p === 'history' ? 'History' : 'Files'}
-            </button>
-          ))}
-        </div>
-        {needsProject(run, project, (s) =>
-          part === 'history' ? (
-            <HistoryTab
-              key={s.project.name}
-              project={s.project.name}
-              runId={run.id}
-              tick={project.tick}
-              initialBranch={init?.branch}
-              initialView={init?.view}
-              autoplay={init?.autoplay}
-            />
-          ) : (
-            <FilesTab key={s.project.name} project={s.project.name} branches={s.branches} tick={project.tick} initialBranch={init?.branch} />
-          ),
-        )}
+      <div className="mx-auto flex min-h-full w-full max-w-7xl flex-col gap-3 px-8 py-5">
+        <Segmented role="tablist" aria-label="History" size="md" value={part} onChange={setPart} options={PARTS} />
+        {needsProject(run, project, (s) => (
+          <div key={part} className="hist-swap flex min-h-0 flex-1 flex-col">
+            {part === 'history' ? (
+              <HistoryTab
+                key={s.project.name}
+                project={s.project.name}
+                runId={run.id}
+                tick={project.tick}
+                initialBranch={init?.branch}
+                initialView={init?.view}
+                autoplay={init?.autoplay}
+              />
+            ) : (
+              <FilesTab key={s.project.name} project={s.project.name} branches={s.branches} tick={project.tick} initialBranch={init?.branch} />
+            )}
+          </div>
+        ))}
       </div>
     </div>
   )

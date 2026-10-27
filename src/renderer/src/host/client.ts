@@ -69,11 +69,28 @@ export const host = {
   stopRun: (id: string) => call<RunSummary>('POST', `/api/runs/${enc(id)}/stop`),
 }
 
+// One event stream for every listener: a browser keeps at most six connections
+// to one host, and a stream per hook would leave none for the API calls.
+const listeners = new Set<(event: RunEvent) => void>()
+let source: EventSource | null = null
+
 /** Subscribes to the host's events; answers the unsubscribe. */
 export function onHostEvent(listener: (event: RunEvent) => void): () => void {
   const host = hostEndpoint()
   if ('error' in host) return () => {}
-  const source = new EventSource(`${host.url}/api/events?token=${enc(host.token)}`)
-  source.onmessage = (m) => listener(JSON.parse(m.data) as RunEvent)
-  return () => source.close()
+  listeners.add(listener)
+  if (!source) {
+    source = new EventSource(`${host.url}/api/events?token=${enc(host.token)}`)
+    source.onmessage = (m) => {
+      const event = JSON.parse(m.data) as RunEvent
+      for (const l of [...listeners]) l(event)
+    }
+  }
+  return () => {
+    listeners.delete(listener)
+    if (listeners.size === 0 && source) {
+      source.close()
+      source = null
+    }
+  }
 }

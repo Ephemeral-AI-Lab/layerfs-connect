@@ -79,7 +79,7 @@ export function ComputePage({ platform }: ComputePageProps) {
           <>
             <section className="flex flex-col gap-3">
               <div>
-                <h2 className="text-[13px] font-semibold">This machine</h2>
+                <h2 className="text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">This machine</h2>
                 <p className="text-xs text-faint">
                   {s.platform === 'macos' ? 'macOS' : s.platform === 'windows' ? 'Windows' : 'Linux'} · {window.connect.arch}
                 </p>
@@ -91,7 +91,7 @@ export function ComputePage({ platform }: ComputePageProps) {
 
             <section className="flex flex-col gap-3">
               <div>
-                <h2 className="text-[13px] font-semibold">Cloud sandboxes</h2>
+                <h2 className="text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">Cloud sandboxes</h2>
                 <p className="text-xs text-faint">They can't open a local SQLite file, so they wait on PostgreSQL storage too.</p>
               </div>
               <CloudCards />
@@ -99,14 +99,14 @@ export function ComputePage({ platform }: ComputePageProps) {
 
             <section className="flex flex-col gap-3">
               <div>
-                <h2 className="flex items-center gap-1.5 text-[13px] font-semibold">
+                <h2 className="flex items-center gap-1.5 text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">
                   <Settings2 aria-hidden="true" className="size-3.5" /> Settings
                 </h2>
                 <p className="text-xs text-faint">
                   Read only here. Edit <span className="font-mono">{s.settings.state}/settings.json</span> and restart Connect.
                 </p>
               </div>
-              <dl className="grid grid-cols-[9rem_minmax(0,1fr)] gap-x-4 gap-y-2.5 rounded-xl border bg-card px-5 py-4 text-sm">
+              <dl className="surface reveal grid grid-cols-[9rem_minmax(0,1fr)] gap-x-4 gap-y-2.5 rounded-xl px-5 py-4 text-sm">
                 <Setting label="Settings file" value={`${s.settings.state}/settings.json`} />
                 <Setting label="LayerFS home" value={s.settings.home} />
                 <Setting label="Sandbox image" value={s.settings.image} />

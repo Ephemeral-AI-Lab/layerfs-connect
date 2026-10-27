@@ -1,5 +1,10 @@
+import './history.css'
+
 import { ChevronRight } from 'lucide-react'
 import { type KeyboardEvent, useMemo } from 'react'
+
+import { Collapse, revealStyle, useIndicator } from '@/components/motion'
+import { Button } from '@/components/ui/button'
 
 import type { ForkBranch, ForkTree } from '@/data/forks'
 import { agentColor, shortId } from '@/data/format'
@@ -21,8 +26,7 @@ export function AgentDot({ tree, agent, className }: { tree: ForkTree; agent: st
       title={agent}
       className={cn('relative flex size-2 shrink-0', className)}
     >
-      {busy && <span className="absolute inset-0 animate-ping rounded-full opacity-60" style={{ background: color }} />}
-      <span className="relative size-2 rounded-full" style={{ background: color }} />
+      <span className={cn('relative size-2 rounded-full', busy && 'pulse-ring')} style={{ background: color, color }} />
     </span>
   )
 }
@@ -58,9 +62,12 @@ interface BranchTreeProps {
   onToggle: (name: string, open?: boolean) => void
   query: string
   filter: BranchFilter
+  /** Clears the search and the filter, from the no-match state. */
+  onClear?: () => void
 }
 
-export function BranchTree({ tree, focus, onFocus, expanded, onToggle, query, filter }: BranchTreeProps) {
+export function BranchTree({ tree, focus, onFocus, expanded, onToggle, query, filter, onClear }: BranchTreeProps) {
+  const { container, indicator } = useIndicator<HTMLDivElement>()
   const narrowing = query.trim() !== '' || filter !== 'all'
   const shown = useMemo(() => visibleBranches(tree, query, filter), [tree, query, filter])
   const direct = useMemo(() => {
@@ -101,22 +108,36 @@ export function BranchTree({ tree, focus, onFocus, expanded, onToggle, query, fi
   }
 
   const empty = narrowing && shown.size === 1 && direct.size === 0
+  const order = new Map(rows.map((n, i) => [n, i]))
   return (
     <div className="min-h-0 flex-1 overflow-y-auto px-1.5 py-2">
-      {empty && <p className="px-2 pb-2 text-xs text-muted-foreground">No Branch or Commit matches.</p>}
-      <ul role="tree" aria-label="Branches by fork" onKeyDown={onKeyDown}>
-        <Node
-          name="main"
-          tree={tree}
-          focus={focus}
-          onFocus={onFocus}
-          isOpen={isOpen}
-          onToggle={onToggle}
-          shown={shown}
-          direct={direct}
-          narrowing={narrowing}
-        />
-      </ul>
+      <div ref={container} className="relative isolate">
+        <span ref={indicator} aria-hidden="true" className="indicator hist-row-indicator -z-10" />
+        <ul role="tree" aria-label="Branches by fork" onKeyDown={onKeyDown}>
+          <Node
+            name="main"
+            tree={tree}
+            focus={focus}
+            onFocus={onFocus}
+            isOpen={isOpen}
+            onToggle={onToggle}
+            shown={shown}
+            direct={direct}
+            narrowing={narrowing}
+            order={order}
+          />
+        </ul>
+      </div>
+      {empty && (
+        <div className="hist-swap mx-1.5 mt-3 flex flex-col items-start gap-2 rounded-lg border border-dashed px-3 py-3">
+          <p className="text-xs text-muted-foreground">No Branch or Commit matches.</p>
+          {onClear && (
+            <Button variant="outline" size="xs" onClick={onClear}>
+              Show all Branches
+            </Button>
+          )}
+        </div>
+      )}
     </div>
   )
 }
@@ -133,10 +154,12 @@ interface NodeProps {
   shown: Set<string>
   direct: Set<string>
   narrowing: boolean
+  /** Each drawn row's place, for the entrance stagger. */
+  order: Map<string, number>
 }
 
 function Node(props: NodeProps) {
-  const { name, tree, focus, onFocus, isOpen, onToggle, shown, direct, narrowing } = props
+  const { name, tree, focus, onFocus, isOpen, onToggle, shown, direct, narrowing, order } = props
   const b = tree.branches.get(name)
   if (!b || !shown.has(name)) return null
   const kids = b.children.filter((k) => shown.has(k))
@@ -148,10 +171,12 @@ function Node(props: NodeProps) {
   return (
     <li role="treeitem" aria-expanded={kids.length > 0 ? open : undefined} aria-selected={selected}>
       <div
+        data-active={selected}
         className={cn(
-          'group flex h-8 items-center gap-1 rounded-lg pr-1.5 text-[13px]',
-          selected ? 'bg-accent text-accent-foreground' : 'hover:bg-muted/70',
+          'reveal group flex h-8 items-center gap-1 rounded-lg pr-1.5 text-[13px] transition-colors duration-(--dur-fast)',
+          selected ? 'text-accent-foreground' : 'hover:bg-muted/70',
         )}
+        style={revealStyle(order.get(name) ?? 0)}
       >
         {kids.length > 0 ? (
           <button
@@ -160,9 +185,9 @@ function Node(props: NodeProps) {
             aria-label={`${open ? 'Collapse' : 'Expand'} ${name}`}
             onClick={() => onToggle(name)}
             disabled={narrowing}
-            className="flex size-4 shrink-0 items-center justify-center rounded text-faint hover:text-foreground"
+            className="flex size-4 shrink-0 items-center justify-center rounded text-faint transition-colors hover:text-foreground"
           >
-            <ChevronRight className={cn('size-3.5 transition-transform', open && 'rotate-90')} />
+            <ChevronRight data-open={open} className="chevron size-3.5" />
           </button>
         ) : (
           <span className="w-4 shrink-0" />
@@ -177,8 +202,15 @@ function Node(props: NodeProps) {
         >
           <span
             aria-hidden="true"
-            className={cn('size-2 shrink-0', name === 'main' ? 'rounded-[2px]' : 'rounded-full', quiet && 'opacity-40')}
-            style={{ background: laneColor(b.depth) }}
+            className={cn(
+              'size-2 shrink-0 transition-[box-shadow] duration-(--dur-base)',
+              name === 'main' ? 'rounded-[2px]' : 'rounded-full',
+              quiet && 'opacity-40',
+            )}
+            style={{
+              background: laneColor(b.depth),
+              boxShadow: selected ? `0 0 0 3px color-mix(in oklab, ${laneColor(b.depth)} 22%, transparent), 0 0 8px ${laneColor(b.depth)}` : undefined,
+            }}
           />
           <span className={cn('min-w-0 flex-1 truncate', name === 'main' && 'font-semibold', quiet && 'text-faint')}>
             {name}
@@ -195,12 +227,18 @@ function Node(props: NodeProps) {
           </span>
         </button>
       </div>
-      {kids.length > 0 && open && (
-        <ul role="group" className="ml-[7px] border-l border-border/80 pl-1">
-          {kids.map((k) => (
-            <Node key={k} {...props} name={k} />
-          ))}
-        </ul>
+      {kids.length > 0 && (
+        <Collapse open={open} appear={false}>
+          <ul
+            role="group"
+            className="ml-[7px] border-l pl-1"
+            style={{ borderColor: `color-mix(in oklab, ${laneColor(b.depth)} 30%, var(--border))` }}
+          >
+            {kids.map((k) => (
+              <Node key={k} {...props} name={k} />
+            ))}
+          </ul>
+        </Collapse>
       )}
     </li>
   )

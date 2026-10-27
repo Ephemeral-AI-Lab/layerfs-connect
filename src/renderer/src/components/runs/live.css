@@ -1,0 +1,229 @@
+/* Live tab: the system diagram's own surfaces and motion. Colours that belong
+   to an agent come in as currentColor (a text-* class on the element), so one
+   rule serves every agent. Everything here animates transform or opacity,
+   except the lane dashes (stroke-dashoffset) and the one-shot flashes. */
+
+/* ---------- the stage ---------- */
+
+/* The diagram's field: a faint dot grid, brightest around the project. */
+.live-field {
+  position: relative;
+  isolation: isolate;
+}
+.live-field::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image: radial-gradient(circle at 1px 1px, var(--grid-dot) 1px, transparent 0);
+  background-size: 20px 20px;
+  mask-image: radial-gradient(42rem 22rem at 50% 50%, #000, transparent 78%);
+}
+
+/* ---------- connectors (live-flow.ts) ---------- */
+
+.live-tree {
+  stroke: color-mix(in oklab, var(--foreground) 16%, transparent);
+}
+.live-ghost {
+  stroke: color-mix(in oklab, var(--foreground) 14%, transparent);
+  stroke-dasharray: 2 6;
+  stroke-linecap: round;
+}
+/* A lane carrying calls: its dashes flow from the agent to the target. */
+.live-lane[data-flow] {
+  stroke-dasharray: 5 7;
+  stroke-linecap: round;
+  animation: live-lane-flow 0.8s linear infinite;
+}
+@keyframes live-lane-flow {
+  to {
+    stroke-dashoffset: -24;
+  }
+}
+.live-dot-halo {
+  opacity: 0.2;
+}
+.live-dot-tail {
+  opacity: 0.4;
+}
+
+/* ---------- nodes ---------- */
+
+/* A busy node's edge and glow, in its agent's colour; it breathes while busy and settles when idle. */
+.live-aura {
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  box-shadow:
+    0 0 0 1px color-mix(in oklab, currentColor 50%, transparent),
+    0 8px 26px -10px color-mix(in oklab, currentColor 70%, transparent);
+  transition: opacity var(--dur-slow) var(--ease-out-soft);
+}
+[data-busy] > .live-aura {
+  opacity: 1;
+  animation: live-aura 2.6s ease-in-out infinite;
+}
+@keyframes live-aura {
+  50% {
+    opacity: 0.45;
+  }
+}
+
+/* The agent's colour as a bar down its card's left edge: bright while it works. */
+.live-accent {
+  position: absolute;
+  top: 9px;
+  bottom: 9px;
+  left: -1px;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: currentColor;
+  opacity: 0.28;
+  transform: scaleY(0.6);
+  transition:
+    opacity var(--dur-base) var(--ease-out-soft),
+    transform var(--dur-slow) var(--ease-out-expo);
+}
+[data-busy] > .live-accent {
+  opacity: 1;
+  transform: scaleY(1);
+}
+
+/* ---------- the project (hub) ---------- */
+
+/* The light behind the project: still at rest, breathing while sessions play. */
+.live-halo {
+  position: absolute;
+  inset: -6rem -5.5rem;
+  z-index: -1;
+  pointer-events: none;
+  border-radius: 999px;
+  /* the card covers the middle; what shows is the ring from ~55% out */
+  background: radial-gradient(
+    closest-side,
+    color-mix(in oklab, var(--brand-2) 34%, transparent),
+    color-mix(in oklab, var(--brand-1) 22%, transparent) 55%,
+    color-mix(in oklab, var(--brand-3) 9%, transparent) 78%,
+    transparent
+  );
+  opacity: 0.35;
+  transition: opacity var(--dur-xslow) var(--ease-out-soft);
+}
+/* on a light page the same light reads weaker: give it more colour */
+html:not(.dark) .live-halo {
+  background: radial-gradient(
+    closest-side,
+    color-mix(in oklab, var(--brand-2) 40%, transparent),
+    color-mix(in oklab, var(--brand-1) 30%, transparent) 55%,
+    color-mix(in oklab, var(--brand-3) 14%, transparent) 78%,
+    transparent
+  );
+}
+[data-live] > .live-halo {
+  opacity: 0.75;
+  animation: live-halo 4.2s ease-in-out infinite;
+}
+[data-busy] > .live-halo {
+  opacity: 1;
+  animation-duration: 2.4s;
+}
+@keyframes live-halo {
+  50% {
+    transform: scale(0.9);
+    opacity: 0.55;
+  }
+}
+.live-hub-card {
+  border: 1px solid var(--border);
+  background-color: var(--card);
+  background-image: var(--surface-sheen);
+  box-shadow: var(--highlight), var(--elev-2);
+  transition: box-shadow var(--dur-slow) var(--ease-out-soft);
+}
+.live-hub-card.live-border {
+  box-shadow:
+    var(--highlight),
+    var(--elev-2),
+    0 0 0 1px color-mix(in oklab, var(--primary) 20%, transparent),
+    0 0 44px -14px var(--glow-strong);
+}
+
+/* The mark's core: rings in the colour of each call that reaches the project. */
+.live-core {
+  position: relative;
+  isolation: isolate;
+}
+.live-core::before,
+.live-core::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: 999px;
+  pointer-events: none;
+}
+.live-core::before {
+  background: radial-gradient(closest-side, color-mix(in oklab, var(--primary) 16%, transparent), transparent);
+  transform: scale(1.5);
+}
+.live-core::after {
+  border: 1.5px solid var(--flash, var(--primary));
+  opacity: 0;
+}
+.live-core.live-flash {
+  /* the shared flash would fill the core; only the ring below answers here */
+  animation: none;
+}
+.live-core.live-flash::after {
+  animation: live-core-ping 0.9s var(--ease-out-soft);
+}
+@keyframes live-core-ping {
+  from {
+    opacity: 0.85;
+    transform: scale(0.85);
+  }
+  to {
+    opacity: 0;
+    transform: scale(1.7);
+  }
+}
+
+/* ---------- Workspaces ---------- */
+
+/* A Workspace whose exec is running: a light that scans along its foot. */
+.live-exec {
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 2px;
+  overflow: hidden;
+  pointer-events: none;
+}
+.live-exec::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 40%;
+  background: linear-gradient(90deg, transparent, currentColor, transparent);
+  animation: live-exec-scan 1.5s var(--ease-out-soft) infinite;
+}
+@keyframes live-exec-scan {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(260%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .live-lane[data-flow],
+  [data-busy] > .live-aura,
+  [data-live] > .live-halo,
+  .live-exec::before {
+    animation: none;
+  }
+}

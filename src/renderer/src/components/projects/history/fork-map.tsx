@@ -1,16 +1,26 @@
+import './history.css'
+
 import { Minus, Pause, Play, Plus } from 'lucide-react'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { type CSSProperties, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 
 import { laneColor } from '@/components/projects/history/branch-tree'
+import { HashChip } from '@/components/projects/history/parts'
 import { Button } from '@/components/ui/button'
 import { type ForkBranch, type ForkTree, ancestry } from '@/data/forks'
 import { agentColor, shortId, when } from '@/data/format'
+import { cn } from '@/lib/utils'
 
-const LANE = 34
 const PAD_LEFT = 44
-const PAD_RIGHT = 190
-const PAD_Y = 40
-const STEPS = [16, 22, 30, 40]
+const PAD_RIGHT = 200
+const PAD_Y = 44
+/** Lane spacing: at least this, more when the canvas is tall, up to the max. */
+const LANE_MIN = 36
+const LANE_MAX = 64
+/** Zoom stops, as px per event; 22 is 100%. */
+const STEPS = [12, 16, 22, 30, 40, 52]
+const BASE = 22
+/** Fitting never zooms past 2.5x, so a tiny history keeps its proportions. */
+const FIT_MAX = 55
 const TICK_MS = 140
 
 interface Lane {
@@ -19,7 +29,9 @@ interface Lane {
 }
 
 const labelText = (b: ForkBranch) => (b.state === 'merged' ? `${b.name} · merged` : b.name)
-const labelWidth = (b: ForkBranch) => labelText(b).length * 6.4 + 16
+const labelWidth = (b: ForkBranch) => labelText(b).length * 7.25 + 18
+/** A CSS translate, so moves glide (an SVG transform attribute would jump). */
+const at = (x: number, y: number): CSSProperties => ({ transform: `translate(${x}px, ${y}px)` })
 
 /**
  * main is the spine. Top-level Branches alternate sides and keep their fork
@@ -27,7 +39,7 @@ const labelWidth = (b: ForkBranch) => labelText(b).length * 6.4 + 16
  * that is free over its span (fork point to label end) and lies further out
  * than its parent's lane, so nesting always reads outward from main.
  */
-function lanesFor(tree: ForkTree, shown: Set<string>, x: (id?: string) => number, step: number) {
+function packLanes(tree: ForkTree, shown: Set<string>, x: (id?: string) => number, step: number) {
   const top = (tree.branches.get('main')?.children ?? []).filter((n) => shown.has(n))
   const level = new Map<string, number>()
   const used: [number, number][][][] = [[], []]
@@ -52,17 +64,23 @@ function lanesFor(tree: ForkTree, shown: Set<string>, x: (id?: string) => number
     mark(name)
     place(name, i % 2)
   })
-  const above = Math.max(used[0].length - 1, 0)
-  const below = Math.max(used[1].length - 1, 0)
-  const mainY = PAD_Y + above * LANE + 12
+  return { level, sideOf, above: Math.max(used[0].length - 1, 0), below: Math.max(used[1].length - 1, 0) }
+}
+
+/** Each Branch's y, `gap` apart, main between the two sides. */
+function placeLanes(tree: ForkTree, packed: ReturnType<typeof packLanes>, gap: number) {
+  const { level, sideOf, above, below } = packed
+  const mainY = PAD_Y + above * gap + 12
   const lanes = new Map<string, Lane>()
   lanes.set('main', { b: tree.branches.get('main')!, y: mainY })
   for (const [name, k] of level) {
     const b = tree.branches.get(name)!
-    lanes.set(name, { b, y: sideOf.get(name) === 0 ? mainY - k * LANE : mainY + k * LANE })
+    lanes.set(name, { b, y: sideOf.get(name) === 0 ? mainY - k * gap : mainY + k * gap })
   }
-  return { lanes, mainY, height: mainY + below * LANE + PAD_Y }
+  return { lanes, mainY, height: mainY + below * gap + PAD_Y }
 }
+
+const clamp = (n: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, n))
 
 interface ForkMapProps {
   /** Names the drawing for screen readers. */
@@ -90,18 +108,40 @@ export function ForkMap({ title, tree, focus, shown, onOpen, autoplay }: ForkMap
   const order = useMemo(() => new Map(events.map((e, i) => [e.id, i])), [events])
   const lit = useMemo(() => new Set(ancestry(tree, focus).map((b) => b.name)), [tree, focus])
 
-  // A short history starts zoomed in, so it fills more of the view.
-  const [zoom, setZoom] = useState(() => (events.length < 20 ? 3 : events.length < 40 ? 2 : 1))
-  const step = STEPS[zoom]
+  // The canvas size, so the Map can fit it; nothing draws until it is known.
+  const box = useRef<HTMLDivElement>(null)
+  const [canvas, setCanvas] = useState({ w: 0, h: 0 })
+  useLayoutEffect(() => {
+    const el = box.current
+    if (!el) return
+    const measure = () => {
+      const next = { w: Math.round(el.clientWidth), h: Math.round(el.clientHeight) }
+      setCanvas((c) => (Math.abs(c.w - next.w) < 2 && Math.abs(c.h - next.h) < 2 ? c : next))
+    }
+    measure()
+    const ro = new ResizeObserver(measure)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
+
+  // null fits the width (with margins, at most 2x); a number is a zoom stop picked by hand.
+  const [zoom, setZoom] = useState<number | null>(null)
+  const fitStep = canvas.w > 0 ? clamp((canvas.w - PAD_LEFT - PAD_RIGHT - 16) / Math.max(events.length, 1), STEPS[0], FIT_MAX) : BASE
+  const step = zoom ?? fitStep
+  const zoomOut = [...STEPS].reverse().find((s) => s < step - 0.5)
+  const zoomIn = STEPS.find((s) => s > step + 0.5)
   const last = events.length - 1
   const [cut, setCut] = useState(autoplay ? 0 : last)
   const [playing, setPlaying] = useState(Boolean(autoplay))
-  const box = useRef<HTMLDivElement>(null)
 
   const x = (id: string | undefined) => PAD_LEFT + (order.get(id ?? '') ?? 0) * step
   // Lanes come from the full history, so replaying never moves a Branch.
   // biome-ignore lint/correctness/useExhaustiveDependencies: x depends only on order and step
-  const { lanes, mainY, height } = useMemo(() => lanesFor(tree, shown, x, step), [tree, shown, order, step])
+  const packed = useMemo(() => packLanes(tree, shown, x, step), [tree, shown, order, step])
+  // Lanes spread out to use a tall canvas, centring main.
+  const rows = packed.above + packed.below
+  const gap = rows > 0 && canvas.h > 0 ? clamp((canvas.h - PAD_Y * 2 - 24) / rows, LANE_MIN, LANE_MAX) : LANE_MIN
+  const { lanes, mainY, height } = useMemo(() => placeLanes(tree, packed, gap), [tree, packed, gap])
   const seen = (id: string | undefined) => (order.get(id ?? '') ?? Infinity) <= cut
   const nowX = PAD_LEFT + cut * step + step
   const width = PAD_LEFT + events.length * step + PAD_RIGHT
@@ -157,146 +197,213 @@ export function ForkMap({ title, tree, focus, shown, onOpen, autoplay }: ForkMap
     setPlaying(true)
   }
 
+  const replaying = playing || cut < last
+
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <div className="flex items-center gap-3 border-b px-4 py-2">
-        <span className="font-mono text-xs">
-          main @ {head ? shortId(head.id) : '—'}
+      <div className="hist-pane-head relative flex items-center gap-3 px-4 py-2">
+        <span className="flex items-center gap-1.5 text-xs tabular-nums">
+          <span className="font-mono">main @</span>
+          {head ? <HashChip id={head.id} on={!replaying} /> : <span className="font-mono text-faint">—</span>}
           <span className="text-muted-foreground">
-            {' '}
             · {commitsSoFar} Commit{commitsSoFar === 1 ? '' : 's'}
             {cut < last ? ` · replay at ${cutAt ? new Date(cutAt).toLocaleTimeString() : 'start'}` : ''}
           </span>
         </span>
         <span className="ml-auto text-xs text-faint">Click a Branch to open its lineage</span>
-        <Button variant="outline" size="sm" onClick={play}>
+        <Button variant={replaying ? 'default' : 'outline'} size="sm" onClick={play} className="min-w-[5.5rem]">
           {playing ? <Pause /> : <Play />} {playing ? 'Pause' : cut < last ? 'Resume' : 'Replay'}
         </Button>
-        <div className="flex items-center rounded-lg border">
-          <Button variant="ghost" size="icon-sm" aria-label="Zoom out" disabled={zoom === 0} onClick={() => setZoom((z) => z - 1)}>
+        <div role="group" aria-label="Zoom" className="flex items-center rounded-lg border bg-card shadow-[var(--highlight),var(--elev-1)]">
+          <Button variant="ghost" size="icon-sm" aria-label="Zoom out" disabled={zoomOut === undefined} onClick={() => zoomOut && setZoom(zoomOut)}>
             <Minus />
           </Button>
-          <span className="w-10 text-center text-xs tabular-nums text-muted-foreground">{Math.round((step / STEPS[1]) * 100)}%</span>
-          <Button variant="ghost" size="icon-sm" aria-label="Zoom in" disabled={zoom === STEPS.length - 1} onClick={() => setZoom((z) => z + 1)}>
+          <button
+            type="button"
+            aria-pressed={zoom === null}
+            aria-label={`Fit to view, now ${Math.round((step / BASE) * 100)}%`}
+            title={zoom === null ? 'Fitted to the view' : 'Fit to view'}
+            onClick={() => setZoom(null)}
+            className={cn(
+              'flex h-7 w-14 items-center justify-center gap-1 rounded-md text-xs tabular-nums outline-none transition-colors hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring',
+              zoom === null ? 'text-foreground' : 'text-muted-foreground',
+            )}
+          >
+            {zoom === null && <span aria-hidden="true" className="size-1 rounded-full bg-primary shadow-[0_0_6px_var(--glow-strong)]" />}
+            {Math.round((step / BASE) * 100)}%
+          </button>
+          <Button variant="ghost" size="icon-sm" aria-label="Zoom in" disabled={zoomIn === undefined} onClick={() => zoomIn && setZoom(zoomIn)}>
             <Plus />
           </Button>
         </div>
+        {/* How far the replay has come. */}
+        <div
+          aria-hidden="true"
+          className={cn('absolute inset-x-0 -bottom-px h-0.5 transition-opacity duration-(--dur-base)', replaying ? 'opacity-100' : 'opacity-0')}
+        >
+          <div className="map-progress h-full" style={{ transform: `scaleX(${last > 0 ? cut / last : 1})` }} />
+        </div>
       </div>
 
-      <div ref={box} className="relative min-h-0 flex-1 overflow-auto">
-        <svg width={width} height={height} role="img" aria-label={title} className="block">
-          {/* Layer guides */}
-          {visibleLayers.map((l) => (
-            <line key={`g-${l.id}`} x1={x(l.id)} x2={x(l.id)} y1={PAD_Y / 2} y2={height - PAD_Y / 2} stroke="var(--border)" strokeWidth={1} opacity={0.5} />
-          ))}
-          {/* now */}
-          <line x1={nowX} x2={nowX} y1={14} y2={height - 10} stroke="var(--faint)" strokeDasharray="3 4" />
-          <text x={nowX} y={11} textAnchor="middle" className="fill-muted-foreground font-mono text-[10px]">
-            now
-          </text>
-
-          {/* Branch lanes, drawn before main so the spine sits on top */}
-          {merges.map((m) => (
-            <path
-              key={`m-${m.id}`}
-              d={`M${m.x1} ${m.y1} C${(m.x1 + m.x2) / 2} ${m.y1} ${(m.x1 + m.x2) / 2} ${m.y2} ${m.x2} ${m.y2}`}
-              fill="none"
-              stroke={m.color}
-              strokeWidth={1.5}
-              strokeDasharray="4 3"
-              opacity={0.8}
-            />
-          ))}
-          {drawn.map(({ b, y, parentY, color, fx, own, endX, bend, on, quiet }) => (
-            <g key={b.name} opacity={quiet ? 0.5 : 1}>
+      {/* A flex box: margin auto centres a Map smaller than the canvas, and scrolls one that is larger. */}
+      <div ref={box} className="map-canvas relative flex min-h-0 flex-1 overflow-auto">
+        {canvas.w > 0 && (
+          <svg width={width} height={height} role="img" aria-label={title} className="reveal-x m-auto block shrink-0 overflow-visible">
+            {/* A soft band along main, the line everything leaves from */}
+            <rect x={0} y={mainY - 18} width={width} height={36} fill="url(#map-band)" className="map-glide" />
+            <defs>
+              <linearGradient id="map-band" x1="0" x2="1" y1="0" y2="0">
+                <stop offset="0" stopColor="var(--primary)" stopOpacity={0} />
+                <stop offset="0.15" stopColor="var(--primary)" stopOpacity={0.06} />
+                <stop offset="1" stopColor="var(--primary)" stopOpacity={0.03} />
+              </linearGradient>
+            </defs>
+            {/* Layer guides */}
+            {visibleLayers.map((l) => (
               <path
-                d={`M${fx} ${parentY} C${fx + bend * 0.55} ${parentY} ${fx + bend * 0.45} ${y} ${fx + bend} ${y} L${endX} ${y}`}
-                fill="none"
-                stroke={color}
-                strokeWidth={on ? 3 : 2}
-                strokeDasharray={own.length === 0 ? '3 3' : undefined}
+                key={`g-${l.id}`}
+                d={`M${x(l.id)} ${PAD_Y / 2} V${height - PAD_Y / 2}`}
+                stroke="var(--border)"
+                strokeWidth={1}
+                opacity={0.5}
+                className="map-glide hist-fade"
               />
-              {b.publishedAs && seen(b.publishedAs) && (
-                <path
-                  d={`M${endX} ${y} C${endX + step} ${y} ${x(b.publishedAs) - step} ${mainY} ${x(b.publishedAs)} ${mainY}`}
-                  fill="none"
-                  stroke={color}
-                  strokeWidth={1.5}
-                  opacity={0.7}
-                />
-              )}
-              {own.map((c) =>
-                forkPoints.has(c.id) ? (
-                  <circle key={c.id} cx={x(c.id)} cy={y} r={4.5} fill="var(--card)" stroke={color} strokeWidth={2}>
-                    <title>{`${shortId(c.id)} · ${c.message} · ${when(c.at)}${c.by ? ` · ${c.by}` : ''}`}</title>
-                  </circle>
-                ) : (
-                  <circle key={c.id} cx={x(c.id)} cy={y} r={3.5} fill={color}>
-                    <title>{`${shortId(c.id)} · ${c.message} · ${when(c.at)}${c.by ? ` · ${c.by}` : ''}`}</title>
-                  </circle>
-                ),
-              )}
-              {b.agent && tree.busy.has(b.agent) && cut >= last && (
-                <circle cx={endX} cy={y} r={6} fill="none" stroke={agentColor(tree.agents, b.agent)} strokeWidth={2}>
-                  <animate attributeName="r" values="5;10;5" dur="1.6s" repeatCount="indefinite" />
-                  <animate attributeName="opacity" values="1;0.2;1" dur="1.6s" repeatCount="indefinite" />
-                </circle>
-              )}
-            </g>
-          ))}
-
-          {/* main: solid through its newest Layer, dotted on to now */}
-          {head && (
-            <>
-              <line x1={PAD_LEFT - 20} x2={x(head.id)} y1={mainY} y2={mainY} stroke="var(--primary)" strokeWidth={5} strokeLinecap="round" />
-              <line x1={x(head.id)} x2={nowX} y1={mainY} y2={mainY} stroke="var(--primary)" strokeWidth={2} strokeDasharray="2 5" />
-            </>
-          )}
-          {visibleLayers.map((l) => (
-            <g key={l.id}>
-              <rect x={x(l.id) - 3} y={mainY - 7} width={6} height={14} rx={1.5} fill={l.from ? laneColor(tree.branches.get(l.from)?.depth ?? 1) : 'var(--primary)'} stroke="var(--card)" strokeWidth={1}>
-                <title>{`${shortId(l.id)} · ${l.message} · ${when(l.at)}`}</title>
-              </rect>
-              <text x={x(l.id) + 5} y={mainY - 10} className="fill-muted-foreground font-mono text-[10px]">
-                L{tree.layers.length - tree.layers.indexOf(l)}
+            ))}
+            {/* now */}
+            <path d={`M${nowX} 14 V${height - 10}`} stroke="var(--faint)" strokeDasharray="3 4" data-playing={playing} className="map-now map-glide" />
+            <g style={at(nowX, 11)} className="map-glide">
+              <text textAnchor="middle" className={cn('map-halo font-mono text-[10.5px]', playing ? 'fill-primary' : 'fill-muted-foreground')}>
+                now
               </text>
             </g>
-          ))}
-          {/* Labels last, so no lane draws over them */}
-          {drawn.map(({ b, y, color, endX, on, quiet }) => {
-            const w = labelWidth(b)
-            const focused = b.name === focus
-            return (
-              <g
-                key={`label-${b.name}`}
-                role="button"
-                tabIndex={0}
-                aria-label={`Open ${b.name}`}
-                onClick={() => onOpen(b.name)}
-                onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && onOpen(b.name)}
-                className="cursor-pointer outline-none"
-                opacity={quiet ? 0.6 : 1}
-                transform={`translate(${endX + 10} ${y - 10})`}
-              >
-                <rect width={w} height={20} rx={5} fill={focused ? color : 'var(--card)'} stroke={color} strokeWidth={on ? 1.5 : 1} />
-                <text x={8} y={14} className="font-mono text-[11px]" fill={focused ? 'var(--card)' : color}>
-                  {labelText(b)}
-                </text>
-                {b.agent && (
-                  <circle cx={w + 9} cy={10} r={3.5} fill={agentColor(tree.agents, b.agent)}>
-                    <title>{b.agent}</title>
-                  </circle>
+
+            {/* Branch lanes, drawn before main so the spine sits on top */}
+            {merges.map((m) => (
+              <path
+                key={`m-${m.id}`}
+                d={`M${m.x1} ${m.y1} C${(m.x1 + m.x2) / 2} ${m.y1} ${(m.x1 + m.x2) / 2} ${m.y2} ${m.x2} ${m.y2}`}
+                fill="none"
+                stroke={m.color}
+                strokeWidth={1.5}
+                strokeDasharray="4 3"
+                opacity={0.8}
+                className="map-glide hist-fade"
+              />
+            ))}
+            {drawn.map(({ b, y, parentY, color, fx, own, endX, bend, on, quiet }) => (
+              <g key={b.name} opacity={quiet ? 0.5 : 1} className="map-glide">
+                <path
+                  d={`M${fx} ${parentY} C${fx + bend * 0.55} ${parentY} ${fx + bend * 0.45} ${y} ${fx + bend} ${y} L${endX} ${y}`}
+                  fill="none"
+                  stroke={color}
+                  strokeWidth={on ? 3 : 2}
+                  strokeLinecap="round"
+                  strokeDasharray={own.length === 0 ? '3 3' : undefined}
+                  pathLength={own.length === 0 ? undefined : 1}
+                  className={cn('map-glide', own.length === 0 ? 'hist-fade' : 'hist-draw')}
+                />
+                {b.publishedAs && seen(b.publishedAs) && (
+                  <path
+                    d={`M${endX} ${y} C${endX + step} ${y} ${x(b.publishedAs) - step} ${mainY} ${x(b.publishedAs)} ${mainY}`}
+                    fill="none"
+                    stroke={color}
+                    strokeWidth={1.5}
+                    opacity={0.7}
+                    pathLength={1}
+                    className="map-glide hist-draw"
+                  />
+                )}
+                {own.map((c) =>
+                  forkPoints.has(c.id) ? (
+                    <circle key={c.id} cx={x(c.id)} cy={y} r={4.5} fill="var(--card)" stroke={color} strokeWidth={2} className="hist-pop map-pop map-glide">
+                      <title>{`${shortId(c.id)} · ${c.message} · ${when(c.at)}${c.by ? ` · ${c.by}` : ''}`}</title>
+                    </circle>
+                  ) : (
+                    <circle key={c.id} cx={x(c.id)} cy={y} r={3.5} fill={color} className="hist-pop map-pop map-glide">
+                      <title>{`${shortId(c.id)} · ${c.message} · ${when(c.at)}${c.by ? ` · ${c.by}` : ''}`}</title>
+                    </circle>
+                  ),
+                )}
+                {b.agent && tree.busy.has(b.agent) && cut >= last && (
+                  <>
+                    <circle cx={endX} cy={y} r={5} fill="none" stroke={agentColor(tree.agents, b.agent)} strokeWidth={2} className="hist-halo map-glide" />
+                    <circle cx={endX} cy={y} r={3} fill={agentColor(tree.agents, b.agent)} className="hist-head map-glide" style={{ '--head': agentColor(tree.agents, b.agent) } as CSSProperties} />
+                  </>
                 )}
               </g>
-            )
-          })}
-          <g role="button" tabIndex={0} aria-label="Open main" onClick={() => onOpen('main')} onKeyDown={(e) => e.key === 'Enter' && onOpen('main')} className="cursor-pointer outline-none" transform={`translate(${nowX + 10} ${mainY - 11})`}>
-            <rect width={44} height={22} rx={5} fill="var(--primary)" />
-            <text x={22} y={15} textAnchor="middle" className="font-mono text-[11px] font-semibold" fill="var(--primary-foreground)">
-              main
-            </text>
-          </g>
-        </svg>
+            ))}
+
+            {/* main: solid through its newest Layer, dotted on to now */}
+            {head && (
+              <>
+                <path d={`M${PAD_LEFT - 20} ${mainY} H${x(head.id)}`} stroke="var(--primary)" strokeWidth={5} strokeLinecap="round" pathLength={1} className="map-glide hist-draw" />
+                <path d={`M${x(head.id)} ${mainY} H${nowX}`} stroke="var(--primary)" strokeWidth={2} strokeDasharray="2 5" className="map-glide hist-fade" />
+              </>
+            )}
+            {visibleLayers.map((l) => (
+              <g key={l.id}>
+                <rect
+                  x={x(l.id) - 3}
+                  y={mainY - 7}
+                  width={6}
+                  height={14}
+                  rx={1.5}
+                  fill={l.from ? laneColor(tree.branches.get(l.from)?.depth ?? 1) : 'var(--primary)'}
+                  stroke="var(--card)"
+                  strokeWidth={1}
+                  className={cn('hist-pop map-pop map-glide', l === head && 'hist-head')}
+                >
+                  <title>{`${shortId(l.id)} · ${l.message} · ${when(l.at)}`}</title>
+                </rect>
+                <g style={at(x(l.id) + 5, mainY - 10)} className="map-glide hist-fade">
+                  <text className="map-halo fill-muted-foreground font-mono text-[10.5px]">L{tree.layers.length - tree.layers.indexOf(l)}</text>
+                </g>
+              </g>
+            ))}
+            {/* Labels last, so no lane draws over them */}
+            {drawn.map(({ b, y, color, endX, on, quiet }) => {
+              const w = labelWidth(b)
+              const focused = b.name === focus
+              return (
+                <g
+                  key={`label-${b.name}`}
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`Open ${b.name}`}
+                  onClick={() => onOpen(b.name)}
+                  onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && onOpen(b.name)}
+                  className={cn('map-label map-glide hist-fade cursor-pointer outline-none', focused && 'hist-head')}
+                  opacity={quiet ? 0.6 : 1}
+                  style={{ ...at(endX + 10, y - 11), '--head': color } as CSSProperties}
+                >
+                  <rect width={w} height={22} rx={6} fill={focused ? color : 'var(--card)'} stroke={color} strokeWidth={on ? 1.5 : 1} />
+                  <text x={9} y={15} className={cn('font-mono text-[12px]', focused && 'font-semibold')} fill={focused ? 'var(--card)' : color}>
+                    {labelText(b)}
+                  </text>
+                  {b.agent && (
+                    <circle cx={w + 10} cy={11} r={4} fill={agentColor(tree.agents, b.agent)}>
+                      <title>{b.agent}</title>
+                    </circle>
+                  )}
+                </g>
+              )
+            })}
+            <g
+              role="button"
+              tabIndex={0}
+              aria-label="Open main"
+              onClick={() => onOpen('main')}
+              onKeyDown={(e) => e.key === 'Enter' && onOpen('main')}
+              className="map-label map-glide hist-head cursor-pointer outline-none"
+              style={at(nowX + 10, mainY - 12)}
+            >
+              <rect width={50} height={24} rx={6} fill="var(--primary)" />
+              <text x={25} y={16} textAnchor="middle" className="font-mono text-[12px] font-semibold" fill="var(--primary-foreground)">
+                main
+              </text>
+            </g>
+          </svg>
+        )}
       </div>
     </div>
   )

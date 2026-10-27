@@ -4,6 +4,10 @@
 // back green or red), and the tree guides from each subagent to its parent.
 // Positions come from the cards' data-anchor elements, read every frame while
 // anything moves, so lanes follow cards as they come, go and fold.
+//
+// The look is in live.css: a lane carrying calls flows (dashes moving toward
+// the target), a mounted one rests as a solid line, each lane has a socket at
+// the card edges it touches, and a dot travels with a soft halo and a tail.
 
 /** Where a call travels: from an agent, through a Branch row (or the hub), to a target. */
 export interface FlowRoute {
@@ -24,6 +28,8 @@ export interface FlowScene {
   mounts: { key: string; route: FlowRoute }[]
   /** Tree guides, as [child anchor, parent anchor]. */
   tree: [string, string][]
+  /** Faint resting connectors between placeholders, as [from anchor, to anchor]: left card's right edge to right card's left edge. */
+  ghosts?: [string, string][]
 }
 
 interface Rect {
@@ -37,14 +43,23 @@ interface Rect {
 interface Lane {
   route: FlowRoute
   path: SVGPathElement
+  /** Sockets where the lane meets a card's edge. */
+  ports: SVGGElement
   heat: number
   mounted: boolean
   dots: number
+  /** What was last written to the DOM, so a frame only touches what changed. */
+  cls: string
+  flow: boolean
 }
 
 interface Dot {
   lane: Lane
-  el: SVGCircleElement
+  /** The dot's group: removed when it arrives. */
+  el: SVGGElement
+  /** Halo and core, moved by transform. */
+  head: SVGGElement
+  tail: SVGCircleElement
   t0: number
   ms: number
   back: boolean
@@ -59,6 +74,12 @@ const COOL_MS = 3000
 /** Dots on one lane at once; more calls only keep it warm. */
 const LANE_DOTS = 3
 const MAX_DOTS = 40
+/** A lane above this heat is carrying calls: its dashes flow. */
+const FLOW_HEAT = 0.12
+/** How far a dot's tail trails it, in px. */
+const TAIL_PX = 11
+/** The project's core rings at most this often, however many calls arrive. */
+const CORE_MS = 180
 
 export const OK_CLASS = 'text-success'
 export const FAIL_CLASS = 'text-destructive'
@@ -85,7 +106,9 @@ export class FlowEngine {
   private disposed = false
   private rects = new Map<string, Rect | null>()
   private base: DOMRect | null = null
+  private coreAt = 0
   private readonly treeEl: SVGPathElement
+  private readonly ghostEl: SVGPathElement
   private readonly laneLayer: SVGGElement
   private readonly dotLayer: SVGGElement
   private readonly probe: SVGPathElement
@@ -97,15 +120,22 @@ export class FlowEngine {
     svg: SVGSVGElement,
   ) {
     this.motion = !window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    this.ghostEl = svg.appendChild(document.createElementNS(NS, 'path'))
+    this.ghostEl.setAttribute('fill', 'none')
+    this.ghostEl.setAttribute('class', 'live-ghost')
+    this.ghostEl.setAttribute('stroke-width', '1.5')
     this.treeEl = svg.appendChild(document.createElementNS(NS, 'path'))
     this.treeEl.setAttribute('fill', 'none')
-    this.treeEl.setAttribute('class', 'stroke-border')
+    this.treeEl.setAttribute('class', 'live-tree')
     this.treeEl.setAttribute('stroke-width', '1.5')
     this.laneLayer = svg.appendChild(document.createElementNS(NS, 'g'))
     this.dotLayer = svg.appendChild(document.createElementNS(NS, 'g'))
     this.probe = document.createElementNS(NS, 'path')
     this.observer = new ResizeObserver(() => this.kick())
     this.observer.observe(root)
+    // cards rise in and fold with CSS; draw once more when they settle
+    root.addEventListener('animationend', this.kick)
+    root.addEventListener('transitionend', this.kick)
   }
 
   dispose() {
@@ -113,6 +143,8 @@ export class FlowEngine {
     cancelAnimationFrame(this.raf)
     this.raf = 0
     this.observer.disconnect()
+    this.root.removeEventListener('animationend', this.kick)
+    this.root.removeEventListener('transitionend', this.kick)
     const dots = this.dots
     this.dots = []
     for (const d of dots) d.done()
@@ -156,20 +188,24 @@ export class FlowEngine {
       if (opts.back) return
       this.flash(route.via, agentColor)
       this.flash(route.to, agentColor)
+      const now = performance.now()
+      if (now - this.coreAt > CORE_MS) {
+        this.coreAt = now
+        this.flash('hub-core', agentColor)
+      }
     }
     if (!this.motion || lane.dots >= LANE_DOTS || this.dots.length >= MAX_DOTS) {
       arrived()
       return Promise.resolve()
     }
     return new Promise((resolve) => {
-      const el = this.dotLayer.appendChild(document.createElementNS(NS, 'circle'))
-      el.setAttribute('r', '4')
-      el.setAttribute('fill', 'currentColor')
-      el.setAttribute('class', opts.color ?? agentColor)
+      const { el, head, tail } = this.dot(opts.color ?? agentColor)
       lane.dots++
       this.dots.push({
         lane,
         el,
+        head,
+        tail,
         t0: performance.now(),
         ms: LEG_MS,
         back: !!opts.back,
@@ -194,8 +230,26 @@ export class FlowEngine {
 
   // ---------- drawing ----------
 
-  private kick() {
+  private kick = () => {
     if (!this.raf && !this.disposed) this.raf = requestAnimationFrame(this.frame)
+  }
+
+  /** A dot: a soft halo and a bright core that move together, and a tail placed behind them. */
+  private dot(colorClass: string) {
+    const el = this.dotLayer.appendChild(document.createElementNS(NS, 'g'))
+    el.setAttribute('class', colorClass)
+    el.setAttribute('fill', 'currentColor')
+    const tail = el.appendChild(document.createElementNS(NS, 'circle'))
+    tail.setAttribute('r', '2.5')
+    tail.setAttribute('class', 'live-dot-tail')
+    const head = el.appendChild(document.createElementNS(NS, 'g'))
+    const halo = head.appendChild(document.createElementNS(NS, 'circle'))
+    halo.setAttribute('r', '8')
+    halo.setAttribute('class', 'live-dot-halo')
+    const core = head.appendChild(document.createElementNS(NS, 'circle'))
+    core.setAttribute('r', '3.75')
+    // the head moves by transform; the tail sits beside it so it can trail
+    return { el, head, tail }
   }
 
   private lane(route: FlowRoute): Lane {
@@ -205,7 +259,9 @@ export class FlowEngine {
       const path = this.laneLayer.appendChild(document.createElementNS(NS, 'path'))
       path.setAttribute('fill', 'none')
       path.setAttribute('stroke', 'currentColor')
-      lane = { route, path, heat: 0, mounted: false, dots: 0 }
+      const ports = this.laneLayer.appendChild(document.createElementNS(NS, 'g'))
+      ports.setAttribute('fill', 'currentColor')
+      lane = { route, path, ports, heat: 0, mounted: false, dots: 0, cls: '', flow: false }
       this.lanes.set(key, lane)
     }
     return lane
@@ -230,6 +286,11 @@ export class FlowEngine {
 
   /** agent → (hub's left edge at the Branch row) → [across the hub, hidden behind it] → target. */
   private pathFor(route: FlowRoute): string | null {
+    return this.legs(route)?.d ?? null
+  }
+
+  /** The lane's path and the points where it meets a card's edge (its sockets). */
+  private legs(route: FlowRoute): { d: string; ports: { x: number; y: number }[] } | null {
     const a = this.rect(this.scene.origin(route.agent))
     const hub = this.rect('hub')
     if (!a || !hub) return null
@@ -239,8 +300,23 @@ export class FlowEngine {
     const from = { x: a.r, y: a.y }
     const d = `M ${from.x} ${from.y} ${curve(from, { x: hub.l, y })}`
     const to = route.to ? this.rect(route.to) : null
-    if (!to) return `${d} L ${hub.l + 24} ${y}`
-    return `${d} L ${hub.r} ${y} ${curve({ x: hub.r, y }, { x: to.l, y: to.y })}`
+    if (!to) return { d: `${d} L ${hub.l + 24} ${y}`, ports: [from, { x: hub.l, y }] }
+    return {
+      d: `${d} L ${hub.r} ${y} ${curve({ x: hub.r, y }, { x: to.l, y: to.y })}`,
+      ports: [from, { x: hub.l, y }, { x: hub.r, y }, { x: to.l, y: to.y }],
+    }
+  }
+
+  /** Places a lane's sockets: half-hidden circles under the cards' edges. */
+  private placePorts(lane: Lane, ports: { x: number; y: number }[]) {
+    const g = lane.ports
+    while (g.childNodes.length < ports.length) g.appendChild(document.createElementNS(NS, 'circle')).setAttribute('r', '3.5')
+    while (g.childNodes.length > ports.length) g.lastChild!.remove()
+    ports.forEach((p, i) => {
+      const c = g.childNodes[i] as SVGCircleElement
+      c.setAttribute('cx', String(p.x))
+      c.setAttribute('cy', String(p.y))
+    })
   }
 
   private frame = (now: number) => {
@@ -260,21 +336,45 @@ export class FlowEngine {
     }
     this.treeEl.setAttribute('d', tree)
 
+    let ghosts = ''
+    for (const [from, to] of this.scene.ghosts ?? []) {
+      const f = this.rect(from)
+      const t = this.rect(to)
+      if (!f || !t) continue
+      const a = { x: f.r, y: f.y }
+      ghosts += `M ${a.x} ${a.y} ${curve(a, { x: t.l, y: t.y })} `
+    }
+    this.ghostEl.setAttribute('d', ghosts)
+
     let warm = false
     for (const [key, lane] of this.lanes) {
       lane.heat = Math.max(0, lane.heat - dt / COOL_MS)
       if (!lane.mounted && lane.heat === 0 && lane.dots === 0) {
         lane.path.remove()
+        lane.ports.remove()
         this.lanes.delete(key)
         continue
       }
       if (lane.heat > 0) warm = true
-      lane.path.setAttribute('d', this.pathFor(lane.route) ?? '')
-      lane.path.setAttribute('class', this.scene.color(lane.route.agent))
-      lane.path.setAttribute('stroke-width', lane.mounted ? '2' : '1.5')
-      lane.path.setAttribute('stroke-opacity', String((lane.mounted ? 0.4 : 0) + lane.heat * 0.55))
-      if (lane.mounted) lane.path.removeAttribute('stroke-dasharray')
-      else lane.path.setAttribute('stroke-dasharray', '3 5')
+      const legs = this.legs(lane.route)
+      lane.path.setAttribute('d', legs?.d ?? '')
+      this.placePorts(lane, legs?.ports ?? [])
+      const color = this.scene.color(lane.route.agent)
+      if (lane.cls !== color) {
+        lane.cls = color
+        lane.path.setAttribute('class', `live-lane ${color}`)
+        lane.ports.setAttribute('class', color)
+      }
+      // a lane carrying calls flows; a mounted one at rest is a still, solid line
+      const flow = lane.heat > FLOW_HEAT || !lane.mounted
+      if (lane.flow !== flow) {
+        lane.flow = flow
+        lane.path.toggleAttribute('data-flow', flow)
+      }
+      const opacity = (lane.mounted ? 0.38 : 0) + lane.heat * 0.6
+      lane.path.setAttribute('stroke-width', lane.mounted || lane.heat > 0.5 ? '2' : '1.5')
+      lane.path.setAttribute('stroke-opacity', String(opacity))
+      lane.ports.setAttribute('fill-opacity', String(Math.min(1, 0.35 + opacity)))
     }
 
     this.dotLayer.appendChild(this.probe)
@@ -285,9 +385,14 @@ export class FlowEngine {
         this.probe.setAttribute('d', d)
         const len = this.probe.getTotalLength()
         const e = ease(k)
-        const p = this.probe.getPointAtLength((dot.back ? 1 - e : e) * len)
-        dot.el.setAttribute('cx', String(p.x))
-        dot.el.setAttribute('cy', String(p.y))
+        const at = (dot.back ? 1 - e : e) * len
+        const p = this.probe.getPointAtLength(at)
+        dot.head.setAttribute('transform', `translate(${p.x} ${p.y})`)
+        // the tail trails by a few px, less at the ends where the dot is slow
+        const lag = TAIL_PX * Math.min(1, 4 * Math.min(k, 1 - k) + 0.2)
+        const q = this.probe.getPointAtLength(Math.min(len, Math.max(0, dot.back ? at + lag : at - lag)))
+        dot.tail.setAttribute('cx', String(q.x))
+        dot.tail.setAttribute('cy', String(q.y))
       }
       if (k < 1 && d) return true
       dot.el.remove()

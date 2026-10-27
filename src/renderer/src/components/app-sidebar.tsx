@@ -1,6 +1,6 @@
 import type { DemoSummary, RunSummary } from '@shared/host-api'
 import { ChevronRight, Cpu, Folder, FolderOpen, LoaderCircle, Plus, RotateCw, Unplug } from 'lucide-react'
-import { useEffect, useMemo, useState } from 'react'
+import { type CSSProperties, useEffect, useMemo, useState } from 'react'
 
 import { ConnectMark } from '@/components/connect-mark'
 import { LfsProject, LfsStore } from '@/components/lfs-icons'
@@ -8,7 +8,7 @@ import { Collapse } from '@/components/motion/collapse'
 import { useIndicator } from '@/components/motion/indicator'
 import { revealStyle } from '@/components/motion/reveal'
 import { RunDot } from '@/components/runs/run-badges'
-import { ago, isLive, runLabel } from '@/components/runs/run-format'
+import { agentColors, ago, isLive, runLabel } from '@/components/runs/run-format'
 import { useRuns, useStartRun } from '@/components/runs/use-runs'
 import {
   Sidebar,
@@ -106,7 +106,7 @@ export function AppSidebar({ selected, onSelect, storageCount, computeCount }: A
       </SidebarHeader>
 
       <SidebarContent className="gap-0 pb-6">
-        <div ref={container} className="relative">
+        <div ref={container} className="side-tree relative">
           <span
             ref={indicator}
             aria-hidden="true"
@@ -128,7 +128,16 @@ export function AppSidebar({ selected, onSelect, storageCount, computeCount }: A
                     >
                       <item.icon />
                       <span className="flex-1">{item.label}</span>
-                      {item.count !== undefined && <span className="text-[13px] font-normal text-faint tabular-nums">{item.count}</span>}
+                      {item.count !== undefined && (
+                        <span
+                          className={cn(
+                            'min-w-6 rounded-full px-1.5 text-center text-[11.5px] leading-5 font-medium tabular-nums ring-1 ring-inset transition-colors duration-(--dur-base) animate-in fade-in',
+                            active ? 'bg-primary/10 text-primary ring-primary/20' : 'bg-foreground/[0.04] text-faint ring-foreground/[0.05]',
+                          )}
+                        >
+                          {item.count}
+                        </span>
+                      )}
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 )
@@ -211,6 +220,34 @@ interface DemoItemProps {
   onStart: () => void
 }
 
+/** A CSS colour from an agent's dot class: "bg-agent-builder" → var(--agent-builder), "bg-(--lane-3)" → var(--lane-3). */
+const cssColor = (dot: string) => {
+  const v = dot.match(/^bg-\((--[\w-]+)\)$/)
+  return v ? `var(${v[1]})` : `var(--${dot.slice(3)})`
+}
+
+/** A playing session's row breathes in its first running agent's colour. */
+function pulseOf(run: RunSummary): CSSProperties | undefined {
+  const colorOf = agentColors(run.agents.map((a) => a.name))
+  const first = run.agents.find((a) => a.state === 'running')
+  return first ? ({ '--pulse': cssColor(colorOf(first.name).dot) } as CSSProperties) : undefined
+}
+
+/** A playing session's running agents, a pulsing dot each in its colour (at most three). */
+function RunningAgents({ run }: { run: RunSummary }) {
+  const colorOf = agentColors(run.agents.map((a) => a.name))
+  const running = run.agents.filter((a) => a.state === 'running')
+  if (!running.length) return <RunDot state={run.state} />
+  return (
+    <span role="img" aria-label={`${running.length} running`} title={running.map((a) => a.name).join(', ')} className="flex shrink-0 items-center gap-[3px]">
+      {running.slice(0, 3).map((a) => {
+        const c = colorOf(a.name)
+        return <span key={a.name} className={cn('pulse-ring size-1.5 rounded-full', c.dot, c.text)} />
+      })}
+    </span>
+  )
+}
+
 /** Sessions a folder lists before "Show all". */
 const SHOWN = 6
 
@@ -223,7 +260,7 @@ function DemoItem({ index, demo, runs, open, selected, starting, refused, onTogg
   const shown = all ? runs : runs.slice(0, SHOWN)
   const FolderIcon = open ? FolderOpen : Folder
   return (
-    <SidebarMenuItem className="reveal" style={revealStyle(index)}>
+    <SidebarMenuItem className="side-in" style={revealStyle(index)}>
       <SidebarMenuButton
         isActive={here && !selected.run}
         onClick={() => {
@@ -262,21 +299,23 @@ function DemoItem({ index, demo, runs, open, selected, starting, refused, onTogg
               {refused}
             </li>
           )}
-          {shown.map((r) => {
+          {shown.map((r, i) => {
             const playing = isLive(r.state)
             return (
-              <SidebarMenuSubItem key={r.id}>
+              <SidebarMenuSubItem key={r.id} className="side-in" style={revealStyle(i)}>
                 <SidebarMenuSubButton
                   asChild
                   isActive={here && selected.run === r.id}
-                  className={cn('h-8 text-[13px]', playing && 'bg-primary/[0.06] text-foreground ring-1 ring-primary/20 ring-inset live-glow')}
+                  className={cn('h-8 text-[13px]', playing && 'side-live text-foreground')}
+                  style={playing ? pulseOf(r) : undefined}
                 >
                   <button type="button" onClick={() => onSelect({ kind: 'project', id: demo.id, run: r.id })} className="w-full">
-                    <RunDot state={r.state} />
+                    {playing ? <RunningAgents run={r} /> : <RunDot state={r.state} />}
                     <span className="min-w-0 flex-1 truncate text-left">{runLabel(r)}</span>
                     <span className={cn('text-[11px] tabular-nums', playing ? 'font-medium text-primary' : 'text-faint')}>
-                      {playing ? 'live' : ago(r.ended ?? r.started)}
+                      {playing ? (r.of ? `${Math.round((100 * r.done) / r.of)}%` : 'live') : ago(r.ended ?? r.started)}
                     </span>
+                    {playing && <span aria-hidden="true" className="side-progress" style={{ '--p': r.of ? r.done / r.of : 0 } as CSSProperties} />}
                   </button>
                 </SidebarMenuSubButton>
               </SidebarMenuSubItem>
@@ -287,14 +326,15 @@ function DemoItem({ index, demo, runs, open, selected, starting, refused, onTogg
               <button
                 type="button"
                 onClick={() => setAll(!all)}
-                className="rounded px-2 py-1 text-xs text-muted-foreground outline-none transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-sidebar-ring"
+                className="flex items-center gap-1 rounded px-2 py-1 text-xs text-muted-foreground outline-none transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-sidebar-ring"
               >
-                {all ? 'Show fewer' : `Show all ${runs.length}`}
+                {all ? 'Show fewer' : 'Show all'}
+                {!all && <span className="rounded-full bg-foreground/[0.05] px-1.5 text-[11px] leading-4 text-faint tabular-nums">{runs.length}</span>}
               </button>
             </li>
           )}
-          <SidebarMenuSubItem>
-            <SidebarMenuSubButton asChild className="h-7 text-xs text-muted-foreground">
+          <SidebarMenuSubItem className="side-in" style={revealStyle(shown.length + 1)}>
+            <SidebarMenuSubButton asChild className="mt-0.5 h-7 text-xs text-muted-foreground hover:text-foreground">
               <button
                 type="button"
                 onClick={onStart}
@@ -302,11 +342,16 @@ function DemoItem({ index, demo, runs, open, selected, starting, refused, onTogg
                 className="group/new w-full"
                 title={live ? 'A session is playing' : 'Reset the project and play the scenario as a new session'}
               >
-                {starting ? (
-                  <LoaderCircle className="size-3.5! animate-spin text-primary!" />
-                ) : (
-                  <Plus className="size-3.5! text-muted-foreground! transition-transform duration-(--dur-base) ease-out-expo group-hover/new:rotate-90 group-hover/new:text-primary!" />
-                )}
+                <span
+                  aria-hidden="true"
+                  className="flex size-4 shrink-0 items-center justify-center rounded-full border border-dashed border-foreground/20 transition-[border-color,background-color,box-shadow] duration-(--dur-base) group-hover/new:border-solid group-hover/new:border-primary/50 group-hover/new:bg-primary/10 group-hover/new:shadow-[0_0_10px_-2px_var(--glow)]"
+                >
+                  {starting ? (
+                    <LoaderCircle className="size-3! animate-spin text-primary!" />
+                  ) : (
+                    <Plus className="size-3! text-muted-foreground! transition-transform duration-(--dur-base) ease-out-expo group-hover/new:rotate-90 group-hover/new:text-primary!" />
+                  )}
+                </span>
                 <span>{starting ? 'Starting…' : 'New session'}</span>
               </button>
             </SidebarMenuSubButton>

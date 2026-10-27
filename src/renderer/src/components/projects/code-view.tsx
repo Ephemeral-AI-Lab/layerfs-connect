@@ -1,3 +1,5 @@
+import '@/components/projects/history/history.css'
+
 import { javascript } from '@codemirror/lang-javascript'
 import { json } from '@codemirror/lang-json'
 import { markdown } from '@codemirror/lang-markdown'
@@ -25,13 +27,19 @@ const highlight = HighlightStyle.define([
 
 const theme = EditorView.theme({
   '&': { fontSize: '13px', backgroundColor: 'transparent', color: 'var(--foreground)', height: '100%' },
-  '.cm-scroller': { fontFamily: 'ui-monospace, "SF Mono", Menlo, monospace', lineHeight: '1.7' },
+  '.cm-scroller': { fontFamily: 'ui-monospace, "SF Mono", Menlo, monospace', lineHeight: '1.7', fontVariantLigatures: 'none' },
   '.cm-content': { padding: '12px 0', caretColor: 'transparent' },
-  '.cm-gutters': { backgroundColor: 'transparent', border: 'none', color: 'var(--faint)' },
-  '.cm-lineNumbers .cm-gutterElement': { padding: '0 14px 0 18px', minWidth: '44px' },
+  '.cm-gutters': {
+    backgroundColor: 'color-mix(in oklab, var(--muted) 30%, transparent)',
+    border: 'none',
+    color: 'color-mix(in oklab, var(--faint) 75%, transparent)',
+  },
+  '.cm-lineNumbers .cm-gutterElement': { padding: '0 12px 0 18px', minWidth: '48px', fontVariantNumeric: 'tabular-nums', fontSize: '11.5px' },
   '.cm-line': { padding: '0 16px' },
   '&.cm-focused': { outline: 'none' },
-  '.cm-selectionBackground, &.cm-focused .cm-selectionBackground': { backgroundColor: 'var(--accent) !important' },
+  '.cm-selectionBackground, &.cm-focused .cm-selectionBackground': {
+    backgroundColor: 'color-mix(in oklab, var(--primary) 18%, transparent) !important',
+  },
 })
 
 function language(path: string): Extension {
@@ -65,5 +73,5 @@ export function CodeView({ path, text }: { path: string; text: string }) {
     return () => view.destroy()
   }, [path, text])
 
-  return <div ref={host} className="h-full min-h-0 overflow-hidden [&_.cm-editor]:h-full" />
+  return <div ref={host} className="code-view h-full min-h-0 overflow-hidden [&_.cm-editor]:h-full" />
 }

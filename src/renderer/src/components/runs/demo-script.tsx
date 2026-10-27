@@ -2,15 +2,17 @@ import type { DemoDetail, SegmentKind } from '@shared/host-api'
 import { RotateCw } from 'lucide-react'
 import { useMemo, useState } from 'react'
 
-import { AgentSwitcher, type SwitcherAgent } from '@/components/runs/agent-switcher'
+import { revealStyle } from '@/components/motion/reveal'
+import { AgentRail, AgentSwitcher, type SwitcherAgent } from '@/components/runs/agent-switcher'
 import { Conversation } from '@/components/runs/conversation'
 import { KindLegend } from '@/components/runs/run-badges'
-import { agentColors, plural, stepKey } from '@/components/runs/run-format'
+import { KIND, KIND_ORDER, agentColors, plural, stepKey } from '@/components/runs/run-format'
 import { type Entry, buildThread, targetOf, threadSize } from '@/components/runs/thread'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { host } from '@/host/client'
 import { useHostQuery } from '@/host/use-host'
+import { cn } from '@/lib/utils'
 
 /** Who starts whom: a subagent step's segment names the child. */
 function spawnParents(demo: DemoDetail): Map<string, string | null> {
@@ -24,6 +26,22 @@ function spawnParents(demo: DemoDetail): Map<string, string | null> {
 }
 
 const FRAME = 'flex h-full min-h-0 flex-col'
+/** Up to this many agents fit the rail; more get the dropdown. */
+const RAIL = 8
+
+/** The script's calls by kind, as one bar of proportional segments that draws in. */
+function KindBar({ counts }: { counts: Partial<Record<SegmentKind, number>> }) {
+  const kinds = KIND_ORDER.filter((k) => (counts[k] ?? 0) > 0)
+  const total = kinds.reduce((n, k) => n + (counts[k] ?? 0), 0)
+  if (!total) return null
+  return (
+    <div aria-hidden="true" className="reveal-x flex h-1.5 w-full gap-px overflow-hidden rounded-full bg-muted">
+      {kinds.map((k) => (
+        <span key={k} title={`${KIND[k].label} ${counts[k]}`} className={cn('h-full min-w-[3px]', KIND[k].dot)} style={{ flexGrow: counts[k] }} />
+      ))}
+    </div>
+  )
+}
 
 /** A demo's script before any run: one agent's thread at a time, in the run view's folded-turn look. */
 export function DemoScript({ demo }: { demo: string }) {
@@ -76,16 +94,24 @@ function Script({ demo }: { demo: DemoDetail }) {
 
   return (
     <div className={FRAME}>
-      <header className="mx-auto flex w-full max-w-[1000px] min-w-0 shrink-0 flex-wrap items-center gap-x-3 gap-y-1.5 px-8 pt-3 text-sm">
-        <AgentSwitcher agents={agents} value={agent} onChange={setAgent} colorOf={colorOf} />
-        <span className="text-xs text-faint">
-          {plural(demo.agents.length, 'agent')} · {plural(demo.steps, 'step')}
-        </span>
-        <KindLegend
-          kinds={Object.keys(demo.kinds) as SegmentKind[]}
-          counts={demo.kinds}
-          className="ml-auto gap-x-3 [&_li]:text-[11px]"
-        />
+      <header className="mx-auto w-full max-w-[1000px] min-w-0 shrink-0 px-8 pt-4 pb-1">
+        <div className="surface reveal flex flex-col gap-3 rounded-xl px-4 pt-3 pb-3.5">
+          <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-2">
+            <span className="text-[11px] font-medium tracking-[0.06em] text-faint uppercase">Scenario</span>
+            {agents.length <= RAIL ? (
+              <AgentRail agents={agents} value={agent} onChange={setAgent} colorOf={colorOf} />
+            ) : (
+              <AgentSwitcher agents={agents} value={agent} onChange={setAgent} colorOf={colorOf} />
+            )}
+            <span className="ml-auto text-xs text-muted-foreground tabular-nums">
+              {plural(demo.agents.length, 'agent')} · {plural(demo.steps, 'step')}
+            </span>
+          </div>
+          <div className="flex flex-col gap-2 reveal" style={revealStyle(2)}>
+            <KindBar counts={demo.kinds} />
+            <KindLegend kinds={Object.keys(demo.kinds) as SegmentKind[]} counts={demo.kinds} className="gap-x-3.5 [&_li]:text-[11px]" />
+          </div>
+        </div>
       </header>
       <div className="flex min-h-0 flex-1 flex-col">
         <Conversation

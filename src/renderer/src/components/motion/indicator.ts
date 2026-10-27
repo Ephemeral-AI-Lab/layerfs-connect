@@ -61,7 +61,8 @@ export function useIndicator<C extends HTMLElement = HTMLElement, I extends HTML
     const i = indicator.current
     if (!c || !i) return
     const el = c.querySelector<HTMLElement>(selector)
-    if (!el) {
+    // an active child in a closed <Collapse> (inert) is out of sight: no ghost highlight over the rows below
+    if (!el || el.closest('[inert]')) {
       i.removeAttribute('data-placed')
       last.current = null
       return

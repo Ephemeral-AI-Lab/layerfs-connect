@@ -1,8 +1,13 @@
+import './history.css'
+
 import { ChevronRight, CornerDownRight, Ellipsis } from 'lucide-react'
-import { type KeyboardEvent, useEffect, useMemo, useRef } from 'react'
+import { type CSSProperties, type KeyboardEvent, useEffect, useMemo, useRef } from 'react'
+
+import { revealStyle, useIndicator } from '@/components/motion'
 
 import { LfsFork, LfsMerge, LfsPublish } from '@/components/lfs-icons'
 import { laneColor } from '@/components/projects/history/branch-tree'
+import { HashChip } from '@/components/projects/history/parts'
 import { Unavailable } from '@/components/storage/unavailable'
 import { Button } from '@/components/ui/button'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
@@ -74,6 +79,7 @@ export function LineageGraph({ tree, focus, onFocus, selected, onSelect }: Linea
   const lanes = path.length
   const width = PAD * 2 + (lanes - 1) * LANE
   const list = useRef<HTMLDivElement>(null)
+  const { container, indicator } = useIndicator<HTMLDivElement>()
   const x = (lane: number) => PAD + lane * LANE
   const y = (i: number) => i * ROW + ROW / 2
 
@@ -117,6 +123,9 @@ export function LineageGraph({ tree, focus, onFocus, selected, onSelect }: Linea
   const mainFork = path[1] ? rows.findIndex((r) => rowId(r) === path[1].forkedFrom?.id) : -1
   const forkPoints = new Set(path.slice(1).map((b) => b.forkedFrom?.id))
   const firstOfLane = new Map(segments.map((s) => [s.top, s.b]))
+  // The Branch's newest entry glows; it breathes while its agent is working.
+  const headId = branch.name === 'main' ? (branch.commits[0] && tree.layers[0] && branch.commits[0].at > tree.layers[0].at ? branch.commits[0].id : tree.layers[0]?.id) : branch.commits[0]?.id
+  const live = branch.agent !== undefined && tree.busy.has(branch.agent)
   // Long ancestries keep main, the parent and the Branch; the middle folds into a menu.
   const crumbs: { b?: ForkBranch; folded?: ForkBranch[] }[] =
     path.length > 3
@@ -125,7 +134,7 @@ export function LineageGraph({ tree, focus, onFocus, selected, onSelect }: Linea
 
   return (
     <section className="flex min-h-0 min-w-0 flex-col border-r">
-      <header className="flex flex-col gap-2 border-b px-4 py-3">
+      <header className="hist-pane-head flex flex-col gap-2 px-4 py-2.5">
         <nav aria-label="Fork ancestry" className="flex min-w-0 items-center gap-1 text-[13px]">
           {crumbs.map(({ b, folded }, i) => (
             <span key={b?.name ?? 'folded'} className={cn('flex items-center gap-1', i === crumbs.length - 1 ? 'min-w-0' : 'min-w-0 shrink')}>
@@ -148,16 +157,18 @@ export function LineageGraph({ tree, focus, onFocus, selected, onSelect }: Linea
                   </DropdownMenuContent>
                 </DropdownMenu>
               ) : !b ? null : i === crumbs.length - 1 ? (
-                <span aria-current="page" className="truncate font-semibold">
-                  {b.name}
+                <span aria-current="page" className="flex min-w-0 items-center gap-1.5 font-semibold">
+                  <LaneMark b={b} />
+                  <span className="truncate">{b.name}</span>
                 </span>
               ) : (
                 <button
                   type="button"
                   onClick={() => onFocus(b.name)}
-                  className="truncate rounded text-muted-foreground outline-none hover:text-foreground hover:underline focus-visible:ring-2 focus-visible:ring-ring"
+                  className="flex min-w-0 items-center gap-1.5 rounded px-0.5 text-muted-foreground outline-none transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
                 >
-                  {b.name}
+                  <LaneMark b={b} />
+                  <span className="truncate">{b.name}</span>
                 </button>
               )}
             </span>
@@ -169,7 +180,7 @@ export function LineageGraph({ tree, focus, onFocus, selected, onSelect }: Linea
               ? `${tree.layers.length} Layer${tree.layers.length === 1 ? '' : 's'} · the published line new mounts start from`
               : `Forked from ${parent?.name}${branch.forkedFrom ? ` at ${shortId(branch.forkedFrom.id)}` : ''} · ${branch.commits.length} Commit${branch.commits.length === 1 ? '' : 's'} · ${branch.children.length} fork${branch.children.length === 1 ? '' : 's'}${branch.state === 'merged' ? ' · merged' : branch.state === 'published' ? ` · published${branch.publishedAs ? ` as ${shortId(branch.publishedAs)}` : ''}` : ''}`}
           </p>
-          <div className="flex shrink-0 gap-1">
+          <div role="group" aria-label="Branch actions" className="flex shrink-0 items-center gap-1">
             <Unavailable reason={BY_HAND}>
               <Button variant="ghost" size="sm" disabled>
                 <LfsFork /> Fork
@@ -201,47 +212,109 @@ export function LineageGraph({ tree, focus, onFocus, selected, onSelect }: Linea
         onKeyDown={onKeyDown}
         className="relative min-h-0 flex-1 overflow-y-auto outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
       >
-        <div className="relative" style={{ height: rows.length * ROW + 8 }}>
-          <svg aria-hidden="true" width={width} height={rows.length * ROW} className="absolute top-0 left-0">
+        {/* Keyed by the Branch, so its lineage draws in afresh when focus moves. */}
+        <div key={branch.name} ref={container} className="relative isolate" style={{ height: rows.length * ROW + 8 }}>
+          <span ref={indicator} aria-hidden="true" className="indicator hist-row-indicator -z-10" />
+          <svg aria-hidden="true" width={width} height={rows.length * ROW} className="absolute top-0 left-0 overflow-visible">
             {segments.map(({ b, lane, top, bottom, forkRow }) => {
               const color = laneColor(b.depth)
               if (lane === 0) {
                 const split = mainFork >= 0 ? mainFork : top
                 return (
                   <g key={b.name}>
-                    {split > top && <line x1={x(0)} x2={x(0)} y1={y(top)} y2={y(split)} stroke={color} strokeWidth={3} opacity={0.3} />}
-                    <line x1={x(0)} x2={x(0)} y1={y(split)} y2={rows[bottom]?.kind === 'earlier' ? (bottom + 1) * ROW : y(bottom)} stroke={color} strokeWidth={3} />
+                    {/* Drawn from the oldest end up, the way the line grew. */}
+                    <line
+                      x1={x(0)}
+                      x2={x(0)}
+                      y1={rows[bottom]?.kind === 'earlier' ? (bottom + 1) * ROW : y(bottom)}
+                      y2={y(split)}
+                      stroke={color}
+                      strokeWidth={3}
+                      strokeLinecap="round"
+                      pathLength={1}
+                      className="hist-draw"
+                    />
+                    {split > top && (
+                      <line
+                        x1={x(0)}
+                        x2={x(0)}
+                        y1={y(split)}
+                        y2={y(top)}
+                        stroke={color}
+                        strokeWidth={3}
+                        strokeLinecap="round"
+                        opacity={0.3}
+                        pathLength={1}
+                        className="hist-draw"
+                        style={revealStyle(4)}
+                      />
+                    )}
                   </g>
                 )
               }
               if (forkRow < 0) return null
               const bend = y(forkRow) - ROW * 0.55
+              const dashed = rows[top]?.kind === 'empty'
               return (
                 <path
                   key={b.name}
                   d={`M${x(lane - 1)} ${y(forkRow)} C${x(lane - 1)} ${bend} ${x(lane)} ${y(forkRow) - ROW * 0.2} ${x(lane)} ${bend} L${x(lane)} ${y(top)}`}
                   stroke={color}
                   strokeWidth={2}
+                  strokeLinecap="round"
                   fill="none"
-                  strokeDasharray={rows[top]?.kind === 'empty' ? '3 3' : undefined}
+                  strokeDasharray={dashed ? '3 3' : undefined}
+                  pathLength={dashed ? undefined : 1}
+                  className={dashed ? 'hist-fade' : 'hist-draw'}
+                  style={revealStyle(lane * 3)}
                 />
               )
             })}
             {rows.map((r, i) => {
               const color = laneColor(path[r.lane].depth)
-              const on = rowId(r) === selected?.id
+              const id = rowId(r)
+              const on = id !== undefined && id === selected?.id
+              const head = id !== undefined && id === headId
+              const pop = { className: cn('hist-pop hist-node', head && 'hist-head'), style: revealStyle(i, { '--head': color } as CSSProperties) }
+              const key = id ?? `${r.kind}-${i}`
+              const halo = head && live && (
+                <circle key={`${key}-halo`} cx={x(r.lane)} cy={y(i)} r={6} fill="none" stroke={color} strokeWidth={1.5} className="hist-halo" />
+              )
               if (r.kind === 'layer')
-                return (
-                  <rect key={i} x={x(0) - 5} y={y(i) - 5} width={10} height={10} rx={2} fill={color} opacity={r.dim ? 0.35 : 1} stroke={on ? 'var(--foreground)' : 'none'} strokeWidth={2} />
-                )
+                return [
+                  halo,
+                  <rect
+                    key={key}
+                    x={x(0) - (on ? 6 : 5)}
+                    y={y(i) - (on ? 6 : 5)}
+                    width={on ? 12 : 10}
+                    height={on ? 12 : 10}
+                    rx={2.5}
+                    fill={color}
+                    opacity={r.dim ? 0.35 : 1}
+                    stroke={on ? 'var(--foreground)' : 'none'}
+                    strokeWidth={2}
+                    {...pop}
+                  />,
+                ]
               if (r.kind === 'commit') {
                 const hollow = forkPoints.has(r.commit.id)
-                return (
-                  <circle key={i} cx={x(r.lane)} cy={y(i)} r={hollow ? 5 : 4.5} fill={hollow ? 'var(--card)' : color} stroke={on ? 'var(--foreground)' : color} strokeWidth={hollow || on ? 2 : 0} />
-                )
+                return [
+                  halo,
+                  <circle
+                    key={key}
+                    cx={x(r.lane)}
+                    cy={y(i)}
+                    r={(hollow ? 5 : 4.5) + (on ? 1 : 0)}
+                    fill={hollow ? 'var(--card)' : color}
+                    stroke={on ? 'var(--foreground)' : color}
+                    strokeWidth={hollow || on ? 2 : 0}
+                    {...pop}
+                  />,
+                ]
               }
               if (r.kind === 'empty')
-                return <circle key={i} cx={x(r.lane)} cy={y(i)} r={4.5} fill="var(--card)" stroke={color} strokeWidth={1.5} strokeDasharray="2 2" />
+                return <circle key={key} cx={x(r.lane)} cy={y(i)} r={4.5} fill="var(--card)" stroke={color} strokeWidth={1.5} strokeDasharray="2 2" {...pop} />
               return null
             })}
           </svg>
@@ -249,6 +322,7 @@ export function LineageGraph({ tree, focus, onFocus, selected, onSelect }: Linea
           {rows.map((r, i) => (
             <RowLine
               key={rowId(r) ?? `${r.kind}-${i}`}
+              index={i}
               row={r}
               top={i * ROW}
               indent={width}
@@ -265,7 +339,20 @@ export function LineageGraph({ tree, focus, onFocus, selected, onSelect }: Linea
   )
 }
 
+/** A Branch's lane colour, as a small mark: square for main, round for a fork. */
+function LaneMark({ b }: { b: ForkBranch }) {
+  return (
+    <span
+      aria-hidden="true"
+      className={cn('size-2 shrink-0', b.name === 'main' ? 'rounded-[2px]' : 'rounded-full', b.state === 'merged' && 'opacity-50')}
+      style={{ background: laneColor(b.depth) }}
+    />
+  )
+}
+
 interface RowLineProps {
+  /** Its place, for the entrance stagger. */
+  index: number
   row: Row
   top: number
   indent: number
@@ -277,12 +364,14 @@ interface RowLineProps {
   onFocus: (name: string) => void
 }
 
-function RowLine({ row, top, indent, tree, selected, label, onSelect, onFocus }: RowLineProps) {
-  const style = { top, height: ROW, paddingLeft: indent + 4 }
+function RowLine({ index, row, top, indent, tree, selected, label, onSelect, onFocus }: RowLineProps) {
+  const style = revealStyle(index, { top, height: ROW, paddingLeft: indent + 6 })
   if (row.kind === 'earlier' || row.kind === 'empty')
     return (
-      <div className="absolute inset-x-0 flex items-center pr-4 text-xs text-faint italic" style={style}>
-        {row.kind === 'earlier' ? `${row.count} earlier ${row.of}` : 'No Commits yet: forked, nothing committed'}
+      <div className="reveal absolute inset-x-0 flex items-center pr-4 text-xs text-faint" style={style}>
+        <span className="rounded-md border border-dashed px-2 py-0.5">
+          {row.kind === 'earlier' ? `${row.count} earlier ${row.of}` : 'No Commits yet: forked, nothing committed'}
+        </span>
       </div>
     )
 
@@ -295,22 +384,21 @@ function RowLine({ row, top, indent, tree, selected, label, onSelect, onFocus }:
   const shownForks = row.forks.slice(0, 1)
 
   return (
-    <div className="absolute inset-x-0 flex items-center gap-2 pr-3" style={{ top, height: ROW, paddingLeft: indent }}>
+    <div className="reveal absolute inset-x-0 flex items-center gap-2 pr-3" style={revealStyle(index, { top, height: ROW, paddingLeft: indent })}>
       <button
         type="button"
         role="option"
         aria-selected={selected}
         aria-current={selected ? 'true' : undefined}
+        data-active={selected}
         tabIndex={-1}
         onClick={() => onSelect({ kind: row.kind, id })}
         className={cn(
-          'flex h-[34px] min-w-0 flex-1 items-center gap-2 rounded-lg px-2 text-left outline-none',
-          selected ? 'bg-accent' : 'hover:bg-muted/60',
+          'flex h-[34px] min-w-0 flex-1 items-center gap-2 rounded-lg px-2 text-left outline-none transition-colors duration-(--dur-fast)',
+          !selected && 'hover:bg-muted/60',
         )}
       >
-        <span title={id} className={cn('w-[4.25rem] shrink-0 font-mono text-xs', dim ? 'text-faint' : 'text-foreground')}>
-          {shortId(id)}
-        </span>
+        <HashChip id={id} dim={dim} className="w-[4.75rem] shrink-0 justify-center" />
         {label && label.name !== 'main' && (
           <span
             role="link"
@@ -319,8 +407,8 @@ function RowLine({ row, top, indent, tree, selected, label, onSelect, onFocus }:
               e.stopPropagation()
               onFocus(label.name)
             }}
-            className="max-w-[7.5rem] shrink-0 cursor-pointer truncate rounded px-1.5 py-px text-[11px] font-medium ring-1 ring-current/30 ring-inset hover:underline"
-            style={{ color: laneColor(label.depth) }}
+            className="lane-chip max-w-[7.5rem] shrink-0 cursor-pointer truncate rounded px-1.5 py-px text-[11px] font-medium"
+            style={{ '--lane': laneColor(label.depth) } as CSSProperties}
           >
             {label.name}
           </span>
@@ -349,7 +437,7 @@ function RowLine({ row, top, indent, tree, selected, label, onSelect, onFocus }:
                 onClick={() => onFocus(name)}
                 title={`Open ${name}, forked here`}
                 className={cn(
-                  'flex max-w-[7.5rem] items-center gap-1 rounded-md border px-1.5 py-0.5 text-[11px] hover:bg-muted',
+                  'flex max-w-[7.5rem] items-center gap-1 rounded-md border bg-card px-1.5 py-0.5 text-[11px] shadow-[var(--highlight)] transition-colors hover:bg-muted hover:text-foreground',
                   kid?.state === 'merged' ? 'text-faint' : 'text-muted-foreground',
                 )}
               >

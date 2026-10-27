@@ -1,19 +1,23 @@
-import { GitCommitVertical, Network, Search } from 'lucide-react'
+import { GitCommitVertical, Network } from 'lucide-react'
 import { useMemo, useState } from 'react'
 
+import { Segmented, type SegmentedOption } from '@/components/motion'
 import { type BranchFilter, BranchTree, visibleBranches } from '@/components/projects/history/branch-tree'
 import { CommitDetail } from '@/components/projects/history/commit-detail'
 import { ForkMap } from '@/components/projects/history/fork-map'
 import { type HistoryItem, LineageGraph } from '@/components/projects/history/lineage-graph'
+import { HashChip, PaneHead, SearchField } from '@/components/projects/history/parts'
 import { LoadError, Loading } from '@/components/projects/states'
-import { Input } from '@/components/ui/input'
 import { host } from '@/host/client'
 import { useHostQuery } from '@/host/use-host'
 import { type ForkTree, ancestry, buildForkTree } from '@/data/forks'
-import { shortId } from '@/data/format'
-import { cn } from '@/lib/utils'
 
 export type HistoryView = 'lineage' | 'map'
+
+const VIEWS: SegmentedOption<HistoryView>[] = [
+  { value: 'lineage', label: 'Lineage', icon: GitCommitVertical },
+  { value: 'map', label: 'Map', icon: Network },
+]
 
 const FILTERS: { id: BranchFilter; label: string }[] = [
   { id: 'all', label: 'All' },
@@ -109,72 +113,35 @@ function HistoryBody({ project, tree, initialBranch, initialView = 'lineage', au
   const open = branches.filter((b) => b.name !== 'main' && b.state === 'open').length
   const deepest = Math.max(0, ...branches.map((b) => b.depth))
 
+  const counts = { all: branches.length - 1, open, done: branches.length - 1 - open }
+  const filters = FILTERS.map((f) => ({ value: f.id, label: f.label, count: counts[f.id] }))
+  const kind = selected?.kind === 'layer' ? 'Layer' : 'Commit'
+
   return (
-    <div className="flex h-[calc(100svh-13.5rem)] min-h-[30rem] flex-col overflow-hidden rounded-2xl border bg-card">
-      <div className="flex items-center gap-3 border-b px-3 py-2.5">
-        <div className="relative w-60">
-          <Search aria-hidden="true" className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-faint" />
-          <Input
-            aria-label="Find a Branch or Commit"
-            placeholder="Find a Branch or Commit"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            className="h-8 pl-7 text-[13px]"
-          />
-        </div>
-        <div role="radiogroup" aria-label="Show Branches" className="flex gap-0.5 rounded-lg bg-muted p-0.5">
-          {FILTERS.map((f) => (
-            <button
-              key={f.id}
-              type="button"
-              role="radio"
-              aria-checked={filter === f.id}
-              onClick={() => setFilter(f.id)}
-              className={cn(
-                'rounded-md px-2.5 py-1 text-xs font-medium outline-none focus-visible:ring-2 focus-visible:ring-ring',
-                filter === f.id ? 'bg-card text-foreground shadow-xs' : 'text-muted-foreground hover:text-foreground',
-              )}
-            >
-              {f.label}
-            </button>
-          ))}
-        </div>
-        <span className="min-w-0 flex-1 truncate text-right text-xs text-muted-foreground">
+    <div className="hist-frame flex h-0 min-h-[30rem] flex-1 flex-col overflow-hidden rounded-2xl">
+      <div className="flex items-center gap-3 border-b bg-muted/25 px-3 py-2">
+        <SearchField label="Find a Branch or Commit" value={query} onChange={setQuery} className="w-60" />
+        <Segmented aria-label="Show Branches" value={filter} onChange={setFilter} options={filters} />
+        <span className="min-w-0 flex-1 truncate text-right text-xs text-muted-foreground tabular-nums">
           {tree.branches.size === 1
             ? 'No Branches yet'
             : `${tree.branches.size - 1} Branch${tree.branches.size === 2 ? '' : 'es'} · ${open} open · forks ${deepest} deep`}
           {' · '}
           {tree.commits.size} Commit{tree.commits.size === 1 ? '' : 's'}
-          {tree.layers[0] && ` · main at ${shortId(tree.layers[0].id)}`}
+          {tree.layers[0] && (
+            <>
+              {' · main at '}
+              <HashChip id={tree.layers[0].id} className="ml-0.5 text-[11px]" />
+            </>
+          )}
         </span>
-        <div role="radiogroup" aria-label="View" className="flex gap-0.5 rounded-lg bg-muted p-0.5">
-          {(
-            [
-              { id: 'lineage', label: 'Lineage', icon: GitCommitVertical },
-              { id: 'map', label: 'Map', icon: Network },
-            ] as const
-          ).map((v) => (
-            <button
-              key={v.id}
-              type="button"
-              role="radio"
-              aria-checked={view === v.id}
-              onClick={() => setView(v.id)}
-              className={cn(
-                'flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium outline-none focus-visible:ring-2 focus-visible:ring-ring',
-                view === v.id ? 'bg-card text-foreground shadow-xs' : 'text-muted-foreground hover:text-foreground',
-              )}
-            >
-              <v.icon className="size-3.5" />
-              {v.label}
-            </button>
-          ))}
-        </div>
+        <Segmented aria-label="View" value={view} onChange={setView} options={VIEWS} />
       </div>
 
       {view === 'lineage' ? (
-        <div className="grid min-h-0 flex-1 grid-cols-[15.5rem_minmax(0,1fr)_17.5rem]">
-          <aside className="flex min-h-0 flex-col border-r">
+        <div key="lineage" className="hist-swap grid min-h-0 flex-1 grid-cols-[15.5rem_minmax(0,1fr)_18rem]">
+          <aside aria-label="Branches" className="hist-side flex min-h-0 flex-col border-r">
+            <PaneHead label="Branches" count={shown.size} />
             <BranchTree
               tree={tree}
               focus={focus}
@@ -190,25 +157,34 @@ function HistoryBody({ project, tree, initialBranch, initialView = 'lineage', au
               }
               query={query}
               filter={filter}
+              onClear={() => {
+                setQuery('')
+                setFilter('all')
+              }}
             />
           </aside>
           <LineageGraph tree={tree} focus={focus} onFocus={setFocus} selected={selected} onSelect={setSelected} />
-          <section className="min-h-0 overflow-y-auto">
-            <CommitDetail tree={tree} item={selected} onFocus={setFocus} />
+          <section aria-label={`${kind} detail`} className="hist-side min-h-0 overflow-y-auto">
+            <PaneHead label={selected ? kind : 'Detail'} />
+            <div key={selected ? `${selected.kind}:${selected.id}` : 'none'} className="hist-swap">
+              <CommitDetail tree={tree} item={selected} onFocus={setFocus} />
+            </div>
           </section>
         </div>
       ) : (
-        <ForkMap
-          title={`Fork timeline of ${project}`}
-          tree={tree}
-          focus={focus}
-          shown={shown}
-          autoplay={autoplay}
-          onOpen={(name) => {
-            setFocus(name)
-            setView('lineage')
-          }}
-        />
+        <div key="map" className="hist-swap flex min-h-0 flex-1 flex-col">
+          <ForkMap
+            title={`Fork timeline of ${project}`}
+            tree={tree}
+            focus={focus}
+            shown={shown}
+            autoplay={autoplay}
+            onOpen={(name) => {
+              setFocus(name)
+              setView('lineage')
+            }}
+          />
+        </div>
       )}
     </div>
   )

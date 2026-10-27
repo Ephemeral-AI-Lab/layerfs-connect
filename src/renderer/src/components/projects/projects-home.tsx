@@ -1,113 +1,27 @@
-import { Plus, Search, TriangleAlert } from 'lucide-react'
-import { useState } from 'react'
+import './home.css'
 
-import { LayerfsMark } from '@/components/layerfs-mark'
-import { LfsBranch, LfsCommit, LfsStore } from '@/components/lfs-icons'
+import { FolderSearch, Search, TriangleAlert, X } from 'lucide-react'
+import { useCallback, useLayoutEffect, useState } from 'react'
+
+import { revealStyle } from '@/components/motion/reveal'
 import { PageHeader } from '@/components/motion/page-header'
-import { LoadError } from '@/components/projects/states'
-import { isLive, plural, runLabel } from '@/components/runs/run-format'
+import { type CardFacts, ProjectCard } from '@/components/projects/home/project-card'
+import { StatsStrip } from '@/components/projects/home/stats-strip'
+import { useFlip } from '@/components/projects/home/use-flip'
+import { Empty, LoadError } from '@/components/projects/states'
+import { isLive, plural } from '@/components/runs/run-format'
 import { useStartRun } from '@/components/runs/use-runs'
 import { Chip } from '@/components/storage/chips'
 import { ProjectsTable } from '@/components/storage/projects-table'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
-import { ago, bytes, shortId } from '@/data/format'
-import { HostError, host } from '@/host/client'
+import { bytes } from '@/data/format'
+import { host } from '@/host/client'
 import { useHostEvents, useHostQuery } from '@/host/use-host'
 import type { DemoSummary, RunSummary } from '@shared/host-api'
 
-interface ProjectCardProps {
-  demo: DemoSummary
-  latest: RunSummary | null
-  starting: boolean
-  onOpen: () => void
-  onNewSession: () => void
-}
-
-/** A demo's LayerFS project: its state now, its Store and last Commit, and its sessions. */
-function ProjectCard({ demo, latest, starting, onOpen, onNewSession }: ProjectCardProps) {
-  const live = latest ? isLive(latest.state) : false
-  // reread as sessions start and end; a demo never played has no project yet (404)
-  const state = useHostQuery(() => host.project(demo.id), [demo.id, latest?.id, latest?.state])
-  const s = state.data?.project.name === demo.id ? state.data : undefined
-  const missing = state.error instanceof HostError && state.error.status === 404
-  return (
-    <div className="group relative flex flex-col gap-3.5 rounded-xl border bg-card p-5 transition-[border-color,box-shadow] hover:border-foreground/20 hover:shadow-sm has-[[data-open]:focus-visible]:ring-2 has-[[data-open]:focus-visible]:ring-ring">
-      <div className="flex items-start gap-3">
-        <LayerfsMark className="size-8 shrink-0" />
-        <div className="min-w-0 flex-1">
-          <button
-            type="button"
-            data-open
-            onClick={onOpen}
-            className="block max-w-full truncate text-left text-[15px] font-semibold outline-none group-hover:underline after:absolute after:inset-0 after:rounded-xl"
-          >
-            {demo.title}
-          </button>
-          <div className="truncate text-xs text-muted-foreground">
-            {s?.last ? `${shortId(s.last.id)} · ${ago(s.last.at)}` : <span className="font-mono text-faint">{demo.id}</span>}
-          </div>
-        </div>
-        {live && (
-          <Chip tone="info" live>
-            {runLabel(latest!)} playing
-          </Chip>
-        )}
-      </div>
-
-      {demo.blurb && <p className="line-clamp-2 text-[13px] text-muted-foreground">{demo.blurb}</p>}
-
-      <div className="flex items-center gap-2.5 rounded-lg bg-muted/50 px-2.5 py-2">
-        <LfsStore className="size-4" />
-        <div className="min-w-0 flex-1">
-          <div className="truncate text-[13px] font-medium">
-            Local SQLite <span className="font-normal text-muted-foreground">· {s ? bytes(s.store.bytes) : missing ? 'not created yet' : '…'}</span>
-          </div>
-          <div className="truncate text-xs text-faint">
-            {s
-              ? `main L${Math.max(0, s.layers.length - 1)} · ${s.branches.length} Branch${s.branches.length === 1 ? '' : 'es'} · ${plural(s.commits, 'Commit')}`
-              : missing
-                ? 'The first session Inits it from the fixture'
-                : state.error
-                  ? state.error.message
-                  : 'Reading the project'}
-          </div>
-        </div>
-      </div>
-
-      {s?.last && (
-        <div className="flex min-w-0 items-center gap-2 text-xs">
-          <LfsCommit className="size-3.5" />
-          <span className="min-w-0 flex-1 truncate">{s.last.message || 'Commit'}</span>
-          <span className="flex shrink-0 items-center gap-1 text-muted-foreground">
-            <LfsBranch className="size-3.5" />
-            {s.last.branch}
-          </span>
-        </div>
-      )}
-
-      <div className="mt-auto flex items-center gap-3 border-t pt-3">
-        <div className="min-w-0 flex-1 text-xs text-muted-foreground">
-          {live && latest ? (
-            <span className="block truncate">
-              {plural(demo.runs, 'session')} · one playing since {ago(latest.started)}
-            </span>
-          ) : latest ? (
-            <span className="block truncate">
-              {plural(demo.runs, 'session')} · last {ago(latest.ended ?? latest.started)}
-            </span>
-          ) : (
-            'No sessions yet'
-          )}
-        </div>
-        <Button size="sm" variant="outline" className="relative z-10" disabled={starting || live} onClick={onNewSession}>
-          <Plus /> {starting ? 'Starting…' : 'New session'}
-        </Button>
-      </div>
-    </div>
-  )
-}
+const GRID = 'grid grid-cols-[repeat(auto-fill,minmax(19rem,1fr))] gap-4'
 
 interface ProjectsHomeProps {
   onOpenProject: (demo: string) => void
@@ -132,19 +46,39 @@ export function ProjectsHome({ onOpenProject, onOpenRun }: ProjectsHomeProps) {
   })
   const { start, starting, error, clearError } = useStartRun((run) => onOpenRun(run.id))
 
+  // What each card read about its project, summed in the strip.
+  const [facts, setFacts] = useState<Record<string, CardFacts>>({})
+  const onFacts = useCallback(
+    (demo: string, f: CardFacts) =>
+      setFacts((all) => (all[demo]?.commits === f.commits && all[demo]?.bytes === f.bytes ? all : { ...all, [demo]: f })),
+    [],
+  )
+
+  // Cards that stay glide to their new places as the search narrows or widens.
+  const flip = useFlip<HTMLDivElement>()
+  const search = (next: string) => {
+    flip.snapshot()
+    setQuery(next)
+  }
+
   const latestOf = (d: DemoSummary) => {
     const event = latest[d.id]
     return event && (!d.latest || event.started >= d.latest.started) ? event : d.latest
   }
   const q = query.trim().toLowerCase()
-  const shown = (demos.data ?? [])
+  useLayoutEffect(flip.play, [q, flip.play])
+  const all = demos.data ?? []
+  const shown = all
     .filter((d) => !q || `${d.id} ${d.title} ${d.blurb ?? ''} ${d.tags.join(' ')}`.toLowerCase().includes(q))
     .sort((a, b) => a.order - b.order)
-  const live = (demos.data ?? []).filter((d) => {
-    const l = latestOf(d)
-    return l && isLive(l.state)
-  }).length
+  const playing = all.map(latestOf).filter((l): l is RunSummary => !!l && isLive(l.state))
+  const live = playing.length
   const others = (projects.data ?? []).filter((p) => !p.run && !p.demo)
+
+  const known = Object.values(facts)
+  const commits = demos.data && known.length > 0 ? known.reduce((n, f) => n + f.commits, 0) : null
+  const stored = known.reduce((n, f) => n + (f.bytes ?? 0), 0)
+  const agentsRunning = playing.reduce((n, r) => n + r.agents.filter((a) => a.state === 'running').length, 0)
 
   return (
     <div className="h-svh overflow-y-auto">
@@ -153,11 +87,7 @@ export function ProjectsHome({ onOpenProject, onOpenRun }: ProjectsHomeProps) {
         width="max-w-6xl"
         title="Projects"
         badges={live > 0 && <Chip tone="info" live>{live} playing</Chip>}
-        description={
-          demos.data
-            ? `${demos.data.length} projects · ${live} playing now. Each is one LayerFS project; a new session starts it again from the demo's fixture and plays its scripted agents.`
-            : 'Scripted demo scenarios, each played on the real LayerFS.'
-        }
+        description="Each is one LayerFS project; a new session starts it again from the demo's fixture and plays its scripted agents."
         actions={
           <div className="group/search relative w-64 shrink-0">
             <Search
@@ -168,17 +98,33 @@ export function ProjectsHome({ onOpenProject, onOpenRun }: ProjectsHomeProps) {
               aria-label="Search projects"
               placeholder="Search projects"
               value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              className="bg-card/70 pl-8 shadow-[var(--highlight),var(--elev-1)] backdrop-blur-sm"
+              onChange={(e) => search(e.target.value)}
+              onKeyDown={(e) => e.key === 'Escape' && query && (e.preventDefault(), search(''))}
+              className="bg-card/70 pr-16 pl-8 shadow-[var(--highlight),var(--elev-1)] backdrop-blur-sm"
             />
+            {q && demos.data && (
+              <span className="home-count absolute top-1/2 right-1.5 flex -translate-y-1/2 items-center gap-1">
+                <span aria-live="polite" className="text-[11px] text-faint tabular-nums">
+                  {shown.length} of {all.length}
+                </span>
+                <button
+                  type="button"
+                  aria-label="Clear search"
+                  onClick={() => search('')}
+                  className="flex size-5 items-center justify-center rounded text-faint outline-none hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  <X className="size-3" />
+                </button>
+              </span>
+            )}
           </div>
         }
       />
-      <div className="mx-auto flex max-w-6xl flex-col gap-6 px-8 pt-2 pb-10">
+      <div className="mx-auto flex max-w-6xl flex-col gap-6 px-8 pt-2 pb-12">
         {error && (
           <div
             role="alert"
-            className="flex items-start gap-2 rounded-lg bg-destructive/10 px-3 py-2 text-[13px] text-destructive ring-1 ring-destructive/25 ring-inset"
+            className="reveal flex items-start gap-2 rounded-lg bg-destructive/10 px-3 py-2 text-[13px] text-destructive ring-1 ring-destructive/25 ring-inset"
           >
             <TriangleAlert aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
             <span className="min-w-0 flex-1">
@@ -190,46 +136,99 @@ export function ProjectsHome({ onOpenProject, onOpenRun }: ProjectsHomeProps) {
           </div>
         )}
 
+        {!demos.error && (
+          <StatsStrip
+            stats={[
+              {
+                label: 'Projects',
+                value: demos.data ? all.length + others.length : null,
+                note: demos.data ? `${plural(all.length, 'demo')} · ${others.length} other` : 'Reading',
+              },
+              {
+                label: 'Sessions',
+                value: demos.data ? all.reduce((n, d) => n + d.runs, 0) : null,
+                note: 'Played over every project',
+              },
+              {
+                label: 'Playing now',
+                value: demos.data ? live : null,
+                live: live > 0,
+                note: live > 0 ? `${plural(agentsRunning, 'agent')} running` : 'Nothing playing',
+              },
+              {
+                label: 'Commits',
+                value: commits,
+                note: commits === null ? 'Reading the projects' : `${bytes(stored)} of Store`,
+              },
+            ]}
+          />
+        )}
+
         {!demos.data ? (
           demos.error ? (
             <LoadError error={demos.error} what="the demo projects" onRetry={demos.reload} />
           ) : (
-            <div className="grid grid-cols-[repeat(auto-fill,minmax(19rem,1fr))] gap-4" aria-busy="true" aria-label="Loading projects">
+            <div className={GRID} aria-busy="true" aria-label="Loading projects">
               {Array.from({ length: 6 }, (_, i) => (
-                <Skeleton key={i} className="h-60 rounded-xl" />
+                <Skeleton key={i} className="reveal h-64 rounded-xl" style={revealStyle(i)} />
               ))}
             </div>
           )
         ) : shown.length === 0 ? (
-          <p className="rounded-xl border border-dashed px-6 py-12 text-center text-sm text-muted-foreground">
-            {demos.data.length === 0 ? 'The host lists no demo projects.' : 'No projects match. Try another search.'}
-          </p>
+          all.length === 0 ? (
+            <Empty icon={FolderSearch} title="No demo projects">
+              The host lists no demo projects.
+            </Empty>
+          ) : (
+            <Empty
+              icon={FolderSearch}
+              title="No projects match"
+              action={
+                <Button variant="outline" size="sm" onClick={() => search('')}>
+                  Clear search
+                </Button>
+              }
+            >
+              Nothing matches “{query.trim()}”. Search by name, id or tag.
+            </Empty>
+          )
         ) : (
-          <div className="grid grid-cols-[repeat(auto-fill,minmax(19rem,1fr))] gap-4">
-            {shown.map((d) => (
+          <div ref={flip.container} className={GRID}>
+            {shown.map((d, i) => (
               <ProjectCard
                 key={d.id}
                 demo={d}
+                index={i}
                 latest={latestOf(d)}
                 starting={starting === d.id}
                 onOpen={() => onOpenProject(d.id)}
                 onNewSession={() => void start(d.id)}
+                onFacts={onFacts}
               />
             ))}
           </div>
         )}
 
-        <section className="flex flex-col gap-2">
-          <div>
-            <h2 className="text-[13px] font-semibold">Other LayerFS projects</h2>
-            <p className="text-xs text-faint">Projects in Connect's LayerFS home that no demo session made.</p>
+        <section className="reveal mt-2 flex flex-col gap-3" style={revealStyle(6)}>
+          <div className="flex items-end gap-3">
+            <div className="min-w-0 flex-1">
+              <h2 className="flex items-center gap-2 text-sm font-semibold tracking-[-0.01em]">
+                Other LayerFS projects
+                {projects.data && (
+                  <span className="rounded-full bg-muted px-1.5 text-[11px] font-medium text-muted-foreground tabular-nums">{others.length}</span>
+                )}
+              </h2>
+              <p className="mt-0.5 text-xs text-faint">Projects in Connect's LayerFS home that no demo session made.</p>
+            </div>
           </div>
           {projects.error && !projects.data ? (
             <LoadError error={projects.error} what="the LayerFS projects" onRetry={projects.reload} />
           ) : !projects.data ? (
             <Skeleton className="h-24 rounded-xl" />
           ) : (
-            <ProjectsTable projects={others} title="Projects" empty="Every project here was made by a demo run." />
+            <div className="surface overflow-hidden rounded-xl [&>section]:rounded-none [&>section]:border-0 [&>section]:bg-transparent [&>section>header]:hidden">
+              <ProjectsTable projects={others} title="Projects" empty="Every project here was made by a demo run." />
+            </div>
           )}
         </section>
       </div>
