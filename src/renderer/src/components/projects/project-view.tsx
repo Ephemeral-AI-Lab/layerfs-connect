@@ -15,7 +15,7 @@ import { duration, isLive, ownProject, plural, runLabel } from '@/components/run
 import { ReplayControl } from '@/components/runs/replay-control'
 import { RunList } from '@/components/runs/run-list'
 import type { HistoryInit } from '@/components/runs/run-project-tabs'
-import { Crumb, RunPanel } from '@/components/runs/run-view'
+import { RunPanel } from '@/components/runs/run-view'
 import { useNow } from '@/components/runs/use-run'
 import { useRuns, useStartRun } from '@/components/runs/use-runs'
 import { ago, bytes } from '@/data/format'
@@ -292,11 +292,9 @@ function SessionPage({ run, title, agent, onAgent, onProject }: SessionPageProps
       >
         {title}
       </button>
-      <Crumb>
-        <h1 className="shrink-0 px-1 font-semibold">{runLabel(run)}</h1>
-        <RunStateBadge state={run.state} />
-        {ownProject(run) && <ProjectChip name={run.project} />}
-      </Crumb>
+      {/* the page is the session's: named for screen readers, shown on hover over its agents */}
+      <h1 className="sr-only">{runLabel(run)}</h1>
+      {ownProject(run) && <ProjectChip name={run.project} />}
     </>
   )
   return (

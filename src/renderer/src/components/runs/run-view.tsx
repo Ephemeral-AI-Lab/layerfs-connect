@@ -11,7 +11,7 @@ import { AgentSwitcher, type SwitcherAgent } from '@/components/runs/agent-switc
 import { Conversation } from '@/components/runs/conversation'
 import { ProjectStorage } from '@/components/projects/project-storage'
 import { LiveTab } from '@/components/runs/live-tab'
-import { Spinner } from '@/components/runs/run-badges'
+import { SessionHint, Spinner } from '@/components/runs/run-badges'
 import { activity, agentColors, isLive, stepKey } from '@/components/runs/run-format'
 import { ThinkingLine } from '@/components/runs/thread-items'
 import { type HistoryInit, RunHistoryTab, useRunProject } from '@/components/runs/run-project-tabs'
@@ -103,7 +103,7 @@ function SessionBar({ lead, meta, tabs, children }: { lead: ReactNode; meta?: Re
   )
 }
 
-export function Crumb({ children }: { children: ReactNode }) {
+function Crumb({ children }: { children: ReactNode }) {
   return (
     <>
       <ChevronRight aria-hidden="true" className="size-3.5 shrink-0 text-faint" />
@@ -221,18 +221,24 @@ function RunBody({ run, demo, views, tab, onTab, picked, onAgent: setPicked, his
           {chain.map((name) => (
             <Fragment key={name}>
               <Crumb>
-                <button
-                  type="button"
-                  onClick={() => setPicked(name)}
-                  className="truncate rounded px-1 text-muted-foreground outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
-                >
-                  {name}
-                </button>
+                <SessionHint run={run} now={now}>
+                  <button
+                    type="button"
+                    onClick={() => setPicked(name)}
+                    className="truncate rounded px-1 text-muted-foreground outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    {name}
+                  </button>
+                </SessionHint>
               </Crumb>
             </Fragment>
           ))}
           <Crumb>
-            <AgentSwitcher agents={agents} value={agent} onChange={setPicked} colorOf={colorOf} />
+            <SessionHint run={run} now={now}>
+              <span className="flex">
+                <AgentSwitcher agents={agents} value={agent} onChange={setPicked} colorOf={colorOf} />
+              </span>
+            </SessionHint>
           </Crumb>
         </SessionBar>
       ) : (

@@ -1,8 +1,9 @@
-import type { AgentState, RunState, SegmentKind } from '@shared/host-api'
+import type { AgentState, RunState, RunSummary, SegmentKind } from '@shared/host-api'
 import { Ban, Check, LoaderCircle, X } from 'lucide-react'
 
-import { AGENT_TONE, KIND, KIND_ORDER, RUN_LABEL, RUN_TONE } from '@/components/runs/run-format'
+import { AGENT_TONE, KIND, KIND_ORDER, RUN_LABEL, RUN_TONE, ago, isLive, runLabel } from '@/components/runs/run-format'
 import { Chip, type Tone } from '@/components/storage/chips'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
 
 const DOT: Record<Tone, string> = {
@@ -85,3 +86,19 @@ export function KindLegend({ kinds, counts, className }: { kinds?: SegmentKind[]
 export const Spinner = ({ className }: { className?: string }) => (
   <LoaderCircle aria-label="Running" className={cn('size-3.5 shrink-0 animate-spin text-primary', className)} />
 )
+
+/**
+ * Shows, on hover or focus, the session an agent belongs to: "Session 7 ·
+ * playing" or "Session 7 · started 5 min ago". Pages name the project and the
+ * agent; the session is a detail behind them.
+ */
+export function SessionHint({ run, now, children }: { run: Pick<RunSummary, 'id' | 'project' | 'replay' | 'state' | 'started'>; now?: number; children: React.ReactNode }) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>{children}</TooltipTrigger>
+      <TooltipContent side="bottom">
+        {runLabel(run)} · {isLive(run.state) ? 'playing' : `started ${ago(run.started, now)}`}
+      </TooltipContent>
+    </Tooltip>
+  )
+}

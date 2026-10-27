@@ -10,8 +10,8 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { LayerfsMark } from '@/components/layerfs-mark'
 import { LfsBranch, LfsSandbox, LfsWorkspace } from '@/components/lfs-icons'
 import type { SwitcherAgent } from '@/components/runs/agent-switcher'
-import { AgentDot, Spinner } from '@/components/runs/run-badges'
-import { type AgentColor, activity, ago, duration, isIdle, isLive, runLabel } from '@/components/runs/run-format'
+import { AgentDot, SessionHint, Spinner } from '@/components/runs/run-badges'
+import { type AgentColor, activity, ago, duration, isIdle, isLive } from '@/components/runs/run-format'
 import { treeOrder } from '@/components/runs/thread'
 import { useNow } from '@/components/runs/use-run'
 import { host } from '@/host/client'
@@ -126,8 +126,8 @@ export function LiveTab({ run, agents, colorOf, onOpenAgent, sessions = [] }: Li
                 )
               ) : (
                 idle
-                  ? `No session working · the last ended ${ago(run.ended ?? run.started, now)}`
-                  : `${runLabel(run)} ended ${ago(run.ended ?? run.started, now)} · Workspaces unmounted, Sandboxes closed · History keeps its Commits`
+                  ? `No agent working · the last finished ${ago(run.ended ?? run.started, now)}`
+                  : `Agents finished ${ago(run.ended ?? run.started, now)} · Workspaces unmounted, Sandboxes closed · History keeps its Commits`
               )}
             </p>
             <span className="shrink-0 text-xs text-faint">Local SQLite Store · Docker Sandboxes</span>
@@ -306,20 +306,19 @@ function FlowGraph({ run, state, agents, sandboxes, runningOf, execOn, now, colo
         </svg>
 
         <div className="relative z-10 flex flex-col gap-3">
-          <ColumnLabel>Sessions</ColumnLabel>
-          {idle ? (
+          <ColumnLabel>Agents</ColumnLabel>
+          {idle && (
             <div
               data-anchor="session-none"
               className="flex items-center gap-2.5 rounded-xl border border-dashed px-3.5 py-3 text-xs text-muted-foreground"
             >
-              No session working. Replay starts one.
+              No agent working. Replay starts a session.
             </div>
-          ) : (
-            <SessionLabel run={run} />
           )}
           {nodes.map(({ item: a, depth }) => (
             <SessionNode
               key={a.name}
+              run={run}
               agent={a}
               depth={depth}
               calls={runningOf.get(a.name) ?? []}
@@ -354,16 +353,6 @@ function FlowGraph({ run, state, agents, sandboxes, runningOf, execOn, now, colo
   )
 }
 
-/** A working session's name above its agents: "Session 7 · playing", or when it ended. */
-function SessionLabel({ run }: { run: RunSummary }) {
-  return (
-    <span className="flex items-center gap-1.5 px-1 py-0.5 text-xs text-muted-foreground">
-      <span className="font-medium text-foreground">{runLabel(run)}</span>
-      {isLive(run.state) ? 'playing' : `ended ${ago(run.ended ?? run.started)}`}
-    </span>
-  )
-}
-
 function ColumnLabel({ children }: { children: React.ReactNode }) {
   return <span className="px-1 text-[11px] font-medium tracking-wide text-faint uppercase">{children}</span>
 }
@@ -375,6 +364,7 @@ function callTarget(c: { branch?: string | null; path?: string | null; sandbox?:
 }
 
 function SessionNode({
+  run,
   agent,
   anchor,
   depth,
@@ -384,6 +374,8 @@ function SessionNode({
   color,
   onOpen,
 }: {
+  /** The session the agent works in, shown on hover. */
+  run: RunSummary
   agent: SwitcherAgent
   /** Where edges attach; agent-<name> by default. */
   anchor?: string
@@ -398,42 +390,43 @@ function SessionNode({
   const call = calls[0]
   const active = state === 'running'
   return (
-    <button
-      type="button"
-      data-anchor={anchor ?? `agent-${agent.name}`}
-      onClick={onOpen}
-      title={`Open ${agent.name}'s conversation`}
-      style={{ marginLeft: Math.min(depth, 3) * 12 }}
-      className={cn(
-        'flex flex-col gap-1 rounded-xl border bg-card px-3 py-2.5 text-left outline-none transition-[border-color,box-shadow,opacity] focus-visible:ring-2 focus-visible:ring-ring',
-        active ? 'border-foreground/20 shadow-sm' : 'hover:border-foreground/20',
-      )}
-    >
-      <span className="flex min-w-0 items-center gap-2">
-        <span className={cn('flex size-6 shrink-0 items-center justify-center rounded-md text-[12px] font-semibold uppercase', color.soft, color.text)}>
-          {agent.name.slice(0, 1)}
-        </span>
-        <span className="min-w-0 flex-1 truncate text-sm font-medium">{agent.name}</span>
-        <AgentDot state={state} />
-      </span>
-      <span className="flex min-w-0 items-center gap-1.5 pl-8 text-xs text-muted-foreground">
-        {call ? (
-          <>
-            <Spinner className="size-3 shrink-0" />
-            <span className="shrink-0 font-mono text-foreground">{call.method}</span>
-            <span className="min-w-0 truncate font-mono text-faint">{callTarget(call)}</span>
-            <span className="ml-auto shrink-0 tabular-nums">{duration(now - call.start)}</span>
-          </>
-        ) : agent.thinking || state === 'running' || state === 'idle' || !last ? (
-          <span className="text-faint tabular-nums">{activity(agent, undefined, now)}</span>
-        ) : (
-          <>
-            <span className={cn('shrink-0 font-mono', last.ok ? '' : 'text-destructive')}>{last.method}</span>
-            <span className="truncate text-faint">{last.ok ? '' : `${last.code ?? 'failed'} · `}{ago(last.at, now)}</span>
-          </>
+    <SessionHint run={run} now={now}>
+      <button
+        type="button"
+        data-anchor={anchor ?? `agent-${agent.name}`}
+        onClick={onOpen}
+        style={{ marginLeft: Math.min(depth, 3) * 12 }}
+        className={cn(
+          'flex flex-col gap-1 rounded-xl border bg-card px-3 py-2.5 text-left outline-none transition-[border-color,box-shadow,opacity] focus-visible:ring-2 focus-visible:ring-ring',
+          active ? 'border-foreground/20 shadow-sm' : 'hover:border-foreground/20',
         )}
-      </span>
-    </button>
+      >
+        <span className="flex min-w-0 items-center gap-2">
+          <span className={cn('flex size-6 shrink-0 items-center justify-center rounded-md text-[12px] font-semibold uppercase', color.soft, color.text)}>
+            {agent.name.slice(0, 1)}
+          </span>
+          <span className="min-w-0 flex-1 truncate text-sm font-medium">{agent.name}</span>
+          <AgentDot state={state} />
+        </span>
+        <span className="flex min-w-0 items-center gap-1.5 pl-8 text-xs text-muted-foreground">
+          {call ? (
+            <>
+              <Spinner className="size-3 shrink-0" />
+              <span className="shrink-0 font-mono text-foreground">{call.method}</span>
+              <span className="min-w-0 truncate font-mono text-faint">{callTarget(call)}</span>
+              <span className="ml-auto shrink-0 tabular-nums">{duration(now - call.start)}</span>
+            </>
+          ) : agent.thinking || state === 'running' || state === 'idle' || !last ? (
+            <span className="text-faint tabular-nums">{activity(agent, undefined, now)}</span>
+          ) : (
+            <>
+              <span className={cn('shrink-0 font-mono', last.ok ? '' : 'text-destructive')}>{last.method}</span>
+              <span className="truncate text-faint">{last.ok ? '' : `${last.code ?? 'failed'} · `}{ago(last.at, now)}</span>
+            </>
+          )}
+        </span>
+      </button>
+    </SessionHint>
   )
 }
 
