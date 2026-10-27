@@ -4,14 +4,14 @@
 // (RunDetail.live, kept current by the host's events); the project's state
 // (Branches, Layers, open Sandboxes) is reread every two seconds while the
 // replay plays.
-import type { LiveMount, ProjectState, RunDetail, RunningCall, TraceCall } from '@shared/host-api'
+import type { LiveMount, ProjectState, RunDetail, RunningCall } from '@shared/host-api'
 import { Box, FolderOpen, GitBranch } from 'lucide-react'
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 
 import { LayerfsMark } from '@/components/layerfs-mark'
 import type { SwitcherAgent } from '@/components/runs/agent-switcher'
 import { AgentDot, Spinner } from '@/components/runs/run-badges'
-import { type AgentColor, KIND, ago, duration, isLive, methodKind } from '@/components/runs/run-format'
+import { type AgentColor, ago, duration, isLive } from '@/components/runs/run-format'
 import { treeOrder } from '@/components/runs/thread'
 import { useNow } from '@/components/runs/use-run'
 import { host } from '@/host/client'
@@ -19,7 +19,6 @@ import { useHostQuery } from '@/host/use-host'
 import { cn } from '@/lib/utils'
 
 const POLL_MS = 2000
-const FEED = 14
 
 interface LiveTabProps {
   run: RunDetail
@@ -153,7 +152,6 @@ export function LiveTab({ run, agents, colorOf, onOpenAgent }: LiveTabProps) {
           </footer>
         </section>
 
-        <Activity run={run} now={now} colorOf={colorOf} onOpenAgent={onOpenAgent} />
       </div>
     </div>
   )
@@ -524,87 +522,5 @@ function SandboxNode({
         })
       )}
     </div>
-  )
-}
-
-// ---------- recent calls ----------
-
-function Activity({
-  run,
-  now,
-  colorOf,
-  onOpenAgent,
-}: {
-  run: RunDetail
-  now: number
-  colorOf: (name: string) => AgentColor
-  onOpenAgent: (name: string) => void
-}) {
-  const recent = useMemo(() => {
-    const calls: TraceCall[] = []
-    for (let i = run.steps.length - 1; i >= 0 && calls.length < FEED * 3; i--) calls.push(...run.steps[i].calls)
-    return calls.sort((a, b) => Date.parse(b.start) - Date.parse(a.start)).slice(0, FEED)
-  }, [run.steps])
-  const running = run.live.running
-  if (recent.length === 0 && running.length === 0) return null
-  return (
-    <section aria-label="Recent calls" className="flex flex-col gap-2">
-      <h2 className="px-1 text-sm font-semibold">Recent LayerFS calls</h2>
-      <ol className="divide-y overflow-hidden rounded-xl border bg-card text-xs">
-        {running.map((c) => (
-          <CallRow key={`r-${c.id}`} agent={c.agent} method={c.method} target={callTarget(c)} color={colorOf(c.agent)} onOpenAgent={onOpenAgent}>
-            <Spinner className="size-3" />
-            <span className="w-16 text-right tabular-nums">{duration(now - c.start)}</span>
-          </CallRow>
-        ))}
-        {recent.map((c) => (
-          <CallRow
-            key={c.id}
-            agent={c.agent}
-            method={c.method}
-            target={callTarget({ branch: c.branch, sandbox: c.sandbox, path: c.path })}
-            color={colorOf(c.agent)}
-            onOpenAgent={onOpenAgent}
-          >
-            {c.ok === false ? <span className="text-destructive">{c.code ?? 'failed'}</span> : <span className="text-faint">{c.kind ?? 'ok'}</span>}
-            <span className="w-16 text-right text-muted-foreground tabular-nums">{duration(c.ms)}</span>
-          </CallRow>
-        ))}
-      </ol>
-    </section>
-  )
-}
-
-function CallRow({
-  agent,
-  method,
-  target,
-  color,
-  onOpenAgent,
-  children,
-}: {
-  agent: string
-  method: string
-  target: string | null
-  color: AgentColor
-  onOpenAgent: (name: string) => void
-  children: React.ReactNode
-}) {
-  const kind = KIND[methodKind(method)]
-  return (
-    <li className="flex items-center gap-3 px-4 py-1.5">
-      <button
-        type="button"
-        onClick={() => onOpenAgent(agent)}
-        className="flex w-28 shrink-0 items-center gap-1.5 truncate rounded text-left outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"
-      >
-        <span aria-hidden="true" className={cn('size-2 shrink-0 rounded-full', color.dot)} />
-        <span className="truncate">{agent}</span>
-      </button>
-      <span aria-hidden="true" className={cn('size-1.5 shrink-0 rounded-full', kind.dot)} />
-      <span className="w-40 shrink-0 truncate font-mono">{method}</span>
-      <span className="min-w-0 flex-1 truncate font-mono text-faint">{target ?? ''}</span>
-      <span className="flex shrink-0 items-center gap-3">{children}</span>
-    </li>
   )
 }
