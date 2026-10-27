@@ -1,5 +1,5 @@
 import { CircleAlert, GitCommitVertical, Network, X } from 'lucide-react'
-import { useEffect, useMemo, useState } from 'react'
+import { Suspense, lazy, useEffect, useMemo, useState } from 'react'
 
 import { Segmented, type SegmentedOption } from '@/components/motion'
 import { type BranchFilter, BranchTree, visibleBranches } from '@/components/projects/history/branch-tree'
@@ -18,6 +18,36 @@ const VIEWS: SegmentedOption<HistoryView>[] = [
   { value: 'lineage', label: 'Lineage', icon: GitCommitVertical },
   { value: 'map', label: 'Map', icon: Network },
 ]
+
+/** The Map in 3D (three.js), loaded only when it is asked for. */
+const Citadel = lazy(() => import('@/components/projects/history/citadel'))
+
+type MapLook = '2d' | '3d'
+const LOOK_KEY = 'connect.timeline.view'
+const LOOKS = [
+  { value: '2d' as const, label: '2D' },
+  { value: '3d' as const, label: '3D' },
+]
+
+/** The Map's look, kept on this machine (2D when nothing is kept). */
+function useMapLook(): [MapLook, (v: MapLook) => void] {
+  const [look, setLook] = useState<MapLook>(() => {
+    try {
+      return localStorage.getItem(LOOK_KEY) === '3d' ? '3d' : '2d'
+    } catch {
+      return '2d'
+    }
+  })
+  const set = (v: MapLook) => {
+    setLook(v)
+    try {
+      localStorage.setItem(LOOK_KEY, v)
+    } catch {
+      // not kept: 2D next time
+    }
+  }
+  return [look, set]
+}
 
 const FILTERS: { id: BranchFilter; label: string }[] = [
   { id: 'all', label: 'All' },
@@ -137,10 +167,16 @@ function HistoryBody({ project, tree, initialBranch, initialView = 'lineage', au
   const counts = { all: branches.length - 1, open, done: branches.length - 1 - open }
   const filters = FILTERS.map((f) => ({ value: f.id, label: f.label, count: counts[f.id] }))
   const kind = selected?.kind === 'layer' ? 'Layer' : 'Commit'
+  const [look, setLook] = useMapLook()
+  const openBranch = (name: string) => {
+    setFocus(name)
+    setView('lineage')
+  }
 
   return (
     <div className="hist-frame flex h-0 min-h-[30rem] flex-1 flex-col overflow-hidden rounded-2xl">
       <div className="flex items-center gap-3 border-b bg-muted/25 px-3 py-2">
+        {view === 'map' && <Segmented aria-label="Map view" value={look} onChange={setLook} options={LOOKS} />}
         <SearchField label="Find a Branch or Commit" value={query} onChange={setQuery} className="w-60" />
         <Segmented aria-label="Show Branches" value={filter} onChange={setFilter} options={filters} />
         <span className="min-w-0 flex-1 truncate text-right text-xs text-muted-foreground tabular-nums">
@@ -195,17 +231,13 @@ function HistoryBody({ project, tree, initialBranch, initialView = 'lineage', au
         </div>
       ) : (
         <div key="map" className="hist-swap flex min-h-0 flex-1 flex-col">
-          <ForkMap
-            title={`Fork timeline of ${project}`}
-            tree={tree}
-            focus={focus}
-            shown={shown}
-            autoplay={autoplay}
-            onOpen={(name) => {
-              setFocus(name)
-              setView('lineage')
-            }}
-          />
+          {look === '3d' ? (
+            <Suspense fallback={<Loading label="Loading the 3D view" />}>
+              <Citadel tree={tree} focus={focus} shown={shown} onOpen={openBranch} />
+            </Suspense>
+          ) : (
+            <ForkMap title={`Fork timeline of ${project}`} tree={tree} focus={focus} shown={shown} autoplay={autoplay} onOpen={openBranch} />
+          )}
         </div>
       )}
     </div>
