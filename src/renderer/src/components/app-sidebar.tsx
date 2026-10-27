@@ -17,8 +17,8 @@ import { cn } from '@/lib/utils'
 
 export type NavId = 'sessions' | 'extensions' | 'projects' | 'storage' | 'compute'
 
-/** What the sidebar has selected: a page, or one session. */
-export type Selection = { kind: 'nav'; id: NavId } | { kind: 'session'; id: string }
+/** What the sidebar has selected: a page, one project, or one session. */
+export type Selection = { kind: 'nav'; id: NavId } | { kind: 'project'; id: string } | { kind: 'session'; id: string }
 
 interface NavItem {
   id: NavId
@@ -59,7 +59,7 @@ export function AppSidebar({ selected, onSelect, storageCount, computeCount }: A
     items.map((item) => (
       <SidebarMenuItem key={item.id}>
         <SidebarMenuButton
-          isActive={selected.kind === 'nav' && selected.id === item.id}
+          isActive={(selected.kind === 'nav' && selected.id === item.id) || (selected.kind === 'project' && item.id === 'projects')}
           onClick={() => onSelect({ kind: 'nav', id: item.id })}
           className="h-10 gap-3 px-3 text-[15px] font-medium [&_svg]:size-[18px] [&_svg]:text-muted-foreground"
         >
@@ -108,10 +108,14 @@ export function AppSidebar({ selected, onSelect, storageCount, computeCount }: A
           <SidebarMenu>
             {PROJECTS.map((project) => (
               <SidebarMenuItem key={project.key} className="pt-2">
-                <div className="flex h-9 items-center gap-3 px-3 text-[15px] font-medium">
+                <SidebarMenuButton
+                  isActive={selected.kind === 'project' && selected.id === project.key}
+                  onClick={() => onSelect({ kind: 'project', id: project.key })}
+                  className="h-9 gap-3 px-3 text-[15px] font-medium"
+                >
                   <LayerfsMark className="size-4 shrink-0" />
                   <span className="truncate">{project.key}</span>
-                </div>
+                </SidebarMenuButton>
                 <SidebarMenu>
                   {project.sessions.map((session) => (
                     <SidebarMenuItem key={session.id}>

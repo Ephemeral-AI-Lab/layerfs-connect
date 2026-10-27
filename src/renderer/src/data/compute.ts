@@ -98,8 +98,8 @@ export const SANDBOXES: SandboxRow[] = [
     started: '12 min ago',
     scratch: '220 MB',
     workspaces: [
-      { path: '/workspaces/1', branch: 'feature-checkout', base: 'c15', activity: 'busy', doing: 'npm test', changed: 14, session: 'checkout' },
-      { path: '/workspaces/2', branch: 'fix-cart-test', base: 'c15', activity: 'idle', changed: 0, session: 'flaky' },
+      { path: '/workspaces/1', branch: 'feature/checkout', base: 'c34', activity: 'busy', doing: 'npm test', changed: 14, session: 'checkout' },
+      { path: '/workspaces/2', branch: 'tests/flaky', base: 'c34', activity: 'idle', changed: 0, session: 'flaky' },
     ],
   },
   {
@@ -120,7 +120,7 @@ export const SANDBOXES: SandboxRow[] = [
     started: '31 min ago',
     scratch: '96 MB',
     workspaces: [
-      { path: '/workspaces/1', branch: 'docs', base: 'c62', activity: 'busy', doing: 'Commit', changed: 3, session: 'qdocs' },
+      { path: '/workspaces/1', branch: 'docs/qdocs', base: 'c62', activity: 'busy', doing: 'Commit', changed: 3, session: 'qdocs' },
       { path: '/workspaces/2', branch: 'main', base: 'c62', activity: 'idle', changed: 0 },
     ],
   },

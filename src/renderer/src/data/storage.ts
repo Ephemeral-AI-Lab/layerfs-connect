@@ -61,6 +61,8 @@ export interface LocalDatabase {
 export interface PostgresDatabase {
   kind: 'postgres'
   id: string
+  /** A short name for tight places; the list shows host and database. */
+  label?: string
   endpoint: string
   database: string
   token: string
@@ -183,6 +185,7 @@ export const DATABASES: Database[] = [
   {
     kind: 'postgres',
     id: 'pg-team',
+    label: 'Postgres · team',
     endpoint: 'https://pg.team.example',
     database: 'layerfs',
     token: 'lfs_…4b9e',
@@ -192,6 +195,7 @@ export const DATABASES: Database[] = [
   {
     kind: 'postgres',
     id: 'pg-lab',
+    label: 'Postgres · lab',
     endpoint: 'https://pg.lab.example',
     database: 'layerfs',
     token: 'lfs_…02c1',

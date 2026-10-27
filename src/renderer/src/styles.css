@@ -90,6 +90,19 @@
   --agent-reviewer: #6352c8;
   --agent-tester: #a86a10;
   --agent-docs: #17805a;
+  /* History lanes, by fork depth; main uses the primary colour. */
+  --lane-1: #b8701a;
+  --lane-2: #138a7a;
+  --lane-3: #c04878;
+  --lane-4: #6a5ad0;
+  /* Code highlighting in the file view. */
+  --hl-comment: #8b8b94;
+  --hl-keyword: #6352c8;
+  --hl-string: #17805a;
+  --hl-number: #c4502a;
+  --hl-function: #2d5bb5;
+  --hl-type: #a86a10;
+  --hl-property: #2d3a9a;
 }
 
 .dark {
@@ -127,6 +140,17 @@
   --agent-reviewer: #9486f0;
   --agent-tester: #d39a3e;
   --agent-docs: #3fbf8c;
+  --lane-1: #dd9a45;
+  --lane-2: #3cc0ad;
+  --lane-3: #e57aa3;
+  --lane-4: #9b8ef2;
+  --hl-comment: #71717a;
+  --hl-keyword: #a99cf5;
+  --hl-string: #6fd3a5;
+  --hl-number: #f09a78;
+  --hl-function: #8fb2f2;
+  --hl-type: #e3b562;
+  --hl-property: #c3c9f7;
 }
 
 @layer base {
@@ -138,5 +162,21 @@
   }
   html {
     @apply font-sans;
+  }
+}
+
+/* Projects page: a dashed edge that flows while a call is in flight. */
+@keyframes flow-dash {
+  to {
+    stroke-dashoffset: -20;
+  }
+}
+.flow-dash {
+  stroke-dasharray: 4 6;
+  animation: flow-dash 0.9s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .flow-dash {
+    animation: none;
   }
 }

@@ -123,10 +123,12 @@ interface SandboxListProps {
   onOpenSession: (id: string) => void
   /** Dev aid: open the unmount question for the first changed Workspace. */
   unmountOnOpen?: boolean
+  /** Label each project's group; off when the list is one project's. */
+  showProject?: boolean
 }
 
 /** Running Sandboxes by project; each opens to the Workspaces mounted in it. */
-export function SandboxList({ sandboxes, onOpenSession, unmountOnOpen }: SandboxListProps) {
+export function SandboxList({ sandboxes, onOpenSession, unmountOnOpen, showProject = true }: SandboxListProps) {
   // Sandboxes with a busy Workspace start open.
   const [open, setOpen] = useState<Set<string>>(
     () => new Set(sandboxes.filter((s) => s.workspaces.some((w) => w.activity === 'busy')).map((s) => s.name)),
@@ -157,10 +159,12 @@ export function SandboxList({ sandboxes, onOpenSession, unmountOnOpen }: Sandbox
     <div role="table" aria-label="Sandboxes and their Workspaces">
       {projects.map((project) => (
         <div key={project} role="rowgroup" className="border-t first:border-t-0">
-          <div className="flex items-center gap-2 px-5 pt-3 pb-1.5 text-xs font-medium text-muted-foreground">
-            <LayerfsMark className="size-3.5" />
-            {project}
-          </div>
+          {showProject && (
+            <div className="flex items-center gap-2 px-5 pt-3 pb-1.5 text-xs font-medium text-muted-foreground">
+              <LayerfsMark className="size-3.5" />
+              {project}
+            </div>
+          )}
           {sandboxes
             .filter((s) => s.project === project)
             .map((s) => {

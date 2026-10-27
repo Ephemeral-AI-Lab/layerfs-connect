@@ -45,7 +45,8 @@ function createWindow(): BrowserWindow {
         const image = await win.webContents.capturePage()
         await writeFile(shot, image.toPNG())
         app.quit()
-      }, 1000)
+        // CONNECT_SHOT_DELAY=<ms> waits longer, to catch a later frame.
+      }, Number(process.env.CONNECT_SHOT_DELAY ?? 1000))
     })
   }
 

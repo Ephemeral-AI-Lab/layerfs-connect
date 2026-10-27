@@ -24,7 +24,7 @@ export const PROJECTS: Project[] = [
   {
     key: 'wayfare',
     database: 'team',
-    lastCommit: { id: 'c15', ago: '4 min ago' },
+    lastCommit: { id: 'c34', ago: '4 min ago' },
     size: '12.4 MB',
     sessions: [
       { id: 'checkout', title: 'Checkout refactor', agent: 'builder', busy: true },
@@ -63,7 +63,7 @@ export const PROJECTS: Project[] = [
   {
     key: 'shop',
     database: 'pg-team',
-    lastCommit: { id: 'c31', ago: '1 min ago' },
+    lastCommit: { id: 'c43', ago: '1 min ago' },
     size: '27.9 MB',
     sessions: [
       { id: 'pay', title: 'Payment tests', agent: 'builder', busy: true },
