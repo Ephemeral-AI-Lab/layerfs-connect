@@ -117,6 +117,18 @@ test('subagents: until waits for replies, messages wake children, a reply carrie
   assert.ok(detail.messages.some((m) => m.from === 'b' && m.text === 'b: committed c0ffee.'))
 })
 
+test('only started agents are listed: a subagent never started stays out of the run and its events', async () => {
+  const { detail, events } = await play({
+    root: [bash('exit 1'), { subagent: { description: 'b', prompt: 'You are b.' } }, { reply: 'Waiting.', until: ['b'] }, bash('echo end')],
+    b: [{ reply: 'b: ready.' }],
+  })
+  assert.equal(detail.state, 'failed')
+  assert.deepEqual(detail.agents.map((a) => a.name), ['root'])
+  assert.ok(!events.some((e) => e.type === 'agent' && e.agent.name === 'b'))
+  // the scenario's total still counts b's steps
+  assert.ok(detail.of > detail.agents[0].of)
+})
+
 test('a message sent while the child is ending its turn wakes it', async () => {
   const { detail } = await play({
     root: [{ subagent: { description: 'b', prompt: 'You are b.' } }, { reply: 'Waiting.', until: ['b'] }, { send_message: { agent_id: '@b', message: 'Go on.' } }, { reply: 'Waiting again.', until: ['b'] }, bash('echo end')],

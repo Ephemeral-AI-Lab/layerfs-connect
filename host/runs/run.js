@@ -100,7 +100,8 @@ export class Run {
       done: agents.reduce((n, a) => n + a.index, 0),
       of: agents.reduce((n, a) => n + a.steps.length, 0),
       phase: this.phase,
-      agents: agents.map((a) => a.view()),
+      // only agents that have started: a subagent appears when its parent starts it
+      agents: agents.filter((a) => a.state !== 'waiting').map((a) => a.view()),
     }
   }
 
@@ -136,7 +137,7 @@ export class Run {
   }
 
   agentChanged(agent) {
-    this.emit({ type: 'agent', run: this.id, agent: agent.view() })
+    if (agent.state !== 'waiting') this.emit({ type: 'agent', run: this.id, agent: agent.view() })
     this.save()
     if (agent.state === 'idle' || agent.state === 'done') setImmediate(() => this.checkStuck())
   }
@@ -426,7 +427,8 @@ export class Run {
     this.live.stopped()
     this.liveChanged(true)
     for (const step of this.steps) if (step.state === 'running') Object.assign(step, { state: 'stopped', ended: this.ended })
-    for (const agent of this.agents.values()) if (!['done', 'failed'].includes(agent.state)) agent.setState(state === 'passed' ? agent.state : 'stopped')
+    // an agent never started stays waiting, so it stays unlisted
+    for (const agent of this.agents.values()) if (!['done', 'failed', 'waiting'].includes(agent.state)) agent.setState(state === 'passed' ? agent.state : 'stopped')
     this.changed(true)
     // a run cut short leaves its scripts' Workspaces mounted, so their Sandboxes never go idle
     const cleanup = state === 'passed' ? Promise.resolve() : this.closeSandboxes().catch((e) => console.error(`[runs] ${this.id}: closing Sandboxes: ${e.message}`))

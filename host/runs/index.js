@@ -125,7 +125,7 @@ export class RunManager extends EventEmitter {
         const ended = record.ended ?? Date.now()
         Object.assign(record, { state: 'failed', error: 'interrupted: the host stopped while it played', ended })
         for (const step of record.steps ?? []) if (step.state === 'running') Object.assign(step, { state: 'stopped', ended })
-        for (const agent of record.agents ?? []) if (['running', 'idle', 'waiting'].includes(agent.state)) agent.state = 'stopped'
+        for (const agent of record.agents ?? []) if (['running', 'idle'].includes(agent.state)) agent.state = 'stopped'
         writeFileSync(`${file}.tmp`, JSON.stringify(record))
         renameSync(`${file}.tmp`, file)
       }
@@ -243,7 +243,14 @@ export class RunManager extends EventEmitter {
 }
 
 const EMPTY_LIVE = { running: [], mounts: [], sandboxes: [], last: {} }
-const pick = (r) => ({ ...Object.fromEntries(SUMMARY.map((k) => [k, r[k] ?? null])), agents: r.agents ?? [] })
+const pick = (r) => ({ ...Object.fromEntries(SUMMARY.map((k) => [k, r[k] ?? null])), agents: (r.agents ?? []).filter(started) })
+
+/**
+ * True for an agent that started. Records list only those; older records
+ * listed every agent, and marked the never-started ones of a cut-short run
+ * stopped with no step done.
+ */
+const started = (a) => a.state !== 'waiting' && !(a.parent && a.state === 'stopped' && !a.done)
 
 /** True when `pid` is another live process (the host that wrote a run's record). */
 function hostAlive(pid) {
