@@ -2,10 +2,10 @@
 // the project's Live, History and Storage, read from the newest session, on
 // the project page. The page header above names the project or session;
 // these only add what is theirs. The session page's one-row header comes from
-// here, as it names the agents: "5 agents / work-a", then the project.
+// here, as it names the agents: "Crew / root / work-a (2 subagents running)".
 import type { DemoDetail, RunDetail, RunSummary, StepView } from '@shared/host-api'
 import { Gauge, RotateCw, TriangleAlert } from 'lucide-react'
-import { type ReactNode, useMemo } from 'react'
+import { Fragment, type ReactNode, useMemo } from 'react'
 
 import { AgentSwitcher, type SwitcherAgent } from '@/components/runs/agent-switcher'
 import { Conversation } from '@/components/runs/conversation'
@@ -87,19 +87,27 @@ export function RunPanel({ runId, tab, onTab, agent, onAgent, historyInit, sessi
   )
 }
 
-/** The session page's header, one row as in dsh: "5 agents / work-a ⇕", the project, then facts on the right. */
+/** The session page's header, one row as in dsh: project / root / … / agent ⇕, then facts on the right. */
 function SessionBar({ lead, meta, tabs, children }: { lead: ReactNode; meta?: ReactNode; tabs?: ReactNode; children?: ReactNode }) {
   return (
     <header className="flex shrink-0 flex-col border-b px-8">
       <div className="flex h-12 items-center gap-1 pt-1">
         <nav aria-label="Breadcrumb" className="flex min-w-0 flex-1 items-center gap-1 text-sm">
-          {children}
           {lead}
+          {children}
         </nav>
         {meta && <span className="shrink-0 truncate pl-4 text-xs text-muted-foreground tabular-nums">{meta}</span>}
       </div>
       {tabs && <nav className="flex items-end gap-6">{tabs}</nav>}
     </header>
+  )
+}
+
+function Slash() {
+  return (
+    <span aria-hidden="true" className="px-1 text-faint">
+      /
+    </span>
   )
 }
 
@@ -167,6 +175,19 @@ function RunBody({ run, demo, views, tab, onTab, picked, onAgent: setPicked, his
   }, [run.steps, run.messages, views, agent, agents, root, demo?.prompt])
   const steps = useMemo(() => run.steps.filter((s) => s.agent === agent).length, [run.steps, agent])
   const shown = run.agents.find((a) => a.name === agent)
+  // the agent's ancestors, root first, and how many of its subagents (at any depth) are running
+  const chain = useMemo(() => {
+    const out: string[] = []
+    for (let p = agents.find((a) => a.name === agent)?.parent; p && !out.includes(p); p = agents.find((a) => a.name === p)?.parent ?? null) out.unshift(p)
+    return out
+  }, [agents, agent])
+  const running = useMemo(() => {
+    const under = (a: SwitcherAgent): boolean => {
+      for (let p = a.parent; p; p = agents.find((x) => x.name === p)?.parent ?? null) if (p === agent) return true
+      return false
+    }
+    return agents.filter((a) => a.state === 'running' && under(a)).length
+  }, [agents, agent])
 
   if (tab === 'live')
     return (
@@ -203,15 +224,27 @@ function RunBody({ run, demo, views, tab, onTab, picked, onAgent: setPicked, his
     <div className="flex h-full min-h-0 flex-col">
       {lead ? (
         <SessionBar lead={lead} meta={meta} tabs={tabs}>
-          <span className="shrink-0 text-muted-foreground">{plural(agents.length, 'agent')}</span>
-          <span aria-hidden="true" className="px-1.5 text-faint">
-            /
-          </span>
+          {chain.map((name) => (
+            <Fragment key={name}>
+              <Slash />
+              <SessionHint run={run} now={now}>
+                <button
+                  type="button"
+                  onClick={() => setPicked(name)}
+                  className="truncate rounded px-1 text-muted-foreground outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  {name}
+                </button>
+              </SessionHint>
+            </Fragment>
+          ))}
+          <Slash />
           <SessionHint run={run} now={now}>
             <span className="flex">
               <AgentSwitcher agents={agents} value={agent} onChange={setPicked} colorOf={colorOf} />
             </span>
           </SessionHint>
+          {running > 0 && <span className="shrink-0 pl-1 text-muted-foreground">({plural(running, 'subagent')} running)</span>}
         </SessionBar>
       ) : (
         <div className="shrink-0 px-8 pt-3">
