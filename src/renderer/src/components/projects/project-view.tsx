@@ -4,7 +4,7 @@
 // demo's fixture), and the list of Sessions. A session page is one replay:
 // its conversation, agent by agent. Both carry the small replay control,
 // whose menu opens the scenario.
-import { ChevronLeft, TriangleAlert } from 'lucide-react'
+import { Activity, ChevronLeft, TriangleAlert } from 'lucide-react'
 import { useState } from 'react'
 
 import { LfsProject } from '@/components/lfs-icons'
@@ -15,7 +15,7 @@ import { duration, isLive, ownProject, plural, runLabel } from '@/components/run
 import { ReplayControl } from '@/components/runs/replay-control'
 import { RunList } from '@/components/runs/run-list'
 import type { HistoryInit } from '@/components/runs/run-project-tabs'
-import { RunPanel } from '@/components/runs/run-view'
+import { Crumb, RunPanel } from '@/components/runs/run-view'
 import { useNow } from '@/components/runs/use-run'
 import { useRuns, useStartRun } from '@/components/runs/use-runs'
 import { ago, bytes } from '@/data/format'
@@ -122,8 +122,6 @@ export function ProjectView({ demo, runId, agent, onPick, initialTab, initialBra
         agent={agent}
         onAgent={(name) => onPick({ run: session.id, agent: name })}
         onProject={() => onPick({})}
-        action={replay}
-        refusal={refusal}
       />
     ) : (
       <Loading label={runs ? `No session ${runId}` : 'Reading the sessions'} className="h-svh" />
@@ -261,7 +259,8 @@ function ProjectPage({ demo, title, runs, runsError, onPick, onBack, tab, onTab:
   )
 }
 
-interface SessionPageProps extends PageParts {
+interface SessionPageProps {
+  title: string
   run: RunSummary
   agent?: string
   onAgent: (name: string) => void
@@ -269,29 +268,63 @@ interface SessionPageProps extends PageParts {
 }
 
 /** One session (replay): its conversation, agent by agent. */
-function SessionPage({ run, title, agent, onAgent, onProject, action, refusal }: SessionPageProps) {
+/** One session (replay): its conversation, agent by agent, under a one-row breadcrumb header. */
+function SessionPage({ run, title, agent, onAgent, onProject }: SessionPageProps) {
   const live = isLive(run.state)
   const now = useNow(live)
+  const [view, setView] = useState<'conversation' | 'trace'>('conversation')
+  const tabs = (
+    <>
+      <TabButton active={view === 'conversation'} onClick={() => setView('conversation')}>
+        Conversation
+      </TabButton>
+      <TabButton active={view === 'trace'} onClick={() => setView('trace')}>
+        Trace
+      </TabButton>
+    </>
+  )
+  const lead = (
+    <>
+      <button
+        type="button"
+        onClick={onProject}
+        className="-ml-1 truncate rounded px-1 text-muted-foreground outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
+      >
+        {title}
+      </button>
+      <Crumb>
+        <h1 className="shrink-0 px-1 font-semibold">{runLabel(run)}</h1>
+        <RunStateBadge state={run.state} />
+        {ownProject(run) && <ProjectChip name={run.project} />}
+      </Crumb>
+    </>
+  )
   return (
     <div className="flex h-svh min-h-0 flex-col">
-      <header className="flex shrink-0 flex-col gap-2.5 border-b px-8 pt-4 pb-3">
-        <BackLink onClick={onProject}>{title}</BackLink>
-        <div className="flex items-center gap-4">
-          <div className="flex min-w-0 flex-1 items-center gap-3">
-            <h1 className="truncate text-xl font-semibold tracking-[-0.015em]">{runLabel(run)}</h1>
-            <RunStateBadge state={run.state} />
-            <span className="truncate text-xs text-muted-foreground tabular-nums">
-              {duration((run.ended ?? now) - run.started)} · started {ago(run.started, now)}
-            </span>
-            {ownProject(run) && <ProjectChip name={run.project} />}
-          </div>
-          {action}
-        </div>
-        {refusal}
-      </header>
       <div className="flex min-h-0 flex-1 flex-col">
-        <RunPanel key={run.id} runId={run.id} tab="conversation" agent={agent} onAgent={onAgent} />
+        <RunPanel
+          key={run.id}
+          runId={run.id}
+          tab="conversation"
+          agent={agent}
+          onAgent={onAgent}
+          lead={lead}
+          tabs={tabs}
+          pane={view === 'trace' ? <TracePlaceholder /> : undefined}
+          meta={`${duration((run.ended ?? now) - run.started)} · started ${ago(run.started, now)}`}
+        />
       </div>
+    </div>
+  )
+}
+
+/** Trace: a placeholder for now. */
+function TracePlaceholder() {
+  return (
+    <div className="mx-auto w-full max-w-[1000px] px-8 py-8">
+      <Empty icon={Activity} title="Trace is coming">
+        The session’s LayerFS calls as a timeline, agent by agent, will show here.
+      </Empty>
     </div>
   )
 }

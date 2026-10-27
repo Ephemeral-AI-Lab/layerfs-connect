@@ -1,10 +1,11 @@
 // A session's (one replay's) views: its Conversation on the session page, and
 // the project's Live, History and Storage, read from the newest session, on
 // the project page. The page header above names the project or session;
-// these only add what is theirs (the Conversation's agent switcher).
+// these only add what is theirs. The session page's one-row header comes from
+// here: its breadcrumb (project / session / root / … / agent) needs the agents.
 import type { DemoDetail, RunDetail, RunSummary, StepView } from '@shared/host-api'
-import { Gauge, RotateCw, TriangleAlert } from 'lucide-react'
-import { useMemo } from 'react'
+import { ChevronRight, Gauge, RotateCw, TriangleAlert } from 'lucide-react'
+import { Fragment, type ReactNode, useMemo } from 'react'
 
 import { AgentSwitcher, type SwitcherAgent } from '@/components/runs/agent-switcher'
 import { Conversation } from '@/components/runs/conversation'
@@ -33,10 +34,16 @@ interface RunPanelProps {
   sessions?: RunSummary[]
   onAgent: (name: string) => void
   historyInit?: HistoryInit
+  /** Conversation: the breadcrumb's start (project / session) and the row's trailing facts. */
+  lead?: ReactNode
+  meta?: ReactNode
+  /** The session page's tabs, a row under the breadcrumb; `pane` replaces the conversation (another tab). */
+  tabs?: ReactNode
+  pane?: ReactNode
 }
 
 /** A run's tab, live: loads the run once and follows its events. */
-export function RunPanel({ runId, tab, onTab, agent, onAgent, historyInit, sessions }: RunPanelProps) {
+export function RunPanel({ runId, tab, onTab, agent, onAgent, historyInit, sessions, lead, meta, tabs, pane }: RunPanelProps) {
   const live = useRun(runId)
   if (live.run)
     return (
@@ -50,19 +57,58 @@ export function RunPanel({ runId, tab, onTab, agent, onAgent, historyInit, sessi
         onAgent={onAgent}
         historyInit={historyInit}
         sessions={sessions}
+        lead={lead}
+        meta={meta}
+        tabs={tabs}
+        pane={pane}
       />
     )
-  if (live.error) return <RunError error={live.error} onRetry={live.reload} />
+  const bar = lead && <SessionBar lead={lead} meta={meta} tabs={tabs} />
+  if (live.error)
+    return (
+      <>
+        {bar}
+        <RunError error={live.error} onRetry={live.reload} />
+      </>
+    )
   return (
-    <div aria-busy="true" aria-label="Loading the run" className="mx-auto flex w-full max-w-[1000px] flex-col gap-5 px-8 py-8">
-      {[0, 1, 2].map((i) => (
-        <div key={i} className="flex flex-col gap-3">
-          <Skeleton className="h-12 rounded-xl" />
-          <Skeleton className="h-4 w-40" />
-          <Skeleton className="h-4 w-3/4" />
-        </div>
-      ))}
-    </div>
+    <>
+      {bar}
+      <div aria-busy="true" aria-label="Loading the run" className="mx-auto flex w-full max-w-[1000px] flex-col gap-5 px-8 py-8">
+        {[0, 1, 2].map((i) => (
+          <div key={i} className="flex flex-col gap-3">
+            <Skeleton className="h-12 rounded-xl" />
+            <Skeleton className="h-4 w-40" />
+            <Skeleton className="h-4 w-3/4" />
+          </div>
+        ))}
+      </div>
+    </>
+  )
+}
+
+/** The session page's header, one row: the breadcrumb, then facts on the right. */
+function SessionBar({ lead, meta, tabs, children }: { lead: ReactNode; meta?: ReactNode; tabs?: ReactNode; children?: ReactNode }) {
+  return (
+    <header className="flex shrink-0 flex-col border-b px-8">
+      <div className="flex h-12 items-center gap-1 pt-1">
+        <nav aria-label="Breadcrumb" className="flex min-w-0 flex-1 items-center gap-1 text-sm">
+          {lead}
+          {children}
+        </nav>
+        {meta && <span className="shrink-0 truncate pl-4 text-xs text-muted-foreground tabular-nums">{meta}</span>}
+      </div>
+      {tabs && <nav className="flex items-end gap-6">{tabs}</nav>}
+    </header>
+  )
+}
+
+export function Crumb({ children }: { children: ReactNode }) {
+  return (
+    <>
+      <ChevronRight aria-hidden="true" className="size-3.5 shrink-0 text-faint" />
+      {children}
+    </>
   )
 }
 
@@ -92,9 +138,13 @@ interface BodyProps {
   onAgent: (name: string) => void
   historyInit?: HistoryInit
   sessions?: RunSummary[]
+  lead?: ReactNode
+  meta?: ReactNode
+  tabs?: ReactNode
+  pane?: ReactNode
 }
 
-function RunBody({ run, demo, views, tab, onTab, picked, onAgent: setPicked, historyInit, sessions }: BodyProps) {
+function RunBody({ run, demo, views, tab, onTab, picked, onAgent: setPicked, historyInit, sessions, lead, meta, tabs, pane }: BodyProps) {
   const root = run.agents.find((a) => a.parent === null)?.name ?? demo?.agents.find((a) => a.prompt === null)?.name ?? 'root'
   const live = isLive(run.state)
 
@@ -126,6 +176,12 @@ function RunBody({ run, demo, views, tab, onTab, picked, onAgent: setPicked, his
   }, [run.steps, run.messages, views, agent, agents, root, demo?.prompt])
   const steps = useMemo(() => run.steps.filter((s) => s.agent === agent).length, [run.steps, agent])
   const shown = run.agents.find((a) => a.name === agent)
+  // the agent's ancestors, root first: the breadcrumb before the switcher
+  const chain = useMemo(() => {
+    const out: string[] = []
+    for (let p = agents.find((a) => a.name === agent)?.parent; p && !out.includes(p); p = agents.find((a) => a.name === p)?.parent ?? null) out.unshift(p)
+    return out
+  }, [agents, agent])
 
   if (tab === 'live')
     return (
@@ -160,37 +216,66 @@ function RunBody({ run, demo, views, tab, onTab, picked, onAgent: setPicked, his
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <div className="shrink-0 px-8 pt-3">
-        <div className="mx-auto flex w-full max-w-[1000px] items-center gap-3">
-          <AgentSwitcher agents={agents} value={agent} onChange={setPicked} colorOf={colorOf} />
-        </div>
-        {run.error && (
-          <div
-            role="alert"
-            className="mx-auto mt-2 flex w-full max-w-[1000px] items-start gap-2 rounded-lg bg-destructive/[0.07] px-3 py-2 text-[13px] text-destructive"
-          >
-            <TriangleAlert aria-hidden="true" className="mt-0.5 size-3.5 shrink-0" />
-            <span className="min-w-0 break-words whitespace-pre-wrap">{run.error}</span>
+      {lead ? (
+        <SessionBar lead={lead} meta={meta} tabs={tabs}>
+          {chain.map((name) => (
+            <Fragment key={name}>
+              <Crumb>
+                <button
+                  type="button"
+                  onClick={() => setPicked(name)}
+                  className="truncate rounded px-1 text-muted-foreground outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  {name}
+                </button>
+              </Crumb>
+            </Fragment>
+          ))}
+          <Crumb>
+            <AgentSwitcher agents={agents} value={agent} onChange={setPicked} colorOf={colorOf} />
+          </Crumb>
+        </SessionBar>
+      ) : (
+        <div className="shrink-0 px-8 pt-3">
+          <div className="mx-auto flex w-full max-w-[1000px] items-center gap-3">
+            <AgentSwitcher agents={agents} value={agent} onChange={setPicked} colorOf={colorOf} />
           </div>
-        )}
-      </div>
-      <div className="flex min-h-0 flex-1 flex-col">
-        <Conversation
-          key={agent}
-          turns={turns}
-          colorOf={colorOf}
-          onOpenAgent={setPicked}
-          live={live}
-          empty={empty}
-          footer={live && shown?.thinking ? <ThinkingLine /> : null}
-        />
-      </div>
-      <div className="shrink-0 px-8 pb-3">
-        <span className="mx-auto flex w-fit items-center gap-1.5 text-xs text-faint tabular-nums">
-          <Gauge aria-hidden="true" className="size-3.5" />
-          {threadSize(turns, steps)}
-        </span>
-      </div>
+        </div>
+      )}
+      {pane ? (
+        <div className="min-h-0 flex-1 overflow-y-auto">{pane}</div>
+      ) : (
+        <>
+          <div className="shrink-0 px-8">
+            {run.error && (
+              <div
+                role="alert"
+                className="mx-auto mt-2 flex w-full max-w-[1000px] items-start gap-2 rounded-lg bg-destructive/[0.07] px-3 py-2 text-[13px] text-destructive"
+              >
+                <TriangleAlert aria-hidden="true" className="mt-0.5 size-3.5 shrink-0" />
+                <span className="min-w-0 break-words whitespace-pre-wrap">{run.error}</span>
+              </div>
+            )}
+          </div>
+          <div className="flex min-h-0 flex-1 flex-col">
+            <Conversation
+              key={agent}
+              turns={turns}
+              colorOf={colorOf}
+              onOpenAgent={setPicked}
+              live={live}
+              empty={empty}
+              footer={live && shown?.thinking ? <ThinkingLine /> : null}
+            />
+          </div>
+          <div className="shrink-0 px-8 pb-3">
+            <span className="mx-auto flex w-fit items-center gap-1.5 text-xs text-faint tabular-nums">
+              <Gauge aria-hidden="true" className="size-3.5" />
+              {threadSize(turns, steps)}
+            </span>
+          </div>
+        </>
+      )}
     </div>
   )
 }
