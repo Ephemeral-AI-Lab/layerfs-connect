@@ -9,15 +9,18 @@
 //                 paths from branch.diff_commits against its parent
 //   listDir/file  fs.list, fs.stat and fs.read
 //   remove        runtime.project.remove(name, { confirm: name })
+//   storeBytes    the Store file's size (with its WAL): stat on Linux, one
+//                 stat in the home's worker container on macOS
 // Branch, Commit and file reads go through one @layerfs/agent client per
 // project, opened after the runtime (so on macOS it uses the home's worker)
 // and closed after a quiet minute. Every LayerFS call is made once; a
 // refusal passes through with its code.
-import { readdirSync, readFileSync } from 'node:fs'
+import { execFile } from 'node:child_process'
+import { readdirSync, readFileSync, statSync } from 'node:fs'
 import { join } from 'node:path'
 import { LayerFS } from '@layerfs/agent'
 import { LayerFSBackend } from '@layerfs/backend'
-import { missing as missingSettings, openRuntime, withProjectEnv } from './config.js'
+import { VOLUMES, missing as missingSettings, openRuntime, withProjectEnv } from './config.js'
 
 /** A project's client is closed after this long unused. */
 const IDLE_MS = 60_000
@@ -33,6 +36,9 @@ const WIDTH = 4
 const KEEP_CHANGES = 5000
 /** Default and largest Commits per answer. */
 const LIMIT = 200
+
+/** How long the Store size may take before it is answered as unknown. */
+const SIZE_MS = 5_000
 
 /** Project names, as LayerFS takes them. */
 const NAME = /^[a-z0-9](?:[a-z0-9_.-]{0,61}[a-z0-9])?$/
@@ -71,6 +77,9 @@ function keep(map, key, value, most) {
   map.set(key, value)
   while (map.size > most) map.delete(map.keys().next().value)
 }
+
+/** A project's Store file in its volume. */
+const storeFile = (volume) => `${VOLUMES}/${volume}/_data/global/store.sqlite`
 
 /** A Commit as the SDK shows it -> CommitInfo. */
 const commitInfo = (c, branch) => ({
@@ -238,7 +247,47 @@ export class Projects {
         from: l.sourceBranch ?? null,
       }
     })
-    return { project: this.summary(record, this.madeBy()), branches, layers, sandboxes: sandboxInfos(name, st, containers) }
+    let newest = null
+    for (const c of byId.values()) if (typeof c.time === 'number' && (!newest || c.time > newest.time)) newest = c
+    const store = { path: record.volume ? storeFile(record.volume) : null, bytes: await this.storeBytes(record.volume) }
+    return {
+      project: this.summary(record, this.madeBy()),
+      branches,
+      layers,
+      sandboxes: sandboxInfos(name, st, containers),
+      last: newest ? commitInfo(newest) : null,
+      commits: byId.size,
+      store,
+    }
+  }
+
+  /**
+   * The Store file's bytes, its WAL included, or null when it cannot be read
+   * (no volume, a platform whose worker is not a container here). One stat.
+   */
+  async storeBytes(volume) {
+    if (!volume) return null
+    const files = [storeFile(volume), `${storeFile(volume)}-wal`]
+    if (!this.spec.worker) {
+      let n = null
+      for (const f of files) {
+        try {
+          n = (n ?? 0) + statSync(f).size
+        } catch {
+          // no WAL right after a checkpoint; no Store at all reads as unknown
+        }
+      }
+      return n
+    }
+    const docker = this.spec.docker.startsWith('/') ? `unix://${this.spec.docker}` : this.spec.docker
+    const args = ['-H', docker, 'exec', `${this.spec.prefix}worker`, 'stat', '-c', '%s', ...files]
+    return new Promise((resolve) => {
+      // stat exits 1 when the WAL is missing; the sizes it printed still count
+      execFile('docker', args, { timeout: SIZE_MS }, (error, stdout) => {
+        const sizes = String(stdout ?? '').split('\n').filter(Boolean).map(Number)
+        resolve(sizes.length ? sizes.reduce((a, b) => a + b, 0) : (error && this.log(`[host] Store size of ${volume}: ${error.message.split('\n')[0]}`), null))
+      })
+    })
   }
 
   /** BranchInfo[] from a get_state answer; Branches whose Commits it cut short are listed (branch.list_commits) to count them. */

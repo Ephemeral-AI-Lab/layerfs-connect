@@ -1,4 +1,4 @@
-// Live: the replay's sessions (its agents) connected to the demo's LayerFS
+// Live: the newest session's agents connected to the demo's LayerFS
 // project, and the project to the Sandboxes and Workspaces they mounted. The
 // agents' trace lines say who holds which Workspace and which calls run now
 // (RunDetail.live, kept current by the host's events); the project's state
@@ -11,7 +11,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { LayerfsMark } from '@/components/layerfs-mark'
 import type { SwitcherAgent } from '@/components/runs/agent-switcher'
 import { AgentDot, Spinner } from '@/components/runs/run-badges'
-import { type AgentColor, ago, duration, isLive } from '@/components/runs/run-format'
+import { type AgentColor, ago, duration, isLive, plural } from '@/components/runs/run-format'
 import { treeOrder } from '@/components/runs/thread'
 import { useNow } from '@/components/runs/use-run'
 import { host } from '@/host/client'
@@ -113,7 +113,7 @@ export function LiveTab({ run, agents, colorOf, onOpenAgent }: LiveTabProps) {
                   `${run.phase ?? 'Starting'}: ${run.project} from the demo's fixture`
                 ) : (
                   <>
-                    {working} of {agents.length} session{agents.length === 1 ? '' : 's'} working · {running.length} call
+                    {working} of {agents.length} agent{agents.length === 1 ? '' : 's'} working · {running.length} call
                     {running.length === 1 ? '' : 's'} in flight
                   </>
                 )
@@ -138,12 +138,12 @@ export function LiveTab({ run, agents, colorOf, onOpenAgent }: LiveTabProps) {
 
           <footer className="flex flex-wrap items-end gap-x-8 gap-y-3 border-t px-6 py-4">
             <p className="max-w-md text-xs leading-relaxed text-muted-foreground">
-              Each session is one agent with bash and the subagent tools. Its <code className="font-mono">layerfs</code> calls go
+              Each agent has only bash and the subagent tools. Its <code className="font-mono">layerfs</code> calls go
               straight to the project's Store; a Workspace mounts a Branch inside a Sandbox, where{' '}
               <code className="font-mono">workspace exec</code> runs.
             </p>
             <div className="ml-auto flex gap-7">
-              <Stat value={working} label="sessions working" />
+              <Stat value={working} label="agents working" />
               <Stat value={running.length} label="calls in flight" />
               <Stat value={sandboxes.length} label="Sandboxes open" />
               <Stat value={mounted} label="Workspaces mounted" />
@@ -289,7 +289,7 @@ function FlowGraph({ run, state, agents, sandboxes, runningOf, execOn, now, colo
         </svg>
 
         <div className="relative z-10 flex flex-col gap-3">
-          <ColumnLabel>Sessions</ColumnLabel>
+          <ColumnLabel>Agents</ColumnLabel>
           {nodes.map(({ item: a, depth }) => (
             <SessionNode
               key={a.name}
@@ -366,7 +366,7 @@ function SessionNode({
       style={{ marginLeft: Math.min(depth, 3) * 12 }}
       className={cn(
         'flex flex-col gap-1 rounded-xl border bg-card px-3 py-2.5 text-left outline-none transition-[border-color,box-shadow,opacity] focus-visible:ring-2 focus-visible:ring-ring',
-        active ? 'border-foreground/20 shadow-sm' : state === 'waiting' ? 'opacity-60 hover:opacity-100' : 'hover:border-foreground/20',
+        active ? 'border-foreground/20 shadow-sm' : 'hover:border-foreground/20',
       )}
     >
       <span className="flex min-w-0 items-center gap-2">
@@ -375,9 +375,7 @@ function SessionNode({
         </span>
         <span className="min-w-0 flex-1 truncate text-sm font-medium">{agent.name}</span>
         <AgentDot state={state} />
-        <span className="text-[11px] text-faint tabular-nums">
-          {agent.done ?? 0}/{agent.of}
-        </span>
+        <span className="text-[11px] text-faint tabular-nums">{plural(agent.done ?? 0, 'step')}</span>
       </span>
       <span className="flex min-w-0 items-center gap-1.5 pl-8 text-xs text-muted-foreground">
         {call ? (
@@ -387,8 +385,6 @@ function SessionNode({
             <span className="min-w-0 truncate font-mono text-faint">{callTarget(call)}</span>
             <span className="ml-auto shrink-0 tabular-nums">{duration(now - call.start)}</span>
           </>
-        ) : state === 'waiting' ? (
-          'not started yet'
         ) : last ? (
           <>
             <span className={cn('shrink-0 font-mono', last.ok ? '' : 'text-destructive')}>{last.method}</span>

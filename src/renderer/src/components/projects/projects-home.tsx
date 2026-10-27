@@ -1,60 +1,40 @@
-import { Bot, ListOrdered, Play, Search, TriangleAlert } from 'lucide-react'
+import { Database, GitBranch, GitCommitHorizontal, Plus, Search, TriangleAlert } from 'lucide-react'
 import { useState } from 'react'
 
+import { LayerfsMark } from '@/components/layerfs-mark'
 import { LoadError } from '@/components/projects/states'
 import { Progress, RunStateBadge } from '@/components/runs/run-badges'
-import { KIND, KIND_ORDER, agentColors, isLive } from '@/components/runs/run-format'
+import { isLive, plural, runLabel } from '@/components/runs/run-format'
 import { useStartRun } from '@/components/runs/use-runs'
+import { Chip } from '@/components/storage/chips'
 import { ProjectsTable } from '@/components/storage/projects-table'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
-import { ago } from '@/data/format'
-import { host } from '@/host/client'
+import { ago, bytes, shortId } from '@/data/format'
+import { HostError, host } from '@/host/client'
 import { useHostEvents, useHostQuery } from '@/host/use-host'
-import { cn } from '@/lib/utils'
 import type { DemoSummary, RunSummary } from '@shared/host-api'
 
-/** Counts by kind as one bar, widths by share. */
-export function KindBar({ kinds, className }: { kinds: DemoSummary['kinds']; className?: string }) {
-  const total = KIND_ORDER.reduce((n, k) => n + (kinds[k] ?? 0), 0)
-  if (total === 0) return null
-  const parts = KIND_ORDER.filter((k) => (kinds[k] ?? 0) > 0)
-  return (
-    <div
-      role="img"
-      aria-label={`Segments by kind: ${parts.map((k) => `${KIND[k].label} ${kinds[k]}`).join(', ')}`}
-      className={cn('flex h-1.5 gap-px overflow-hidden rounded-full bg-muted', className)}
-    >
-      {parts.map((k) => (
-        <span
-          key={k}
-          title={`${KIND[k].label} · ${kinds[k]}`}
-          className={cn('h-full', KIND[k].dot)}
-          style={{ width: `${((kinds[k] ?? 0) / total) * 100}%` }}
-        />
-      ))}
-    </div>
-  )
-}
-
-interface DemoCardProps {
+interface ProjectCardProps {
   demo: DemoSummary
   latest: RunSummary | null
   starting: boolean
   onOpen: () => void
-  onRun: () => void
+  onNewSession: () => void
 }
 
-function DemoCard({ demo, latest, starting, onOpen, onRun }: DemoCardProps) {
-  const colorOf = agentColors(demo.agents.map((a) => a.name))
+/** A demo's LayerFS project: its state now, its Store and last Commit, and its sessions. */
+function ProjectCard({ demo, latest, starting, onOpen, onNewSession }: ProjectCardProps) {
   const live = latest ? isLive(latest.state) : false
+  // reread as sessions start and end; a demo never played has no project yet (404)
+  const state = useHostQuery(() => host.project(demo.id), [demo.id, latest?.id, latest?.state])
+  const s = state.data?.project.name === demo.id ? state.data : undefined
+  const missing = state.error instanceof HostError && state.error.status === 404
   return (
     <div className="group relative flex flex-col gap-3.5 rounded-xl border bg-card p-5 transition-[border-color,box-shadow] hover:border-foreground/20 hover:shadow-sm has-[[data-open]:focus-visible]:ring-2 has-[[data-open]:focus-visible]:ring-ring">
       <div className="flex items-start gap-3">
-        <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-muted font-mono text-xs font-semibold text-muted-foreground tabular-nums">
-          {String(demo.order).padStart(2, '0')}
-        </span>
+        <LayerfsMark className="size-8 shrink-0" />
         <div className="min-w-0 flex-1">
           <button
             type="button"
@@ -64,66 +44,67 @@ function DemoCard({ demo, latest, starting, onOpen, onRun }: DemoCardProps) {
           >
             {demo.title}
           </button>
-          <div className="truncate font-mono text-xs text-faint">{demo.id}</div>
+          <div className="truncate text-xs text-muted-foreground">
+            {s?.last ? `${shortId(s.last.id)} · ${ago(s.last.at)}` : <span className="font-mono text-faint">{demo.id}</span>}
+          </div>
         </div>
-        {latest && <RunStateBadge state={latest.state} />}
+        {live ? (
+          <Chip tone="info" live>
+            {runLabel(latest!)} playing
+          </Chip>
+        ) : (
+          latest && <RunStateBadge state={latest.state} />
+        )}
       </div>
 
       {demo.blurb && <p className="line-clamp-2 text-[13px] text-muted-foreground">{demo.blurb}</p>}
 
-      {demo.tags.length > 0 && (
-        <div className="flex flex-wrap gap-1">
-          {demo.tags.map((t) => (
-            <span key={t} className="rounded-md bg-muted px-1.5 py-0.5 text-[11px] font-medium text-muted-foreground">
-              {t}
-            </span>
-          ))}
+      <div className="flex items-center gap-2.5 rounded-lg bg-muted/50 px-2.5 py-2">
+        <Database aria-hidden="true" className="size-4 shrink-0 text-faint" />
+        <div className="min-w-0 flex-1">
+          <div className="truncate text-[13px] font-medium">
+            Local SQLite <span className="font-normal text-muted-foreground">· {s ? bytes(s.store.bytes) : missing ? 'not created yet' : '…'}</span>
+          </div>
+          <div className="truncate text-xs text-faint">
+            {s
+              ? `main L${Math.max(0, s.layers.length - 1)} · ${s.branches.length} Branch${s.branches.length === 1 ? '' : 'es'} · ${plural(s.commits, 'Commit')}`
+              : missing
+                ? 'The first session Inits it from the fixture'
+                : state.error
+                  ? state.error.message
+                  : 'Reading the project'}
+          </div>
+        </div>
+      </div>
+
+      {s?.last && (
+        <div className="flex min-w-0 items-center gap-2 text-xs">
+          <GitCommitHorizontal aria-hidden="true" className="size-3.5 shrink-0 text-faint" />
+          <span className="min-w-0 flex-1 truncate">{s.last.message || 'Commit'}</span>
+          <span className="flex shrink-0 items-center gap-1 text-muted-foreground">
+            <GitBranch aria-hidden="true" className="size-3" />
+            {s.last.branch}
+          </span>
         </div>
       )}
 
-      <div className="flex flex-col gap-2">
-        <div className="flex items-center justify-between gap-3 text-xs text-muted-foreground">
-          <span className="flex min-w-0 items-center gap-1.5" title={demo.agents.map((a) => `${a.name} · ${a.steps} steps`).join('\n')}>
-            <Bot aria-hidden="true" className="size-3.5 shrink-0 text-faint" />
-            <span className="flex shrink-0 gap-1">
-              {demo.agents.slice(0, 6).map((a) => (
-                <span key={a.name} aria-hidden="true" className={cn('size-2 rounded-full', colorOf(a.name).dot)} />
-              ))}
-            </span>
-            <span className="truncate">
-              {demo.agents.length === 1 ? demo.agents[0].name : `${demo.agents.length} agents`}
-            </span>
-          </span>
-          <span className="flex shrink-0 items-center gap-1">
-            <ListOrdered aria-hidden="true" className="size-3.5 text-faint" />
-            {demo.steps} steps
-          </span>
-        </div>
-        <KindBar kinds={demo.kinds} />
-      </div>
-
       <div className="mt-auto flex items-center gap-3 border-t pt-3">
         <div className="min-w-0 flex-1 text-xs text-muted-foreground">
-          {latest ? (
-            live ? (
-              <div className="flex items-center gap-2">
-                <Progress done={latest.done} of={latest.of} className="w-20" />
-                <span className="truncate tabular-nums">
-                  {latest.done}/{latest.of} · {latest.project}
-                </span>
-              </div>
-            ) : (
-              <span className="block truncate">
-                {demo.runs} run{demo.runs === 1 ? '' : 's'} · last {ago(latest.ended ?? latest.started)} ·{' '}
-                <span className="font-mono">{latest.project}</span>
-              </span>
-            )
+          {live && latest ? (
+            <div className="flex items-center gap-2">
+              <Progress done={latest.done} of={latest.of} className="w-20" />
+              <span className="truncate tabular-nums">{plural(latest.done, 'step')}</span>
+            </div>
+          ) : latest ? (
+            <span className="block truncate">
+              {plural(demo.runs, 'session')} · last {ago(latest.ended ?? latest.started)}
+            </span>
           ) : (
-            'Not run yet'
+            'No sessions yet'
           )}
         </div>
-        <Button size="sm" variant={latest ? 'outline' : 'default'} className="relative z-10" disabled={starting} onClick={onRun}>
-          <Play /> {starting ? 'Starting…' : 'Replay'}
+        <Button size="sm" variant="outline" className="relative z-10" disabled={starting || live} onClick={onNewSession}>
+          <Plus /> {starting ? 'Starting…' : 'New session'}
         </Button>
       </div>
     </div>
@@ -175,7 +156,7 @@ export function ProjectsHome({ onOpenProject, onOpenRun }: ProjectsHomeProps) {
             <h1 className="text-2xl font-semibold tracking-[-0.015em]">Projects</h1>
             <p className="mt-1 text-sm text-muted-foreground">
               {demos.data
-                ? `${demos.data.length} demo projects · ${live} running now. Each has one LayerFS project; a replay resets it and plays the scripted agents, each a session.`
+                ? `${demos.data.length} projects · ${live} playing now. Each is one LayerFS project; a new session starts it again from the demo's fixture and plays its scripted agents.`
                 : 'Scripted demo scenarios, each played on the real LayerFS.'}
             </p>
           </div>
@@ -198,7 +179,7 @@ export function ProjectsHome({ onOpenProject, onOpenRun }: ProjectsHomeProps) {
           >
             <TriangleAlert aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
             <span className="min-w-0 flex-1">
-              Could not start a run of {error.demo}: {error.message}
+              Could not start a session of {error.demo}: {error.message}
             </span>
             <button type="button" onClick={clearError} className="text-xs font-medium underline-offset-2 hover:underline">
               Dismiss
@@ -223,13 +204,13 @@ export function ProjectsHome({ onOpenProject, onOpenRun }: ProjectsHomeProps) {
         ) : (
           <div className="grid grid-cols-[repeat(auto-fill,minmax(19rem,1fr))] gap-4">
             {shown.map((d) => (
-              <DemoCard
+              <ProjectCard
                 key={d.id}
                 demo={d}
                 latest={latestOf(d)}
                 starting={starting === d.id}
                 onOpen={() => onOpenProject(d.id)}
-                onRun={() => void start(d.id)}
+                onNewSession={() => void start(d.id)}
               />
             ))}
           </div>
@@ -238,7 +219,7 @@ export function ProjectsHome({ onOpenProject, onOpenRun }: ProjectsHomeProps) {
         <section className="flex flex-col gap-2">
           <div>
             <h2 className="text-[13px] font-semibold">Other LayerFS projects</h2>
-            <p className="text-xs text-faint">Projects in Connect's LayerFS home that no demo run made.</p>
+            <p className="text-xs text-faint">Projects in Connect's LayerFS home that no demo session made.</p>
           </div>
           {projects.error && !projects.data ? (
             <LoadError error={projects.error} what="the LayerFS projects" onRetry={projects.reload} />

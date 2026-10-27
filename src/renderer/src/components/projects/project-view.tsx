@@ -1,66 +1,65 @@
-// A demo project: one LayerFS project, named after the demo, and its sessions
-// (the agents of its replay), on one page as dsh lays out a session. The
-// header names the demo and its LayerFS project and picks the replay; one tab
-// row shows that replay's Live view, Conversation and History, then the demo's Replays and Script. A replay resets the project first, so
-// only the newest replay's Branches, Commits and Sandboxes are there.
-import { ChevronLeft, Layers, RotateCcw, TriangleAlert } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
+// A demo project and its sessions. The project page is the demo's LayerFS
+// project: its Live view, History and Storage, read from the newest session
+// (each session is one replay, which starts the project again from the
+// demo's fixture), then the list of Sessions and the demo's Script. A session
+// page is one replay: its conversation, agent by agent.
+import { ChevronLeft, Layers, Plus, TriangleAlert } from 'lucide-react'
+import { useState } from 'react'
 
-import { KindBar } from '@/components/projects/projects-home'
 import { Empty, Loading } from '@/components/projects/states'
 import { DemoScript } from '@/components/runs/demo-script'
-import { RunDot, RunStateBadge } from '@/components/runs/run-badges'
-import { RUN_LABEL, duration, isLive, ownProject, runLabel } from '@/components/runs/run-format'
+import { RunStateBadge } from '@/components/runs/run-badges'
+import { duration, isLive, ownProject, plural, runLabel } from '@/components/runs/run-format'
 import { RunList } from '@/components/runs/run-list'
 import type { HistoryInit } from '@/components/runs/run-project-tabs'
-import { RunPanel, type RunTab } from '@/components/runs/run-view'
+import { RunPanel } from '@/components/runs/run-view'
 import { useNow } from '@/components/runs/use-run'
 import { useRuns, useStartRun } from '@/components/runs/use-runs'
 import { Button } from '@/components/ui/button'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { ago } from '@/data/format'
+import { ago, bytes } from '@/data/format'
 import { host } from '@/host/client'
 import { useHostQuery } from '@/host/use-host'
 import { cn } from '@/lib/utils'
 import type { RunSummary } from '@shared/host-api'
 
-export type ProjectTab = RunTab | 'runs' | 'script'
+type ProjectTab = 'live' | 'history' | 'storage' | 'sessions' | 'script'
 
-const RUN_TABS: { id: RunTab; label: string }[] = [
+const PROJECT_TABS: { id: ProjectTab; label: string }[] = [
   { id: 'live', label: 'Live' },
-  { id: 'conversation', label: 'Conversation' },
   { id: 'history', label: 'History' },
+  { id: 'storage', label: 'Storage' },
 ]
 
 /** Tab names in `#projects/<demo>/<tab>` hashes (old names too), and where each went. */
 function openingTab(initial?: string): { tab?: ProjectTab; history?: HistoryInit } {
   switch (initial) {
     case 'live':
-    case 'conversation':
     case 'history':
-    case 'runs':
+    case 'storage':
+    case 'sessions':
     case 'script':
       return { tab: initial }
+    case 'runs':
     case 'replays':
-      return { tab: 'runs' }
+      return { tab: 'sessions' }
     case 'files':
     case 'blame':
       return { tab: 'history', history: { part: 'files' } }
     case 'map':
     case 'replay':
       return { tab: 'history', history: { view: 'map', autoplay: initial === 'replay' } }
-    case 'trace':
-      return { tab: 'conversation' }
     case 'work':
-    case 'storage':
     case 'sandboxes':
+      return { tab: 'storage' }
+    case 'conversation':
+    case 'trace':
       return { tab: 'live' }
     default:
       return {}
   }
 }
 
-/** What the page shows: optionally an earlier replay, and a session (agent). */
+/** What the page shows: a session (run) and one of its agents, or the project itself. */
 export interface ProjectPick {
   run?: string
   agent?: string
@@ -69,9 +68,9 @@ export interface ProjectPick {
 interface ProjectViewProps {
   /** The demo id: its LayerFS project has the same name. */
   demo: string
-  /** The replay shown; the newest when absent. */
+  /** The session shown; the project page when absent. */
   runId?: string
-  /** The session (agent) shown; the replay's root when absent. */
+  /** The session's agent shown; its root when absent. */
   agent?: string
   onPick: (pick: ProjectPick) => void
   /** Dev aid: a tab (old names map to new ones), the Branch Files and History open on. */
@@ -80,219 +79,238 @@ interface ProjectViewProps {
   onBack: () => void
 }
 
-function RunPicker({ runs, value, onChange }: { runs: RunSummary[]; value: string; onChange: (id: string) => void }) {
-  const run = runs.find((r) => r.id === value)
-  return (
-    <Select value={value} onValueChange={onChange}>
-      <SelectTrigger aria-label="Replay" className="w-48">
-        <SelectValue>
-          {run && (
-            <span className="flex min-w-0 items-center gap-2">
-              <RunDot state={run.state} />
-              <span className="font-medium">{runLabel(run)}</span>
-              <span className="truncate text-xs text-muted-foreground">{run.id === runs[0]?.id ? 'latest' : ago(run.started)}</span>
-            </span>
-          )}
-        </SelectValue>
-      </SelectTrigger>
-      <SelectContent align="end">
-        {runs.map((r, i) => (
-          <SelectItem key={r.id} value={r.id}>
-            <RunDot state={r.state} />
-            <span className="font-medium">{runLabel(r)}</span>
-            {ownProject(r) && <span className="font-mono text-xs text-muted-foreground">{r.project}</span>}
-            <span className="text-xs text-faint">
-              {RUN_LABEL[r.state]} · {i === 0 ? 'latest' : ago(r.started)}
-            </span>
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
-  )
-}
-
-/** The replay's state beside the title: its badge, and how far it got. */
-function RunProgress({ run }: { run: RunSummary }) {
-  const live = isLive(run.state)
-  const now = useNow(live)
-  return (
-    <>
-      <RunStateBadge state={run.state} />
-      <span className="truncate text-xs text-muted-foreground tabular-nums">
-        {runLabel(run)} · {run.done}/{run.of} steps · {duration((run.ended ?? now) - run.started)}
-        {live && run.phase ? ` · ${run.phase}` : ''}
-      </span>
-    </>
-  )
-}
-
 export function ProjectView({ demo, runId, agent, onPick, initialTab, initialBranch, onBack }: ProjectViewProps) {
   const detail = useHostQuery(() => host.demo(demo), [demo])
   const { runs, error: runsError } = useRuns(demo)
-  const [opening] = useState(() => openingTab(initialTab))
-  const [chosen, setTab] = useState<ProjectTab | undefined>(opening.tab)
-  const { start, starting, error: refused, clearError } = useStartRun(() => {
-    setTab('live')
-    onPick({})
-  })
-
-  // The replay shown: the one asked for, else the newest. The project holds the newest replay on it.
-  const run = runs?.find((r) => r.id === runId) ?? runs?.[0]
-  const holder = runs?.find((r) => r.project === demo)
-  const replacedBy =
-    run && holder && run.project === demo && run.id !== holder.id ? { label: runLabel(holder), onOpen: () => onPick({ agent }) } : undefined
-  // A playing replay opens on Live, a finished one on its conversation.
-  const tab: ProjectTab = chosen ?? (run && isLive(run.state) ? 'live' : 'conversation')
-
-  // A session picked in the sidebar opens its conversation.
-  const seenAgent = useRef(agent)
-  useEffect(() => {
-    if (agent && agent !== seenAgent.current) setTab('conversation')
-    seenAgent.current = agent
-  }, [agent, tab])
-
-  const d = detail.data
-  const history: HistoryInit = { ...opening.history, branch: initialBranch }
-  const replaying = runs?.some((r) => r.project === demo && isLive(r.state)) ?? false
-
-  const replayButton = (
+  const { start, starting, error: refused, clearError } = useStartRun((run) => onPick({ run: run.id }))
+  const title = detail.data?.title ?? demo
+  const playing = runs?.find((r) => isLive(r.state))
+  const newSession = (
     <Button
       onClick={() => void start(demo)}
-      disabled={starting !== null || replaying}
-      title={holder ? `Reset ${demo} (remove it, Init it again from the fixture) and replay the scenario` : `Init ${demo} from the fixture and replay the scenario`}
+      disabled={starting !== null || !!playing}
+      title={playing ? `${runLabel(playing)} is playing` : `Start ${demo} again from the demo's fixture and play the scenario as a new session`}
     >
-      <RotateCcw /> {starting ? 'Starting…' : replaying ? 'Replaying' : 'Replay'}
+      <Plus /> {starting ? 'Starting…' : 'New session'}
     </Button>
   )
-  const noRun =
-    runs || runsError ? (
+  const refusal = refused && (
+    <div
+      role="alert"
+      className="flex items-start gap-2 rounded-lg bg-destructive/10 px-3 py-2 text-[13px] text-destructive ring-1 ring-destructive/25 ring-inset"
+    >
+      <TriangleAlert aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
+      <span className="min-w-0 flex-1">Could not start a session: {refused.message}</span>
+      <button type="button" onClick={clearError} className="text-xs font-medium underline-offset-2 hover:underline">
+        Dismiss
+      </button>
+    </div>
+  )
+
+  const session = runId ? runs?.find((r) => r.id === runId) : undefined
+  if (runId)
+    return session ? (
+      <SessionPage
+        run={session}
+        title={title}
+        agent={agent}
+        onAgent={(name) => onPick({ run: session.id, agent: name })}
+        onProject={() => onPick({})}
+        action={newSession}
+        refusal={refusal}
+      />
+    ) : (
+      <Loading label={runs ? `No session ${runId}` : 'Reading the sessions'} className="h-svh" />
+    )
+
+  return (
+    <ProjectPage
+      demo={demo}
+      title={title}
+      runs={runs}
+      runsError={runsError}
+      onPick={onPick}
+      onBack={onBack}
+      initialTab={initialTab}
+      initialBranch={initialBranch}
+      action={newSession}
+      refusal={refusal}
+    />
+  )
+}
+
+interface PageParts {
+  title: string
+  action: React.ReactNode
+  refusal: React.ReactNode
+}
+
+interface ProjectPageProps extends PageParts {
+  demo: string
+  runs: RunSummary[] | undefined
+  runsError: Error | undefined
+  onPick: (pick: ProjectPick) => void
+  onBack: () => void
+  initialTab?: string
+  initialBranch?: string
+}
+
+/** The project: Live, History and Storage from its newest session, then Sessions and Script. */
+function ProjectPage({ demo, title, runs, runsError, onPick, onBack, initialTab, initialBranch, action, refusal }: ProjectPageProps) {
+  const [opening] = useState(() => openingTab(initialTab))
+  const [tab, setTab] = useState<ProjectTab>(opening.tab ?? 'live')
+  // The project holds its newest session's state; sessions from before one project per demo played elsewhere.
+  const current = runs?.find((r) => r.project === demo)
+  const state = useHostQuery(() => host.project(demo), [demo, current?.id, current?.state])
+  const s = state.data?.project.name === demo ? state.data : undefined
+  const history: HistoryInit = { ...opening.history, branch: initialBranch }
+
+  const facts = s
+    ? [
+        s.last ? `last Commit ${ago(s.last.at)} on ${s.last.branch}` : 'no Commits yet',
+        `${s.branches.length} Branch${s.branches.length === 1 ? '' : 'es'}`,
+        plural(s.commits, 'Commit'),
+        `Store ${bytes(s.store.bytes)}`,
+      ]
+    : []
+
+  const body =
+    tab === 'sessions' ? (
+      <div className="h-full overflow-y-auto">
+        <div className="mx-auto w-full max-w-7xl px-8 py-6">
+          <RunList demo={demo} onOpenRun={(id) => onPick({ run: id })} />
+        </div>
+      </div>
+    ) : tab === 'script' ? (
+      <DemoScript demo={demo} />
+    ) : current ? (
+      <RunPanel
+        key={current.id}
+        runId={current.id}
+        tab={tab}
+        onOpenRun={(id) => onPick({ run: id })}
+        onAgent={(name) => onPick({ run: current.id, agent: name })}
+        historyInit={history}
+      />
+    ) : runs || runsError ? (
       <div className="mx-auto w-full max-w-[1000px] px-8 py-8">
-        <Empty icon={RotateCcw} title={runsError ? 'Replays are not readable right now' : `${d?.title ?? demo} has not been replayed yet`} action={replayButton}>
+        <Empty icon={Layers} title={runsError ? 'Sessions are not readable right now' : `${title} has no sessions yet`} action={action}>
           {runsError ? (
             runsError.message
           ) : (
             <>
-              A replay Inits the LayerFS project <span className="font-mono text-foreground">{demo}</span> from the demo’s fixture and plays
-              its agents on it; each agent is a session here. A later replay resets the project first.
+              A session Inits the LayerFS project <span className="font-mono text-foreground">{demo}</span> from the demo’s fixture and plays
+              its scripted agents on it. Its Live view, History and Storage show here.
             </>
           )}
         </Empty>
       </div>
     ) : (
-      <Loading label="Reading the replays" />
+      <Loading label="Reading the sessions" />
     )
 
   return (
     <div className="flex h-svh min-h-0 flex-col">
       <header className="flex shrink-0 flex-col gap-2.5 px-8 pt-4">
-        <button
-          type="button"
-          onClick={onBack}
-          className="-ml-1 flex w-fit items-center gap-1 rounded text-[13px] text-muted-foreground outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
-        >
-          <ChevronLeft className="size-4" /> Projects
-        </button>
+        <BackLink onClick={onBack}>Projects</BackLink>
         <div className="flex items-center gap-4">
           <div className="min-w-0 flex-1">
             <div className="flex min-w-0 items-center gap-3">
-              <h1 className="truncate text-xl font-semibold tracking-[-0.015em]">{d?.title ?? demo}</h1>
-              <span
-                title={`The LayerFS project ${run && ownProject(run) ? run.project : demo}`}
-                className="flex shrink-0 items-center gap-1 rounded-md bg-muted px-1.5 py-0.5 font-mono text-[12px] text-muted-foreground"
-              >
-                <Layers aria-hidden="true" className="size-3" />
-                {run && ownProject(run) ? run.project : demo}
-              </span>
-              {run && <RunProgress run={run} />}
-            </div>
-            <div className="mt-1 flex min-w-0 items-center gap-3">
-              {d && d.tags.length > 0 && (
-                <div className="flex shrink-0 flex-wrap gap-1">
-                  {d.tags.map((t) => (
-                    <span key={t} className="rounded-md bg-muted px-1.5 py-0.5 text-[11px] font-medium text-muted-foreground">
-                      {t}
-                    </span>
-                  ))}
-                </div>
+              <h1 className="truncate text-xl font-semibold tracking-[-0.015em]">{title}</h1>
+              <ProjectChip name={demo} />
+              {current && isLive(current.state) && (
+                <button type="button" onClick={() => onPick({ run: current.id })} className="flex items-center gap-2 text-xs text-primary hover:underline">
+                  <RunStateBadge state={current.state} /> {runLabel(current)} playing
+                </button>
               )}
-              {d && (
-                <span className="truncate text-xs text-muted-foreground">
-                  {d.agents.length} session{d.agents.length === 1 ? '' : 's'} · {d.steps} steps
-                </span>
-              )}
-              {d && <KindBar kinds={d.kinds} className="w-28 shrink-0" />}
-              {detail.error && <span className="text-xs text-destructive">{detail.error.message}</span>}
             </div>
+            <p className="mt-1 truncate text-xs text-muted-foreground">
+              {s ? facts.join(' · ') : state.error && current ? state.error.message : 'Local SQLite Store · Docker Sandboxes'}
+            </p>
           </div>
-          {runs && runs.length > 1 && run && <RunPicker runs={runs} value={run.id} onChange={(id) => onPick({ run: id, agent })} />}
-          {replayButton}
+          {action}
         </div>
-        {refused && (
-          <div
-            role="alert"
-            className="flex items-start gap-2 rounded-lg bg-destructive/10 px-3 py-2 text-[13px] text-destructive ring-1 ring-destructive/25 ring-inset"
-          >
-            <TriangleAlert aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
-            <span className="min-w-0 flex-1">Could not start a replay: {refused.message}</span>
-            <button type="button" onClick={clearError} className="text-xs font-medium underline-offset-2 hover:underline">
-              Dismiss
-            </button>
-          </div>
-        )}
+        {refusal}
         <nav aria-label="Project" className="flex items-end gap-6 border-b">
-          {RUN_TABS.map((t) => (
+          {PROJECT_TABS.map((t) => (
             <TabButton key={t.id} active={tab === t.id} onClick={() => setTab(t.id)}>
-              {t.id === 'live' && run && isLive(run.state) && !replacedBy && (
+              {t.id === 'live' && current && isLive(current.state) && (
                 <span aria-hidden="true" className="mr-1.5 inline-block size-1.5 animate-pulse rounded-full bg-primary align-middle" />
               )}
               {t.label}
             </TabButton>
           ))}
           <span aria-hidden="true" className="mb-2.5 ml-auto h-4 w-px bg-border" />
-          <TabButton active={tab === 'runs'} onClick={() => setTab('runs')} quiet>
-            Replays{runs ? <span className="ml-1 text-faint">{runs.length}</span> : null}
+          <TabButton active={tab === 'sessions'} onClick={() => setTab('sessions')} quiet>
+            Sessions{runs ? <span className="ml-1 text-faint">{runs.length}</span> : null}
           </TabButton>
           <TabButton active={tab === 'script'} onClick={() => setTab('script')} quiet>
             Script
           </TabButton>
         </nav>
       </header>
+      <div className="flex min-h-0 flex-1 flex-col">{body}</div>
+    </div>
+  )
+}
 
-      <div className="flex min-h-0 flex-1 flex-col">
-        {tab === 'runs' ? (
-          <div className="h-full overflow-y-auto">
-            <div className="mx-auto w-full max-w-7xl px-8 py-6">
-              <RunList
-                demo={demo}
-                onOpenRun={(id) => {
-                  setTab('conversation')
-                  onPick({ run: id })
-                }}
-              />
-            </div>
+interface SessionPageProps extends PageParts {
+  run: RunSummary
+  agent?: string
+  onAgent: (name: string) => void
+  onProject: () => void
+}
+
+/** One session (replay): its conversation, agent by agent. */
+function SessionPage({ run, title, agent, onAgent, onProject, action, refusal }: SessionPageProps) {
+  const live = isLive(run.state)
+  const now = useNow(live)
+  return (
+    <div className="flex h-svh min-h-0 flex-col">
+      <header className="flex shrink-0 flex-col gap-2.5 border-b px-8 pt-4 pb-3">
+        <BackLink onClick={onProject}>{title}</BackLink>
+        <div className="flex items-center gap-4">
+          <div className="flex min-w-0 flex-1 items-center gap-3">
+            <h1 className="truncate text-xl font-semibold tracking-[-0.015em]">{runLabel(run)}</h1>
+            <RunStateBadge state={run.state} />
+            <span className="truncate text-xs text-muted-foreground tabular-nums">
+              {plural(run.done, 'step')} · {duration((run.ended ?? now) - run.started)} · started {ago(run.started, now)}
+              {live && run.phase ? ` · ${run.phase}` : ''}
+            </span>
+            {ownProject(run) && <ProjectChip name={run.project} />}
           </div>
-        ) : tab === 'script' ? (
-          <DemoScript demo={demo} />
-        ) : run ? (
-          <RunPanel
-            key={run.id}
-            runId={run.id}
-            tab={tab}
-            onTab={setTab}
-            onOpenRun={() => {
-              setTab('live')
-              onPick({})
-            }}
-            agent={agent}
-            onAgent={(name) => onPick({ run: runId, agent: name })}
-            replacedBy={replacedBy}
-            historyInit={history}
-          />
-        ) : (
-          noRun
-        )}
+          {action}
+        </div>
+        {refusal}
+      </header>
+      <div className="flex min-h-0 flex-1 flex-col">
+        <RunPanel key={run.id} runId={run.id} tab="conversation" agent={agent} onAgent={onAgent} />
       </div>
     </div>
+  )
+}
+
+function ProjectChip({ name }: { name: string }) {
+  return (
+    <span
+      title={`The LayerFS project ${name}`}
+      className="flex shrink-0 items-center gap-1 rounded-md bg-muted px-1.5 py-0.5 font-mono text-[12px] text-muted-foreground"
+    >
+      <Layers aria-hidden="true" className="size-3" />
+      {name}
+    </span>
+  )
+}
+
+function BackLink({ onClick, children }: { onClick: () => void; children: React.ReactNode }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="-ml-1 flex w-fit items-center gap-1 rounded text-[13px] text-muted-foreground outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
+    >
+      <ChevronLeft className="size-4" /> {children}
+    </button>
   )
 }
 

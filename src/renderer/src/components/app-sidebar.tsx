@@ -1,11 +1,10 @@
 import type { DemoSummary, RunSummary } from '@shared/host-api'
-import { Cpu, Database, Folder, FolderOpen, Layers, LoaderCircle, type LucideIcon, RotateCcw, RotateCw, Unplug } from 'lucide-react'
+import { Cpu, Database, Folder, FolderOpen, Layers, LoaderCircle, type LucideIcon, Plus, RotateCw, Unplug } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 
 import { LayerfsMark } from '@/components/layerfs-mark'
-import { AgentDot, RunDot } from '@/components/runs/run-badges'
-import { agentColors, isLive } from '@/components/runs/run-format'
-import { treeOrder } from '@/components/runs/thread'
+import { RunDot } from '@/components/runs/run-badges'
+import { ago, isLive, runLabel } from '@/components/runs/run-format'
 import { useRuns, useStartRun } from '@/components/runs/use-runs'
 import {
   Sidebar,
@@ -23,13 +22,12 @@ import {
 } from '@/components/ui/sidebar'
 import { HostError, host } from '@/host/client'
 import { useHostQuery } from '@/host/use-host'
-import { cn } from '@/lib/utils'
 
 export type NavId = 'projects' | 'storage' | 'compute'
 
 /**
- * What the sidebar has selected: a page, or one demo project, optionally on
- * an earlier replay (`run`) and one session (`agent`, the replay's root when
+ * What the sidebar has selected: a page, or one demo project, optionally one
+ * of its sessions (`run`, one replay) and an agent of it (`agent`, its root when
  * absent).
  */
 export type Selection = { kind: 'nav'; id: NavId } | { kind: 'project'; id: string; run?: string; agent?: string }
@@ -173,7 +171,7 @@ function HostNotice({ title, message, onRetry }: { title: string; message: strin
 
 interface DemoItemProps {
   demo: DemoSummary
-  /** The demo's runs, newest first. */
+  /** The demo's runs (its sessions), newest first. */
   runs: RunSummary[]
   open: boolean
   selected: Selection
@@ -184,39 +182,20 @@ interface DemoItemProps {
   onStart: () => void
 }
 
-interface Session {
-  name: string
-  parent: string | null
-  state?: RunSummary['agents'][number]['state']
-  done?: number
-  of: number
-}
+/** Sessions a folder lists before "Show all". */
+const SHOWN = 6
 
-/** The sessions of a project: its replay's agents, and the demo's agents that have not started. */
-function sessionsOf(demo: DemoSummary, run: RunSummary | undefined): Session[] {
-  const list: Session[] = (run?.agents ?? []).map((a) => ({ ...a }))
-  const root = demo.agents.find((a) => a.prompt === null)?.name ?? 'root'
-  for (const a of demo.agents)
-    if (!list.some((x) => x.name === a.name)) list.push({ name: a.name, parent: a.prompt === null ? null : root, of: a.steps })
-  return list
-}
-
-/** A demo project: its one LayerFS project, and under it the sessions (agents) of its replay. */
+/** A project folder: its LayerFS project, and under it its sessions, one per replay. */
 function DemoItem({ demo, runs, open, selected, starting, refused, onToggle, onSelect, onStart }: DemoItemProps) {
-  // the replay the project holds: the newest on the demo's own project (else the newest at all)
-  const run = runs.find((r) => r.project === demo.id) ?? runs[0]
-  const live = run !== undefined && isLive(run.state)
-  const sessions = sessionsOf(demo, run)
-  const nodes = treeOrder(sessions, (a) => a.name, (a) => a.parent)
-  const colorOf = agentColors([...demo.agents.map((a) => a.name), ...sessions.map((a) => a.name)])
-  const root = sessions.find((a) => a.parent === null)?.name
-  const here = selected.kind === 'project' && selected.id === demo.id && !selected.run
-  const shownAgent = here ? (selected.agent ?? root) : undefined
-  const working = sessions.filter((a) => a.state === 'running').length
+  const [all, setAll] = useState(false)
+  const live = runs.find((r) => isLive(r.state))
+  const newest = runs[0]
+  const here = selected.kind === 'project' && selected.id === demo.id
+  const shown = all ? runs : runs.slice(0, SHOWN)
   return (
     <SidebarMenuItem>
       <SidebarMenuButton
-        isActive={here && !selected.agent}
+        isActive={here && !selected.run}
         onClick={() => {
           onSelect({ kind: 'project', id: demo.id })
           if (!open) onToggle()
@@ -225,12 +204,11 @@ function DemoItem({ demo, runs, open, selected, starting, refused, onToggle, onS
       >
         <span className="min-w-0 flex-1 truncate">{demo.title}</span>
         {live ? (
-          <span className="flex items-center gap-1.5 text-[12px] font-normal text-primary" title={`${working} session${working === 1 ? '' : 's'} working`}>
-            <RunDot state={run.state} />
-            {working || ''}
+          <span className="flex items-center gap-1.5 text-[12px] font-normal text-primary" title="A session is playing">
+            <RunDot state={live.state} />
           </span>
-        ) : run ? (
-          <RunDot state={run.state} className="opacity-70" />
+        ) : newest ? (
+          <RunDot state={newest.state} className="opacity-70" />
         ) : null}
       </SidebarMenuButton>
       <SidebarMenuAction
@@ -241,16 +219,6 @@ function DemoItem({ demo, runs, open, selected, starting, refused, onToggle, onS
       >
         {open ? <FolderOpen className="size-4!" /> : <Folder className="size-4!" />}
       </SidebarMenuAction>
-      <SidebarMenuAction
-        showOnHover
-        onClick={onStart}
-        disabled={starting || live}
-        aria-label={`Replay ${demo.title}`}
-        title={live ? 'Replaying now' : 'Reset the project and replay'}
-        className="top-2"
-      >
-        {starting ? <LoaderCircle className="animate-spin" /> : <RotateCcw />}
-      </SidebarMenuAction>
 
       {open && (
         <SidebarMenuSub className="mr-0 ml-[19px] gap-0.5 pr-0">
@@ -259,29 +227,29 @@ function DemoItem({ demo, runs, open, selected, starting, refused, onToggle, onS
               {refused}
             </li>
           )}
-          {nodes.map(({ item: a, depth }) => (
-            <SidebarMenuSubItem key={a.name}>
-              <SidebarMenuSubButton asChild isActive={shownAgent === a.name && selected.kind === 'project' && !!selected.agent} className="h-8 text-[13px]">
-                <button
-                  type="button"
-                  onClick={() => onSelect({ kind: 'project', id: demo.id, agent: a.name })}
-                  className={cn('w-full', !a.state && 'text-muted-foreground')}
-                  style={{ paddingLeft: 8 + Math.min(depth, 3) * 12 }}
-                >
-                  <span aria-hidden="true" className={cn('size-2 shrink-0 rounded-full', colorOf(a.name).dot, !a.state && 'opacity-50')} />
-                  <span className="min-w-0 flex-1 truncate text-left">{a.name}</span>
-                  {a.state && a.state !== 'done' && <AgentDot state={a.state} />}
-                  <span className="text-[11px] text-faint tabular-nums">{a.done !== undefined ? `${a.done}/${a.of}` : a.of}</span>
+          {shown.map((r) => (
+            <SidebarMenuSubItem key={r.id}>
+              <SidebarMenuSubButton asChild isActive={here && selected.run === r.id} className="h-8 text-[13px]">
+                <button type="button" onClick={() => onSelect({ kind: 'project', id: demo.id, run: r.id })} className="w-full">
+                  <RunDot state={r.state} />
+                  <span className="min-w-0 flex-1 truncate text-left">{runLabel(r)}</span>
+                  <span className="text-[11px] text-faint tabular-nums">{isLive(r.state) ? `${r.done} steps` : ago(r.ended ?? r.started)}</span>
                 </button>
               </SidebarMenuSubButton>
             </SidebarMenuSubItem>
           ))}
-          {!run && !refused && <li className="px-2 py-1 text-xs text-faint">Not replayed yet</li>}
+          {runs.length > SHOWN && (
+            <li>
+              <button type="button" onClick={() => setAll(!all)} className="px-2 py-1 text-xs text-muted-foreground hover:text-foreground">
+                {all ? 'Show fewer' : `Show all ${runs.length}`}
+              </button>
+            </li>
+          )}
           <SidebarMenuSubItem>
             <SidebarMenuSubButton asChild className="h-7 text-xs text-muted-foreground">
-              <button type="button" onClick={onStart} disabled={starting || live} className="w-full">
-                <RotateCcw className="size-3.5! text-muted-foreground!" />
-                <span>{starting ? 'Starting…' : live ? 'Replaying…' : run ? 'Replay' : 'Replay (Init the project)'}</span>
+              <button type="button" onClick={onStart} disabled={starting || !!live} className="w-full" title={live ? 'A session is playing' : 'Reset the project and play the scenario as a new session'}>
+                {starting ? <LoaderCircle className="size-3.5! animate-spin" /> : <Plus className="size-3.5! text-muted-foreground!" />}
+                <span>{starting ? 'Starting…' : 'New session'}</span>
               </button>
             </SidebarMenuSubButton>
           </SidebarMenuSubItem>

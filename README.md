@@ -3,12 +3,14 @@
 The LayerFS desktop app. It runs on the real LayerFS: a local SQLite Store per
 project in a Docker volume, and Docker Sandboxes. Its projects are ten scripted
 demos (tour, parallel, conflicts, merge, sandbox, agents, checkpoints, shop,
-depot, crew). Each demo has one LayerFS project, named after it; a replay
-resets it (removed, then Inited again from the demo's fixture) and plays the
-demo's agents, which have only bash and the subagent tools, as in
-dsh-layerfs. Each agent is a session of the project. The Live tab shows the
-sessions, the project and the Sandboxes and Workspaces they mounted. There is no language model: every call comes from the
-scenario, and every call really runs.
+depot, crew). Each demo has one LayerFS project, named after it. A new
+session resets it (removed, then Inited again from the demo's fixture) and
+plays the demo's agents, which have only bash and the subagent tools, as in
+dsh-layerfs; earlier sessions stay listed with their conversations. A
+project's page shows its Live view (agents, project, Sandboxes and
+Workspaces), History and Storage from the newest session; a session's page
+shows its conversation. There is no language model: every call comes from
+the scenario, and every call really runs.
 
 Not implemented: PostgreSQL and cloud storage, and native and cloud compute.
 Those pages show them disabled.
@@ -78,8 +80,8 @@ Drive the running app's host from a terminal (it writes
 node tools/connect-run.mjs start tour merge
 ```
 
-Dev aids: `CONNECT_VIEW=<hash>` opens a page (`projects/<demo>[/<tab>]`, `sessions/<demo>/<agent>`,
-`runs/<run id>`, `storage`, `compute`); `CONNECT_SHOT=<file.png>` saves a
+Dev aids: `CONNECT_VIEW=<hash>` opens a page (`projects/<demo>[/<tab>]`,
+`runs/<run id>[/<agent>]` for a session, `storage`, `compute`); `CONNECT_SHOT=<file.png>` saves a
 screenshot once loaded, then quits (`CONNECT_SHOT_DELAY` waits longer;
 `CONNECT_EVAL=<js>` runs in the page first and prints its result);
 `CONNECT_THEME=dark|light`.

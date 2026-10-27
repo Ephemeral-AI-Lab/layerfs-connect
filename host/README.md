@@ -87,7 +87,7 @@ errors are `{ code, message }` with a 4xx/5xx status. CORS allows any origin
 | `GET /api/status` | `HostStatus` |
 | `POST /api/worker/start` | `HostStatus` once the worker answers |
 | `GET /api/projects` | `ProjectSummary[]` |
-| `GET /api/projects/:name` | `ProjectState` (branches, layers, Sandboxes) |
+| `GET /api/projects/:name` | `ProjectState` (branches, layers, Sandboxes, last Commit, Commit count, Store file and size) |
 | `GET /api/projects/:name/commits?branch=&limit=` | `CommitInfo[]`, newest first |
 | `GET /api/projects/:name/fs?branch=&path=` | `FsEntry[]` of one folder |
 | `GET /api/projects/:name/file?branch=&path=` | `{ path, size, binary, text }` (text null when binary or over 1 MiB) |

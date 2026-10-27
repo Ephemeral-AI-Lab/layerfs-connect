@@ -2,7 +2,7 @@ import type { AgentState } from '@shared/host-api'
 import { Check, ChevronsUpDown } from 'lucide-react'
 
 import { AgentDot } from '@/components/runs/run-badges'
-import type { AgentColor } from '@/components/runs/run-format'
+import { type AgentColor, plural } from '@/components/runs/run-format'
 import { treeOrder } from '@/components/runs/thread'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { cn } from '@/lib/utils'
@@ -46,7 +46,7 @@ export function AgentSwitcher({ agents, value, onChange, colorOf }: AgentSwitche
             <span aria-hidden="true" className={cn('size-2 shrink-0 rounded-full', colorOf(a.name).dot)} />
             <span className={cn('min-w-0 flex-1 truncate', a.name === value && 'font-medium')}>{a.name}</span>
             {a.state && <AgentDot state={a.state} />}
-            <span className="text-[11px] text-faint tabular-nums">{a.done !== undefined ? `${a.done}/${a.of}` : a.of}</span>
+            <span className="text-[11px] text-faint tabular-nums">{plural(a.done ?? 0, 'step')}</span>
             <Check aria-hidden="true" className={cn('size-3.5', a.name === value ? 'text-foreground' : 'invisible')} />
           </DropdownMenuItem>
         ))}

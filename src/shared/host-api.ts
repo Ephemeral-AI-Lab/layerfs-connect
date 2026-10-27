@@ -86,6 +86,12 @@ export interface ProjectState {
   branches: BranchInfo[]
   layers: LayerInfo[]
   sandboxes: SandboxInfo[]
+  /** The newest Commit on any Branch, null before the first. */
+  last: CommitInfo | null
+  /** Commits on every Branch. */
+  commits: number
+  /** The project's Store file (in its Docker volume) and its bytes with the WAL; null when unreadable. */
+  store: { path: string | null; bytes: number | null }
 }
 
 // ---------- Demos (scenarios) ----------

@@ -1,12 +1,14 @@
-// One replay's tabs on the project page: Live, Conversation and History. The page header above names the demo, the replay and its state;
-// these tabs only add what is theirs (the Conversation's agent switcher). The
-// agent shown is the page's (the sidebar's sessions pick it too).
+// A session's (one replay's) views: its Conversation on the session page, and
+// the project's Live, History and Storage, read from the newest session, on
+// the project page. The page header above names the project or session;
+// these only add what is theirs (the Conversation's agent switcher).
 import type { DemoDetail, RunDetail, StepView } from '@shared/host-api'
-import { Gauge, History, RotateCw, TriangleAlert } from 'lucide-react'
+import { Gauge, RotateCw, TriangleAlert } from 'lucide-react'
 import { useMemo } from 'react'
 
 import { AgentSwitcher, type SwitcherAgent } from '@/components/runs/agent-switcher'
 import { Conversation } from '@/components/runs/conversation'
+import { ProjectStorage } from '@/components/projects/project-storage'
 import { LiveTab } from '@/components/runs/live-tab'
 import { Spinner } from '@/components/runs/run-badges'
 import { agentColors, stepKey } from '@/components/runs/run-format'
@@ -18,25 +20,23 @@ import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { HostError } from '@/host/client'
 
-export type RunTab = 'live' | 'conversation' | 'history'
+export type RunTab = 'live' | 'conversation' | 'history' | 'storage'
 
 interface RunPanelProps {
   runId: string
   tab: RunTab
   /** Switches the page's tab (a Live session opens its agent's conversation). */
   onTab?: (tab: RunTab) => void
-  /** Opens a replay started with Replay. */
+  /** Opens a session started with New session. */
   onOpenRun?: (runId: string) => void
   /** The agent (session) shown; root when absent. */
   agent?: string
   onAgent: (name: string) => void
-  /** An earlier replay: the project has been reset since, so Live, Work and History do not show it. */
-  replacedBy?: { label: string; onOpen: () => void }
   historyInit?: HistoryInit
 }
 
 /** A run's tab, live: loads the run once and follows its events. */
-export function RunPanel({ runId, tab, onTab, onOpenRun, agent, onAgent, replacedBy, historyInit }: RunPanelProps) {
+export function RunPanel({ runId, tab, onTab, onOpenRun, agent, onAgent, historyInit }: RunPanelProps) {
   const live = useRun(runId)
   if (live.run)
     return (
@@ -49,7 +49,6 @@ export function RunPanel({ runId, tab, onTab, onOpenRun, agent, onAgent, replace
         onOpenRun={onOpenRun}
         picked={agent}
         onAgent={onAgent}
-        replacedBy={replacedBy}
         historyInit={historyInit}
       />
     )
@@ -92,26 +91,15 @@ interface BodyProps {
   onOpenRun?: (runId: string) => void
   picked?: string
   onAgent: (name: string) => void
-  replacedBy?: RunPanelProps['replacedBy']
   historyInit?: HistoryInit
 }
 
-function RunBody({ run, demo, views, tab, onTab, onOpenRun, picked, onAgent: setPicked, replacedBy, historyInit }: BodyProps) {
+function RunBody({ run, demo, views, tab, onTab, onOpenRun, picked, onAgent: setPicked, historyInit }: BodyProps) {
   const root = run.agents.find((a) => a.parent === null)?.name ?? demo?.agents.find((a) => a.prompt === null)?.name ?? 'root'
   const actions = useRunActions(run, onOpenRun)
 
-  // Every agent of the demo, started or not; started ones carry the run's state.
-  const agents = useMemo<SwitcherAgent[]>(() => {
-    const list: SwitcherAgent[] = run.agents.map((a) => ({ ...a }))
-    for (const a of demo?.agents ?? [])
-      if (!list.some((x) => x.name === a.name)) {
-        const spawner = Object.entries(demo?.script ?? {}).find(([, steps]) =>
-          steps.some((s) => s.tool === 'subagent' && s.segments.some((g) => g.detail === a.name)),
-        )?.[0]
-        list.push({ name: a.name, parent: a.prompt === null ? null : (spawner ?? root), state: 'waiting', done: 0, of: a.steps })
-      }
-    return list
-  }, [run.agents, demo, root])
+  // Only the agents started so far: a subagent appears when its parent starts it, as in a live session.
+  const agents = useMemo<SwitcherAgent[]>(() => run.agents.map((a) => ({ ...a })), [run.agents])
   const agent = picked && agents.some((a) => a.name === picked) ? picked : root
   const namesKey = [...(demo?.agents.map((a) => a.name) ?? []), ...run.agents.map((a) => a.name)].join('\u0000')
   const colorOf = useMemo(() => agentColors([...new Set(namesKey.split('\u0000'))]), [namesKey])
@@ -133,7 +121,6 @@ function RunBody({ run, demo, views, tab, onTab, onOpenRun, picked, onAgent: set
   }, [run.steps, run.messages, views, agent, agents])
   const steps = useMemo(() => run.steps.filter((s) => s.agent === agent).length, [run.steps, agent])
 
-  if (replacedBy && (tab === 'live' || tab === 'history')) return <Replaced run={run} tab={tab} replacedBy={replacedBy} />
   if (tab === 'live')
     return (
       <LiveTab
@@ -147,6 +134,7 @@ function RunBody({ run, demo, views, tab, onTab, onOpenRun, picked, onAgent: set
       />
     )
   if (tab === 'history') return <ProjectHistory run={run} historyInit={historyInit} />
+  if (tab === 'storage') return <ProjectStorage run={run} />
 
   const empty = actions.live ? (
     <div className="flex flex-col items-center gap-2 py-20 text-center text-sm text-muted-foreground">
@@ -186,7 +174,7 @@ function RunBody({ run, demo, views, tab, onTab, onOpenRun, picked, onAgent: set
       <div className="shrink-0 px-8 pb-3">
         <div className="mx-auto flex w-full max-w-[1000px] flex-col items-center gap-2">
           <div className="flex w-full items-center gap-3 rounded-2xl border bg-card py-1.5 pr-1.5 pl-4 shadow-xs">
-            <span className="min-w-0 flex-1 truncate text-sm text-faint">Scripted replay · replies come from the scenario</span>
+            <span className="min-w-0 flex-1 truncate text-sm text-faint">Scripted session · replies come from the scenario</span>
             <RunActionButton actions={actions} className="text-muted-foreground" />
           </div>
           <span className="flex items-center gap-1.5 text-xs text-faint tabular-nums">
@@ -195,25 +183,6 @@ function RunBody({ run, demo, views, tab, onTab, onOpenRun, picked, onAgent: set
           </span>
         </div>
       </div>
-    </div>
-  )
-}
-
-/** Live, Work or History of an earlier replay: its project state was reset by a newer one. */
-function Replaced({ run, tab, replacedBy }: { run: RunDetail; tab: RunTab; replacedBy: NonNullable<RunPanelProps['replacedBy']> }) {
-  const what = tab === 'live' ? 'Live follows' : 'History shows'
-  return (
-    <div className="flex flex-col items-center justify-center gap-3 px-8 py-20 text-center">
-      <History aria-hidden="true" className="size-6 text-faint" />
-      <h2 className="text-[15px] font-semibold">An earlier replay</h2>
-      <p className="max-w-md text-sm text-muted-foreground">
-        Each replay resets <span className="font-mono text-foreground">{run.project}</span> and plays it again, so this
-        replay's Branches, Commits and Sandboxes are gone; its Conversation is kept. {what}{' '}
-        {replacedBy.label}, the one the project holds now.
-      </p>
-      <Button variant="outline" size="sm" onClick={replacedBy.onOpen}>
-        Open {replacedBy.label}
-      </Button>
     </div>
   )
 }

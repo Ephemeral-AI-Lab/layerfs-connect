@@ -1,8 +1,8 @@
 import type { RunSummary } from '@shared/host-api'
-import { ChevronRight, Play, RotateCw, TriangleAlert } from 'lucide-react'
+import { ChevronRight, Plus, RotateCw, TriangleAlert } from 'lucide-react'
 
-import { Progress, RunDot } from '@/components/runs/run-badges'
-import { RUN_LABEL, RUN_TONE, ago, clock, duration, isLive, runLabel } from '@/components/runs/run-format'
+import { RunDot } from '@/components/runs/run-badges'
+import { RUN_LABEL, ago, clock, duration, isLive, plural, runLabel } from '@/components/runs/run-format'
 import { useNow } from '@/components/runs/use-run'
 import { useRuns, useStartRun } from '@/components/runs/use-runs'
 import { Button } from '@/components/ui/button'
@@ -15,7 +15,7 @@ interface RunListProps {
   onOpenRun: (runId: string) => void
 }
 
-/** A demo project's replays, newest first, with a Replay button. */
+/** A demo project's sessions (one per replay), newest first, with a New session button. */
 export function RunList({ demo, onOpenRun }: RunListProps) {
   const { runs, error, loading, reload } = useRuns(demo)
   const { start, starting, error: refused, clearError } = useStartRun((run) => onOpenRun(run.id))
@@ -25,17 +25,17 @@ export function RunList({ demo, onOpenRun }: RunListProps) {
   return (
     <section aria-label="Runs" className="rounded-xl border bg-card">
       <header className="flex items-center gap-2 px-5 pt-4 pb-3">
-        <h3 className="text-sm font-semibold">Replays</h3>
+        <h3 className="text-sm font-semibold">Sessions</h3>
         {runs && <span className="text-xs text-faint">{runs.length}</span>}
         <Button size="sm" className="ml-auto" onClick={() => void start(demo)} disabled={starting !== null}>
-          <Play /> {starting ? 'Starting…' : 'Replay'}
+          <Plus /> {starting ? 'Starting…' : 'New session'}
         </Button>
       </header>
 
       {refused && (
         <div role="alert" className="mx-5 mb-3 flex items-start gap-2 rounded-lg bg-destructive/10 px-3 py-2 text-[13px] text-destructive ring-1 ring-destructive/25 ring-inset">
           <TriangleAlert aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
-          <span className="min-w-0 flex-1">Could not start a replay: {refused.message}</span>
+          <span className="min-w-0 flex-1">Could not start a session: {refused.message}</span>
           <button type="button" onClick={clearError} className="text-xs font-medium underline-offset-2 hover:underline">
             Dismiss
           </button>
@@ -58,16 +58,16 @@ export function RunList({ demo, onOpenRun }: RunListProps) {
         </div>
       ) : runs.length === 0 ? (
         <div className="flex flex-col items-center gap-1.5 px-5 pt-3 pb-7 text-center">
-          <p className="text-sm font-medium">No replays yet</p>
+          <p className="text-sm font-medium">No sessions yet</p>
           <p className="max-w-sm text-xs text-muted-foreground">
-            A replay Inits this demo’s LayerFS project from its fixture (resetting it after the first) and plays its agents live on the real backend.
+            A session Inits this demo’s LayerFS project from its fixture (starting it again after the first) and plays its agents live on the real backend.
           </p>
         </div>
       ) : (
         <Table>
           <TableHeader>
             <TableRow className="hover:bg-transparent">
-              <TableHead className="pl-5 text-xs text-faint">Replay</TableHead>
+              <TableHead className="pl-5 text-xs text-faint">Session</TableHead>
               <TableHead className="text-xs text-faint">Started</TableHead>
               <TableHead className="text-xs text-faint">Duration</TableHead>
               <TableHead className="text-xs text-faint">Steps</TableHead>
@@ -117,12 +117,7 @@ function RunRow({ run, now, onOpen }: { run: RunSummary; now: number; onOpen: ()
       </TableCell>
       <TableCell className="text-muted-foreground tabular-nums">{duration((run.ended ?? now) - run.started)}</TableCell>
       <TableCell>
-        <span className="flex items-center gap-2">
-          <Progress done={run.done} of={run.of} tone={RUN_TONE[run.state]} className="w-20" />
-          <span className="text-xs text-muted-foreground tabular-nums">
-            {run.done}/{run.of}
-          </span>
-        </span>
+        <span className="text-xs text-muted-foreground tabular-nums">{plural(run.done, 'step')}</span>
       </TableCell>
       <TableCell>
         <code className="font-mono text-xs text-muted-foreground">{run.project}</code>

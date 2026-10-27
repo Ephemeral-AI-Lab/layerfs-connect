@@ -204,11 +204,10 @@ export const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' :
 
 export const stepKey = (agent: string, index: number) => `${agent}:${index}`
 
-/** "run 3" from the run's project "<demo>-3", else the run id. */
+/** A run as a session: "Session 3", or the project an older run played on. */
 export function runLabel(run: { id: string; project: string; replay?: number | null }): string {
-  if (run.replay) return `replay ${run.replay}`
-  const n = run.project.match(/-(\d+)$/)?.[1]
-  return n ? `run ${n}` : run.id
+  // a session of the demo's project; a run from before that played on a project of its own, named here
+  return run.replay ? `Session ${run.replay}` : `Session · ${run.project}`
 }
 
 /** True for a run from before one project per demo: it made its own project (`<demo>-<n>`). */
