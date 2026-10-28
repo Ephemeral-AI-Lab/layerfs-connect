@@ -31,10 +31,13 @@ const LOOKS = [
   { value: '3d' as const, label: '3D' },
   { value: 'game' as const, label: 'Game' },
 ]
+/** The 3D and Game views are hidden from the app for now; their code stays, and true brings the switch back. */
+const SHOW_VIEWS = false
 
 /** The Map's look, kept on this machine (2D when nothing is kept). */
 function useMapLook(): [MapLook, (v: MapLook) => void] {
   const [look, setLook] = useState<MapLook>(() => {
+    if (!SHOW_VIEWS) return '2d'
     try {
       const kept = localStorage.getItem(LOOK_KEY)
       return kept === '3d' || kept === 'game' ? kept : '2d'
@@ -180,7 +183,7 @@ function HistoryBody({ project, tree, initialBranch, initialView = 'lineage', au
   return (
     <div className="hist-frame flex h-0 min-h-[30rem] flex-1 flex-col overflow-hidden rounded-2xl">
       <div className="flex items-center gap-3 border-b bg-muted/25 px-3 py-2">
-        {view === 'map' && <Segmented aria-label="Map view" value={look} onChange={setLook} options={LOOKS} />}
+        {SHOW_VIEWS && view === 'map' && <Segmented aria-label="Map view" value={look} onChange={setLook} options={LOOKS} />}
         <SearchField label="Find a Branch or Commit" value={query} onChange={setQuery} className="w-60" />
         <Segmented aria-label="Show Branches" value={filter} onChange={setFilter} options={filters} />
         <span className="min-w-0 flex-1 truncate text-right text-xs text-muted-foreground tabular-nums">
