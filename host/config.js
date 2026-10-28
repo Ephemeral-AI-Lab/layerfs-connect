@@ -8,9 +8,9 @@
 //   <state>/runs           one folder per demo run
 // Each setting comes from settings.json, else LAYERFS_CONNECT_<NAME>, else
 // its default. LayerFS itself reads LAYERFS_* names only.
-import { chmodSync, existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs'
+import { chmodSync, existsSync, mkdirSync, readFileSync, realpathSync, renameSync, writeFileSync } from 'node:fs'
 import { homedir } from 'node:os'
-import { join } from 'node:path'
+import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { LayerFSRuntime } from '@layerfs/runtime'
 
@@ -19,8 +19,8 @@ export const VOLUMES = '/var/lib/docker/volumes'
 
 /** apps/connect */
 export const APP = fileURLToPath(new URL('..', import.meta.url))
-/** The LayerFS checkout's api/ folder (LAYERFS_CONNECT_API, default ../layerfs/api beside Connect): the layerfs command. */
-export const API = process.env.LAYERFS_CONNECT_API || join(APP, '..', 'layerfs', 'api')
+/** The LayerFS api/ folder Connect links @layerfs/* to (package.json), or LAYERFS_CONNECT_API: the layerfs command. */
+export const API = process.env.LAYERFS_CONNECT_API || dirname(realpathSync(join(APP, 'node_modules', '@layerfs', 'cli')))
 
 /**
  * @typedef {object} Spec

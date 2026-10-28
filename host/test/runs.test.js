@@ -215,7 +215,7 @@ test('the environment: layerfs shim first on PATH, the resolve hook, LAYERFS_* a
   assert.deepEqual([project, label, start, file], [`t${n}-1`, 'root:0', '1', 'root.jsonl'])
   assert.match(options, /--import=\/.*\/host\/resolve-layerfs\.js$/)
   assert.equal(shimPath, join(run.bin, 'layerfs'))
-  assert.match(shim, /^exec node --import '.*\/host\/resolve-layerfs\.js' '.*\/agent\/cli\/src\/layerfs\.js' "\$@"$/)
+  assert.match(shim, /^exec node --import '.*\/host\/resolve-layerfs\.js' '.*\/api\/cli\/src\/layerfs\.js' "\$@"$/)
   assert.equal(cwd.replace(/^\/private/, ''), run.work.replace(/^\/private/, ''))
   const saved = JSON.parse(readFileSync(join(run.dir, 'run.json'), 'utf8'))
   for (const key of ['demo', 'state', 'error', 'started', 'ended', 'project', 'checks']) assert.ok(key in saved, key)

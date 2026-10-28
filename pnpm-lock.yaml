@@ -33,17 +33,17 @@ importers:
         specifier: 5.3.0
         version: 5.3.0
       '@layerfs/agent':
-        specifier: link:../layerfs/api/agent/sdk
-        version: link:../layerfs/api/agent/sdk
+        specifier: link:../layerfs/.claude/worktrees/connect-main/api/agent
+        version: link:../layerfs/.claude/worktrees/connect-main/api/agent
       '@layerfs/backend':
-        specifier: link:../layerfs/api/backend
-        version: link:../layerfs/api/backend
+        specifier: link:../layerfs/.claude/worktrees/connect-main/api/backend
+        version: link:../layerfs/.claude/worktrees/connect-main/api/backend
       '@layerfs/cli':
-        specifier: link:../layerfs/api/agent/cli
-        version: link:../layerfs/api/agent/cli
+        specifier: link:../layerfs/.claude/worktrees/connect-main/api/cli
+        version: link:../layerfs/.claude/worktrees/connect-main/api/cli
       '@layerfs/runtime':
-        specifier: link:../layerfs/api/runtime
-        version: link:../layerfs/api/runtime
+        specifier: link:../layerfs/.claude/worktrees/connect-main/api/runtime
+        version: link:../layerfs/.claude/worktrees/connect-main/api/runtime
       '@lezer/highlight':
         specifier: 1.2.5
         version: 1.2.5

@@ -15,13 +15,15 @@ and one server-sent event stream; the types are in
 ## Where LayerFS comes from
 
 Connect never installs into or edits the LayerFS repository. `package.json`
-links `@layerfs/{agent,backend,runtime,cli}` to `../layerfs/api/...` (the
-LayerFS main checkout beside this repo), and every Node process Connect starts
+links `@layerfs/{agent,backend,runtime,cli}` to the `api/` packages of a
+LayerFS worktree at `main` beside this repo
+(`../layerfs/.claude/worktrees/connect-main/api/...`), and every Node process Connect starts
 loads [`resolve-layerfs.js`](resolve-layerfs.js) first (`node --import`, and
 `NODE_OPTIONS=--import=…` in agents' bash calls), so `@layerfs/*` always
 resolves from Connect's `node_modules`. The `layerfs` command in agents' bash
 calls is a shim on PATH:
-`node --import <host>/resolve-layerfs.js <api>/agent/cli/src/layerfs.js "$@"`.
+`node --import <host>/resolve-layerfs.js <api>/cli/src/layerfs.js "$@"`. `<api>` is the
+folder those links point at (`config.js` `API`).
 
 ## Deployment ([`config.js`](config.js))
 

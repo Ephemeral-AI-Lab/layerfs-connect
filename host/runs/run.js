@@ -35,7 +35,7 @@ const WATCH_MS = 250
 const SAVE_MS = 300
 const LIVE_MS = 120
 const RESOLVE = fileURLToPath(new URL('../resolve-layerfs.js', import.meta.url))
-const CLI = join(API, 'agent', 'cli', 'src', 'layerfs.js')
+const CLI = join(API, 'cli', 'src', 'layerfs.js')
 const ACTIVE = new Set(['starting', 'running'])
 const q = (s) => `'${String(s).replaceAll("'", "'\\''")}'`
 

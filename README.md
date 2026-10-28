@@ -1,5 +1,40 @@
 # LayerFS Connect
 
+## Install prompt
+
+Paste this into a coding agent (Claude Code, Codex) on a Mac. It installs
+Connect on LayerFS `main`, opens the app, makes an empty project and plays the
+Tour scenario on it.
+
+```text
+Install LayerFS Connect for me on this Mac, open the desktop app, make an empty project in it, and play the Tour scenario on that project.
+
+Rules:
+- macOS only, with Docker Desktop running. If this is not macOS, stop and tell me.
+- Pin exactly: https://github.com/Ephemeral-AI-Lab/layerfs at commit fabefdf87a, and the runtime Dockerfile from https://github.com/Ephemeral-AI-Lab/dsh-layerfs at commit b9bf3bc819. Connect itself is https://github.com/Ephemeral-AI-Lab/layerfs-connect (private: you need access) at main.
+- Change no code in any checkout. Don't commit, push, delete other Docker containers or volumes, or install system-wide software without asking me.
+- One attempt per step. If a step fails, stop and give me the exact error and its cause from the source; don't retry on your own.
+
+1. Check the tools and record each version: macOS, `node --version` (22.15 or newer), `pnpm --version` (11; `corepack enable` provides it), `docker info` (Docker Desktop, at least 20 GB free inside it), `git`, `python3 --version` (3.9 or newer) and `jq`. If something is missing, stop and tell me which.
+2. Checkouts, side by side in one folder (say ~/layerfs-lab): clone layerfs-connect and layerfs there. Connect's package.json links @layerfs/* to a LayerFS worktree at a fixed path, so in the layerfs clone run `git worktree add --detach .claude/worktrees/connect-main fabefdf87a`.
+3. Images, in Docker Desktop:
+   - build image: `printf 'FROM rust:1.85.1-bookworm\nRUN rustup component add clippy\n' | docker build -t layerfs-build:1.85.1 -`
+   - runtime image (Node 24, Rust and browsers for the scenarios): `curl -fsSL https://raw.githubusercontent.com/Ephemeral-AI-Lab/dsh-layerfs/b9bf3bc819/tools/runtime/Dockerfile | docker build -t layerfs-352-runtime:node24 -`
+   Record both sha256 image IDs (`docker image inspect -f '{{.Id}}' <tag>`).
+4. Sealed Linux LayerFS bundle, from the worktree of step 2 with its own launcher (see its docs/general/parallel-worktrees.md):
+   - `python3 tools/worktree.py register --worktree <worktree> --owner connect --build-image <build id> --runtime-image <runtime id> --sandbox-image <runtime id>` prints a resources.json path.
+   - `python3 tools/worktree.py prepare --resources <resources.json> --platform linux` (fetches the Cargo dependencies).
+   - `python3 tools/worktree.py build --resources <resources.json> --platform linux --profile release --jobs 6` prints the bundle folder (build-linux-…). The first build takes several minutes.
+   Check its manifest.json says "status": "sealed", and that it holds layerfs-daemon, layerfs.node and api/runtime/src/worker/server.js.
+5. Connect's settings: write ~/.layerfs-connect/settings.json as { "image": "<runtime id>", "bundle": "<bundle folder>", "containerPrefix": "lfc-" }. If the file already exists, copy it to a dated backup first and tell me.
+6. In layerfs-connect: `pnpm install` (Electron downloads its binary; a note about ignored build scripts of other packages is expected), then `pnpm typecheck`. `ls -l node_modules/@layerfs` must show agent, backend, cli and runtime linked into the worktree's api/.
+7. Open the app: `pnpm dev`, left running. In the window, open LayerFS, then its Storage tab: Local SQLite must show "Worker running" (the worker starts on first open; give it a minute).
+8. Make an empty project: in the sidebar, New session, then New project…. Keep "Empty", name it hello, and press Create project. Expected: hello appears in the sidebar and the page asks "What should the agent do on hello?".
+9. Play a scenario: in the box at the bottom type `/scenario tour` and press Enter. Tour is one agent in 14 steps (edits, an install, a build in Workspaces, merges and two publishes) and takes about a minute. Expected: a session /tour_1 under hello that plays every step and ends without a failed step; the project's Timeline and History tabs then show its Branches and Commits.
+
+Report every step with its command and outcome (PASS, FAIL or NOT_RUN with the reason), the versions, both image IDs and the bundle folder.
+```
+
 The LayerFS desktop app. It runs on the real LayerFS: a local SQLite Store per
 project in a Docker volume, and Docker Sandboxes. Its projects are ten scripted
 demos (tour, parallel, conflicts, merge, sandbox, agents, checkpoints, shop,
@@ -140,11 +175,13 @@ src/
 ## Where LayerFS comes from
 
 Connect never installs into or edits the LayerFS repository. `package.json`
-links `@layerfs/*` to the LayerFS checkout beside this repo
-(`../layerfs/api/…`), and the host and every agent's bash call load
-`host/resolve-layerfs.js`, so `@layerfs/*` resolves from Connect's
-`node_modules`. The macOS worker runs a sealed Linux LayerFS build, named in
-`~/.layerfs-connect/settings.json`:
+links `@layerfs/*` to the `api/` packages of a LayerFS worktree beside this
+repo, kept at LayerFS `main`
+(`../layerfs/.claude/worktrees/connect-main/api/{agent,backend,cli,runtime}`),
+and the host and every agent's bash call load `host/resolve-layerfs.js`, so
+`@layerfs/*` resolves from Connect's `node_modules`. The macOS worker runs a
+sealed Linux LayerFS build from the same worktree (`tools/worktree.py build`
+in LayerFS), named in `~/.layerfs-connect/settings.json`:
 
 ```json
 { "image": "sha256:…", "bundle": "/path/to/build-linux-…", "containerPrefix": "lfc-" }

@@ -2,7 +2,7 @@
 // rather than written down here:
 //   CLI      @layerfs/cli/calls: the `layerfs <family> <call>` table, with each
 //            command's positional names and option kinds (layerfs init too)
-//   SDK      api/agent/sdk/src/<family>/: the `lf.<family>.<call>` methods
+//   SDK      api/agent/src/<family>/: the `lf.<family>.<call>` methods
 //            (the CLI mirrors them one to one; the folder adds nothing new
 //            today, but a call the SDK gains before the CLI is still known)
 //   backend  api/backend/src/<store|daemon>/<group>/<call>.js: the
