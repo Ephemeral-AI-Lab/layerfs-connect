@@ -33,7 +33,8 @@ before(async () => {
 })
 after(async () => {
   await projects.close()
-  await runtime.project.remove(NAME, { confirm: NAME, stopSandboxes: true })
+  // LayerFS v2 renamed project.remove to project.delete (layerfs#511)
+  await runtime.project.delete(NAME, { confirm: NAME, stopSandboxes: true })
   await runtime.close()
 })
 
