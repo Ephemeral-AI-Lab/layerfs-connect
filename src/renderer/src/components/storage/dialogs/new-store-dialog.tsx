@@ -1,11 +1,10 @@
 // A new, empty local SQLite Store (layerfs#506): one Docker volume that
-// projects are then Inited into. Loading a Store from a bucket and importing
-// one into PostgreSQL are on the bucket and Store pages.
+// projects are then Inited into. Opened from New, or a page's New Store.
 import { LoaderCircle, Plus } from 'lucide-react'
 import { siSqlite } from 'simple-icons'
 import { useEffect, useId, useState } from 'react'
 
-import { BTN, Field, FormError, message, SHEET, SheetFooter, SheetHeader } from '@/components/storage/dialogs/fields'
+import { BackLink, BTN, Field, FormError, message, SHEET, SheetFooter, SheetHeader } from '@/components/storage/dialogs/fields'
 import { Mark } from '@/components/storage/icons'
 import { NAME } from '@/components/storage/identity/providers'
 import { Button } from '@/components/ui/button'
@@ -19,9 +18,11 @@ interface NewStoreDialogProps {
   onOpenChange: (open: boolean) => void
   taken: Set<string>
   onCreated: (name: string) => void
+  /** Opened from New: a link back to it. */
+  onBack?: () => void
 }
 
-export function NewStoreDialog({ open, onOpenChange, taken, onCreated }: NewStoreDialogProps) {
+export function NewStoreDialog({ open, onOpenChange, taken, onCreated, onBack }: NewStoreDialogProps) {
   useI18n()
   const id = useId()
   const [name, setName] = useState('')
@@ -58,6 +59,7 @@ export function NewStoreDialog({ open, onOpenChange, taken, onCreated }: NewStor
         >
           {t('An empty SQLite Store in a Docker volume of its own. Projects you add to it share its storage, its writer and its link: a push uploads all of them.')}
         </SheetHeader>
+        {onBack && <BackLink onBack={onBack} disabled={busy} />}
         <form
           className="flex flex-col gap-4"
           onSubmit={(e) => {

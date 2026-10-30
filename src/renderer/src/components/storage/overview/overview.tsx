@@ -1,25 +1,22 @@
 // The board (layerfs-storage.md): one line of facts with search, then one
 // card per Store with its projects. Stores that need you come first, then
 // shared Stores, then projects' own Stores. Warnings and failed transfers show
-// only while they are true; connections and this machine open from the line.
-import { ChevronDown, Database, Download, HardDrive, Plus, RefreshCw, Search, TriangleAlert, X } from 'lucide-react'
+// only while they are true; this machine and the connections open from the line.
+import { Download, HardDrive, Plus, Search, TriangleAlert, X } from 'lucide-react'
 import { type CSSProperties, useEffect, useRef, useState } from 'react'
 import { siSqlite } from 'simple-icons'
 
 import { Empty, LoadError } from '@/components/projects/states'
-import { count, useStorage } from '@/components/storage/actions'
+import { count, type NewTab, useStorage } from '@/components/storage/actions'
 import { Mark } from '@/components/storage/icons'
-import { ProviderMark } from '@/components/storage/identity/store-icon'
 import { LOW_DISK } from '@/components/storage/meters'
 import { Notice } from '@/components/storage/notice'
 import { attentionOf, StoreCard } from '@/components/storage/overview/store-card'
 import { totalText } from '@/components/storage/size'
-import { HealthDot } from '@/components/storage/sync/health-dot'
 import { isFailed, isRunning } from '@/components/storage/transfers/phases'
 import { TransferTray } from '@/components/storage/transfers/transfer-tray'
 import { dismissJob } from '@/components/storage/transfers/use-transfers'
 import { Button } from '@/components/ui/button'
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input'
 import { bytes } from '@/data/format'
 import { t, useI18n } from '@/i18n'
@@ -143,7 +140,7 @@ export function Overview({ error, onRetry, trayHidden, setTrayHidden, loadedProj
   )
 }
 
-/** "16 Stores · 1.8 GB · 77.9 GB free on this machine · 4 connections ▾", and search on the right. */
+/** "16 Stores · 1.8 GB · 77.9 GB free on this machine · 2 buckets · 2 databases", and search on the right. */
 function FactsLine({ query, onQuery, showSearch }: { query: string; onQuery: (q: string) => void; showSearch: boolean }) {
   const s = useStorage()
   const all = s.view.stores.list
@@ -176,62 +173,25 @@ function FactsLine({ query, onQuery, showSearch }: { query: string; onQuery: (q:
   )
 }
 
-/** "· 4 connections ▾": each bucket and database with its health, then Add connection… and Check all now. */
+/** "· 2 buckets · 1 database": each opens New on its tab, where its connections are listed and added. */
 function ConnectionsMenu({ dot, link }: { dot: React.ReactNode; link: string }) {
   const s = useStorage()
   const { remotes, postgresql } = s.view
-  if (!remotes.available && !postgresql.available) return null
-  const n = remotes.list.length + postgresql.connections.length
-  const canCheck = s.view.supports.check || s.view.supports.postgresqlStatus
-  if (!n)
-    return (
+  const down = (h: { state: string }) => h.state === 'unreachable' || h.state === 'denied'
+  const part = (on: boolean, n: number, one: string, tab: NewTab, sick: boolean) =>
+    on && (
       <>
         {dot}
-        <button type="button" onClick={() => s.addLocation()} className={cn(link, 'inline-flex items-center gap-1')}>
-          <Plus aria-hidden="true" className="size-3.5" /> {t('Add connection')}
+        <button type="button" onClick={() => s.newDialog(tab)} className={cn(link, 'inline-flex items-center gap-1.5')}>
+          {sick && <span aria-hidden="true" className="size-1.5 rounded-full bg-amber-500" />}
+          {n ? count(n, one) : t(`Add a ${one}`)}
         </button>
       </>
     )
   return (
     <>
-      {dot}
-      <DropdownMenu>
-        <DropdownMenuTrigger className={cn(link, 'inline-flex items-center gap-1')}>
-          {count(n, 'connection')}
-          <ChevronDown aria-hidden="true" className="size-3.5" />
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="start" className="w-72 rounded-xl">
-          {remotes.list.length > 0 && <DropdownMenuLabel className="text-xs text-muted-foreground">{t('Buckets')}</DropdownMenuLabel>}
-          {[...remotes.list]
-            .sort((a, b) => a.name.localeCompare(b.name))
-            .map((r) => (
-              <DropdownMenuItem key={r.name} onSelect={() => s.open({ view: 'location', id: r.name })}>
-                <ProviderMark provider={r.provider} className="size-4" />
-                <span className="min-w-0 flex-1 truncate font-mono text-[13px]">{r.name}</span>
-                <HealthDot health={r.health} quiet />
-              </DropdownMenuItem>
-            ))}
-          {postgresql.connections.length > 0 && <DropdownMenuLabel className="text-xs text-muted-foreground">{t('PostgreSQL')}</DropdownMenuLabel>}
-          {[...postgresql.connections]
-            .sort((a, b) => a.name.localeCompare(b.name))
-            .map((c) => (
-              <DropdownMenuItem key={c.name} onSelect={() => s.open({ view: 'connection', id: c.name })}>
-                <Database className="text-muted-foreground" />
-                <span className="min-w-0 flex-1 truncate font-mono text-[13px]">{c.name}</span>
-                <HealthDot health={c.health} quiet />
-              </DropdownMenuItem>
-            ))}
-          <DropdownMenuSeparator />
-          <DropdownMenuItem onSelect={() => s.addLocation()}>
-            <Plus className="text-muted-foreground" /> {t('Add connection…')}
-          </DropdownMenuItem>
-          {canCheck && (
-            <DropdownMenuItem onSelect={() => void s.check().catch(() => undefined)} disabled={s.checking}>
-              <RefreshCw className={cn('text-muted-foreground', s.checking && 'motion-safe:animate-spin')} /> {s.checking ? t('Checking…') : t('Check all now')}
-            </DropdownMenuItem>
-          )}
-        </DropdownMenuContent>
-      </DropdownMenu>
+      {part(remotes.available, remotes.list.length, 'bucket', 'sqlite', remotes.list.some((r) => down(r.health)))}
+      {part(postgresql.available, postgresql.connections.length, 'database', 'postgresql', postgresql.connections.some((c) => down(c.health)))}
     </>
   )
 }

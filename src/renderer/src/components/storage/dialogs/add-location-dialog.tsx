@@ -6,7 +6,7 @@
 import { ChevronLeft, CircleCheck, Clock, LoaderCircle, Plus, Search, TriangleAlert } from 'lucide-react'
 import { type KeyboardEvent, useEffect, useMemo, useState } from 'react'
 
-import { BTN, FormError, message, SHEET, SheetFooter, SheetHeader } from '@/components/storage/dialogs/fields'
+import { BackLink, BTN, FormError, message, SHEET, SheetFooter, SheetHeader } from '@/components/storage/dialogs/fields'
 import { formState, initialValues, PostgresqlForm, postgresqlState, ProviderForm, type PostgresqlValues } from '@/components/storage/dialogs/provider-forms'
 import { type FieldValues, PROVIDERS, providerEntry, providerInfos, providerMatches, type ProviderEntry } from '@/components/storage/identity/providers'
 import { FamilyTile, ProviderTile } from '@/components/storage/identity/store-icon'
@@ -28,6 +28,21 @@ function reachableBucket(files: { linkedBy: string | null }[] | null | undefined
   return loose ? t('Reachable. {n} Store files, {loose} not loaded: open it to Load.', { n: files.length, loose }) : t('Reachable. {n} Store files.', { n: files.length })
 }
 
+/** A connection that already points at the bucket and prefix being typed: both would list and change the same files. */
+export function sameBucket(provider: string, values: FieldValues, remotes: StorageView['remotes']['list']): string | null {
+  const trim = (v: string | null | undefined) => (v ?? '').trim().replace(/^\/+|\/+$/g, '').toLowerCase()
+  const host = (v: string | null | undefined) => trim(v).replace(/^https?:\/\//, '')
+  if (!trim(values.bucket)) return null
+  const hit = remotes.find(
+    (r) =>
+      r.provider === provider &&
+      trim(r.bucket) === trim(values.bucket) &&
+      trim(r.prefix) === trim(values.prefix) &&
+      (provider === 'r2' ? trim(r.account) === trim(values.account) : host(r.endpoint) === host(values.endpoint)),
+  )
+  return hit?.name ?? null
+}
+
 export type LocationFamily = 'copy' | 'database'
 
 type Step = { kind: 'pick' } | { kind: 'copy'; entry: ProviderEntry } | { kind: 'postgresql' }
@@ -43,6 +58,8 @@ interface AddLocationDialogProps {
   provider?: string
   /** The view changed: a connection was added or removed. */
   onChanged: () => void
+  /** Opened from New: a link back to it. */
+  onBack?: () => void
 }
 
 const PG_DEFAULT = (taken: Set<string>): PostgresqlValues => ({ name: taken.size ? '' : 'main', url: 'postgresql://layerfs@localhost:5432/layerfs', synchronousCommit: 'off' })
@@ -110,7 +127,7 @@ function GroupHead({ id, title, about }: { id: string; title: string; about: str
   )
 }
 
-export function AddLocationDialog({ open, onOpenChange, view, family, provider, onChanged }: AddLocationDialogProps) {
+export function AddLocationDialog({ open, onOpenChange, view, family, provider, onChanged, onBack }: AddLocationDialogProps) {
   useI18n()
   const remotesTaken = useMemo(() => new Set(view.remotes.list.map((r) => r.name)), [view.remotes.list])
   const pgTaken = useMemo(() => new Set(view.postgresql.connections.map((c) => c.name)), [view.postgresql.connections])
@@ -152,6 +169,7 @@ export function AddLocationDialog({ open, onOpenChange, view, family, provider, 
   const pgForm = step.kind === 'postgresql' ? postgresqlState(pg, pgTaken) : null
   const form = copyForm ?? pgForm
   const locked = busy || after?.state === 'checking'
+  const twin = step.kind === 'copy' && !after ? sameBucket(String(step.entry.id), values, view.remotes.list) : null
 
   const firstCheck = async (name: string, what: After['what']) => {
     const supported = what === 'remote' ? view.supports.check : view.supports.postgresqlStatus
@@ -281,10 +299,14 @@ export function AddLocationDialog({ open, onOpenChange, view, family, provider, 
             <SheetHeader mark={entry ? <ProviderTile provider={String(entry.id)} size="sm" /> : <FamilyTile family="postgresql" size="sm" />} title={entry ? t('Add a {provider} bucket', { provider: entry.label }) : t('Add a PostgreSQL connection')}>
               {entry ? t(entry.about) : t('A database that holds PostgreSQL Stores live, one schema each. The LayerFS box connects directly.')}
             </SheetHeader>
-            {!provider && (
-              <Button type="button" size="xs" variant="ghost" className="-mt-3 w-fit rounded-lg" onClick={() => choose({ kind: 'pick' })} disabled={locked || !!after}>
-                <ChevronLeft /> {t('All providers')}
-              </Button>
+            {onBack ? (
+              <BackLink onBack={onBack} disabled={locked || !!after} />
+            ) : (
+              !provider && (
+                <Button type="button" size="xs" variant="ghost" className="-mt-3 w-fit rounded-lg" onClick={() => choose({ kind: 'pick' })} disabled={locked || !!after}>
+                  <ChevronLeft /> {t('All providers')}
+                </Button>
+              )
             )}
             {entry && copyForm && <ProviderForm entry={entry} values={values} onChange={setValues} problems={copyForm.problems} disabled={locked || !!after} />}
             {pgForm && <PostgresqlForm values={pg} onChange={setPg} problems={pgForm.problems} disabled={locked || !!after} />}
@@ -305,6 +327,12 @@ export function AddLocationDialog({ open, onOpenChange, view, family, provider, 
                 )}
                 <span className={cn('min-w-0 break-words', after.state === 'checking' && 'text-muted-foreground')}>{after.text}</span>
               </div>
+            )}
+            {twin && (
+              <p role="status" className="flex items-start gap-2 rounded-xl bg-warning/[0.08] px-3.5 py-2.5 text-xs leading-relaxed text-warning">
+                <TriangleAlert aria-hidden="true" className="mt-0.5 size-3.5 shrink-0" />
+                <span>{t('{name} already points at this bucket and prefix. Both would list and change the same Store files; a different prefix keeps them apart.', { name: twin })}</span>
+              </p>
             )}
             <FormError error={error} />
             {!after && form && form.missing.length > 0 && <p className="-mb-2 text-right text-[11.5px] text-muted-foreground">{t('Still needed: {fields}.', { fields: form.missing.join(', ') })}</p>}

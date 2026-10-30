@@ -10,6 +10,7 @@ import { AddProjectDialog } from '@/components/storage/dialogs/add-project-dialo
 import { ConfirmByName } from '@/components/storage/dialogs/confirm-by-name'
 import { ImportDialog } from '@/components/storage/dialogs/import-dialog'
 import { LoadDialog } from '@/components/storage/dialogs/load-dialog'
+import { NewDialog, type NewTab } from '@/components/storage/dialogs/new-dialog'
 import { NewStoreDialog } from '@/components/storage/dialogs/new-store-dialog'
 import { PublishDialog } from '@/components/storage/dialogs/publish-dialog'
 import { PullDialog, pullDiscards } from '@/components/storage/dialogs/pull-dialog'
@@ -22,13 +23,14 @@ import type { StoreInfo } from '@shared/host-api'
 export type DialogState =
   | { kind: 'publish'; store: StoreInfo; remote?: string }
   | { kind: 'send'; store: StoreInfo }
-  | { kind: 'load'; remote: string; file: string }
+  | { kind: 'load'; remote: string; file: string; back?: NewTab }
   | { kind: 'pull'; store: StoreInfo }
   | { kind: 'conflict'; store: StoreInfo }
   | { kind: 'unlink'; store: StoreInfo }
-  | { kind: 'import'; store?: string; connection?: string }
-  | { kind: 'location'; family?: LocationFamily; provider?: string }
-  | { kind: 'new-store' }
+  | { kind: 'import'; store?: string; connection?: string; back?: NewTab }
+  | { kind: 'location'; family?: LocationFamily; provider?: string; back?: NewTab }
+  | { kind: 'new-store'; back?: NewTab }
+  | { kind: 'new'; tab: NewTab }
   | { kind: 'add-project'; store: StoreInfo }
   | { kind: 'remove'; target: RemoveTarget }
   | null
@@ -74,8 +76,17 @@ export function StorageDialogs({ dialog: d, setDialog, started, reveal, reload }
   const close = useCallback((open: boolean) => !open && setDialog(null), [setDialog])
   const remove = d?.kind === 'remove' ? d.target : null
   const taken = useMemo(() => new Set(view.stores.list.map((x) => x.name)), [view.stores.list])
+  // a dialog opened from New links back to it, on the tab it came from
+  const back = d && 'back' in d && d.back ? () => setDialog({ kind: 'new', tab: d.back! }) : undefined
   return (
     <>
+      <NewDialog
+        open={d?.kind === 'new'}
+        onOpenChange={close}
+        tab={d?.kind === 'new' ? d.tab : 'sqlite'}
+        onTab={(tab) => setDialog({ kind: 'new', tab })}
+        onChoose={(choice) => d?.kind === 'new' && setDialog({ ...choice, back: d.tab })}
+      />
       {d?.kind === 'publish' && <PublishDialog open onOpenChange={close} view={view} store={d.store} remote={d.remote} onDone={reveal} />}
       {d?.kind === 'send' && <SendDialog open onOpenChange={close} view={view} store={d.store} onDone={reveal} />}
       {d?.kind === 'load' && (
@@ -87,6 +98,7 @@ export function StorageDialogs({ dialog: d, setDialog, started, reveal, reload }
           file={d.file}
           free={s.status?.disk.volumes ?? null}
           onDone={reveal}
+          onBack={back}
           onOpenStore={(store) => {
             setDialog(null)
             s.open({ view: 'store', id: store })
@@ -131,6 +143,7 @@ export function StorageDialogs({ dialog: d, setDialog, started, reveal, reload }
         store={d?.kind === 'import' ? d.store : undefined}
         connection={d?.kind === 'import' ? d.connection : undefined}
         onDone={reveal}
+        onBack={d?.kind === 'import' ? back : undefined}
       />
       <AddLocationDialog
         open={d?.kind === 'location'}
@@ -139,11 +152,13 @@ export function StorageDialogs({ dialog: d, setDialog, started, reveal, reload }
         family={d?.kind === 'location' ? d.family : undefined}
         provider={d?.kind === 'location' ? d.provider : undefined}
         onChanged={reload}
+        onBack={d?.kind === 'location' ? back : undefined}
       />
       <NewStoreDialog
         open={d?.kind === 'new-store'}
         onOpenChange={close}
         taken={taken}
+        onBack={d?.kind === 'new-store' ? back : undefined}
         onCreated={(name) => {
           reload()
           reveal(name)

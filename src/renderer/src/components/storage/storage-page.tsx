@@ -2,9 +2,9 @@
 // of facts, then one card per Store with its projects (SQLite Stores on this
 // machine, each linked to at most one remote file, and PostgreSQL Stores that
 // live in a database). A card opens its Store's page; the view lives in the
-// URL hash (#storage/store/work), so back works. One "New" menu makes Stores
-// and connections.
-import { ChevronDown, Cloud, Database, DatabaseZap, Download, Plus } from 'lucide-react'
+// URL hash (#storage/store/work), so back works. New opens one dialog with a
+// tab per kind of Store, its ways to make one and its connections.
+import { Plus } from 'lucide-react'
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 
 import { PageHeader, viewTransition } from '@/components/motion'
@@ -24,7 +24,6 @@ import { onJobEnded, putJob, useTransfers } from '@/components/storage/transfers
 import { Unavailable } from '@/components/storage/unavailable'
 import { loadStorage, normalizeJob, normalizeView } from '@/components/storage/view'
 import { Button } from '@/components/ui/button'
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { host, onProjectsChanged } from '@/host/client'
 import { useHostQuery, useStorageEvents } from '@/host/use-host'
 import type { ProjectCatalog } from '@/host/use-projects'
@@ -229,6 +228,7 @@ export function StoragePage({ catalog, initialId, onOpenProject }: StoragePagePr
       importInto: (o = {}) => setDialog({ kind: 'import', ...o }),
       addLocation: (o = {}) => setDialog({ kind: 'location', ...o }),
       newStore: () => setDialog({ kind: 'new-store' }),
+      newDialog: (tab = 'sqlite') => setDialog({ kind: 'new', tab }),
       addProject: (store) => setDialog({ kind: 'add-project', store }),
       remove: (target: RemoveTarget) => setDialog({ kind: 'remove', target }),
       check,
@@ -259,36 +259,11 @@ export function StoragePage({ catalog, initialId, onOpenProject }: StoragePagePr
   const on = view?.stores.available === true
   const remotesOn = view?.remotes.available === true
   const pgOn = view?.postgresql.available === true
-  type NewItem = { label: string; icon: React.ReactNode; onSelect: () => void; disabled?: boolean } | 'separator'
-  const newItems = ([
-    on && { label: t('New Store…'), icon: <Plus />, onSelect: () => setDialog({ kind: 'new-store' }) },
-    on && remotesOn && { label: t('Load from a connection…'), icon: <Download />, onSelect: () => open({ view: 'location', id: view?.remotes.list[0]?.name ?? '' }), disabled: !view?.remotes.list.length },
-    pgOn && { label: t('Import into PostgreSQL…'), icon: <DatabaseZap />, onSelect: () => setDialog({ kind: 'import' }), disabled: !view?.postgresql.connections.length },
-    (remotesOn || pgOn) && ('separator' as const),
-    remotesOn && { label: t('Bucket connection (MinIO, R2)…'), icon: <Cloud />, onSelect: () => setDialog({ kind: 'location', family: 'copy' }) },
-    pgOn && { label: t('PostgreSQL connection…'), icon: <Database />, onSelect: () => setDialog({ kind: 'location', family: 'database' }) },
-  ] as (NewItem | false)[])
-    .filter((x): x is NewItem => !!x)
-    .filter((x, i) => !(x === 'separator' && i === 0))
-  const headerActions = newItems.some((x) => x !== 'separator') ? (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button className="rounded-xl">
-          <Plus /> {t('New')} <ChevronDown />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-72 rounded-xl">
-        {newItems.map((it, i) =>
-          it === 'separator' ? (
-            <DropdownMenuSeparator key={i} />
-          ) : (
-            <DropdownMenuItem key={it.label} onSelect={it.onSelect} disabled={it.disabled}>
-              <span className="text-muted-foreground [&_svg]:size-4">{it.icon}</span> {it.label}
-            </DropdownMenuItem>
-          ),
-        )}
-      </DropdownMenuContent>
-    </DropdownMenu>
+  const anything = on || remotesOn || pgOn
+  const headerActions = anything ? (
+    <Button className="rounded-xl" onClick={() => setDialog({ kind: 'new', tab: on || remotesOn ? 'sqlite' : 'postgresql' })}>
+      <Plus /> {t('New')}
+    </Button>
   ) : (
     <Unavailable reason={view?.stores.reason ?? FALLBACK_REASON}>
       <Button className="rounded-xl" disabled>

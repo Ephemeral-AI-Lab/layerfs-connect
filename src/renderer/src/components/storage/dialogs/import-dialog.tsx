@@ -4,7 +4,7 @@ import { ArrowRight, DatabaseZap, LoaderCircle } from 'lucide-react'
 import { useEffect, useId, useMemo, useState } from 'react'
 
 import { count } from '@/components/storage/actions'
-import { BTN, Field, FormError, INSET, message, SHEET, SheetFooter, SheetHeader } from '@/components/storage/dialogs/fields'
+import { BackLink, BTN, Field, FormError, INSET, message, SHEET, SheetFooter, SheetHeader } from '@/components/storage/dialogs/fields'
 import { NAME } from '@/components/storage/identity/providers'
 import { FamilyTile, StoreIcon, storeProviders } from '@/components/storage/identity/store-icon'
 import { totalText } from '@/components/storage/size'
@@ -34,9 +34,11 @@ interface ImportDialogProps {
   connection?: string
   /** The import ended well: the new PostgreSQL Store's name. */
   onDone: (store: string) => void
+  /** Opened from New: a link back to it. */
+  onBack?: () => void
 }
 
-export function ImportDialog({ open, onOpenChange, view, store: fixedStore, connection: fixedConnection, onDone }: ImportDialogProps) {
+export function ImportDialog({ open, onOpenChange, view, store: fixedStore, connection: fixedConnection, onDone, onBack }: ImportDialogProps) {
   useI18n()
   const ids = { store: useId(), connection: useId(), name: useId() }
   const sqlite = useMemo(() => view.stores.list.filter((s) => s.kind === 'sqlite').sort((a, b) => a.name.localeCompare(b.name)), [view.stores.list])
@@ -102,6 +104,7 @@ export function ImportDialog({ open, onOpenChange, view, store: fixedStore, conn
         <SheetHeader icon={DatabaseZap} title={t('Import into PostgreSQL')}>
           {t('Copies a SQLite Store, all of its projects, into a new PostgreSQL Store.')} <span className="font-semibold text-foreground">{t('Both stay. They don’t sync after this.')}</span>
         </SheetHeader>
+        {onBack && <BackLink onBack={onBack} />}
         <div aria-hidden="true" className={`${INSET} grid grid-cols-[1fr_auto_1fr] items-center gap-3`}>
           <div className="flex min-w-0 items-center gap-2.5">
             {source ? <StoreIcon family="sqlite" providers={storeProviders(source, view.remotes.list)} size="md" /> : <FamilyTile family="sqlite" size="md" />}

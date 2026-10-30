@@ -18,6 +18,9 @@ export type Route =
   | { view: 'connection'; id: string }
   | { view: 'machine' }
 
+/** The New dialog's tabs: one per kind of Store. */
+export type NewTab = 'sqlite' | 'postgresql'
+
 export type RemoveTarget = { kind: 'store'; store: StoreInfo } | { kind: 'remote'; name: string } | { kind: 'connection'; name: string; stores: number }
 
 export interface StorageActions {
@@ -42,6 +45,8 @@ export interface StorageActions {
   importInto: (options?: { store?: string; connection?: string }) => void
   addLocation: (options?: { family?: LocationFamily; provider?: string }) => void
   newStore: () => void
+  /** The New dialog, on a tab (SQLite by default). */
+  newDialog: (tab?: NewTab) => void
   addProject: (store: StoreInfo) => void
   remove: (target: RemoveTarget) => void
   /** Link checks, connection listings and PostgreSQL status; resolves when the host answers. */

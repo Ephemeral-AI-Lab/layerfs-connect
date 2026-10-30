@@ -8,9 +8,9 @@ Source: `src/renderer/src/components/storage/storage-page.tsx` (main file; other
 
 ```text
 +-[1] PageHeader ------------------------------------------------------------------------------+
-| Storage                                                                         [ + New v ]  |
+| Storage                                                                           [ + New ]  |
 +----------------------------------------------------------------------------------------------+
-  [2] 16 Stores · 1.9 GB · (disk) 77.9 GB free on this machine · 4 connections v   [ / Search ]
+  [2] 16 Stores · 1.9 GB · (disk) 77.9 GB free on this machine · 2 buckets · 2 databases   [ / ]
 +-[4] TransferTray (only a failed job, or an import still copying) ----------------------------+
 | (!) mirror <- r2 / mirror   Pull failed: The Store file is open; close its Sandboxes first.  |
 +----------------------------------------------------------------------------------------------+
@@ -51,12 +51,10 @@ Opening a SQLite Store (`#storage/store/work`):
 
 Every card is `glass-liquid` with the `spotlight` (its glow follows the one `--cursor-hue`), `rounded-2xl`, and enters with the `reveal` stagger (`--i`). Controls are `rounded-xl`; chips are `rounded-full`. Every string goes through `t()` (`@/i18n`); Chinese is in `src/renderer/src/i18n/storage.ts`.
 
-1. **Page header** (`PageHeader` in `StoragePage`): "Storage" and one **New ▾** menu. The header's live line runs while a transfer runs.
-   - The menu holds New Store…, Load from a connection… (opens the first bucket's file list), Import into PostgreSQL…, then Bucket connection (MinIO, R2)… and PostgreSQL connection… (`AddLocationDialog`).
-   - Items for parts the linked LayerFS build lacks are left out; with none left, New is disabled with the build's reason in a tooltip (`Unavailable`).
-2. **Facts line** (`FactsLine` in `overview/overview.tsx`): `N Stores · size · 77.9 GB free on this machine · N connections ▾`, and search on the right.
+1. **Page header** (`PageHeader` in `StoragePage`): "Storage" and one **New** button, which opens the New dialog (below) on the SQLite tab. The header's live line runs while a transfer runs. When the build has none of Stores, buckets or PostgreSQL, New is disabled with the build's reason in a tooltip (`Unavailable`).
+2. **Facts line** (`FactsLine` in `overview/overview.tsx`): `N Stores · size · 77.9 GB free on this machine · N buckets · N databases`, and search on the right.
    - The free space (the lower of the home disk and the Docker volumes) opens the machine page; it turns warning-coloured when low, and reads "Docker is not answering" when Docker is down.
-   - "N connections ▾" (`ConnectionsMenu`) lists buckets and PostgreSQL connections with their health (each opens its page), then Add connection… and Check all now. With no connections it is an "Add connection" link; it is hidden while the build has neither buckets nor PostgreSQL.
+   - "N buckets" and "N databases" open the New dialog on the SQLite or PostgreSQL tab, where those connections are listed and added ("Add a bucket" / "Add a database" when there are none). An amber dot marks one that isn't answering. Each is hidden while the build lacks it.
    - Search shows from six Stores up: it matches Store and project names (`/` focuses it, Esc clears it). A card found by a project lists that project first, highlighted.
 3. **Store cards** (`StoreCard`, `overview/store-card.tsx`): a grid of glass cards, at least 17.5 rem wide (one column in a narrow window). Order: Stores that need you (`attentionOf`), Stores with a running job, shared Stores, then projects' own pre-#506 Stores; by name within each.
    - **Head:** the Store icon (`StoreIcon`: SQLite when local only, MinIO or Cloudflare when linked there, PostgreSQL for a PostgreSQL Store), the name (opens the Store page), and the `…` menu (`StoreMenu` in `overview/sqlite-store-row.tsx`: Push, Pull, Check now, Send a copy…, Unlink… or Publish… and Send a copy…, Import into PostgreSQL…, Open, Remove…; `PostgresqlStoreMenu`: Open, Remove…).
@@ -80,12 +78,19 @@ Every card is `glass-liquid` with the `spotlight` (its glow follows the one `--c
 
 ### Dialogs (`dialogs/`, one owner: `StorageDialogs` in `dialogs/storage-dialogs.tsx`)
 
-All dialogs share the branch's sheet (`SHEET`, `SheetHeader`, `SheetFooter`, `Field`, `FormError` in `dialogs/fields.tsx`): `rounded-3xl`, a title with its icon on a tinted tile, `h-8 rounded-xl` buttons.
+All dialogs share the branch's sheet (`SHEET`, `SheetHeader`, `SheetFooter`, `Field`, `FormError`, `BackLink` in `dialogs/fields.tsx`): `rounded-3xl`, a title with its icon on a tinted tile, `h-8 rounded-xl` buttons.
+
+- **New** (`NewDialog` in `new-dialog.tsx`): two tabs (`Segmented`), one per kind of Store; each opens with one sentence on what that kind is.
+  - **SQLite**: Empty Store (opens New Store) and From a bucket file (lists each bucket's files in place: Load… a file that isn't loaded, or open the Store that has it). Then Buckets, grouped by provider: name, where it points (`location`: endpoint or account, bucket and prefix), file count and health; each opens its bucket page. "+ MinIO bucket" and "+ Cloudflare R2 bucket" open that provider's add form. Check now reads them again.
+  - **PostgreSQL**: Copy a SQLite Store in (opens Import). Then Databases: name, host and database, Store count and health; each opens its connection page. "+ PostgreSQL database".
+  - A way that can't be used yet stays listed, dimmed, with why in its second line (Add a bucket first, Add a database first, the build's reason).
+  - Each dialog it opens has a "‹ New" link (`BackLink`) back to the same tab. Several connections of one provider are fine; only names must differ.
 
 - **Add connection** (`AddLocationDialog`): binds no Store.
   - Step 1 is a picker of provider tiles from the registry in `identity/providers.ts`; arrow keys move between them. Filtered by family; a search box appears with more than 8 providers.
   - MinIO, Cloudflare R2 and PostgreSQL are live when the build has them; Amazon S3, Google Cloud Storage, Google Drive and Folder are dashed "Coming" tiles.
-  - Step 2 is the provider's form (`ProviderForm` or `PostgresqlForm` with `synchronous_commit`, in `provider-forms.tsx`).
+  - Step 2 is the provider's form (`ProviderForm` or `PostgresqlForm` with `synchronous_commit`, in `provider-forms.tsx`). Opened from New, it starts on the form, with "‹ New" in place of "All providers".
+  - A bucket form that matches an existing connection's provider, endpoint (or account), bucket and prefix shows a warning naming it (`sameBucket`): both would list and change the same files. It doesn't block the add.
   - After adding, the dialog runs one check: "Reachable. N Store files, M not loaded" or "Added, but not reachable", with Keep it or Remove it.
 - **Publish** and **Send a copy** (`UploadDialog` in `publish-dialog.tsx`; `SendDialog` in `send-dialog.tsx`): a connection (with health) and a file name; a file that exists is refused under the field. The job runs in the dialog; "Run in background" leaves it to the tray.
 - **Load** (`LoadDialog`): the new Store's name, the file's size and modified time, and room in the Docker volumes; a linked file is refused before the call ("Already linked as X", Open).
@@ -152,4 +157,4 @@ The cards fill as many columns as fit at 17.5 rem or wider (`repeat(auto-fill, m
 - `overview/`: `overview.tsx` (facts line, connections menu, search, build line), `store-card.tsx`, `row-parts.tsx` (`Card`, `MoreButton`), `sqlite-store-row.tsx` (`StoreMenu`, `ContextAction`), `postgresql-store-row.tsx` (`FromLink`, `PostgresqlStoreMenu`);
 - `detail/`: `breadcrumb.tsx`, `parts.tsx`, `sqlite-store-detail.tsx`, `postgresql-store-detail.tsx`, `link-card.tsx`, `size-card.tsx`, `bucket-detail.tsx`, `connection-detail.tsx`, `machine-detail.tsx`;
 - `machine/`: `worker.tsx`;
-- `dialogs/`: `storage-dialogs.tsx`, `fields.tsx`, `confirm-by-name.tsx`, `add-location-dialog.tsx`, `provider-forms.tsx`, `publish-dialog.tsx`, `send-dialog.tsx`, `load-dialog.tsx`, `pull-dialog.tsx`, `push-conflict-dialog.tsx`, `import-dialog.tsx`, `add-project-dialog.tsx`, `new-store-dialog.tsx`.
+- `dialogs/`: `storage-dialogs.tsx`, `new-dialog.tsx`, `fields.tsx`, `confirm-by-name.tsx`, `add-location-dialog.tsx`, `provider-forms.tsx`, `publish-dialog.tsx`, `send-dialog.tsx`, `load-dialog.tsx`, `pull-dialog.tsx`, `push-conflict-dialog.tsx`, `import-dialog.tsx`, `add-project-dialog.tsx`, `new-store-dialog.tsx`.

@@ -5,7 +5,7 @@
 import { Download, LoaderCircle } from 'lucide-react'
 import { useEffect, useId, useMemo, useState } from 'react'
 
-import { BTN, Field, FormError, INSET, message, SHEET, SheetFooter, SheetHeader } from '@/components/storage/dialogs/fields'
+import { BackLink, BTN, Field, FormError, INSET, message, SHEET, SheetFooter, SheetHeader } from '@/components/storage/dialogs/fields'
 import { NAME } from '@/components/storage/identity/providers'
 import { ProviderMark } from '@/components/storage/identity/store-icon'
 import { LOW_DISK } from '@/components/storage/meters'
@@ -34,6 +34,8 @@ interface LoadDialogProps {
   onDone: (store: string) => void
   /** Opens a Store (the one a linked file belongs to). */
   onOpenStore: (store: string) => void
+  /** Opened from New: a link back to it. */
+  onBack?: () => void
 }
 
 /** A file name as a Store name, when it can be one. */
@@ -44,7 +46,7 @@ const asStoreName = (file: string) =>
     .replace(/^-+|-+$/g, '')
     .slice(0, 32)
 
-export function LoadDialog({ open, onOpenChange, view, remote, file, free, onDone, onOpenStore }: LoadDialogProps) {
+export function LoadDialog({ open, onOpenChange, view, remote, file, free, onDone, onOpenStore, onBack }: LoadDialogProps) {
   useI18n()
   const id = useId()
   const taken = useMemo(() => new Set(view.stores.list.map((s) => s.name)), [view.stores.list])
@@ -98,6 +100,7 @@ export function LoadDialog({ open, onOpenChange, view, remote, file, free, onDon
         <SheetHeader icon={Download} title={t('Load {file}', { file })}>
           {t('A new SQLite Store on this machine from this file, with all of its projects, linked to it: Push and Pull then go there.')}
         </SheetHeader>
+        {onBack && <BackLink onBack={onBack} />}
         <form
           className="flex flex-col gap-4"
           onSubmit={(e) => {

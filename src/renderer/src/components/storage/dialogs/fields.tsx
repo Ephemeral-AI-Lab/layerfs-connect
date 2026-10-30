@@ -2,9 +2,10 @@
 // (projects/delete-project-dialog.tsx): a rounded-3xl glass sheet, a title
 // with its icon on a tinted tile, a labelled field, an error line, and the
 // footer's buttons.
-import { type LucideIcon, TriangleAlert } from 'lucide-react'
+import { ChevronLeft, type LucideIcon, TriangleAlert } from 'lucide-react'
 
 import { DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { t } from '@/i18n'
 import { cn } from '@/lib/utils'
 
 export const message = (e: unknown) => (e instanceof Error ? e.message : String(e))
@@ -70,5 +71,20 @@ export function SheetFooter({ left, children }: { left?: React.ReactNode; childr
       {left && <div className="mr-auto flex flex-wrap gap-2">{left}</div>}
       {children}
     </div>
+  )
+}
+
+/** "‹ New": back to the New dialog that opened this one. */
+export function BackLink({ onBack, label, disabled }: { onBack: () => void; label?: string; disabled?: boolean }) {
+  return (
+    <button
+      type="button"
+      onClick={onBack}
+      disabled={disabled}
+      className="-mt-2 -mb-1 inline-flex w-fit items-center gap-0.5 rounded-md text-xs text-muted-foreground outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
+    >
+      <ChevronLeft aria-hidden="true" className="size-3.5" />
+      {label ?? t('New')}
+    </button>
   )
 }
