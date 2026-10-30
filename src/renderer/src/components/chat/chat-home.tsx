@@ -765,12 +765,13 @@ export function ChatHome({ projects, initialProject, onOpenProject }: ChatHomePr
       <NewProjectDialog
         open={newProjectOpen}
         onOpenChange={setNewProjectOpen}
-        taken={new Set((projects.data ?? []).map((p) => p.name))}
-        onCreated={(name) => {
-          projects.reload()
-          setProject(name)
-          drafts.open(newDraftKey(name, cwd))
-          localStorage.setItem(LAST_PROJECT, name)
+        initialFolder={cwd}
+        onCreated={(created) => {
+          projects.add(created)
+          setProject(created.name)
+          drafts.open(newDraftKey(created.name, created.source || cwd))
+          localStorage.setItem(LAST_PROJECT, created.name)
+          if (created.source) changeDirectory(created.source)
         }}
       />
       <ModelSettingsDialog

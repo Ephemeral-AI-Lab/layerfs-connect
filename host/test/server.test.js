@@ -29,8 +29,6 @@ const projects = {
     throw refusal('Binary', 'Binary: not text')
   }),
   remove: record('remove', { removed: true }),
-  create: record('create', (body) => ({ id: 'job-1', name: body.name, step: 'scan' })),
-  initJob: record('initJob', (id) => ({ id, step: 'done' })),
 }
 
 class FakeRuns extends EventEmitter {
@@ -109,34 +107,16 @@ test('project routes pass their arguments through', async () => {
   await call('GET', '/api/projects/shop/fs?branch=cart&path=%2Fsrc')
   await call('GET', '/api/projects/shop/fs')
   assert.deepEqual((await call('DELETE', '/api/projects/shop')).body, { removed: true })
-  // layerfs#506: ?store= names the Store of a project whose name is in several
-  await call('GET', '/api/projects/shop?store=team')
-  await call('GET', '/api/projects/shop/file?branch=cart&path=%2Fa&store=team')
-  await call('DELETE', '/api/projects/shop?store=team')
   assert.deepEqual(calls, [
     ['status'],
     ['startWorker'],
     ['list'],
-    ['state', 'shop', null],
-    ['commits', 'shop', 'cart', '5', null],
-    ['commits', 'shop', 'main', null, null],
-    ['listDir', 'shop', 'cart', '/src', null],
-    ['listDir', 'shop', 'main', '/', null],
-    ['remove', 'shop', null],
-    ['state', 'shop', 'team'],
-    ['file', 'shop', 'cart', '/a', 'team'],
-    ['remove', 'shop', 'team'],
-  ])
-})
-
-test('a new project: POST /api/projects starts its Init; /api/inits/:id follows it', async () => {
-  calls.length = 0
-  const res = await fetch(`${url}/api/projects`, { method: 'POST', headers: { ...auth, 'content-type': 'application/json' }, body: JSON.stringify({ name: 'mine', folder: '/Users/me/mine' }) })
-  assert.deepEqual(await res.json(), { id: 'job-1', name: 'mine', step: 'scan' })
-  assert.deepEqual((await call('GET', '/api/inits/job-1')).body, { id: 'job-1', step: 'done' })
-  assert.deepEqual(calls, [
-    ['create', { name: 'mine', folder: '/Users/me/mine' }],
-    ['initJob', 'job-1'],
+    ['state', 'shop'],
+    ['commits', 'shop', 'cart', '5'],
+    ['commits', 'shop', 'main', null],
+    ['listDir', 'shop', 'cart', '/src'],
+    ['listDir', 'shop', 'main', '/'],
+    ['remove', 'shop'],
   ])
 })
 

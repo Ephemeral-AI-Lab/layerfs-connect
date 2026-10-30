@@ -50,20 +50,15 @@ export async function readAll(lf, ref, path) {
 }
 
 /**
- * The tracked entries of `ref` (a Branch, Commit or Layer), by path. With
- * `root` (a scenario run's folder, /<run>), only what is under it, by its
- * path from there: the folder is the run's project root, .gitignore files
- * and all.
+ * The tracked entries of `ref` (a Branch, Commit or Layer), by path.
  * @returns {Promise<Map<string, 'file' | 'dir' | 'symlink'>>}
  */
-export async function trackedTree(lf, ref, root = '/') {
+export async function trackedTree(lf, ref) {
   const scratch = mkdtempSync(join(tmpdir(), 'lfc-ignore-'))
   const tree = new Map()
-  const base = root === '/' ? '' : root
-  const local = (path) => path.slice(base.length)
   try {
     execFileSync('git', ['init', '-q', scratch])
-    const dirs = [root]
+    const dirs = ['/']
     while (dirs.length) {
       const dir = dirs.shift()
       const items = (await listAll(lf, ref, dir)).filter((item) => item.name !== '.git')
@@ -71,15 +66,15 @@ export async function trackedTree(lf, ref, root = '/') {
       if (ignore) {
         const read = await readAll(lf, ref, ignore.path)
         if (read.problem) throw new Error(`${ignore.path}: ${read.problem}`)
-        const target = join(scratch, local(ignore.path))
+        const target = join(scratch, ignore.path)
         mkdirSync(dirname(target), { recursive: true })
         writeFileSync(target, read.text)
       }
-      const key = (item) => local(item.path).slice(1) + (item.type === 'dir' ? '/' : '')
+      const key = (item) => item.path.slice(1) + (item.type === 'dir' ? '/' : '')
       const ignored = ignoredOf(scratch, items.map(key))
       for (const item of items) {
         if (ignored.has(key(item))) continue
-        tree.set(local(item.path), item.type)
+        tree.set(item.path, item.type)
         if (item.type === 'dir') dirs.push(item.path)
       }
     }
@@ -97,16 +92,15 @@ export async function trackedTree(lf, ref, root = '/') {
  * @param {{ id: string, parent?: string, base?: string }} commit as list_commits lists it
  * @param {(ref: string) => Promise<Map<string, string>>} treeOf trackedTree, perhaps cached
  */
-export async function trackedChanges(lf, commit, treeOf = (ref) => trackedTree(lf, ref), root = '/') {
+export async function trackedChanges(lf, commit, treeOf = (ref) => trackedTree(lf, ref)) {
   const before = commit.parent ?? commit.base
   const [a, b] = [await treeOf(before), await treeOf(commit.id)]
-  const at = (path) => (root === '/' ? path : `${root}${path}`)
   const out = []
   for (const [path, type] of b) {
     const was = a.get(path)
     if (!was) out.push({ path, kind: 'Added', type })
     else if (was !== type) out.push({ path, kind: 'Removed', type: was }, { path, kind: 'Added', type })
-    else if (type === 'file' && !(await lf.fs.diff_files(before, at(path), commit.id, at(path))).contentEqual) out.push({ path, kind: 'Modified', type })
+    else if (type === 'file' && !(await lf.fs.diff_files(before, path, commit.id, path)).contentEqual) out.push({ path, kind: 'Modified', type })
     else if (type === 'symlink') throw new Error(`${path}: a symlink in the tracked tree is not compared yet`)
   }
   for (const [path, type] of a) if (!b.has(path)) out.push({ path, kind: 'Removed', type })
@@ -152,21 +146,17 @@ export async function byteHashes(lf, branch, paths) {
 }
 
 /**
- * The tracked files of main with their SHA-256 (symlinks: "symlink"). A
- * scenario run's: of its folder `root` on its last trunk `ref`, by path from
- * the folder.
+ * The tracked files of main with their SHA-256 (symlinks: "symlink").
  * @returns {Promise<{ files: Record<string, string> }>}
  */
-export async function trackedHashes(lf, { ref = 'main', root = '/' } = {}) {
-  const tree = await trackedTree(lf, ref, root)
+export async function trackedHashes(lf) {
+  const tree = await trackedTree(lf, 'main')
   const files = {}
-  const at = (path) => (root === '/' ? path : `${root}${path}`)
   const regular = [...tree].filter(([, type]) => type === 'file').map(([path]) => path)
   if (regular.length) {
-    const branch = `${CHECK_PREFIX}${root === '/' ? '' : `${root.slice(1)}-`}${Date.now().toString(36)}`
-    await lf.branch.fork(branch, ref)
-    const hashes = await byteHashes(lf, branch, regular.map(at))
-    for (const path of regular) files[path] = hashes[at(path)]
+    const branch = `${CHECK_PREFIX}${Date.now().toString(36)}`
+    await lf.branch.fork(branch)
+    Object.assign(files, await byteHashes(lf, branch, regular))
   }
   for (const [path, type] of tree) if (type === 'symlink') files[path] = 'symlink'
   return { files: sortKeys(files) }

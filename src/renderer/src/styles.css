@@ -43,13 +43,6 @@
   --color-success: var(--success);
   --color-warning: var(--warning);
   --color-idle: var(--idle);
-  /* Storage sync states (storage-redesign §4.4, §11.1). */
-  --color-sync-ok: var(--sync-ok);
-  --color-sync-ahead: var(--sync-ahead);
-  --color-sync-behind: var(--sync-behind);
-  --color-sync-diverged: var(--sync-diverged);
-  --color-sync-unknown: var(--sync-unknown);
-  --color-badge-ring: var(--badge-ring);
   --color-agent-builder: var(--agent-builder);
   --color-agent-reviewer: var(--agent-reviewer);
   --color-agent-tester: var(--agent-tester);
@@ -159,19 +152,6 @@
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-out-soft: cubic-bezier(0.25, 0.8, 0.35, 1);
   --stagger: 40ms;
-  /* The main canvas's ambient light and dot grid. */
-  --ambient-1: color-mix(in oklab, var(--brand-2) 9%, transparent);
-  --ambient-2: color-mix(in oklab, var(--brand-3) 8%, transparent);
-  --grid-dot: color-mix(in oklab, var(--foreground) 11%, transparent);
-  /* Storage sync states (§4.4): aliases, so each meaning has one name. The
-     dark theme needs nothing: the aliases follow their sources' dark values. */
-  --sync-ok: var(--success);
-  --sync-ahead: var(--primary);
-  --sync-behind: var(--warning);
-  --sync-diverged: var(--destructive);
-  --sync-unknown: var(--faint);
-  /* A provider badge's cut-out ring (StoreIcon). */
-  --badge-ring: var(--card);
   /* Ambient pastel aurora palette (learned from agibase.dev: DeepMind & Apple pastel depth) */
   --aura-lavender: #c7d2fe;
   --aura-mint: #a7f3d0;
@@ -179,6 +159,7 @@
   --aura-rose: #fecdd3;
   --aura-amber: #fef08a;
   --aura-blue: #0071e3;
+  --grid-dot: rgba(0, 0, 0, 0.045);
   /* Pure monochrome transparent glass - colors appear ONLY where cursor moves */
   --card-pastel-gradient: none;
   --glass-sheen: none;

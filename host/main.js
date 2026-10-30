@@ -13,12 +13,10 @@
 import { readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { APP, openRuntime, resolveSpec } from './config.js'
-import { Models } from './models.js'
 import { AgentManager } from './agents/index.js'
 import { Projects } from './projects.js'
 import { AgentWorkspaces } from './agents/workspaces.js'
 import { createHostServer, listen, newToken } from './server.js'
-import { Storage } from './storage.js'
 
 /** How long shutdown may take before the process exits anyway. */
 const CLOSE_MS = 30_000
@@ -43,10 +41,10 @@ function parseArgs(argv) {
 }
 
 /** The RunManager, or why it did not load. Loaded lazily: the engine may be absent. */
-async function loadRuns(spec, projects, models) {
+async function loadRuns(spec, projects) {
   try {
     const { RunManager } = await import('./runs/index.js')
-    return { runs: new RunManager({ spec, scenarios: join(APP, 'scenarios'), models }), error: null }
+    return { runs: new RunManager({ spec, scenarios: join(APP, 'scenarios'), beforeRemove: (name) => projects.forget(name) }), error: null }
   } catch (error) {
     log(`[host] the demo engine did not load: ${error?.code === 'ERR_MODULE_NOT_FOUND' ? error.message : (error?.stack ?? error)}`)
     return { runs: null, error: error?.message ?? String(error) }
@@ -72,21 +70,9 @@ async function main() {
   const runtime = await openRuntime(spec)
   const engine = { runs: null, error: 'loading' }
   const projects = new Projects({ spec, runs: () => engine.runs, log })
-  const agents = await AgentManager.create({ state: spec.state, projectEnvironment: (name) => projects.record(name), projectWorkspaces: new AgentWorkspaces({
-      // chats name a project; projects.open takes its runtime record (layerfs#506: a name may need its Store)
-      projects: { open: async (name) => projects.open(await projects.record(name)) },
-    }),
-  })
+  const agents = await AgentManager.create({ state: spec.state, projectEnvironment: (name) => projects.record(name), projectWorkspaces: new AgentWorkspaces({ projects }) })
   const token = newToken()
-  const models = new Models(spec)
-  const storage = new Storage({ spec, projects, log })
-  // a PostgreSQL Store's projects are read with their connection's URL, which only storage.js holds
-  projects.postgresql = (store) => storage.urlForStore(store)
-  // and so are runs' clients, agents' bash calls and their Sandboxes (config.js notePostgresql)
-  spec.postgresqlUrl = (store) => storage.urlForStore(store)
-  // the project list shows each project's Store sync state and copy providers from the Storage view
-  projects.storeJoin = () => storage.projectJoin()
-  const server = createHostServer({ token, projects, storage, models, agents: () => agents, runs: () => engine.runs, runsError: () => engine.error, log })
+  const server = createHostServer({ token, projects, agents: () => agents, runs: () => engine.runs, runsError: () => engine.error, log })
 
   const endpoint = join(spec.state, 'host.json')
   let owned = false
@@ -99,7 +85,6 @@ async function main() {
         process.exit(1)
       }, CLOSE_MS).unref()
       await new Promise((resolve) => server.close(() => resolve()))
-      storage.close()
       let clean = true
       await agents.close().catch((error) => {
         clean = false
@@ -121,7 +106,7 @@ async function main() {
   process.stdin.on('close', () => void shutdown('stdin closed'))
   process.stdin.resume()
 
-  Object.assign(engine, await loadRuns(spec, projects, models))
+  Object.assign(engine, await loadRuns(spec, projects))
   void projects.ensureWorker()
   const url = await listen(server, args.port)
   // a second host (another app window on the same state) leaves the first one's file alone

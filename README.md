@@ -58,26 +58,6 @@ unmount the workspace and close its sandbox. An incomplete cleanup remains
 visible as an error and retains the workspace for retry. Continuing a stopped
 conversation mounts the same saved branch again.
 
-## Runs: scripted demos and live sessions
-
-The LayerFS page runs on the real LayerFS: Stores in Docker volumes, and
-Docker Sandboxes. Its projects include ten scripted
-demos (tour, parallel, conflicts, merge, sandbox, agents, checkpoints, shop,
-depot, crew). `/scenario <name>` in a session plays one on that session's
-project, in a folder `/<scenario>_<n>/` of its own with its own Branches and
-Sandboxes, so the project's other files and sessions are left alone;
-`/scenario all` plays every one there at once, except that at most two heavy
-ones (those that install and build, or replay 100 steps or more: agents, crew,
-depot, shop) play together; the others wait their turn. A scenario's agents have only
-bash and the subagent tools, as in dsh-layerfs; earlier sessions stay listed
-with their conversations. A
-project's page shows its Live view (agents, project, Sandboxes and
-Workspaces), Timeline (the fork map over time, replayable), History and
-Storage from the newest session; a session's page
-shows its conversation. A scenario uses no language model: every call comes
-from its script, and every call really runs. A live session drives a Pi agent
-with the `layerfs` command instead.
-
 Project commands do not leave background processes running after they finish:
 Connect stops the command's process group and descendants before saving.
 Run checks in the foreground. Pi may put large-output logs on the host;

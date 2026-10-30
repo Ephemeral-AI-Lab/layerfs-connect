@@ -1,8 +1,7 @@
 // The renderer talks to the Connect host over HTTP, not through Electron IPC.
 // The preload tells it which platform and CPU it runs on, and the host's
 // address and token, which the main process passes as --connect-host=<JSON>
-// ({ url, token }, or { error } when the host did not start). The one IPC
-// call is pickFolder: the system's folder picker (null when cancelled).
+// ({ url, token }, or { error } when the host did not start).
 
 import { contextBridge, ipcRenderer } from 'electron'
 
@@ -21,9 +20,6 @@ function hostAddress(): HostAddress {
 }
 
 contextBridge.exposeInMainWorld('connect', {
-  platform: process.platform,
-  arch: process.arch,
-  host: hostAddress(),
-  pickFolder: (): Promise<string | null> => ipcRenderer.invoke('connect:pick-folder'),
+  platform: process.platform, arch: process.arch, host: hostAddress(),
   chooseDirectory: (defaultPath?: string, locale?: 'zh-CN' | 'en') => ipcRenderer.invoke('connect:choose-directory', defaultPath, locale),
 })

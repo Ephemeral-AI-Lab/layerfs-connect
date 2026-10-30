@@ -69,13 +69,9 @@ fixtures/demo-workspace/   the fixture the hand-written seven Init from
   SDK); at most one workload, `node` or `rust`, where real builds run; one to
   three topics from `conflicts`, `merge`, `publish`, `multi-agent`,
   `background`, `sandbox`. Anything else is refused.
-- `fixture`: what a run copies into its folder `/<scenario>_<n>/` of the
-  project it plays on, relative to the scenario's folder. A folder, or a
-  seed file (`*.json`) that a run first writes out with
-  [`host/seed.js`](../host/seed.js) `writeSeed(seed, dir)`. Scripts are
-  written as if the fixture were the whole project on main: the engine keeps
-  each call in the run's folder, Branches and Sandboxes
-  ([host/README.md, "Where a run plays"](../host/README.md#where-a-run-plays)).
+- `fixture`: what a replay Inits the demo's project `<demo>` from, relative
+  to the folder. A folder, or a seed file (`*.json`) that a run first writes
+  out with [`host/seed.js`](../host/seed.js) `writeSeed(seed, dir)`.
 - `image`: optional runtime image digest; `{{image}}` in a command names it.
   No scenario sets one: Sandboxes run Connect's configured image.
 - `agents`: `root` is the run's own agent; every other agent is started by a
@@ -99,10 +95,11 @@ A scenario may hold `sessions` in place of `agents` (and no top-level
   agent, named after the session; its other agents are started by `subagent`
   steps as usual. Each session is checked as a scenario of its own, and agent
   names are unique over all sessions.
-- One start plays them all at once (a launch): the first session sets up
-  the folder, the others wait for it, then all play in it. They share the
-  folder, Branches and Sandbox numbers, so Branch names must not collide,
-  and Sandbox numbers are not known ahead: use `{{sandbox}}` and `{{ws}}`.
+- One New session starts them all at once (a launch): the first session
+  resets the project (removed, then Inited from the fixture), the others
+  wait for that Init, then all play on the same project. They share it, so
+  Branch names must not collide, and Sandbox numbers are not known ahead:
+  use `{{sandbox}}` and `{{ws}}`.
 - They end together: once one fails or is stopped, the others stop, and the
   project's Sandboxes are closed once. A launch counts once against the two
   replays that may play at once.
@@ -227,11 +224,8 @@ checked after the run only. The ten scenarios check 29 codes
 ### Final checks
 
 After the root's last step, a scenario with `final.json` (shop, depot, crew)
-has its run checked by [`host/checks`](../host/checks/index.js)
-`finalChecks`, through the run's open client. A run plays in a folder on
-trunk Branches, so each check reads the record that way: main's Layers are
-the run's trunks, main's files its folder on its last trunk, the project's
-Sandboxes its own (host/README.md, "Where a run plays"):
+has its run's project checked by [`host/checks`](../host/checks/index.js)
+`finalChecks`, through the run's open client:
 
 - `final.order`: every Branch's Commits (message and how they were made:
   `fs` or `exec`), forks, merges and main's publishes as recorded, named by
@@ -253,7 +247,7 @@ Sandboxes its own (host/README.md, "Where a run plays"):
   of the time. The port ([`tools/lib/agents-sandboxes.mjs`](../tools/lib/agents-sandboxes.mjs))
   changes it: after forking, the lead opens Sandbox 1 for checkout (Ava, Ben,
   Cy) and Sandbox 2 for search (Dee, Eli), checking it got those numbers (a
-  run numbers its own Sandboxes from 1, whatever the project's numbers). Each subagent's prompt names
+  fresh project numbers its Sandboxes from 1). Each subagent's prompt names
   its Sandbox; every command mounts a Workspace of its own there and unmounts
   it; the lead builds release in Sandbox 1 and closes both before its last
   reply. In a shared Sandbox, Cy finds the Workspace it keeps open by its

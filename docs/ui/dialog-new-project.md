@@ -1,20 +1,20 @@
 # New project dialog
 
-Makes a LayerFS project by Init, empty or as a copy of a folder, into a Store the user picks (or a new one), then opens a new session on it.
+Makes a LayerFS project by Init, empty or as a copy of a folder, then opens a new session on it.
 Opens from: New project on the LayerFS Projects tab, or "New project..." in the sidebar's New session
 menu.
 Source: `src/renderer/src/components/projects/new-project-dialog.tsx` (every region is in this file).
 
 ## Skeleton
 
-Drawn with "From a folder" chosen and a LayerFS build with Stores (layerfs#506); the dialog opens on Empty, without the Folder field.
+Drawn with "From a folder" chosen; the dialog opens on Empty, without the Folder field.
 
 ```text
 +--------------------------------------------------------------------+
 | +-[1] DialogHeader ----------------------------------------------+ |
 | | New project                                                  x | |
-| | Empty, or a copy of a folder, in a Store you choose. Changes   | |
-| | in the folder later do not reach the project.                  | |
+| | A LayerFS project of its own: empty, or a copy of a folder.    | |
+| | Changes in the folder later do not reach the project.          | |
 | +----------------------------------------------------------------+ |
 | +-[2] Start from ------------------------------------------------+ |
 | | +----------------------------+  +----------------------------+ | |
@@ -26,12 +26,6 @@ Drawn with "From a folder" chosen and a LayerFS build with Stores (layerfs#506);
 | | Folder                                                         | |
 | | [ /Users/you/my-app                            ] [ Choose... ] | |
 | | Everything in it is imported, node_modules and .git included.  | |
-| +----------------------------------------------------------------+ |
-| +-[S] Store -----------------------------------------------------+ |
-| | Store                                                          | |
-| | [ team-examples   2 projects - from local-minio             v ] | |
-| | It shares this Store's file and its copies: a push or pull     | |
-| | moves every project in it.                                     | |
 | +----------------------------------------------------------------+ |
 | +-[4] Name ------------------------------------------------------+ |
 | | Name                                                           | |
@@ -48,16 +42,10 @@ Drawn with "From a folder" chosen and a LayerFS build with Stores (layerfs#506);
 1. **Header** (`DialogHeader` in `NewProjectDialog`, `projects/new-project-dialog.tsx`): "New project", the description, and the close x.
 2. **Start from** (`NewProjectDialog` radiogroup, `projects/new-project-dialog.tsx`): two cards, Empty ("main with no files") and From a folder ("Import its files"). From a folder opens the system folder picker when no folder is set yet.
 3. **Folder** (`NewProjectDialog`, `projects/new-project-dialog.tsx`), only for From a folder: an absolute path field (placeholder "/Users/you/my-app") and "Choose..." when the app can pick folders. A note says everything is imported; it reads "An absolute path" in red for a relative one. Picking a folder fills Name from the folder's name until Name is typed.
-S. **Store** (`NewProjectDialog`, `projects/new-project-dialog.tsx`), only when the LayerFS build lists Stores (layerfs#506): a select of the local SQLite Stores, each with its project count and "from <remote>" for a clone, then "New SQLite Store...".
-   - It opens on the Store the last project went into (remembered in this browser), else the first Store, else New SQLite Store.
-   - New SQLite Store shows a name field, filled from the project name (`_` and `.` as hyphens) until typed. Under it in red: "Lowercase letters, digits and hyphens, at most 32", or "A Store has this name; choose it above instead".
-   - PostgreSQL Stores are not listed: they get projects only by import.
-   - Without Stores in the build, the section is absent and each project gets a new Store of its own, as before.
 4. **Name** (`NewProjectDialog`, `projects/new-project-dialog.tsx`): the project name, mono, placeholder "my-project". Under it in red: "Lowercase letters, digits, _ . and -, starting and ending with a letter or digit", or "A project has this name".
 5. **Footer** (`DialogFooter`, `projects/new-project-dialog.tsx`): Cancel, and Create project, which is enabled once the name (and the folder) is valid.
 
 ## States
 
 - **Creating**: a status row appears above the footer, showing a spinner, the Init step and, once counted, "N files - size". The steps are Counting the folder, Making the Store volume, Importing and Done. Every control is disabled, the button reads "Creating...", and the dialog cannot be closed. When it is done, the dialog closes and a draft session opens on the new project.
-- **New Store**: Create project first makes the Store (POST /api/stores), then Inits into it. If Init then fails, the new Store stays and is selected, so trying again does not make a second one.
 - **Failed**: the step reads "Failed", and the error shows with a warning icon above the footer.

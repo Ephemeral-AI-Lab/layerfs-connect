@@ -5,7 +5,6 @@ import { CloudCards } from '@/components/compute/cloud-cards'
 import { DockerCard } from '@/components/compute/docker-card'
 import { NativeCard } from '@/components/compute/native-card'
 import type { SandboxGroup } from '@/components/compute/sandbox-list'
-import { type LayerFSPart, LayerFSTabs } from '@/components/layerfs-tabs'
 import { PageHeader } from '@/components/motion/page-header'
 import { LoadError, Loading } from '@/components/projects/states'
 import { Button } from '@/components/ui/button'
@@ -30,18 +29,16 @@ function Setting({ label, value, mono = true }: { label: string; value: string |
 interface ComputePageProps {
   /** Dev aid: draw the Native card for another OS (linux, win32, darwin). */
   platform?: string
-  /** Opens another part of the LayerFS page (Projects, Storage). */
-  onPart?: (part: LayerFSPart) => void
 }
 
-export function ComputePage({ platform, onPart }: ComputePageProps) {
+export function ComputePage({ platform }: ComputePageProps) {
   useI18n()
   const status = useHostQuery(() => host.status(), [])
   // Every project's Sandboxes: one state read per project, none of which starts a Sandbox.
   const sandboxes = useHostQuery(async () => {
     const projects = await host.projects()
     const states = await Promise.all(
-      projects.filter((p) => p.initialized).map((p) => host.project(p.key ?? p.name).then((s) => ({ name: p.key ?? p.name, s }), () => ({ name: p.key ?? p.name, s: null }))),
+      projects.filter((p) => p.initialized).map((p) => host.project(p.name).then((s) => ({ name: p.name, s }), () => ({ name: p.name, s: null }))),
     )
     const groups: SandboxGroup[] = states.flatMap(({ name, s }) => (s && s.sandboxes.length > 0 ? [{ project: name, sandboxes: s.sandboxes }] : []))
     return { groups, failed: states.filter((x) => !x.s).map((x) => x.name) }
@@ -59,10 +56,8 @@ export function ComputePage({ platform, onPart }: ComputePageProps) {
       <PageHeader
         sticky
         width="max-w-5xl"
-        size="md"
-        title="LayerFS"
-        tabs={<LayerFSTabs current="compute" onPick={onPart} />}
-        description="Where runs execute commands with their Workspace mounted. Docker is the one LayerFS has today."
+        title={t("Compute")}
+        description={t("Local container runtimes and sandbox execution providers.")}
         actions={
           <Button
             variant="outline"

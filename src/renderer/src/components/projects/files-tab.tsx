@@ -1,3 +1,4 @@
+import { t, useI18n } from '@/i18n'
 import '@/components/projects/history/history.css'
 
 import { ChevronRight, FileQuestion, FileText, Folder, FolderOpen, Link2, X } from 'lucide-react'
@@ -17,6 +18,7 @@ import type { BranchInfo, FsEntry } from '@shared/host-api'
 
 /** A small coloured badge per file type, so the tree scans quickly. */
 function FileBadge({ entry }: { entry: Pick<FsEntry, 'name' | 'kind'> }) {
+  useI18n()
   const { name } = entry
   if (entry.kind === 'symlink') return <Link2 aria-hidden="true" className="size-4 shrink-0 text-faint" />
   const [text, tone] =
@@ -50,6 +52,7 @@ function FileBadge({ entry }: { entry: Pick<FsEntry, 'name' | 'kind'> }) {
 
 /** The icon over an empty pane: a small raised tile. */
 function EmptyMark({ icon: Icon }: { icon: React.ComponentType<{ className?: string }> }) {
+  useI18n()
   return (
     <span className="mb-1 flex size-10 items-center justify-center rounded-xl border bg-card text-faint shadow-[var(--highlight),var(--elev-1)]">
       <Icon aria-hidden="true" className="size-5" />
@@ -74,13 +77,14 @@ interface TreeProps {
 }
 
 function Tree({ path, depth, dirs, open, selected, onToggle, onOpenFile }: TreeProps) {
+  useI18n()
   const dir = dirs.get(path)
   const pad = { paddingLeft: `${0.5 + depth * 1 + (depth > 0 ? 1.375 : 0)}rem` }
   if (dir === undefined || dir === 'loading')
     return (
       <p role="status" style={pad} className="flex items-center gap-2 py-1.5 pr-3 text-xs text-faint">
         <span aria-hidden="true" className="shimmer h-2 w-24 rounded-full" />
-        <span className="sr-only">Reading…</span>
+        <span className="sr-only">{t("Reading…")}</span>
       </p>
     )
   if (dir instanceof Error)
@@ -91,12 +95,10 @@ function Tree({ path, depth, dirs, open, selected, onToggle, onOpenFile }: TreeP
     )
   if (dir.length === 0)
     return (
-      <p style={pad} className="py-1 text-xs text-faint italic">
-        Empty folder
-      </p>
+      <p style={pad} className="py-1 text-xs text-faint italic">{t("Empty folder")}</p>
     )
   return (
-    <ul role={depth === 0 ? 'tree' : 'group'} aria-label={depth === 0 ? 'Files' : undefined}>
+    <ul role={depth === 0 ? 'tree' : 'group'} aria-label={depth === 0 ? t("Files") : undefined}>
       {[...dir].sort(byKind).map((n, i) => {
         const expanded = open.has(n.path)
         const on = n.path === selected
@@ -106,7 +108,7 @@ function Tree({ path, depth, dirs, open, selected, onToggle, onOpenFile }: TreeP
               type="button"
               data-active={on}
               onClick={() => (n.kind === 'dir' ? onToggle(n.path) : onOpenFile(n))}
-              title={n.kind === 'dir' ? n.path : `${n.path} · ${bytes(n.size)}`}
+              title={n.kind === 'dir' ? n.path : t("{value1} · {value2}", {value1: n.path, value2: bytes(n.size)})}
               style={revealStyle(i, { paddingLeft: `${0.5 + depth * 1}rem` })}
               className={cn(
                 'reveal flex h-7 w-full items-center gap-2 rounded-md pr-3 text-left text-[13px] outline-none transition-colors duration-(--dur-fast) focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset',
@@ -146,6 +148,7 @@ function Tree({ path, depth, dirs, open, selected, onToggle, onOpenFile }: TreeP
 }
 
 function FileBody({ project, branch, path, tick }: { project: string; branch: string; path: string; tick: number }) {
+  useI18n()
   const q = useHostQuery(() => host.file(project, branch, path), [project, branch, path, tick])
   // A file read for another ref or path is not this one's.
   const data = q.data?.path === path ? q.data : undefined
@@ -166,7 +169,7 @@ function FileBody({ project, branch, path, tick }: { project: string; branch: st
         <span className="ml-auto shrink-0 text-xs text-faint tabular-nums">
           {data &&
             (data.text !== null ? `${data.text.split('\n').length - (data.text.endsWith('\n') ? 1 : 0)} lines · ` : '')}
-          {data && `${bytes(data.size)} · `}at {branch}
+          {data && `${bytes(data.size)} · `}{t("at ")}{branch}
         </span>
       </div>
       <div key={path} className="hist-fade min-h-0 flex-1">
@@ -174,17 +177,17 @@ function FileBody({ project, branch, path, tick }: { project: string; branch: st
           q.error ? (
             <LoadError error={q.error} what={path} onRetry={q.reload} className="m-6" />
           ) : (
-            <Loading label="Reading the file" />
+            <Loading label={t("Reading the file")} />
           )
         ) : data.text !== null ? (
           <CodeView path={path} text={data.text} />
         ) : (
           <div className="flex h-full flex-col items-center justify-center gap-2 text-center">
             <EmptyMark icon={FileQuestion} />
-            <p className="text-sm font-medium">{data.binary ? 'A binary file' : 'Too large to show'}</p>
+            <p className="text-sm font-medium">{data.binary ? t("A binary file") : t("Too large to show")}</p>
             <p className="text-xs text-muted-foreground">
               {bytes(data.size)}
-              {data.binary ? '; only text files open here.' : '; files over 1 MiB open only their size.'}
+              {data.binary ? t("; only text files open here.") : t("; files over 1 MiB open only their size.")}
             </p>
           </div>
         )}
@@ -204,6 +207,7 @@ interface FilesTabProps {
 }
 
 export function FilesTab({ project, branches, tick = 0, initialBranch }: FilesTabProps) {
+  useI18n()
   const [ref, setRef] = useState(() => (initialBranch && branches.some((b) => b.name === initialBranch) ? initialBranch : 'main'))
   const [dirs, setDirs] = useState<Map<string, Dir>>(new Map())
   const [open, setOpen] = useState<Set<string>>(new Set())
@@ -246,7 +250,7 @@ export function FilesTab({ project, branches, tick = 0, initialBranch }: FilesTa
       setTabs([readme.path])
       setActive(readme.path)
     }
-  }, [root, tabs.length, project])
+  }, [root, tabs.length])
 
   const toggle = (path: string) => {
     const next = new Set(open)
@@ -277,20 +281,20 @@ export function FilesTab({ project, branches, tick = 0, initialBranch }: FilesTa
 
   return (
     <div className="hist-frame grid h-0 min-h-[28rem] flex-1 grid-cols-[17rem_minmax(0,1fr)] overflow-hidden rounded-2xl">
-      <aside aria-label="Files" className="hist-side flex min-h-0 flex-col border-r">
-        <PaneHead label="Files" count={tabs.length > 0 ? `${tabs.length} open` : undefined} />
+      <aside aria-label={t("Files")} className="hist-side flex min-h-0 flex-col border-r">
+        <PaneHead label={t("Files")} count={tabs.length > 0 ? `${tabs.length} open` : undefined} />
         <div className="flex flex-col gap-2 border-b p-3">
           <Select value={ref} onValueChange={setRef}>
-            <SelectTrigger aria-label="Branch" className="w-full">
+            <SelectTrigger aria-label={t("Branch")} className="w-full">
               <SelectValue>
                 {ref} {branch?.head && <span className="font-mono text-xs text-muted-foreground">· {shortId(branch.head)}</span>}
               </SelectValue>
             </SelectTrigger>
             <SelectContent>
               <SelectGroup>
-                <SelectLabel>Published</SelectLabel>
+                <SelectLabel>{t("Published")}</SelectLabel>
                 <SelectItem value="main">
-                  <span className="font-medium">main</span>
+                  <span className="font-medium">{t("main")}</span>
                   <span className="font-mono text-xs text-muted-foreground">
                     {shortId(branches.find((b) => b.name === 'main')?.head)}
                   </span>
@@ -298,12 +302,12 @@ export function FilesTab({ project, branches, tick = 0, initialBranch }: FilesTa
               </SelectGroup>
               {others.length > 0 && (
                 <SelectGroup>
-                  <SelectLabel>Branches</SelectLabel>
+                  <SelectLabel>{t("Branches")}</SelectLabel>
                   {others.map((b) => (
                     <SelectItem key={b.name} value={b.name}>
                       <span className={cn('font-medium', b.state === 'merged' && 'text-muted-foreground')}>{b.name}</span>
                       <span className="font-mono text-xs text-muted-foreground">
-                        {b.state === 'open' ? `+${b.commits}` : b.state}
+                        {b.state === 'open' ? t("+{value1}", {value1: b.commits}) : t(b.state)}
                       </span>
                     </SelectItem>
                   ))}
@@ -311,18 +315,16 @@ export function FilesTab({ project, branches, tick = 0, initialBranch }: FilesTa
               )}
             </SelectContent>
           </Select>
-          <SearchField label="Find in opened folders" value={query} onChange={setQuery} size="sm" />
+          <SearchField label={t("Find in opened folders")} value={query} onChange={setQuery} size="sm" />
         </div>
         <div className="min-h-0 flex-1 overflow-y-auto px-1.5 py-1.5">
           <div ref={tree.container} className="relative isolate">
             <span ref={tree.indicator} aria-hidden="true" className="indicator hist-row-indicator -z-10" />
             {q ? (
               matches.length === 0 ? (
-                <p className="hist-swap mx-1.5 mt-1.5 rounded-lg border border-dashed px-3 py-3 text-xs text-muted-foreground">
-                  No file in the opened folders matches.
-                </p>
+                <p className="hist-swap mx-1.5 mt-1.5 rounded-lg border border-dashed px-3 py-3 text-xs text-muted-foreground">{t("No file in the opened folders matches.")}</p>
               ) : (
-                <ul aria-label="Matching files">
+                <ul aria-label={t("Matching files")}>
                   {matches.map((n, i) => (
                     <li key={n.path}>
                       <button
@@ -353,7 +355,7 @@ export function FilesTab({ project, branches, tick = 0, initialBranch }: FilesTa
         <div
           ref={strip.container}
           role="tablist"
-          aria-label="Open files"
+          aria-label={t("Open files")}
           className="relative flex h-10 shrink-0 items-center gap-0.5 overflow-x-auto border-b bg-muted/25 px-1.5"
         >
           {tabs.map((p) => {
@@ -381,10 +383,10 @@ export function FilesTab({ project, branches, tick = 0, initialBranch }: FilesTa
                 </button>
                 <button
                   type="button"
-                  aria-label={`Close ${p}`}
+                  aria-label={t("Close {value1}", {value1: p})}
                   onClick={() => closeFile(p)}
                   className={cn(
-                    'rounded p-0.5 text-faint outline-none transition-opacity hover:bg-muted hover:text-foreground focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-ring',
+                    'inline-flex size-5 shrink-0 items-center justify-center rounded text-faint outline-none transition-opacity hover:bg-muted hover:text-foreground focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-ring',
                     on ? 'opacity-70' : 'opacity-0 group-hover:opacity-70',
                   )}
                 >
@@ -393,7 +395,7 @@ export function FilesTab({ project, branches, tick = 0, initialBranch }: FilesTa
               </div>
             )
           })}
-          {tabs.length === 0 && <span className="px-2 text-xs text-faint">No files open</span>}
+          {tabs.length === 0 && <span className="px-2 text-xs text-faint">{t("No files open")}</span>}
           <span ref={strip.indicator} aria-hidden="true" className="indicator file-tab-indicator" />
         </div>
 
@@ -402,10 +404,8 @@ export function FilesTab({ project, branches, tick = 0, initialBranch }: FilesTa
         ) : (
           <div className="hist-swap flex flex-1 flex-col items-center justify-center gap-2 text-center">
             <EmptyMark icon={FileText} />
-            <p className="text-sm font-medium">Open a file from the tree</p>
-            <p className="text-xs text-muted-foreground">
-              Files open read-only, at the Branch picked above the tree.
-            </p>
+            <p className="text-sm font-medium">{t("Open a file from the tree")}</p>
+            <p className="text-xs text-muted-foreground">{t("Files open read-only, at the Branch picked above the tree.")}</p>
           </div>
         )}
       </section>

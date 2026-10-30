@@ -190,13 +190,6 @@ void app.whenReady().then(async () => {
   const theme = process.env.CONNECT_THEME
   if (!app.isPackaged && (theme === 'dark' || theme === 'light')) nativeTheme.themeSource = theme
   hostAddress = await startHost()
-  // the one thing the page asks Electron for: a folder the user picks (New project imports it)
-  ipcMain.handle('connect:pick-folder', async (event) => {
-    const win = BrowserWindow.fromWebContents(event.sender)
-    const options = { title: 'Choose a folder to import', buttonLabel: 'Import', properties: ['openDirectory' as const] }
-    const picked = win ? await dialog.showOpenDialog(win, options) : await dialog.showOpenDialog(options)
-    return picked.canceled ? null : (picked.filePaths[0] ?? null)
-  })
   createWindow()
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()

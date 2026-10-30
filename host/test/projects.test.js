@@ -33,7 +33,7 @@ before(async () => {
 })
 after(async () => {
   await projects.close()
-  await runtime.project.delete(NAME, { confirm: NAME, stopSandboxes: true })
+  await runtime.project.remove(NAME, { confirm: NAME, stopSandboxes: true })
   await runtime.close()
 })
 
@@ -97,15 +97,6 @@ test('commits: newest first, as CommitInfo; main has none (its history is Layers
   await assert.rejects(projects.commits(NAME, 'no-such-branch'), { code: 'NoSuchBranch' })
 })
 
-test('branchCommits: several Branches in one call, as commits() gives each; an unknown one left out', async () => {
-  const all = await projects.branchCommits(NAME, ['feature-home', 'main', 'no-such-branch'])
-  assert.deepEqual(Object.keys(all).sort(), ['feature-home', 'main'])
-  assert.deepEqual(all.main, [])
-  assert.deepEqual(all['feature-home'], await projects.commits(NAME, 'feature-home'))
-  assert.deepEqual(await projects.branchCommits(NAME, []), {})
-  await assert.rejects(projects.branchCommits(NAME, ['']), { status: 400 })
-})
-
 test('state and Commit reads see every Branch, past get_state\'s 64 and one list_branches page', async () => {
   const lf = await withProjectEnv(spec, await projects.record(NAME), () => LayerFS.open(NAME))
   const extra = Array.from({ length: 100 }, (_, i) => `wide-${String(i).padStart(3, '0')}`)
@@ -121,8 +112,6 @@ test('state and Commit reads see every Branch, past get_state\'s 64 and one list
   const last = st.branches.find((b) => b.name === extra.at(-1))
   assert.equal(last.parent, 'main')
   assert.equal(last.forkedFrom, st.branches.find((b) => b.name === 'feature-home').forkedFrom)
-  const all = await projects.branchCommits(NAME, extra)
-  assert.deepEqual(Object.keys(all).sort(), extra)
   assert.deepEqual(await projects.commits(NAME, extra.at(-1)), [])
 })
 
@@ -159,28 +148,4 @@ test('one client per project, kept open between reads', async () => {
   assert.equal(projects.clients.get(NAME), held)
   assert.equal(held.users, 0)
   assert.ok(held.timer)
-})
-
-test('create: an empty project, followed through its Init; bad requests refused before any change', async () => {
-  const name = `${NAME}-empty`
-  await assert.rejects(projects.create({ name: 'Bad Name' }), { status: 400 })
-  await assert.rejects(projects.create({ name, folder: 'relative/path' }), { status: 400 })
-  await assert.rejects(projects.create({ name: NAME }), { code: 'Exists' })
-  let job = await projects.create({ name })
-  assert.equal(job.name, name)
-  assert.equal(job.source, null)
-  try {
-    while (!job.ended) {
-      await pause(250)
-      job = await projects.initJob(job.id)
-    }
-    assert.equal(job.step, 'done', job.error?.message)
-    const listed = (await projects.list()).find((p) => p.name === name)
-    assert.equal(listed?.initialized, true)
-    assert.deepEqual(await projects.listDir(name, 'main', '/'), [])
-  } finally {
-    await projects.forget(name)
-    await runtime.project.delete(name, { confirm: name, stopSandboxes: true }).catch(() => {})
-  }
-  await assert.rejects(projects.initJob('no-such-job'), { status: 404 })
 })

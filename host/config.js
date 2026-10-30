@@ -113,24 +113,6 @@ export function openRuntime(spec) {
  * runtime's record ({ name, volume, image? }).
  */
 export function deploymentEnv(spec, project) {
-  // layerfs#506 d: a project of a PostgreSQL Store has no volume; its Store
-  // calls and its Sandboxes' daemons open the schema with the connection's
-  // URL, noted in this process only (notePostgresql), never written
-  const url = project.store ? spec.postgresqlUrls?.get(project.store) : undefined
-  if (url) {
-    return {
-      PROJECT: project.name,
-      HOME: spec.home,
-      DOCKER: spec.docker,
-      IMAGE: project.image ?? spec.image ?? '',
-      DAEMON: spec.daemon ?? '',
-      STORE_PATH: `postgresql:${project.store}`,
-      STORE: project.store,
-      STORE_POSTGRESQL: JSON.stringify({ url }),
-      CONTAINER_PREFIX: spec.prefix,
-      ...(spec.worker ? { WORKER_ENDPOINT: join(spec.home, 'worker', 'endpoint.json') } : {}),
-    }
-  }
   return {
     PROJECT: project.name,
     HOME: spec.home,
@@ -139,48 +121,9 @@ export function deploymentEnv(spec, project) {
     DAEMON: spec.daemon ?? '',
     VOLUME: project.volume,
     STORE_PATH: `${VOLUMES}/${project.volume}/_data/global/store.sqlite`,
-    // layerfs#506: a project of a shared Store is addressed by its Store and name
-    STORE: project.shared ? project.store : '',
     CONTAINER_PREFIX: spec.prefix,
     ...(spec.worker ? { WORKER_ENDPOINT: join(spec.home, 'worker', 'endpoint.json') } : {}),
   }
-}
-
-/**
- * Whether the project `key` (a key or a projectRef) is in a PostgreSQL Store
- * (layerfs#506 d): then its connection's URL, as the LayerFS box reaches
- * it, is noted for deploymentEnv in this process. `spec.postgresqlUrl(store)`
- * (set by main.js from storage.js) answers it, or refuses NoSuchStore for a
- * Store that is not one; any other refusal (its connection is gone) is thrown.
- */
-export async function notePostgresql(spec, key) {
-  const ref = typeof key === 'string' ? projectRef(key) : key
-  if (!ref?.store || !spec.postgresqlUrl) return false
-  if (spec.postgresqlUrls?.has(ref.store)) return true
-  let url
-  try {
-    url = await spec.postgresqlUrl(ref.store)
-  } catch (error) {
-    if (error?.code === 'NoSuchStore') return false
-    throw error
-  }
-  ;(spec.postgresqlUrls ??= new Map()).set(ref.store, url)
-  return true
-}
-
-/** The Store holding a runtime project record (a build before layerfs#506 has none: the project's own). */
-export const storeOf = (p) => (typeof p.store === 'string' ? p.store : (p.store?.name ?? p.name))
-/** The key a project goes by, as the runtime's: `store/name` in a shared Store, else the name. */
-export const keyOf = (p) => (p.shared ? `${storeOf(p)}/${p.name}` : p.name)
-
-/**
- * A project key as the app and runs know it (layerfs#506): `store/name` for
- * a project of a shared Store, else the bare name. As a project for
- * deploymentEnv: `{ name, store, shared }`.
- */
-export function projectRef(key) {
-  const at = String(key).indexOf('/')
-  return at < 0 ? { name: key, store: null, shared: false } : { name: key.slice(at + 1), store: key.slice(0, at), shared: true }
 }
 
 /** `deploymentEnv` as LAYERFS_* environment variables. */
@@ -191,9 +134,9 @@ export const layerfsEnv = (spec, project) =>
       .map(([k, v]) => [`LAYERFS_${k}`, v]),
   )
 
-/** Runs `make` with LAYERFS_* set for `project` (and `extra`), restoring the environment before it returns. LayerFS.open reads it synchronously. */
-export function withProjectEnv(spec, project, make, extra = {}) {
-  const env = { ...layerfsEnv(spec, project), ...extra }
+/** Runs `make` with LAYERFS_* set for `project`, restoring the environment before it returns. LayerFS.open reads it synchronously. */
+export function withProjectEnv(spec, project, make) {
+  const env = layerfsEnv(spec, project)
   const saved = Object.fromEntries(Object.keys(env).map((k) => [k, process.env[k]]))
   Object.assign(process.env, env)
   try {
