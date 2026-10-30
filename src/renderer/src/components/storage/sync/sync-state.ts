@@ -54,7 +54,7 @@ export const severity = (s: StoreSyncState | null | undefined) => {
   return i < 0 ? SEVERITY.indexOf('unknown') : i
 }
 
-/** States that ask the user to act (the toolbar's Needs attention). */
+/** States that ask the user to act: their cards come first, with a ring (overview/store-card.tsx). */
 export const NEEDS_ACTION: StoreSyncState[] = ['ahead', 'behind', 'diverged', 'missing', 'unreachable']
 
 export const isSyncState = (s: unknown): s is StoreSyncState => typeof s === 'string' && s in SYNC

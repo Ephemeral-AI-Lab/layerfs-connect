@@ -1,32 +1,36 @@
-// The overview (storage-redesign §3.1): the summary strip, the transfer tray,
-// what this LayerFS build can do, notices, the toolbar, both family bands and
-// every connection. Search, filter and sort live here; the bands render.
-import { Download, Plus, TriangleAlert } from 'lucide-react'
-import { useState } from 'react'
+// The board (layerfs-storage.md): one line of facts with search, then one
+// card per Store with its projects. Stores that need you come first, then
+// shared Stores, then projects' own Stores. Warnings and failed transfers show
+// only while they are true; connections and this machine open from the line.
+import { ChevronDown, Database, Download, HardDrive, Plus, RefreshCw, Search, TriangleAlert, X } from 'lucide-react'
+import { type CSSProperties, useEffect, useRef, useState } from 'react'
 import { siSqlite } from 'simple-icons'
 
 import { Empty, LoadError } from '@/components/projects/states'
-import { useStorage } from '@/components/storage/actions'
+import { count, useStorage } from '@/components/storage/actions'
 import { Mark } from '@/components/storage/icons'
+import { ProviderMark } from '@/components/storage/identity/store-icon'
 import { LOW_DISK } from '@/components/storage/meters'
 import { Notice } from '@/components/storage/notice'
-import { Capabilities } from '@/components/storage/overview/capabilities'
-import { Connections } from '@/components/storage/overview/connections'
-import { PostgresqlBand } from '@/components/storage/overview/postgresql-band'
-import type { Sort, SortKey } from '@/components/storage/overview/row-parts'
-import { SqliteBand } from '@/components/storage/overview/sqlite-band'
-import { SummaryStrip } from '@/components/storage/overview/summary-strip'
-import { type Filter, Toolbar } from '@/components/storage/overview/toolbar'
-import { NEEDS_ACTION, severity } from '@/components/storage/sync/sync-state'
-import { isFailed } from '@/components/storage/transfers/phases'
+import { attentionOf, StoreCard } from '@/components/storage/overview/store-card'
+import { totalText } from '@/components/storage/size'
+import { HealthDot } from '@/components/storage/sync/health-dot'
+import { isFailed, isRunning } from '@/components/storage/transfers/phases'
 import { TransferTray } from '@/components/storage/transfers/transfer-tray'
+import { dismissJob } from '@/components/storage/transfers/use-transfers'
 import { Button } from '@/components/ui/button'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import { Input } from '@/components/ui/input'
+import { bytes } from '@/data/format'
 import { t, useI18n } from '@/i18n'
 import { cn } from '@/lib/utils'
 import type { StoreInfo } from '@shared/host-api'
 
 /** The SQLite mark, for the empty state's lit tile. */
 const SqliteMark = ({ className }: { className?: string }) => <Mark icon={siSqlite} className={className} />
+
+/** Search shows from this many Stores up (or while it holds words). */
+const SEARCH_FROM = 6
 
 type Row = { store: StoreInfo; match: string | null }
 
@@ -43,52 +47,39 @@ export function Overview({ error, onRetry, trayHidden, setTrayHidden, loadedProj
   const s = useStorage()
   const { view, status, transfers } = s
   const [query, setQuery] = useState('')
-  const [filter, setFilter] = useState<Filter>('all')
-  const [sort, setSort] = useState<Sort>({ key: 'name', dir: 1 })
-  const onSort = (key: SortKey) => setSort((x) => (x.key === key ? { key, dir: x.dir === 1 ? -1 : 1 } : { key, dir: key === 'size' ? -1 : 1 }))
 
-  const sqlite = view.stores.list.filter((x) => x.kind === 'sqlite')
-  const pg = view.stores.list.filter((x) => x.kind === 'postgresql')
-  const downConnections = new Set(view.postgresql.connections.filter((c) => c.health.state === 'unreachable' || c.health.state === 'denied').map((c) => c.name))
-  const failedOn = new Set(transfers.shown.filter(isFailed).map((j) => j.store))
-  const attention = (x: StoreInfo) => (x.kind === 'sqlite' ? NEEDS_ACTION.includes(x.sync.state) || failedOn.has(x.name) : downConnections.has(x.connection ?? ''))
-
+  const all = view.stores.list
+  const attention = new Map(all.map((x) => [x.name, attentionOf(x, s)]))
+  // needs you, then shared Stores, then projects' own Stores; by name within each
+  const rank = (x: StoreInfo) => (attention.get(x.name) ? 0 : transfers.runningFor(x.name) ? 1 : x.legacy ? 3 : 2)
   const q = query.trim().toLowerCase()
   const pass = (x: StoreInfo): Row | null => {
-    if (filter === 'attention' && !attention(x)) return null
     if (!q || x.name.toLowerCase().includes(q)) return { store: x, match: null }
     const p = x.projects.find((name) => name.toLowerCase().includes(q))
     return p ? { store: x, match: p } : null
   }
-  const cmp = (a: StoreInfo, b: StoreInfo) => {
-    if (sort.key === 'name') return a.name.localeCompare(b.name) * sort.dir
-    const d = sort.key === 'size' ? (a.size?.bytes ?? -1) - (b.size?.bytes ?? -1) : severity(a.sync.state) - severity(b.sync.state)
-    return d * sort.dir || a.name.localeCompare(b.name)
-  }
-  const kept = (list: StoreInfo[]) => list.map(pass).filter((x): x is Row => x !== null)
-  const sqliteRows = kept(sqlite).sort((a, b) => cmp(a.store, b.store))
-  const pgRows = kept(pg).sort((a, b) => a.store.name.localeCompare(b.store.name))
-  const filtering = !!q || filter !== 'all'
-  const noMatch = filtering && !sqliteRows.length && !pgRows.length
-  const empty = filter === 'attention' && !q ? t('Nothing needs attention. Every linked Store is in sync or being checked.') : t('No Stores match.')
+  const rows = all
+    .map(pass)
+    .filter((x): x is Row => x !== null)
+    .sort((a, b) => rank(a.store) - rank(b.store) || a.store.name.localeCompare(b.store.name))
 
   const lowDisk = !!status && [status.disk.home, status.disk.volumes].some((n) => n !== null && n < LOW_DISK)
   const worker = status?.worker
   const workerDown = !!worker && worker.state !== 'starting' && (worker.state !== 'running' || !!worker.error)
-  const nothing = view.stores.available && !sqlite.length && !pg.length
+  const nothing = view.stores.available && !all.length
+  const reading = !view.stores.available && !loadedProjects
 
-  const attentionAndGo = () => {
-    setFilter('attention')
-    requestAnimationFrame(() => document.getElementById('sqlite-band')?.scrollIntoView({ block: 'start', behavior: 'smooth' }))
+  // the tray only for what has no card to show it: failed jobs, and imports still copying into a new Store
+  const trayJobs = transfers.shown.filter((j) => isFailed(j) || (j.kind === 'import' && isRunning(j)))
+  const hideTray = () => {
+    trayJobs.filter((j) => !isRunning(j)).forEach((j) => dismissJob(j.id))
+    setTrayHidden(true)
   }
 
   return (
     <>
-      <div className={cn('transition-opacity duration-(--dur-base)', error && 'opacity-55')}>
-        <SummaryStrip view={view} transfers={transfers} onAttention={attentionAndGo} trayHidden={trayHidden} onShowTray={() => setTrayHidden(false)} index={0} />
-      </div>
-      {!trayHidden && <TransferTray transfers={transfers} onHide={() => setTrayHidden(true)} actionsFor={s.refusalActions} index={1} />}
-      <Capabilities index={2} />
+      {!error && !nothing && <FactsLine query={query} onQuery={setQuery} showSearch={all.length >= SEARCH_FROM || !!query} />}
+      {!trayHidden && trayJobs.length > 0 && <TransferTray transfers={{ ...transfers, shown: trayJobs }} onHide={hideTray} actionsFor={s.refusalActions} />}
       {workerDown && (
         <Notice
           tone="warning"
@@ -108,6 +99,7 @@ export function Overview({ error, onRetry, trayHidden, setTrayHidden, loadedProj
           {t('Init and Commits write into the Store volumes, and a push stages a file beside its Store; a full disk fails them.')}
         </Notice>
       )}
+      <BuildLine />
       {error ? (
         <LoadError error={error} what={t('the storage')} onRetry={onRetry} />
       ) : nothing ? (
@@ -132,20 +124,185 @@ export function Overview({ error, onRetry, trayHidden, setTrayHidden, loadedProj
         </Empty>
       ) : (
         <>
-          <Toolbar
-            query={query}
-            onQuery={setQuery}
-            filter={filter}
-            onFilter={setFilter}
-            counts={{ all: sqlite.length + pg.length, attention: [...sqlite, ...pg].filter(attention).length }}
-            noMatch={noMatch}
-            index={3}
-          />
-          <SqliteBand stores={!view.stores.available && !loadedProjects ? null : sqliteRows} all={sqlite} sort={sort} onSort={onSort} empty={filtering ? empty : undefined} index={4} />
-          {(view.postgresql.available || pg.length > 0) && <PostgresqlBand stores={pgRows} all={pg} filtering={filtering} empty={empty} index={5} />}
-          {(view.remotes.available || view.postgresql.available) && <Connections index={6} />}
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(17.5rem,1fr))] gap-4">
+            {reading
+              ? Array.from({ length: 6 }, (_, i) => <span key={i} className="shimmer h-36 rounded-2xl" />)
+              : rows.map(({ store, match }, i) => <StoreCard key={store.name} store={store} match={match} attention={attention.get(store.name) ?? null} index={Math.min(i, 12)} />)}
+          </div>
+          {!reading && q && !rows.length && (
+            <p className="py-8 text-center text-[13px] text-muted-foreground">
+              {t('No Stores match.')}{' '}
+              <button type="button" onClick={() => setQuery('')} className="rounded-md text-primary outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring">
+                {t('Clear')}
+              </button>
+            </p>
+          )}
         </>
       )}
     </>
+  )
+}
+
+/** "16 Stores · 1.8 GB · 77.9 GB free on this machine · 4 connections ▾", and search on the right. */
+function FactsLine({ query, onQuery, showSearch }: { query: string; onQuery: (q: string) => void; showSearch: boolean }) {
+  const s = useStorage()
+  const all = s.view.stores.list
+  const known = all.filter((x) => x.size)
+  const total = known.reduce((n, x) => n + x.size!.bytes, 0)
+  const st = s.status
+  const free = st ? [st.disk.home, st.disk.volumes].filter((n): n is number => n !== null) : []
+  const low = free.length > 0 && Math.min(...free) < LOW_DISK
+  const link = 'rounded-md outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring'
+  const dot = (
+    <span aria-hidden="true" className="text-faint">
+      ·
+    </span>
+  )
+  return (
+    <div className="reveal flex min-h-9 flex-wrap items-center gap-x-4 gap-y-2" style={{ '--i': 0 } as CSSProperties}>
+      <p className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-1 text-[13px] text-muted-foreground tabular-nums">
+        <span>{count(all.length, 'Store')}</span>
+        {dot}
+        <span>{totalText(total, all.length - known.length, all.length)}</span>
+        {dot}
+        <button type="button" onClick={() => s.open({ view: 'machine' })} className={cn(link, 'inline-flex items-center gap-1.5', low && 'font-medium text-warning')}>
+          <HardDrive aria-hidden="true" className="size-3.5" />
+          {st?.docker.level !== 'ok' && st ? t('Docker is not answering') : free.length ? t('{size} free on this machine', { size: bytes(Math.min(...free)) }) : t('This machine')}
+        </button>
+        <ConnectionsMenu dot={dot} link={link} />
+      </p>
+      {showSearch && <SearchField query={query} onQuery={onQuery} />}
+    </div>
+  )
+}
+
+/** "· 4 connections ▾": each bucket and database with its health, then Add connection… and Check all now. */
+function ConnectionsMenu({ dot, link }: { dot: React.ReactNode; link: string }) {
+  const s = useStorage()
+  const { remotes, postgresql } = s.view
+  if (!remotes.available && !postgresql.available) return null
+  const n = remotes.list.length + postgresql.connections.length
+  const canCheck = s.view.supports.check || s.view.supports.postgresqlStatus
+  if (!n)
+    return (
+      <>
+        {dot}
+        <button type="button" onClick={() => s.addLocation()} className={cn(link, 'inline-flex items-center gap-1')}>
+          <Plus aria-hidden="true" className="size-3.5" /> {t('Add connection')}
+        </button>
+      </>
+    )
+  return (
+    <>
+      {dot}
+      <DropdownMenu>
+        <DropdownMenuTrigger className={cn(link, 'inline-flex items-center gap-1')}>
+          {count(n, 'connection')}
+          <ChevronDown aria-hidden="true" className="size-3.5" />
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start" className="w-72 rounded-xl">
+          {remotes.list.length > 0 && <DropdownMenuLabel className="text-xs text-muted-foreground">{t('Buckets')}</DropdownMenuLabel>}
+          {[...remotes.list]
+            .sort((a, b) => a.name.localeCompare(b.name))
+            .map((r) => (
+              <DropdownMenuItem key={r.name} onSelect={() => s.open({ view: 'location', id: r.name })}>
+                <ProviderMark provider={r.provider} className="size-4" />
+                <span className="min-w-0 flex-1 truncate font-mono text-[13px]">{r.name}</span>
+                <HealthDot health={r.health} quiet />
+              </DropdownMenuItem>
+            ))}
+          {postgresql.connections.length > 0 && <DropdownMenuLabel className="text-xs text-muted-foreground">{t('PostgreSQL')}</DropdownMenuLabel>}
+          {[...postgresql.connections]
+            .sort((a, b) => a.name.localeCompare(b.name))
+            .map((c) => (
+              <DropdownMenuItem key={c.name} onSelect={() => s.open({ view: 'connection', id: c.name })}>
+                <Database className="text-muted-foreground" />
+                <span className="min-w-0 flex-1 truncate font-mono text-[13px]">{c.name}</span>
+                <HealthDot health={c.health} quiet />
+              </DropdownMenuItem>
+            ))}
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onSelect={() => s.addLocation()}>
+            <Plus className="text-muted-foreground" /> {t('Add connection…')}
+          </DropdownMenuItem>
+          {canCheck && (
+            <DropdownMenuItem onSelect={() => void s.check().catch(() => undefined)} disabled={s.checking}>
+              <RefreshCw className={cn('text-muted-foreground', s.checking && 'motion-safe:animate-spin')} /> {s.checking ? t('Checking…') : t('Check all now')}
+            </DropdownMenuItem>
+          )}
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </>
+  )
+}
+
+/** Search over Store and project names: `/` focuses it, Esc clears it. */
+function SearchField({ query, onQuery }: { query: string; onQuery: (q: string) => void }) {
+  const input = useRef<HTMLInputElement>(null)
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null
+      if (e.key !== '/' || e.metaKey || e.ctrlKey || e.altKey) return
+      if (target && (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName))) return
+      if (document.querySelector('[role="dialog"]')) return
+      e.preventDefault()
+      input.current?.focus()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
+  return (
+    <div className="relative w-full sm:w-60">
+      <Search aria-hidden="true" className="pointer-events-none absolute top-1/2 left-3 size-3.5 -translate-y-1/2 text-muted-foreground" />
+      <Input
+        ref={input}
+        value={query}
+        onChange={(e) => onQuery(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === 'Escape' && query) {
+            e.preventDefault()
+            onQuery('')
+          }
+        }}
+        placeholder={t('Search Stores and projects')}
+        aria-label={t('Search Stores and projects')}
+        className="glass-liquid h-9 rounded-xl pr-8 pl-8.5"
+      />
+      {query ? (
+        <button
+          type="button"
+          onClick={() => onQuery('')}
+          aria-label={t('Clear the search')}
+          className="absolute top-1/2 right-2 flex size-5 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          <X className="size-3.5" />
+        </button>
+      ) : (
+        <kbd aria-hidden="true" className="pointer-events-none absolute top-1/2 right-2.5 -translate-y-1/2 rounded-md border border-foreground/10 bg-muted/70 px-1.5 font-mono text-[10px] text-muted-foreground">
+          /
+        </kbd>
+      )}
+    </div>
+  )
+}
+
+/** One quiet line when the linked LayerFS build lacks part of Storage; the build's reasons in the tooltip. */
+function BuildLine() {
+  const { view } = useStorage()
+  const parts = [
+    { name: 'Shared Stores', on: view.stores.available, reason: view.stores.reason },
+    { name: 'Buckets', on: view.remotes.available, reason: view.remotes.reason },
+    { name: 'PostgreSQL', on: view.postgresql.available, reason: view.postgresql.reason },
+  ].filter((p) => !p.on)
+  if (!parts.length) return null
+  const tip = parts.map((p) => `${t(p.name)}: ${p.reason ?? t('Not in this build')}`).join('\n')
+  return (
+    <p title={tip} className="reveal flex items-center gap-2 text-xs text-muted-foreground">
+      <TriangleAlert aria-hidden="true" className="size-3.5 shrink-0" />
+      <span className="text-pretty">
+        {t('Not in this LayerFS build: {parts}.', { parts: parts.map((p) => t(p.name)).join(', ') })}
+        {!view.stores.available && ` ${t('Each project keeps its own SQLite Store.')}`}
+      </span>
+    </p>
   )
 }

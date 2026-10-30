@@ -1,10 +1,9 @@
-// The Storage page (docs/ui/layerfs-storage.md, storage-links §3). Stores
-// first: a summary strip, then every Store in two family bands, SQLite (files
-// on this machine, each linked to at most one remote file) and PostgreSQL
-// (schemas, live in a database); then every connection in one grid. A row or
-// card opens its own page; the view lives in the URL hash
-// (#storage/store/work), so back works. When the linked LayerFS build lacks
-// part of the storage view, a capabilities card says which part and why.
+// The Storage page (docs/ui/layerfs-storage.md, storage-links §3): one line
+// of facts, then one card per Store with its projects (SQLite Stores on this
+// machine, each linked to at most one remote file, and PostgreSQL Stores that
+// live in a database). A card opens its Store's page; the view lives in the
+// URL hash (#storage/store/work), so back works. One "New" menu makes Stores
+// and connections.
 import { ChevronDown, Cloud, Database, DatabaseZap, Download, Plus } from 'lucide-react'
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 
@@ -18,21 +17,18 @@ import { PostgresqlStoreDetail } from '@/components/storage/detail/postgresql-st
 import { SqliteStoreDetail } from '@/components/storage/detail/sqlite-store-detail'
 import { StorageDialogs, type DialogState } from '@/components/storage/dialogs/storage-dialogs'
 import { pullDiscards } from '@/components/storage/dialogs/pull-dialog'
-import { FamilyTile } from '@/components/storage/identity/store-icon'
 import { Overview } from '@/components/storage/overview/overview'
-import { SummaryStrip } from '@/components/storage/overview/summary-strip'
 import { PUSH_REPLACES } from '@/components/storage/sync/sync-state'
 import { isFailed } from '@/components/storage/transfers/phases'
-import { onJobEnded, putJob, type Transfers, useTransfers } from '@/components/storage/transfers/use-transfers'
+import { onJobEnded, putJob, useTransfers } from '@/components/storage/transfers/use-transfers'
 import { Unavailable } from '@/components/storage/unavailable'
 import { loadStorage, normalizeJob, normalizeView } from '@/components/storage/view'
 import { Button } from '@/components/ui/button'
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { host, onProjectsChanged } from '@/host/client'
 import { useHostQuery, useStorageEvents } from '@/host/use-host'
 import type { ProjectCatalog } from '@/host/use-projects'
 import { t, useI18n } from '@/i18n'
-import { cn } from '@/lib/utils'
 import { type ProjectSummary, projectKey, type StorageCheck, type StorageView, type StoreInfo } from '@shared/host-api'
 
 import '@/components/storage/storage.css'
@@ -63,8 +59,6 @@ function fallbackView(projects: ProjectSummary[], base: StorageView | null): Sto
     jobs: [],
   })
 }
-
-const NO_TRANSFERS: Transfers = { all: [], running: [], shown: [], jobFor: () => undefined, runningFor: () => undefined }
 
 interface StoragePageProps {
   catalog: ProjectCatalog
@@ -265,44 +259,42 @@ export function StoragePage({ catalog, initialId, onOpenProject }: StoragePagePr
   const on = view?.stores.available === true
   const remotesOn = view?.remotes.available === true
   const pgOn = view?.postgresql.available === true
-  const headerActions = (
-    <>
-      {remotesOn || pgOn ? (
-        <SplitButton
-          label={t('Add connection')}
-          icon={<Plus />}
-          variant="outline"
-          onMain={() => setDialog({ kind: 'location' })}
-          items={[
-            { label: t('Bucket (MinIO, R2)…'), icon: <Cloud />, onSelect: () => setDialog({ kind: 'location', family: 'copy' }), disabled: !remotesOn },
-            { label: t('PostgreSQL connection…'), icon: <Database />, onSelect: () => setDialog({ kind: 'location', family: 'database' }), disabled: !pgOn },
-          ]}
-        />
-      ) : (
-        <Unavailable reason={view?.remotes.reason ?? 'Needs layerfs#506.'}>
-          <Button variant="outline" className="rounded-xl" disabled>
-            <Plus /> {t('Add connection')}
-          </Button>
-        </Unavailable>
-      )}
-      {on ? (
-        <SplitButton
-          label={t('New Store')}
-          icon={<Plus />}
-          onMain={() => setDialog({ kind: 'new-store' })}
-          items={[
-            { label: t('Load from a connection…'), icon: <Download />, onSelect: () => open({ view: 'location', id: view?.remotes.list[0]?.name ?? '' }), disabled: !view?.remotes.list.length },
-            { label: t('Import into PostgreSQL…'), icon: <DatabaseZap />, onSelect: () => setDialog({ kind: 'import' }), disabled: !view?.postgresql.connections.length },
-          ]}
-        />
-      ) : (
-        <Unavailable reason={view?.stores.reason ?? FALLBACK_REASON}>
-          <Button className="rounded-xl" disabled>
-            <Plus /> {t('New Store')}
-          </Button>
-        </Unavailable>
-      )}
-    </>
+  type NewItem = { label: string; icon: React.ReactNode; onSelect: () => void; disabled?: boolean } | 'separator'
+  const newItems = ([
+    on && { label: t('New Store…'), icon: <Plus />, onSelect: () => setDialog({ kind: 'new-store' }) },
+    on && remotesOn && { label: t('Load from a connection…'), icon: <Download />, onSelect: () => open({ view: 'location', id: view?.remotes.list[0]?.name ?? '' }), disabled: !view?.remotes.list.length },
+    pgOn && { label: t('Import into PostgreSQL…'), icon: <DatabaseZap />, onSelect: () => setDialog({ kind: 'import' }), disabled: !view?.postgresql.connections.length },
+    (remotesOn || pgOn) && ('separator' as const),
+    remotesOn && { label: t('Bucket connection (MinIO, R2)…'), icon: <Cloud />, onSelect: () => setDialog({ kind: 'location', family: 'copy' }) },
+    pgOn && { label: t('PostgreSQL connection…'), icon: <Database />, onSelect: () => setDialog({ kind: 'location', family: 'database' }) },
+  ] as (NewItem | false)[])
+    .filter((x): x is NewItem => !!x)
+    .filter((x, i) => !(x === 'separator' && i === 0))
+  const headerActions = newItems.some((x) => x !== 'separator') ? (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button className="rounded-xl">
+          <Plus /> {t('New')} <ChevronDown />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-72 rounded-xl">
+        {newItems.map((it, i) =>
+          it === 'separator' ? (
+            <DropdownMenuSeparator key={i} />
+          ) : (
+            <DropdownMenuItem key={it.label} onSelect={it.onSelect} disabled={it.disabled}>
+              <span className="text-muted-foreground [&_svg]:size-4">{it.icon}</span> {it.label}
+            </DropdownMenuItem>
+          ),
+        )}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  ) : (
+    <Unavailable reason={view?.stores.reason ?? FALLBACK_REASON}>
+      <Button className="rounded-xl" disabled>
+        <Plus /> {t('New')}
+      </Button>
+    </Unavailable>
   )
 
   const retry = () => {
@@ -313,7 +305,6 @@ export function StoragePage({ catalog, initialId, onOpenProject }: StoragePagePr
     <div className="flex h-svh min-w-0 flex-col">
       <PageHeader
         title={t('Storage')}
-        description={t('Where projects’ history lives: SQLite Stores on this machine, each linked to at most one file in a bucket, and PostgreSQL Stores that live in a database.')}
         live={transfers.running.length > 0}
         actions={headerActions}
       />
@@ -342,66 +333,16 @@ export function StoragePage({ catalog, initialId, onOpenProject }: StoragePagePr
   )
 }
 
-/** A button with a menu of related ways beside it. */
-function SplitButton({
-  label,
-  icon,
-  variant = 'default',
-  onMain,
-  items,
-}: {
-  label: string
-  icon: React.ReactNode
-  variant?: 'default' | 'outline'
-  onMain: () => void
-  items: { label: string; icon: React.ReactNode; onSelect: () => void; disabled?: boolean }[]
-}) {
-  return (
-    <span className="inline-flex">
-      <Button variant={variant} onClick={onMain} className="rounded-l-xl rounded-r-none">
-        {icon} {label}
-      </Button>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant={variant}
-            aria-label={t('More ways: {label}', { label })}
-            className={cn('rounded-l-none rounded-r-xl px-1.5', variant === 'default' ? 'border-l border-l-primary-foreground/25' : '-ml-px')}
-          >
-            <ChevronDown />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-60 rounded-xl">
-          {items.map((it) => (
-            <DropdownMenuItem key={it.label} onSelect={it.onSelect} disabled={it.disabled}>
-              <span className="text-muted-foreground [&_svg]:size-4">{it.icon}</span> {it.label}
-            </DropdownMenuItem>
-          ))}
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </span>
-  )
-}
-
-/** The first load: the strip's cells, and each band's header reading over three rows (§10.1). */
+/** The first load: the facts line and a few cards reading (§10.1). */
 function OverviewSkeleton() {
   return (
     <div aria-busy="true" aria-label={t('Reading the storage')} className="flex flex-col gap-5">
-      <SummaryStrip view={null} transfers={NO_TRANSFERS} onAttention={() => {}} trayHidden={false} onShowTray={() => {}} />
-      {(['sqlite', 'postgresql'] as const).map((family) => (
-        <div key={family} className="glass-liquid rounded-2xl p-5 shadow-xs">
-          <div className="flex items-center gap-3">
-            <FamilyTile family={family} size="md" />
-            <span className="text-[15px] font-semibold tracking-tight">{family === 'sqlite' ? t('SQLite Stores') : t('PostgreSQL Stores')}</span>
-            <span className="text-xs text-muted-foreground">{t('Reading…')}</span>
-          </div>
-          <div className="mt-5 flex flex-col gap-3">
-            {[0, 1, 2].map((r) => (
-              <span key={r} className="shimmer h-7 rounded-xl" />
-            ))}
-          </div>
-        </div>
-      ))}
+      <span className="shimmer h-5 w-80 max-w-full rounded-lg" />
+      <div className="grid grid-cols-[repeat(auto-fill,minmax(17.5rem,1fr))] gap-4">
+        {Array.from({ length: 6 }, (_, i) => (
+          <span key={i} className="shimmer h-36 rounded-2xl" />
+        ))}
+      </div>
     </div>
   )
 }

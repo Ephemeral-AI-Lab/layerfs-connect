@@ -14,7 +14,7 @@ import { FromLink, PostgresqlStoreMenu } from '@/components/storage/overview/pos
 import { StoreMenu } from '@/components/storage/overview/sqlite-store-row'
 import { SizeText } from '@/components/storage/size'
 import { copyTip } from '@/components/storage/sync/sync-pill'
-import { SYNC } from '@/components/storage/sync/sync-state'
+import { NEEDS_ACTION, SYNC } from '@/components/storage/sync/sync-state'
 import { isFailed } from '@/components/storage/transfers/phases'
 import { TransferRow } from '@/components/storage/transfers/transfer-row'
 import { Button } from '@/components/ui/button'
@@ -84,7 +84,7 @@ export function StoreCard({ store, attention, match, index = 0 }: StoreCardProps
         {sqlite ? <StoreMenu store={store} /> : <PostgresqlStoreMenu store={store} />}
       </header>
       {!solo && <Projects store={store} match={match ?? null} onMore={openStore} />}
-      <footer className="mt-auto flex min-h-7 min-w-0 items-center gap-2 border-t border-foreground/[0.06] pt-3">
+      <footer className="mt-auto flex min-h-11 min-w-0 items-center gap-2 border-t border-foreground/[0.06] pt-3">
         {job ? <TransferRow job={job} form="compact" className="min-w-0 flex-1" /> : <Footer store={store} />}
       </footer>
     </Card>
@@ -261,8 +261,6 @@ function isDown(s: ReturnType<typeof useStorage>, connection: string | null): bo
 export function attentionOf(store: StoreInfo, s: ReturnType<typeof useStorage>): Attention {
   if (store.kind === 'postgresql') return isDown(s, store.connection) ? 'warning' : null
   if (s.transfers.shown.some((j) => j.store === store.name && isFailed(j))) return 'danger'
-  const state = store.sync.state
-  if (state === 'diverged') return 'danger'
-  if (state === 'ahead' || state === 'behind' || state === 'missing' || state === 'unreachable') return 'warning'
-  return null
+  if (store.sync.state === 'diverged') return 'danger'
+  return NEEDS_ACTION.includes(store.sync.state) ? 'warning' : null
 }

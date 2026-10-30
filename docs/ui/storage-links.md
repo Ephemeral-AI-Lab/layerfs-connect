@@ -51,6 +51,11 @@ one schema, is never linked, and reads **Live**.
 
 ### 3.1 Storage overview
 
+> **Superseded (2026-10-31):** the overview is now one card per Store with its
+> projects, under one line of facts; bands, the summary strip and the
+> connections grid are gone. As built: [layerfs-storage.md](layerfs-storage.md)
+> regions 1–4. The text below is the earlier design.
+
 Top to bottom, one column:
 
 1. **Summary strip:** Stores, Linked (`3 of 11 SQLite`), Needs attention
