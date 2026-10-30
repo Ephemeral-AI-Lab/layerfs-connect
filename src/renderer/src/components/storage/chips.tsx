@@ -78,3 +78,19 @@ export function Dot({ tone, label }: { tone: Tone; label: string }) {
     />
   )
 }
+
+/** A state dot; while live it glows and sends out a ring (`pulse-ring`), at rest it is still. */
+export function StateDot({ tone, live, label, className }: { tone: Tone; live?: boolean; label: string; className?: string }) {
+  const { t } = useI18n()
+  return (
+    <span role="img" aria-label={t(label)} title={t(label)} className={cn('relative flex size-2 shrink-0', className)}>
+      <span
+        className={cn(
+          'size-2 rounded-full transition-colors duration-(--dur-base)',
+          DOT[tone],
+          live ? 'pulse-ring' : 'shadow-[0_0_0_2.5px_color-mix(in_oklab,currentColor_13%,transparent)]',
+        )}
+      />
+    </span>
+  )
+}

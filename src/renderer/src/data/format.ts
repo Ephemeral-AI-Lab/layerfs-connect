@@ -1,7 +1,5 @@
-import { t, localeTag } from '@/i18n'
+import { getLocale, t, localeTag } from '@/i18n'
 // Small formatters shared by the project, storage and compute pages.
-
-import { agentColors } from '@/components/runs/run-format'
 
 /** A host time as epoch milliseconds: the host may answer seconds or milliseconds. */
 export const toMs = (at: number | null | undefined): number | null =>
@@ -52,12 +50,15 @@ export const shortId = (id: string | null | undefined) =>
 export const shortDigest = (digest: string | null | undefined) =>
   !digest ? '—' : digest.replace(/^(sha256:)?([0-9a-f]{12})[0-9a-f]+$/, (_, p: string | undefined, h: string) => `${p ?? ''}${h}…`)
 
-/**
- * An agent's colour as a CSS value, for SVG and inline styles: the run pages'
- * colour (components/runs/run-format agentColors) by its place in `names`.
- */
+/** "1 Branch", "3 Branches"; in Chinese the word is translated and never takes a plural. */
+export const plural = (n: number, word: string) => getLocale() === 'zh-CN' ? `${n} ${t(word)}` : `${n} ${word}${n === 1 ? '' : 's'}`
+
+/** Agents take colours in the order they appear, root first: CSS custom properties. */
+const AGENT_COLORS = ['primary', 'agent-builder', 'agent-docs', 'agent-tester', 'lane-3', 'lane-2', 'agent-reviewer', 'hl-function']
+
+/** An agent's colour as a CSS value, for SVG and inline styles, by its place in `names` (a name not there comes after them). */
 export function agentColor(names: string[], name: string): string {
-  const dot = agentColors(names)(name).dot
-  const token = dot.match(/^bg-\(--([\w-]+)\)$/)?.[1] ?? dot.replace(/^bg-/, '')
-  return `var(--${token})`
+  const order = [...new Set(names)]
+  const i = order.indexOf(name)
+  return `var(--${AGENT_COLORS[(i < 0 ? order.length : i) % AGENT_COLORS.length]})`
 }

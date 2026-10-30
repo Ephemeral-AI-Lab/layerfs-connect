@@ -51,6 +51,8 @@ interface ComposerProps {
   loading?: boolean
   onStop?: () => void
   controls?: ReactNode
+  /** Controls on the right of the bar, before the send shortcut (the model and thinking pickers). */
+  trailing?: ReactNode
   commands?: ComposerCommand[]
   sendLabel?: string
   placeholder?: string
@@ -68,6 +70,7 @@ export function Composer({
   loading = false,
   onStop,
   controls,
+  trailing,
   commands = [],
   sendLabel = t("Send message"),
   placeholder = t("Give the agent a task…"),
@@ -283,6 +286,7 @@ export function Composer({
           </div>
 
           <div className="flex shrink-0 items-center gap-2">
+            {trailing}
             <DropdownMenu>
               <DropdownMenuTrigger aria-label={t("Send shortcut")} title={t("Send with {shortcut}", { shortcut: sendShortcut })} className="flex items-center gap-0.5 rounded-md px-1 py-1 text-[10px] text-muted-foreground outline-none hover:bg-foreground/[0.05] focus-visible:ring-2 focus-visible:ring-ring">
                 <span>{sendShortcut}</span><ChevronDown className="size-2.5 opacity-60" />

@@ -6,5 +6,7 @@ interface Window {
     arch: string
     chooseDirectory: (defaultPath?: string, locale?: 'zh-CN' | 'en') => Promise<string | null>
     host?: { url: string; token: string } | { error: string }
+    /** Tab commands from the main process ('close' for ⌘W); returns the unsubscribe. Absent outside Electron. */
+    onTabCommand?: (listener: (command: string) => void) => () => void
   }
 }

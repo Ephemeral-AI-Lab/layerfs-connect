@@ -8,11 +8,14 @@ import { projectsZh } from './projects'
 import { signinZh } from './signin'
 import { liveZh } from './live'
 import { scenariosZh } from './scenarios'
+import { tabsZh } from './tabs'
+import { traceZh } from './trace'
+import { preferencesZh } from './preferences'
 
 export type Locale = 'zh-CN' | 'en'
 export type TranslationValues = Record<string, string | number>
 const STORAGE_KEY = 'connect.language'
-const chinese = { ...resourcesZh, ...storageZh, ...projectsZh, ...signinZh, ...liveZh, ...scenariosZh, ...settingsZh, ...chatZh, ...commonZh }
+const chinese = { ...preferencesZh, ...resourcesZh, ...storageZh, ...projectsZh, ...signinZh, ...liveZh, ...scenariosZh, ...traceZh, ...tabsZh, ...settingsZh, ...chatZh, ...commonZh }
 const english = Object.fromEntries(Object.entries(chinese).map(([key, value]) => [value, key]))
 const listeners = new Set<() => void>()
 const systemLocale = (): Locale => navigator.language.toLowerCase().startsWith('zh') ? 'zh-CN' : 'en'

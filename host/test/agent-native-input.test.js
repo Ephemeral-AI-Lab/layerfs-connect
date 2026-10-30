@@ -215,7 +215,7 @@ for (const disposition of ['handled', 'transform']) {
   })
 }
 
-test('the runtime deadline cancels a pending Steer operation after the model has finished', async (t) => {
+test('Stop cancels a pending Steer operation after the model has finished', async (t) => {
   const main = Promise.withResolvers(), started = Promise.withResolvers(), promotion = Promise.withResolvers(), promoting = Promise.withResolvers()
   const f = await fixture(t, (pi) => pi.on('input', async (event) => {
     if (event.text === 'PENDING' && event.streamingBehavior === 'steer') { promoting.resolve(); await promotion.promise; return { action: 'transform', text: 'TOO LATE' } }
@@ -224,19 +224,19 @@ test('the runtime deadline cancels a pending Steer operation after the model has
     return 'Done.'
   })
   f.cleanup(() => { main.resolve(); promotion.resolve() })
-  const chat = await f.manager.create({ limits: { maxRuntimeSeconds: 1 } })
+  const chat = await f.manager.create()
   await f.manager.message(chat.id, { text: 'HOLD' }); await started.promise
   const pending = await f.manager.message(chat.id, { text: 'PENDING' })
   const moving = f.manager.updateQueued(chat.id, pending.queued[0].id, 'steer')
   const rejected = assert.rejects(moving, { code: 'stopping' })
   await promoting.promise
   main.resolve(); await f.manager.live.get(chat.id).task
+  const stopping = f.manager.stop(chat.id)
   await rejected
   const result = await f.wait(chat.id)
   assert.equal(result.execution.phase, 'interrupted')
-  assert.match(result.execution.reason, /1-second run limit/)
   assert.deepEqual(result.queued, [])
-  promotion.resolve(); await pause(25)
+  promotion.resolve(); await stopping; await pause(25)
   assert.deepEqual(f.requests.map(lastUser), ['HOLD'])
 })
 

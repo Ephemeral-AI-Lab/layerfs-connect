@@ -8,6 +8,7 @@ export const projectsZh: Record<string, string> = {
   'Local only': '仅本地',
   'local only': '仅本地',
   'on disk': '磁盘占用',
+  'Store {value1}': '存储 {value1}',
   '{family} Store': '{family} 存储',
   'Connection': '连接',
   'its database': '其数据库',

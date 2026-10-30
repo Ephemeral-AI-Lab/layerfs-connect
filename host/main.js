@@ -16,6 +16,7 @@ import { APP, openRuntime, resolveSpec } from './config.js'
 import { AgentManager } from './agents/index.js'
 import { Projects } from './projects.js'
 import { AgentWorkspaces } from './agents/workspaces.js'
+import { AgentScenarios } from './agents/scenarios.js'
 import { createHostServer, listen, newToken } from './server.js'
 import { Storage } from './storage.js'
 
@@ -79,7 +80,12 @@ async function main() {
   // the project list shows each project's Store sync state and copy providers from the Storage view
   projects.storeJoin = () => storage.projectJoin()
   // a session's project is a project key: its name, or `store/name` in a shared Store (layerfs#506)
-  const agents = await AgentManager.create({ state: spec.state, projectEnvironment: (key) => projects.recordOf(key), projectWorkspaces: new AgentWorkspaces({ projects }) })
+  // a scenario chat plays its script on the scenario engine's folder and scope (agents/scenarios.js)
+  const scenarios = await new AgentScenarios({ spec }).ready().catch((error) => {
+    log(`[host] scenario chats are off: ${error?.message ?? error}`)
+    return null
+  })
+  const agents = await AgentManager.create({ state: spec.state, projectEnvironment: (key) => projects.recordOf(key), projectWorkspaces: new AgentWorkspaces({ projects }), scenarios })
   const token = newToken()
   const server = createHostServer({ token, projects, storage, agents: () => agents, runs: () => engine.runs, runsError: () => engine.error, log })
 

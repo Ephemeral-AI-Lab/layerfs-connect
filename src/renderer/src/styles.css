@@ -296,8 +296,8 @@
   }
 }
 
-/* Live: a Branch row, Workspace or folded card rings in the colour of the
-   agent whose call just reached it (live-flow.ts sets --flash). */
+/* A card that just changed rings once in its --flash colour (a Store card on
+   the Storage page). */
 @keyframes live-flash {
   from {
     background-color: color-mix(in oklab, var(--flash) 16%, transparent);
@@ -986,21 +986,6 @@
       0 0 16px -6px color-mix(in oklab, var(--pulse) 50%, transparent);
   }
 }
-@keyframes trace-grow {
-  from {
-    transform: scaleX(0);
-    opacity: 0;
-  }
-}
-@keyframes trace-sweep {
-  from {
-    transform: translateX(0);
-  }
-  to {
-    transform: translateX(100%);
-  }
-}
-
 @layer components {
   /* A hero header's mark: a lit tile on a soft brand glow (<HeroTile>). */
   .hero-tile {
@@ -1042,47 +1027,6 @@
     box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.12), var(--elev-2);
   }
 
-  /* A hero header's facts: one row; if it ever overflows, its end fades rather than wrapping. */
-  .facts-row {
-    mask-image: linear-gradient(to right, #000 calc(100% - 1.5rem), transparent);
-  }
-  .facts-row > * {
-    flex-shrink: 0;
-  }
-  /* A fact as a small pill (<Stat>). */
-  .stat-pill {
-    display: inline-flex;
-    height: 1.75rem;
-    align-items: center;
-    gap: 0.3125rem;
-    padding: 0 0.5625rem;
-    border: 1px solid var(--border);
-    border-radius: 999px;
-    background-color: color-mix(in oklab, var(--card) 72%, transparent);
-    box-shadow: var(--highlight);
-    color: var(--muted-foreground);
-    font-size: 12px;
-    white-space: nowrap;
-    transition:
-      border-color var(--dur-fast) var(--ease-out-soft),
-      box-shadow var(--dur-base) var(--ease-out-soft);
-  }
-  .stat-pill > svg {
-    color: var(--faint);
-  }
-  .stat-pill:hover {
-    border-color: color-mix(in oklab, var(--primary) 28%, var(--border));
-  }
-  .stat-pill[data-live] {
-    border-color: color-mix(in oklab, var(--primary) 32%, var(--border));
-    box-shadow:
-      var(--highlight),
-      0 0 14px -6px var(--glow);
-  }
-  .stat-pill[data-live] > svg {
-    color: var(--primary);
-  }
-
   /* Something is playing: a calm, clean hairline along the header's bottom edge. */
   .live-line {
     position: absolute;
@@ -1117,43 +1061,6 @@
       inset 0 0 0 1px color-mix(in oklab, var(--foreground) 5%, transparent),
       0 0 16px -10px var(--glow);
   }
-  /* A playing session's row shows a calm tint in the colour of its running agent (--pulse). */
-  .side-live {
-    --pulse: var(--primary);
-    position: relative;
-    background-color: color-mix(in oklab, var(--pulse) 8%, transparent);
-    box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--pulse) 22%, transparent);
-  }
-  /* Its progress through the scenario, a hairline along the row's foot. */
-  .side-progress {
-    position: absolute;
-    inset: auto 0.5rem 1px;
-    height: 1.5px;
-    overflow: hidden;
-    border-radius: 999px;
-    pointer-events: none;
-    background: color-mix(in oklab, var(--pulse, var(--primary)) 14%, transparent);
-  }
-  .side-progress::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    background-image: var(--brand-gradient);
-    transform-origin: left;
-    transform: scaleX(var(--p, 0));
-    transition: transform var(--dur-slow) var(--ease-out-expo);
-  }
-
-  /* Trace's coming-soon sketch: lanes of calls draw in, a playhead sweeps across. */
-  .trace-sketch .trace-bar {
-    transform-origin: left;
-    animation: trace-grow 700ms var(--ease-out-expo) backwards;
-    animation-delay: calc(var(--d, 0) * 1ms);
-  }
-  .trace-sketch .trace-head {
-    animation: trace-sweep 6s linear infinite;
-  }
 }
 
 /* Page and tab switches (viewTransition() in components/motion). The sidebar
@@ -1182,7 +1089,7 @@ html:active-view-transition-type(tab)::view-transition-new(page) {
   animation: none;
 }
 
-/* Reduced motion: everything settles at once; Live's flash stays, short. */
+/* Reduced motion: everything settles at once; the live-flash ring stays, short. */
 @media (prefers-reduced-motion: reduce) {
   *:not(.live-flash),
   *::before,
@@ -1206,4 +1113,18 @@ html:active-view-transition-type(tab)::view-transition-new(page) {
 }
 main.vt-page {
   view-transition-name: page;
+}
+/* The tab strip stays put while the page under it changes. */
+.tab-strip {
+  view-transition-name: tab-strip;
+}
+/* Pages fill the window (h-svh); under the tab strip they fill what is left. */
+.tab-body > .h-svh {
+  height: 100%;
+}
+.no-scrollbar {
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
 }

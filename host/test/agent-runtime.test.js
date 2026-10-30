@@ -174,30 +174,31 @@ test('a failed extension-owned completion wake clears held input and settles wit
   assert.ok(f.requests.every((request) => !JSON.stringify(request.messages).includes('DO_NOT_RUN_WAKE_QUEUE')))
 })
 
-test('turn limits stop the full run before another model request and allow an explicit continuation', async (t) => {
-  const f = await fixture(t, (request) => lastUser(request).startsWith('Continue the task') ? { text: 'Continued.' } : bash('printf x >> turns.txt'))
-  const chat = await f.manager.create({ permissionMode: 'full', limits: { maxTurns: 1, maxRetries: 0 } })
-  await f.manager.message(chat.id, { text: 'Loop until stopped by the turn budget' })
-  const stopped = await f.wait(chat.id, (session) => session.execution.phase === 'interrupted' && !f.manager.stopping.get(chat.id)?.pending)
-  assert.equal(f.requests.length, 1)
-  assert.equal(await readFile(join(f.cwd, 'turns.txt'), 'utf8'), 'x')
-  assert.match(stopped.execution.reason, /1-turn limit/)
-  assert.equal(stopped.execution.turns, 1)
-  assert.equal(stopped.recovery.required, false)
-  assert.equal(stopped.recovery.canContinue, true)
-  await f.manager.continue(chat.id)
-  assert.equal((await f.wait(chat.id)).state, 'idle')
+test('runs have no turn limit: a run keeps taking turns until the model finishes', async (t) => {
+  const f = await fixture(t, (request, requests) => requests.length > 40 ? { text: 'Finished after many turns.' } : bash('printf x >> turns.txt'))
+  const chat = await f.manager.create({ permissionMode: 'full', limits: { maxRetries: 0 } })
+  assert.equal('maxTurns' in chat.limits, false)
+  assert.equal('maxRuntimeSeconds' in chat.limits, false)
+  await f.manager.message(chat.id, { text: 'Take more turns than the old 32-turn limit' })
+  const final = await f.wait(chat.id)
+  assert.equal(final.state, 'idle', final.error)
+  assert.equal(final.execution.phase, 'idle')
+  assert.equal(final.execution.turns, 41)
+  assert.equal((await readFile(join(f.cwd, 'turns.txt'), 'utf8')).length, 40)
 })
 
-test('run deadlines stop actual bash before its late write, while default bash timeouts bound individual tools', async (t) => {
+test('Stop ends actual bash before its late write, while default bash timeouts bound individual tools', async (t) => {
   const f = await fixture(t, (request) => request.messages.at(-1)?.role === 'tool' ? { text: 'Command ended.' } : bash('printf partial > partial.txt; echo STARTED; sleep 3; printf late > late.txt'))
-  const chat = await f.manager.create({ permissionMode: 'full', limits: { maxRuntimeSeconds: 1, maxRetries: 0 } })
-  await f.manager.message(chat.id, { text: 'Check the whole-run deadline' })
+  const chat = await f.manager.create({ permissionMode: 'full', limits: { maxRetries: 0 } })
+  await f.manager.message(chat.id, { text: 'Check that Stop ends the command' })
+  await f.wait(chat.id, () => existsSync(join(f.cwd, 'partial.txt')))
+  await f.manager.stop(chat.id)
   const stopped = await f.wait(chat.id, (session) => session.execution.phase === 'interrupted' && !f.manager.stopping.get(chat.id)?.pending)
-  assert.match(stopped.execution.reason, /1-second run limit/)
+  assert.equal(stopped.state, 'idle')
   assert.equal(await readFile(join(f.cwd, 'partial.txt'), 'utf8'), 'partial')
+  await pause(3500)
   assert.equal(existsSync(join(f.cwd, 'late.txt')), false)
-  const tool = await f.manager.create({ permissionMode: 'full', limits: { maxRuntimeSeconds: 0, bashTimeoutSeconds: 1, maxRetries: 0 } })
+  const tool = await f.manager.create({ permissionMode: 'full', limits: { bashTimeoutSeconds: 1, maxRetries: 0 } })
   await f.manager.message(tool.id, { text: 'Check the default command timeout' })
   const final = await f.wait(tool.id)
   assert.equal(final.state, 'idle', final.error)
@@ -205,22 +206,22 @@ test('run deadlines stop actual bash before its late write, while default bash t
   assert.equal(existsSync(join(f.cwd, 'late.txt')), false)
 })
 
-test('background children keep the deadline, and a busy Continue request does not stop the worker', async (t) => {
+test('Stop ends background children, and a busy Continue request does not stop the worker', async (t) => {
   const f = await fixture(t, (request) => {
     const root = request.tools?.some((tool) => tool.function?.name === 'subagent')
     if (!root) return request.messages.at(-1)?.role === 'tool' ? { text: 'Worker ended.' } : bash('echo $$ > background-pid.txt; sleep 8; printf late > background-late.txt')
     const delegated = request.messages.some((message) => message.tool_calls?.some((call) => call.function.name === 'subagent'))
     return delegated ? { text: 'Parent is ready while the worker runs.' } : { tool: 'subagent', args: { agent: 'connect-worker', task: 'LONG_BACKGROUND_WORKER', async: true } }
   })
-  const chat = await f.manager.create({ permissionMode: 'full', limits: { maxRuntimeSeconds: 5, maxRetries: 0 } })
+  const chat = await f.manager.create({ permissionMode: 'full', limits: { maxRetries: 0 } })
   await f.manager.message(chat.id, { text: 'Start a background worker' })
   await f.wait(chat.id, () => existsSync(join(f.cwd, 'background-pid.txt')))
   const pid = Number(await readFile(join(f.cwd, 'background-pid.txt'), 'utf8'))
   if (f.manager.detail(chat.id).state === 'running') await assert.rejects(f.manager.continue(chat.id), { status: 409 })
   else await f.manager.continue(chat.id)
   assert.doesNotThrow(() => process.kill(pid, 0), 'Continue must not stop a live background child.')
+  await f.manager.stop(chat.id)
   const stopped = await f.wait(chat.id, (session) => session.execution.phase === 'interrupted' && !f.manager.stopping.get(chat.id)?.pending)
-  assert.match(stopped.execution.reason, /5-second run limit/)
   assert.equal(existsSync(join(f.cwd, 'background-late.txt')), false)
   assert.throws(() => process.kill(pid, 0), { code: 'ESRCH' })
   assert.ok(stopped.children.every((child) => !['running', 'pending', 'queued', 'paused'].includes(child.state)))
@@ -229,9 +230,9 @@ test('background children keep the deadline, and a busy Continue request does no
 test('limits update before the first message, persist and copy; archived conversations require restore', async (t) => {
   const f = await fixture(t, () => ({ text: 'Done.' }))
   const chat = await f.manager.create({ permissionMode: 'full' })
-  const updated = await agentRoute(f.manager, 'POST', ['sessions', chat.id, 'limits'], { maxTurns: 7, maxRuntimeSeconds: 0, bashTimeoutSeconds: 4, maxRetries: 0, instructions: 'Use the saved project instructions.' })
-  assert.equal(updated.limits.maxTurns, 7)
-  for (const input of [{ maxTurns: -1 }, { maxRuntimeSeconds: 86401 }, { bashTimeoutSeconds: 0 }, { maxRetries: 6 }, { instructions: 'x'.repeat(32769) }]) await assert.rejects(async () => f.manager.updateLimits(chat.id, input), { status: 400 })
+  const updated = await agentRoute(f.manager, 'POST', ['sessions', chat.id, 'limits'], { bashTimeoutSeconds: 4, maxRetries: 0, instructions: 'Use the saved project instructions.' })
+  assert.equal(updated.limits.bashTimeoutSeconds, 4)
+  for (const input of [{ bashTimeoutSeconds: 86401 }, { bashTimeoutSeconds: 0 }, { maxRetries: 6 }, { instructions: 'x'.repeat(32769) }]) await assert.rejects(async () => f.manager.updateLimits(chat.id, input), { status: 400 })
   await f.manager.message(chat.id, { text: 'Use saved run settings' })
   await f.wait(chat.id)
   const copy = await f.manager.fork(chat.id)
@@ -243,10 +244,58 @@ test('limits update before the first message, persist and copy; archived convers
   await assert.rejects(f.manager.message(chat.id, { text: 'Blocked until restored' }), { status: 409 })
   await assert.rejects(f.manager.continue(chat.id), { status: 409 })
   await f.restart()
-  assert.equal(f.manager.detail(chat.id).limits.maxTurns, 7)
+  assert.equal(f.manager.detail(chat.id).limits.bashTimeoutSeconds, 4)
   await f.manager.update(chat.id, { archived: false })
   await f.manager.continue(chat.id)
   assert.equal((await f.wait(chat.id)).state, 'idle')
+})
+
+test('Settings run limits apply to new and existing chats, persist, keep instructions, and wait for running chats', async (t) => {
+  const own = await mkdtemp(join(tmpdir(), 'connect-run-limits-'))
+  const cwd = join(own, 'work')
+  await mkdir(cwd)
+  let manager = await AgentManager.create({ state: join(own, 'state'), defaultCwd: cwd })
+  t.after(async () => { await manager.close(); await rm(own, { recursive: true, force: true }) })
+  const initial = await agentRoute(manager, 'GET', ['run-limits'], null)
+  assert.deepEqual(initial.limits, { bashTimeoutSeconds: 900, maxRetries: 2 })
+  assert.deepEqual(initial.defaults, initial.limits)
+  const existing = await manager.create({ permissionMode: 'full', limits: { instructions: 'Keep these instructions.' } })
+  const updatedAt = manager.detail(existing.id).updated
+  for (const input of [{ bashTimeoutSeconds: 1.5 }, { bashTimeoutSeconds: 86401 }, { bashTimeoutSeconds: 0 }, { maxRetries: 6 }]) {
+    await assert.rejects(async () => agentRoute(manager, 'POST', ['run-limits'], input), { status: 400 })
+  }
+  manager.records.get(existing.id).state = 'running'
+  await assert.rejects(async () => manager.setRunSettings({ bashTimeoutSeconds: 600 }), { status: 409 })
+  manager.records.get(existing.id).state = 'idle'
+  const saved = await agentRoute(manager, 'POST', ['run-limits'], { bashTimeoutSeconds: 30, maxRetries: 1 })
+  assert.deepEqual(saved.limits, { bashTimeoutSeconds: 30, maxRetries: 1 })
+  assert.deepEqual(manager.detail(existing.id).limits, { ...saved.limits, instructions: 'Keep these instructions.' })
+  assert.equal(manager.detail(existing.id).updated, updatedAt)
+  const fresh = await manager.create({ permissionMode: 'full' })
+  assert.deepEqual(fresh.limits, { ...saved.limits, instructions: '' })
+  await manager.close()
+  manager = await AgentManager.create({ state: join(own, 'state'), defaultCwd: cwd })
+  assert.deepEqual(manager.runSettings().limits, saved.limits)
+  assert.equal(manager.detail(existing.id).limits.bashTimeoutSeconds, 30)
+  // a chat saved by an earlier version: its removed limits drop, and the old 120-second default takes the setting
+  await manager.close()
+  const file = join(own, 'state', 'chats', existing.id, 'chat.json')
+  const old = JSON.parse(await readFile(file, 'utf8'))
+  old.limits = { maxTurns: 32, maxRuntimeSeconds: 1800, bashTimeoutSeconds: 120, maxRetries: 2, instructions: 'Keep these instructions.' }
+  await writeFile(file, JSON.stringify(old))
+  manager = await AgentManager.create({ state: join(own, 'state'), defaultCwd: cwd })
+  assert.deepEqual(manager.detail(existing.id).limits, { bashTimeoutSeconds: 30, maxRetries: 2, instructions: 'Keep these instructions.' })
+})
+
+test('a chat\u2019s Live route answers while the chat is open', async (t) => {
+  const f = await fixture(t, () => ({ text: 'Done.' }))
+  const chat = await f.manager.create({ permissionMode: 'full' })
+  await f.manager.message(chat.id, { text: 'Open the chat' })
+  await f.wait(chat.id)
+  assert.ok(f.manager.live.has(chat.id), 'the chat has an open Pi session')
+  const live = await agentRoute(f.manager, 'GET', ['sessions', chat.id, 'live'], null)
+  assert.ok(Array.isArray(live.calls))
+  assert.ok(live.live)
 })
 
 test('interrupted state is honest after restart and continue first completes its stop obligation', async (t) => {

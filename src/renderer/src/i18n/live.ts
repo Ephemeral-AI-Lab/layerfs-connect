@@ -1,9 +1,10 @@
 // Chinese for the Live and Timeline tabs: English source text -> zh-CN.
 export const liveZh: Record<string, string> = {
   // Live: header and stat row
-  '{n} run playing': '{n} 个运行正在播放',
-  '{n} runs playing': '{n} 个运行正在播放',
-  'No run playing': '没有正在播放的运行',
+  '{n} chat working': '{n} 个对话正在工作',
+  '{n} chats working': '{n} 个对话正在工作',
+  '{n} more projects are working: open one to see its Live.': '还有 {n} 个项目正在工作：打开项目即可查看其实时视图。',
+  'No chat working': '没有正在工作的对话',
   '{n} ended recently': '{n} 个刚刚结束',
   '{n} call in flight': '{n} 个调用进行中',
   '{n} calls in flight': '{n} 个调用进行中',
@@ -13,11 +14,11 @@ export const liveZh: Record<string, string> = {
   // Live: the diagram
   'Agents': '智能体',
   'No agent working': '没有智能体在工作',
-  'The last run, /{name}, ended {time}': '上一个运行 /{name} 结束于{time}',
-  'No run has played on this project yet': '这个项目上还没有运行过',
-  'Reading the runs…': '正在读取运行…',
-  'A scenario run starts a session. Its agents show here as a tree, and every call they make travels to the project.':
-    '场景运行会开启一个会话。它的智能体以树的形式显示在这里，它们的每个调用都会流向项目。',
+  'The last chat, {name}, ended {time}': '上一个对话 {name} 结束于{time}',
+  'No chat has worked in LayerFS on this project yet': '这个项目上还没有对话在 LayerFS 中工作过',
+  'Reading the chats…': '正在读取对话…',
+  'A scenario chat, or a project chat with a LayerFS mount, shows here while it works. Its agents form a tree, and every call they make travels to the project.':
+    '场景对话或带 LayerFS 挂载的项目对话工作时会显示在这里。它的智能体以树的形式显示，它们的每个调用都会流向项目。',
   'No Sandbox open': '没有打开的沙箱',
   'One opens when an agent creates it to mount a Workspace.': '智能体为挂载工作区创建沙箱时，它会出现在这里。',
   'waiting its turn': '排队等待中',
@@ -28,8 +29,8 @@ export const liveZh: Record<string, string> = {
   '{n} agents': '{n} 个智能体',
   '{n} subagent': '{n} 个子智能体',
   '{n} subagents': '{n} 个子智能体',
-  'Open run {name}': '打开运行 {name}',
-  '{agent} in run {run}': '运行 {run} 中的 {agent}',
+  'Open chat {name}': '打开对话 {name}',
+  '{agent} in chat {run}': '对话 {run} 中的 {agent}',
   "Show {agent}'s subagents": '展开 {agent} 的子智能体',
   "Fold {agent}'s subagents": '折叠 {agent} 的子智能体',
   '{name}: this run’s trunk, standing for main': '{name}：这个运行的主干，代表 main',

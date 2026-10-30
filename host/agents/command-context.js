@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto'
 import { resolve } from 'node:path'
 import { checkpointFor } from './history.js'
 import { assertNativeControl } from './native-input.js'
+import { mounted } from './workspaces.js'
 
 const fail = (status, message) => Object.assign(new Error(message), { status })
 const hasWork = (record) => record.state === 'running' || record.children.some((child) => ['running', 'pending', 'queued', 'paused'].includes(child.state))
@@ -12,8 +13,8 @@ export function commandForkTarget(manager, record, source, entryId, position = '
   if (position !== 'at') throw fail(400, 'Choose before or at for the fork position.')
   const entry = source.getEntry(entryId)
   if (!entry) throw fail(400, 'Choose an existing conversation entry.')
-  const checkpoint = record.project && entry.type === 'message' && entry.message.role === 'user' ? checkpointFor(source, entry) : null
-  if (record.project && !checkpoint) throw fail(409, 'This entry has no exact LayerFS checkpoint.')
+  const checkpoint = mounted(record) && entry.type === 'message' && entry.message.role === 'user' ? checkpointFor(source, entry) : null
+  if (mounted(record) && !checkpoint) throw fail(409, 'This entry has no exact LayerFS checkpoint.')
   return { entry, checkpoint, draft: '', attachments: [] }
 }
 
@@ -50,7 +51,7 @@ export function commandContextActions(manager, id, active) {
       const nextId = await idle(async () => {
         if (await beforeSwitch('new')) return null
         const record = manager.record(id)
-        const checkpoint = record.project ? await manager.projectWorkspaces.checkpoint(record, () => manager.changed(id, true)) : null
+        const checkpoint = mounted(record) ? await manager.projectWorkspaces.checkpoint(record, () => manager.changed(id, true)) : null
         assertNativeControl(active)
         const previousSessionFile = active.session.sessionFile
         await manager.stop(id)
@@ -62,13 +63,13 @@ export function commandContextActions(manager, id, active) {
         manager.historyOperations.set(copyId, barrier.promise)
         try {
           await manager.createRecord(copyId, {
-            cwd: record.cwd, project: record.project,
+            cwd: record.cwd, project: record.project, runs: mounted(record) ? 'mount' : 'folder',
             provider: record.provider, modelId: record.modelId, thinkingLevel: record.thinkingLevel,
             permissionMode: record.permissionMode, limits: record.limits,
           }, { publish: false })
           assertNativeControl(active)
           const copy = manager.record(copyId)
-          if (copy.project) await manager.projectWorkspaces.fork(copy, checkpoint, () => manager.save(copyId))
+          if (mounted(copy)) await manager.projectWorkspaces.fork(copy, checkpoint, () => manager.save(copyId))
           assertNativeControl(active)
           await manager.open(copyId, {
             history: true, setup: options.setup, parentSession: options.parentSession,
@@ -107,7 +108,7 @@ export function commandContextActions(manager, id, active) {
         if (before?.cancel) return null
         const record = manager.record(id)
         const source = active.session.sessionManager
-        if (record.project && position === 'at') {
+        if (mounted(record) && position === 'at') {
           const entry = source.getEntry(entryId)
           if (!entry) throw fail(400, 'Choose an existing conversation entry.')
           if (entry.type !== 'message' || entry.message.role !== 'user' || !checkpointFor(source, entry)) return null
@@ -148,7 +149,7 @@ export function commandContextActions(manager, id, active) {
 
     navigateTree(targetId, options) {
       return idle(async () => {
-        if (manager.record(id).project) return { cancelled: true }
+        if (mounted(manager.record(id))) return { cancelled: true }
         const result = await active.session.navigateTree(targetId, options)
         manager.changed(id, true)
         return { cancelled: result.cancelled === true || result.aborted === true }

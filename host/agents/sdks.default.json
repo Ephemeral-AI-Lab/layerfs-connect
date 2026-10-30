@@ -1,0 +1,54 @@
+{
+  "sdks": [
+    {
+      "id": "layerfs",
+      "title": "LayerFS SDK",
+      "description": "Branches, files, Sandboxes and Workspaces from a Node script or the layerfs command.",
+      "enabled": true,
+      "root": "../layerfs/.claude/worktrees/connect-main/api",
+      "packages": ["@layerfs/agent", "@layerfs/backend", "@layerfs/runtime", "@layerfs/cli"],
+      "command": "layerfs",
+      "docs": ["docs/agent.md", "docs/backend.md", "docs/runtime.md"],
+      "agents": ["main", "worker", "lead"],
+      "calls": [
+        { "name": "client.open", "signature": "LayerFS.open(name)", "description": "Connects to an existing project; a missing project is refused right away." },
+        { "name": "client.init", "signature": "LayerFS.init(name, sourcePath, timeout = 300000)", "description": "Copies a folder into a new project as main at L0, then connects." },
+        { "name": "client.close", "signature": "layerfs.close()", "description": "Releases the client; Workspaces stay mounted." },
+
+        { "name": "project.list_branches", "signature": "list_branches(pageSize = 50, pagePos = 0)", "description": "Pages through the project's Branches, main first." },
+        { "name": "project.list_sandboxes", "signature": "list_sandboxes(pageSize = 50, pagePos = 0)", "description": "Pages through the running Sandboxes; starts nothing." },
+
+        { "name": "branch.fork", "signature": "fork(name, fromRef = \"main\")", "description": "New Branch from main, a Branch, a Commit or a Layer; copies nothing." },
+        { "name": "branch.list_commits", "signature": "list_commits(branch, pageSize = 50, pagePos = 0)", "description": "A Branch's Commits, newest first." },
+        { "name": "branch.diff_commits", "signature": "diff_commits(from, to, pageSize = 50, pagePos = 0, { cursor, hunks } = {})", "description": "Paths changed between two Commits, with their hunks." },
+        { "name": "branch.diff_branches", "signature": "diff_branches(from, to, pageSize = 50, pagePos = 0, { cursor, hunks } = {})", "description": "Paths changed between two Branch heads, with their hunks." },
+        { "name": "branch.merge", "signature": "merge(a, b, name, message?, units?)", "description": "Merges a and b into a new Branch; a and b stay unchanged." },
+        { "name": "branch.publish", "signature": "publish(branch, commit?)", "description": "Makes the Branch head, or a given Commit, main's next Layer." },
+
+        { "name": "fs.read", "signature": "read(ref, path, startLine = 1, endLine?)", "description": "A line range of a text file, up to 2000 lines or 48 KiB." },
+        { "name": "fs.list", "signature": "list(ref, path = \"/\", pageSize = 50, pagePos = 0)", "description": "Pages through one folder's entries." },
+        { "name": "fs.stat", "signature": "stat(ref, path)", "description": "Type, inode and size of a path." },
+        { "name": "fs.grep", "signature": "grep(ref, pattern, path = \"/\", pageSize = 50, pagePos = 0)", "description": "Lines containing the text, as plain text rather than a regex." },
+        { "name": "fs.glob", "signature": "glob(ref, pattern, path = \"/\", pageSize = 50, pagePos = 0)", "description": "Paths matching a glob." },
+        { "name": "fs.diff_files", "signature": "diff_files(leftRef, leftPath, rightRef, rightPath)", "description": "Hunks between two files, at any refs." },
+        { "name": "fs.blame", "signature": "blame(ref, path, fromLine = 1)", "description": "The Commit that last changed each line." },
+        { "name": "fs.write", "signature": "write(branch, path, content, message?)", "description": "Creates or replaces a file on a Branch (not main), as one Commit." },
+        { "name": "fs.edit", "signature": "edit(branch, path, oldText, newText, message?)", "description": "Replaces exactly one match of oldText, as one Commit." },
+        { "name": "fs.apply", "signature": "apply(branch, changes, message?)", "description": "Several write, edit, mkdir, rm, cp and mv changes as one Commit." },
+        { "name": "fs.mkdir", "signature": "mkdir(branch, path, message?)", "description": "Creates a folder and any missing parents." },
+        { "name": "fs.rm", "signature": "rm(branch, path, message?)", "description": "Removes a file or a folder tree." },
+        { "name": "fs.cp", "signature": "cp(branch, from, to, message?)", "description": "Copies a file or tree." },
+        { "name": "fs.mv", "signature": "mv(branch, from, to, message?)", "description": "Moves or renames a file or tree, keeping its history." },
+
+        { "name": "workspace.mount", "signature": "mount(sandbox, branch)", "description": "Mounts a writable Workspace on a Branch in a running Sandbox." },
+        { "name": "workspace.exec", "signature": "exec(ws, command, message?, { stdout, stderr }?)", "description": "Runs bash -c at the Workspace root; it has no timeout of its own." },
+        { "name": "workspace.commit", "signature": "commit(ws, message?, force = false)", "description": "Saves all changes as one Commit; merges if the Branch has moved." },
+        { "name": "workspace.unmount", "signature": "unmount(ws, discard = false)", "description": "Removes the Workspace; refused while it has uncommitted changes." },
+
+        { "name": "sandbox.create", "signature": "create({ image } = {})", "description": "Starts the project's next Sandbox." },
+        { "name": "sandbox.list_workspaces", "signature": "list_workspaces(sandbox, pageSize = 50, pagePos = 0)", "description": "The Workspaces mounted in one Sandbox." },
+        { "name": "sandbox.close", "signature": "close(sandbox)", "description": "Stops and deletes the Sandbox; refused while Workspaces are mounted." }
+      ]
+    }
+  ]
+}

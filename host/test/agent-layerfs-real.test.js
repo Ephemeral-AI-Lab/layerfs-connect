@@ -93,7 +93,7 @@ test('real LayerFS isolates Pi and child bash, saves history, resumes and stops 
   const settled = (id) => wait(id, (session) => session.state !== 'running')
   await open()
   const instruction = 'Connect harness integration instructions.'
-  const chat = await manager.create({ project: name, permissionMode: 'full', limits: { instructions: instruction } })
+  const chat = await manager.create({ project: name, runs: 'mount', permissionMode: 'full', limits: { instructions: instruction } })
   await manager.message(chat.id, { text: 'WRITE_ROOT' })
   const first = await settled(chat.id)
   assert.equal(first.state, 'idle', first.error)
@@ -138,7 +138,7 @@ test('real LayerFS isolates Pi and child bash, saves history, resumes and stops 
   assert.equal(resumed.state, 'idle', resumed.error)
   assert.equal(resumed.workspace.branch, first.workspace.branch)
   assert.ok(resumed.messages.some((message) => message.role === 'tool' && message.text.includes('RESUMED')))
-  const second = await manager.create({ project: name, permissionMode: 'full' })
+  const second = await manager.create({ project: name, runs: 'mount', permissionMode: 'full' })
   assert.notEqual(second.workspace.branch, first.workspace.branch)
   await manager.executeWorkspace(second.id, { command: 'test ! -e root.txt && cat seed.txt && printf other > second.txt', agent: 'root', toolCallId: 'isolated-second' }, {})
   assert.equal((await projects.file(name, second.workspace.branch, '/second.txt')).text, 'other')
@@ -235,7 +235,7 @@ test('real LayerFS isolates Pi and child bash, saves history, resumes and stops 
 
   // Native images and text-file metadata remain editable after a copy and restart.
   await manager.models.saveProvider({ id: 'workspace-fixture', baseUrl: `http://127.0.0.1:${server.address().port}/v1`, api: 'openai-completions', models: [{ id: 'fixture-model', input: ['text', 'image'] }] })
-  const attached = await manager.create({ project: name, permissionMode: 'full', limits: { instructions: instruction } })
+  const attached = await manager.create({ project: name, runs: 'mount', permissionMode: 'full', limits: { instructions: instruction } })
   const attachments = [
     { id: 'text-fixture', name: 'note.txt', mimeType: 'text/plain', data: Buffer.from('Attachment integration text.').toString('base64') },
     { id: 'image-fixture', name: 'icon.png', mimeType: 'image/png', data: (await readFile(new URL('../../resources/icon.png', import.meta.url))).toString('base64') },

@@ -3,10 +3,15 @@
 // facts, actions on the right, then anything else (an alert) and the page's
 // tabs. `sticky` pins it to the top of its scroller, frosting once content
 // scrolls under it; put it as a direct child of the scroller. A hero header
-// adds an `icon` tile before the title and a row of `facts` (stat pills) under
-// it; `live` runs a line of brand light along its bottom edge.
+// adds an `icon` tile before the title; `back` puts a back button before that,
+// in the title row, so going back costs no row of its own; `live` runs a line
+// of brand light along its bottom edge.
+import { ChevronLeft } from 'lucide-react'
 import { type CSSProperties, type ReactNode, useEffect, useRef } from 'react'
 
+import { Button } from '@/components/ui/button'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { t } from '@/i18n'
 import { cn } from '@/lib/utils'
 
 const isMac = typeof window !== 'undefined' && window.connect?.platform === 'darwin'
@@ -22,9 +27,8 @@ interface PageHeaderProps {
   description?: ReactNode
   /** Before the title block: the page's mark in a lit tile (<HeroTile>). */
   icon?: ReactNode
-  /** A row under the title: <Stat> pills, kept on one row (its end fades if it overflows). The title block is
-   *  the container `hero`, so pills can shorten with `@max-[40rem]/hero:hidden` parts. Shown in place of `description`. */
-  facts?: ReactNode
+  /** A back button at the start of the title row; `label` (where it goes) is its tooltip. */
+  back?: { label: string; onBack: () => void }
   /** Something is playing: a slim animated line of brand light runs under the header. */
   live?: boolean
   /** Right side: buttons, a search box. */
@@ -41,7 +45,7 @@ interface PageHeaderProps {
   className?: string
 }
 
-export function PageHeader({ eyebrow, title, badges, description, icon, facts, live, actions, tabs, children, size = 'lg', sticky, width, className }: PageHeaderProps) {
+export function PageHeader({ eyebrow, title, badges, description, icon, back, live, actions, tabs, children, size = 'lg', sticky, width, className }: PageHeaderProps) {
   const sentinel = useRef<HTMLDivElement>(null)
   const header = useRef<HTMLElement>(null)
   useEffect(() => {
@@ -74,19 +78,21 @@ export function PageHeader({ eyebrow, title, badges, description, icon, facts, l
           ) : (
             <>
               {eyebrow && <div className="reveal flex min-w-0 items-center">{eyebrow}</div>}
-              <div className={cn('flex min-w-0 flex-wrap gap-x-5 gap-y-4', icon ? 'items-center' : 'items-end')}>
-                {icon && <div className="reveal-scale shrink-0">{icon}</div>}
-                <div className={cn('min-w-0 flex-1', facts && '@container/hero')}>
+              <div className={cn('flex min-w-0 flex-wrap gap-x-5 gap-y-4', icon || back ? 'items-center' : 'items-end')}>
+                {(icon || back) && (
+                  <div className="flex shrink-0 items-center gap-1">
+                    {back && <BackButton {...back} />}
+                    {icon && <div className="reveal-scale shrink-0">{icon}</div>}
+                  </div>
+                )}
+                <div className="min-w-0 flex-1">
                   <div className="reveal flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1.5">
                     {title && (
                       <h1 className={cn('truncate font-semibold tracking-[-0.022em]', size === 'lg' ? 'text-[26px] leading-9' : icon ? 'text-[22px] leading-8' : 'text-xl leading-7')}>{title}</h1>
                     )}
                     {badges}
                   </div>
-                  {facts ? (
-                    // one row at every width: what does not fit fades out at the end (container: `@container/hero` for narrow variants)
-                    <div className="facts-row -my-1 mt-1 flex min-w-0 flex-nowrap items-center gap-1.5 overflow-hidden py-1">{facts}</div>
-                  ) : description && (
+                  {description && (
                     <p
                       className={cn('reveal text-muted-foreground', size === 'lg' ? 'mt-1.5 max-w-2xl text-sm leading-relaxed text-pretty' : 'mt-0.5 truncate text-xs tabular-nums')}
                       style={{ '--i': 1 } as CSSProperties}
@@ -109,5 +115,20 @@ export function PageHeader({ eyebrow, title, badges, description, icon, facts, l
         {live && <span aria-hidden="true" className="live-line" />}
       </header>
     </>
+  )
+}
+
+/** A round chevron that goes back; where it goes is its tooltip and its name. */
+function BackButton({ label, onBack }: { label: string; onBack: () => void }) {
+  const name = t('Back to {value1}', { value1: label })
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button variant="ghost" size="icon" aria-label={name} onClick={onBack} className="group/back -ml-2.5 rounded-full text-muted-foreground hover:text-foreground">
+          <ChevronLeft className="size-5 transition-transform duration-(--dur-base) ease-out-expo group-hover/back:-translate-x-0.5" />
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent side="bottom" align="start" className="max-w-80 text-pretty">{name}</TooltipContent>
+    </Tooltip>
   )
 }

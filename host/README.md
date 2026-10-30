@@ -111,13 +111,23 @@ usage count sums provider reports from that transcript; it is not the current
 context-window occupancy. Model and thinking controls share the Chat header,
 with provider configuration under the model dropdown.
 
-Sessions persist run limits (32 main-agent turns, 1,800 seconds, a 120-second
-default bash timeout and two native main-agent provider retries), conversation instructions, archive
-metadata and recorded usage. Runtime deadlines include background children and
-use the same verified stop/commit/release path as manual Stop. Continue uses
+Sessions persist run limits (a 900-second default bash timeout and two native
+main-agent provider retries, set for every chat in Settings → Runs and kept in
+`run-limits.json`), conversation instructions, archive metadata and recorded
+usage. Runs have no turn or run-time limit; Stop ends them. Continue uses
 Pi's high-level custom-message API without replaying completed tool calls.
 Execution phases and recovery state accompany snapshots; SSE omits attachment
 bytes, which remain available on full session responses.
+
+Settings → SDKs lists the SDKs in `<state>/sdks.json` ([`agents/sdks.js`](agents/sdks.js));
+until that file exists, the built-in `agents/sdks.default.json` (the LayerFS
+SDK and its 32 agent calls) stands in for it. Each SDK's `root` is absolute or
+relative to Connect's folder; the host looks there for each package and doc
+and reports the version it finds. Each SDK that is on and found adds a
+section written from its entry (description, packages, command, docs, calls)
+to the system prompt of the agents its `agents` names, in every chat
+(`child-extension.js`). The page writes only an SDK's `enabled`; like an
+extension switch, it waits while a chat works and reloads idle chats.
 
 Root and child agents load project instructions from the actual execution
 directory, with custom conversation instructions appended. Pi's native context
@@ -354,7 +364,9 @@ Interactive routes accept JSON request bodies:
 | `GET /api/agent/sessions/:id` | `AgentSessionDetail` with messages, queued inputs, tools, children, workspace, permissions, limits, execution/recovery state, recorded usage and archive metadata |
 | `POST /api/agent/sessions/:id/message` | `{ text, attachments?, mode?, provider?, modelId?, thinkingLevel? }`; starts or queues input and returns the snapshot |
 | `POST /api/agent/sessions/:id/continue` | `{ provider?, modelId?, thinkingLevel? }`; resumes an idle conversation through Pi while retaining completed results |
-| `POST /api/agent/sessions/:id/limits` | Partial `{ maxTurns, maxRuntimeSeconds, bashTimeoutSeconds, maxRetries, instructions }`; updates an idle conversation's settings |
+| `GET /api/agent/run-limits` | `{ limits, defaults, busy }`: the `{ bashTimeoutSeconds, maxRetries }` every chat uses, the built-in defaults, and the chats working now |
+| `POST /api/agent/run-limits` | Partial `{ bashTimeoutSeconds, maxRetries }`; saves them and gives them to every chat; `409` while a chat works |
+| `POST /api/agent/sessions/:id/limits` | Partial `{ bashTimeoutSeconds, maxRetries, instructions }`; updates an idle conversation's settings |
 | `POST /api/agent/sessions/:id/update` | `{ title?, archived? }`; rename or archive/restore without deleting Pi files or branch history |
 | `GET /api/agent/sessions/:id/output/:artifactId?offset=0` | Reads an owned output artifact in UTF-8-safe pages; returns `{ text, offset, nextOffset, bytes, done }` |
 | `POST /api/agent/sessions/:id/children/:runId/stop` | Stops a controllable background run after terminal proof; foreground children use the conversation Stop action |

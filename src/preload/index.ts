@@ -22,4 +22,10 @@ function hostAddress(): HostAddress {
 contextBridge.exposeInMainWorld('connect', {
   platform: process.platform, arch: process.arch, host: hostAddress(),
   chooseDirectory: (defaultPath?: string, locale?: 'zh-CN' | 'en') => ipcRenderer.invoke('connect:choose-directory', defaultPath, locale),
+  // Tab shortcuts the window menu would take first (⌘W): the main process sends them here.
+  onTabCommand: (listener: (command: string) => void) => {
+    const handler = (_event: unknown, command: string) => listener(command)
+    ipcRenderer.on('connect:tab-command', handler)
+    return () => { ipcRenderer.removeListener('connect:tab-command', handler) }
+  },
 })

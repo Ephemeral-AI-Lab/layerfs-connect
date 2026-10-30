@@ -14,10 +14,9 @@ import { SandboxTiles } from '@/components/projects/sandbox-tiles'
 import { useProjectSandboxes } from '@/components/projects/use-sandboxes'
 import type { StoreFacts } from '@/components/projects/store-facts'
 import { CommitBars, CommitKinds, CountBytes, DiskFlow, GrowthChart, SavedRing, times, useLanded } from '@/components/projects/store-visuals'
-import { plural } from '@/components/runs/run-format'
+import { plural } from '@/data/format'
 import { Tile } from '@/components/storage/icons'
 import { StoreIcon } from '@/components/storage/identity/store-icon'
-import { SyncPill } from '@/components/storage/sync/sync-pill'
 import { bytes, when } from '@/data/format'
 import { cn } from '@/lib/utils'
 
@@ -177,7 +176,7 @@ function StoreStatsBody({ s, t }: { s: ProjectState; t: StoreStats }) {
   )
 }
 
-/** The Store card's header (storage-links §6): the Store's mark, family and name, its sync state and its link, one chip. */
+/** The Store card's header (storage-links §6): the Store's mark, family and name and its link, one chip. No sync state: the project page never checks the remote file. */
 function StoreCard({ s, store }: { s: ProjectState; store: StoreFacts }) {
   useI18n()
   const postgresql = store.family === 'postgresql'
@@ -191,7 +190,6 @@ function StoreCard({ s, store }: { s: ProjectState; store: StoreFacts }) {
             <h3 className="min-w-0 text-sm font-semibold [overflow-wrap:anywhere]">
               {store.name ? <>{tr("{family} Store", { family })} <span className="font-mono">{store.name}</span></> : tr("Project Store")}
             </h3>
-            {!postgresql && store.sync && <SyncPill state={store.sync} copy={store.link} compact />}
             {!postgresql && store.name && (
               <span className="max-w-full truncate rounded-full bg-foreground/[0.05] px-2 py-0.5 font-mono text-[11px] text-muted-foreground ring-1 ring-foreground/[0.05] ring-inset" title={store.link?.object}>
                 {store.link ? `${store.link.remote} / ${store.link.file}` : tr("local only")}

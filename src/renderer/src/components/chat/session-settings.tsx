@@ -10,7 +10,7 @@ export type SessionSettingsTarget = { session?: AgentSessionSummary; limits?: Ag
 export function SessionSettingsDialog({ target, onClose, onSave }: { target: SessionSettingsTarget; onClose: () => void; onSave: (value: { title: string } | AgentLimits) => Promise<void> }) {
   const { t } = useI18n()
   const [title, setTitle] = useState(target.session?.title ?? '')
-  const [limits, setLimits] = useState<AgentLimits>(target.session?.limits ?? target.limits ?? { maxTurns: 32, maxRuntimeSeconds: 1800, bashTimeoutSeconds: 120, maxRetries: 2, instructions: '' })
+  const [limits, setLimits] = useState<AgentLimits>(target.session?.limits ?? target.limits ?? { bashTimeoutSeconds: 900, maxRetries: 2, instructions: '' })
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const inFlight = useRef(false)
@@ -29,7 +29,6 @@ export function SessionSettingsDialog({ target, onClose, onSave }: { target: Ses
       <DialogHeader><DialogTitle>{rename ? t("Rename chat") : t("Run settings")}</DialogTitle><DialogDescription className="text-xs leading-relaxed">{rename ? t("Give this conversation a name you can find later.") : t("Limits and additional instructions for this conversation and its agents. Changes apply to the next run.")}</DialogDescription></DialogHeader>
       {rename ? <label className="grid gap-2 text-xs">{t("Name")}<Input aria-label={t("Conversation name")} maxLength={120} value={title} disabled={busy} onChange={(e) => setTitle(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) { e.preventDefault(); void save() } }} /></label> : <>
         <div className="grid grid-cols-2 gap-3">{([
-          ['maxTurns', t("Maximum turns"), t("Main agent; 0 disables this limit")], ['maxRuntimeSeconds', t("Run time (seconds)"), '0 disables this limit'],
           ['bashTimeoutSeconds', t("Command timeout (seconds)"), t("Default when a command has no explicit timeout")], ['maxRetries', t("Automatic retries"), t("Main agent; 0 disables retries")],
         ] as const).map(([key, label, help]) => <label key={key} className="grid gap-1.5 text-xs"><span>{t(label)}</span><Input type="number" min={key === 'bashTimeoutSeconds' ? 1 : 0} step={1} aria-label={t(label)} value={limits[key]} disabled={busy} onChange={(e) => setLimits({ ...limits, [key]: e.target.value === '' ? 0 : Number(e.target.value) })} /><span className="text-[10px] leading-relaxed text-muted-foreground">{t(help)}</span></label>)}</div>
         <label className="grid gap-2 text-xs">{t("Additional instructions")}<textarea aria-label={t("Additional instructions")} value={limits.instructions ?? ''} disabled={busy} onChange={(e) => setLimits({ ...limits, instructions: e.target.value })} rows={3} placeholder={t("Optional instructions for this conversation…")} className="max-h-44 min-h-24 w-full resize-y rounded-xl border border-foreground/[0.1] bg-background/40 px-3 py-2 text-xs leading-relaxed outline-none focus-visible:ring-2 focus-visible:ring-ring" /></label>

@@ -49,7 +49,7 @@ async function fixture(t, { prepare, release, validate } = {}) {
     if (previous.temp === undefined) delete process.env.PI_SUBAGENTS_TEMP_ROOT
     else process.env.PI_SUBAGENTS_TEMP_ROOT = previous.temp
   })
-  const create = (project = 'project') => manager.create({ project, permissionMode: 'full' })
+  const create = (project = 'project') => manager.create({ project, runs: 'mount', permissionMode: 'full' })
   return { state, manager, calls, workspaces, create }
 }
 
@@ -205,4 +205,23 @@ test('close waits for every workspace cleanup before closing permissions and rep
   await rejected
   assert.equal(f.manager.record(second.id).workspace.state, 'closed')
   assert.equal(f.calls.permissionsClosed, true)
+})
+
+test('a new project chat runs bash in its working folder: no LayerFS mount, and its instructions come from the folder', async (t) => {
+  const f = await fixture(t)
+  const folder = await mkdtemp(join(tmpdir(), 'connect-project-folder-'))
+  t.after(() => rm(folder, { recursive: true, force: true }))
+  await writeFile(join(folder, 'AGENTS.md'), 'Folder instructions\n')
+  const chat = await f.manager.create({ project: 'project', cwd: folder, permissionMode: 'full' })
+  const record = f.manager.record(chat.id)
+  assert.equal(record.runs, 'folder')
+  assert.equal(record.cwd, folder)
+  assert.equal(record.workspace, null)
+  // its instructions come from the folder, not a mount
+  const { instructions } = await f.manager.context(chat.id)
+  assert.ok(instructions.some((file) => file.path === join(folder, 'AGENTS.md') && file.content === 'Folder instructions\n'))
+  // opening it (the model is unavailable here) never prepares a mount
+  await assert.rejects(f.manager.message(chat.id, { text: 'Start work' }), /model is unavailable/)
+  assert.deepEqual(f.calls.prepared, [])
+  await assert.rejects(f.manager.workspaceDirectory(chat.id), /no LayerFS workspace/)
 })

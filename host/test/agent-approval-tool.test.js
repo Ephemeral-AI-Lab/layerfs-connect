@@ -49,10 +49,14 @@ test('parent and generated child bash tools wait for approval, deny, abort, and 
   }
   const parent = capture(createConnectBashExtension({ cwd: state, env: {}, traceDir: join(state, 'traces'), agent: 'root', approvalFile }))
   const adapter = await createConnectExtensions({ cwd: state, agentDir: join(state, 'pi'), runDir: join(state, 'run'), approvalFile })
+  // the child's settings sit beside its module; neither holds the approval token
   const wrapper = await readFile(adapter.childExtensionPath, 'utf8')
-  assert.ok(wrapper.includes(JSON.stringify(approvalFile)))
-  assert.ok(!wrapper.includes(connection.token))
-  assert.ok(!wrapper.includes('approvalMode'))
+  const settings = await readFile(join(state, 'run', 'connect-child.json'), 'utf8')
+  assert.equal(JSON.parse(settings).approvalFile, approvalFile)
+  for (const text of [wrapper, settings]) {
+    assert.ok(!text.includes(connection.token))
+    assert.ok(!text.includes('approvalMode'))
+  }
   const child = capture((await import(pathToFileURL(adapter.childExtensionPath).href)).default)
 
   const parentWork = parent.execute('parent-call', { command: 'printf approved > approved.txt' }, undefined, undefined, context)

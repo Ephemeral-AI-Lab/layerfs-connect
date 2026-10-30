@@ -1,5 +1,6 @@
 // Provider/model selection follows ConeCode's provider-scoped model settings;
 // Pi owns credentials, model metadata and the actual provider protocol.
+import { spawn } from 'node:child_process'
 import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { ModelRuntime } from '@earendil-works/pi-coding-agent'
@@ -19,6 +20,30 @@ const modelMetadata = (model = {}) => defined(Object.fromEntries([
   'name', 'reasoning', 'thinkingLevelMap', 'input', 'inputLimits', 'cost', 'promptCache',
   'contextWindow', 'maxTokens', 'samplingParams', 'samplingParamsByThinkingLevel', 'compat',
 ].map((field) => [field, model[field]])))
+const positive = (value) => typeof value === 'number' && Number.isFinite(value) && value > 0 ? Math.round(value) : undefined
+/** A provider's model list as the settings page edits it: id, name, limits, input types, reasoning. */
+const listedModel = (model = {}) => defined({
+  id: model.id,
+  name: typeof model.name === 'string' && model.name.trim() ? model.name.trim() : undefined,
+  contextWindow: positive(model.contextWindow),
+  maxTokens: positive(model.maxTokens),
+  reasoning: typeof model.reasoning === 'boolean' ? model.reasoning : undefined,
+  input: Array.isArray(model.input) ? model.input.filter((type) => type === 'text' || type === 'image') : undefined,
+})
+
+/** Checks a model list sent by the settings page; every id must be present and unique. */
+function modelList(models) {
+  if (models === undefined) return undefined
+  if (!Array.isArray(models)) throw new Error('Invalid model list.')
+  const seen = new Set()
+  return models.map((model) => {
+    const id = typeof model?.id === 'string' ? model.id.trim() : ''
+    if (!id) throw new Error('Model ID is required.')
+    if (seen.has(id)) throw new Error('Model ID must be unique.')
+    seen.add(id)
+    return listedModel({ ...model, id })
+  })
+}
 
 export class AgentModels {
   static async create(agentDir) {
@@ -55,6 +80,10 @@ export class AgentModels {
           headers: savedHeaders(config?.headers),
           hasKey: this.runtime.hasConfiguredAuth(provider.id),
           custom: Boolean(config),
+          // Pi ships it (a catalog provider), rather than models.json declaring it
+          builtIn: this.runtime.builtins?.has?.(provider.id) ?? !config,
+          // the models models.json lists for it: all of a declared provider's, extras for a built-in one
+          savedModels: (config?.models ?? []).map((model) => listedModel(model)),
           // a subscription sign-in it offers, and whether its credential is one
           signIn: signInOf(provider),
           signedIn: this.runtime.isUsingOAuth?.(provider.id) ?? false,
@@ -105,8 +134,11 @@ export class AgentModels {
         throw new Error('Use an HTTP or HTTPS API URL without credentials, query parameters, or fragments.')
       }
     }
+    const models = modelList(input.models)
+    if (models && !models.length && !this.runtime.builtins?.has?.(id)) throw new Error('A custom provider needs at least one model.')
     return this.saveProvider({
       id,
+      models,
       name: input.name?.trim() || undefined,
       baseUrl: baseUrl || undefined,
       api: input.api?.trim() || this.config.providers[id]?.api || (this.runtime.getProvider(id) ? undefined : 'openai-completions'),
@@ -115,23 +147,50 @@ export class AgentModels {
     })
   }
 
-  async persistProvider({ id, name, baseUrl, api, apiKey, models, headers }) {
+  async persistProvider({ id, name, baseUrl, api, apiKey, models, modelOverrides, headers }) {
     if (!id?.trim()) throw new Error('Provider ID is required.')
     const config = {
       ...this.config.providers[id],
-      ...defined({ name, baseUrl, api, models, headers: nativeHeaders(headers) }),
+      ...defined({ name, baseUrl, api, models, modelOverrides, headers: nativeHeaders(headers) }),
     }
+    // an emptied model list goes away rather than staying as []
+    if (Array.isArray(config.models) && !config.models.length) delete config.models
+    const previous = this.config
+    const next = { ...this.config, providers: { ...this.config.providers } }
     // Built-in providers can save credentials without an empty Pi override.
-    if (Object.keys(config).length) this.config.providers[id] = config
-    else delete this.config.providers[id]
-    write(this.modelsPath, this.config)
-    if (apiKey?.trim()) {
-      const auth = read(this.authPath, {})
-      auth[id] = { type: 'api_key', key: apiKey.trim() }
-      write(this.authPath, auth)
+    if (Object.keys(config).length) next.providers[id] = config
+    else delete next.providers[id]
+    const files = [this.modelsPath, ...(apiKey?.trim() ? [this.authPath] : [])]
+      .map((path) => ({ path, contents: existsSync(path) ? readFileSync(path) : undefined }))
+    try {
+      write(this.modelsPath, next)
+      if (apiKey?.trim()) write(this.authPath, { ...read(this.authPath, {}), [id]: { type: 'api_key', key: apiKey.trim() } })
+      this.config = next
+      await this.reload(id)
+    } catch (error) {
+      // Pi checks the whole provider on reload: a rejected save leaves the files as they were
+      this.config = previous
+      for (const { path, contents } of files) {
+        if (contents === undefined) rmSync(path, { force: true })
+        else writeContents(path, contents)
+      }
+      await this.reload(id).catch(() => {})
+      throw error
     }
-    await this.reload(id)
+    // a model the list dropped is no longer the one new chats use
+    if (this.selected?.provider === id && !this.runtime.getModel(id, this.selected.modelId)) {
+      this.selected = null
+      write(this.selectionPath, null)
+    }
     return this.snapshot()
+  }
+
+  /** Opens models.json, where providers and their models are kept, in the system's text editor. */
+  openConfig() {
+    if (!existsSync(this.modelsPath)) write(this.modelsPath, this.config)
+    const [cmd, args] = process.platform === 'darwin' ? ['open', ['-t', this.modelsPath]] : process.platform === 'win32' ? ['cmd', ['/c', 'start', '', this.modelsPath]] : ['xdg-open', [this.modelsPath]]
+    spawn(cmd, args, { stdio: 'ignore', detached: true }).on('error', () => {}).unref()
+    return { path: this.modelsPath }
   }
 
   configure({ provider, modelId, apiKey, baseUrl, api, thinkingLevel, contextWindow, maxTokens, reasoning, headers }) {
@@ -148,8 +207,7 @@ export class AgentModels {
       } else {
         config.models = [...(config.models ?? []), { id: modelId, ...overrides }]
       }
-      this.config.providers[provider] = config
-      await this.persistProvider({ id: provider, apiKey, baseUrl: baseUrl || undefined, api: api || undefined, headers })
+      await this.persistProvider({ id: provider, apiKey, baseUrl: baseUrl || undefined, api: api || undefined, headers, models: config.models, modelOverrides: config.modelOverrides })
       return this.select({ provider, modelId, thinkingLevel: thinkingLevel ?? this.selected?.thinkingLevel ?? 'off' })
     })
   }

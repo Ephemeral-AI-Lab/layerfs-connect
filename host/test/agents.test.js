@@ -862,3 +862,209 @@ for (const recovery of ['interrupted parent without child cards', 'paused child 
     assert.ok(existsSync(file), 'Unconfirmed process exit must keep the conversation available for recovery.')
   })
 }
+
+test('capabilities group tools and hooks by extension and match a live chat', { timeout: 30_000 }, async (t) => {
+  const f = await fixture(t, () => ({ text: 'ok' }))
+  const chat = await f.manager.create({ permissionMode: 'full' })
+  const configured = f.manager.capabilities(chat.id)
+  assert.equal(configured.live, false)
+  await f.manager.open(chat.id)
+  const live = f.manager.capabilities()
+  assert.equal(live.live, true)
+  // pi-subagents loads as an extension of its own; the run guard stays hidden
+  assert.deepEqual(live.extensions.map((extension) => [extension.id, extension.enabled]), [['layerfs-connect', true], ['pi-subagents', true]])
+  assert.deepEqual(live.extensions.map((extension) => extension.tools), [['bash'], ['subagent', 'bg_wait', 'subagent_supervisor', 'contact_supervisor']])
+  assert.ok(live.extensions[0].version && live.extensions[1].version)
+  // the configured view (no chat open) says what a live chat reports
+  for (const id of ['layerfs-connect', 'pi-subagents']) {
+    assert.deepEqual(live.hooks.filter((hook) => hook.extension === id).map((hook) => hook.event).sort(), configured.hooks.filter((hook) => hook.extension === id).map((hook) => hook.event).sort(), id)
+  }
+  for (const tool of live.tools.filter((tool) => tool.parameters.length)) {
+    assert.deepEqual(tool.parameters, configured.tools.find((item) => item.name === tool.name).parameters, tool.name)
+  }
+  assert.ok(live.hooks.every((hook) => hook.enabled))
+  // only the project-instructions hook has a switch; the rest switch with their extension
+  assert.deepEqual(live.hooks.filter((hook) => !hook.locked).map((hook) => hook.id), ['layerfs-connect:before_agent_start'])
+  assert.equal(live.tools.find((tool) => tool.name === 'bash').locked.startsWith('Required'), true)
+})
+
+test('extension and tool switches change what the model is offered, and refuse unsafe changes', { timeout: 45_000 }, async (t) => {
+  const f = await fixture(t, () => ({ text: 'ok' }))
+  const chat = await f.manager.create({ permissionMode: 'full' })
+  const offered = async (text) => {
+    const before = f.requests.length
+    await f.manager.message(chat.id, { text })
+    const done = await settled(f.manager, chat.id)
+    assert.equal(done.state, 'idle', done.error)
+    return toolNames(f.requests[before])
+  }
+  assert.deepEqual(await offered('ALL_ON'), parentTools)
+
+  const rejects = (change, pattern) => assert.rejects(f.manager.setCapability(change), (error) => error.status === 409 && pattern.test(error.message))
+  await rejects({ kind: 'extension', id: 'layerfs-connect', enabled: false }, /cannot be turned off/)
+  await rejects({ kind: 'tool', id: 'bash', enabled: false }, /Required/)
+
+  // a working chat blocks every change
+  f.manager.record(chat.id).state = 'running'
+  await rejects({ kind: 'tool', id: 'bg_wait', enabled: false }, /Wait for/)
+  f.manager.record(chat.id).state = 'idle'
+
+  await f.manager.setCapability({ kind: 'tool', id: 'bg_wait', enabled: false })
+  assert.equal(f.manager.live.has(chat.id), false, 'the idle chat closed its Pi session')
+  assert.deepEqual(await offered('NO_BG_WAIT'), ['bash', 'subagent', 'subagent_supervisor'])
+
+  await f.manager.setCapability({ kind: 'tool', id: 'subagent', enabled: false })
+  assert.deepEqual(await offered('NO_SUBAGENT'), ['bash'])
+  await rejects({ kind: 'tool', id: 'subagent_supervisor', enabled: false }, /Turns on with subagent/)
+  await f.manager.setCapability({ kind: 'tool', id: 'subagent', enabled: true })
+
+  const off = await f.manager.setCapability({ kind: 'extension', id: 'pi-subagents', enabled: false })
+  assert.deepEqual(off.tools.filter((tool) => tool.enabled).map((tool) => tool.name), ['bash'])
+  assert.ok(off.hooks.filter((hook) => hook.extension === 'pi-subagents').every((hook) => !hook.enabled))
+  assert.deepEqual(await offered('NO_PI_SUBAGENTS'), ['bash'])
+  assert.deepEqual(f.manager.capabilities().extensions.map((extension) => extension.id), ['layerfs-connect', 'pi-subagents'])
+  assert.match(f.requests.at(-1).messages.find((message) => message.role === 'system')?.content ?? '', /tool is `bash`\./)
+  await rejects({ kind: 'tool', id: 'subagent', enabled: true }, /Turns on with pi-subagents/)
+
+  // the setup survives a restart; turning it back on restores the remembered tool choices
+  await f.restart()
+  assert.equal(f.manager.capabilities().extensions[1].enabled, false)
+  await f.manager.setCapability({ kind: 'extension', id: 'pi-subagents', enabled: true })
+  assert.deepEqual(await offered('BACK_ON'), ['bash', 'subagent', 'subagent_supervisor'])
+  await f.manager.setCapability({ kind: 'tool', id: 'bg_wait', enabled: true })
+  assert.deepEqual(await offered('ALL_BACK'), parentTools)
+  assert.deepEqual(await f.manager.remove(chat.id), { id: chat.id })
+})
+
+test('a subagent’s numbers and conversation come from its own session file', { timeout: 45_000 }, async (t) => {
+  const f = await fixture(t, (request) => {
+    const prompt = lastUser(request)
+    if (prompt.includes('CHILD_CONVERSATION_FIXTURE')) {
+      if (hasResult(request)) return { text: 'CHILD_SAID_DONE' }
+      return bash("printf 'from child' > child-conv.txt")
+    }
+    if (hasResult(request)) return { text: 'PARENT_DONE' }
+    return { tool: 'subagent', args: { agent: 'connect-worker', task: 'CHILD_CONVERSATION_FIXTURE', async: false } }
+  })
+  const chat = await f.manager.create({ permissionMode: 'full' })
+  await f.manager.message(chat.id, { text: 'DELEGATE_CONVERSATION' })
+  const done = await settled(f.manager, chat.id)
+  assert.equal(done.state, 'idle', done.error)
+  const child = done.children.find((item) => item.agent === 'connect-worker')
+  assert.ok(child, JSON.stringify(done.children))
+  assert.equal(child.task, 'CHILD_CONVERSATION_FIXTURE')
+  assert.equal(child.conversation, true)
+  assert.equal(child.turns, 2)
+  assert.equal(child.toolCount, 1)
+  assert.ok(child.tokens > 0)
+  assert.ok(child.startedAt <= child.endedAt)
+
+  const { child: same, messages } = await agentRoute(f.manager, 'GET', ['sessions', chat.id, 'children', child.id])
+  assert.equal(same.id, child.id)
+  assert.match(messages.find((message) => message.role === 'user').text, /CHILD_CONVERSATION_FIXTURE/)
+  assert.ok(messages.some((message) => message.role === 'tool' && message.toolName === 'bash' && message.status === 'done'))
+  assert.equal(messages.filter((message) => message.role === 'assistant').at(-1).text, 'CHILD_SAID_DONE')
+
+  assert.throws(() => f.manager.childConversation(chat.id, 'not-a-child'), (error) => error.status === 404)
+  await f.restart()
+  assert.equal(f.manager.detail(chat.id).children.find((item) => item.id === child.id).turns, 2)
+  // a session file outside the chat's folder is never read
+  f.manager.record(chat.id).children = f.manager.record(chat.id).children.map((item) => ({ ...item, sessionFile: '/etc/hosts' }))
+  assert.deepEqual(f.manager.childConversation(chat.id, child.id).messages, [])
+  assert.equal(f.manager.detail(chat.id).children.find((item) => item.id === child.id).conversation, false)
+})
+
+test('turning leads off stops chats from starting connect-lead, and back on allows it', { timeout: 60_000 }, async (t) => {
+  const f = await fixture(t, (request) => {
+    const tools = toolNames(request)
+    if (!tools.includes('subagent')) {
+      if (hasResult(request)) return { text: 'WORKER_DONE' }
+      return bash("printf 'lead worker' > lead.txt")
+    }
+    if (tools.includes('contact_supervisor')) {
+      if (hasResult(request)) return { text: 'LEAD_DONE' }
+      return { tool: 'subagent', args: { agent: 'connect-worker', task: 'LEAD_WORKER', async: false } }
+    }
+    if (hasResult(request)) return { text: 'ROOT_DONE' }
+    return { tool: 'subagent', args: { agent: 'connect-lead', task: 'START_A_LEAD', async: false } }
+  })
+  const chat = await f.manager.create({ permissionMode: 'full' })
+  await assert.rejects(f.manager.setCapability({ kind: 'agent', id: 'main', enabled: false }), (error) => error.status === 409)
+  await assert.rejects(f.manager.setCapability({ kind: 'agent', id: 'worker', enabled: false }), (error) => error.status === 409)
+  const off = await f.manager.setCapability({ kind: 'agent', id: 'lead', enabled: false })
+  assert.deepEqual(off.agents.map((agent) => [agent.id, agent.enabled]), [['main', true], ['worker', true], ['lead', false]])
+
+  await f.manager.message(chat.id, { text: 'TRY_A_LEAD' })
+  const refused = await settled(f.manager, chat.id)
+  assert.equal(refused.state, 'idle', refused.error)
+  assert.ok(!refused.children.some((child) => child.agent === 'connect-lead' && child.state === 'completed'), JSON.stringify(refused.children))
+  assert.equal(existsSync(join(f.cwd, 'lead.txt')), false)
+
+  await f.manager.setCapability({ kind: 'agent', id: 'lead', enabled: true })
+  await f.manager.message(chat.id, { text: 'TRY_A_LEAD_AGAIN' })
+  const allowed = await settled(f.manager, chat.id)
+  assert.equal(allowed.state, 'idle', allowed.error)
+  assert.ok(allowed.children.some((child) => child.agent === 'connect-lead' && child.text?.includes('LEAD_DONE')), JSON.stringify(allowed.children))
+  assert.equal(await readFile(join(f.cwd, 'lead.txt'), 'utf8'), 'lead worker')
+})
+
+const systemText = (request) => request.messages.filter((message) => ['system', 'developer'].includes(message.role)).map((message) => content(message.content)).join('\n')
+
+test('per-agent tool and hook switches reach each agent, and global ones reach all of them', { timeout: 90_000 }, async (t) => {
+  // the main agent starts a lead, which starts a worker; each agent is told apart by its system prompt
+  const f = await fixture(t, (request) => {
+    const system = systemText(request)
+    if (system.includes('You are a focused worker in LayerFS Connect.')) return hasResult(request) || lastUser(request).includes('NO_TOOL') ? { text: 'WORKER_DONE' } : bash('true')
+    if (system.includes('You are a team lead in LayerFS Connect.')) {
+      if (hasResult(request)) return { text: 'LEAD_DONE' }
+      return { tool: 'subagent', args: { agent: 'connect-worker', task: 'NO_TOOL work', async: false } }
+    }
+    if (hasResult(request)) return { text: 'MAIN_DONE' }
+    return { tool: 'subagent', args: { agent: 'connect-lead', task: 'LEAD_TASK', async: false } }
+  })
+  await writeFile(join(f.cwd, 'AGENTS.md'), 'PROJECT_RULE_MARKER\n')
+  const chat = await f.manager.create({ permissionMode: 'full' })
+  const run = async (text) => {
+    const before = f.requests.length
+    await f.manager.message(chat.id, { text })
+    const done = await settled(f.manager, chat.id)
+    assert.equal(done.state, 'idle', done.error)
+    const seen = {}
+    for (const request of f.requests.slice(before)) {
+      const system = systemText(request)
+      const agent = system.includes('You are a focused worker') ? 'worker' : system.includes('You are a team lead') ? 'lead' : 'main'
+      seen[agent] ??= { tools: toolNames(request), rules: system.includes('PROJECT_RULE_MARKER') }
+    }
+    return seen
+  }
+  const all = await run('ALL_ON')
+  assert.deepEqual(all.main, { tools: parentTools, rules: true })
+  assert.deepEqual(all.lead, { tools: ['bash', 'bg_wait', 'contact_supervisor', 'subagent', 'subagent_supervisor'], rules: true })
+  assert.deepEqual(all.worker, { tools: ['bash', 'contact_supervisor'], rules: true })
+
+  // per agent: only that agent changes
+  await f.manager.setCapability({ kind: 'tool', id: 'bg_wait', agent: 'main', enabled: false })
+  await f.manager.setCapability({ kind: 'tool', id: 'contact_supervisor', agent: 'worker', enabled: false })
+  await f.manager.setCapability({ kind: 'hook', id: 'layerfs-connect:before_agent_start', agent: 'worker', enabled: false })
+  const own = await run('PER_AGENT')
+  assert.deepEqual(own.main, { tools: ['bash', 'subagent', 'subagent_supervisor'], rules: true })
+  assert.deepEqual(own.lead, { tools: ['bash', 'bg_wait', 'contact_supervisor', 'subagent', 'subagent_supervisor'], rules: true })
+  assert.deepEqual(own.worker, { tools: ['bash'], rules: false })
+
+  // global: every agent changes, and per-agent switches wait under it
+  await f.manager.setCapability({ kind: 'tool', id: 'subagent_supervisor', enabled: false })
+  await f.manager.setCapability({ kind: 'hook', id: 'layerfs-connect:before_agent_start', enabled: false })
+  await assert.rejects(f.manager.setCapability({ kind: 'tool', id: 'subagent_supervisor', agent: 'lead', enabled: true }), (error) => error.status === 409 && /Off for all agents/.test(error.message))
+  await assert.rejects(f.manager.setCapability({ kind: 'hook', id: 'layerfs-connect:before_agent_start', agent: 'main', enabled: true }), (error) => error.status === 409 && /Off for all agents/.test(error.message))
+  await assert.rejects(f.manager.setCapability({ kind: 'hook', id: 'layerfs-connect:message_start', enabled: false }), (error) => error.status === 409 && /rollback/.test(error.message))
+  await assert.rejects(f.manager.setCapability({ kind: 'hook', id: 'pi-subagents:input', enabled: false }), (error) => error.status === 409)
+  const global = await run('GLOBAL')
+  assert.deepEqual(global.main, { tools: ['bash', 'subagent'], rules: false })
+  assert.deepEqual(global.lead, { tools: ['bash', 'bg_wait', 'contact_supervisor', 'subagent'], rules: false })
+  assert.deepEqual(global.worker, { tools: ['bash'], rules: false })
+
+  const catalog = f.manager.capabilities()
+  assert.deepEqual(catalog.tools.find((tool) => tool.name === 'bg_wait').offFor, ['main'])
+  assert.equal(catalog.hooks.find((hook) => hook.id === 'layerfs-connect:before_agent_start').enabled, false)
+  assert.equal(catalog.agents.find((agent) => agent.id === 'worker').tools.find((tool) => tool.name === 'contact_supervisor').enabled, false)
+})

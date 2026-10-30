@@ -1,11 +1,13 @@
 import { useI18n } from '@/i18n'
-import { Archive, ArchiveRestore, ChevronDown, CircleHelp, Copy, Download, FolderOpen, History, LoaderCircle, MoreHorizontal, Pencil, Play, Plus, Settings2, ShieldQuestion, WifiOff, X } from 'lucide-react'
+import { Archive, ArchiveRestore, CircleHelp, Copy, Download, LoaderCircle, MoreHorizontal, Pencil, Play, ShieldQuestion, WifiOff, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
-import type { AgentModels, AgentSessionDetail, AgentSessionSummary, ModelSelection } from '@shared/agent-api'
+import type { AgentModels, AgentSessionDetail, AgentSessionSummary, ChatScenario, ModelSelection } from '@shared/agent-api'
 import { projectKey, projectLabel, projectRef } from '@shared/host-api'
 
 import { ConnectMark } from '@/components/connect-mark'
-import { AgentMessage, ChildRuns } from '@/components/chat/agent-messages'
+import { LfsProject } from '@/components/lfs-icons'
+import { AgentMessage } from '@/components/chat/agent-messages'
+import { ChildConversationView, SubagentsMenu, SubagentsSummary } from '@/components/chat/subagents'
 import { attachmentPayload, hydrateMessageAttachments } from '@/components/chat/attachments'
 import { newDraftKey, sessionDraftKey, useChatDraft } from '@/components/chat/chat-drafts'
 import { SessionSettingsDialog, type SessionSettingsTarget } from '@/components/chat/session-settings'
@@ -13,30 +15,30 @@ import { conversationMarkdown, exportConversation } from '@/components/chat/tran
 import { Composer, type ComposerCommand } from '@/components/chat/composer'
 import { ConversationActionDialog, type ConversationActionTarget } from '@/components/chat/conversation-actions'
 import { ContextMeter } from '@/components/chat/context-meter'
-import { ModelSettingsDialog } from '@/components/chat/model-settings'
+import { useModelsChanged, useSettings } from '@/components/settings/settings-context'
 import { ModelSelector } from '@/components/chat/model-selector'
+import { TraceView } from '@/components/chat/trace-view'
 import { ApprovalPanel } from '@/components/chat/permissions'
 import { QueuedMessages } from '@/components/chat/queued-messages'
-import { SessionHistory } from '@/components/chat/session-history'
-import { Suggestions } from '@/components/chat/suggestions'
-import { WorkspacePicker } from '@/components/chat/workspace-picker'
+import { WorkspaceMenus } from '@/components/chat/workspace-picker'
 import { WorkspaceStatus } from '@/components/chat/workspace-status'
 import { NewProjectDialog } from '@/components/projects/new-project-dialog'
-import { useDemos } from '@/components/projects/scenario-picker'
-import { spotlight } from '@/components/motion/spotlight'
-import { ThinkingLine } from '@/components/runs/thread-items'
+import { ProjectView, type EmbeddedProjectView } from '@/components/projects/project-view'
+import { Tab, TabBar } from '@/components/motion/tabs'
+import { ThinkingLine } from '@/components/chat/markdown'
 import { Button } from '@/components/ui/button'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { agentHost } from '@/host/agent-client'
-import { host, onHostConnection, onHostEvent, type HostConnection } from '@/host/client'
+import { onHostConnection, onHostEvent, type HostConnection } from '@/host/client'
 import type { ProjectCatalog } from '@/host/use-projects'
 import { cn } from '@/lib/utils'
 import './chat.css'
 
-const isMac = window.connect.platform === 'darwin'
 const LAST_SESSION = 'connect.agent.last-session'
 const LAST_CWD = 'connect.agent.cwd'
 const LAST_PROJECT = 'connect.agent.project'
+/** A scenario chat's provider: its model is the scenario's script (host/agents/scenario-model.js). */
+const SCENARIO_PROVIDER = 'scenario'
 const byUpdated = (a: AgentSessionSummary, b: AgentSessionSummary) => b.updated - a.updated
 const mergeHistory = (current: AgentSessionSummary[], incoming: AgentSessionSummary[], deleted: ReadonlySet<string>) => {
   const all = new Map(current.filter((session) => !deleted.has(session.id)).map((session) => [session.id, session]))
@@ -52,14 +54,27 @@ interface ChatHomeProps {
   initialProject?: string
   /** A conversation to open (from the sidebar); a new one opens when absent. */
   initialSession?: string
-  onOpenProject?: (project: string, branch?: string) => void
-  /** Opens a scenario run's page: `/scenario` started it on `project`. */
-  onOpenRun?: (project: string, run: string) => void
+  /** Opens a new chat even when no session is given, instead of the last one used. */
+  startNew?: boolean
+  /** Opens the project page; `from` names this chat, for the way back. */
+  onOpenProject?: (project: string, branch?: string, from?: string) => void
+  /** The view to open on (Chat, Trace, Files…), and each view opened after. */
+  initialView?: string
+  onView?: (view: string) => void
   /** Says which conversation is open now (null for a new one), for the sidebar. */
   onActiveSession?: (id: string | null) => void
 }
 
-export function ChatHome({ projects, initialProject, initialSession, onOpenProject, onOpenRun, onActiveSession }: ChatHomeProps) {
+/** The chat page's views: the conversation, the agent's Trace, and its project's Files, History and Sandboxes. */
+type ChatView = 'chat' | 'trace' | EmbeddedProjectView
+const CHAT_VIEWS = ['chat', 'trace', 'files', 'history', 'sandboxes'] as const
+const PROJECT_VIEWS: { id: EmbeddedProjectView; label: string }[] = [
+  { id: 'files', label: 'Files' },
+  { id: 'history', label: 'History' },
+  { id: 'sandboxes', label: 'Sandboxes' },
+]
+
+export function ChatHome({ projects, initialProject, initialSession, startNew, onOpenProject: openProjectPage, initialView, onView, onActiveSession }: ChatHomeProps) {
   const { t } = useI18n()
   const [models, setModels] = useState<AgentModels>()
   const [selection, setSelection] = useState<ModelSelection | null>(null)
@@ -73,23 +88,37 @@ export function ChatHome({ projects, initialProject, initialSession, onOpenProje
   const [notice, setNotice] = useState('')
   const [loading, setLoading] = useState(true)
   const [pending, setPending] = useState(false)
-  const [modelsOpen, setModelsOpen] = useState(false)
+  const settings = useSettings()
   const [modelBusy, setModelBusy] = useState(false)
   const [modelMenuOpen, setModelMenuOpen] = useState(false)
-  const [historyOpen, setHistoryOpen] = useState(false)
   const [workspaceOpen, setWorkspaceOpen] = useState(false)
+  /** The subagent whose conversation shows in place of the chat's, and the header's list of them. */
+  const [childView, setChildView] = useState<string | null>(null)
+  const [subagentsOpen, setSubagentsOpen] = useState(false)
+  useEffect(() => { setChildView(null) }, [session?.id])
+  const [view, setView] = useState<ChatView>(() => (CHAT_VIEWS as readonly string[]).includes(initialView ?? '') ? initialView as ChatView : 'chat')
+  useEffect(() => { onView?.(view) }, [view]) // eslint-disable-line react-hooks/exhaustive-deps
+  /** The Branch the Project tab opens on (a Trace link). */
+  const [projectBranch, setProjectBranch] = useState<string | undefined>()
   const [newProjectOpen, setNewProjectOpen] = useState(false)
   const [sessionSettings, setSessionSettings] = useState<SessionSettingsTarget | null>(null)
   const [connection, setConnection] = useState<HostConnection>('connecting')
   const [conversationAction, setConversationAction] = useState<ConversationActionTarget | null>(null)
   const activeId = useRef<string | null>(null)
   const navigation = useRef(0)
-  const skipRestore = useRef(initialProject !== undefined)
-  const demos = useDemos()
+  const skipRestore = useRef(initialProject !== undefined || !!startNew)
+  const [scenarios, setScenarios] = useState<ChatScenario[]>()
   const sendInFlight = useRef(false)
   const conversationInFlight = useRef(false)
   const conversationTrigger = useRef<HTMLButtonElement>(null)
   const catalogRequest = useRef(0)
+  // Settings → Models saved the catalog: this chat's model list follows it
+  useModelsChanged((catalog) => {
+    catalogRequest.current += 1
+    setModels(catalog)
+    setSelection(catalog.selected)
+    setError('')
+  })
   // The mount-only SSE listener must see the current catalog when switching sessions.
   const modelCatalog = useRef(models)
   modelCatalog.current = models
@@ -104,6 +133,7 @@ export function ChatHome({ projects, initialProject, initialSession, onOpenProje
   const followBottom = useRef(true)
   const agentRunning = session?.state === 'running'
   const running = agentRunning || session?.execution?.phase === 'children' || !!session?.children.some((child) => /^(running|pending|queued|paused)$/.test(child.state))
+  const openChild = (childView && session?.children.find((child) => child.id === childView)) || null
 
   function update(detail: AgentSessionDetail) {
     if (deletedIds.current.has(detail.id)) return
@@ -122,7 +152,7 @@ export function ChatHome({ projects, initialProject, initialSession, onOpenProje
     setProject(detail.project ?? '')
     const configured = catalog?.providers.some((provider) => provider.id === detail.provider && (provider.custom || provider.hasKey))
     const available = configured && catalog?.models.some((model) => model.provider === detail.provider && model.id === detail.modelId)
-    if (useSessionModel && available && detail.provider && detail.modelId) setSelection({ provider: detail.provider, modelId: detail.modelId, thinkingLevel: detail.thinkingLevel })
+    if (useSessionModel && available && detail.provider && detail.modelId && detail.provider !== SCENARIO_PROVIDER) setSelection({ provider: detail.provider, modelId: detail.modelId, thinkingLevel: detail.thinkingLevel })
     followBottom.current = true
     drafts.open(sessionDraftKey(detail.id))
     update(detail)
@@ -304,17 +334,19 @@ export function ChatHome({ projects, initialProject, initialSession, onOpenProje
     // `/scenario …` never goes to the model; without a LayerFS project it only explains
     const scenario = /^\/scenario(?:\s+(\S+))?\s*$/.exec(prompt)
     if (scenario) {
-      if (!(session ? session.project : project)) setNotice(t("/scenario plays on a LayerFS project. Choose a project in Workspace, then try again."))
+      if (!(session ? session.project ?? session.scenario?.project : project)) setNotice(t("/scenario plays on a LayerFS project. Choose a project in Workspace, then try again."))
       else if (scenario[1]) { setInput(''); void playScenario(scenario[1]) }
       else setInput('/scenario ')
       return
     }
-    if (!selection) {
+    // a scenario chat answers with its own script, whatever the composer's model is
+    const scripted = !!session?.scenario
+    if (!selection && !scripted) {
       setInput(prompt)
-      setModelsOpen(true)
+      settings.open('models')
       return
     }
-    const chosenModel = models?.models.find((item) => item.provider === selection.provider && item.id === selection.modelId)
+    const chosenModel = scripted ? undefined : models?.models.find((item) => item.provider === selection?.provider && item.id === selection?.modelId)
     if (attachments.some((item) => item.mimeType.startsWith('image/')) && !chosenModel?.input?.includes('image')) { setError("Choose a model that supports images, or remove the image attachments."); return }
     const sentDraft = drafts.snapshot()
     const sentKey = drafts.key()
@@ -327,7 +359,7 @@ export function ChatHome({ projects, initialProject, initialSession, onOpenProje
     try {
       let target = session
       if (!target) {
-        target = await agentHost.create({ ...(project ? { project } : { cwd: cwd.trim() || undefined }), ...selection, permissionMode: 'full', limits: sentDraft.limits })
+        target = await agentHost.create({ ...(project ? { project } : {}), cwd: cwd.trim() || undefined, ...selection, permissionMode: 'full', ...(sentDraft.limits?.instructions ? { limits: { instructions: sentDraft.limits.instructions } } : {}) })
         if (view !== navigation.current) {
           update(target)
           return
@@ -337,7 +369,7 @@ export function ChatHome({ projects, initialProject, initialSession, onOpenProje
         if (!target.project) localStorage.setItem(LAST_CWD, target.cwd)
         setWorkspaceOpen(false)
       }
-      const detail = await agentHost.send(target.id, { text: prompt, attachments: attachmentPayload(sentDraft.attachments), mode: 'followUp', ...(target.state === 'running' ? {} : selection) })
+      const detail = await agentHost.send(target.id, { text: prompt, attachments: attachmentPayload(sentDraft.attachments), mode: 'followUp', ...(target.state === 'running' || target.scenario || !selection ? {} : selection) })
       if (detail.id === target.id) update(detail)
       else activateReplacement(detail, target.id, view)
       drafts.clear(sentKey, sentDraft)
@@ -377,15 +409,6 @@ export function ChatHome({ projects, initialProject, initialSession, onOpenProje
     }
   }
 
-  async function removeSession(id: string) {
-    await agentHost.remove(id)
-    drafts.clear(sessionDraftKey(id))
-    // In-flight history reads and the stop event can arrive after DELETE.
-    deletedIds.current.add(id)
-    setSessions((all) => all.filter((s) => s.id !== id))
-    if (activeId.current === id) newSession()
-  }
-
   async function changeConversation(target: ConversationActionTarget, text: string) {
     if (conversationInFlight.current || sendInFlight.current) throw new Error(t("Wait for the current action to finish."))
     conversationInFlight.current = true
@@ -404,7 +427,6 @@ export function ChatHome({ projects, initialProject, initialSession, onOpenProje
           skipRestore.current = true
           activate(result.session)
           drafts.open(sessionDraftKey(result.session.id), { text: result.draft ?? '', attachments: result.attachments ?? [] })
-          setHistoryOpen(false)
           setWorkspaceOpen(false)
           setNotice('Conversation copied. Send a message when you are ready to continue.')
         }
@@ -437,7 +459,7 @@ export function ChatHome({ projects, initialProject, initialSession, onOpenProje
   async function archiveSession(target: AgentSessionSummary) {
     if (pending || target.state === 'running' || target.execution?.phase === 'children') return
     setPending(true); setError('')
-    try { await updateMetadata(target, { archived: !target.archived }); setNotice(target.archived ? "Conversation restored." : "Conversation archived. Find it under Archived in History.") }
+    try { await updateMetadata(target, { archived: !target.archived }); setNotice(target.archived ? "Conversation restored." : "Conversation archived.") }
     catch (e) { setError((e as Error).message) }
     finally { setPending(false) }
   }
@@ -471,11 +493,12 @@ export function ChatHome({ projects, initialProject, initialSession, onOpenProje
   const messages = session?.messages ?? []
   const visibleError = error || session?.error
   const totalCost = session?.usage?.cost ?? messages.reduce((sum, message) => sum + (message.usage?.cost ?? 0), 0)
-  const activeProvider = running ? session?.provider : selection?.provider
-  const modelLabel = running ? session?.modelId : selection?.modelId
-  const activeProject = session ? session.project ?? '' : project
-  const activeCwd = activeProject ? session?.workspace?.path ?? t("Managed LayerFS workspace") : session?.cwd ?? (cwd || t("Choose directory"))
-  const folderShort = activeProject ? t("LayerFS workspace") : activeCwd.split('/').filter(Boolean).slice(-2).join('/') || activeCwd
+  const scenario = session?.scenario ?? null
+  const ownModel = running || !!scenario
+  const activeProvider = ownModel ? session?.provider : selection?.provider
+  const modelLabel = ownModel ? session?.modelId : selection?.modelId
+  // a scenario chat is on its project like any project chat
+  const activeProject = session ? session.project ?? scenario?.project ?? '' : project
   const currentModelMeta = models?.models.find((m) => m.provider === activeProvider && m.id === modelLabel)
   const thinkingOptions = currentModelMeta?.thinkingLevels ?? ['off', 'minimal', 'low', 'medium', 'high', 'xhigh', 'max']
   const activeThinking = (running ? session?.thinkingLevel : selection?.thinkingLevel) ?? 'off'
@@ -486,15 +509,8 @@ export function ChatHome({ projects, initialProject, initialSession, onOpenProje
 
   // The header owns model selection and settings for configured providers.
   const configuredProviderIds = new Set((models?.providers ?? []).filter((p) => p.hasKey || p.custom).map((p) => p.id))
-  const selectableModels = (models?.models ?? []).filter((m) => configuredProviderIds.has(m.provider))
-
-  function openHistoryDrawer() {
-    setHistoryOpen(true)
-    void agentHost.sessions().then((h) => setSessions((all) => mergeHistory(all, h, deletedIds.current)), (e: Error) => setError(e.message))
-    if (activeId.current) {
-      refreshSession(activeId.current)
-    }
-  }
+  // a scenario's model plays only in its own chat (/scenario)
+  const selectableModels = (models?.models ?? []).filter((m) => configuredProviderIds.has(m.provider) && m.provider !== SCENARIO_PROVIDER)
 
   async function saveSelection(next: ModelSelection) {
     setModelBusy(true)
@@ -511,13 +527,6 @@ export function ChatHome({ projects, initialProject, initialSession, onOpenProje
     }
   }
 
-  async function refreshSyncedModels() {
-    // Read the latest catalog rather than applying a delayed sync response.
-    const request = ++catalogRequest.current
-    const catalog = await agentHost.models()
-    if (request === catalogRequest.current) setModels(catalog)
-  }
-
   function selectModelChoice(provider: string, modelId: string) {
     if (running) return
     void saveSelection({ provider, modelId, thinkingLevel: selection?.thinkingLevel ?? 'off' })
@@ -528,29 +537,55 @@ export function ChatHome({ projects, initialProject, initialSession, onOpenProje
     void saveSelection({ ...selection, thinkingLevel: level })
   }
 
-  // `/scenario <name>` plays a scenario on the chat's LayerFS project, in a folder of its own; nothing goes to the model
+  // `/scenario <name>` opens a new chat whose model is the scenario's script, on the chat's
+  // LayerFS project, in a folder of its own; it is stopped like any chat, with Stop.
+  // `/scenario all` starts one such chat per scenario, all at once, and opens the first.
   async function playScenario(name: string) {
     const target = activeProject
     if (!target) return
     setError('')
     setNotice('')
+    if (name.toLowerCase() === 'all') return playAllScenarios(target)
     try {
-      const started = name === 'all' ? await host.startAll(target) : [await host.startRun(name, target)]
-      if (started[0] && onOpenRun) onOpenRun(target, started[0].id)
-      else setNotice(t("Scenario started on {project}.", { project: projectLabel(target) }))
+      const detail = await agentHost.create({ scenario: name, project: target })
+      navigation.current += 1
+      setConversationAction(null)
+      setLoading(false)
+      activate(detail)
     } catch (e) {
       setError(t("Could not start the scenario: {message}", { message: (e as Error).message }))
     }
   }
+  async function playAllScenarios(target: string) {
+    const ids = playable.map((item) => item.id)
+    if (!ids.length) return setNotice(t("No scenario plays in a chat yet."))
+    const started = await Promise.allSettled(ids.map((id) => agentHost.create({ scenario: id, project: target })))
+    const first = started.find((result) => result.status === 'fulfilled')
+    const failed = started.flatMap((result, i) => result.status === 'rejected' ? [`${ids[i]}: ${(result.reason as Error).message}`] : [])
+    if (first) {
+      navigation.current += 1
+      setConversationAction(null)
+      setLoading(false)
+      activate(first.value)
+    }
+    if (failed.length) setError(t("Could not start {count} of {total} scenarios: {message}", { count: failed.length, total: ids.length, message: failed.join('; ') }))
+    else setNotice(t("Started {count} scenarios, each in a chat of its own.", { count: ids.length }))
+  }
+  useEffect(() => {
+    let live = true
+    agentHost.scenarios().then((all) => live && setScenarios(all), () => live && setScenarios([]))
+    return () => { live = false }
+  }, [])
+  const playable = (scenarios ?? []).filter((item) => !item.notInChat)
   const scenarioCommand: ComposerCommand = activeProject
     ? {
         id: 'scenario',
         label: t("Play scenario"),
-        description: t("Play a scenario here, in a folder of its own"),
+        description: t("A new chat plays a scenario’s script here, in a folder of its own"),
         onSelect: () => {},
         options: [
-          ...(demos.data ?? []).map((demo) => ({ id: demo.id, label: demo.title, description: demo.blurb ?? undefined })),
-          ...((demos.data?.length ?? 0) > 1 ? [{ id: 'all', label: t("All scenarios"), description: t("Every scenario at once, each in its own folder") }] : []),
+          ...(playable.length > 1 ? [{ id: 'all', label: t("All scenarios"), description: t("{count} at once, each in a chat and folder of its own", { count: playable.length }) }] : []),
+          ...playable.map((item) => ({ id: item.id, label: item.title, description: item.blurb || undefined })),
         ],
         onArgument: (name) => void playScenario(name),
       }
@@ -563,7 +598,6 @@ export function ChatHome({ projects, initialProject, initialSession, onOpenProje
 
   const commands: ComposerCommand[] = [
     { id: 'new', label: t("New session"), description: t("Start a fresh conversation in this workspace"), onSelect: newSession },
-    { id: 'history', label: t("History & context"), description: t("Find a session or inspect its saved context"), onSelect: openHistoryDrawer },
     { id: 'model', label: t("Select model"), description: running ? t("Available after the current turn") : t("Choose the model for your next message"), disabled: running, onSelect: () => setModelMenuOpen(true) },
     { id: 'workspace', label: t("Workspace"), description: t("Working directory, project and recent folders"), onSelect: () => setWorkspaceOpen(true) },
     { id: 'compact', label: t("Compact context"), description: running ? t("Stop the agent before compacting") : !messages.length ? t("Start a conversation first") : t("Summarize earlier turns to free context"), disabled: !messages.length || running, onSelect: () => void sessionAction('compact') },
@@ -571,27 +605,61 @@ export function ChatHome({ projects, initialProject, initialSession, onOpenProje
     scenarioCommand,
   ]
 
+  /** The project page, in this tab: its back link returns here, named by this chat's title. */
+  const onOpenProject = openProjectPage && ((project: string, branch?: string) => openProjectPage(project, branch, session?.title ?? t("New chat")))
+  const projectView = view === 'files' || view === 'history' || view === 'sandboxes'
+  const shown: ChatView = (projectView && !activeProject) || (view === 'trace' && !session) ? 'chat' : view
+  // a new chat before its first message: no header, the title and the composer in the middle of the page
+  const fresh = !session && !loading && messages.length === 0 && shown === 'chat'
+  const workspaceMenus = (bare: boolean) => (
+    <WorkspaceMenus
+      bare={bare}
+      cwd={session?.cwd ?? cwd}
+      project={activeProject}
+      workspace={session?.workspace ?? null}
+      locked={!!session}
+      disabled={loading || pending}
+      sessions={sessions}
+      projects={projects.data ?? []}
+      projectsLoading={projects.loading}
+      projectError={projects.error?.message ?? ''}
+      open={workspaceOpen}
+      onOpenChange={setWorkspaceOpen}
+      onDirectory={changeDirectory}
+      onProject={changeProject}
+      onRefresh={projects.reload}
+      onNewProject={() => setNewProjectOpen(true)}
+      onOpenProject={onOpenProject}
+      onError={setError}
+    />
+  )
+
   return (
     <div className="relative flex h-svh min-h-0 flex-col overflow-hidden">
-      <div className={cn('h-10 shrink-0 app-drag', !isMac && 'pr-36')} />
-
-      {/* Unified Top Bar */}
-      <header className="mx-auto flex w-full max-w-4xl shrink-0 items-center justify-between gap-3 px-6 pb-2">
-        <div className="flex min-w-0 items-center gap-2">
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            title={t("History & conversation context")}
-            data-session-history aria-label={t("Session history")}
-            disabled={pending || loading}
-            onClick={openHistoryDrawer}
-            className="shrink-0 rounded-xl text-muted-foreground hover:bg-foreground/[0.05] hover:text-foreground"
-          >
-            <History className="size-4" />
-          </Button>
-          <h1 className="truncate text-sm font-semibold tracking-tight text-foreground">
-            {session?.title ?? t("New session")}
-          </h1>
+      {/* the chat's name and project, then its views */}
+      <header className={cn('mx-auto w-full max-w-7xl shrink-0 px-6 pt-1.5 @min-[56rem]/workspace:px-8', fresh && 'hidden')}>
+        <div className="flex h-10 min-w-0 items-center gap-2">
+          {/* the project, then this chat: a breadcrumb */}
+          {activeProject && onOpenProject && (
+            <>
+              <button
+                type="button"
+                data-open-project
+                onClick={() => onOpenProject(activeProject)}
+                title={t("Open {name}", { name: projectLabel(activeProject) })}
+                className="-ml-1.5 inline-flex h-7 max-w-56 shrink-0 items-center gap-1.5 rounded-lg px-1.5 text-[15px] font-medium text-muted-foreground outline-none transition-colors hover:bg-foreground/[0.05] hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <LfsProject className="size-4 shrink-0 text-primary/80" />
+                <span className="min-w-0 truncate">{projectRef(activeProject).name}</span>
+              </button>
+              <span aria-hidden="true" className="shrink-0 text-[15px] text-faint">/</span>
+            </>
+          )}
+          {openChild
+            ? <button type="button" onClick={() => setChildView(null)} className="min-w-0 truncate rounded-md text-[15px] font-medium tracking-tight text-muted-foreground outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring">{session?.title ?? t("New chat")}</button>
+            : <h1 className="min-w-0 truncate text-[15px] font-semibold tracking-tight text-foreground">{session?.title ?? t("New chat")}</h1>}
+          {openChild && <><span aria-hidden="true" className="shrink-0 text-[15px] text-faint">›</span><h1 className="min-w-0 shrink-0 truncate text-[15px] font-semibold tracking-tight text-foreground">{openChild.agent}</h1></>}
+          {session && <SubagentsMenu children={session.children} open={subagentsOpen} onOpenChange={setSubagentsOpen} current={childView} onOpen={(id) => { setChildView(id); setView('chat') }} />}
           {connection !== 'connected' && <span role="status" title={connection === 'reconnecting' ? t("Connection lost. Reconnecting to the host…") : t("Connecting to the host…")} className="inline-flex shrink-0 items-center gap-1 text-[10px] text-muted-foreground"><WifiOff className="size-3" /><span>{connection === 'reconnecting' ? t("Reconnecting") : t("Connecting")}</span></span>}
           {running && connection === 'connected' && (
             <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-0.5 text-[11px] font-medium whitespace-nowrap text-primary">
@@ -599,97 +667,73 @@ export function ChatHome({ projects, initialProject, initialSession, onOpenProje
               {pendingApprovals ? t("Waiting for approval {count}", { count: pendingApprovals }) : reviewingApprovals ? t("Reviewing {count}", { count: reviewingApprovals }) : session?.execution?.phase === 'retrying' ? t("Retrying {count}", { count: session?.execution?.retryAttempt ?? 0 }) : session?.execution?.phase === 'children' ? t("Subagents working") : session?.execution?.phase === 'tool' ? t("Running tool") : session?.execution?.phase === 'stopping' ? t("Stopping") : t("Working")}
             </span>
           )}
+          <div className="ml-auto flex shrink-0 items-center gap-1.5">
+          {session && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button ref={conversationTrigger} data-conversation-actions variant="ghost" size="icon-sm" aria-label={t("Conversation actions")} title={t("Conversation actions")} disabled={pending || loading} className="shrink-0 rounded-xl text-muted-foreground"><MoreHorizontal className="size-4" /></Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="chat-popover w-56">
+                {session && <DropdownMenuItem className="text-xs" onSelect={() => setSessionSettings({ mode: 'rename', session, returnFocus: conversationTrigger.current })}><Pencil className="size-3.5" />{t("Rename chat")}</DropdownMenuItem>}
+                {session && <><DropdownMenuSeparator />
+                <DropdownMenuItem disabled={running || !messages.length} className="text-xs" onSelect={() => setConversationAction({ action: 'duplicate', session, returnFocus: conversationTrigger.current })}><Copy className="size-3.5" />{t("Duplicate chat")}</DropdownMenuItem>
+                {running && <p className="px-2 py-2 text-[11px] leading-relaxed text-muted-foreground">{t("Stop the agent before copying or archiving.")}</p>}
+                <DropdownMenuItem className="text-xs" onSelect={() => void exportSession(session, 'copy')}><Copy className="size-3.5" />{t("Copy conversation")}</DropdownMenuItem>
+                <DropdownMenuItem className="text-xs" onSelect={() => void exportSession(session, 'md')}><Download className="size-3.5" />{t("Export Markdown")}</DropdownMenuItem>
+                <DropdownMenuItem className="text-xs" onSelect={() => void exportSession(session, 'json')}><Download className="size-3.5" />{t("Export JSON")}</DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem className="text-xs" disabled={running} onSelect={() => void archiveSession(session)}>{session.archived ? <ArchiveRestore className="size-3.5" /> : <Archive className="size-3.5" />}{session.archived ? t("Restore chat") : t("Archive chat")}</DropdownMenuItem></>}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+          </div>
         </div>
-
-        <div className="flex shrink-0 items-center gap-1.5">
-          <button
-            type="button"
-            aria-expanded={workspaceOpen}
-            aria-label={t("Workspace settings")}
-            onClick={() => setWorkspaceOpen(!workspaceOpen)}
-            title={activeCwd}
-            className={cn(
-              'flex h-8 max-w-64 items-center gap-1.5 overflow-hidden rounded-full px-3 text-xs font-medium transition-colors outline-none',
-              workspaceOpen
-                ? 'bg-primary/10 text-primary ring-1 ring-primary/20'
-                : 'bg-foreground/[0.04] text-muted-foreground hover:bg-foreground/[0.07] hover:text-foreground',
-            )}
-          >
-            <FolderOpen className="size-3.5 shrink-0 opacity-75" />
-            <span className="hidden min-w-0 truncate font-mono text-[11.5px] xl:block">{folderShort}</span>
-            {activeProject && (
-              <span title={projectLabel(activeProject)} className="hidden max-w-24 shrink-0 truncate rounded-full bg-primary/15 px-1.5 py-px text-[10px] font-semibold text-primary xl:block">
-                {projectRef(activeProject).name}
-              </span>
-            )}
-            <ChevronDown className={cn('size-3 shrink-0 opacity-60 transition-transform duration-(--dur-base)', workspaceOpen && 'rotate-180')} />
-          </button>
-
-          <ModelSelector
-            open={modelMenuOpen}
-            onOpenChange={setModelMenuOpen}
-            models={selectableModels}
-            provider={activeProvider}
-            modelId={modelLabel}
-            thinking={activeThinking}
-            thinkingOptions={thinkingOptions}
-            disabled={running || pending || loading}
-            busy={modelBusy}
-            onModel={selectModelChoice}
-            onThinking={selectThinkingLevel}
-            onManage={() => setModelsOpen(true)}
-          />
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={newSession}
-            disabled={pending || loading}
-            className="h-8 rounded-full bg-foreground/[0.04] px-3 text-xs font-medium text-foreground/85 hover:bg-foreground/[0.08] hover:text-foreground"
-          >
-            <Plus className="size-3.5" />
-
-            {t("New")}
-          </Button>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button ref={conversationTrigger} data-conversation-actions variant="ghost" size="icon-sm" aria-label={t("Conversation actions")} title={t("Conversation actions")} disabled={pending || loading} className="shrink-0 rounded-xl text-muted-foreground"><MoreHorizontal className="size-4" /></Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="chat-popover w-56">
-              {session && <DropdownMenuItem className="text-xs" onSelect={() => setSessionSettings({ mode: 'rename', session, returnFocus: conversationTrigger.current })}><Pencil className="size-3.5" />{t("Rename chat")}</DropdownMenuItem>}
-              <DropdownMenuItem className="text-xs" disabled={running} onSelect={() => setSessionSettings({ mode: 'limits', session: session ?? undefined, limits: drafts.snapshot().limits, returnFocus: conversationTrigger.current })}><Settings2 className="size-3.5" />{t("Run settings")}</DropdownMenuItem>
-              {session && <><DropdownMenuSeparator />
-              <DropdownMenuItem disabled={running || !messages.length} className="text-xs" onSelect={() => setConversationAction({ action: 'duplicate', session, returnFocus: conversationTrigger.current })}><Copy className="size-3.5" />{t("Duplicate chat")}</DropdownMenuItem>
-              {running && <p className="px-2 py-2 text-[11px] leading-relaxed text-muted-foreground">{t("Stop the agent before copying or archiving.")}</p>}
-              <DropdownMenuItem className="text-xs" onSelect={() => void exportSession(session, 'copy')}><Copy className="size-3.5" />{t("Copy conversation")}</DropdownMenuItem>
-              <DropdownMenuItem className="text-xs" onSelect={() => void exportSession(session, 'md')}><Download className="size-3.5" />{t("Export Markdown")}</DropdownMenuItem>
-              <DropdownMenuItem className="text-xs" onSelect={() => void exportSession(session, 'json')}><Download className="size-3.5" />{t("Export JSON")}</DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-xs" disabled={running} onSelect={() => void archiveSession(session)}>{session.archived ? <ArchiveRestore className="size-3.5" /> : <Archive className="size-3.5" />}{session.archived ? t("Restore chat") : t("Archive chat")}</DropdownMenuItem></>}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
+        <TabBar aria-label={t("Chat views")} className="gap-6">
+          <Tab active={shown === 'chat'} onClick={() => setView('chat')}><span data-chat-view="chat">{t("Chat")}</span></Tab>
+          {session && <Tab active={shown === 'trace'} onClick={() => setView('trace')}><span data-chat-view="trace">{t("Trace")}</span></Tab>}
+          {activeProject && (
+            <>
+              <span aria-hidden="true" className="mb-3 h-4 w-px shrink-0 self-end bg-border" />
+              {PROJECT_VIEWS.map((v, i) => (
+                <Tab key={v.id} active={shown === v.id} onClick={() => setView(v.id)} title={i === 0 ? projectLabel(activeProject) : undefined}>
+                  <span data-chat-view={v.id}>{t(v.label)}</span>
+                </Tab>
+              ))}
+            </>
+          )}
+        </TabBar>
       </header>
 
-      {activeProject && <WorkspaceStatus project={activeProject} workspace={session?.workspace ?? null} started={!!session} onOpenProject={onOpenProject} />}
-
-      {workspaceOpen && (
-        <WorkspacePicker
-          cwd={activeProject ? cwd : session?.cwd ?? cwd}
+      {projectView && shown === view && activeProject && (
+        <ProjectView
+          key={`${activeProject}:${projectBranch ?? ''}`}
           project={activeProject}
-          workspace={session?.workspace ?? null}
-          locked={!!session}
-          disabled={loading || pending}
-          sessions={sessions}
-          projects={projects.data ?? []}
-          projectsLoading={projects.loading}
-          projectError={projects.error?.message ?? ''}
-          onDirectory={changeDirectory}
-          onProject={changeProject}
-          onRefresh={projects.reload}
-          onNewProject={() => setNewProjectOpen(true)}
-          onOpenProject={onOpenProject}
+          initialBranch={projectBranch}
+          embedded={view}
+          onEmbeddedView={setView}
+          onBack={() => setView('chat')}
+          onNewChat={() => setView('chat')}
+          onOpenChat={(id) => { void openSession(id); setView('chat') }}
         />
       )}
+      {shown === 'trace' && session && (
+        <div className="min-h-0 flex-1 overflow-y-auto">
+          <TraceView
+            source={session.id}
+            load={(o) => agentHost.trace(session.id, o)}
+            watch={(e) => e.type === 'chat' && e.session.id === session.id}
+            live={running}
+            started={session.created}
+            // a checkpoint's Commit or Branch opens in the Project tab's History
+            onOpenHistory={activeProject ? (at) => { setProjectBranch(at.branch); setView('history') } : undefined}
+          />
+        </div>
+      )}
+
+      <div className={cn('flex min-h-0 flex-1 flex-col', shown !== 'chat' && 'hidden')}>
+      {/* only a chat with a LayerFS mount has a branch to report; a project chat made now runs in its folder */}
+      {activeProject && !scenario && !fresh && session?.workspace && <WorkspaceStatus project={activeProject} workspace={session?.workspace ?? null} started={!!session} onOpenProject={onOpenProject} />}
+
 
       {/* Main Conversation Canvas */}
       <div
@@ -698,29 +742,18 @@ export function ChatHome({ projects, initialProject, initialSession, onOpenProje
           const el = scroller.current
           if (el) followBottom.current = el.scrollHeight - el.scrollTop - el.clientHeight < 90
         }}
-        className="min-h-0 flex-1 overflow-y-auto px-6 pt-3 pb-8"
+        className={cn('min-h-0 flex-1 overflow-y-auto px-6 pt-3', fresh ? 'flex flex-col pb-7' : 'pb-8', openChild && 'hidden')}
       >
-        <div className="mx-auto flex max-w-3xl flex-col gap-5">
+        <div className={cn('mx-auto flex w-full max-w-3xl flex-col gap-5', fresh && 'mt-auto')}>
           {loading ? (
             <div role="status" className="flex items-center justify-center gap-2 py-24 text-sm text-muted-foreground">
               <LoaderCircle className="size-4 animate-spin text-primary" />  {t("Loading…")}
             </div>
           ) : messages.length === 0 ? (
-            <div className="flex flex-col items-center justify-center pt-16 pb-6 text-center sm:pt-24 [@media(max-height:700px)]:pt-10">
-              <span
-                onPointerMove={spotlight}
-                className="glass-liquid spotlight mb-5 flex size-14 items-center justify-center rounded-2xl"
-              >
-                <ConnectMark className="size-8" />
-              </span>
-              <h2 className="text-2xl font-semibold tracking-[-0.025em] text-foreground sm:text-[26px]">
-
-                {t("What would you like to build?")}
-              </h2>
-              <div className="mt-7 w-full">
-                <Suggestions onSelect={(prompt) => setInput(prompt)} />
-              </div>
-            </div>
+            <h2 className="flex items-center justify-center gap-3 text-center text-[26px] font-semibold tracking-[-0.025em] text-foreground">
+              <ConnectMark className="size-9 shrink-0" />
+              {t("What would you like to build?")}
+            </h2>
           ) : (
             messages.map((message) => <AgentMessage key={message.id} sessionId={session?.id} message={message} disabled={pending || loading} running={running} onAction={(action, target, returnFocus) => { if (session) setConversationAction({ action, session, message: target, returnFocus }) }} />)
           )}
@@ -734,10 +767,10 @@ export function ChatHome({ projects, initialProject, initialSession, onOpenProje
             </div>
           )}
 
-          {!!session?.children.length && <ChildRuns children={session.children} onStop={async (id) => update(await agentHost.stopChild(session.id, id))} />}
+          {!!session?.children.length && <SubagentsSummary children={session.children} onOpen={() => setSubagentsOpen(true)} />}
 
-          {session && !agentRunning && session.recovery?.canContinue && <div className="glass-liquid flex flex-wrap items-center gap-3 rounded-2xl px-4 py-3 text-xs">
-            <span className="min-w-0 flex-1 text-muted-foreground">{session?.execution?.reason || (session.recovery.required ? t("This run was interrupted. Continue from its saved context.") : t("Continue working from the current context."))}</span>
+          {session && !agentRunning && session.recovery?.canContinue && (session.recovery.required || session.state === 'error') && <div className="glass-liquid flex flex-wrap items-center gap-3 rounded-2xl px-4 py-3 text-xs">
+            <span className="min-w-0 flex-1 text-muted-foreground">{session.execution?.reason || t("This run was interrupted. Continue from its saved context.")}</span>
             <Button size="sm" disabled={pending || loading} onClick={() => void continueSession()}><Play className="size-3.5" />{session.state === 'error' ? t("Retry") : t("Continue")}</Button>
           </div>}
           <div ref={approvalsAnchor}>
@@ -780,7 +813,14 @@ export function ChatHome({ projects, initialProject, initialSession, onOpenProje
       </div>
 
       {/* Bottom Composer */}
-      <div className="shrink-0 px-6 pt-1 pb-5">
+      {openChild && session && <ChildConversationView
+        key={openChild.id}
+        sessionId={session.id}
+        child={openChild}
+        onBack={() => setChildView(null)}
+        onStop={async (runId) => update(await agentHost.stopChild(session.id, runId))}
+      />}
+      <div className={cn('shrink-0 px-6 pt-1 pb-5', openChild && 'hidden')}>
         <div className="mx-auto w-full max-w-3xl">
           {session && (
             <QueuedMessages
@@ -790,6 +830,12 @@ export function ChatHome({ projects, initialProject, initialSession, onOpenProje
               onSteer={(id) => changeQueuedMessage(id, 'steerQueued')}
               onRemove={(id) => changeQueuedMessage(id, 'removeQueued')}
             />
+          )}
+          {fresh && (
+            <div className="mb-2 flex min-w-0 items-center gap-1 px-1.5">
+              {workspaceMenus(true)}
+              {connection !== 'connected' && <span role="status" className="ml-auto inline-flex shrink-0 items-center gap-1 text-[11px] text-muted-foreground"><WifiOff className="size-3" />{connection === 'reconnecting' ? t("Reconnecting") : t("Connecting")}</span>}
+            </div>
           )}
           {drafts.storageError && <p role="alert" className="mb-2 text-xs text-destructive">{t(drafts.storageError)}</p>}
           <Composer
@@ -807,8 +853,25 @@ export function ChatHome({ projects, initialProject, initialSession, onOpenProje
             loading={running}
             placeholder={agentRunning ? t("Add a follow-up — it will run after this task…") : t("Ask the agent to work on your project… (/ for commands)")}
             sendLabel={agentRunning ? t("Queue follow-up") : t("Send message")}
+            trailing={
+              <ModelSelector
+                open={modelMenuOpen}
+                onOpenChange={setModelMenuOpen}
+                models={selectableModels}
+                provider={activeProvider}
+                modelId={modelLabel}
+                thinking={activeThinking}
+                thinkingOptions={thinkingOptions}
+                disabled={running || pending || loading}
+                busy={modelBusy}
+                onModel={selectModelChoice}
+                onThinking={selectThinkingLevel}
+                onManage={() => settings.open('models')}
+              />
+            }
             controls={
               <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+                {!fresh && workspaceMenus(false)}
                 {waitingApprovals > 0 && (
                   <button
                     type="button"
@@ -829,6 +892,10 @@ export function ChatHome({ projects, initialProject, initialSession, onOpenProje
           />
         </div>
       </div>
+      {/* below the composer: half the free height while the chat is new, so the title and composer sit in the middle */}
+      <div aria-hidden="true" className={cn('shrink-0 transition-[flex-grow] duration-(--dur-slow) ease-out-expo', fresh ? 'grow' : 'grow-0')} />
+
+      </div>
 
       <NewProjectDialog
         open={newProjectOpen}
@@ -842,37 +909,6 @@ export function ChatHome({ projects, initialProject, initialSession, onOpenProje
           localStorage.setItem(LAST_PROJECT, key)
           if (created.source) changeDirectory(created.source)
         }}
-      />
-      <ModelSettingsDialog
-        open={modelsOpen}
-        onOpenChange={setModelsOpen}
-        models={models ? { ...models, selected: selection } : undefined}
-        onSynced={refreshSyncedModels}
-        onSaved={(catalog) => {
-          catalogRequest.current += 1
-          setModels(catalog)
-          setSelection(catalog.selected)
-          setError('')
-        }}
-      />
-      <SessionHistory
-        open={historyOpen}
-        onOpenChange={setHistoryOpen}
-        sessions={sessions}
-        activeSession={session}
-        selectedId={activeId.current}
-        compacting={pending}
-        actionMessage={notice}
-        actionError={visibleError || undefined}
-        onSelect={(id) => void openSession(id)}
-        onNew={newSession}
-        onCompact={() => void sessionAction('compact')}
-        onRemove={removeSession}
-        hasDraft={drafts.has}
-        onRename={(target) => { setHistoryOpen(false); setSessionSettings({ mode: 'rename', session: target }) }}
-        onArchive={archiveSession}
-        onExport={(target, format) => void exportSession(target, format)}
-        onDuplicate={(target) => { setHistoryOpen(false); setConversationAction({ action: 'duplicate', session: target }) }}
       />
       {sessionSettings && <SessionSettingsDialog key={`${sessionSettings.session?.id ?? drafts.key()}:${sessionSettings.mode}`} target={sessionSettings} onClose={() => setSessionSettings(null)} onSave={async (value) => {
         if ('title' in value) { if (sessionSettings.session) await updateMetadata(sessionSettings.session, value) }

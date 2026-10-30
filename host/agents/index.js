@@ -4,16 +4,22 @@ import { existsSync, mkdirSync, readdirSync, readFileSync, renameSync, rmSync, s
 import { join, resolve } from 'node:path'
 import { createAgentSession, DefaultResourceLoader, SessionManager, SettingsManager } from '@earendil-works/pi-coding-agent'
 import { AgentModels } from './models.js'
-import { asyncSnapshotChildren, asyncSubagentChildren, createConnectExtensions } from './extensions.js'
+import { asyncSnapshotChildren, asyncSubagentChildren, createConnectExtensions, leadsAllowed, setupTools } from './extensions.js'
+import { AgentSetup, capabilityCatalog } from './capabilities.js'
 import { connectPrompt } from './prompt.js'
+import { mounted } from './workspaces.js'
 import { childrenFrom, sessionTranscript } from './transcript.js'
+import { childConversation, describeChildren } from './children.js'
 import { ApprovalService, permissionMode } from './permissions.js'
 import { CHECKPOINT_TYPE, checkpointFor, cloneSession } from './history.js'
-import { DEFAULT_LIMITS, idleExecution, runLimits, sessionUsage } from './runtime.js'
+import { DEFAULT_LIMITS, idleExecution, OLD_DEFAULT_BASH_TIMEOUT_SECONDS, REMOVED_LIMITS, RUN_LIMIT_FIELDS, RunLimitSettings, runLimits, sessionUsage } from './runtime.js'
+import { SdkSettings } from './sdks.js'
 import { updateSession } from './session-metadata.js'
 import { readProjectInstructions } from './context.js'
 import { readToolOutput } from './tool-output.js'
 import { normalizePrompt, promptDetails } from './attachments.js'
+import { chatLive, chatTrace } from './trace.js'
+import { registerScenarioProvider, SCENARIO_PROVIDER } from './scenario-model.js'
 import { assertNativeControl, bindNativeInput, cancelNativeControls, currentNativeControl, nativeCommand, pendingNativeInput, runNativeControl, staleNativeControl } from './native-input.js'
 import { commandContextActions, commandForkTarget } from './command-context.js'
 
@@ -69,13 +75,19 @@ function enqueueMessage(active, entry) {
 }
 
 export class AgentManager extends EventEmitter {
-  static async create({ state, defaultCwd = process.cwd(), projectEnvironment = async () => ({}), projectWorkspaces = null }) {
+  static async create({ state, defaultCwd = process.cwd(), projectEnvironment = async () => ({}), projectWorkspaces = null, scenarios = null }) {
     const agentDir = join(state, 'pi')
     mkdirSync(agentDir, { recursive: true, mode: 0o700 })
     process.env.PI_CODING_AGENT_DIR = agentDir
     const models = await AgentModels.create(agentDir)
-    const manager = new AgentManager({ state, agentDir, defaultCwd, models, projectEnvironment, projectWorkspaces })
+    const manager = new AgentManager({ state, agentDir, defaultCwd, models, projectEnvironment, projectWorkspaces, scenarios })
     manager.permissions = await new ApprovalService(manager).start()
+    if (scenarios) {
+      registerScenarioProvider(models.runtime, {
+        scenarios: () => scenarios.playable(),
+        session: (piSessionId) => manager.scenarioChat(piSessionId),
+      })
+    }
     return manager
   }
 
@@ -84,6 +96,9 @@ export class AgentManager extends EventEmitter {
     Object.assign(this, options)
     this.dir = join(this.state, 'chats')
     mkdirSync(this.dir, { recursive: true })
+    this.setup = new AgentSetup(join(this.state, 'agent-setup.json'))
+    this.runLimits = new RunLimitSettings(join(this.state, 'run-limits.json'))
+    this.sdks = new SdkSettings(join(this.state, 'sdks.json'))
     this.records = new Map()
     this.live = new Map()
     this.stopping = new Map()
@@ -93,6 +108,7 @@ export class AgentManager extends EventEmitter {
     this.deletingProjects = new Set()
     this.historyOperations = new Map()
     this.controlMutations = new Map()
+    this.scenarioSetups = new Map()
     for (const entry of readdirSync(this.dir, { withFileTypes: true })) {
       if (!entry.isDirectory()) continue
       const file = join(this.dir, entry.name, 'chat.json')
@@ -103,9 +119,13 @@ export class AgentManager extends EventEmitter {
       record.archived ??= false
       record.archivedAt ??= null
       record.limits = { ...DEFAULT_LIMITS, ...record.limits }
+      for (const field of REMOVED_LIMITS) delete record.limits[field]
+      // chats saved with the old 120-second default take the current command timeout
+      if (record.limits.bashTimeoutSeconds === OLD_DEFAULT_BASH_TIMEOUT_SECONDS) record.limits.bashTimeoutSeconds = this.runLimits.get().bashTimeoutSeconds
       record.execution ??= idleExecution()
       record.usage ??= sessionUsage()
-      record.workspace ??= record.project && this.projectWorkspaces ? this.projectWorkspaces.initial(record.id) : null
+      record.workspace ??= mounted(record) && this.projectWorkspaces ? this.projectWorkspaces.initial(record.id) : null
+      if (record.scenario?.state === 'preparing') Object.assign(record.scenario, { state: 'failed', phase: null, error: 'The app closed while the scenario set up its folder.' })
       for (const approval of record.approvals) {
         if (['pending', 'reviewing'].includes(approval.status)) {
           Object.assign(approval, { status: 'cancelled', decidedAt: Date.now(), reason: 'The app closed before this command was approved.' })
@@ -145,24 +165,6 @@ export class AgentManager extends EventEmitter {
     record.execution = { ...idleExecution(), phase: 'preparing', startedAt: Date.now() }
   }
 
-  armDeadline(id, active) {
-    clearTimeout(active.runTimer)
-    const record = this.record(id)
-    if (!record.limits.maxRuntimeSeconds) return
-    const remaining = record.limits.maxRuntimeSeconds * 1000 - (Date.now() - record.execution.startedAt)
-    active.runTimer = setTimeout(() => this.stopForLimit(id, `Reached the ${record.limits.maxRuntimeSeconds}-second run limit.`), Math.max(0, remaining))
-    active.runTimer.unref()
-  }
-
-  stopForLimit(id, reason) {
-    const active = this.live.get(id)
-    if (!active || active.limitReason) return
-    active.limitReason = reason
-    this.record(id).execution.reason = reason
-    // Stop waits for the current task, so never await it inside an awaited Pi hook.
-    queueMicrotask(() => { void this.stop(id, { reason }).catch(() => {}) })
-  }
-
   finishExecution(id, active) {
     const record = this.record(id)
     const children = active.children ? [...active.children.values()] : record.children
@@ -174,9 +176,7 @@ export class AgentManager extends EventEmitter {
       if (!this.stopping.get(id)?.pending && !record.error) record.execution.phase = 'preparing'
       return
     }
-    clearTimeout(active.runTimer)
-    if (!this.stopping.get(id)?.pending) record.execution.phase = active.limitReason ? 'interrupted' : record.error ? 'error' : 'idle'
-    if (active.limitReason) record.execution.reason = active.limitReason
+    if (!this.stopping.get(id)?.pending) record.execution.phase = record.error ? 'error' : 'idle'
   }
 
   trackTask(id, active, task, control = null) {
@@ -213,7 +213,7 @@ export class AgentManager extends EventEmitter {
     if (owned) { assertNativeControl(active); return work(owned) }
     const record = this.record(id)
     const busy = record.state === 'running' || !active.session.isIdle
-    if (!busy) { record.state = 'running'; this.beginExecution(id); this.armDeadline(id, active); this.changed(id, true) }
+    if (!busy) { record.state = 'running'; this.beginExecution(id); this.changed(id, true) }
     return runNativeControl(active, 'command', work).task.finally(() => {
       if (!busy && this.live.get(id) === active && !this.stopping.get(id)?.pending && active.session.isIdle) {
         record.state = record.error ? 'error' : 'idle'
@@ -242,12 +242,34 @@ export class AgentManager extends EventEmitter {
     const record = this.record(id)
     if (this.permissions.stopped.has(id)) throw fail(409, 'The session was stopped.')
     this.checkHistoryAvailable(id, this.live.get(id)?.startingWithHistory === true)
-    return { instructions: record.project ? await this.projectWorkspaces.context(record, () => this.changed(id, true)) : await readProjectInstructions(record.cwd) }
+    return { instructions: mounted(record) ? await this.projectWorkspaces.context(record, () => this.changed(id, true)) : await readProjectInstructions(record.cwd) }
+  }
+
+  /** One subagent's own conversation, read-only (children.js). */
+  childConversation(id, childId) {
+    const record = this.record(id)
+    this.detail(id)
+    const result = childConversation(record, join(this.dir, id), childId)
+    if (!result) throw fail(404, 'This subagent is not part of the chat.')
+    return result
   }
 
   output(id, artifactId, offset = 0) {
     this.record(id)
     return readToolOutput(join(this.dir, id), artifactId, offset)
+  }
+
+  /** One page of the chat's Trace rows (trace.js): Pi's log of the branch it is on, and each tool call's LayerFS calls. */
+  trace(id, { before = null, limit } = {}) {
+    const record = this.record(id)
+    const manager = this.live.get(id)?.session?.sessionManager ?? (record.sessionFile && existsSync(record.sessionFile) ? SessionManager.open(record.sessionFile) : null)
+    return chatTrace({ record, entries: manager ? manager.getBranch() : [], dir: join(this.dir, id), before, limit })
+  }
+
+  /** A chat's Live: its newest LayerFS calls and what it holds in LayerFS now (trace.js chatLive). Not `live`: that is the open chats' Map. */
+  liveView(id) {
+    const record = this.record(id)
+    return chatLive(join(this.dir, id, 'traces'), { running: record.state === 'running' })
   }
 
   record(id) {
@@ -259,6 +281,85 @@ export class AgentManager extends EventEmitter {
   summary(record) {
     const { messages, children, sessionFile, tools, approvals, needsStop, execution, usage, ...summary } = record
     return { ...summary, execution: this.execution(record.id), workspace: workspaceSummary(record.workspace) }
+  }
+
+  /** Settings → Extensions, Tools, Hooks and Commands (capabilities.js): the setup, with what an open chat's Pi session reports. */
+  capabilities(id) {
+    if (id) this.record(id)
+    // every chat loads the same setup, so Settings reads whichever chat is open
+    const session = id ? this.live.get(id)?.session : [...this.live.values()].find((active) => active.session)?.session
+    return capabilityCatalog(this.setup.get(), { session, busy: this.setupBusy() })
+  }
+
+  /** Chats whose agent or subagents are working: the setup cannot change under them. */
+  setupBusy() {
+    return [...this.records.values()].filter((record) => {
+      const active = this.live.get(record.id)
+      return record.state === 'running' || this.stopping.get(record.id)?.pending || (active && (!active.session || !active.session.isIdle))
+        || record.children.some((child) => ['running', 'pending', 'queued', 'paused'].includes(child.state))
+    }).map((record) => record.title || 'New chat')
+  }
+
+  /**
+   * Turns an extension or tool on or off. Idle chats close their Pi session so
+   * their next message starts with the new setup; while any chat or its
+   * subagents work, nothing changes (turning pi-subagents off under running
+   * children would leave runs Connect can no longer stop).
+   */
+  async setCapability(change) {
+    const busy = this.setupBusy()
+    if (busy.length) throw fail(409, `Wait for ${busy.length === 1 ? `“${busy[0]}”` : `${busy.length} chats`} to finish, or stop ${busy.length === 1 ? 'it' : 'them'}, before changing extensions or tools.`)
+    this.setup.change(change)
+    for (const id of [...this.live.keys()]) {
+      await this.closeHistorySession(id, { reason: 'reload' })
+      this.changed(id, true)
+    }
+    return this.capabilities()
+  }
+
+  /**
+   * Switches an SDK on or off. Like extensions and tools, idle chats close
+   * their Pi session so their next message starts with the change; nothing
+   * changes while a chat or its subagents work.
+   */
+  async setSdk(change) {
+    const busy = this.setupBusy()
+    if (busy.length) throw fail(409, `Wait for ${busy.length === 1 ? `“${busy[0]}”` : `${busy.length} chats`} to finish, or stop ${busy.length === 1 ? 'it' : 'them'}, before switching SDKs.`)
+    this.sdks.setEnabled(change)
+    for (const id of [...this.live.keys()]) {
+      await this.closeHistorySession(id, { reason: 'reload' })
+      this.changed(id, true)
+    }
+    return this.sdkView()
+  }
+
+  /** Settings → SDKs: sdks.json, what was found of each SDK, and the chats that keep the switches from changing now. */
+  sdkView() {
+    return { ...this.sdks.view(), busy: this.setupBusy() }
+  }
+
+  /** Settings → Runs: the run limits every chat uses, and the chats that keep them from changing now. */
+  runSettings() {
+    return { limits: this.runLimits.get(), defaults: Object.fromEntries(RUN_LIMIT_FIELDS.map((field) => [field, DEFAULT_LIMITS[field]])), busy: this.setupBusy() }
+  }
+
+  /**
+   * Saves the run limits and gives them to every chat, keeping each chat's
+   * additional instructions. Idle chats close their Pi session so the next run
+   * picks up the new command timeout and retries; nothing changes while a chat works.
+   */
+  async setRunSettings(input) {
+    const limits = this.runLimits.check(input)
+    const busy = this.setupBusy()
+    if (busy.length) throw fail(409, `Wait for ${busy.length === 1 ? `“${busy[0]}”` : `${busy.length} chats`} to finish, or stop ${busy.length === 1 ? 'it' : 'them'}, before changing run limits.`)
+    this.runLimits.set(limits)
+    for (const record of this.records.values()) {
+      record.limits = { ...record.limits, ...limits }
+      // saved without touching `updated`, so the chat list keeps its order
+      this.save(record.id)
+      if (this.live.has(record.id)) await this.closeHistorySession(record.id, { reason: 'reload' })
+    }
+    return this.runSettings()
   }
 
   list() { return [...this.records.values()].sort((a, b) => b.updated - a.updated).map((record) => this.summary(record)) }
@@ -289,6 +390,7 @@ export class AgentManager extends EventEmitter {
     // ephemeral: a restored record has no trustworthy estimate until opened.
     return {
       ...detail,
+      children: describeChildren(record, join(this.dir, id)),
       workspace: workspaceSummary(record.workspace),
       queued: (active?.queued ?? []).map(({ id, text, mode, message }) => ({ id, text, mode, attachments: message.details?.connectAttachments ?? [] })),
       contextUsage: active?.session?.getContextUsage() ?? null,
@@ -325,20 +427,89 @@ export class AgentManager extends EventEmitter {
     finally { this.creatingProjects.delete(id) }
   }
 
+  /**
+   * A chat that plays scenario `input.scenario` on LayerFS project
+   * `input.project` (scenarios.js): it sets up the scenario's folder, then
+   * sends the scenario's prompt to its scripted model. It answers at once;
+   * `scenario.state` and `scenario.phase` follow the setup.
+   */
+  async createScenario(input = {}) {
+    if (!this.scenarios) throw fail(503, 'Scenarios are not available in this host.')
+    const entry = this.scenarios.get(input.scenario)
+    if (!entry) throw fail(404, `No scenario named ${input.scenario} plays in a chat.`)
+    if (!input.project) throw fail(400, 'Name the LayerFS project to play the scenario on.')
+    this.checkProjectAvailable(input.project)
+    await this.projectEnvironment(input.project)
+    const id = randomUUID()
+    const dir = join(this.dir, id, 'scenario')
+    mkdirSync(join(dir, 'work'), { recursive: true })
+    await this.createRecord(id, { cwd: join(dir, 'work'), title: entry.title, provider: SCENARIO_PROVIDER, modelId: entry.id, thinkingLevel: 'off', permissionMode: 'full' }, { publish: false })
+    const record = this.record(id)
+    record.scenario = this.scenarios.initial(entry, input.project, dir)
+    // the chat works from the start, as any chat does once sent a message: Stop stops its setup too
+    record.state = 'running'
+    this.beginExecution(id)
+    this.changed(id, true)
+    const setup = (async () => {
+      await this.scenarios.setup(record, (phase) => { record.scenario.phase = phase; this.changed(id, true) })
+      // stopped while it set up
+      if (record.scenario.state !== 'preparing') return
+      Object.assign(record.scenario, { state: 'playing', phase: null })
+      record.state = 'idle'
+      record.execution = idleExecution()
+      await this.message(id, { text: entry.prompt ?? `Play ${entry.title}.` })
+    })().catch(async (error) => {
+      if (!this.records.has(id)) return
+      Object.assign(record.scenario, { state: 'failed', phase: null, error: error.message })
+      record.error = `Could not start the scenario: ${error.message}`
+      record.state = 'error'
+      record.execution = { ...idleExecution(), phase: 'error', reason: record.error }
+      await this.scenarios.release(record)
+      this.changed(id, true)
+    }).finally(() => this.scenarioSetups.delete(id))
+    this.scenarioSetups.set(id, setup)
+    return this.detail(id)
+  }
+
+  /** The scenario chat a scripted model's request comes from (scenario-model.js), by Pi's session id. */
+  scenarioChat(piSessionId) {
+    for (const [id, active] of this.live) {
+      if (active.session?.sessionId !== piSessionId) continue
+      const record = this.records.get(id)
+      if (!record?.scenario || !this.scenarios) return null
+      const traceDir = join(this.dir, id, 'traces')
+      return {
+        scenarioId: record.scenario.id,
+        traceOf: (callId) => this.scenarios.traceOf(traceDir, callId),
+        progress: ({ done, of, phase }) => Object.assign(record.scenario, { done, of, ...(phase ? { phase } : {}) }),
+        finish: () => this.scenarios.finish(record, () => this.changed(id, true)),
+        failed: async (message) => {
+          record.scenario.error = message
+          await this.scenarios.release(record, 'failed')
+          this.changed(id, true)
+        },
+      }
+    }
+    return null
+  }
+
   async createRecord(id, input, { publish = true } = {}) {
     const cwd = resolve(input.cwd || this.defaultCwd)
     if (!statSync(cwd).isDirectory()) throw fail(400, 'Choose a working directory.')
     if (input.project) await this.projectEnvironment(input.project)
-    if (input.project && !this.projectWorkspaces) throw fail(503, 'LayerFS workspaces are not available in this host.')
+    // a project chat runs bash in its folder unless it copies a chat that has a mount
+    const runs = input.project ? (input.runs === 'mount' ? 'mount' : 'folder') : undefined
+    if (runs === 'mount' && !this.projectWorkspaces) throw fail(503, 'LayerFS workspaces are not available in this host.')
     const selected = { ...this.models.snapshot().selected, ...input }
     const record = {
       id, title: input.title || 'New session', cwd, project: input.project || null,
-      workspace: input.project ? this.projectWorkspaces.initial(id) : null,
+      ...(runs ? { runs } : {}),
+      workspace: runs === 'mount' ? this.projectWorkspaces.initial(id) : null,
       created: Date.now(), updated: Date.now(), state: 'idle', error: null,
-      archived: false, archivedAt: null, limits: runLimits(input.limits), execution: idleExecution(), usage: sessionUsage(),
+      archived: false, archivedAt: null, limits: runLimits(input.limits, this.runLimits.get()), execution: idleExecution(), usage: sessionUsage(),
       permissionMode: permissionMode(input.permissionMode), approvals: [],
       provider: selected.provider || null, modelId: selected.modelId || null,
-      thinkingLevel: selected.thinkingLevel || 'off', messages: [], children: [], tools: ['bash', 'subagent'], sessionFile: null,
+      thinkingLevel: selected.thinkingLevel || 'off', messages: [], children: [], tools: setupTools(this.setup.get()).main, sessionFile: null,
     }
     mkdirSync(join(this.dir, id), { recursive: true })
     this.records.set(id, record)
@@ -356,8 +527,8 @@ export class AgentManager extends EventEmitter {
     this.live.set(id, active)
     active.opening = (async () => {
       const runDir = join(this.dir, id)
-      if (record.project) await this.prepareWorkspace(id, { history })
-      const controlCwd = record.project ? runDir : record.cwd
+      if (mounted(record)) await this.prepareWorkspace(id, { history })
+      const controlCwd = mounted(record) ? runDir : record.cwd
       const mergeChildren = (children) => {
         for (const child of children) {
           const previous = active.children.get(child.id)
@@ -383,23 +554,15 @@ export class AgentManager extends EventEmitter {
         return active.childRefresh
       }
       const extensions = await createConnectExtensions({
-        cwd: controlCwd, agentDir: this.agentDir, runDir, workspace: !!record.project, allowNestedSubagents: true,
+        cwd: controlCwd, agentDir: this.agentDir, runDir, workspace: mounted(record), allowNestedSubagents: leadsAllowed(this.setup.get()), setup: this.setup.get(),
+        // a scenario chat's bash plays in its scenario's folder (scenarios.js)
+        env: record.scenario && this.scenarios ? await this.scenarios.env(record) : {},
+        sdk: { prompt: this.sdks.prompts() },
         instructions: record.limits.instructions,
         defaultBashTimeoutSeconds: record.limits.bashTimeoutSeconds,
         onTurnStart: (_event, ctx) => {
           try { assertNativeControl(active) } catch (error) { ctx.abort(); throw error }
           const execution = record.execution
-          const max = record.limits.maxTurns
-          if (max && execution.turns >= max) {
-            ctx.abort()
-            this.stopForLimit(id, `Reached the ${max}-turn limit.`)
-            return
-          }
-          if (record.limits.maxRuntimeSeconds && Date.now() - execution.startedAt >= record.limits.maxRuntimeSeconds * 1000) {
-            ctx.abort()
-            this.stopForLimit(id, `Reached the ${record.limits.maxRuntimeSeconds}-second run limit.`)
-            return
-          }
           execution.turns++
           execution.phase = 'thinking'
           this.changed(id, true)
@@ -414,7 +577,7 @@ export class AgentManager extends EventEmitter {
               message.details = { ...message.details, ...active.pendingPromptDetails }
               active.pendingPromptDetails = null
             }
-            const checkpoint = record.project ? await this.projectWorkspaces.checkpoint(record, () => this.changed(id, true)) : null
+            const checkpoint = mounted(record) ? await this.projectWorkspaces.checkpoint(record, () => this.changed(id, true)) : null
             active.session.sessionManager.appendCustomEntry(CHECKPOINT_TYPE, { checkpoint })
           } catch (error) { if (error.code !== 'stopping') active.checkpointError = error.message; throw error }
         },
@@ -430,10 +593,10 @@ export class AgentManager extends EventEmitter {
         cwd: controlCwd, agentDir: this.agentDir, settingsManager,
         noContextFiles: true,
         noExtensions: true, noSkills: true, noPromptTemplates: true, noThemes: true,
-        extensionFactories: [...extensions.extensionFactories, (pi) => pi.on('before_agent_start', (_event, ctx) => {
+        extensionFactories: [...extensions.extensionFactories, { name: 'connect-run-guard', hidden: true, factory: (pi) => pi.on('before_agent_start', (_event, ctx) => {
           try { assertNativeControl(active) } catch (error) { ctx.abort(); throw error }
-        })],
-        appendSystemPrompt: [connectPrompt(record)],
+        }) }],
+        appendSystemPrompt: [connectPrompt({ ...record, project: mounted(record) ? record.project : null }, extensions.tools)],
       })
       await resourceLoader.reload()
       const errors = resourceLoader.getExtensions().errors
@@ -476,7 +639,7 @@ export class AgentManager extends EventEmitter {
     const active = this.live.get(id)
     const record = this.record(id)
     if (event.type === 'agent_start') {
-      if (record.state !== 'running' && record.execution.phase !== 'children') { this.beginExecution(id); this.armDeadline(id, active) }
+      if (record.state !== 'running' && record.execution.phase !== 'children') this.beginExecution(id)
       record.state = 'running'
       if (record.execution.phase !== 'retrying') record.execution.phase = 'thinking'
     }
@@ -576,7 +739,6 @@ export class AgentManager extends EventEmitter {
       record.state = 'running'
       record.error = null
       this.beginExecution(id)
-      this.armDeadline(id, active)
       this.changed(id, true)
     }
     const control = runNativeControl(active, 'command', async (lease) => {
@@ -602,6 +764,7 @@ export class AgentManager extends EventEmitter {
     if (!text && !input.attachments?.length) throw fail(400, 'A message is required.')
     const record = this.record(id)
     if (record.archived) throw fail(409, 'Restore this conversation before sending a message.')
+    if (record.scenario?.state === 'preparing') throw fail(409, 'This chat is still setting up. Send the message again in a moment.')
     this.checkProjectAvailable(record.project)
     const previousStop = this.stopping.get(id)
     const checkStopping = () => {
@@ -659,7 +822,6 @@ export class AgentManager extends EventEmitter {
       record.error = null
       active.checkpointError = null
       active.startError = null
-      active.limitReason = null
       this.permissions.resume(id)
       const model = this.models.resolve(record)
       await active.session.setModel(model)
@@ -669,7 +831,6 @@ export class AgentManager extends EventEmitter {
       const prepared = normalizePrompt(input, model)
       checkStopping()
       if (!nativeInput && nativeCommand(active, prepared.text)) return await this.pluginCommand(id, active, prepared, false)
-      this.armDeadline(id, active)
       if (!record.messages.length) record.title = (text || 'Attached files').split('\n')[0].slice(0, 72)
       this.changed(id, true)
       const accepted = Promise.withResolvers()
@@ -711,7 +872,6 @@ export class AgentManager extends EventEmitter {
       record.state = 'error'
       record.execution.phase = 'error'
       record.execution.reason = error.message
-      clearTimeout(active?.runTimer)
       this.changed(id, true)
       throw error
     }
@@ -769,7 +929,7 @@ export class AgentManager extends EventEmitter {
   async workspaceDirectory(id) {
     this.checkHistoryAvailable(id)
     const record = this.record(id)
-    if (!record.project || !this.projectWorkspaces) throw fail(409, 'This conversation has no LayerFS workspace.')
+    if (!mounted(record) || !this.projectWorkspaces) throw fail(409, 'This conversation has no LayerFS workspace.')
     if (this.permissions.stopped.has(id)) throw fail(409, 'The session was stopped.')
     await this.prepareWorkspace(id)
     if (this.permissions.stopped.has(id)) throw fail(409, 'The session was stopped.')
@@ -780,7 +940,7 @@ export class AgentManager extends EventEmitter {
     this.checkHistoryAvailable(id)
     const record = this.record(id)
     this.checkProjectAvailable(record.project)
-    if (!record.project || !this.projectWorkspaces) throw fail(409, 'This conversation has no LayerFS workspace.')
+    if (!mounted(record) || !this.projectWorkspaces) throw fail(409, 'This conversation has no LayerFS workspace.')
     if (this.permissions.stopped.has(id)) throw fail(409, 'The session was stopped.')
     const controller = new AbortController()
     const executions = this.workspaceExecutions.get(id) ?? new Set()
@@ -848,7 +1008,7 @@ export class AgentManager extends EventEmitter {
       if (message.details?.connectAttachments) message.attachments = message.details.connectAttachments
       if (message.details) message.details = Object.fromEntries(Object.entries(message.details).filter(([key]) => !['connectText', 'connectAttachments'].includes(key)))
       const entry = message.entryId && manager.getEntry(message.entryId)
-      message.canRestore = Boolean(entry && (!record.project || checkpointFor(manager, entry)))
+      message.canRestore = Boolean(entry && (!mounted(record) || checkpointFor(manager, entry)))
     }
   }
 
@@ -878,7 +1038,7 @@ export class AgentManager extends EventEmitter {
     const entry = manager.getBranch().find((item) => item.id === entryId)
     if (entry?.type !== 'message' || entry.message.role !== 'user') throw fail(400, 'Choose a user message on the current conversation path.')
     const checkpoint = checkpointFor(manager, entry)
-    if (record.project && !checkpoint) throw fail(409, 'This message has no saved LayerFS checkpoint. Continue the conversation to create new restore points.')
+    if (mounted(record) && !checkpoint) throw fail(409, 'This message has no saved LayerFS checkpoint. Continue the conversation to create new restore points.')
     const draft = entry.message.details?.connectText ?? (typeof entry.message.content === 'string' ? entry.message.content : entry.message.content.filter((part) => part.type === 'text').map((part) => part.text).join('\n'))
     return { entry, checkpoint, draft, attachments: entry.message.details?.connectAttachments ?? [] }
   }
@@ -900,8 +1060,8 @@ export class AgentManager extends EventEmitter {
     await this.stop(record.id, { history: true })
     await this.closeHistorySession(record.id)
     const runDir = join(this.dir, record.id)
-    manager = cloneSession(record.sessionFile, record.project ? runDir : record.cwd, runDir)
-    if (record.project) await this.projectWorkspaces.restore(record, target.checkpoint, () => this.changed(record.id, true))
+    manager = cloneSession(record.sessionFile, mounted(record) ? runDir : record.cwd, runDir)
+    if (mounted(record)) await this.projectWorkspaces.restore(record, target.checkpoint, () => this.changed(record.id, true))
     if (target.entry.parentId === null) manager.resetLeaf()
     else manager.branch(target.entry.parentId)
     // branch/resetLeaf alone are in-memory. A state-only child makes the chosen cursor survive restart.
@@ -936,20 +1096,20 @@ export class AgentManager extends EventEmitter {
       const target = entryId ? await commandForkTarget(this, record, source, entryId, position) : null
       await this.stop(id, { history: true })
       await this.closeHistorySession(id, { reason: 'fork' })
-      const checkpoint = record.project ? target?.checkpoint ?? await this.projectWorkspaces.checkpoint(record, () => this.changed(id, true)) : null
+      const checkpoint = mounted(record) ? target?.checkpoint ?? await this.projectWorkspaces.checkpoint(record, () => this.changed(id, true)) : null
       const copyId = randomUUID()
       this.historyOperations.set(copyId, this.historyOperations.get(id))
       try {
         await this.createRecord(copyId, {
-          title: `Copy of ${record.title}`.slice(0, 72), cwd: record.cwd, project: record.project,
+          title: `Copy of ${record.title}`.slice(0, 72), cwd: record.cwd, project: record.project, runs: mounted(record) ? 'mount' : 'folder',
           provider: record.provider, modelId: record.modelId, thinkingLevel: record.thinkingLevel, permissionMode: record.permissionMode,
           limits: record.limits,
         }, { publish: false })
         const copy = this.record(copyId)
         copy.forkedFrom = { sessionId: id, ...(entryId ? { entryId } : {}) }
-        if (copy.project) await this.projectWorkspaces.fork(copy, checkpoint, () => this.save(copyId))
+        if (mounted(copy)) await this.projectWorkspaces.fork(copy, checkpoint, () => this.save(copyId))
         const runDir = join(this.dir, copyId)
-        const manager = cloneSession(record.sessionFile, copy.project ? runDir : copy.cwd, runDir)
+        const manager = cloneSession(record.sessionFile, mounted(copy) ? runDir : copy.cwd, runDir)
         if (target) {
           if (position === 'at') manager.branch(target.entry.id)
           else if (target.entry.parentId === null) manager.resetLeaf()
@@ -964,7 +1124,7 @@ export class AgentManager extends EventEmitter {
         const copy = this.records.get(copyId)
         if (copy) {
           try {
-            if (copy.project) await this.projectWorkspaces.release(copy, () => this.save(copyId))
+            if (mounted(copy)) await this.projectWorkspaces.release(copy, () => this.save(copyId))
             this.permissions.forget(copyId)
             this.records.delete(copyId)
             rmSync(join(this.dir, copyId), { recursive: true })
@@ -1003,7 +1163,6 @@ export class AgentManager extends EventEmitter {
       if (active || needsRecovery(record)) record.needsStop = true
       if (!active && needsRecovery(record) && !this.canSkipSessionRecovery(record)) active = await this.open(id, { history })
       if (active) {
-        clearTimeout(active.runTimer)
         try { await active.opening }
         catch (error) {
           if (active.recoveryRequired || this.live.get(id) === active) throw error
@@ -1033,7 +1192,8 @@ export class AgentManager extends EventEmitter {
       }
       await this.workspacePreparations.get(id)?.catch(() => {})
       if (record.error) throw fail(409, record.error)
-      if (record.project && this.projectWorkspaces) await this.projectWorkspaces.release(record, () => this.changed(id, true))
+      if (mounted(record) && this.projectWorkspaces) await this.projectWorkspaces.release(record, () => this.changed(id, true))
+      if (record.scenario && this.scenarios) await this.scenarios.release(record, 'stopped')
       delete record.needsStop
       record.state = 'idle'
       record.execution.phase = reason || wasRunning ? 'interrupted' : 'idle'
@@ -1089,8 +1249,6 @@ export class AgentManager extends EventEmitter {
       active.session.setThinkingLevel(record.thinkingLevel)
       active.checkpointError = null
       active.startError = null
-      active.limitReason = null
-      this.armDeadline(id, active)
       this.changed(id, true)
       this.trackTask(id, active, active.session.sendCustomMessage({
         customType: 'connect.continue',

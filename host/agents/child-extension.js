@@ -5,18 +5,28 @@ import { createWorkspaceBashOperations, readBashConnection } from './workspace-b
 import { instructionPrompt, readProjectInstructions, workspaceInstructions } from './context.js'
 import { captureToolOutput } from './tool-output.js'
 
+/** How the worker and lead definitions (extensions.js) begin; a child tells which it is by its system prompt. */
+export const WORKER_MARK = 'You are a focused worker in LayerFS Connect.'
+export const LEAD_MARK = 'You are a team lead in LayerFS Connect.'
+
 /** The same bash implementation is loaded by the parent and every Pi child. */
-export function createConnectBashExtension({ cwd, env, traceDir, runDir = dirname(traceDir), agent = null, approvalFile, workspace = false, instructions = '', defaultBashTimeoutSeconds = 120 }) {
+export function createConnectBashExtension({ cwd, env, traceDir, runDir = dirname(traceDir), agent = null, approvalFile, workspace = false, instructions = '', defaultBashTimeoutSeconds = 120, projectInstructions = { main: true, worker: true, lead: true }, sdk = {} }) {
   return (pi) => {
     mkdirSync(traceDir, { recursive: true })
+    // which agent this is, known once its first run starts: Settings → SDKs gives each kind its own
+    let kind = agent === 'root' ? 'main' : 'worker'
     pi.on('before_agent_start', async (event, ctx) => {
       try {
-        const files = workspace ? await workspaceInstructions(approvalFile) : await readProjectInstructions(ctx.cwd)
+        // Settings → Hooks can turn project instructions off, for every agent or one
+        kind = agent === 'root' ? 'main' : event.systemPrompt?.includes(LEAD_MARK) ? 'lead' : 'worker'
+        const withFiles = projectInstructions[kind] !== false
+        const files = !withFiles ? [] : workspace ? await workspaceInstructions(approvalFile) : await readProjectInstructions(ctx.cwd)
         const context = instructionPrompt(files, instructions)
         const location = workspace && agent !== 'root'
           ? "Connect executes every bash command in this conversation's mounted LayerFS FUSE Workspace, shared with the parent agent and subagents. Pi's local cwd is a host control directory, not the project filesystem. Each bash command starts in the Workspace root (use cd within a command for subdirectories) and is serialized and auto-committed to the session branch when it finishes; .gitignore does not exclude files from LayerFS commits, so write temporary scratch data to /tmp or remove temporary workspace files before exiting. Processes are stopped with their process group when a command ends. Do not switch execution to the host or manipulate LayerFS mounts. Pi's fullOutputPath is a host log that container bash cannot read; redirect large output to a workspace file or /tmp if you need to inspect it."
           : ''
-        return { systemPrompt: [event.systemPrompt, location, context, 'Project root instructions above are loaded automatically; do not waste a bash call re-reading root AGENTS.md. Before changing files in subdirectories, use bash to check for additional AGENTS.override.md, AGENTS.md, or CLAUDE.md instructions in those directories.'].filter(Boolean).join('\n\n') }
+        const note = withFiles ? 'Project root instructions above are loaded automatically; do not waste a bash call re-reading root AGENTS.md. Before changing files in subdirectories, use bash to check for additional AGENTS.override.md, AGENTS.md, or CLAUDE.md instructions in those directories.' : ''
+        return { systemPrompt: [event.systemPrompt, location, context, note, sdk.prompt?.[kind]].filter(Boolean).join('\n\n') }
       } catch (error) { ctx.abort(); throw error }
     })
     const bash = createBashToolDefinition(cwd)

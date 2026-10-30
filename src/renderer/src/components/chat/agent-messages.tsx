@@ -8,8 +8,7 @@ import { MessageActions, type ConversationAction } from '@/components/chat/conve
 import { AttachmentList } from '@/components/chat/attachments'
 import { ToolOutputDialog } from '@/components/chat/tool-output'
 import { spotlight } from '@/components/motion/spotlight'
-import { Markdown } from '@/components/runs/blocks'
-import { SayText, ThinkingLine } from '@/components/runs/thread-items'
+import { Markdown, SayText, ThinkingLine } from '@/components/chat/markdown'
 import { Button } from '@/components/ui/button'
 import { highlight, highlightOutput, type Token } from '@/lib/highlight'
 import { cn } from '@/lib/utils'
@@ -125,8 +124,10 @@ function ToolMessage({ message, sessionId }: { message: ChatMessage; sessionId?:
   )
 }
 
-export const AgentMessage = memo(function AgentMessage({ message, sessionId, disabled = false, running = false, onAction }: {
+export const AgentMessage = memo(function AgentMessage({ message, sessionId, disabled = false, running = false, onAction, author = 'Connect' }: {
   message: ChatMessage
+  /** Who replies: Connect, or a subagent's name in its own conversation. */
+  author?: string
   sessionId?: string
   disabled?: boolean
   running?: boolean
@@ -157,7 +158,7 @@ export const AgentMessage = memo(function AgentMessage({ message, sessionId, dis
         <ConnectMark className="size-4.5" />
       </div>
       <div onPointerMove={spotlight} className="chat-assistant-message chat-glass-card glass-liquid spotlight min-w-0 flex-1 space-y-3 rounded-2xl px-4 py-4 sm:px-5">
-        <div className="flex items-center gap-2 text-xs font-semibold text-foreground">Connect{message.status === 'running' && <span className="size-1.5 rounded-full bg-primary motion-safe:animate-pulse" aria-label={t("Responding")} />}</div>
+        <div className="flex items-center gap-2 text-xs font-semibold text-foreground">{author}{message.status === 'running' && <span className="size-1.5 rounded-full bg-primary motion-safe:animate-pulse" aria-label={t("Responding")} />}</div>
         {message.thinking && (
           <div className="chat-inset overflow-hidden rounded-xl border border-foreground/[0.06] text-xs text-muted-foreground">
             <button

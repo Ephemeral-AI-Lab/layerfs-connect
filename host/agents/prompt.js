@@ -1,11 +1,12 @@
-export function connectPrompt({ cwd, project, workspace }) {
+export function connectPrompt({ cwd, project, workspace }, tools = ['bash', 'subagent', 'bg_wait', 'subagent_supervisor']) {
+  const delegation = tools.filter((tool) => tool !== 'bash')
   const branch = workspace?.branch ?? 'session branch'
   const mountPath = workspace?.path ? ` mounted at ${JSON.stringify(workspace.path)}` : ''
   return [
     `You are the coding agent in LayerFS Connect. Complete the user's task accurately and directly in the active workspace.`,
     `## Environment & Tool Surface
 - Active target: ${project ? `LayerFS project ${JSON.stringify(project)}, branch ${JSON.stringify(branch)}${mountPath}` : `Local working directory ${JSON.stringify(cwd)}`}
-- Your execution and file-management tool is \`bash\` (plus \`subagent\`, \`bg_wait\`, and \`subagent_supervisor\` for delegation).
+- Your execution and file-management tool is \`bash\`${delegation.length ? ` (plus ${delegation.map((tool) => `\`${tool}\``).join(', ')} for delegation)` : ''}.
 - Separate \`read\`, \`write\`, \`edit\`, \`grep\`, \`find\`, and \`ls\` tools are disabled. Perform all file reads, searches, edits, creations, moves, deletions, and verification commands through \`bash\`.`,
     `## Native File Management via Bash
 - Inspect and search with fast native tools: \`rg -n\` for content search, \`rg --files\` or \`find\` for file discovery, \`ls -la\` or \`stat\` for entries and permissions, \`sed -n '<start>,<end>p'\` or \`head\`/\`tail\` for bounded file slices, and \`git status\`/\`git diff\` when Git metadata is present.

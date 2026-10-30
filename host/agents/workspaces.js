@@ -6,7 +6,14 @@ const CHUNK = 64 * 1024
 const quote = (value) => `'${String(value).replaceAll("'", "'\\''")}'`
 const fail = (message) => Object.assign(new Error(message), { status: 409 })
 
-/** Pi stays on the host; every project bash call runs in this session's LayerFS mount. */
+/**
+ * Whether a chat's bash runs in a LayerFS mount of its own branch. A project
+ * chat made now runs bash in its working folder (`runs: 'folder'`); older
+ * project chats, made with a mount, keep it.
+ */
+export const mounted = (record) => !!record.project && record.runs !== 'folder'
+
+/** Pi stays on the host; a mounted chat's bash calls run in its LayerFS mount. */
 export class AgentWorkspaces {
   constructor({ projects }) {
     this.projects = projects

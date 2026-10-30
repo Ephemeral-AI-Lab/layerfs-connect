@@ -113,7 +113,7 @@ export function ConversationActionDialog({ target, unavailable, hasDraft, onClos
         if (inFlight.current && !completed.current) return
         const focus = completed.current
           ? document.querySelector<HTMLTextAreaElement>('textarea[data-chat-composer]')
-          : target.returnFocus?.isConnected ? target.returnFocus : document.querySelector<HTMLElement>('[data-session-history]')
+          : target.returnFocus?.isConnected ? target.returnFocus : null
         focus?.focus()
       }}
       onEscapeKeyDown={(event) => { if (inFlight.current) event.preventDefault() }}

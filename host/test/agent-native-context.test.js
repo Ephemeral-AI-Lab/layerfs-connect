@@ -79,7 +79,7 @@ async function fixture(t, { project = false } = {}) {
   manager = await AgentManager.create({ state, defaultCwd: cwd, projectEnvironment: async () => ({}), projectWorkspaces: workspaces })
   manager.on('event', (event) => events.push(structuredClone(event)))
   await manager.models.configure(model)
-  const create = (input = {}) => manager.create({ ...(project ? { project: 'context-project' } : {}), ...input })
+  const create = (input = {}) => manager.create({ ...(project ? { project: 'context-project', runs: 'mount' } : {}), ...input })
   async function seed(id, texts = ['First task', 'Second task']) {
     const active = await manager.open(id)
     const entries = []
@@ -133,7 +133,7 @@ test('native before-switch/fork cancellation leaves chats, cursor and callbacks 
 
 test('native newSession runs setup and fresh callbacks, inherits settings and keeps local files', { timeout: 15_000 }, async (t) => {
   const f = await fixture(t)
-  const limits = { maxTurns: 7, maxRuntimeSeconds: 120, bashTimeoutSeconds: 9, maxRetries: 0, instructions: 'Native context fixture instructions.' }
+  const limits = { bashTimeoutSeconds: 9, maxRetries: 0, instructions: 'Native context fixture instructions.' }
   const source = await f.create({ limits, permissionMode: 'full' })
   const { active } = await f.seed(source.id)
   await writeFile(join(f.cwd, 'local-marker.txt'), 'keep-local-files')

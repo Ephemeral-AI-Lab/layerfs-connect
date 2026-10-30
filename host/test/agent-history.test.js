@@ -147,7 +147,7 @@ test('each actual user message gets a workspace checkpoint, including queued fol
   const workspaces = fakeWorkspaces()
   const f = await fixture(t, workspaces)
   for (const mode of ['followUp', 'steer']) {
-    const chat = await f.manager.create({ project: 'project', permissionMode: 'full' })
+    const chat = await f.manager.create({ project: 'project', runs: 'mount', permissionMode: 'full' })
     await f.manager.message(chat.id, { text: `WAIT initial ${mode}` })
     await f.manager.message(chat.id, { text: `queued ${mode}`, mode })
     const final = await f.settle(chat.id)
@@ -172,7 +172,7 @@ test('each actual user message gets a workspace checkpoint, including queued fol
 test('history changes block sends, stops, deletions and other history changes until workspace restore finishes', async (t) => {
   const workspaces = fakeWorkspaces()
   const f = await fixture(t, workspaces)
-  const chat = await f.manager.create({ project: 'project', permissionMode: 'full' })
+  const chat = await f.manager.create({ project: 'project', runs: 'mount', permissionMode: 'full' })
   const final = await f.send(chat.id, 'saved prompt')
   const entered = Promise.withResolvers(), gate = Promise.withResolvers()
   workspaces.beforeRestore = async () => { entered.resolve(); await gate.promise }
@@ -193,7 +193,7 @@ test('history changes block sends, stops, deletions and other history changes un
 test('a new copied conversation cannot run until both its workspace and transcript are ready', async (t) => {
   const workspaces = fakeWorkspaces()
   const f = await fixture(t, workspaces)
-  const chat = await f.manager.create({ project: 'project', permissionMode: 'full' })
+  const chat = await f.manager.create({ project: 'project', runs: 'mount', permissionMode: 'full' })
   await f.send(chat.id, 'saved prompt')
   const entered = Promise.withResolvers(), gate = Promise.withResolvers()
   let copyId
@@ -217,7 +217,7 @@ test('a new copied conversation cannot run until both its workspace and transcri
 test('failed copy creation cleans only its new resources, retaining recovery evidence if release fails', async (t) => {
   const workspaces = fakeWorkspaces()
   const f = await fixture(t, workspaces)
-  const chat = await f.manager.create({ project: 'project', permissionMode: 'full' })
+  const chat = await f.manager.create({ project: 'project', runs: 'mount', permissionMode: 'full' })
   await f.send(chat.id, 'source prompt')
   const before = f.manager.list().map((session) => session.id)
   workspaces.beforeFork = async () => { throw new Error('Copy mount failed') }
@@ -236,7 +236,7 @@ test('failed copy creation cleans only its new resources, retaining recovery evi
 test('failed checkpoints abort before the model request; copied pending notices never restart old work', async (t) => {
   const workspaces = fakeWorkspaces()
   const f = await fixture(t, workspaces)
-  const bad = await f.manager.create({ project: 'project', permissionMode: 'full' })
+  const bad = await f.manager.create({ project: 'project', runs: 'mount', permissionMode: 'full' })
   workspaces.beforeCheckpoint = async () => { throw new Error('Checkpoint unavailable') }
   await assert.rejects(f.manager.message(bad.id, { text: 'must not request a model' }), /Checkpoint unavailable/)
   const failed = await f.settle(bad.id)

@@ -5,6 +5,7 @@ import { FolderOpen, FolderSearch, Plus, RotateCw, Search, X } from 'lucide-reac
 import { useLayoutEffect, useState } from 'react'
 import { projectKey } from '@shared/host-api'
 
+import { ProjectsLive } from '@/components/live/projects-live'
 import { PageHeader } from '@/components/motion/page-header'
 import { revealStyle } from '@/components/motion/reveal'
 import { ProjectCard } from '@/components/projects/home/project-card'
@@ -21,9 +22,11 @@ interface ProjectsHomeProps {
   projects: ProjectCatalog
   onOpenProject: (project: string) => void
   onNewProject: () => void
+  /** Opens a chat on the Chat page (from Live). */
+  onOpenChat: (session: string) => void
 }
 
-export function ProjectsHome({ projects, onOpenProject, onNewProject }: ProjectsHomeProps) {
+export function ProjectsHome({ projects, onOpenProject, onNewProject, onOpenChat }: ProjectsHomeProps) {
   useI18n()
   const [query, setQuery] = useState('')
   const flip = useFlip<HTMLDivElement>()
@@ -101,6 +104,7 @@ export function ProjectsHome({ projects, onOpenProject, onNewProject }: Projects
           >{t("Nothing matches “")}{query.trim()}{t("”. Search by name, Store or source folder.")}</Empty>
         ) : (
           <>
+            {!q && <ProjectsLive projects={all.map(projectKey)} onOpenProject={onOpenProject} onOpenChat={onOpenChat} />}
             <p aria-live="polite" className="px-1 text-xs text-muted-foreground tabular-nums">
               {q ? t("{value1} of {value2} projects", {value1: shown.length, value2: all.length}) : t(all.length === 1 ? '{count} project' : '{count} projects', {count: all.length})}
             </p>

@@ -123,6 +123,15 @@ function createWindow(): BrowserWindow {
 
   win.once('ready-to-show', () => win.show())
 
+  // ⌘W (Ctrl+W) closes the active tab, not the window: the renderer decides,
+  // and closes the window itself when its last tab goes.
+  win.webContents.on('before-input-event', (event, input) => {
+    if (input.type !== 'keyDown' || input.alt || input.shift || input.key.toLowerCase() !== 'w') return
+    if (!(isMac ? input.meta && !input.control : input.control && !input.meta)) return
+    event.preventDefault()
+    win.webContents.send('connect:tab-command', 'close')
+  })
+
   // Links open in the default browser, never inside the app window.
   win.webContents.setWindowOpenHandler(({ url }) => {
     void shell.openExternal(url)

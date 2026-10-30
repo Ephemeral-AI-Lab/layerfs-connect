@@ -1,15 +1,15 @@
 // A project's Store as the Projects screens show it (layerfs#506, #509): which
-// Store holds it, its family, where it syncs, its sync state and its size.
+// Store holds it, its family, where it syncs and its size. No sync state:
+// the project is already local, so these screens never check the remote file.
 // One cached Storage view feeds every card, header and dialog; it is read
 // again when the host says Storage changed, a sync job ends, or a project
 // or Store is made or removed. A LayerFS build without Stores answers no
 // view (or one with stores unavailable): the facts then fall back to the
 // project summary, and the badge reads "Local SQLite".
 import { useSyncExternalStore } from 'react'
-import { projectRef, type ProjectSummary, type RemoteProvider, type StorageView, type StoreFamily, type StoreInfo, type StoreLink, type StoreSyncState } from '@shared/host-api'
+import { projectRef, type ProjectSummary, type RemoteProvider, type StorageView, type StoreFamily, type StoreInfo, type StoreLink } from '@shared/host-api'
 
 import { StoreIcon, storeProviders } from '@/components/storage/identity/store-icon'
-import { SyncPill } from '@/components/storage/sync/sync-pill'
 import { bytes } from '@/data/format'
 import { host, onHostEvent, onProjectsChanged } from '@/host/client'
 import { useI18n } from '@/i18n'
@@ -81,7 +81,6 @@ export interface StoreFacts {
   family: StoreFamily
   /** The provider of the Store's link, for StoreIcon. */
   providers: RemoteProvider[]
-  sync: StoreSyncState | null
   /** Bytes on disk (SQLite file and WAL, or the PostgreSQL schema); null when unknown. */
   size: number | null
   link: StoreLink | null
@@ -101,7 +100,6 @@ export function storeFacts(project: ProjectSummary, storage: StorageView | null 
     name: project.store ?? null,
     family,
     providers: info ? storeProviders(info, storage?.remotes.list) : (project.storeProviders ?? []),
-    sync: info?.sync.state ?? project.storeSync ?? null,
     size: info ? (info.size?.bytes ?? info.bytes ?? null) : null,
     link: info?.link ?? null,
     connection: info?.connection ?? project.connection ?? null,
@@ -122,7 +120,7 @@ function storeTitle(facts: StoreFacts, t: (source: string) => string): string {
   return facts.name ?? (facts.family === 'postgresql' ? 'PostgreSQL' : t('Local SQLite'))
 }
 
-/** A project's Store in one line: its mark, its name, where it syncs and its size, then its sync state. */
+/** A project's Store in one line: its mark, its name, where it syncs and its size. No sync state: project screens never check the remote file. */
 export function StoreLine({ facts, className }: { facts: StoreFacts; className?: string }) {
   const { t } = useI18n()
   const where = storeWhere(facts, t)
@@ -134,19 +132,25 @@ export function StoreLine({ facts, className }: { facts: StoreFacts; className?:
         <span className="block truncate text-xs font-medium" title={facts.name ?? undefined}>{storeTitle(facts, t)}</span>
         {detail && <span className="mt-0.5 block truncate font-mono text-[10.5px] text-muted-foreground" title={facts.link?.object ?? detail}>{detail}</span>}
       </span>
-      {facts.sync && <SyncPill state={facts.sync} copy={facts.link} compact className="shrink-0" />}
     </span>
   )
 }
 
-/** A project's Store as a pill beside its title: mark, name and sync state. */
-export function StoreBadge({ facts }: { facts: StoreFacts }) {
+/**
+ * A project's Store as a pill beside its title: its mark and name. No sync
+ * state: the project page works on the local copy, so it never checks the
+ * remote file (that is the Storage page's job).
+ * A Store of its own named like `project` leaves the name out (the title says it).
+ */
+export function StoreBadge({ facts, project }: { facts: StoreFacts; project?: string }) {
   const { t } = useI18n()
+  const named = !(!facts.shared && facts.name === project)
   return (
-    <span className="glass-liquid inline-flex max-w-full min-w-0 items-center gap-2 rounded-full py-0.5 pr-1 pl-0.5 text-xs shadow-xs">
-      <StoreIcon family={facts.family} providers={facts.providers} size="sm" className="[&>span]:size-6 [&>span]:rounded-full" />
-      <span className="min-w-0 truncate font-medium" title={storeWhere(facts, t) ?? undefined}>{storeTitle(facts, t)}</span>
-      {facts.sync ? <SyncPill state={facts.sync} copy={facts.link} compact className="shrink-0" /> : <span className="pr-1.5" />}
+    <span className={cn('glass-liquid inline-flex max-w-full min-w-0 items-center gap-2 rounded-full py-0.5 pl-0.5 text-xs shadow-xs', named ? 'pr-2.5' : 'pr-0.5')}>
+      <span className="inline-flex shrink-0" title={named ? undefined : t('Store {value1}', { value1: storeTitle(facts, t) })}>
+        <StoreIcon family={facts.family} providers={facts.providers} size="sm" className="[&>span]:size-6 [&>span]:rounded-full" />
+      </span>
+      {named && <span className="min-w-0 truncate font-medium" title={storeWhere(facts, t) ?? undefined}>{storeTitle(facts, t)}</span>}
     </span>
   )
 }

@@ -203,3 +203,31 @@ test('deleting a built-in provider clears its saved connection and hides it from
   assert.equal(restored.runtime.hasConfiguredAuth('openai'), false)
   assert.equal(restored.selected, null)
 })
+
+test('the settings page replaces a provider model list, and a rejected save leaves the files as they were', async (t) => {
+  const { dir, baseUrl } = await fixture(t)
+  const models = await AgentModels.create(dir)
+  await models.configureProvider({ provider: 'list-fixture', name: 'List Fixture', baseUrl, api: 'openai-completions', apiKey: 'list-test-key', models: [{ id: 'one', contextWindow: 32000 }, { id: 'two', name: 'Two', input: ['text', 'image'], reasoning: true }] })
+  await models.configure({ provider: 'list-fixture', modelId: 'one' })
+  let provider = models.snapshot().providers.find((p) => p.id === 'list-fixture')
+  assert.equal(provider.builtIn, false)
+  assert.deepEqual(provider.savedModels, [{ id: 'one', contextWindow: 32000 }, { id: 'two', name: 'Two', reasoning: true, input: ['text', 'image'] }])
+
+  // dropping the selected model clears the selection
+  const snapshot = await models.configureProvider({ provider: 'list-fixture', models: [{ id: 'two' }] })
+  assert.deepEqual(snapshot.providers.find((p) => p.id === 'list-fixture').savedModels, [{ id: 'two' }])
+  assert.equal(snapshot.selected, null)
+  assert.deepEqual(snapshot.models.filter((m) => m.provider === 'list-fixture').map((m) => m.id), ['two'])
+
+  await assert.rejects(async () => models.configureProvider({ provider: 'list-fixture', models: [] }), /at least one model/)
+  await assert.rejects(async () => models.configureProvider({ provider: 'list-fixture', models: [{ id: 'a' }, { id: 'a' }] }), /unique/)
+  const before = await readFile(models.modelsPath, 'utf8')
+  // Pi refuses a declared provider without a base URL on reload; the save is undone
+  await assert.rejects(models.persistProvider({ id: 'no-url', api: 'openai-completions', models: [{ id: 'x' }] }))
+  assert.equal(await readFile(models.modelsPath, 'utf8'), before)
+  assert.equal(models.config.providers['no-url'], undefined)
+
+  // a built-in provider reads as one and keeps its catalog beside extra models
+  provider = models.snapshot().providers.find((p) => p.id === 'openai')
+  assert.equal(provider.builtIn, true)
+})
