@@ -255,11 +255,18 @@ src/
 
 ## Where LayerFS comes from
 
+Two branches go together: Connect works on its own `main`, and builds against
+LayerFS's `layerfs_v2_0_0` branch.
+
 Connect never installs into or edits the LayerFS repository. `package.json`
 links `@layerfs/*` to the `api/` packages of a LayerFS worktree beside this
-repo, kept at LayerFS `main`
-(`../layerfs/.claude/worktrees/connect-main/api/{agent,backend,cli,runtime}`),
-and the host loads `host/resolve-layerfs.js`, so `@layerfs/*` resolves from
+repo, kept at the tip of LayerFS `layerfs_v2_0_0`
+(`../layerfs/.claude/worktrees/connect-main/api/{agent,backend,cli,runtime}`;
+the folder's name is older than the branch). The worktree sits on that commit
+detached, so it does not follow the branch by itself; to move it forward,
+`git -C ../layerfs fetch origin layerfs_v2_0_0` then
+`git -C ../layerfs/.claude/worktrees/connect-main checkout --detach origin/layerfs_v2_0_0`.
+The host loads `host/resolve-layerfs.js`, so `@layerfs/*` resolves from
 Connect's `node_modules`. Local-folder bash calls also receive this resolver;
 project bash runs through the host's LayerFS workspace execution bridge inside
 the container. The macOS worker runs a

@@ -184,8 +184,10 @@ under all three modes; local-folder commands retain direct host execution.
 
 Connect never installs into or edits the LayerFS repository. `package.json`
 links `@layerfs/{agent,backend,runtime,cli}` to the `api/` packages of a
-LayerFS worktree at `main` beside this repo
-(`../layerfs/.claude/worktrees/connect-main/api/...`). Host-side LayerFS calls
+LayerFS worktree beside this repo, kept at the tip of LayerFS's
+`layerfs_v2_0_0` branch (`../layerfs/.claude/worktrees/connect-main/api/...`;
+Connect itself works on `main`, and the README's "Where LayerFS comes from"
+says how to move the worktree forward). Host-side LayerFS calls
 load [`resolve-layerfs.js`](resolve-layerfs.js) first (`node --import`), so
 `@layerfs/*` resolves from Connect's `node_modules`. Local-folder bash also
 receives `NODE_OPTIONS=--import=…` and a `layerfs` shim on PATH:
