@@ -12,6 +12,15 @@
 // folded, and subagents below the second level start folded under their
 // parent. What the user folds or opens is kept per project. A folded card
 // stands in for what it hides: their calls start from it.
+//
+// Density: the page fits what is there. Past DENSE_SESSIONS sessions a
+// folded session is one line (its folder, progress and agents working), the
+// watched one first, then the playing ones, the ended ones last. Past
+// DENSE_SANDBOXES Sandboxes, one running a command or used by the watched
+// session keeps its card and the others are one line (opened by a click),
+// with no mount lanes drawn to them; past SANDBOX_ROWS lines the rest wait
+// behind "+N more". Calls still fly to a line: it carries its Workspaces'
+// anchors.
 import './live.css'
 
 import type { LiveMount, ProjectState, RunDetail, RunEvent, RunSummary, RunningCall, TraceCall } from '@shared/host-api'
@@ -19,12 +28,11 @@ import { Activity, ChevronRight } from 'lucide-react'
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 
 import { LayerfsMark } from '@/components/layerfs-mark'
-import { LfsAgent, LfsBranch, LfsCommit, LfsSandbox, LfsStore, LfsWorkspace } from '@/components/lfs-icons'
+import { LfsAgent, LfsBranch, LfsCommit, LfsSandbox, LfsWorkspace } from '@/components/lfs-icons'
 import { CountUp, revealStyle } from '@/components/motion'
 import type { SwitcherAgent } from '@/components/runs/agent-switcher'
 import { FAIL_CLASS, FlowEngine, type FlowRoute, type FlowScene, OK_CLASS } from '@/components/runs/live-flow'
 import { AgentDot, SessionHint, Spinner } from '@/components/runs/run-badges'
-import { Chip } from '@/components/storage/chips'
 import { type AgentColor, activity, agentColors, ago, duration, isIdle, isLive, plural, runLabel } from '@/components/runs/run-format'
 import { treeOrder } from '@/components/runs/thread'
 import { applyEvents, useNow } from '@/components/runs/use-run'
@@ -41,6 +49,15 @@ const MAX_INDENT = 5
 const FOLD_DEPTH = 3
 /** A finished call older than this is history, not drawn. */
 const FRESH_MS = 5000
+/** More sessions than this: the folded ones are one line each. */
+const DENSE_SESSIONS = 3
+/** More Sandboxes than this: the quiet ones are one line each. */
+const DENSE_SANDBOXES = 4
+/** One-line Sandboxes shown before "+N more". */
+const SANDBOX_ROWS = 10
+
+/** A command as its script wrote it: without the `cd <run> || exit 97` a scenario run's scope puts first (host/runs/scope.js). */
+export const shownCommand = (command: string | null | undefined) => (command ? command.replace(/^cd [A-Za-z0-9_.-]+ \|\| exit 97\n/, '') : command)
 
 interface LiveTabProps {
   run: RunDetail
@@ -79,7 +96,7 @@ function useLiveProject(project: string, live: boolean, changed: string) {
     return () => clearInterval(t)
   }, [live])
   // one more read once a session ends (`changed` moves), so its closed Sandboxes leave
-  const q = useHostQuery(() => host.project(project), [project, tick, changed])
+  const q = useHostQuery(() => host.project(project), [project, tick, changed], `project:${project}`)
   return q.data?.project.name === project ? q.data : undefined
 }
 
@@ -211,7 +228,9 @@ function sandboxViews(state: ProjectState | undefined, groups: Group[]): Sandbox
     })
   }
   for (const [id, by] of made) if (!out.has(id)) out.set(id, { id, name: null, state: 'running', madeBy: by, workspaces: [] })
-  for (const g of groups)
+  // an ended session's Workspaces were unmounted when it ended: its Sandbox numbers may be another session's now
+  for (const g of groups) {
+    if (!isLive(g.run.state)) continue
     for (const m of g.run.live.mounts) {
       let s = out.get(m.sandbox)
       if (!s) {
@@ -221,9 +240,12 @@ function sandboxViews(state: ProjectState | undefined, groups: Group[]): Sandbox
       const key = wsKey(m.sandbox, m.path)
       const mount = { ...m, run: g.run.id }
       const w = s.workspaces.find((x) => x.key === key)
-      if (w) Object.assign(w, { mount, branch: w.branch ?? m.branch })
-      else s.workspaces.push({ key, sandbox: m.sandbox, path: m.path, branch: m.branch, mount })
+      // the newest mount of a place is the one there; its Branch is the one the call named
+      if (w) {
+        if (!w.mount || w.mount.since <= m.since) Object.assign(w, { mount, branch: m.branch ?? w.branch })
+      } else s.workspaces.push({ key, sandbox: m.sandbox, path: m.path, branch: m.branch, mount })
     }
+  }
   return [...out.values()].sort((a, b) => Number(a.id) - Number(b.id) || a.id.localeCompare(b.id))
 }
 
@@ -359,41 +381,12 @@ export function LiveTab({ run, agents, colorOf, onOpenAgent, onOpenSession, sess
   const inFlight = groups.reduce((n, g) => n + g.run.live.running.length, 0)
   const mounted = sandboxes.reduce((n, s) => n + s.workspaces.length, 0)
   const commits = state?.branches.reduce((n, b) => n + b.commits, 0) ?? 0
-  const live = isLive(run.state)
   const lastEnded = `the last finished ${ago(run.ended ?? run.started, now)}`
-
-  let summary: string
-  if (groups.length > 1)
-    summary = `${plural(groups.length, 'session')} · ${working} of ${plural(all.length, 'agent')} working · ${plural(inFlight, 'call')} in flight`
-  else if (live && run.state === 'starting') summary = `${run.phase ?? 'Starting'}: ${run.project} from the demo's fixture`
-  else if (groups.length === 1 && isLive(groups[0].run.state))
-    summary = `${working} of ${plural(groups[0].agents.length, 'agent')} working · ${plural(inFlight, 'call')} in flight`
-  else if (groups.length === 0) summary = `No agent working · ${lastEnded}`
-  else summary = `Agents finished ${ago(groups[0].run.ended ?? groups[0].run.started, now)} · Workspaces unmounted, Sandboxes closed · History keeps its Commits`
-
-  const status = run.state === 'starting' ? 'Starting' : anyLive ? 'Live' : groups.length ? 'Ended' : 'Idle'
 
   return (
     <div className="h-full overflow-y-auto [overflow-anchor:none]">
       <div className="mx-auto flex w-full max-w-[1320px] flex-col gap-5 px-5 py-5 xl:px-8 xl:py-6">
         <section aria-label="Live" className="surface rounded-2xl">
-          <header className="flex items-center gap-3 border-b px-5 py-3 xl:px-6">
-            <Chip tone={anyLive ? 'info' : 'neutral'} live={anyLive}>
-              {status}
-            </Chip>
-            <p className="min-w-0 flex-1 truncate text-sm text-muted-foreground tabular-nums">{summary}</p>
-            <span className="hidden shrink-0 items-center gap-3.5 text-xs text-faint lg:flex">
-              <span className="flex items-center gap-1.5">
-                <LfsStore className="size-3.5" />
-                Local SQLite Store
-              </span>
-              <span className="flex items-center gap-1.5">
-                <LfsSandbox className="size-3.5" />
-                Docker Sandboxes
-              </span>
-            </span>
-          </header>
-
           <dl className="grid grid-cols-5 divide-x border-b">
             <StatTile icon={<LfsAgent className="size-4" />} value={working} label="agents working" hot />
             <StatTile icon={<Activity aria-hidden="true" className="size-4 text-muted-foreground" />} value={inFlight} label="calls in flight" hot />
@@ -514,11 +507,36 @@ function FlowGraph({ run, state, groups, sandboxes, folds, now, live, busy, idle
   const svg = useRef<SVGSVGElement>(null)
   const engine = useRef<FlowEngine | null>(null)
   const many = groups.length > 1
-  const layouts = useMemo(() => groups.map((g) => layoutGroup(g, folds.over, many)), [groups, folds.over, many])
+  const denseSessions = groups.length > DENSE_SESSIONS
+  // the watched session first, then the playing ones (newest first), the ended ones last
+  const layouts = useMemo(() => {
+    const out = groups.map((g) => layoutGroup(g, folds.over, many))
+    if (!denseSessions) return out
+    const rank = (l: GroupLayout) => (l.group.watched ? 0 : isLive(l.group.run.state) ? 1 : 2)
+    return out.sort((a, b) => rank(a) - rank(b) || b.group.run.started - a.group.run.started)
+  }, [groups, folds.over, many, denseSessions])
   const rows = useMemo(() => new Set(hubRows(state).map((b) => b.name)), [state])
   const workspaces = useMemo(() => new Set(sandboxes.flatMap((s) => s.workspaces.map((w) => w.key))), [sandboxes])
   const noAgents = layouts.length === 0
   const noSandboxes = sandboxes.length === 0
+
+  // many Sandboxes: the ones at work or the watched session's keep their cards, the rest are lines
+  const [opened, setOpened] = useState<ReadonlySet<string>>(() => new Set())
+  const [allRows, setAllRows] = useState(false)
+  const denseSandboxes = sandboxes.length > DENSE_SANDBOXES
+  const compact = useMemo(() => {
+    if (!denseSandboxes) return new Set<string>()
+    const watched = groups.find((g) => g.watched)?.run.id
+    // at work: running a command (a mount waiting under load does not count, or every new Sandbox would keep its card)
+    const busy = new Set(
+      groups.flatMap((g) => g.run.live.running.filter((c) => c.command !== null || c.method.startsWith('process.')).map((c) => c.sandbox).filter((x): x is string => !!x)),
+    )
+    const mine = (s: SandboxView) => !!watched && (s.madeBy?.run === watched || s.workspaces.some((w) => w.mount?.run === watched))
+    return new Set(sandboxes.filter((s) => !busy.has(s.id) && !mine(s) && !opened.has(s.id)).map((s) => s.id))
+  }, [denseSandboxes, groups, sandboxes, opened])
+  const cards = sandboxes.filter((s) => !compact.has(s.id))
+  const lines = sandboxes.filter((s) => compact.has(s.id))
+  const shownLines = allRows ? lines : lines.slice(0, SANDBOX_ROWS)
 
   useLayoutEffect(() => {
     const e = new FlowEngine(box.current!, svg.current!)
@@ -539,7 +557,8 @@ function FlowGraph({ run, state, groups, sandboxes, folds, now, live, busy, idle
     const mounts: FlowScene['mounts'] = []
     for (const s of sandboxes)
       for (const w of s.workspaces)
-        if (w.mount)
+        // a Sandbox shown as a line draws no mount lane: its calls still fly to it
+        if (w.mount && !compact.has(s.id))
           mounts.push({
             key: w.key,
             route: { agent: agentKey(w.mount.run, w.mount.agent), via: w.branch && rows.has(w.branch) ? `branch-${w.branch}` : null, to: `ws-${w.key}` },
@@ -565,7 +584,7 @@ function FlowGraph({ run, state, groups, sandboxes, folds, now, live, busy, idle
       tree,
       ghosts,
     }
-  }, [layouts, sandboxes, rows, noAgents, noSandboxes])
+  }, [layouts, sandboxes, rows, noAgents, noSandboxes, compact])
   useLayoutEffect(() => engine.current?.setScene(scene))
 
   useTraffic(engine, groups, rows, workspaces)
@@ -588,6 +607,7 @@ function FlowGraph({ run, state, groups, sandboxes, folds, now, live, busy, idle
               key={l.group.run.id}
               layout={l}
               many={many}
+              dense={denseSessions}
               now={now}
               onOpen={(name) => onOpen(l.group, name)}
               onFold={(key, folded) => folds.set(key, folded)}
@@ -604,7 +624,36 @@ function FlowGraph({ run, state, groups, sandboxes, folds, now, live, busy, idle
           {noSandboxes ? (
             <IdleSandboxes />
           ) : (
-            sandboxes.map((s, i) => <SandboxNode key={s.id} index={i} sandbox={s} groups={groups} many={many} now={now} />)
+            <>
+              {cards.map((s, i) => (
+                <SandboxNode key={s.id} index={i} sandbox={s} groups={groups} many={many} now={now} />
+              ))}
+              {shownLines.length > 0 && (
+                <div className="flex flex-col gap-1">
+                  {shownLines.map((s, i) => (
+                    <SandboxLine key={s.id} index={i} sandbox={s} groups={groups} onOpen={() => setOpened((o) => new Set(o).add(s.id))} />
+                  ))}
+                  {lines.length > SANDBOX_ROWS && (
+                    <button
+                      type="button"
+                      onClick={() => setAllRows((v) => !v)}
+                      className="self-start rounded-md px-2 py-1 text-xs text-muted-foreground outline-none hover:bg-muted/60 hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
+                    >
+                      {allRows ? 'Show fewer' : `+${lines.length - SANDBOX_ROWS} more`}
+                    </button>
+                  )}
+                </div>
+              )}
+              {opened.size > 0 && denseSandboxes && (
+                <button
+                  type="button"
+                  onClick={() => setOpened(new Set())}
+                  className="self-start rounded-md px-2 py-1 text-xs text-muted-foreground outline-none hover:bg-muted/60 hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  Fold the Sandboxes I opened
+                </button>
+              )}
+            </>
           )}
         </div>
       </div>
@@ -754,12 +803,15 @@ const SessionDot = ({ live }: { live: boolean }) => (
 function SessionGroup({
   layout,
   many,
+  dense = false,
   now,
   onOpen,
   onFold,
 }: {
   layout: GroupLayout
   many: boolean
+  /** Many sessions: folded, this one is a single line. */
+  dense?: boolean
   now: number
   onOpen: (name: string) => void
   onFold: (key: string, folded: boolean) => void
@@ -793,6 +845,45 @@ function SessionGroup({
     ))
 
   if (!many) return <div className="flex flex-col gap-2">{agentNodes}</div>
+
+  if (folded && dense) {
+    const ratio = run.of > 0 ? Math.min(1, run.done / run.of) : 0
+    return (
+      <button
+        type="button"
+        data-anchor={`session-${run.id}`}
+        data-busy={working > 0 || undefined}
+        onClick={fold}
+        aria-expanded={false}
+        title={`${runLabel(run)}: ${run.done} of ${run.of} steps · ${working} of ${plural(nodes.length, 'agent')} working`}
+        className={cn(
+          'reveal relative flex min-w-0 items-center gap-2 rounded-lg border bg-card px-2.5 py-1.5 text-left text-xs text-muted-foreground shadow-elev-1 outline-none transition-[border-color,box-shadow,opacity] duration-(--dur-base) hover:border-foreground/20 hover:shadow-elev-2 focus-visible:ring-2 focus-visible:ring-ring',
+          !live && 'opacity-65 hover:opacity-100',
+        )}
+      >
+        <ChevronRight aria-hidden="true" className="chevron size-3.5 shrink-0 text-faint" />
+        <SessionDot live={live} />
+        <span className="min-w-0 flex-1 truncate text-[13px] font-medium text-foreground">{runLabel(run)}</span>
+        {group.watched && <span className="shrink-0 rounded-full bg-primary/10 px-1.5 text-[10px] leading-4 font-medium text-primary">this session</span>}
+        {run.queued ? (
+          <span className="shrink-0 text-faint" title={run.phase ?? undefined}>
+            waiting
+          </span>
+        ) : live ? (
+          <>
+            <span aria-hidden="true" className="h-1 w-10 shrink-0 overflow-hidden rounded-full bg-muted">
+              <span className="block h-full rounded-full bg-primary transition-[width] duration-(--dur-slow)" style={{ width: `${Math.round(ratio * 100)}%` }} />
+            </span>
+            <span className="w-8 shrink-0 text-right tabular-nums">
+              {working}/{nodes.length}
+            </span>
+          </>
+        ) : (
+          <span className={cn('shrink-0', run.state === 'failed' ? 'text-destructive' : 'text-faint')}>{run.state}</span>
+        )}
+      </button>
+    )
+  }
 
   if (folded)
     return (
@@ -856,7 +947,7 @@ function MiddleTruncate({ text, className, tail = 8 }: { text: string; className
 }
 
 function callTarget(c: { branch?: string | null; path?: string | null; sandbox?: string | null; command?: string | null }) {
-  if (c.command) return c.command
+  if (c.command) return shownCommand(c.command)
   if (c.sandbox && c.path) return `${c.sandbox}:${c.path}`
   return c.branch ?? c.path ?? null
 }
@@ -1112,14 +1203,14 @@ function SandboxNode({ index, sandbox, groups, many, now }: { index: number; san
                   <>
                     <Spinner className={cn('size-3', execColor?.text)} />
                     <span className="shrink-0 font-medium text-foreground">exec</span>
-                    <span className="min-w-0 truncate font-mono text-[11px]">{exec.call.command ?? ''}</span>
+                    <span className="min-w-0 truncate font-mono text-[11px]">{shownCommand(exec.call.command) ?? ''}</span>
                     {exec.call.agent !== mount?.agent && <span className="shrink-0 text-faint">by {exec.call.agent}</span>}
                     <span className="ml-auto shrink-0 tabular-nums">{duration(now - exec.call.start)}</span>
                   </>
                 ) : mount?.last ? (
                   <>
                     <span className="shrink-0">idle · last</span>
-                    <span className="min-w-0 truncate font-mono text-[11px] text-faint">{mount.last.command ?? 'exec'}</span>
+                    <span className="min-w-0 truncate font-mono text-[11px] text-faint">{shownCommand(mount.last.command) ?? 'exec'}</span>
                     <span
                       className={cn(
                         'ml-auto shrink-0 font-mono text-[11px]',
@@ -1140,5 +1231,29 @@ function SandboxNode({ index, sandbox, groups, many, now }: { index: number; san
         })
       )}
     </div>
+  )
+}
+
+/** A quiet Sandbox when there are many: one line, its Workspaces' anchors on it, so calls still reach it; a click shows its card. */
+function SandboxLine({ index, sandbox, groups, onOpen }: { index: number; sandbox: SandboxView; groups: Group[]; onOpen: () => void }) {
+  const maker = sandbox.madeBy && groups.find((g) => g.run.id === sandbox.madeBy?.run)
+  const n = sandbox.workspaces.length
+  return (
+    <button
+      type="button"
+      data-anchor={`sandbox-${sandbox.id}`}
+      onClick={onOpen}
+      style={revealStyle(index)}
+      title={sandbox.name ?? `Sandbox ${sandbox.id}`}
+      className="reveal relative flex min-w-0 items-center gap-2 rounded-lg border bg-card/80 px-2.5 py-1.5 text-left text-xs text-muted-foreground outline-none transition-[border-color,box-shadow] duration-(--dur-base) hover:border-foreground/20 hover:shadow-elev-1 focus-visible:ring-2 focus-visible:ring-ring"
+    >
+      {sandbox.workspaces.map((w) => (
+        <span key={w.key} data-anchor={`ws-${w.key}`} aria-hidden="true" className="pointer-events-none absolute inset-0" />
+      ))}
+      <LfsSandbox className="size-3.5 shrink-0" />
+      <span className="shrink-0 font-medium text-foreground">Sandbox {sandbox.id}</span>
+      <span className="min-w-0 flex-1 truncate">{maker ? runLabel(maker.run) : sandbox.state}</span>
+      <span className="shrink-0 text-faint tabular-nums">{n ? plural(n, 'Workspace') : 'no Workspace'}</span>
+    </button>
   )
 }

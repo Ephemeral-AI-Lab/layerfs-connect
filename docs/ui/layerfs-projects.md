@@ -43,6 +43,7 @@ Source: `src/renderer/src/components/projects/projects-home.tsx` (main file; oth
 3. **Stats strip** (`StatsStrip`, `projects/home/stats-strip.tsx`): Projects, Sessions, Playing now and Commits, each with a note. The numbers count up as the cards report them. Commits sums what each card read, and its note gives the Store bytes.
 4. **Project cards** (`ProjectCard`, `projects/home/project-card.tsx`): a grid that fills the width (three columns at 1440). Each card shows:
    - The project's title, its mono name (and the scenario's agent count) and its blurb.
+   - A project in a Store shared with other projects (layerfs#506) is titled `name · store`, since the same name may be in several Stores (a clone, a PostgreSQL import). Its page and reads name that Store.
    - The Store well: Local SQLite and its size, then main's Layer, the Branches and the Commits, with a small stack of Layers on the right.
    - The last Commit: its message, its age and its Branch.
    - The session count with the last one's age, and New session.

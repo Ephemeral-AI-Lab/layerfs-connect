@@ -246,7 +246,7 @@ export function FilesTab({ project, branches, tick = 0, initialBranch }: FilesTa
       setTabs([readme.path])
       setActive(readme.path)
     }
-  }, [root, tabs.length])
+  }, [root, tabs.length, project])
 
   const toggle = (path: string) => {
     const next = new Set(open)
@@ -403,7 +403,9 @@ export function FilesTab({ project, branches, tick = 0, initialBranch }: FilesTa
           <div className="hist-swap flex flex-1 flex-col items-center justify-center gap-2 text-center">
             <EmptyMark icon={FileText} />
             <p className="text-sm font-medium">Open a file from the tree</p>
-            <p className="text-xs text-muted-foreground">Files open read-only, at the Branch picked above the tree.</p>
+            <p className="text-xs text-muted-foreground">
+              Files open read-only, at the Branch picked above the tree.
+            </p>
           </div>
         )}
       </section>

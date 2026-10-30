@@ -19,12 +19,14 @@ import { cn } from '@/lib/utils'
 interface RunListProps {
   demo: string
   onOpenRun: (runId: string) => void
+  /** A project with no scenario of its own: New session opens a live session on it instead of replaying one. */
+  onNewSession?: () => void
 }
 
 const HEAD = 'h-9 text-[11px] font-medium tracking-[0.05em] text-faint uppercase'
 
 /** A demo project's sessions (one per replay), newest first, with a New session button. */
-export function RunList({ demo, onOpenRun }: RunListProps) {
+export function RunList({ demo, onOpenRun, onNewSession }: RunListProps) {
   const { runs, error, loading, reload } = useRuns(demo)
   const { start, starting, error: refused, clearError } = useStartRun((run) => onOpenRun(run.id))
   const playing = runs?.filter((r) => isLive(r.state)).length ?? 0
@@ -42,7 +44,7 @@ export function RunList({ demo, onOpenRun }: RunListProps) {
             {playing} playing
           </Chip>
         )}
-        <Button size="sm" className="run-new ml-auto" onClick={() => void start(demo)} disabled={starting !== null}>
+        <Button size="sm" className="run-new ml-auto" onClick={() => (onNewSession ? onNewSession() : void start(demo))} disabled={starting !== null}>
           {starting ? <LoaderCircle className="animate-spin" /> : <Plus className="run-plus" />}
           {starting ? 'Starting…' : 'New session'}
         </Button>

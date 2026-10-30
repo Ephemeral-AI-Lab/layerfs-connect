@@ -1,14 +1,19 @@
-import type { DemoSummary, RunSummary } from '@shared/host-api'
+import { projectRef, type RunSummary } from '@shared/host-api'
 import { ArrowUpRight, LoaderCircle, Plus } from 'lucide-react'
 import { type CSSProperties, useEffect } from 'react'
 
 import { LayerfsMark } from '@/components/layerfs-mark'
-import { LfsBranch, LfsCommit, LfsStore } from '@/components/lfs-icons'
+import { LfsBranch, LfsCommit } from '@/components/lfs-icons'
 import { CountUp } from '@/components/motion/count-up'
 import { revealStyle } from '@/components/motion/reveal'
 import { spotlight } from '@/components/motion/spotlight'
 import { isLive, plural, runLabel } from '@/components/runs/run-format'
 import { Chip } from '@/components/storage/chips'
+import { StoreIcon, storeProviders } from '@/components/storage/identity/store-icon'
+import { SyncPill } from '@/components/storage/sync/sync-pill'
+import { TransferRow } from '@/components/storage/transfers/transfer-row'
+import { useTransfers } from '@/components/storage/transfers/use-transfers'
+import { findStore, useStorageView } from '@/components/storage/view'
 import { Button } from '@/components/ui/button'
 import { ago, bytes, shortId } from '@/data/format'
 import { HostError, host } from '@/host/client'
@@ -21,8 +26,21 @@ export interface CardFacts {
   bytes: number | null
 }
 
+/** A LayerFS project as its card shows it; a scenario's project has its title, blurb and agents. */
+export interface CardProject {
+  id: string
+  title: string
+  blurb: string | null
+  /** The scenario's agents; null for a project no scenario names. */
+  agents: number | null
+  /** Its sessions. */
+  runs: number
+  /** The kind of Store that holds it (layerfs#506); a build before it has local SQLite only. */
+  kind?: 'sqlite' | 'postgresql' | null
+}
+
 interface ProjectCardProps {
-  demo: DemoSummary
+  demo: CardProject
   latest: RunSummary | null
   starting: boolean
   /** Its place in the grid's entrance. */
@@ -63,8 +81,10 @@ function LayerStack({ layers }: { layers: number }) {
 export function ProjectCard({ demo, latest, starting, index, onOpen, onNewSession, onFacts }: ProjectCardProps) {
   const live = latest ? isLive(latest.state) : false
   // reread as sessions start and end; a demo never played has no project yet (404)
-  const state = useHostQuery(() => host.project(demo.id), [demo.id, latest?.id, latest?.state])
-  const s = state.data?.project.name === demo.id ? state.data : undefined
+  const state = useHostQuery(() => host.project(demo.id), [demo.id, latest?.id, latest?.state], `project:${demo.id}`)
+  // the card's id is the project key: `store/name` in a shared Store (layerfs#506)
+  const s = (state.data?.project.key ?? state.data?.project.name) === demo.id ? state.data : undefined
+  const postgresql = demo.kind === 'postgresql'
   const missing = state.error instanceof HostError && state.error.status === 404
 
   const commits = s?.commits
@@ -73,8 +93,22 @@ export function ProjectCard({ demo, latest, starting, index, onOpen, onNewSessio
     if (commits !== undefined) onFacts?.(demo.id, { commits, bytes: stored })
   }, [demo.id, commits, stored, onFacts])
 
+  // the Store well (storage-links §3.6): one mark for where the Store syncs, the size and the sync pill, from the cached storage view
+  const storage = useStorageView()
+  const storeName = s?.project.store ?? projectRef(demo.id).store
+  const info = findStore(storage.data, storeName)
+  const family = info?.kind ?? (postgresql ? 'postgresql' : 'sqlite')
+  const providers = info ? storeProviders(info, storage.data?.remotes.list) : (s?.project.storeProviders ?? [])
+  const sync = info?.sync.state ?? s?.project.storeSync ?? null
+  const job = useTransfers().runningFor(storeName ?? '')
+  const shared = s?.project.shared ?? !!projectRef(demo.id).store
+  const connection = info?.connection ?? s?.project.connection ?? null
+  const size = info?.size?.bytes ?? stored
   const layers = s ? s.layers.length : 0
   const share = live && latest?.of ? latest.done / latest.of : 0
+
+  const storeLabel = family === 'postgresql' ? (storeName ?? 'PostgreSQL') : shared && storeName ? storeName : 'SQLite'
+  const where = family === 'postgresql' ? (connection ? `on ${connection}` : null) : info?.link ? `${info.link.remote} / ${info.link.file}` : info ? 'Local only' : null
 
   return (
     <article
@@ -83,11 +117,11 @@ export function ProjectCard({ demo, latest, starting, index, onOpen, onNewSessio
       onPointerMove={spotlight}
       style={revealStyle(index)}
       className={cn(
-        'home-card surface card-hover spotlight reveal flex flex-col gap-3.5 rounded-xl p-5 has-[[data-open]:focus-visible]:ring-2 has-[[data-open]:focus-visible]:ring-ring',
+        'home-card surface card-hover spotlight reveal flex flex-col gap-4 rounded-xl p-6 has-[[data-open]:focus-visible]:ring-2 has-[[data-open]:focus-visible]:ring-ring',
         live && 'live-border',
       )}
     >
-      <div className="flex items-start gap-3">
+      <div className="flex items-start gap-3.5">
         <span className="home-mark" data-live={live || undefined}>
           <LayerfsMark className="size-6" />
         </span>
@@ -96,15 +130,19 @@ export function ProjectCard({ demo, latest, starting, index, onOpen, onNewSessio
             type="button"
             data-open
             onClick={onOpen}
-            className="flex max-w-full items-center gap-1 text-left text-[15px] leading-5 font-semibold tracking-[-0.01em] outline-none after:absolute after:inset-0 after:rounded-xl"
+            className="flex max-w-full items-start gap-1 text-left text-[16px] leading-6 font-semibold tracking-[-0.01em] outline-none after:absolute after:inset-0 after:rounded-xl"
           >
-            <span className="truncate">{demo.title}</span>
-            <ArrowUpRight aria-hidden="true" className="home-arrow size-3.5 shrink-0 text-primary" />
+            <span className="break-words">{demo.title}</span>
+            <ArrowUpRight aria-hidden="true" className="home-arrow mt-1 size-3.5 shrink-0 text-primary" />
           </button>
-          <div className="mt-0.5 flex min-w-0 items-center gap-1.5 text-xs text-faint">
-            <span className="truncate font-mono">{demo.id}</span>
-            <span aria-hidden="true">·</span>
-            <span className="shrink-0">{plural(demo.agents.length, 'agent')}</span>
+          <div className="mt-0.5 flex flex-wrap items-center gap-x-1.5 text-xs text-faint">
+            <span className="font-mono break-all">{demo.id}</span>
+            {demo.agents !== null && (
+              <>
+                <span aria-hidden="true">·</span>
+                <span>{plural(demo.agents, 'agent')}</span>
+              </>
+            )}
           </div>
         </div>
         {live && (
@@ -114,52 +152,57 @@ export function ProjectCard({ demo, latest, starting, index, onOpen, onNewSessio
         )}
       </div>
 
-      {demo.blurb && <p className="line-clamp-2 text-[13px] leading-5 text-pretty text-muted-foreground">{demo.blurb}</p>}
+      {demo.blurb && <p className="line-clamp-3 text-[13px] leading-5 text-pretty break-words text-muted-foreground">{demo.blurb}</p>}
 
-      <div className="flex items-center gap-3 rounded-lg bg-muted/55 px-3 py-2.5 ring-1 ring-foreground/[0.04] ring-inset dark:bg-muted/40">
-        <LfsStore className="size-4 shrink-0" />
-        <div className="min-w-0 flex-1">
-          <div className="truncate text-[13px] font-medium">
-            Local SQLite{' '}
-            <span className="font-normal text-muted-foreground">
-              ·{' '}
-              {s ? (
-                <CountUp value={stored} format={bytes} placeholder="size unknown" />
-              ) : missing ? (
-                'not created yet'
-              ) : (
-                <span className="inline-block h-2.5 w-10 animate-pulse rounded-full bg-foreground/10 align-middle" />
-              )}
-            </span>
+      <section aria-label="Store" className="flex flex-col gap-3 rounded-lg bg-muted/55 p-4 ring-1 ring-foreground/[0.04] ring-inset dark:bg-muted/40">
+        <div className="flex items-start gap-3">
+          <StoreIcon family={family} providers={providers} size="md" />
+          <div className="min-w-0 flex-1">
+            <p className="text-[14px] leading-5 font-medium break-words">{storeLabel}</p>
+            {where && <p className="mt-0.5 font-mono text-[11.5px] break-all text-muted-foreground">{where}</p>}
           </div>
-          <div className="truncate text-xs text-faint tabular-nums">
-            {s
-              ? `main L${Math.max(0, layers - 1)} · ${s.branches.length} Branch${s.branches.length === 1 ? '' : 'es'} · ${plural(s.commits, 'Commit')}`
-              : missing
-                ? 'The first session Inits it from the fixture'
-                : state.error
-                  ? state.error.message
-                  : 'Reading the project'}
-          </div>
+          {!job && sync && <SyncPill state={sync} compact className="shrink-0" />}
         </div>
-        {s && layers > 0 && <LayerStack layers={layers} />}
-      </div>
+        {job && <TransferRow job={job} form="compact" />}
+        {s ? (
+          <dl className="grid grid-cols-4 gap-2 border-t border-foreground/[0.06] pt-3">
+            <Stat label="Size">
+              <CountUp value={size} format={bytes} placeholder="unknown" />
+            </Stat>
+            <Stat label="Branches">{s.branches.length}</Stat>
+            <Stat label="Commits">{s.commits}</Stat>
+            <Stat label="Layer on main" aside={layers > 0 ? <LayerStack layers={layers} /> : null}>
+              L{Math.max(0, layers - 1)}
+            </Stat>
+          </dl>
+        ) : (
+          <p className="border-t border-foreground/[0.06] pt-3 text-xs text-faint">
+            {missing ? 'Not created yet. The first session Inits it from the fixture.' : state.error ? state.error.message : 'Reading the project…'}
+          </p>
+        )}
+      </section>
 
       {s?.last && (
-        <div className="flex min-w-0 items-center gap-2 text-xs">
-          <LfsCommit className="size-3.5 shrink-0" />
-          <span className="min-w-0 flex-1 truncate" title={`${shortId(s.last.id)} · ${s.last.message || 'Commit'}`}>
-            {s.last.message || 'Commit'}
-          </span>
-          <span className="shrink-0 text-faint tabular-nums">{ago(s.last.at)}</span>
-          <span className="flex max-w-32 shrink-0 items-center gap-1 rounded-full bg-background/60 py-0.5 pr-2 pl-1.5 font-mono text-[11px] text-muted-foreground ring-1 ring-border ring-inset">
-            <LfsBranch className="size-3 shrink-0" />
-            <span className="truncate">{s.last.branch}</span>
-          </span>
+        <div className="flex flex-col gap-1.5">
+          <div className="flex items-start gap-2 text-[13px] leading-5">
+            <LfsCommit className="mt-0.5 size-4 shrink-0" />
+            <span className="line-clamp-2 min-w-0 flex-1 break-words" title={`${shortId(s.last.id)} · ${s.last.message || 'Commit'}`}>
+              {s.last.message || 'Commit'}
+            </span>
+          </div>
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 pl-6 text-xs text-faint tabular-nums">
+            <span className="flex max-w-full items-center gap-1 rounded-full bg-background/60 py-0.5 pr-2 pl-1.5 font-mono text-[11px] text-muted-foreground ring-1 ring-border ring-inset">
+              <LfsBranch className="size-3 shrink-0" />
+              <span className="break-all">{s.last.branch}</span>
+            </span>
+            <span>{ago(s.last.at)}</span>
+            <span aria-hidden="true">·</span>
+            <span className="font-mono">{shortId(s.last.id)}</span>
+          </div>
         </div>
       )}
 
-      <div className="mt-auto flex flex-col gap-2.5 border-t pt-3">
+      <div className="mt-auto flex flex-col gap-3 border-t pt-4">
         {live && latest && (
           <div className="flex flex-col gap-1.5">
             <div className="flex items-center justify-between text-[11px] text-muted-foreground tabular-nums">
@@ -180,14 +223,14 @@ export function ProjectCard({ demo, latest, starting, index, onOpen, onNewSessio
             </div>
           </div>
         )}
-        <div className="flex items-center gap-3">
-          <div className="min-w-0 flex-1 text-xs text-muted-foreground tabular-nums">
+        <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+          <div className="text-xs text-muted-foreground tabular-nums">
             {live && latest ? (
-              <span className="block truncate">
+              <span>
                 {plural(demo.runs, 'session')} · one playing since {ago(latest.started)}
               </span>
             ) : latest ? (
-              <span className="block truncate">
+              <span>
                 {plural(demo.runs, 'session')} · last {ago(latest.ended ?? latest.started)}
               </span>
             ) : (
@@ -201,5 +244,18 @@ export function ProjectCard({ demo, latest, starting, index, onOpen, onNewSessio
         </div>
       </div>
     </article>
+  )
+}
+
+/** One fact of the Store well: the value over its label. */
+function Stat({ label, aside, children }: { label: string; aside?: React.ReactNode; children: React.ReactNode }) {
+  return (
+    <div className="flex min-w-0 flex-col-reverse">
+      <dt className="text-[11px] text-faint">{label}</dt>
+      <dd className="flex items-center gap-1.5 text-[14px] leading-5 font-medium tabular-nums">
+        {children}
+        {aside}
+      </dd>
+    </div>
   )
 }

@@ -179,3 +179,206 @@
   background: linear-gradient(to bottom, var(--brand-1), var(--brand-3));
   box-shadow: 0 0 8px 0 var(--glow);
 }
+
+/* ===================================================================
+   Storage redesign (docs/ui/storage-redesign.md): the board's bands, rows,
+   summary strip and the transfer stepper. Layout widths
+   follow the page body's container (`@container/storage`, §10.5):
+   ≥1040 px as drawn, 760–1039 px compact, <760 px two-line cards.
+   =================================================================== */
+
+/* The stepper's dots: hollow for later steps, a brand dot that pulses for the current one. */
+.sc-step-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  box-shadow: inset 0 0 0 1.25px color-mix(in oklab, var(--foreground) 28%, transparent);
+}
+.sc-step-dot[data-state='now'] {
+  position: relative;
+  background: var(--primary);
+  box-shadow: 0 0 6px 0 var(--glow);
+  color: var(--primary);
+}
+.sc-step-dot[data-state='now']::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: 0 0 0 0 currentColor;
+  animation: pulse-ring 1.8s var(--ease-out-soft) infinite;
+}
+
+/* The import bridge's arrow: a short line of brand light travels along it. */
+.sc-bridge {
+  position: relative;
+  width: 3rem;
+  justify-content: center;
+}
+.sc-bridge::before {
+  content: '';
+  position: absolute;
+  inset: 50% 0.9rem auto 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--brand-1), var(--brand-3));
+  opacity: 0.6;
+}
+
+/* A band: one family's header, its table, and its places. */
+.sc-band-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 0.75rem 1.25rem;
+}
+@container storage (max-width: 759px) {
+  .sc-band-head > .sc-band-side {
+    width: 100%;
+    justify-content: flex-start;
+  }
+}
+
+/* The summary strip: four cells, 2 × 2 when compact, one scrolling row of numbers when narrow. */
+.sc-strip {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  overflow: hidden;
+}
+.sc-strip-cell {
+  position: relative;
+  min-width: 0;
+  padding: 14px 20px 16px;
+}
+.sc-strip-cell + .sc-strip-cell {
+  border-left: 1px solid var(--border);
+}
+.sc-strip-cell[data-live]::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto;
+  height: 2px;
+  background: var(--brand-gradient);
+  background-size: 200% 100%;
+  animation: sc-strip-flow 3s linear infinite;
+}
+@keyframes sc-strip-flow {
+  to {
+    background-position: -200% 0;
+  }
+}
+@container storage (max-width: 1039px) {
+  .sc-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .sc-strip-cell:nth-child(3) {
+    border-left: 0;
+  }
+  .sc-strip-cell:nth-child(n + 3) {
+    border-top: 1px solid var(--border);
+  }
+}
+@container storage (max-width: 759px) {
+  .sc-strip {
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x proximity;
+  }
+  .sc-strip-cell {
+    flex: 0 0 auto;
+    min-width: 9.5rem;
+    padding: 10px 14px 11px;
+    scroll-snap-align: start;
+    border-top: 0 !important;
+  }
+  .sc-strip-cell:nth-child(3) {
+    border-left: 1px solid var(--border);
+  }
+  .sc-strip-note {
+    display: none;
+  }
+}
+
+/* Board rows: a grid per row (role=row), so a row can turn into a two-line card. */
+.sc-row {
+  display: grid;
+  align-items: center;
+  column-gap: 1rem;
+  min-height: 3.25rem;
+  padding: 0.5rem 1.25rem;
+}
+.sc-row[data-head] {
+  min-height: 2.25rem;
+  padding-top: 0.375rem;
+  padding-bottom: 0.375rem;
+}
+/* layerfs#509: Store (name, projects, size) | Linked to | one sync pill | actions */
+.sc-sqlite-row {
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1.5fr) minmax(8.5rem, 0.9fr) minmax(8.5rem, auto);
+  grid-template-areas: 'name copies pill action';
+}
+.sc-sqlite-row .sc-under-name {
+  display: block;
+}
+.sc-pg-row {
+  grid-template-columns: minmax(0, 1.35fr) 4.25rem 5.75rem minmax(0, 1fr) 6.5rem minmax(5rem, 0.8fr) minmax(2.5rem, auto);
+  grid-template-areas: 'name projects size from created pill action';
+}
+.sc-a-name { grid-area: name; min-width: 0; }
+.sc-a-projects { grid-area: projects; }
+.sc-a-size { grid-area: size; text-align: right; }
+.sc-a-copies { grid-area: copies; min-width: 0; }
+.sc-a-from { grid-area: from; min-width: 0; }
+.sc-a-created { grid-area: created; }
+.sc-a-pill { grid-area: pill; min-width: 0; }
+.sc-a-action { grid-area: action; justify-self: end; }
+.sc-a-meta { grid-area: meta; display: none; min-width: 0; }
+.sc-under-name { display: none; }
+
+@container storage (max-width: 1039px) {
+  .sc-sqlite-row {
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.2fr) minmax(8rem, 0.9fr) minmax(8rem, auto);
+    grid-template-areas: 'name copies pill action';
+  }
+  .sc-pg-row {
+    grid-template-columns: minmax(0, 1.4fr) 5.5rem minmax(0, 1fr) minmax(5rem, 0.8fr) minmax(2.5rem, auto);
+    grid-template-areas: 'name size from pill action';
+  }
+  .sc-a-projects,
+  .sc-a-created,
+  .sc-copy-name,
+  .sc-loc-line {
+    display: none;
+  }
+  .sc-under-name {
+    display: block;
+  }
+}
+@container storage (max-width: 759px) {
+  .sc-sqlite-row,
+  .sc-pg-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      'name pill'
+      'meta action';
+    row-gap: 0.375rem;
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
+  }
+  .sc-row[data-head] {
+    display: none;
+  }
+  .sc-a-size,
+  .sc-a-copies,
+  .sc-a-from,
+  .sc-under-name,
+  .sc-sqlite-row .sc-under-name {
+    display: none;
+  }
+  .sc-a-meta {
+    display: flex;
+  }
+  .sc-a-pill {
+    justify-self: end;
+  }
+}

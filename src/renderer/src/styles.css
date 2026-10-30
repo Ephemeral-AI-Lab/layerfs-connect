@@ -42,6 +42,13 @@
   --color-success: var(--success);
   --color-warning: var(--warning);
   --color-idle: var(--idle);
+  /* Storage sync states (storage-redesign §4.4, §11.1). */
+  --color-sync-ok: var(--sync-ok);
+  --color-sync-ahead: var(--sync-ahead);
+  --color-sync-behind: var(--sync-behind);
+  --color-sync-diverged: var(--sync-diverged);
+  --color-sync-unknown: var(--sync-unknown);
+  --color-badge-ring: var(--badge-ring);
   --color-agent-builder: var(--agent-builder);
   --color-agent-reviewer: var(--agent-reviewer);
   --color-agent-tester: var(--agent-tester);
@@ -153,6 +160,15 @@
   --ambient-1: color-mix(in oklab, var(--brand-2) 9%, transparent);
   --ambient-2: color-mix(in oklab, var(--brand-3) 8%, transparent);
   --grid-dot: color-mix(in oklab, var(--foreground) 11%, transparent);
+  /* Storage sync states (§4.4): aliases, so each meaning has one name. The
+     dark theme needs nothing: the aliases follow their sources' dark values. */
+  --sync-ok: var(--success);
+  --sync-ahead: var(--primary);
+  --sync-behind: var(--warning);
+  --sync-diverged: var(--destructive);
+  --sync-unknown: var(--faint);
+  /* A provider badge's cut-out ring (StoreIcon). */
+  --badge-ring: var(--card);
 }
 
 .dark {

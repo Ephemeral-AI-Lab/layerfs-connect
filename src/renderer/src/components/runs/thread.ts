@@ -30,6 +30,9 @@ export interface Turn {
   items: Item[]
 }
 
+/** Who a live session's user messages come from (host/runs/live-run.js). */
+export const USER = 'user'
+
 /** Tools shown as a chip in the thread rather than inside the folded calls. */
 const CHIP_TOOLS = new Set(['subagent', 'send_message', 'interrupt_agent'])
 
@@ -99,7 +102,9 @@ export function buildThread({ agent, parent, children, entries, incoming, prompt
     used[i] = true
     const m = messages[i]
     if (m.from === parent) heard = true
-    push({ type: 'received', key: `m:${m.at}:${m.from}:${i}`, message: m, sender: sender(m) })
+    // a live session: the user's own messages open root's turns
+    if (m.from === USER) push({ type: 'user', key: `u:${m.at}:${i}`, text: m.text })
+    else push({ type: 'received', key: `m:${m.at}:${m.from}:${i}`, message: m, sender: sender(m) })
     while (lo < messages.length && used[lo]) lo++
   }
 

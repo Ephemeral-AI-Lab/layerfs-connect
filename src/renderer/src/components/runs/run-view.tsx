@@ -5,7 +5,7 @@
 // here, as it names the agents: "Crew / root / work-a (2 subagents running)".
 import type { DemoDetail, RunDetail, RunSummary, StepView } from '@shared/host-api'
 import { Gauge, RotateCw, TriangleAlert } from 'lucide-react'
-import { Fragment, type ReactNode, useMemo } from 'react'
+import { Fragment, type ReactNode, useEffect, useMemo, useState } from 'react'
 
 import { AgentSwitcher, type SwitcherAgent } from '@/components/runs/agent-switcher'
 import { Conversation } from '@/components/runs/conversation'
@@ -16,14 +16,14 @@ import { LiveTab } from '@/components/runs/live-tab'
 import { Spinner } from '@/components/runs/run-badges'
 import { activity, agentColors, isLive, stepKey, plural } from '@/components/runs/run-format'
 import { ThinkingLine } from '@/components/runs/thread-items'
-import { type HistoryInit, RunHistoryTab, useRunProject } from '@/components/runs/run-project-tabs'
+import { type HistoryInit, RunHistoryTab, RunTimelineTab, useRunProject } from '@/components/runs/run-project-tabs'
 import { type Entry, buildThread, threadSize } from '@/components/runs/thread'
 import { useNow, useRun } from '@/components/runs/use-run'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { HostError } from '@/host/client'
 
-export type RunTab = 'live' | 'conversation' | 'history' | 'storage' | 'sandboxes'
+export type RunTab = 'live' | 'timeline' | 'conversation' | 'history' | 'storage' | 'sandboxes'
 
 interface RunPanelProps {
   runId: string
@@ -38,16 +38,20 @@ interface RunPanelProps {
   /** Live: opens an agent of another session of the project. */
   onOpenSession?: (run: string, agent: string) => void
   historyInit?: HistoryInit
+  /** Timeline: opens a Branch in History. */
+  onOpenBranch?: (name: string) => void
   /** Conversation: the breadcrumb's start (project / session) and the row's trailing facts. */
   lead?: ReactNode
   meta?: ReactNode
   /** The session page's tabs, a row under the breadcrumb; `pane` replaces the conversation (another tab), given the agent shown. */
   tabs?: ReactNode
   pane?: ReactNode | ((agent: string) => ReactNode)
+  /** Conversation: the box under it, given the thread's size to show. */
+  composer?: (aside: ReactNode) => ReactNode
 }
 
 /** A run's tab, live: loads the run once and follows its events. */
-export function RunPanel({ runId, tab, onTab, agent, onAgent, onOpenSession, historyInit, sessions, lead, meta, tabs, pane }: RunPanelProps) {
+export function RunPanel({ runId, tab, onTab, agent, onAgent, onOpenSession, historyInit, onOpenBranch, sessions, lead, meta, tabs, pane, composer }: RunPanelProps) {
   const live = useRun(runId)
   if (live.run)
     return (
@@ -61,11 +65,13 @@ export function RunPanel({ runId, tab, onTab, agent, onAgent, onOpenSession, his
         onAgent={onAgent}
         onOpenSession={onOpenSession}
         historyInit={historyInit}
+        onOpenBranch={onOpenBranch}
         sessions={sessions}
         lead={lead}
         meta={meta}
         tabs={tabs}
         pane={pane}
+        composer={composer}
       />
     )
   const bar = lead && <SessionBar lead={lead} meta={meta} tabs={tabs} />
@@ -80,6 +86,7 @@ export function RunPanel({ runId, tab, onTab, agent, onAgent, onOpenSession, his
     <>
       {bar}
       <div aria-busy="true" aria-label="Loading the run" className="stagger mx-auto flex w-full max-w-[1000px] flex-col gap-5 px-8 py-8">
+        <LoadingNote />
         {[0, 1, 2].map((i) => (
           <div key={i} className="flex flex-col gap-3" style={{ opacity: 1 - i * 0.25 }}>
             <Skeleton className="h-12 rounded-xl" />
@@ -89,6 +96,21 @@ export function RunPanel({ runId, tab, onTab, agent, onAgent, onOpenSession, his
         ))}
       </div>
     </>
+  )
+}
+
+/** Says the session is loading; after a few seconds, that the host is slow (LayerFS busy), so a wait does not read as a broken page. */
+function LoadingNote() {
+  const [slow, setSlow] = useState(false)
+  useEffect(() => {
+    const t = setTimeout(() => setSlow(true), 4000)
+    return () => clearTimeout(t)
+  }, [])
+  return (
+    <p role="status" className="flex items-center gap-2 text-sm text-muted-foreground">
+      <Spinner />
+      {slow ? 'Still loading this session: the host is slow to answer while LayerFS is busy.' : 'Loading this session…'}
+    </p>
   )
 }
 
@@ -145,14 +167,16 @@ interface BodyProps {
   onAgent: (name: string) => void
   onOpenSession?: (run: string, agent: string) => void
   historyInit?: HistoryInit
+  onOpenBranch?: (name: string) => void
   sessions?: RunSummary[]
   lead?: ReactNode
   meta?: ReactNode
   tabs?: ReactNode
   pane?: ReactNode | ((agent: string) => ReactNode)
+  composer?: (aside: ReactNode) => ReactNode
 }
 
-function RunBody({ run, demo, views, tab, onTab, picked, onAgent: setPicked, onOpenSession, historyInit, sessions, lead, meta, tabs, pane }: BodyProps) {
+function RunBody({ run, demo, views, tab, onTab, picked, onAgent: setPicked, onOpenSession, historyInit, onOpenBranch, sessions, lead, meta, tabs, pane, composer }: BodyProps) {
   const root = run.agents.find((a) => a.parent === null)?.name ?? demo?.agents.find((a) => a.prompt === null)?.name ?? 'root'
   const live = isLive(run.state)
 
@@ -171,7 +195,7 @@ function RunBody({ run, demo, views, tab, onTab, picked, onAgent: setPicked, onO
       .filter((s) => s.agent === agent)
       .map((s) => {
         const key = stepKey(s.agent, s.index)
-        return { key, agent: s.agent, index: s.index, view: views.get(key), result: s }
+        return { key, agent: s.agent, index: s.index, view: s.view ?? views.get(key), result: s }
       })
     return buildThread({
       agent,
@@ -212,6 +236,7 @@ function RunBody({ run, demo, views, tab, onTab, picked, onAgent: setPicked, onO
         }}
       />
     )
+  if (tab === 'timeline') return <ProjectTimeline run={run} historyInit={historyInit} onOpenBranch={onOpenBranch} />
   if (tab === 'history') return <ProjectHistory run={run} historyInit={historyInit} />
   if (tab === 'storage') return <ProjectStorage run={run} />
   if (tab === 'sandboxes') return <ProjectSandboxes run={run} />
@@ -220,9 +245,14 @@ function RunBody({ run, demo, views, tab, onTab, picked, onAgent: setPicked, onO
     <div className="flex flex-col items-center gap-2 py-20 text-center text-sm text-muted-foreground">
       <Spinner className="size-5" />
       {run.state === 'starting' ? (
-        <>
-          Initializing <span className="font-mono text-foreground">{run.project}</span> from the demo’s fixture…
-        </>
+        run.queued ? (
+          <>
+            {run.phase}
+            <span className="text-xs text-faint">It plays when one of them ends.</span>
+          </>
+        ) : (
+          `${run.phase ?? 'Setting up its folder'}…`
+        )
       ) : (
         `Waiting for ${agent} to start…`
       )}
@@ -292,16 +322,27 @@ function RunBody({ run, demo, views, tab, onTab, picked, onAgent: setPicked, onO
               footer={live && shown?.thinking ? <ThinkingLine /> : null}
             />
           </div>
-          <div className="shrink-0 px-8 pb-3">
-            <span className="mx-auto flex w-fit items-center gap-1.5 text-xs text-faint tabular-nums">
-              <Gauge aria-hidden="true" className="size-3.5" />
-              {threadSize(turns, steps)}
-            </span>
-          </div>
+          {composer ? (
+            <div className="shrink-0 px-8 pt-1 pb-4">
+              <div className="mx-auto w-full max-w-[1000px]">{composer(threadSize(turns, steps))}</div>
+            </div>
+          ) : (
+            <div className="shrink-0 px-8 pb-3">
+              <span className="mx-auto flex w-fit items-center gap-1.5 text-xs text-faint tabular-nums">
+                <Gauge aria-hidden="true" className="size-3.5" />
+                {threadSize(turns, steps)}
+              </span>
+            </div>
+          )}
         </>
       )}
     </div>
   )
+}
+
+function ProjectTimeline({ run, historyInit, onOpenBranch }: { run: RunDetail; historyInit?: HistoryInit; onOpenBranch?: (name: string) => void }) {
+  const project = useRunProject(run)
+  return <RunTimelineTab run={run} project={project} init={historyInit} onOpenBranch={onOpenBranch} />
 }
 
 function ProjectHistory({ run, historyInit }: { run: RunDetail; historyInit?: HistoryInit }) {

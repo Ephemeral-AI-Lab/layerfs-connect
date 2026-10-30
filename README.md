@@ -38,12 +38,17 @@ Report every step with its command and outcome (PASS, FAIL or NOT_RUN with the r
 The LayerFS desktop app. It runs on the real LayerFS: a local SQLite Store per
 project in a Docker volume, and Docker Sandboxes. Its projects are ten scripted
 demos (tour, parallel, conflicts, merge, sandbox, agents, checkpoints, shop,
-depot, crew). Each demo has one LayerFS project, named after it. A new
-session resets it (removed, then Inited again from the demo's fixture) and
-plays the demo's agents, which have only bash and the subagent tools, as in
-dsh-layerfs; earlier sessions stay listed with their conversations. A
+depot, crew). `/scenario <name>` in a session plays one on that session's
+project, in a folder `/<scenario>_<n>/` of its own with its own Branches and
+Sandboxes, so the project's other files and sessions are left alone;
+`/scenario all` plays every one there at once, except that at most two heavy
+ones (those that install and build, or replay 100 steps or more: agents, crew,
+depot, shop) play together; the others wait their turn. A scenario's agents have only
+bash and the subagent tools, as in dsh-layerfs; earlier sessions stay listed
+with their conversations. A
 project's page shows its Live view (agents, project, Sandboxes and
-Workspaces), History and Storage from the newest session; a session's page
+Workspaces), Timeline (the fork map over time, replayable), History and
+Storage from the newest session; a session's page
 shows its conversation. There is no language model: every call comes from
 the scenario, and every call really runs.
 

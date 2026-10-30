@@ -24,6 +24,18 @@ export interface HostStatus {
 
 // ---------- Projects (real LayerFS reads) ----------
 
+/** A project key (ProjectSummary.key) as its name and Store: `store/name`, or a bare name. */
+export function projectRef(key: string): { name: string; store: string | null } {
+  const at = key.indexOf('/')
+  return at < 0 ? { name: key, store: null } : { name: key.slice(at + 1), store: key.slice(0, at) }
+}
+
+/** How the app shows a project key: `name · store` in a shared Store. */
+export function projectLabel(key: string): string {
+  const { name, store } = projectRef(key)
+  return store ? `${name} · ${store}` : name
+}
+
 export interface ProjectSummary {
   name: string
   volume: string | null
@@ -33,7 +45,289 @@ export interface ProjectSummary {
   /** The demo whose run made this project, when a run made it. */
   demo?: string | null
   run?: string | null
+  /** The Store that holds the project (layerfs#506); null with a LayerFS build from before Stores held several projects. */
+  store?: string | null
+  /** The Store's kind (layerfs#506). */
+  kind?: StoreFamily | null
+  /** In a Store with other projects: its name may also be in other Stores. */
+  shared?: boolean
+  /** What the app calls the project by: `store/name` in a shared Store, else its name (projectRef reads it back). */
+  key?: string  /** The Store's aggregate sync state (storage-redesign §4.5), from the host's cached storage view. */
+  storeSync?: StoreSyncState | null
+  /** The provider of the Store's link, for its StoreIcon badge (layerfs#509: at most one). */
+  storeProviders?: RemoteProvider[]
+  /** A PostgreSQL Store's connection. */
+  connection?: string | null
 }
+
+// ---------- Storage: Stores, links, remotes and PostgreSQL (layerfs#506, #509; docs/ui/storage-links.md §5) ----------
+//
+// Producer notes: H = the Connect host makes it; E<n> = it needs LayerFS
+// (storage-redesign §8.3). A LayerFS build without an E field leaves it null,
+// and the renderer degrades (§10.4): "size unknown", "Sync unknown", an
+// indeterminate bar. Never assume one is present.
+
+export type StoreFamily = 'sqlite' | 'postgresql'
+export type RemoteProvider = 'minio' | 'r2' | 's3' | 'gcs' | 'google-drive' | 'folder'
+
+/** A link's sync state (storage-links §4). */
+export type SyncState = 'in_sync' | 'ahead' | 'behind' | 'diverged' | 'missing' | 'checking' | 'unreachable' | 'unknown' | 'transferring'
+/** A Store's state: its link's, or one of the two Store-only states. */
+export type StoreSyncState = SyncState | 'local_only' | 'live'
+
+export interface Health {
+  state: 'ok' | 'unreachable' | 'denied' | 'checking' | 'unknown'
+  /** When the last check ended; null before the first. */
+  at: number | null
+  /** The failure's message, readable as is. */
+  message: string | null
+}
+
+/** One push or pull of a whole Store file. */
+export interface TransferInfo {
+  direction: 'push' | 'pull'
+  at: number | null
+  bytes: number | null
+  sha256: string | null
+  /** The Store's history heads digest at that transfer (§4.1). */
+  heads: string | null // E2
+}
+
+/** The last look at a linked file in its bucket: one HEAD. */
+export interface CopyCheck {
+  at: number // H (when the host ran it)
+  present: boolean // E3
+  bytes: number | null // E3
+  sha256: string | null // E3 (layerfs-sha256 metadata)
+  heads: string | null // E3 + E2 (layerfs-heads metadata)
+  modified: number | null // E3 (Last-Modified)
+  error: { code: string; message: string } | null // E3
+}
+
+/** A SQLite Store's link: the one remote file it pushes to and pulls from (layerfs#509). */
+export interface StoreLink {
+  /** The connection's name. */
+  remote: string
+  provider: RemoteProvider | null // H (joined from remote.list)
+  /** The remote file's name: the object <prefix>/<file>/store.sqlite. */
+  file: string
+  /** The full object path, for display: <location>/<file>/store.sqlite. */
+  object: string // H
+  /** When the link was made. */
+  linked: number | null
+  /** Its last push or pull: what both sides are compared with. */
+  last: TransferInfo | null
+  /** The last successful check, and the last check if it failed. */
+  check: CopyCheck | null // H←E3
+  failedCheck: CopyCheck | null // H←E3
+  local: 'same' | 'changed' | 'unknown' // H←E2
+  remoteSide: 'same' | 'changed' | 'missing' | 'unknown' // H←E3
+  sync: SyncState // H (§4)
+  /** The state before the last failed check, shown dashed. */
+  lastKnown: SyncState | null // H
+  reason: string | null // H
+}
+
+export interface StoreSize {
+  /** SQLite: store.sqlite + its WAL. PostgreSQL: the schema's tables, indexes and TOAST. */
+  bytes: number
+  file: number | null // SQLite only
+  wal: number | null // SQLite only
+  at: number
+}
+
+/** A Store: many projects in one SQLite file (its own Docker volume) or one PostgreSQL schema. */
+export interface StoreInfo {
+  name: string
+  kind: StoreFamily
+  /** A SQLite Store's Docker volume. */
+  volume: string | null
+  /** A PostgreSQL Store's connection name, and its schema. */
+  connection: string | null
+  schema: string | null
+  synchronousCommit: SynchronousCommit | null // H
+  /** SQLite: the remote file the Store is linked to, or null (local only). PostgreSQL: always null. */
+  link: StoreLink | null
+  projects: string[]
+  created: number | null // H
+  /** A project's own pre-#506 Store. */
+  legacy: boolean // H
+  /** SQLite: E1, else the host's stat; PostgreSQL: E5. */
+  size: StoreSize | null
+  /** @deprecated size?.bytes; kept one release for project-card.tsx. */
+  bytes: number | null
+  /** The Store file is open now (its -shm exists): a pull would be refused. */
+  open: boolean | null
+  sync: {
+    state: StoreSyncState // H (§4)
+  }
+  /** PostgreSQL: the SQLite Store it was imported from. */
+  importedFrom: { store: string; at: number | null; bytes: number | null } | null // E6, else H
+  /** SQLite: PostgreSQL Stores imported from this one. */
+  imports: string[] // H←E6
+  /** The running job on this Store, if any. */
+  job: string | null // H
+}
+
+/** A remote LayerFS knows; its keys stay in Connect. */
+export interface RemoteInfo {
+  name: string
+  provider: RemoteProvider
+  /** The endpoint as entered. */
+  endpoint: string
+  /** The address the LayerFS box uses (host.docker.internal for this machine's loopback on macOS and Windows). */
+  reachAs: string
+  /** R2: the Cloudflare account id; null for MinIO. */
+  account?: string | null
+  /** R2: '' (none), 'eu' or 'fedramp'; null for MinIO. */
+  jurisdiction?: string | null
+  bucket: string
+  prefix: string
+  /** Connect holds this remote's keys. */
+  hasSecret: boolean
+  /** host/bucket/prefix, for display. */
+  location: string // H
+  /** Local Stores linked to a file here. */
+  stores: string[] // H
+  /** The files in the bucket (from the last listing), each linked or not loaded; null before a listing or without E9. */
+  files: RemoteFile[] | null // E9
+  /** The sum of known file sizes (listed), else of the linked files'. */
+  bytes: number | null // H
+  /** The latest check or listing against this remote. */
+  health: Health // H←E3
+}
+
+/** A SQLite Store file in a connection's bucket (layerfs#509). */
+export interface RemoteFile {
+  file: string
+  bytes: number | null
+  modified: number | null
+  /** The Store of this machine linked to it, or null: not loaded. */
+  linkedBy: string | null
+}
+
+export type SynchronousCommit = 'off' | 'local' | 'remote_write' | 'on' | 'remote_apply'
+
+/** A named PostgreSQL connection Connect keeps; its URL (with the password) stays in Connect. */
+export interface PostgresqlConnection {
+  name: string
+  /** The URL with its password hidden. */
+  url: string
+  synchronousCommit: SynchronousCommit
+  /** Stores in this database. */
+  stores: string[]
+  host: string | null // H (host:port, parsed from the URL)
+  database: string | null // H (parsed from the URL)
+  health: Health & {
+    serverVersion: string | null // E7
+    latencyMs: number | null // H (timed around E7)
+  }
+  bytes: number | null // H←E5 (sum of its Stores)
+}
+
+export type SyncPhase = 'check' | 'snapshot' | 'hash' | 'upload' | 'download' | 'verify' | 'install' | 'copy' | 'record'
+
+/** A publish, push, pull, send, load or PostgreSQL import in progress or just ended. */
+export interface SyncJob {
+  id: string
+  kind: 'publish' | 'push' | 'pull' | 'send' | 'load' | 'import'
+  /** The Store it moves (for a load, the new Store; for an import, the source). */
+  store: string
+  /** The connection's name, or connection/schema for an import. */
+  target: string
+  /** The remote file it moves (layerfs#509); null for an import. */
+  file: string | null // H
+  /** A load's remote file; an import's new PostgreSQL Store. */
+  from: string | null // H
+  provider: RemoteProvider | 'postgresql' | null // H
+  force: boolean // H
+  step: 'running' | 'done' | 'failed'
+  phase: SyncPhase | null // E4
+  /** Within the current phase, updated while running. */
+  bytes: number | null // E4
+  total: number | null // E4
+  pieces: { done: number; of: number } | null // E4 (optional)
+  /** Bytes per second in the current phase (§5.2). */
+  rate: number | null // H
+  /** Seconds left in the current phase (§5.2). */
+  eta: number | null // H
+  cancellable: boolean // H (always false in v1)
+  error: { code: string; message: string } | null // H (the runtime's code)
+  result: { bytes: number | null; sha256: string | null } | null // H
+  started: number
+  ended: number | null
+}
+
+export interface ProviderInfo {
+  id: RemoteProvider
+  /** This LayerFS build can add it. */
+  available: boolean // E8, else H
+  reason: string | null // H
+}
+
+/** What the linked LayerFS build reports, for graceful fallbacks (§10). */
+export interface StorageSupports {
+  size: boolean // E1
+  heads: boolean // E2
+  check: boolean // E3
+  progress: boolean // E4
+  postgresqlStatus: boolean // E5/E7
+  listCopies: boolean // E9 (connection file listings)
+}
+
+export interface StorageTotals {
+  sqlite: { stores: number; bytes: number; unknown: number }
+  postgresql: { stores: number; connections: number; bytes: number; unknown: number }
+  /** SQLite Stores with a link, and their linked files' known sizes. */
+  linked: { stores: number; bytes: number; unknown: number }
+  sync: Partial<Record<StoreSyncState, number>>
+}
+
+/** Each part's `available` is false while the linked LayerFS build lacks it, and `reason` says why. */
+export interface StorageView {
+  stores: { available: boolean; reason: string | null; list: StoreInfo[] }
+  remotes: { available: boolean; reason: string | null; list: RemoteInfo[] }
+  postgresql: { available: boolean; reason: string | null; connections: PostgresqlConnection[] }
+  jobs: SyncJob[]
+  providers: ProviderInfo[] // H / E8
+  totals: StorageTotals // H
+  supports: StorageSupports // H
+  /** The newest finished check, for "Checked 2 min ago". */
+  checkedAt: number | null // H
+  /** Checks running now. */
+  checking: number // H
+}
+
+/** POST /api/storage/check: what to check; empty means everything. */
+export interface StorageCheck {
+  store?: string
+  remote?: string
+  connection?: string
+}
+
+export interface NewMinioRemote {
+  name: string
+  provider: 'minio'
+  endpoint: string
+  bucket: string
+  prefix?: string
+  accessKey: string
+  secretKey: string
+}
+
+/** A Cloudflare R2 bucket: LayerFS reaches it at https://<account>[.<jurisdiction>].r2.cloudflarestorage.com. */
+export interface NewR2Remote {
+  name: string
+  provider: 'r2'
+  account: string
+  jurisdiction?: '' | 'eu' | 'fedramp'
+  bucket: string
+  prefix?: string
+  accessKey: string
+  secretKey: string
+}
+
+export type NewRemote = NewMinioRemote | NewR2Remote
 
 export interface BranchInfo {
   name: string
@@ -251,17 +545,29 @@ export interface DemoDetail extends DemoSummary {
 
 // ---------- Runs ----------
 
-export type RunState = 'starting' | 'running' | 'passed' | 'failed' | 'stopped'
+/** A live session is 'idle' between turns, waiting for the user's next message. */
+export type RunState = 'starting' | 'running' | 'idle' | 'passed' | 'failed' | 'stopped'
+
+/** 'replay': a scenario played on a project (reset first); 'live': the user talking with a model-driven agent. */
+export type RunKind = 'replay' | 'live'
 
 export interface RunSummary {
   id: string
-  demo: string
+  kind: RunKind
+  /** The scenario a replay played; null for a live session. */
+  demo: string | null
   /**
-   * The LayerFS project this run replayed on: the demo's own project (named
-   * after it), reset by each replay. Runs from before one project per demo
-   * name their own project (`<demo>-<n>`).
+   * The LayerFS project this run played on. A scenario plays in a folder of
+   * its own there (`folder`); older runs reset a project named after the demo,
+   * or older still made their own (`<demo>-<n>`).
    */
   project: string
+  /**
+   * A scenario run's folder and name, `<scenario>_<n>`: its files are under
+   * /<folder>/, its Branches are `<folder>.<name>`, and `<folder>.main`,
+   * `<folder>.main.1`, … stand for main. Null until set up, and on older runs.
+   */
+  folder?: string | null
   /** The replay's number among its demo's (1, 2, …); null on runs from before one project per demo. */
   replay: number | null
   /** A demo of several sessions: the session this run plays (its root agent's name); null otherwise. */
@@ -269,6 +575,8 @@ export interface RunSummary {
   /** A demo of several sessions: the launch that started its sessions together; null otherwise. */
   launch?: string | null
   state: RunState
+  /** A heavy scenario waiting its turn (HEAVY_AT_ONCE play at once): starting, not set up yet; `phase` says so. */
+  queued?: boolean
   started: number
   ended: number | null
   error: string | null
@@ -278,6 +586,11 @@ export interface RunSummary {
   phase: string | null
   /** The agents started so far: the replay's sessions. */
   agents: AgentRun[]
+  /** A live session: its first message, cut short. */
+  title?: string | null
+  /** A live session: the model of its next turn, "provider/model-id", and its thinking level. */
+  model?: string | null
+  thinkingLevel?: string | null
 }
 
 export type AgentState = 'waiting' | 'running' | 'idle' | 'done' | 'failed' | 'stopped'
@@ -293,6 +606,10 @@ export interface AgentRun {
   since?: number
   /** When its current pause before a step began; null between pauses. */
   thinking?: number | null
+  /** A live agent (pi drives it): its model and what its turns used so far. */
+  live?: boolean
+  model?: string
+  usage?: { input: number; output: number; cacheRead: number; cacheWrite: number; cost: number; turns: number }
 }
 
 /** One LayerFS call from a trace line. */
@@ -343,6 +660,37 @@ export interface StepResult {
   output?: string
   calls: TraceCall[]
   checks: CheckResult[]
+  /** A live agent's step carries its own view (no script holds it). */
+  view?: StepView
+}
+
+/**
+ * A new project's Init (POST /api/projects; GET /api/inits/:id): LayerFS's
+ * project.init importing a folder, or an empty one. `step` runs scan (counting
+ * the source), volume, import, then done or failed.
+ */
+export interface InitJob {
+  id: string
+  name: string
+  /** The folder imported; null for an empty project. */
+  source: string | null
+  started: number
+  step: 'scan' | 'volume' | 'import' | 'done' | 'failed'
+  /** Counts while the source is read, then its totals. */
+  scanned: { entries: number; files: number; bytes: number } | null
+  totals: { entries: number; files: number; bytes: number } | null
+  /** LayerFS's counts while it imports. */
+  imported: { step: string; entries: number; files: number; bytes: number } | null
+  error: { code: string; message: string } | null
+  ended: number | null
+}
+
+/** What a live session's next message may name besides its text. */
+export interface SessionMessage {
+  text: string
+  provider?: string
+  model?: string
+  thinking?: string
 }
 
 /**
@@ -500,3 +848,90 @@ export type RunEvent =
   | { type: 'message'; run: string; message: RunDetail['messages'][number] }
   | { type: 'checks'; run: string; checks: CheckResult[] }
   | { type: 'live'; run: string; live: RunLive }
+
+/** Every server-sent event on /api/events: the runs' events, and Storage's. */
+export type HostEvent =
+  | RunEvent
+  /** Each new sample of a running sync job, and its end. */
+  | { type: 'sync'; job: SyncJob }
+  /** The storage view changed (a check ended, a job ended): read /api/storage again. */
+  | { type: 'storage' }
+
+// ---------- model providers (host/models.js) ----------
+
+/** One model of a provider, as pi's catalog (or a custom provider) has it. */
+export interface ModelInfo {
+  id: string
+  name: string
+  reasoning: boolean
+  contextWindow: number | null
+  maxTokens: number | null
+  input: string[]
+  /** The thinking levels it supports ("off" alone when it does not reason). */
+  thinking: string[]
+}
+
+/** A model provider. No key is ever in it: keys are write-only. */
+export interface ModelProvider {
+  id: string
+  name: string
+  /** Declared in models.json by the user (a compatible endpoint). */
+  custom: boolean
+  /** The base URL override (custom: its endpoint), or null. */
+  baseUrl: string | null
+  /** The catalog endpoint, for a built-in provider. */
+  defaultBaseUrl: string | null
+  /** A custom provider's API protocol. */
+  api: string | null
+  /** It takes an API key. */
+  keyAuth: boolean
+  /** Its subscription sign-in, when it has one: the button's label and the plan's name. */
+  signIn: { label: string; plan: string } | null
+  /** What is stored for it: an API key, a sign-in, or nothing. */
+  credential: 'api_key' | 'oauth' | null
+  /** The environment variables it reads a key from, in order. */
+  envVars: string[]
+  /** Those of them set in the host's environment. */
+  envFound: string[]
+  /** It can serve requests. */
+  configured: boolean
+  /** Where its credential comes from ("stored", "environment", …). */
+  source: string | null
+  /** It shows as a row: something is stored, found or declared for it. */
+  listed: boolean
+  models: ModelInfo[]
+}
+
+export interface ModelsView {
+  providers: ModelProvider[]
+  /** The model new live sessions use; `usable` is false while its provider has no credential. */
+  default: { provider: string; model: string; thinking: string; usable: boolean } | null
+  /** The API protocols a custom provider may speak. */
+  protocols: string[]
+}
+
+export interface CustomProviderInput {
+  id: string
+  name?: string
+  api: string
+  baseUrl: string
+  key?: string
+  models: string[]
+}
+
+/** A subscription sign-in in progress (host/models.js Login), polled while it runs. */
+export interface LoginView {
+  id: string
+  provider: string
+  /** The sign-in's name, e.g. "OpenAI (ChatGPT Plus/Pro)". */
+  name: string
+  state: 'starting' | 'waiting' | 'done' | 'failed' | 'cancelled'
+  /** What to show: a page to open, or a code to enter on one. */
+  step: { type: 'auth_url'; url: string; instructions?: string } | { type: 'device_code'; userCode: string; verificationUri: string; expires?: number } | null
+  /** The question it waits on: a method to choose, or a code or redirect URL to paste. */
+  prompt: { type: 'select' | 'manual_code' | 'text' | 'secret'; message: string; placeholder?: string; options?: { id: string; label: string; description?: string }[] } | null
+  progress: string | null
+  error: string | null
+  started: number
+  ended: number | null
+}

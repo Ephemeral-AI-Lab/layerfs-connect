@@ -11,17 +11,22 @@
 //                by presence); variesOf() decides both from the record
 //   closed       no Sandbox of the project still runs: each replay step
 //                closes the Sandbox it made, and so does the tree check
-import { compareHistory, historyOf } from './history.js'
-import { trackedChanges, trackedHashes } from './tree.js'
+// A scenario run plays in a scope (host/runs/scope.js): its folder, its
+// Branches and trunks, its Sandboxes. With `scope`, each check looks at those
+// only: the history is the run's (scopedHistoryOf, the record translated to
+// match), the tree is its folder on its last trunk, the Sandboxes its own.
+import { compareHistory, historyOf, scopedHistoryOf, translateRecorded } from './history.js'
+import { trackedChanges, trackedHashes, trackedTree } from './tree.js'
 
 /** The order check: the run's history against final.json's recorded one, as failure messages. */
-export async function orderFailures(final, lf, backend) {
-  const run = await historyOf(lf, backend)
-  const failures = compareHistory(final.history, run)
+export async function orderFailures(final, lf, backend, scope = null) {
+  const run = scope ? await scopedHistoryOf(lf, scope) : await historyOf(lf, backend)
+  const failures = compareHistory(scope ? translateRecorded(final.history) : final.history, run)
   // a run's Commit where the record has UpToDate must change no tracked file
   const byRef = new Map([...run.ids].map(([id, ref]) => [ref, id]))
+  const root = scope ? `/${scope.run}` : '/'
   for (const ref of failures.extras) {
-    const changes = await trackedChanges(lf, run.items.get(byRef.get(ref)))
+    const changes = await trackedChanges(lf, run.items.get(byRef.get(ref)), (r) => trackedTree(lf, r, root), root)
     if (changes.length) failures.push(`${ref} is a Commit where the record has UpToDate, and it changes ${changes.length} tracked path(s), first ${changes[0].path}`)
   }
   return { failures: [...failures], branches: Object.keys(run.branches).length, layers: run.layers.length }
@@ -87,17 +92,18 @@ export function compareTree(final, files) {
 }
 
 /** The final-tree check: main's tracked files, hashed in a Workspace, against final.json's. */
-export async function finalTreeFailures(final, lf) {
-  const run = await trackedHashes(lf)
+export async function finalTreeFailures(final, lf, scope = null) {
+  const run = await trackedHashes(lf, scope ? { ref: scope.trunk().branch, root: `/${scope.run}` } : {})
   return compareTree(final, run.files)
 }
 
 /** The closed check: the project's running Sandboxes, `<n> (<workspaces> Workspace(s))` each. */
-export async function openSandboxes(lf) {
+export async function openSandboxes(lf, scope = null) {
   const open = []
+  const mine = scope ? new Set(scope.sandboxes().values()) : null
   for (let pos = 0; ; ) {
     const page = await lf.project.list_sandboxes(1000, pos)
-    for (const s of page.items) open.push(`Sandbox ${s.sandbox} (${(s.workspaces ?? []).length} Workspace(s))`)
+    for (const s of page.items) if (!mine || mine.has(String(s.sandbox))) open.push(`Sandbox ${s.sandbox} (${(s.workspaces ?? []).length} Workspace(s))`)
     if (!page.hasMore) return open
     pos += page.items.length
   }

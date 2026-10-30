@@ -5,5 +5,7 @@ interface Window {
     platform: string
     arch: string
     host?: { url: string; token: string } | { error: string }
+    /** The system's folder picker: the chosen folder's absolute path, null when cancelled. Absent outside the app (a browser preview). */
+    pickFolder?: () => Promise<string | null>
   }
 }

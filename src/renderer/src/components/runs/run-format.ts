@@ -9,6 +9,7 @@ import type { Tone } from '@/components/storage/chips'
 export const RUN_TONE: Record<RunState, Tone> = {
   starting: 'info',
   running: 'info',
+  idle: 'neutral',
   passed: 'neutral',
   failed: 'neutral',
   stopped: 'warning',
@@ -16,7 +17,8 @@ export const RUN_TONE: Record<RunState, Tone> = {
 
 export const RUN_LABEL: Record<RunState, string> = {
   starting: 'Starting',
-  running: 'Running',
+  running: 'Working',
+  idle: 'Waiting for you',
   passed: 'Ended',
   failed: 'Ended',
   stopped: 'Stopped',
@@ -40,21 +42,42 @@ export const STEP_TONE: Record<StepResult['state'], Tone> = {
 
 export const isLive = (state: RunState) => state === 'starting' || state === 'running'
 
+/** Short names for providers whose models share ids with another's (openai and openai-codex both have gpt-6.1-sol). */
+const PROVIDER_SHORT: Record<string, string> = { 'openai-codex': 'ChatGPT', openai: 'OpenAI API', 'github-copilot': 'Copilot', anthropic: 'Anthropic' }
+
+/** "provider/model-id" as a person reads it: "ChatGPT · gpt-6.1-sol". */
+export function modelLabel(value: string): { provider: string; model: string; text: string } {
+  const at = value.indexOf('/')
+  const id = at < 0 ? '' : value.slice(0, at)
+  const model = at < 0 ? value : value.slice(at + 1)
+  const provider = PROVIDER_SHORT[id] ?? id
+  return { provider, model, text: provider ? `${provider} · ${model}` : model }
+}
+
+/**
+ * The project a session belongs to in the app: the LayerFS project it worked
+ * on. Runs from before one project per demo (no replay number) played on a
+ * project of their own and belong to their demo's.
+ */
+export const projectOf = (run: { kind?: string | null; demo: string | null; project: string; replay?: number | null }): string =>
+  run.kind === 'live' || run.replay != null || !run.demo ? run.project : run.demo
+
 /** How long an ended session stays active in Live before it goes idle. */
 export const IDLE_AFTER_MS = 5 * 60 * 1000
 
 /**
- * True when a session is idle: it ended over IDLE_AFTER_MS ago, or a newer
- * session of its demo has started (a replay resets the project, so it sends
- * every earlier session idle at once).
+ * True when a session is idle: it ended over IDLE_AFTER_MS ago, or (an older
+ * replay, from before scenarios played in folders) a newer replay has reset
+ * its project, which sends every earlier session idle at once.
  */
 export function isIdle(
-  run: { demo: string; state: RunState; started: number; ended: number | null },
-  runs: readonly { demo: string; started: number }[] | undefined,
+  run: { kind?: string | null; demo: string | null; project: string; replay?: number | null; folder?: string | null; state: RunState; started: number; ended: number | null },
+  runs: readonly { kind?: string | null; demo: string | null; project: string; replay?: number | null; folder?: string | null; started: number }[] | undefined,
   now: number,
 ): boolean {
   if (isLive(run.state)) return false
-  if (runs?.some((r) => r.demo === run.demo && r.started > run.started)) return true
+  // a newer reset made the project anew; a scenario in a folder of its own resets nothing
+  if (!run.folder && runs?.some((r) => r.kind !== 'live' && !r.folder && projectOf(r) === projectOf(run) && r.started > run.started)) return true
   return now - (run.ended ?? run.started) > IDLE_AFTER_MS
 }
 
@@ -248,13 +271,16 @@ export const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' :
 export const stepKey = (agent: string, index: number) => `${agent}:${index}`
 
 /** A run as a session: "Session 3", or the project an older run played on. */
-export function runLabel(run: { id: string; project: string; replay?: number | null; session?: string | null }): string {
+export function runLabel(run: { id: string; kind?: string | null; title?: string | null; project: string; replay?: number | null; session?: string | null; folder?: string | null }): string {
+  if (run.kind === 'live') return run.title || 'New session'
+  // a scenario in a folder of its own: named by it
+  if (run.folder) return `/${run.folder}${run.session ? ` · ${run.session}` : ''}`
   // a session of the demo's project (named, for a demo of several); a run from before that played on a project of its own, named here
   return run.replay ? `Session ${run.replay}${run.session ? ` · ${run.session}` : ''}` : `Session · ${run.project}`
 }
 
 /** True for a run from before one project per demo: it made its own project (`<demo>-<n>`). */
-export const ownProject = (run: { demo: string; project: string }) => run.project !== run.demo
+export const ownProject = (run: { kind?: string | null; demo: string | null; project: string; replay?: number | null }) => projectOf(run) !== run.project
 
 /** A call's milliseconds: one decimal under 10 ms, whole above. */
 export const ms = (n: number | null | undefined) => (n === null || n === undefined ? '–' : n < 10 ? n.toFixed(1) : String(Math.round(n)))

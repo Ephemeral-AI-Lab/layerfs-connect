@@ -13,8 +13,10 @@
 import { readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { APP, openRuntime, resolveSpec } from './config.js'
+import { Models } from './models.js'
 import { Projects } from './projects.js'
 import { createHostServer, listen, newToken } from './server.js'
+import { Storage } from './storage.js'
 
 /** How long shutdown may take before the process exits anyway. */
 const CLOSE_MS = 30_000
@@ -39,10 +41,10 @@ function parseArgs(argv) {
 }
 
 /** The RunManager, or why it did not load. Loaded lazily: the engine may be absent. */
-async function loadRuns(spec, projects) {
+async function loadRuns(spec, projects, models) {
   try {
     const { RunManager } = await import('./runs/index.js')
-    return { runs: new RunManager({ spec, scenarios: join(APP, 'scenarios'), beforeRemove: (name) => projects.forget(name) }), error: null }
+    return { runs: new RunManager({ spec, scenarios: join(APP, 'scenarios'), models }), error: null }
   } catch (error) {
     log(`[host] the demo engine did not load: ${error?.code === 'ERR_MODULE_NOT_FOUND' ? error.message : (error?.stack ?? error)}`)
     return { runs: null, error: error?.message ?? String(error) }
@@ -69,7 +71,15 @@ async function main() {
   const engine = { runs: null, error: 'loading' }
   const projects = new Projects({ spec, runs: () => engine.runs, log })
   const token = newToken()
-  const server = createHostServer({ token, projects, runs: () => engine.runs, runsError: () => engine.error, log })
+  const models = new Models(spec)
+  const storage = new Storage({ spec, projects, log })
+  // a PostgreSQL Store's projects are read with their connection's URL, which only storage.js holds
+  projects.postgresql = (store) => storage.urlForStore(store)
+  // and so are runs' clients, agents' bash calls and their Sandboxes (config.js notePostgresql)
+  spec.postgresqlUrl = (store) => storage.urlForStore(store)
+  // the project list shows each project's Store sync state and copy providers from the Storage view
+  projects.storeJoin = () => storage.projectJoin()
+  const server = createHostServer({ token, projects, storage, models, runs: () => engine.runs, runsError: () => engine.error, log })
 
   const endpoint = join(spec.state, 'host.json')
   let owned = false
@@ -82,6 +92,7 @@ async function main() {
         process.exit(1)
       }, CLOSE_MS).unref()
       await new Promise((resolve) => server.close(() => resolve()))
+      storage.close()
       await Promise.resolve()
         .then(() => engine.runs?.close?.())
         .catch((error) => log(`[host] closing the engine: ${error?.message ?? error}`))
@@ -98,7 +109,7 @@ async function main() {
   process.stdin.on('close', () => void shutdown('stdin closed'))
   process.stdin.resume()
 
-  Object.assign(engine, await loadRuns(spec, projects))
+  Object.assign(engine, await loadRuns(spec, projects, models))
   void projects.ensureWorker()
   const url = await listen(server, args.port)
   // a second host (another app window on the same state) leaves the first one's file alone

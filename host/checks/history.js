@@ -130,3 +130,87 @@ export function compareHistory(recorded, run) {
   failures.extras = extras
   return failures
 }
+
+/**
+ * A scenario run's history, in the form a recorded one has (scope.js): its
+ * Branches <run>.<name> by their names alone, and its trunks as main's
+ * Layers. The fixture's Commit on <run>.main is L0 (Init's Layer); Layer k
+ * is <run>.main.k, which publish k forked from the published Commit, so its
+ * source is that Commit. A fork from main after publish k forks from the
+ * trunk, whose head is that Commit: translateRecorded names a recorded "Lk"
+ * the same way.
+ * @param {{ run: string, trunks(): { k: number, branch: string }[] }} scope
+ */
+export async function scopedHistoryOf(lf, scope) {
+  const prefix = `${scope.run}.`
+  const trunks = scope.trunks()
+  const trunkNames = new Set(trunks.map((t) => t.branch))
+  const all = await pages((size, pos) => lf.project.list_branches(size, pos))
+  const byName = new Map(all.map((b) => [b.name, b]))
+  const ids = new Map()
+  const t0 = byName.get(`${scope.run}.main`)
+  if (!t0) throw new Error(`${scope.run}.main, the run's first trunk, is not there`)
+  if (t0.head) ids.set(t0.head, 'L0')
+  const ffs = scope.fastForwards?.() ?? new Map()
+  const chains = {}
+  for (const b of all) {
+    if (!b.name.startsWith(prefix) || trunkNames.has(b.name) || [`${prefix}land`, `${prefix}landed`].includes(b.name)) continue
+    // a Branch forked from a trunk reaches the trunk's whole graph, merges' second parents too: walk first parents from the head to the fork
+    const listed = await pages((size, pos) => lf.branch.list_commits(b.name, size, pos))
+    const byId = new Map(listed.map((c) => [c.id, c]))
+    const newest = []
+    // a merge with main that fast-forwarded onto the trunk starts there, as it started on main's Layer (scope.js, ffs/)
+    const start = ffs.get(b.name)
+    for (let c = byId.get(b.head); c && c.id !== b.forkedFrom && c.id !== start; c = byId.get(c.parent)) newest.push(c)
+    const name = b.name.slice(prefix.length)
+    chains[name] = { branch: b, commits: newest.reverse() }
+    chains[name].commits.forEach((c, i) => ids.set(c.id, `${name}#${i}`))
+  }
+  const name = (id) => (id == null ? null : (ids.get(id) ?? `unknown:${id}`))
+  const layers = [{ source: null }]
+  for (const t of trunks.filter((t) => t.k > 0)) {
+    const b = byName.get(t.branch)
+    layers.push({ source: b ? name(b.forkedFrom) : `missing:${t.branch}` })
+  }
+  const out = { branches: {}, layers }
+  for (const [branch, { branch: b, commits }] of Object.entries(chains).sort(([x], [y]) => (x < y ? -1 : 1))) {
+    out.branches[branch] = {
+      forkedFrom: name(b.forkedFrom ?? b.base),
+      commits: commits.map((c) => ({ id: c.id, message: c.message, via: c.via, merged: name(c.secondParent) })),
+    }
+  }
+  const items = new Map(Object.values(chains).flatMap(({ commits }) => commits.map((c) => [c.id, c])))
+  return { ...out, ids, items }
+}
+
+/** A recorded history as a scoped run's reads (scopedHistoryOf): a fork or merge of Layer k >= 1 names the Commit k published. */
+export function translateRecorded(recorded) {
+  const tr = (ref, seen = 0) => {
+    const k = /^L(\d+)$/.exec(ref ?? '')?.[1]
+    if (!k || Number(k) === 0 || seen > recorded.layers.length) return ref
+    return tr(recorded.layers[Number(k)]?.source ?? ref, seen + 1)
+  }
+  // "orders#3" is at or before "orders#7": the same Branch, an earlier place
+  const atOrBefore = (x, y) => {
+    const [a, i] = String(x ?? '').split('#')
+    const [b, j] = String(y ?? '').split('#')
+    return !!a && a === b && Number(i) <= Number(j)
+  }
+  const branches = {}
+  for (const [name, b] of Object.entries(recorded.branches)) {
+    const forkedFrom = tr(b.forkedFrom)
+    branches[name] = {
+      ...b,
+      forkedFrom,
+      commits: b.commits.map((c, i) => {
+        const merged = tr(c.merged)
+        // a Branch's first Commit merging a Layer that published an ancestor of
+        // its first input: against a trunk that Commit is already there, so the
+        // merge makes no Commit
+        const noop = i === 0 && c.via === 'merge' && /^L[1-9]\d*$/.test(c.merged ?? '') && atOrBefore(merged, forkedFrom)
+        return { ...c, merged, ...(noop ? { optional: true } : {}) }
+      }),
+    }
+  }
+  return { ...recorded, branches }
+}

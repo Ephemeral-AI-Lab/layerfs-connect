@@ -384,6 +384,10 @@ const STATUS_DOT: Record<TraceRecord['status'], string> = {
   stopped: 'bg-warning',
 }
 
+/** A tool's badge: short enough for the badge's width (the full name shows on hover). */
+const TOOL_LABEL: Record<string, string> = { send_message: 'Message', list_agents: 'Agents' }
+const toolLabel = (tool: string) => TOOL_LABEL[tool] ?? tool.replace(/^job_/, 'job ').replaceAll('_', ' ')
+
 /** What a row says in one line when its title is empty. */
 function headline(r: TraceRecord): string {
   if (r.title) return r.title
@@ -394,14 +398,16 @@ function headline(r: TraceRecord): string {
 function Row({ r, started, open, onOpen, callsOpen, onCalls }: { r: TraceRecord; started: number; open: boolean; onOpen: () => void; callsOpen: boolean; onCalls?: () => void }) {
   const k = KIND[r.kind]
   const nested = r.kind === 'layerfs'
-  const label = r.kind === 'assistant' && r.scripted ? 'Script' : r.kind === 'assistant' && r.final ? 'Reply' : r.kind === 'tool' && r.tool && r.tool !== 'bash' ? r.tool : k.label
+  const label = r.kind === 'assistant' && r.scripted ? 'Script' : r.kind === 'assistant' && r.final ? 'Reply' : r.kind === 'tool' && r.tool && r.tool !== 'bash' ? toolLabel(r.tool) : k.label
   const tone = r.kind === 'check' && r.status === 'failed' ? 'text-destructive bg-destructive/10 ring-destructive/20' : k.tone
   const hasDetail = Boolean(r.text || r.output || r.thinking || r.error || r.checks?.length || r.writes?.length || (r.args && Object.keys(r.args).length) || r.sections?.length || r.usage)
   return (
     <li className={`group/row border-b border-border/40 last:border-b-0 ${nested ? 'bg-foreground/[0.015]' : ''}`}>
       <div className={`flex items-center gap-2 py-1.5 pr-3 text-[13px] ${nested ? 'pl-12' : 'pl-3'}`}>
         <span aria-hidden="true" className={`size-1.5 shrink-0 rounded-full ${STATUS_DOT[r.status]}`} title={r.status} />
-        <span className={`w-16 shrink-0 rounded px-1 text-center text-[10px] font-semibold tracking-wide uppercase ring-1 ring-inset ${tone}`}>{label}</span>
+        <span title={r.kind === 'tool' && r.tool ? r.tool : undefined} className={`w-16 shrink-0 truncate rounded px-1 text-center text-[10px] font-semibold tracking-wide uppercase ring-1 ring-inset ${tone}`}>
+          {label}
+        </span>
         <button
           type="button"
           onClick={hasDetail ? onOpen : undefined}

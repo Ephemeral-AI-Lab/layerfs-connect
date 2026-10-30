@@ -1,12 +1,13 @@
-// The History tab of a run: its LayerFS project's history and files. It
-// reuses the project page's components, given the run's project.
+// The History and Timeline tabs of a project: its LayerFS history and files,
+// and its fork map over time. A run's tabs read the project the run plays
+// on; a project with no session reads it by key (its Init made `main`).
 import type { ProjectState, RunDetail } from '@shared/host-api'
 import { FolderTree, GitBranch } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 
 import { Segmented, type SegmentedOption } from '@/components/motion'
 import { FilesTab } from '@/components/projects/files-tab'
-import { HistoryTab, type HistoryView } from '@/components/projects/history-tab'
+import { HistoryTab, TimelineTab } from '@/components/projects/history-tab'
 import '@/components/projects/history/history.css'
 import { LoadError, Loading } from '@/components/projects/states'
 import { host } from '@/host/client'
@@ -34,24 +35,49 @@ function useProgressTick(run: RunDetail): number {
   return tick
 }
 
-/** The run's project state, reread as the run goes on. */
-export function useRunProject(run: RunDetail) {
-  const tick = useProgressTick(run)
-  const state = useHostQuery(() => host.project(run.project), [run.project, tick])
-  const data = state.data?.project.name === run.project ? state.data : undefined
+/** A project's state as read for its tabs; `tick` moves when it should be reread. */
+export interface ProjectRead {
+  state: ProjectState | undefined
+  error: Error | undefined
+  reload: () => void
+  tick: number
+}
+
+/** The key the host and its routes know a project by: `store/name` in a shared Store (layerfs#506). */
+export const projectKey = (s: ProjectState) => s.project.key ?? s.project.name
+
+/** The state of the project `project` (a project key), with or without a session on it. */
+export function useProjectRead(project: string, tick = 0): ProjectRead {
+  const state = useHostQuery(() => host.project(project), [project, tick], `project:${project}`)
+  const data = state.data && projectKey(state.data) === project ? state.data : undefined
   return { state: data, error: state.error, reload: state.reload, tick }
 }
 
-function needsProject(run: RunDetail, p: ReturnType<typeof useRunProject>, body: (s: ProjectState) => React.ReactNode) {
+/** The run's project state, reread as the run goes on. */
+export function useRunProject(run: RunDetail): ProjectRead {
+  return useProjectRead(run.project, useProgressTick(run))
+}
+
+/** Where a project's tabs read it: its key, and whether a session is still Initing it. */
+export interface ProjectSource {
+  project: string
+  /** The run that made it: its trace names each Commit's agent. */
+  runId?: string
+  starting?: boolean
+}
+
+function needsProject(source: ProjectSource, p: ProjectRead, body: (s: ProjectState) => React.ReactNode) {
   if (p.state) return body(p.state)
   if (p.error)
-    return run.state === 'starting' ? (
-      <Loading label={`Initializing ${run.project}`} />
+    return source.starting ? (
+      <Loading label={`Initializing ${source.project}`} />
     ) : (
-      <LoadError error={p.error} what={run.project} onRetry={p.reload} />
+      <LoadError error={p.error} what={source.project} onRetry={p.reload} />
     )
-  return <Loading label={`Reading ${run.project}`} />
+  return <Loading label={`Reading ${source.project}`} />
 }
+
+const sourceOf = (run: RunDetail): ProjectSource => ({ project: run.project, runId: run.id, starting: run.state === 'starting' })
 
 type HistoryPart = 'history' | 'files'
 
@@ -60,43 +86,75 @@ const PARTS: SegmentedOption<HistoryPart>[] = [
   { value: 'files', label: 'Files', icon: FolderTree },
 ]
 
-/** Dev aid: where History opens (its Files, a Branch, the Map, replaying). */
+/** Where History opens (its Files, a Branch), and whether Timeline opens replaying (a dev aid). */
 export interface HistoryInit {
   part?: HistoryPart
   branch?: string
-  view?: HistoryView
   autoplay?: boolean
   /** A Commit or Layer to open on, selected (the Trace's auto-checkpoints link here). */
   commit?: string
   layer?: string
 }
 
-/** History: the project's history (tree, lineage, Map), and its files. */
-export function RunHistoryTab({ run, project, init }: { run: RunDetail; project: ReturnType<typeof useRunProject>; init?: HistoryInit }) {
+/** History: the project's history (tree, lineage, Map), and its files. From Init on: genesis `main` at L0 needs no session. */
+export function HistoryPane({ source, project, init }: { source: ProjectSource; project: ProjectRead; init?: HistoryInit }) {
   const [part, setPart] = useState<HistoryPart>(init?.part ?? 'history')
   return (
     <div className="h-full overflow-y-auto">
       <div className="mx-auto flex min-h-full w-full max-w-7xl flex-col gap-3 px-8 py-5">
         <Segmented role="tablist" aria-label="History" size="md" value={part} onChange={setPart} options={PARTS} />
-        {needsProject(run, project, (s) => (
+        {needsProject(source, project, (s) => (
           <div key={part} className="hist-swap flex min-h-0 flex-1 flex-col">
             {part === 'history' ? (
               <HistoryTab
-                key={s.project.name}
-                project={s.project.name}
-                runId={run.id}
+                key={projectKey(s)}
+                project={projectKey(s)}
+                runId={source.runId}
                 tick={project.tick}
                 initialBranch={init?.branch}
-                initialView={init?.view}
-                autoplay={init?.autoplay}
                 initialItem={init?.commit ? { kind: 'commit', id: init.commit } : init?.layer ? { kind: 'layer', id: init.layer } : undefined}
               />
             ) : (
-              <FilesTab key={s.project.name} project={s.project.name} branches={s.branches} tick={project.tick} initialBranch={init?.branch} />
+              <FilesTab key={projectKey(s)} project={projectKey(s)} branches={s.branches} tick={project.tick} initialBranch={init?.branch} />
             )}
           </div>
         ))}
       </div>
     </div>
   )
+}
+
+/** Timeline: the project's fork map over time; a Branch opens in History. */
+export function TimelinePane({
+  source,
+  project,
+  init,
+  onOpenBranch,
+}: {
+  source: ProjectSource
+  project: ProjectRead
+  init?: HistoryInit
+  onOpenBranch?: (name: string) => void
+}) {
+  return (
+    <div className="h-full overflow-y-auto">
+      <div className="mx-auto flex min-h-full w-full max-w-7xl flex-col gap-3 px-8 py-5">
+        {needsProject(source, project, (s) => (
+          <div className="hist-swap flex min-h-0 flex-1 flex-col">
+            <TimelineTab key={projectKey(s)} project={projectKey(s)} runId={source.runId} tick={project.tick} autoplay={init?.autoplay} onOpenBranch={onOpenBranch} />
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+/** A run's History tab. */
+export function RunHistoryTab({ run, project, init }: { run: RunDetail; project: ProjectRead; init?: HistoryInit }) {
+  return <HistoryPane source={sourceOf(run)} project={project} init={init} />
+}
+
+/** A run's Timeline tab. */
+export function RunTimelineTab({ run, project, init, onOpenBranch }: { run: RunDetail; project: ProjectRead; init?: HistoryInit; onOpenBranch?: (name: string) => void }) {
+  return <TimelinePane source={sourceOf(run)} project={project} init={init} onOpenBranch={onOpenBranch} />
 }

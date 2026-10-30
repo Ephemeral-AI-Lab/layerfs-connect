@@ -36,25 +36,30 @@ interface ChipProps {
   icon?: LucideIcon
   /** A pulsing dot in place of an icon, for live connections. */
   live?: boolean
+  /** A dashed ring: a state that is not known now (Storage's "Sync unknown", a last-known state). */
+  dashed?: boolean
+  /** The icon turns (a check or transfer in flight); it settles under reduced motion. */
+  spin?: boolean
   className?: string
   children: React.ReactNode
 }
 
 /** A small status label: tinted, with a hairline ring and one icon. A live chip glows and its dot pulses. */
-export function Chip({ tone, icon: Icon, live, className, children }: ChipProps) {
+export function Chip({ tone, icon: Icon, live, dashed, spin, className, children }: ChipProps) {
   return (
     <span
       className={cn(
         'inline-flex h-[22px] items-center gap-1 rounded-md px-1.5 text-xs font-medium whitespace-nowrap ring-1 ring-inset transition-shadow duration-(--dur-base)',
         TONE[tone],
         live && GLOW[tone],
+        dashed && 'border border-dashed border-foreground/20 ring-0',
         className,
       )}
     >
       {live && (
         <span aria-hidden="true" className={cn('pulse-ring mx-0.5 size-1.5 rounded-full', DOT[tone])} />
       )}
-      {Icon && <Icon aria-hidden="true" className="size-3" strokeWidth={2.5} />}
+      {Icon && <Icon aria-hidden="true" className={cn('size-3', spin && 'animate-spin')} strokeWidth={2.5} />}
       {children}
     </span>
   )

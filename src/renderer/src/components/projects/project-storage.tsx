@@ -6,14 +6,17 @@
 import type { ProjectState, RunDetail, StoreStats } from '@shared/host-api'
 import type { CSSProperties } from 'react'
 
-import { LfsSandbox, LfsStore } from '@/components/lfs-icons'
+import { LfsSandbox } from '@/components/lfs-icons'
 import { CountUp } from '@/components/motion'
 import { SandboxTiles } from '@/components/projects/sandbox-tiles'
 import { Empty, LoadError, Loading } from '@/components/projects/states'
 import { CommitBars, CommitKinds, CountBytes, DiskFlow, GrowthChart, SavedRing, times, useLanded } from '@/components/projects/store-visuals'
 import { isLive, plural } from '@/components/runs/run-format'
-import { useRunProject } from '@/components/runs/run-project-tabs'
+import { type ProjectRead, useProjectRead, useRunProject } from '@/components/runs/run-project-tabs'
 import { Tile } from '@/components/storage/icons'
+import { StoreIcon, storeProviders } from '@/components/storage/identity/store-icon'
+import { SyncPill } from '@/components/storage/sync/sync-pill'
+import { findStore, useStorageView } from '@/components/storage/view'
 import { bytes, when } from '@/data/format'
 import { cn } from '@/lib/utils'
 
@@ -175,17 +178,41 @@ function StoreStatsBody({ s, t }: { s: ProjectState; t: StoreStats }) {
 }
 
 function StoreCard({ s }: { s: ProjectState }) {
+  // the header names the Store's family, its mark, its link (one chip: connection / file) and (SQLite) its sync state (storage-links §6)
+  const storage = useStorageView()
+  const name = s.project.store ?? s.project.name
+  const info = findStore(storage.data, s.project.store ?? null)
+  const family = info?.kind ?? s.project.kind ?? 'sqlite'
+  const providers = info ? storeProviders(info, storage.data?.remotes.list) : (s.project.storeProviders ?? [])
+  const sync = info?.sync.state ?? s.project.storeSync ?? null
   return (
     <section className="surface reveal-scale overflow-hidden rounded-2xl">
       <header className="flex items-start gap-3 px-6 pt-5">
-        <Tile className="text-primary">
-          <LfsStore className="size-5" />
-        </Tile>
+        <StoreIcon family={family} providers={providers} size="md" />
         <div className="min-w-0 flex-1">
-          <h3 className="text-sm font-semibold">Local SQLite Store</h3>
+          <div className="flex flex-wrap items-center gap-2">
+            <h3 className="text-sm font-semibold">
+              {family === 'postgresql' ? 'PostgreSQL' : 'SQLite'} Store <span className="font-mono">{name}</span>
+            </h3>
+            {family === 'sqlite' && sync && <SyncPill state={sync} compact />}
+            {family === 'sqlite' && info && (
+              <span className="rounded-full bg-muted px-2 py-0.5 font-mono text-[11px] text-muted-foreground" title={info.link?.object}>
+                {info.link ? `${info.link.remote} / ${info.link.file}` : 'local only'}
+              </span>
+            )}
+          </div>
           <p className="mt-0.5 text-xs text-muted-foreground">
-            Every Commit, Branch and Layer of <span className="font-mono text-foreground">{s.project.name}</span> lives in one SQLite file in
-            its Docker volume; each new session starts it again from the demo’s fixture.
+            {family === 'postgresql' ? (
+              <>
+                Every Commit, Branch and Layer of <span className="font-mono text-foreground">{s.project.name}</span> lives in a schema of{' '}
+                {info?.connection ?? s.project.connection ?? 'its database'}; each Commit goes straight there.
+              </>
+            ) : (
+              <>
+                Every Commit, Branch and Layer of <span className="font-mono text-foreground">{s.project.name}</span> lives in one SQLite file in
+                its Docker volume; each new session starts it again from the demo’s fixture.
+              </>
+            )}
           </p>
         </div>
       </header>
@@ -213,7 +240,8 @@ function StoreCard({ s }: { s: ProjectState }) {
   )
 }
 
-function SandboxesCard({ s, run }: { s: ProjectState; run: RunDetail }) {
+/** `live`: whether the newest session runs; null for a project no session has played on. */
+function SandboxesCard({ s, live }: { s: ProjectState; live: boolean | null }) {
   const open = s.sandboxes.filter((x) => x.state !== 'gone').length
   const running = s.sandboxes.filter((x) => x.state === 'running').length
   const mounted = s.sandboxes.reduce((n, x) => n + x.workspaces.length, 0)
@@ -253,9 +281,9 @@ function SandboxesCard({ s, run }: { s: ProjectState; run: RunDetail }) {
       ) : (
         <div className="border-t p-4">
           <Empty icon={LfsSandbox} title="No Sandboxes open" className="border-transparent bg-transparent">
-            {isLive(run.state)
-              ? 'A Sandbox opens when an agent first mounts a Workspace.'
-              : 'The session’s Sandboxes have closed; its Workspaces were unmounted with them.'}
+            {live === false
+              ? 'The session’s Sandboxes have closed; its Workspaces were unmounted with them.'
+              : 'A Sandbox opens when an agent first mounts a Workspace.'}
           </Empty>
         </div>
       )}
@@ -263,25 +291,42 @@ function SandboxesCard({ s, run }: { s: ProjectState; run: RunDetail }) {
   )
 }
 
-/** Reads the project its newest session played on, then draws `body`. */
-function ProjectPane({ run, body }: { run: RunDetail; body: (s: ProjectState) => React.ReactNode }) {
-  const p = useRunProject(run)
+/** Draws `body` once the project is read. */
+function ProjectPane({ p, what, body }: { p: ProjectRead; what: string; body: (s: ProjectState) => React.ReactNode }) {
   const s = p.state
   return (
     <div className="h-full overflow-y-auto">
       <div className="mx-auto flex w-full max-w-[1000px] flex-col gap-6 px-8 py-6">
-        {s ? body(s) : p.error ? <LoadError error={p.error} what={run.project} onRetry={p.reload} /> : <Loading label={`Reading ${run.project}`} />}
+        {s ? body(s) : p.error ? <LoadError error={p.error} what={what} onRetry={p.reload} /> : <Loading label={`Reading ${what}`} />}
       </div>
     </div>
   )
 }
 
+/** The project its newest session played on. */
+function RunPane({ run, body }: { run: RunDetail; body: (s: ProjectState) => React.ReactNode }) {
+  return <ProjectPane p={useRunProject(run)} what={run.project} body={body} />
+}
+
+/** The project `project` (a key), with no session on it. */
+function KeyPane({ project, body }: { project: string; body: (s: ProjectState) => React.ReactNode }) {
+  return <ProjectPane p={useProjectRead(project)} what={project} body={body} />
+}
+
+/** Where a tab reads its project: the newest session's, or the project key itself when no session has played. */
+type PaneSource = { run: RunDetail; project?: never } | { run?: never; project: string }
+
 /** The Storage tab of a project: its Store. */
-export function ProjectStorage({ run }: { run: RunDetail }) {
-  return <ProjectPane run={run} body={(s) => <StoreCard s={s} />} />
+export function ProjectStorage(source: PaneSource) {
+  const body = (s: ProjectState) => <StoreCard s={s} />
+  return source.run ? <RunPane run={source.run} body={body} /> : <KeyPane project={source.project} body={body} />
 }
 
 /** The Sandboxes tab of a project: the Sandboxes open on it. */
-export function ProjectSandboxes({ run }: { run: RunDetail }) {
-  return <ProjectPane run={run} body={(s) => <SandboxesCard s={s} run={run} />} />
+export function ProjectSandboxes(source: PaneSource) {
+  return source.run ? (
+    <RunPane run={source.run} body={(s) => <SandboxesCard s={s} live={isLive(source.run.state)} />} />
+  ) : (
+    <KeyPane project={source.project} body={(s) => <SandboxesCard s={s} live={null} />} />
+  )
 }
