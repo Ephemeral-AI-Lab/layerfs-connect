@@ -1,10 +1,10 @@
 // Import into PostgreSQL (storage-redesign §3.9): copy a SQLite Store, all of
 // its projects, into a new PostgreSQL Store. Both stay; they don't sync after.
 import { ArrowRight, DatabaseZap, LoaderCircle } from 'lucide-react'
-import { useEffect, useId, useMemo, useState } from 'react'
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
 
 import { count } from '@/components/storage/actions'
-import { BackLink, BTN, Field, FormError, INSET, message, SHEET, SheetFooter, SheetHeader } from '@/components/storage/dialogs/fields'
+import { BTN, Field, FormError, INSET, message, SHEET, SheetFooter, SheetHeader } from '@/components/storage/dialogs/fields'
 import { NAME } from '@/components/storage/identity/providers'
 import { FamilyTile, StoreIcon, storeProviders } from '@/components/storage/identity/store-icon'
 import { totalText } from '@/components/storage/size'
@@ -24,9 +24,7 @@ import type { StorageView } from '@shared/host-api'
 /** The schema the host makes for a Store name. */
 export const schemaFor = (name: string) => `lfc_${name.replace(/-/g, '_')}`
 
-interface ImportDialogProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
+interface ImportFormProps {
   view: StorageView
   /** Fixed when opened from a Store. */
   store?: string
@@ -34,19 +32,21 @@ interface ImportDialogProps {
   connection?: string
   /** The import ended well: the new PostgreSQL Store's name. */
   onDone: (store: string) => void
-  /** Opened from New: a link back to it. */
-  onBack?: () => void
+  onClose: () => void
+  /** A request is running: the dialog around it shouldn't close. */
+  onLock?: (locked: boolean) => void
 }
 
-export function ImportDialog({ open, onOpenChange, view, store: fixedStore, connection: fixedConnection, onDone, onBack }: ImportDialogProps) {
+export function ImportForm({ view, store: fixedStore, connection: fixedConnection, onDone, onClose, onLock }: ImportFormProps) {
   useI18n()
   const ids = { store: useId(), connection: useId(), name: useId() }
   const sqlite = useMemo(() => view.stores.list.filter((s) => s.kind === 'sqlite').sort((a, b) => a.name.localeCompare(b.name)), [view.stores.list])
   const connections = view.postgresql.connections
   const taken = useMemo(() => new Set(view.stores.list.map((s) => s.name)), [view.stores.list])
-  const [store, setStore] = useState(fixedStore ?? sqlite[0]?.name ?? '')
+  const first = fixedStore ?? sqlite.find((s) => s.projects.length)?.name ?? sqlite[0]?.name ?? ''
+  const [store, setStore] = useState(first)
   const [connection, setConnection] = useState(fixedConnection ?? connections[0]?.name ?? '')
-  const [name, setName] = useState('')
+  const [name, setName] = useState(first ? `${first}-pg` : '')
   const [named, setNamed] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string>()
@@ -55,24 +55,15 @@ export function ImportDialog({ open, onOpenChange, view, store: fixedStore, conn
   const job = jobId ? transfers.all.find((j) => j.id === jobId) : undefined
   const running = !!job && isRunning(job)
 
+  useEffect(() => onLock?.(busy), [busy, onLock])
+  const done = useRef(false)
   useEffect(() => {
-    if (!open) return
-    const s = fixedStore ?? sqlite[0]?.name ?? ''
-    setStore(s)
-    setConnection(fixedConnection ?? connections[0]?.name ?? '')
-    setName(s ? `${s}-pg` : '')
-    setNamed(false)
-    setError(undefined)
-    setJobId(undefined)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, fixedStore, fixedConnection])
-
-  useEffect(() => {
-    if (job && !isRunning(job) && !isFailed(job)) {
+    if (job && !done.current && !isRunning(job) && !isFailed(job)) {
+      done.current = true
       onDone(job.from ?? name)
-      onOpenChange(false)
+      onClose()
     }
-  }, [job, name, onDone, onOpenChange])
+  }, [job, name, onDone, onClose])
 
   const source = sqlite.find((s) => s.name === store)
   const target = connections.find((c) => c.name === connection)
@@ -99,12 +90,10 @@ export function ImportDialog({ open, onOpenChange, view, store: fixedStore, conn
   }
 
   return (
-    <Dialog open={open} onOpenChange={(next) => (busy && !next ? undefined : onOpenChange(next))}>
-      <DialogContent className={`${SHEET} sm:max-w-[560px]`}>
+    <>
         <SheetHeader icon={DatabaseZap} title={t('Import into PostgreSQL')}>
           {t('Copies a SQLite Store, all of its projects, into a new PostgreSQL Store.')} <span className="font-semibold text-foreground">{t('Both stay. They don’t sync after this.')}</span>
         </SheetHeader>
-        {onBack && <BackLink onBack={onBack} />}
         <div aria-hidden="true" className={`${INSET} grid grid-cols-[1fr_auto_1fr] items-center gap-3`}>
           <div className="flex min-w-0 items-center gap-2.5">
             {source ? <StoreIcon family="sqlite" providers={storeProviders(source, view.remotes.list)} size="md" /> : <FamilyTile family="sqlite" size="md" />}
@@ -203,13 +192,13 @@ export function ImportDialog({ open, onOpenChange, view, store: fixedStore, conn
           <SheetFooter
             left={
               running && (
-                <Button type="button" variant="outline" size="sm" className={BTN} onClick={() => onOpenChange(false)}>
+                <Button type="button" variant="outline" size="sm" className={BTN} onClick={() => onClose()}>
                   {t('Run in background')}
                 </Button>
               )
             }
           >
-            <Button type="button" variant="outline" size="sm" className={BTN} onClick={() => onOpenChange(false)} disabled={busy}>
+            <Button type="button" variant="outline" size="sm" className={BTN} onClick={() => onClose()} disabled={busy}>
               {job ? t('Close') : t('Cancel')}
             </Button>
             {!job && (
@@ -220,6 +209,17 @@ export function ImportDialog({ open, onOpenChange, view, store: fixedStore, conn
             )}
           </SheetFooter>
         </form>
+    </>
+  )
+}
+
+export function ImportDialog({ open, onOpenChange, ...form }: Omit<ImportFormProps, 'onClose' | 'onLock'> & { open: boolean; onOpenChange: (open: boolean) => void }) {
+  const [locked, setLocked] = useState(false)
+  const close = useCallback(() => onOpenChange(false), [onOpenChange])
+  return (
+    <Dialog open={open} onOpenChange={(next) => (locked && !next ? undefined : onOpenChange(next))}>
+      <DialogContent className={`${SHEET} sm:max-w-[560px]`}>
+        <ImportForm {...form} onClose={close} onLock={setLocked} />
       </DialogContent>
     </Dialog>
   )

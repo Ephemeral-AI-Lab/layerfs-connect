@@ -4,11 +4,11 @@
 // form. After an add, the dialog stays open on one line while the host runs
 // the first check, so the user leaves knowing whether it is reachable.
 import { ChevronLeft, CircleCheck, Clock, LoaderCircle, Plus, Search, TriangleAlert } from 'lucide-react'
-import { type KeyboardEvent, useEffect, useMemo, useState } from 'react'
+import { type KeyboardEvent, useCallback, useEffect, useMemo, useState } from 'react'
 
-import { BackLink, BTN, FormError, message, SHEET, SheetFooter, SheetHeader } from '@/components/storage/dialogs/fields'
+import { BTN, FormError, message, SHEET, SheetFooter, SheetHeader } from '@/components/storage/dialogs/fields'
 import { formState, initialValues, PostgresqlForm, postgresqlState, ProviderForm, type PostgresqlValues } from '@/components/storage/dialogs/provider-forms'
-import { type FieldValues, PROVIDERS, providerEntry, providerInfos, providerMatches, type ProviderEntry } from '@/components/storage/identity/providers'
+import { type FieldValues, PROVIDERS, providerEntry, providerInfos, providerMatches } from '@/components/storage/identity/providers'
 import { FamilyTile, ProviderTile } from '@/components/storage/identity/store-icon'
 import { normalizeView } from '@/components/storage/view'
 import { Button } from '@/components/ui/button'
@@ -45,7 +45,6 @@ export function sameBucket(provider: string, values: FieldValues, remotes: Stora
 
 export type LocationFamily = 'copy' | 'database'
 
-type Step = { kind: 'pick' } | { kind: 'copy'; entry: ProviderEntry } | { kind: 'postgresql' }
 type After = { state: 'checking' | 'ok' | 'failed'; text: string; name: string; what: 'remote' | 'connection' }
 
 interface AddLocationDialogProps {
@@ -58,8 +57,6 @@ interface AddLocationDialogProps {
   provider?: string
   /** The view changed: a connection was added or removed. */
   onChanged: () => void
-  /** Opened from New: a link back to it. */
-  onBack?: () => void
 }
 
 const PG_DEFAULT = (taken: Set<string>): PostgresqlValues => ({ name: taken.size ? '' : 'main', url: 'postgresql://layerfs@localhost:5432/layerfs', synchronousCommit: 'off' })
@@ -127,53 +124,43 @@ function GroupHead({ id, title, about }: { id: string; title: string; about: str
   )
 }
 
-export function AddLocationDialog({ open, onOpenChange, view, family, provider, onChanged, onBack }: AddLocationDialogProps) {
+interface ConnectionFormProps {
+  view: StorageView
+  /** 'postgresql', or a bucket provider's id ('minio', 'r2'). */
+  provider: string
+  /** The view changed: a connection was added or removed. */
+  onChanged: () => void
+  onClose: () => void
+  /** A request or the first check is running: the dialog around it shouldn't close. */
+  onLock?: (locked: boolean) => void
+  /** "‹ All providers": back to the picker. */
+  onBack?: () => void
+  /** Without its own title: the New dialog names the provider above it. */
+  bare?: boolean
+}
+
+/** One provider's add form, then the first check's answer in place. */
+export function ConnectionForm({ view, provider, onChanged, onClose, onLock, onBack, bare }: ConnectionFormProps) {
   useI18n()
   const remotesTaken = useMemo(() => new Set(view.remotes.list.map((r) => r.name)), [view.remotes.list])
   const pgTaken = useMemo(() => new Set(view.postgresql.connections.map((c) => c.name)), [view.postgresql.connections])
-  const [step, setStep] = useState<Step>({ kind: 'pick' })
-  const [search, setSearch] = useState('')
-  const [values, setValues] = useState<FieldValues>({})
+  const entry = provider === 'postgresql' ? null : providerEntry(provider)
+  const [values, setValues] = useState<FieldValues>(() => (entry ? initialValues(entry, remotesTaken) : {}))
   const [pg, setPg] = useState<PostgresqlValues>(() => PG_DEFAULT(pgTaken))
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string>()
   const [after, setAfter] = useState<After | null>(null)
 
-  const choose = (next: Step) => {
-    setError(undefined)
-    setAfter(null)
-    if (next.kind === 'copy') setValues(initialValues(next.entry, remotesTaken))
-    if (next.kind === 'postgresql') setPg(PG_DEFAULT(pgTaken))
-    setStep(next)
-  }
-
-  // a fresh dialog each time it opens, on the picker or the asked-for form
-  useEffect(() => {
-    if (!open) return
-    setSearch('')
-    if (provider === 'postgresql') choose({ kind: 'postgresql' })
-    else if (provider) choose({ kind: 'copy', entry: providerEntry(provider) })
-    else choose({ kind: 'pick' })
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, provider])
-
-  const infos = providerInfos(view)
-  const added = (id: string) => view.remotes.list.filter((r) => r.provider === id).length
-  const copyTiles = PROVIDERS.filter((p) => providerMatches(p, search))
-    .map((p) => ({ entry: p, info: infos.find((i) => i.id === p.id) }))
-    .sort((a, b) => Number(!!b.info?.available) - Number(!!a.info?.available) || added(String(b.entry.id)) - added(String(a.entry.id)) || a.entry.label.localeCompare(b.entry.label))
-  const pgMatches = !search.trim() || 'postgresql postgres database pg'.includes(search.trim().toLowerCase())
-  const showSearch = PROVIDERS.length + 1 > 8
-
-  const copyForm = step.kind === 'copy' ? formState(step.entry, values, remotesTaken) : null
-  const pgForm = step.kind === 'postgresql' ? postgresqlState(pg, pgTaken) : null
+  const copyForm = entry ? formState(entry, values, remotesTaken) : null
+  const pgForm = entry ? null : postgresqlState(pg, pgTaken)
   const form = copyForm ?? pgForm
   const locked = busy || after?.state === 'checking'
-  const twin = step.kind === 'copy' && !after ? sameBucket(String(step.entry.id), values, view.remotes.list) : null
+  useEffect(() => onLock?.(locked), [locked, onLock])
+  const twin = entry && !after ? sameBucket(String(entry.id), values, view.remotes.list) : null
 
   const firstCheck = async (name: string, what: After['what']) => {
     const supported = what === 'remote' ? view.supports.check : view.supports.postgresqlStatus
-    if (!supported) return onOpenChange(false)
+    if (!supported) return onClose()
     setAfter({ state: 'checking', text: t('Checking {name}…', { name }), name, what })
     try {
       const v = normalizeView(await host.checkStorage(what === 'remote' ? { remote: name } : { connection: name }))
@@ -193,12 +180,12 @@ export function AddLocationDialog({ open, onOpenChange, view, family, provider, 
     setBusy(true)
     setError(undefined)
     try {
-      if (step.kind === 'copy' && step.entry.request) {
-        await host.addRemote(step.entry.request(values))
+      if (entry?.request) {
+        await host.addRemote(entry.request(values))
         onChanged()
         setBusy(false)
         await firstCheck(values.name, 'remote')
-      } else if (step.kind === 'postgresql') {
+      } else if (!entry) {
         await host.addPostgresql(pg)
         onChanged()
         setBusy(false)
@@ -227,11 +214,113 @@ export function AddLocationDialog({ open, onOpenChange, view, family, provider, 
     }
   }
 
-  const entry = step.kind === 'copy' ? step.entry : null
+  return (
+    <form
+      className={cn('flex flex-1 flex-col', bare ? 'gap-4' : 'gap-5')}
+      onSubmit={(e) => {
+        e.preventDefault()
+        if (after?.state === 'ok' || after?.state === 'failed') onClose()
+        else void add()
+      }}
+    >
+      {!bare && (
+        <SheetHeader mark={entry ? <ProviderTile provider={String(entry.id)} size="sm" /> : <FamilyTile family="postgresql" size="sm" />} title={entry ? t('Add a {provider} bucket', { provider: entry.label }) : t('Add a PostgreSQL connection')}>
+          {entry ? t(entry.about) : t('A database that holds PostgreSQL Stores live, one schema each. The LayerFS box connects directly.')}
+        </SheetHeader>
+      )}
+      {onBack && (
+        <Button type="button" size="xs" variant="ghost" className="-mt-3 w-fit rounded-lg" onClick={onBack} disabled={locked || !!after}>
+          <ChevronLeft /> {t('All providers')}
+        </Button>
+      )}
+      {entry && copyForm && <ProviderForm entry={entry} values={values} onChange={setValues} problems={copyForm.problems} disabled={locked || !!after} />}
+      {pgForm && <PostgresqlForm values={pg} onChange={setPg} problems={pgForm.problems} disabled={locked || !!after} />}
+      {after && (
+        <div
+          role="status"
+          className={cn(
+            'flex items-center gap-2 rounded-xl px-3.5 py-2.5 text-xs font-medium',
+            after.state === 'ok' ? 'bg-success/[0.08] text-success' : after.state === 'failed' ? 'bg-warning/[0.08] text-warning' : 'bg-muted/60',
+          )}
+        >
+          {after.state === 'checking' ? (
+            <LoaderCircle aria-hidden="true" className="size-4 animate-spin text-primary" />
+          ) : after.state === 'ok' ? (
+            <CircleCheck aria-hidden="true" className="size-4" />
+          ) : (
+            <TriangleAlert aria-hidden="true" className="size-4" />
+          )}
+          <span className={cn('min-w-0 break-words', after.state === 'checking' && 'text-muted-foreground')}>{after.text}</span>
+        </div>
+      )}
+      {twin && (
+        <p role="status" className="flex items-start gap-2 rounded-xl bg-warning/[0.08] px-3.5 py-2.5 text-xs leading-relaxed text-warning">
+          <TriangleAlert aria-hidden="true" className="mt-0.5 size-3.5 shrink-0" />
+          <span>{t('{name} already points at this bucket and prefix. Both would list and change the same Store files; a different prefix keeps them apart.', { name: twin })}</span>
+        </p>
+      )}
+      <FormError error={error} />
+      <div className="mt-auto flex flex-col gap-3">
+        {!after && form && form.missing.length > 0 && <p className="text-right text-[11.5px] text-muted-foreground">{t('Still needed: {fields}.', { fields: form.missing.join(', ') })}</p>}
+        <SheetFooter>
+          {after?.state === 'failed' ? (
+            <>
+              <Button type="button" variant="outline" size="sm" className={BTN} onClick={() => void undo()} disabled={busy}>
+                {t('Remove it')}
+              </Button>
+              <Button type="submit" size="sm" className={BTN}>
+                {t('Keep it')}
+              </Button>
+            </>
+          ) : after?.state === 'ok' ? (
+            <Button type="submit" size="sm" className={BTN}>
+              {t('Done')}
+            </Button>
+          ) : (
+            <>
+              <Button type="button" variant="outline" size="sm" className={BTN} onClick={onClose} disabled={locked}>
+                {t('Cancel')}
+              </Button>
+              <Button type="submit" size="sm" className={BTN} disabled={!form?.ready || locked}>
+                {locked ? <LoaderCircle className="size-3.5 animate-spin" /> : <Plus className="size-3.5" />}
+                {after?.state === 'checking' ? t('Checking…') : busy ? t('Adding…') : t('Add connection')}
+              </Button>
+            </>
+          )}
+        </SheetFooter>
+      </div>
+    </form>
+  )
+}
+
+export function AddLocationDialog({ open, onOpenChange, view, family, provider, onChanged }: AddLocationDialogProps) {
+  useI18n()
+  const [picked, setPicked] = useState<string | null>(null)
+  const [search, setSearch] = useState('')
+  const [locked, setLocked] = useState(false)
+  const close = useCallback(() => onOpenChange(false), [onOpenChange])
+  // a fresh dialog each time it opens, on the picker or the asked-for form
+  useEffect(() => {
+    if (!open) return
+    setSearch('')
+    setPicked(null)
+  }, [open, provider])
+  const chosen = provider ?? picked
+
+  const infos = providerInfos(view)
+  const added = (id: string) => view.remotes.list.filter((r) => r.provider === id).length
+  const copyTiles = PROVIDERS.filter((p) => providerMatches(p, search))
+    .map((p) => ({ entry: p, info: infos.find((i) => i.id === p.id) }))
+    .sort((a, b) => Number(!!b.info?.available) - Number(!!a.info?.available) || added(String(b.entry.id)) - added(String(a.entry.id)) || a.entry.label.localeCompare(b.entry.label))
+  const pgMatches = !search.trim() || 'postgresql postgres database pg'.includes(search.trim().toLowerCase())
+  const showSearch = PROVIDERS.length + 1 > 8
+
   return (
     <Dialog open={open} onOpenChange={(next) => (locked && !next ? undefined : onOpenChange(next))}>
       <DialogContent className={`${SHEET} sm:max-w-[640px]`}>
-        {step.kind === 'pick' ? (
+        {chosen ? (
+          <ConnectionForm key={chosen} view={view} provider={chosen} onChanged={onChanged} onClose={close} onLock={setLocked} onBack={provider ? undefined : () => setPicked(null)} />
+        ) : (
           <>
             <SheetHeader icon={Plus} title={t('Add a connection')}>
               {t('A bucket that holds SQLite Store files, or a database where PostgreSQL Stores live. Adding one links no Store.')}
@@ -256,7 +345,7 @@ export function AddLocationDialog({ open, onOpenChange, view, family, provider, 
                           added={added(String(p.id))}
                           coming={!info?.available}
                           reason={info?.reason ?? null}
-                          onPick={() => choose({ kind: 'copy', entry: p })}
+                          onPick={() => setPicked(String(p.id))}
                         />
                       ))}
                     </div>
@@ -275,94 +364,18 @@ export function AddLocationDialog({ open, onOpenChange, view, family, provider, 
                       added={view.postgresql.connections.length}
                       coming={!view.postgresql.available}
                       reason={view.postgresql.reason}
-                      onPick={() => choose({ kind: 'postgresql' })}
+                      onPick={() => setPicked('postgresql')}
                     />
                   </div>
                 </section>
               )}
             </div>
             <SheetFooter>
-              <Button type="button" variant="outline" size="sm" className={BTN} onClick={() => onOpenChange(false)}>
+              <Button type="button" variant="outline" size="sm" className={BTN} onClick={close}>
                 {t('Cancel')}
               </Button>
             </SheetFooter>
           </>
-        ) : (
-          <form
-            className="flex flex-col gap-5"
-            onSubmit={(e) => {
-              e.preventDefault()
-              if (after?.state === 'ok' || after?.state === 'failed') onOpenChange(false)
-              else void add()
-            }}
-          >
-            <SheetHeader mark={entry ? <ProviderTile provider={String(entry.id)} size="sm" /> : <FamilyTile family="postgresql" size="sm" />} title={entry ? t('Add a {provider} bucket', { provider: entry.label }) : t('Add a PostgreSQL connection')}>
-              {entry ? t(entry.about) : t('A database that holds PostgreSQL Stores live, one schema each. The LayerFS box connects directly.')}
-            </SheetHeader>
-            {onBack ? (
-              <BackLink onBack={onBack} disabled={locked || !!after} />
-            ) : (
-              !provider && (
-                <Button type="button" size="xs" variant="ghost" className="-mt-3 w-fit rounded-lg" onClick={() => choose({ kind: 'pick' })} disabled={locked || !!after}>
-                  <ChevronLeft /> {t('All providers')}
-                </Button>
-              )
-            )}
-            {entry && copyForm && <ProviderForm entry={entry} values={values} onChange={setValues} problems={copyForm.problems} disabled={locked || !!after} />}
-            {pgForm && <PostgresqlForm values={pg} onChange={setPg} problems={pgForm.problems} disabled={locked || !!after} />}
-            {after && (
-              <div
-                role="status"
-                className={cn(
-                  'flex items-center gap-2 rounded-xl px-3.5 py-2.5 text-xs font-medium',
-                  after.state === 'ok' ? 'bg-success/[0.08] text-success' : after.state === 'failed' ? 'bg-warning/[0.08] text-warning' : 'bg-muted/60',
-                )}
-              >
-                {after.state === 'checking' ? (
-                  <LoaderCircle aria-hidden="true" className="size-4 animate-spin text-primary" />
-                ) : after.state === 'ok' ? (
-                  <CircleCheck aria-hidden="true" className="size-4" />
-                ) : (
-                  <TriangleAlert aria-hidden="true" className="size-4" />
-                )}
-                <span className={cn('min-w-0 break-words', after.state === 'checking' && 'text-muted-foreground')}>{after.text}</span>
-              </div>
-            )}
-            {twin && (
-              <p role="status" className="flex items-start gap-2 rounded-xl bg-warning/[0.08] px-3.5 py-2.5 text-xs leading-relaxed text-warning">
-                <TriangleAlert aria-hidden="true" className="mt-0.5 size-3.5 shrink-0" />
-                <span>{t('{name} already points at this bucket and prefix. Both would list and change the same Store files; a different prefix keeps them apart.', { name: twin })}</span>
-              </p>
-            )}
-            <FormError error={error} />
-            {!after && form && form.missing.length > 0 && <p className="-mb-2 text-right text-[11.5px] text-muted-foreground">{t('Still needed: {fields}.', { fields: form.missing.join(', ') })}</p>}
-            <SheetFooter>
-              {after?.state === 'failed' ? (
-                <>
-                  <Button type="button" variant="outline" size="sm" className={BTN} onClick={() => void undo()} disabled={busy}>
-                    {t('Remove it')}
-                  </Button>
-                  <Button type="submit" size="sm" className={BTN}>
-                    {t('Keep it')}
-                  </Button>
-                </>
-              ) : after?.state === 'ok' ? (
-                <Button type="submit" size="sm" className={BTN}>
-                  {t('Done')}
-                </Button>
-              ) : (
-                <>
-                  <Button type="button" variant="outline" size="sm" className={BTN} onClick={() => onOpenChange(false)} disabled={locked}>
-                    {t('Cancel')}
-                  </Button>
-                  <Button type="submit" size="sm" className={BTN} disabled={!form?.ready || locked}>
-                    {locked ? <LoaderCircle className="size-3.5 animate-spin" /> : <Plus className="size-3.5" />}
-                    {after?.state === 'checking' ? t('Checking…') : busy ? t('Adding…') : t('Add connection')}
-                  </Button>
-                </>
-              )}
-            </SheetFooter>
-          </form>
         )}
       </DialogContent>
     </Dialog>

@@ -408,6 +408,16 @@ test('view: a build without the engine asks uses the host fallbacks (§10.4)', a
   assert.deepEqual(view.totals.postgresql, { stores: 1, connections: 1, bytes: 0, unknown: 1 })
 })
 
+test('view: providers as LayerFS answers them, objects with available and reason (E8)', async () => {
+  const { storage, runtime } = await redesign()
+  storage.providerIds = null
+  runtime.remote.providers = async () => [{ id: 'minio', available: true }, { id: 'r2', available: true }, { id: 's3', available: false, reason: 'S3 needs layerfs#600' }, { id: 'ftp', available: true }]
+  const view = await storage.view()
+  assert.deepEqual(view.providers.filter((p) => p.available).map((p) => p.id), ['minio', 'r2'])
+  assert.equal(view.providers.find((p) => p.id === 's3').reason, 'S3 needs layerfs#600')
+  assert.equal(view.providers.find((p) => p.id === 'gcs').reason, 'Not in this LayerFS build yet')
+})
+
 test('view: Docker not answering leaves SQLite sizes unknown, never a guess', async () => {
   const { storage } = setup({ stat: async () => null })
   const view = await storage.view()

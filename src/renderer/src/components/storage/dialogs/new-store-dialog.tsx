@@ -1,10 +1,11 @@
 // A new, empty local SQLite Store (layerfs#506): one Docker volume that
-// projects are then Inited into. Opened from New, or a page's New Store.
+// projects are then Inited into. The form shows in the New dialog's pane and,
+// in its own dialog, wherever a page asks for a New Store.
 import { LoaderCircle, Plus } from 'lucide-react'
 import { siSqlite } from 'simple-icons'
-import { useEffect, useId, useState } from 'react'
+import { useCallback, useEffect, useId, useState } from 'react'
 
-import { BackLink, BTN, Field, FormError, message, SHEET, SheetFooter, SheetHeader } from '@/components/storage/dialogs/fields'
+import { BTN, Field, FormError, message, SHEET, SheetFooter, SheetHeader } from '@/components/storage/dialogs/fields'
 import { Mark } from '@/components/storage/icons'
 import { NAME } from '@/components/storage/identity/providers'
 import { Button } from '@/components/ui/button'
@@ -13,24 +14,21 @@ import { Input } from '@/components/ui/input'
 import { host } from '@/host/client'
 import { t, useI18n } from '@/i18n'
 
-interface NewStoreDialogProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
+interface NewStoreFormProps {
   taken: Set<string>
   onCreated: (name: string) => void
-  /** Opened from New: a link back to it. */
-  onBack?: () => void
+  onClose: () => void
+  /** A request is running: the dialog around it shouldn't close. */
+  onLock?: (locked: boolean) => void
 }
 
-export function NewStoreDialog({ open, onOpenChange, taken, onCreated, onBack }: NewStoreDialogProps) {
+export function NewStoreForm({ taken, onCreated, onClose, onLock }: NewStoreFormProps) {
   useI18n()
   const id = useId()
   const [name, setName] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string>()
-  useEffect(() => {
-    if (open) setError(undefined)
-  }, [open])
+  useEffect(() => onLock?.(busy), [busy, onLock])
   const problem = name && !NAME.test(name) ? t('Lower-case letters, digits and hyphens, up to 32.') : taken.has(name) ? t('A Store named {name} exists.', { name }) : null
   const create = async () => {
     setBusy(true)
@@ -38,8 +36,7 @@ export function NewStoreDialog({ open, onOpenChange, taken, onCreated, onBack }:
     try {
       await host.createStore(name)
       onCreated(name)
-      onOpenChange(false)
-      setName('')
+      onClose()
     } catch (e) {
       setError(message(e))
     } finally {
@@ -47,32 +44,31 @@ export function NewStoreDialog({ open, onOpenChange, taken, onCreated, onBack }:
     }
   }
   return (
-    <Dialog open={open} onOpenChange={(next) => (busy && !next ? undefined : onOpenChange(next))}>
-      <DialogContent className={`${SHEET} sm:max-w-[440px]`}>
-        <SheetHeader
-          mark={
-            <span className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-primary/[0.08]">
-              <Mark icon={siSqlite} className="size-4" />
-            </span>
-          }
-          title={t('New Store')}
-        >
-          {t('An empty SQLite Store in a Docker volume of its own. Projects you add to it share its storage, its writer and its link: a push uploads all of them.')}
-        </SheetHeader>
-        {onBack && <BackLink onBack={onBack} disabled={busy} />}
-        <form
-          className="flex flex-col gap-4"
-          onSubmit={(e) => {
-            e.preventDefault()
-            if (name && !problem) void create()
-          }}
-        >
-          <Field id={id} label={t('Name')} problem={problem}>
-            <Input id={id} value={name} onChange={(e) => setName(e.target.value)} placeholder="work" autoFocus disabled={busy} className="rounded-xl font-mono text-[13px]" aria-invalid={!!problem} />
-          </Field>
-          <FormError error={error} />
+    <>
+      <SheetHeader
+        mark={
+          <span className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-primary/[0.08]">
+            <Mark icon={siSqlite} className="size-4" />
+          </span>
+        }
+        title={t('New Store')}
+      >
+        {t('An empty SQLite Store in a Docker volume of its own. Projects you add to it share its storage, its writer and its link: a push uploads all of them.')}
+      </SheetHeader>
+      <form
+        className="flex flex-1 flex-col gap-4"
+        onSubmit={(e) => {
+          e.preventDefault()
+          if (name && !problem) void create()
+        }}
+      >
+        <Field id={id} label={t('Name')} problem={problem}>
+          <Input id={id} value={name} onChange={(e) => setName(e.target.value)} placeholder="work" autoFocus disabled={busy} className="rounded-xl font-mono text-[13px]" aria-invalid={!!problem} />
+        </Field>
+        <FormError error={error} />
+        <div className="mt-auto">
           <SheetFooter>
-            <Button type="button" variant="outline" size="sm" className={BTN} onClick={() => onOpenChange(false)} disabled={busy}>
+            <Button type="button" variant="outline" size="sm" className={BTN} onClick={onClose} disabled={busy}>
               {t('Cancel')}
             </Button>
             <Button type="submit" size="sm" className={BTN} disabled={!name || !!problem || busy}>
@@ -80,7 +76,19 @@ export function NewStoreDialog({ open, onOpenChange, taken, onCreated, onBack }:
               {busy ? t('Creating…') : t('Create Store')}
             </Button>
           </SheetFooter>
-        </form>
+        </div>
+      </form>
+    </>
+  )
+}
+
+export function NewStoreDialog({ open, onOpenChange, ...form }: Omit<NewStoreFormProps, 'onClose' | 'onLock'> & { open: boolean; onOpenChange: (open: boolean) => void }) {
+  const [locked, setLocked] = useState(false)
+  const close = useCallback(() => onOpenChange(false), [onOpenChange])
+  return (
+    <Dialog open={open} onOpenChange={(next) => (locked && !next ? undefined : onOpenChange(next))}>
+      <DialogContent className={`${SHEET} sm:max-w-[440px]`}>
+        <NewStoreForm {...form} onClose={close} onLock={setLocked} />
       </DialogContent>
     </Dialog>
   )

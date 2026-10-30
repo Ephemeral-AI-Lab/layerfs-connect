@@ -3,9 +3,9 @@
 // Store of this machine links to is refused before the call. The job runs in
 // the dialog and carries on in the tray after "Run in background".
 import { Download, LoaderCircle } from 'lucide-react'
-import { useEffect, useId, useMemo, useState } from 'react'
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
 
-import { BackLink, BTN, Field, FormError, INSET, message, SHEET, SheetFooter, SheetHeader } from '@/components/storage/dialogs/fields'
+import { BTN, Field, FormError, INSET, message, SHEET, SheetFooter, SheetHeader } from '@/components/storage/dialogs/fields'
 import { NAME } from '@/components/storage/identity/providers'
 import { ProviderMark } from '@/components/storage/identity/store-icon'
 import { LOW_DISK } from '@/components/storage/meters'
@@ -22,9 +22,7 @@ import { t, useI18n } from '@/i18n'
 import { cn } from '@/lib/utils'
 import type { StorageView } from '@shared/host-api'
 
-interface LoadDialogProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
+interface LoadFormProps {
   view: StorageView
   remote: string
   file: string
@@ -34,8 +32,9 @@ interface LoadDialogProps {
   onDone: (store: string) => void
   /** Opens a Store (the one a linked file belongs to). */
   onOpenStore: (store: string) => void
-  /** Opened from New: a link back to it. */
-  onBack?: () => void
+  onClose: () => void
+  /** A request or job is running: the dialog around it shouldn't close. */
+  onLock?: (locked: boolean) => void
 }
 
 /** A file name as a Store name, when it can be one. */
@@ -46,7 +45,7 @@ const asStoreName = (file: string) =>
     .replace(/^-+|-+$/g, '')
     .slice(0, 32)
 
-export function LoadDialog({ open, onOpenChange, view, remote, file, free, onDone, onOpenStore, onBack }: LoadDialogProps) {
+export function LoadForm({ view, remote, file, free, onDone, onOpenStore, onClose, onLock }: LoadFormProps) {
   useI18n()
   const id = useId()
   const taken = useMemo(() => new Set(view.stores.list.map((s) => s.name)), [view.stores.list])
@@ -61,19 +60,15 @@ export function LoadDialog({ open, onOpenChange, view, remote, file, free, onDon
   const job = jobId ? transfers.all.find((j) => j.id === jobId) : undefined
   const running = !!job && isRunning(job)
 
+  useEffect(() => onLock?.(busy), [busy, onLock])
+  const done = useRef(false)
   useEffect(() => {
-    if (!open) return
-    setInto(asStoreName(file))
-    setError(undefined)
-    setJobId(undefined)
-  }, [open, file])
-
-  useEffect(() => {
-    if (job && !isRunning(job) && !isFailed(job)) {
+    if (job && !done.current && !isRunning(job) && !isFailed(job)) {
+      done.current = true
       onDone(job.store)
-      onOpenChange(false)
+      onClose()
     }
-  }, [job, onDone, onOpenChange])
+  }, [job, onDone, onClose])
 
   const problem = into && !NAME.test(into) ? t('Lower-case letters, digits and hyphens, up to 32.') : taken.has(into) ? t('A Store named {name} exists here; pick another name.', { name: into }) : null
   const ready = !linkedBy && !!into && !problem && !busy && !running
@@ -95,14 +90,12 @@ export function LoadDialog({ open, onOpenChange, view, remote, file, free, onDon
   }
 
   return (
-    <Dialog open={open} onOpenChange={(next) => (busy && !next ? undefined : onOpenChange(next))}>
-      <DialogContent className={`${SHEET} sm:max-w-[520px]`}>
+    <>
         <SheetHeader icon={Download} title={t('Load {file}', { file })}>
           {t('A new SQLite Store on this machine from this file, with all of its projects, linked to it: Push and Pull then go there.')}
         </SheetHeader>
-        {onBack && <BackLink onBack={onBack} />}
         <form
-          className="flex flex-col gap-4"
+          className="flex flex-1 flex-col gap-4"
           onSubmit={(e) => {
             e.preventDefault()
             void start()
@@ -127,7 +120,7 @@ export function LoadDialog({ open, onOpenChange, view, remote, file, free, onDon
                 variant="outline"
                 className="rounded-lg"
                 onClick={() => {
-                  onOpenChange(false)
+                  onClose()
                   onOpenStore(linkedBy)
                 }}
               >
@@ -154,13 +147,13 @@ export function LoadDialog({ open, onOpenChange, view, remote, file, free, onDon
           <SheetFooter
             left={
               running && (
-                <Button type="button" variant="outline" size="sm" className={BTN} onClick={() => onOpenChange(false)}>
+                <Button type="button" variant="outline" size="sm" className={BTN} onClick={() => onClose()}>
                   {t('Run in background')}
                 </Button>
               )
             }
           >
-            <Button type="button" variant="outline" size="sm" className={BTN} onClick={() => onOpenChange(false)} disabled={busy}>
+            <Button type="button" variant="outline" size="sm" className={BTN} onClick={() => onClose()} disabled={busy}>
               {running ? t('Close') : t('Cancel')}
             </Button>
             {!running && !linkedBy && (
@@ -171,6 +164,17 @@ export function LoadDialog({ open, onOpenChange, view, remote, file, free, onDon
             )}
           </SheetFooter>
         </form>
+    </>
+  )
+}
+
+export function LoadDialog({ open, onOpenChange, ...form }: Omit<LoadFormProps, 'onClose' | 'onLock'> & { open: boolean; onOpenChange: (open: boolean) => void }) {
+  const [locked, setLocked] = useState(false)
+  const close = useCallback(() => onOpenChange(false), [onOpenChange])
+  return (
+    <Dialog open={open} onOpenChange={(next) => (locked && !next ? undefined : onOpenChange(next))}>
+      <DialogContent className={`${SHEET} sm:max-w-[520px]`}>
+        <LoadForm {...form} onClose={close} onLock={setLocked} />
       </DialogContent>
     </Dialog>
   )

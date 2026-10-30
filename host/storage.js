@@ -465,24 +465,34 @@ export class Storage extends EventEmitter {
     return out
   }
 
-  /** ProviderInfo[]: remote.providers() (E8, asked once per host process), else MinIO and R2 when the build has remotes. */
+  /**
+   * ProviderInfo[]: remote.providers() (E8, asked once per host process), else MinIO and R2 when the build has remotes.
+   * LayerFS answers `{ id, available, reason? }` objects; a bare id string means available.
+   */
   async providers(runtime, offers) {
     if (this.providerIds === null && offers.remotes && typeof runtime.remote?.providers === 'function') {
       // one ask: a build whose binding lacks the call answers the fallback from then on
       this.providerIds = false
       try {
-        const ids = await runtime.remote.providers()
-        if (Array.isArray(ids)) this.providerIds = ids.filter((id) => typeof id === 'string')
+        const answer = await runtime.remote.providers()
+        if (Array.isArray(answer)) {
+          const known = new Map()
+          for (const p of answer) {
+            if (typeof p === 'string') known.set(p, { available: true, reason: null })
+            else if (p && typeof p.id === 'string') known.set(p.id, { available: p.available !== false, reason: typeof p.reason === 'string' ? p.reason : null })
+          }
+          this.providerIds = known
+        }
       } catch (error) {
         this.log(`[host] remote.providers: ${error?.message ?? error}`)
       }
     }
-    const available = offers.remotes ? this.providerIds || FALLBACK_PROVIDERS : []
-    return PROVIDERS.map((id) => ({
-      id,
-      available: available.includes(id),
-      reason: available.includes(id) ? null : offers.remotes ? 'Not in this LayerFS build yet' : NOT_IN_BUILD,
-    }))
+    const known = offers.remotes ? this.providerIds || new Map(FALLBACK_PROVIDERS.map((id) => [id, { available: true, reason: null }])) : new Map()
+    return PROVIDERS.map((id) => {
+      const p = known.get(id)
+      const available = p?.available === true
+      return { id, available, reason: available ? null : (p?.reason ?? (offers.remotes ? 'Not in this LayerFS build yet' : NOT_IN_BUILD)) }
+    })
   }
 
   /** A runtime Store record -> StoreInfo; `ctx` from view(). */

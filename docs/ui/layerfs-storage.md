@@ -80,16 +80,19 @@ Every card is `glass-liquid` with the `spotlight` (its glow follows the one `--c
 
 All dialogs share the branch's sheet (`SHEET`, `SheetHeader`, `SheetFooter`, `Field`, `FormError`, `BackLink` in `dialogs/fields.tsx`): `rounded-3xl`, a title with its icon on a tinted tile, `h-8 rounded-xl` buttons.
 
-- **New** (`NewDialog` in `new-dialog.tsx`): two tabs (`Segmented`), one per kind of Store; each opens with one sentence on what that kind is.
-  - **SQLite**: Empty Store (opens New Store) and From a bucket file (lists each bucket's files in place: Load… a file that isn't loaded, or open the Store that has it). Then Buckets, grouped by provider: name, where it points (`location`: endpoint or account, bucket and prefix), file count and health; each opens its bucket page. "+ MinIO bucket" and "+ Cloudflare R2 bucket" open that provider's add form. Check now reads them again.
-  - **PostgreSQL**: Copy a SQLite Store in (opens Import). Then Databases: name, host and database, Store count and health; each opens its connection page. "+ PostgreSQL database".
-  - A way that can't be used yet stays listed, dimmed, with why in its second line (Add a bucket first, Add a database first, the build's reason).
-  - Each dialog it opens has a "‹ New" link (`BackLink`) back to the same tab. Several connections of one provider are fine; only names must differ.
-
+- **New** (`NewDialog` in `new-dialog.tsx`): one wide dialog of fixed size (up to 50 rem by 40 rem), two panes, so moving around in it never resizes it. Nothing in it opens another dialog.
+  - **Left pane:** the title, SQLite / PostgreSQL tabs (`Segmented`) with one line on what that kind of Store is, then that kind's list. The chosen line sits on a raised pill; long names truncate.
+    - **SQLite**: Empty Store, From a bucket file; Buckets (provider mark, name, health dot), sorted by provider then name; "+ Add bucket connection".
+    - **PostgreSQL**: Copy a SQLite Store in; Databases (name, health dot); "+ Add database connection".
+    - A way that can't be used yet stays listed, dimmed, with why on hover (Add a bucket first, Add a database first, the build's reason).
+  - **Right pane:** the chosen line, in place. Empty Store is `NewStoreForm`; From a bucket file lists every bucket's files (Load… one that isn't loaded, which opens `LoadForm` with "‹ Files" back; a loaded one opens its Store); a bucket shows where it points (the full location, wrapping), health, keys and its files, with "Open the bucket page"; a database shows host and database, health, `synchronous_commit` and its Stores; Add bucket connection is a provider choice (MinIO, Cloudflare R2: each provider the build can add) above that provider's `ConnectionForm` (two columns, the first check's answer in place); Add database connection is the PostgreSQL `ConnectionForm`; Copy a SQLite Store in is `ImportForm`.
+  - Each tab opens on its first way that can be used (Empty Store; Copy a SQLite Store in), else on adding what it needs. While a form is sending, the dialog can't close and the list can't change.
+  - Below 40 rem wide the panes stack: the list, then the chosen item over it with "‹ New".
+  - The forms (`NewStoreForm`, `LoadForm`, `ImportForm`, `ConnectionForm`) also sit in their own dialogs (`NewStoreDialog`, `LoadDialog`, `ImportDialog`, `AddLocationDialog`) for the pages and menus that open them directly.
 - **Add connection** (`AddLocationDialog`): binds no Store.
   - Step 1 is a picker of provider tiles from the registry in `identity/providers.ts`; arrow keys move between them. Filtered by family; a search box appears with more than 8 providers.
   - MinIO, Cloudflare R2 and PostgreSQL are live when the build has them; Amazon S3, Google Cloud Storage, Google Drive and Folder are dashed "Coming" tiles.
-  - Step 2 is the provider's form (`ProviderForm` or `PostgresqlForm` with `synchronous_commit`, in `provider-forms.tsx`). Opened from New, it starts on the form, with "‹ New" in place of "All providers".
+  - Step 2 is the provider's form (`ConnectionForm`: `ProviderForm` or `PostgresqlForm` with `synchronous_commit`, in `provider-forms.tsx`).
   - A bucket form that matches an existing connection's provider, endpoint (or account), bucket and prefix shows a warning naming it (`sameBucket`): both would list and change the same files. It doesn't block the add.
   - After adding, the dialog runs one check: "Reachable. N Store files, M not loaded" or "Added, but not reachable", with Keep it or Remove it.
 - **Publish** and **Send a copy** (`UploadDialog` in `publish-dialog.tsx`; `SendDialog` in `send-dialog.tsx`): a connection (with health) and a file name; a file that exists is refused under the field. The job runs in the dialog; "Run in background" leaves it to the tray.

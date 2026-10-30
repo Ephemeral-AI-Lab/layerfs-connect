@@ -23,13 +23,13 @@ import type { StoreInfo } from '@shared/host-api'
 export type DialogState =
   | { kind: 'publish'; store: StoreInfo; remote?: string }
   | { kind: 'send'; store: StoreInfo }
-  | { kind: 'load'; remote: string; file: string; back?: NewTab }
+  | { kind: 'load'; remote: string; file: string }
   | { kind: 'pull'; store: StoreInfo }
   | { kind: 'conflict'; store: StoreInfo }
   | { kind: 'unlink'; store: StoreInfo }
-  | { kind: 'import'; store?: string; connection?: string; back?: NewTab }
-  | { kind: 'location'; family?: LocationFamily; provider?: string; back?: NewTab }
-  | { kind: 'new-store'; back?: NewTab }
+  | { kind: 'import'; store?: string; connection?: string }
+  | { kind: 'location'; family?: LocationFamily; provider?: string }
+  | { kind: 'new-store' }
   | { kind: 'new'; tab: NewTab }
   | { kind: 'add-project'; store: StoreInfo }
   | { kind: 'remove'; target: RemoveTarget }
@@ -76,8 +76,6 @@ export function StorageDialogs({ dialog: d, setDialog, started, reveal, reload }
   const close = useCallback((open: boolean) => !open && setDialog(null), [setDialog])
   const remove = d?.kind === 'remove' ? d.target : null
   const taken = useMemo(() => new Set(view.stores.list.map((x) => x.name)), [view.stores.list])
-  // a dialog opened from New links back to it, on the tab it came from
-  const back = d && 'back' in d && d.back ? () => setDialog({ kind: 'new', tab: d.back! }) : undefined
   return (
     <>
       <NewDialog
@@ -85,7 +83,8 @@ export function StorageDialogs({ dialog: d, setDialog, started, reveal, reload }
         onOpenChange={close}
         tab={d?.kind === 'new' ? d.tab : 'sqlite'}
         onTab={(tab) => setDialog({ kind: 'new', tab })}
-        onChoose={(choice) => d?.kind === 'new' && setDialog({ ...choice, back: d.tab })}
+        reload={reload}
+        reveal={reveal}
       />
       {d?.kind === 'publish' && <PublishDialog open onOpenChange={close} view={view} store={d.store} remote={d.remote} onDone={reveal} />}
       {d?.kind === 'send' && <SendDialog open onOpenChange={close} view={view} store={d.store} onDone={reveal} />}
@@ -98,7 +97,6 @@ export function StorageDialogs({ dialog: d, setDialog, started, reveal, reload }
           file={d.file}
           free={s.status?.disk.volumes ?? null}
           onDone={reveal}
-          onBack={back}
           onOpenStore={(store) => {
             setDialog(null)
             s.open({ view: 'store', id: store })
@@ -143,7 +141,6 @@ export function StorageDialogs({ dialog: d, setDialog, started, reveal, reload }
         store={d?.kind === 'import' ? d.store : undefined}
         connection={d?.kind === 'import' ? d.connection : undefined}
         onDone={reveal}
-        onBack={d?.kind === 'import' ? back : undefined}
       />
       <AddLocationDialog
         open={d?.kind === 'location'}
@@ -152,13 +149,11 @@ export function StorageDialogs({ dialog: d, setDialog, started, reveal, reload }
         family={d?.kind === 'location' ? d.family : undefined}
         provider={d?.kind === 'location' ? d.provider : undefined}
         onChanged={reload}
-        onBack={d?.kind === 'location' ? back : undefined}
       />
       <NewStoreDialog
         open={d?.kind === 'new-store'}
         onOpenChange={close}
         taken={taken}
-        onBack={d?.kind === 'new-store' ? back : undefined}
         onCreated={(name) => {
           reload()
           reveal(name)
