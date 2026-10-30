@@ -35,6 +35,32 @@ export interface ProjectSummary {
   run?: string | null
 }
 
+export interface NewProjectInput {
+  name: string
+  /** Omit to create an empty project; otherwise import this absolute directory. */
+  source?: string
+}
+
+export interface ProjectInitCounts {
+  entries: number
+  files: number
+  bytes: number
+}
+
+export interface ProjectInitJob {
+  id: string
+  name: string
+  source: string | null
+  started: number
+  ended: number | null
+  step: 'scan' | 'volume' | 'import' | 'done' | 'failed'
+  scanned: ProjectInitCounts | null
+  totals: ProjectInitCounts | null
+  imported: (ProjectInitCounts & { step: string }) | null
+  project: ProjectSummary | null
+  error: { code: string; message: string } | null
+}
+
 export interface BranchInfo {
   name: string
   /** The head Commit or Layer id this Branch points at. */
@@ -494,9 +520,14 @@ export interface RunLive {
 /** One server-sent event on /api/events. */
 export type RunEvent =
   | { type: 'run'; run: RunSummary }
+  | { type: 'run-removed'; id: string; demo: string }
   | { type: 'agent'; run: string; agent: AgentRun }
   | { type: 'step'; run: string; step: StepResult }
   | { type: 'call'; run: string; call: TraceCall }
   | { type: 'message'; run: string; message: RunDetail['messages'][number] }
   | { type: 'checks'; run: string; checks: CheckResult[] }
   | { type: 'live'; run: string; live: RunLive }
+
+export type HostEvent = RunEvent
+  | { type: 'chat'; session: import('./agent-api').AgentSessionDetail }
+  | { type: 'chat-navigate'; fromId: string; sessionId: string }

@@ -1,3 +1,4 @@
+import { t, useI18n, getLocale } from '@/i18n'
 // Timeline in 3D: the project's history as a fairy-tale castle (three.js),
 // from the same fork tree the 2D map draws.
 //   main       the castle keep, one round storey per Layer, Init at the bottom
@@ -220,7 +221,7 @@ const SIGN: Record<string, [string, string]> = {
   renamed: ['→', 'text-primary'],
 }
 const FILES_SHOWN = 6
-const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`
+const plural = (n: number, word: string) => getLocale() === 'zh-CN' ? `${n} ${t(word)}` : `${n} ${n === 1 ? word : word === 'Branch' ? 'Branches' : `${word}s`}`
 const short = (id: string) => id.slice(0, 8)
 const el = (tag: string, className: string, text?: string) => {
   const e = document.createElement(tag)
@@ -248,7 +249,7 @@ function fullCard(card: Card): HTMLElement {
   stripe.style.background = card.color
   const body = el('div', 'space-y-1 px-3 py-2')
   const head = el('div', 'flex items-center gap-1.5')
-  head.append(dot(card.color), el('span', 'truncate font-medium', card.title), el('span', 'ml-auto shrink-0 rounded-full bg-muted px-1.5 py-px text-[10px] text-muted-foreground', card.kind))
+  head.append(dot(card.color), el('span', 'truncate font-medium', card.title), el('span', 'ml-auto shrink-0 rounded-full bg-muted px-1.5 py-px text-[10px] text-muted-foreground', t(card.kind)))
   body.append(head)
   card.lines.forEach((line, i) => body.append(el('p', i === 0 ? 'line-clamp-2 text-foreground' : 'line-clamp-2 text-muted-foreground', line)))
   if (card.files?.length) {
@@ -259,7 +260,7 @@ function fullCard(card: Card): HTMLElement {
       row.append(el('span', `w-2 shrink-0 ${tone}`, sign), el('span', 'truncate', f.path))
       list.append(row)
     }
-    if (card.files.length > FILES_SHOWN) list.append(el('li', 'pl-3.5 font-sans text-muted-foreground', `and ${plural(card.files.length - FILES_SHOWN, 'more file')}`))
+    if (card.files.length > FILES_SHOWN) list.append(el('li', 'pl-3.5 font-sans text-muted-foreground', t(card.files.length - FILES_SHOWN === 1 ? 'and {count} more file' : 'and {count} more files', { count: card.files.length - FILES_SHOWN })))
     body.append(list)
   }
   box.append(stripe, body)
@@ -293,6 +294,7 @@ const saveFlag = (key: string, on: boolean) => {
 // ---- the component ------------------------------------------------------------------
 
 export default function Citadel({ tree, shown, onOpen }: CitadelProps) {
+  const { locale } = useI18n()
   const box = useRef<HTMLDivElement>(null)
   const api = useRef<{ fit: () => void; pins: (on: boolean) => void } | null>(null)
   const [pinsShown, setPinsShown] = useState(() => readFlag(PINS_KEY))
@@ -416,7 +418,7 @@ export default function Citadel({ tree, shown, onOpen }: CitadelProps) {
     const pick: THREE.Object3D[] = []
     const colorFor = (b: ForkBranch) => (b.state === 'merged' ? lighter(colorOf(b.name), 0.45) : colorOf(b.name))
     const top = p.floors[p.floors.length - 1]?.y1 ?? STOREY
-    const floorName = (i: number | undefined) => (i === undefined ? 'a Layer' : i === 0 ? 'Init' : `Layer ${i}`)
+    const floorName = (i: number | undefined) => (i === undefined ? t('a Layer') : i === 0 ? t('Init') : t('Layer {index}', { index: i }))
     // the Branches each Branch's Commits were merged into
     const mergedInto = new Map<string, Set<string>>()
     for (const c of tree.commits.values()) {
@@ -426,25 +428,25 @@ export default function Citadel({ tree, shown, onOpen }: CitadelProps) {
     const forkPoint = (b: ForkBranch) => {
       const f = b.forkedFrom
       if (!f) return `${b.parent ?? 'main'}`
-      if (f.kind === 'layer') return `main at ${floorName(p.floorOf.get(f.id))}`
+      if (f.kind === 'layer') return t('main at {layer}', { layer: floorName(p.floorOf.get(f.id)) })
       const c = tree.commits.get(f.id)
-      return c ? `${c.branch} at Commit ${short(c.id)}: ${c.message}` : `Commit ${short(f.id)}`
+      return c ? t('{branch} at Commit {id}: {message}', { branch: c.branch, id: short(c.id), message: c.message }) : t('Commit {id}', { id: short(f.id) })
     }
     const stateLine = (b: ForkBranch) =>
       b.state === 'published'
-        ? `Published as ${floorName(b.publishedAs !== undefined ? p.floorOf.get(b.publishedAs) : undefined)} of main`
+        ? t('Published as {layer} of main', { layer: floorName(b.publishedAs !== undefined ? p.floorOf.get(b.publishedAs) : undefined) })
         : b.state === 'merged'
-          ? `Merged into ${[...(mergedInto.get(b.name) ?? [b.parent ?? 'its parent'])].join(', ')}`
-          : 'Open: still being worked on'
+          ? t('Merged into {branches}', { branches: [...(mergedInto.get(b.name) ?? [b.parent ?? t('its parent')])].join(', ') })
+          : t('Open: still being worked on')
     const branchCard = (b: ForkBranch): Card => ({
       kind: 'Branch',
       title: b.name,
       color: hex(colorOf(b.name)),
       lines: [
         stateLine(b),
-        `Forked from ${forkPoint(b)}`,
-        `${plural(b.commits.length, 'Commit')}${b.agent ? ` by ${b.agent}` : ''}${b.children.length ? ` · ${plural(b.children.length, 'fork')} off it` : ''}`,
-        ...(b.commits[0] ? [`Last: ${b.commits[0].message}`] : []),
+        t('Forked from {point}', { point: forkPoint(b) }),
+        `${plural(b.commits.length, 'Commit')}${b.agent ? t(' by {agent}', { agent: b.agent }) : ''}${b.children.length ? t(' · {forks} off it', { forks: plural(b.children.length, 'fork') }) : ''}`,
+        ...(b.commits[0] ? [t('Last: {message}', { message: b.commits[0].message })] : []),
       ],
       files: filesOf(b.commits),
     })
@@ -473,8 +475,8 @@ export default function Citadel({ tree, shown, onOpen }: CitadelProps) {
         color: hex(publisher ? wall : new THREE.Color(ROYAL)),
         lines: [
           f.message,
-          `${i === 0 ? 'Where main begins' : publisher ? `Published by ${publisher.name}${publisher.agent ? ` (${publisher.agent})` : ''}` : 'Published by a Branch no longer listed'} · ${f.ago}`,
-          ...(publisher ? [`${plural(publisher.commits.length, 'Commit')} went into it:`, ...shownCommits.map((c) => `• ${c.message}`), ...(more > 0 ? [`and ${more} more`] : [])] : []),
+          `${i === 0 ? t('Where main begins') : publisher ? t('Published by {name}{agent}', { name: publisher.name, agent: publisher.agent ? ` (${publisher.agent})` : '' }) : t('Published by a Branch no longer listed')} · ${f.ago}`,
+          ...(publisher ? [t('{commits} went into it:', { commits: plural(publisher.commits.length, 'Commit') }), ...shownCommits.map((c) => `• ${c.message}`), ...(more > 0 ? [t('and {count} more', { count: more })] : [])] : []),
         ],
         files: publisher ? filesOf(publisher.commits) : undefined,
       }
@@ -497,7 +499,7 @@ export default function Citadel({ tree, shown, onOpen }: CitadelProps) {
     {
       const info: Info = {
         branch: 'main',
-        card: { kind: 'Branch', title: 'main', color: hex(new THREE.Color(ROYAL)), lines: [`${plural(Math.max(0, p.floors.length - 1), 'published Layer')} on Init`, `${p.arms.length} Branch${p.arms.length === 1 ? '' : 'es'} around it`] },
+        card: { kind: 'Branch', title: 'main', color: hex(new THREE.Color(ROYAL)), lines: [t('{layers} on Init', { layers: plural(Math.max(0, p.floors.length - 1), 'published Layer') }), t('{branches} around it', { branches: plural(p.arms.length, 'Branch') })] },
       }
       const rh = KEEP_R * 2.2
       crown.add(cone, paint(ROYAL), v(0, top + rh / 2, 0), v(KEEP_R * 1.12, rh, KEEP_R * 1.12), 0, info)
@@ -529,15 +531,15 @@ export default function Citadel({ tree, shown, onOpen }: CitadelProps) {
         const from = commit?.merged ? tree.commits.get(commit.merged) : undefined
         const card: Card = {
           kind: from ? 'Merge' : 'Commit',
-          title: `${a.b.name} · ${i + 1} of ${n}`,
+          title: t('{branch} · {index} of {count}', { branch: a.b.name, index: i + 1, count: n }),
           color: hex(colorOf(a.b.name)),
-          lines: [commit?.message ?? '', `${short(c.id)} · ${commit?.ago ?? ''}${commit?.by ? ` · by ${commit.by}` : ''}`, ...(from ? [`Brings in ${from.branch} at ${short(from.id)}: ${from.message}`] : [])],
+          lines: [commit?.message ?? '', `${short(c.id)} · ${commit?.ago ?? ''}${commit?.by ? t(' · by {agent}', { agent: commit.by }) : ''}`, ...(from ? [t('Brings in {branch} at {id}: {message}', { branch: from.branch, id: short(from.id), message: from.message })] : [])],
           files: commit?.changes,
         }
         batches.add(block, paint(i % 2 ? lighter(color, 0.18) : color), c.at, v(Math.max(0.05, a.seg - 0.05), BRIDGE_T, BRIDGE_W), turn, { branch: a.b.name, card, era: Math.max(a.level, eraOf(commit?.at ?? 0)) })
       })
       // the gate it leaves through
-      const gateInfo: Info = { branch: a.b.name, era: Math.max(a.level, eraOf(own[0]?.at ?? 0)), card: { kind: 'Fork', title: `${a.b.name} forks`, color: hex(colorOf(a.b.name)), lines: [`From ${forkPoint(a.b)}`, `${plural(n, 'Commit')} on it since · ${a.b.state}`] } }
+      const gateInfo: Info = { branch: a.b.name, era: Math.max(a.level, eraOf(own[0]?.at ?? 0)), card: { kind: 'Fork', title: t('{branch} forks', { branch: a.b.name }), color: hex(colorOf(a.b.name)), lines: [t('From {point}', { point: forkPoint(a.b) }), t('{commits} on it since · {state}', { commits: plural(n, 'Commit'), state: t(a.b.state) })] } }
       const base = a.origin.clone().setY(a.origin.y + BRIDGE_T / 2)
       batches.add(gate, gold, base.clone().addScaledVector(a.dir, 0.12), v(BRIDGE_W * 0.62, 0.62, 0.7), turn + Math.PI / 2, gateInfo, false)
       batches.add(ball, gold, a.origin.clone().setY(a.origin.y - BRIDGE_T / 2 + 0.02), v(0.16, 0.08, 0.16), 0, gateInfo, false)
@@ -563,7 +565,7 @@ export default function Citadel({ tree, shown, onOpen }: CitadelProps) {
         batches.add(star, paint(GOLD, { glow: 0.8, rough: 0.3 }), end.clone().setY(floor + 1.05), v(0.14, 0.2, 0.14), 0.4, info, false)
       } else batches.add(block, paint(lighter(color, 0.2)), end.clone().setY(floor + 0.2), v(0.42, 0.4, 0.42), turn, info)
       const high = a.b.state === 'published' ? 2.5 : a.b.state === 'open' ? 1.3 : 0.6
-      pin(pinCard(hex(colorOf(a.b.name)), a.b.name, `${plural(n, 'Commit')} · ${a.b.state}`), end.clone().setY(floor + high), [0.5, 1], info.era ?? 0)
+      pin(pinCard(hex(colorOf(a.b.name)), a.b.name, `${plural(n, 'Commit')} · ${t(a.b.state)}`), end.clone().setY(floor + high), [0.5, 1], info.era ?? 0)
     }
 
     // the merges: an arc from the merged-in Commit to the merge, a gold knot where it lands
@@ -582,7 +584,7 @@ export default function Citadel({ tree, shown, onOpen }: CitadelProps) {
           kind: 'Merge',
           title: `${from.branch} → ${c.branch}`,
           color: hex(colorOf(from.branch)),
-          lines: [c.message, `Merge Commit ${short(c.id)} · ${c.ago}`, `Brings in ${short(from.id)}: ${from.message}`],
+          lines: [c.message, t('Merge Commit {id} · {time}', { id: short(c.id), time: c.ago }), t('Brings in {id}: {message}', { id: short(from.id), message: from.message })],
           files: c.changes,
         },
       }
@@ -820,22 +822,22 @@ export default function Citadel({ tree, shown, onOpen }: CitadelProps) {
       labels.domElement.remove()
       api.current = null
     }
-  }, [tree, shown, dark, apart])
+  }, [tree, shown, dark, apart, locale])
 
   if (failed)
-    return <p className="m-auto max-w-sm p-8 text-center text-sm text-muted-foreground">This computer could not start WebGL, so the 3D view cannot be drawn. The 2D view shows the same history.</p>
+    return <p className="m-auto max-w-sm p-8 text-center text-sm text-muted-foreground">{t("This computer could not start WebGL, so the 3D view cannot be drawn. The 2D view shows the same history.")}</p>
 
   // a storybook sky behind the castle: day in light, dusk in dark
   const sky = dark ? 'linear-gradient(180deg, #1c1f4f 0%, #4a2d72 55%, #8a4a7c 100%)' : 'linear-gradient(180deg, #a9d8ff 0%, #d9ecff 40%, #ffe1ef 78%, #fff1dc 100%)'
   return (
     <div className="relative min-h-0 flex-1" style={{ background: sky }}>
-      <div ref={box} className="absolute inset-0 overflow-hidden" role="img" aria-label={`3D castle of the history: ${tree.layers.length} Layers on main and ${tree.branches.size - 1} Branches. Point at a block to see its card; click to open its Branch in History.`} />
+      <div ref={box} className="absolute inset-0 overflow-hidden" role="img" aria-label={t("3D castle of the history: {value1} Layers on main and {value2} Branches. Point at a block to see its card; click to open its Branch in History.", {value1: tree.layers.length, value2: tree.branches.size - 1})} />
       <Button
         variant="outline"
         size="icon"
-        aria-label={pinsShown ? 'Hide the cards' : 'Show a card on every Layer and Branch'}
+        aria-label={pinsShown ? t("Hide the cards") : t("Show a card on every Layer and Branch")}
         aria-pressed={pinsShown}
-        title={pinsShown ? 'Hide cards' : 'Show cards'}
+        title={pinsShown ? t("Hide cards") : t("Show cards")}
         className={`absolute right-13 bottom-3 size-8 backdrop-blur-sm ${pinsShown ? 'bg-primary text-primary-foreground hover:bg-primary/90' : 'bg-card/80'}`}
         onClick={() => {
           const on = !pinsShown
@@ -850,9 +852,9 @@ export default function Citadel({ tree, shown, onOpen }: CitadelProps) {
       <Button
         variant="outline"
         size="icon"
-        aria-label={apart ? 'Put the storeys back together' : 'Pull the storeys apart, so each Layer is in view'}
+        aria-label={apart ? t("Put the storeys back together") : t("Pull the storeys apart, so each Layer is in view")}
         aria-pressed={apart}
-        title={apart ? 'Put together' : 'Pull apart'}
+        title={apart ? t("Put together") : t("Pull apart")}
         className={`absolute right-23 bottom-3 size-8 backdrop-blur-sm ${apart ? 'bg-primary text-primary-foreground hover:bg-primary/90' : 'bg-card/80'}`}
         onClick={() => {
           setApart(!apart)
@@ -861,7 +863,7 @@ export default function Citadel({ tree, shown, onOpen }: CitadelProps) {
       >
         <Layers />
       </Button>
-      <Button variant="outline" size="icon" aria-label="Fit the castle in view" title="Fit" className="absolute right-3 bottom-3 size-8 bg-card/80 backdrop-blur-sm" onClick={() => api.current?.fit()}>
+      <Button variant="outline" size="icon" aria-label={t("Fit the castle in view")} title={t("Fit")} className="absolute right-3 bottom-3 size-8 bg-card/80 backdrop-blur-sm" onClick={() => api.current?.fit()}>
         <Maximize2 />
       </Button>
     </div>

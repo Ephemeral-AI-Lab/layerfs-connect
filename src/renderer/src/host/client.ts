@@ -1,16 +1,14 @@
 // The Connect host's HTTP API (host/README.md), typed by @shared/host-api.
 import type {
-  DemoDetail,
-  DemoSummary,
   FsEntry,
   CommitInfo,
   HostStatus,
   ProjectState,
   ProjectSummary,
+  NewProjectInput,
+  ProjectInitJob,
   RunDetail,
-  RunEvent,
-  RunSummary,
-  TracePage,
+  HostEvent,
 } from '@shared/host-api'
 
 export class HostError extends Error {
@@ -28,7 +26,7 @@ export function hostEndpoint(): { url: string; token: string } | { error: string
   return window.connect.host ?? { error: 'The Connect host did not start.' }
 }
 
-async function call<T>(method: string, path: string, body?: unknown): Promise<T> {
+export async function call<T>(method: string, path: string, body?: unknown): Promise<T> {
   const host = hostEndpoint()
   if ('error' in host) throw new HostError('no-host', host.error, 0)
   const res = await fetch(`${host.url}${path}`, {
@@ -51,6 +49,8 @@ export const host = {
   status: () => call<HostStatus>('GET', '/api/status'),
   startWorker: () => call<HostStatus>('POST', '/api/worker/start'),
   projects: () => call<ProjectSummary[]>('GET', '/api/projects'),
+  createProject: (input: NewProjectInput) => call<ProjectInitJob>('POST', '/api/projects', input),
+  projectInit: (id: string) => call<ProjectInitJob>('GET', `/api/project-inits/${enc(id)}`),
   project: (name: string) => call<ProjectState>('GET', `/api/projects/${enc(name)}`),
   commits: (name: string, branch: string, limit = 200) =>
     call<CommitInfo[]>('GET', `/api/projects/${enc(name)}/commits${q({ branch, limit })}`),
@@ -62,35 +62,49 @@ export const host = {
       `/api/projects/${enc(name)}/file${q({ branch, path })}`,
     ),
   removeProject: (name: string) => call<{ removed: true }>('DELETE', `/api/projects/${enc(name)}`),
-  demos: () => call<DemoSummary[]>('GET', '/api/demos'),
-  demo: (id: string) => call<DemoDetail>('GET', `/api/demos/${enc(id)}`),
-  startRun: (id: string) => call<RunSummary>('POST', `/api/demos/${enc(id)}/runs`),
-  runs: (demo?: string) => call<RunSummary[]>('GET', `/api/runs${q({ demo })}`),
   run: (id: string) => call<RunDetail>('GET', `/api/runs/${enc(id)}`),
-  /** One agent's Trace rows, the newest `limit` before `before` (default: the end). */
-  trace: (id: string, o: { agent?: string; before?: number; limit?: number } = {}) => call<TracePage>('GET', `/api/runs/${enc(id)}/trace${q(o)}`),
-  stopRun: (id: string) => call<RunSummary>('POST', `/api/runs/${enc(id)}/stop`),
+
 }
 
 // One event stream for every listener: a browser keeps at most six connections
 // to one host, and a stream per hook would leave none for the API calls.
-const listeners = new Set<(event: RunEvent) => void>()
+const listeners = new Set<(event: HostEvent) => void>()
+const connections = new Map<(event: HostEvent) => void, () => void>()
 let source: EventSource | null = null
+export type HostConnection = 'connecting' | 'connected' | 'reconnecting'
+let connection: HostConnection = 'connecting'
+const connectionListeners = new Set<(state: HostConnection) => void>()
+function setConnection(next: HostConnection) {
+  connection = next
+  for (const listener of connectionListeners) listener(next)
+}
+export function onHostConnection(listener: (state: HostConnection) => void): () => void {
+  connectionListeners.add(listener)
+  listener(connection)
+  return () => { connectionListeners.delete(listener) }
+}
 
 /** Subscribes to the host's events; answers the unsubscribe. */
-export function onHostEvent(listener: (event: RunEvent) => void): () => void {
+export function onHostEvent(listener: (event: HostEvent) => void, onConnect?: () => void): () => void {
   const host = hostEndpoint()
   if ('error' in host) return () => {}
   listeners.add(listener)
+  if (onConnect) connections.set(listener, onConnect)
   if (!source) {
+    setConnection('connecting')
     source = new EventSource(`${host.url}/api/events?token=${enc(host.token)}`)
     source.onmessage = (m) => {
-      const event = JSON.parse(m.data) as RunEvent
+      const event = JSON.parse(m.data) as HostEvent
       for (const l of [...listeners]) l(event)
     }
+    source.onopen = () => { setConnection('connected'); for (const connected of connections.values()) connected() }
+    source.onerror = () => { setConnection('reconnecting') }
+  } else if (onConnect && source.readyState === EventSource.OPEN) {
+    onConnect()
   }
   return () => {
     listeners.delete(listener)
+    connections.delete(listener)
     if (listeners.size === 0 && source) {
       source.close()
       source = null

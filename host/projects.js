@@ -1,7 +1,9 @@
 // The host's real LayerFS reads (README.md, "HTTP API"), mapped into the
-// types of src/shared/host-api.ts, and project removal.
+// types of src/shared/host-api.ts, with project creation and removal.
 //   status        runtime.status(), plus the worker start this host made
 //   list          runtime.project.list(), each marked with the run that made it
+//   create/init   runtime.project.start_init()/get_init(), importing an empty
+//                 source or the selected folder, with the runtime's progress
 //   state         runtime.project.get_state(name): Branches, Commits, Layers and
 //                 the running Sandboxes' Workspaces, one read that starts no
 //                 Sandbox; runtime.sandbox.list() adds each container's state;
@@ -18,8 +20,9 @@
 // and closed after a quiet minute. Every LayerFS call is made once; a
 // refusal passes through with its code.
 import { execFile } from 'node:child_process'
-import { readdirSync, readFileSync, statSync } from 'node:fs'
-import { join } from 'node:path'
+import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync } from 'node:fs'
+import { dirname, isAbsolute, join } from 'node:path'
+import { setTimeout as pause } from 'node:timers/promises'
 import { LayerFS } from '@layerfs/agent'
 import { LayerFSBackend } from '@layerfs/backend'
 import { VOLUMES, missing as missingSettings, openRuntime, withProjectEnv } from './config.js'
@@ -127,6 +130,9 @@ export class Projects {
     /** The worker start in progress, and the last one's failure. */
     this.starting = null
     this.startError = null
+    this.initializing = new Set()
+    this.creations = new Map()
+    this.emptySources = join(spec.state, 'project-sources')
   }
 
   runtime() {
@@ -225,7 +231,67 @@ export class Projects {
 
   summary(p, made) {
     const by = made.get(p.name)
-    return { name: p.name, volume: p.volume ?? null, source: p.source ?? null, created: p.created ?? null, initialized: !!p.initialized, demo: by?.demo ?? null, run: by?.run ?? null }
+    const source = p.source && dirname(p.source) !== this.emptySources ? p.source : null
+    return { name: p.name, volume: p.volume ?? null, source, created: p.created ?? null, initialized: !!p.initialized, demo: by?.demo ?? null, run: by?.run ?? null }
+  }
+
+  /** Starts a real Init, either from a supplied folder or an empty source. */
+  async create(input) {
+    const { name, source } = input ?? {}
+    checkName(name)
+    if (this.initializing.has(name)) throw refuse(409, 'Exists', `a LayerFS project named ${name} is being created`)
+    if (source !== undefined && (typeof source !== 'string' || !isAbsolute(source) || source.includes('\0') || !statSync(source, { throwIfNoEntry: false })?.isDirectory())) {
+      throw refuse(400, 'InvalidInput', 'Choose an existing absolute source folder.')
+    }
+    this.initializing.add(name)
+    let emptySource
+    try {
+      const runtime = await this.runtime()
+      if (source === undefined) {
+        mkdirSync(this.emptySources, { recursive: true, mode: 0o700 })
+        emptySource = mkdtempSync(join(this.emptySources, 'empty-'))
+      }
+      const job = await runtime.project.start_init(name, source ?? emptySource)
+      // Init continues even when the requesting window is no longer polling.
+      const completion = this.finishInit(runtime, job, emptySource).catch((error) => {
+        this.log(`[host] creating ${name}: ${error.message}`)
+      }).finally(() => {
+        this.initializing.delete(name)
+        this.creations.delete(job.id)
+      })
+      this.creations.set(job.id, completion)
+      return this.initSummary(job)
+    } catch (error) {
+      this.initializing.delete(name)
+      if (emptySource) rmSync(emptySource, { recursive: true, force: true })
+      throw error
+    }
+  }
+
+  async finishInit(runtime, job, emptySource) {
+    while (!job.ended) {
+      await pause(250)
+      const current = await runtime.project.get_init(job.id)
+      if (!current) throw refuse(404, 'NoSuchInit', 'The project creation task is no longer available.')
+      job = current
+    }
+    // Only remove our generated source after Init has actually stopped reading it.
+    if (emptySource) rmSync(emptySource, { recursive: true, force: true })
+  }
+
+  initSummary(job) {
+    return {
+      ...job,
+      source: job.source && dirname(job.source) !== this.emptySources ? job.source : null,
+      project: job.project ? this.summary({ ...job.project, initialized: true }, new Map()) : null,
+    }
+  }
+
+  /** Reads the runtime's job; polling never restarts a failed Init. */
+  async init(id) {
+    const job = await (await this.runtime()).project.get_init(id)
+    if (!job) throw refuse(404, 'NoSuchInit', 'The project creation task is no longer available. Refresh Projects to check its result.')
+    return this.initSummary(job)
   }
 
   /** ProjectSummary[]. */
@@ -533,8 +599,9 @@ export class Projects {
     await client?.layerfs.close().catch((error) => this.log(`[host] closing ${name}: ${error?.message ?? error}`))
   }
 
-  /** Closes every client (the runtime is the caller's). */
+  /** Lets active Inits finish, then closes every client (the runtime is the caller's). */
   async close() {
+    await Promise.all(this.creations.values())
     await Promise.all([...this.clients.keys()].map((name) => this.forget(name)))
   }
 }

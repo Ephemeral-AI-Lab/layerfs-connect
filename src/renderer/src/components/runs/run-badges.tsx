@@ -5,11 +5,13 @@ import { AGENT_TONE, KIND, KIND_ORDER, RUN_LABEL, RUN_TONE, ago, isLive, runLabe
 import { Chip, DOT, type Tone } from '@/components/storage/chips'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
+import { useI18n } from '@/i18n'
 
 /** A state dot; while live it glows and sends out a ring (`pulse-ring`), at rest it is still. */
 export function StateDot({ tone, live, label, className }: { tone: Tone; live?: boolean; label: string; className?: string }) {
+  const { t } = useI18n()
   return (
-    <span role="img" aria-label={label} title={label} className={cn('relative flex size-2 shrink-0', className)}>
+    <span role="img" aria-label={t(label)} title={t(label)} className={cn('relative flex size-2 shrink-0', className)}>
       <span
         className={cn(
           'size-2 rounded-full transition-colors duration-(--dur-base)',
@@ -37,26 +39,26 @@ export function AgentDot({ state }: { state: AgentState }) {
 }
 
 export function RunStateBadge({ state }: { state: RunState }) {
+  const { t } = useI18n()
   const live = state === 'running' || state === 'starting'
   const icon = state === 'stopped' ? Ban : undefined
   return (
     <Chip tone={RUN_TONE[state]} live={live} icon={icon}>
-      {RUN_LABEL[state]}
+      {t(RUN_LABEL[state])}
     </Chip>
   )
 }
 
-/** A kind chip: "workspace.exec", "fs", … coloured by segment kind. */
+/** A kind chip: "workspace.exec", "fs", … with a subtle kind dot on a calm monochrome pill. */
 export function KindChip({ kind, children, className }: { kind: SegmentKind; children?: React.ReactNode; className?: string }) {
   return (
     <span
       className={cn(
-        'inline-flex h-5 shrink-0 items-center gap-1.5 rounded-full pr-2 pl-1.5 font-mono text-[11px] font-medium whitespace-nowrap ring-1 ring-inset',
-        KIND[kind].chip,
+        'inline-flex h-5 shrink-0 items-center gap-1.5 rounded-full bg-foreground/[0.04] pr-2.5 pl-2 font-mono text-[11px] font-medium whitespace-nowrap text-muted-foreground ring-1 ring-foreground/[0.07] ring-inset',
         className,
       )}
     >
-      <span aria-hidden="true" className={cn('size-1.5 shrink-0 rounded-full', KIND[kind].dot)} />
+      <span aria-hidden="true" className={cn('size-1.5 shrink-0 rounded-full opacity-75', KIND[kind].dot)} />
       {children ?? KIND[kind].label}
     </span>
   )
@@ -78,9 +80,10 @@ export function KindLegend({ kinds, counts, className }: { kinds?: SegmentKind[]
   )
 }
 
-export const Spinner = ({ className }: { className?: string }) => (
-  <LoaderCircle aria-label="Running" className={cn('size-3.5 shrink-0 animate-spin text-primary', className)} />
-)
+export function Spinner({ className }: { className?: string }) {
+  const { t } = useI18n()
+  return <LoaderCircle aria-label={t('Running')} className={cn('size-3.5 shrink-0 animate-spin text-primary', className)} />
+}
 
 /**
  * Shows, on hover or focus, the session an agent belongs to: "Session 7 ·

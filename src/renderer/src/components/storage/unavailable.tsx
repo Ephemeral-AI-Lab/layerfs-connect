@@ -1,6 +1,7 @@
+import { t, useI18n } from '@/i18n'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 
-export const NEEDS_REMOTES = 'Needs LayerFS remotes (#446)'
+export const NEEDS_REMOTES = 'Planned for upcoming release'
 
 /**
  * Wraps a control the backend can't serve yet. Disabled buttons fire no
@@ -8,6 +9,7 @@ export const NEEDS_REMOTES = 'Needs LayerFS remotes (#446)'
  * shows the not-allowed cursor.
  */
 export function Unavailable({ reason = NEEDS_REMOTES, children }: { reason?: string; children: React.ReactNode }) {
+  useI18n()
   return (
     <Tooltip>
       <TooltipTrigger asChild>
@@ -15,7 +17,7 @@ export function Unavailable({ reason = NEEDS_REMOTES, children }: { reason?: str
           {children}
         </span>
       </TooltipTrigger>
-      <TooltipContent>{reason}</TooltipContent>
+      <TooltipContent>{t(reason)}</TooltipContent>
     </Tooltip>
   )
 }

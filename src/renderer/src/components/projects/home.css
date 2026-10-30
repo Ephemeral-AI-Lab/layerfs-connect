@@ -1,52 +1,5 @@
-/* Projects Home: the stats strip, the project cards and their small parts.
-   Shared tokens and classes (surface, card-hover, spotlight, live-border…) are in styles.css. */
+/* Projects Home: compact project cards over the shared glass surface. */
 
-/* ---------- Stats strip ---------- */
-
-.home-stats {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  overflow: hidden;
-}
-.home-stat {
-  position: relative;
-  padding: 14px 20px 16px;
-}
-.home-stat + .home-stat {
-  border-left: 1px solid var(--border);
-}
-/* The live cell: a line of brand light along its top edge, drifting. */
-.home-stat[data-live]::before {
-  content: '';
-  position: absolute;
-  inset: 0 0 auto;
-  height: 2px;
-  background: var(--brand-gradient);
-  background-size: 200% 100%;
-  animation: home-flow 3s linear infinite;
-}
-.home-stat[data-live]::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background: radial-gradient(18rem 6rem at 30% 0%, var(--glow), transparent 70%);
-  opacity: 0.35;
-}
-@keyframes home-flow {
-  to {
-    background-position: -200% 0;
-  }
-}
-@media (max-width: 1180px) {
-  .home-stat {
-    padding: 12px 16px 14px;
-  }
-}
-
-/* ---------- Project card ---------- */
-
-/* The mark sits on a small lit tile; a live project's tile breathes brand light. */
 .home-mark {
   position: relative;
   display: flex;
@@ -55,10 +8,12 @@
   justify-content: center;
   width: 38px;
   height: 38px;
-  border-radius: 10px;
-  border: 1px solid var(--border);
-  background-color: var(--card);
-  background-image: var(--surface-sheen);
+  border-radius: 12px;
+  border: 1px solid color-mix(in oklab, var(--border) 60%, rgba(255, 255, 255, 0.8));
+  background-color: color-mix(in oklab, var(--card) 65%, transparent);
+  background-image: var(--glass-sheen);
+  backdrop-filter: blur(12px) saturate(1.6);
+  -webkit-backdrop-filter: blur(12px) saturate(1.6);
   box-shadow: var(--highlight), var(--elev-1);
   transition:
     transform var(--dur-base) var(--ease-out-expo),
@@ -68,112 +23,15 @@
   transform: translateY(-1px) rotate(-4deg);
   box-shadow: var(--highlight), var(--elev-2);
 }
-.home-mark[data-live]::before {
-  content: '';
-  position: absolute;
-  inset: -6px;
-  z-index: -1;
-  border-radius: 14px;
-  background: var(--brand-gradient);
-  filter: blur(10px);
-  opacity: 0.22;
-  animation: home-breathe 2.4s ease-in-out infinite;
-}
-@keyframes home-breathe {
-  50% {
-    opacity: 0.45;
-    transform: scale(1.06);
-  }
-}
 
-/* The open arrow beside a card's title slides in on hover. */
 .home-arrow {
-  opacity: 0;
-  transform: translate(-4px, 2px);
+  opacity: 0.45;
   transition:
     opacity var(--dur-fast) var(--ease-out-soft),
     transform var(--dur-base) var(--ease-out-expo);
 }
 .home-card:hover .home-arrow,
-.home-card:focus-within .home-arrow {
+.home-card:focus-visible .home-arrow {
   opacity: 1;
-  transform: none;
-}
-
-/* The Store well's Layer stack: sheets that settle onto each other, the newest lit. */
-.home-layers path {
-  fill: var(--card);
-  stroke: color-mix(in oklab, var(--foreground) 28%, transparent);
-  stroke-width: 1;
-  stroke-linejoin: round;
-  animation: home-layer var(--dur-slow) var(--ease-out-expo) backwards;
-  animation-delay: calc(var(--i, 0) * 60ms + 200ms);
-}
-.home-layers path.home-sheet-top {
-  fill: color-mix(in oklab, var(--primary) 18%, var(--card));
-  stroke: var(--primary);
-}
-@keyframes home-layer {
-  from {
-    opacity: 0;
-    transform: translateY(-5px);
-  }
-}
-
-/* A live card's progress: a bar that fills, with light flowing through it. */
-.home-progress {
-  position: relative;
-  height: 3px;
-  overflow: hidden;
-  border-radius: 3px;
-  background: color-mix(in oklab, var(--primary) 12%, transparent);
-}
-.home-progress > span {
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background: var(--brand-gradient);
-  transform-origin: left;
-  transition: transform var(--dur-slow) var(--ease-out-expo);
-  @starting-style {
-    transform: scaleX(0);
-  }
-}
-.home-progress > span::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.55), transparent);
-  background-size: 40% 100%;
-  background-repeat: no-repeat;
-  animation: home-sweep 1.8s var(--ease-out-soft) infinite;
-}
-@keyframes home-sweep {
-  from {
-    background-position: -40% 0;
-  }
-  to {
-    background-position: 140% 0;
-  }
-}
-
-/* "New session": the plus turns on hover, the edge takes the brand tint, the press sinks. */
-.home-new svg {
-  transition: transform var(--dur-base) var(--ease-out-expo);
-}
-.home-new:hover:not(:disabled) svg.home-plus {
-  transform: rotate(90deg);
-}
-.home-card:hover .home-new:not(:disabled) {
-  border-color: color-mix(in oklab, var(--primary) 35%, var(--border));
-  color: var(--primary);
-}
-.home-new:active:not(:disabled) {
-  transform: scale(0.96);
-  box-shadow: inset 0 1px 2px rgb(0 0 0 / 0.08);
-}
-
-/* The search box's "3 of 10". */
-.home-count {
-  animation: fade-in var(--dur-fast) var(--ease-out-soft);
+  transform: translate(1px, -1px);
 }

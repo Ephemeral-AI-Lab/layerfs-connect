@@ -3,7 +3,7 @@
 // address and token, which the main process passes as --connect-host=<JSON>
 // ({ url, token }, or { error } when the host did not start).
 
-import { contextBridge } from 'electron'
+import { contextBridge, ipcRenderer } from 'electron'
 
 type HostAddress = { url: string; token: string } | { error: string }
 
@@ -19,4 +19,7 @@ function hostAddress(): HostAddress {
   }
 }
 
-contextBridge.exposeInMainWorld('connect', { platform: process.platform, arch: process.arch, host: hostAddress() })
+contextBridge.exposeInMainWorld('connect', {
+  platform: process.platform, arch: process.arch, host: hostAddress(),
+  chooseDirectory: (defaultPath?: string, locale?: 'zh-CN' | 'en') => ipcRenderer.invoke('connect:choose-directory', defaultPath, locale),
+})

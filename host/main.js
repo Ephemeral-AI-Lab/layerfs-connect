@@ -13,7 +13,9 @@
 import { readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { APP, openRuntime, resolveSpec } from './config.js'
+import { AgentManager } from './agents/index.js'
 import { Projects } from './projects.js'
+import { AgentWorkspaces } from './agents/workspaces.js'
 import { createHostServer, listen, newToken } from './server.js'
 
 /** How long shutdown may take before the process exits anyway. */
@@ -68,8 +70,9 @@ async function main() {
   const runtime = await openRuntime(spec)
   const engine = { runs: null, error: 'loading' }
   const projects = new Projects({ spec, runs: () => engine.runs, log })
+  const agents = await AgentManager.create({ state: spec.state, projectEnvironment: (name) => projects.record(name), projectWorkspaces: new AgentWorkspaces({ projects }) })
   const token = newToken()
-  const server = createHostServer({ token, projects, runs: () => engine.runs, runsError: () => engine.error, log })
+  const server = createHostServer({ token, projects, agents: () => agents, runs: () => engine.runs, runsError: () => engine.error, log })
 
   const endpoint = join(spec.state, 'host.json')
   let owned = false
@@ -82,13 +85,18 @@ async function main() {
         process.exit(1)
       }, CLOSE_MS).unref()
       await new Promise((resolve) => server.close(() => resolve()))
+      let clean = true
+      await agents.close().catch((error) => {
+        clean = false
+        log(`[host] closing agents: ${error.message}`)
+      })
       await Promise.resolve()
         .then(() => engine.runs?.close?.())
         .catch((error) => log(`[host] closing the engine: ${error?.message ?? error}`))
       await projects.close()
       await runtime.close().catch((error) => log(`[host] closing the runtime: ${error?.message ?? error}`))
       if (owned) rmSync(endpoint, { force: true })
-      process.exit(0)
+      process.exit(clean ? 0 : 1)
     })()
     return closing
   }

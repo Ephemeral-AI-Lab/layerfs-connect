@@ -1,5 +1,12 @@
 node_modules/
 out/
 dist/
+coverage/
+.nyc_output/
+.cache/
+.vite/
+test-results/
+playwright-report/
+*.tsbuildinfo
 *.log
 .DS_Store

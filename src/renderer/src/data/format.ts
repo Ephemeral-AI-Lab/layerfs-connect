@@ -1,3 +1,4 @@
+import { t, localeTag } from '@/i18n'
 // Small formatters shared by the project, storage and compute pages.
 
 import { agentColors } from '@/components/runs/run-format'
@@ -11,18 +12,18 @@ export function ago(at: number | null | undefined, now = Date.now()): string {
   const ms = toMs(at)
   if (ms === null) return '—'
   const s = Math.max(0, (now - ms) / 1000)
-  if (s < 45) return 'just now'
+  if (s < 45) return t('just now')
   const m = Math.round(s / 60)
-  if (m < 60) return `${Math.max(m, 1)} min ago`
-  if (m < 24 * 60) return `${Math.round(m / 60)} h ago`
-  if (m < 48 * 60) return 'yesterday'
-  return `${Math.round(m / (24 * 60))} days ago`
+  if (m < 60) return new Intl.RelativeTimeFormat(localeTag(), {numeric: 'always'}).format(-Math.max(m, 1), 'minute')
+  if (m < 24 * 60) return new Intl.RelativeTimeFormat(localeTag(), {numeric: 'always'}).format(-Math.round(m / 60), 'hour')
+  if (m < 48 * 60) return t('yesterday')
+  return new Intl.RelativeTimeFormat(localeTag(), {numeric: 'always'}).format(-Math.round(m / (24 * 60)), 'day')
 }
 
 /** A local date and time, for tooltips. */
 export const when = (at: number | null | undefined) => {
   const ms = toMs(at)
-  return ms === null ? 'unknown time' : new Date(ms).toLocaleString()
+  return ms === null ? t('unknown time') : new Date(ms).toLocaleString(localeTag())
 }
 
 /** "1.2 MB", "340 KB", "12 B". Decimal units, like Docker and Finder. */

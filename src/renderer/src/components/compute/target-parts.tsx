@@ -1,3 +1,4 @@
+import { t, useI18n } from '@/i18n'
 import { Star } from 'lucide-react'
 import { siApple, siDocker, siLinux, siModal } from 'simple-icons'
 
@@ -15,6 +16,7 @@ const MONOGRAM: Partial<Record<TargetId | 'win32', { text: string; hex: string }
 
 /** A target's tile. Native takes the mark of the OS it runs on. */
 export function TargetIcon({ id, os, size = 'md' }: { id: TargetId; os?: string; size?: 'sm' | 'md' | 'lg' }) {
+  useI18n()
   const key = id === 'native' && os === 'win32' ? 'win32' : id
   const mark =
     id === 'docker'
@@ -44,10 +46,9 @@ export function TargetIcon({ id, os, size = 'md' }: { id: TargetId; os?: string;
 }
 
 export function DefaultChip() {
+  useI18n()
   return (
-    <Chip tone="info" icon={Star}>
-      Default
-    </Chip>
+    <Chip tone="info" icon={Star}>{t("Default")}</Chip>
   )
 }
 
@@ -67,6 +68,7 @@ export function TargetHeader({
   control?: React.ReactNode
   className?: string
 }) {
+  useI18n()
   return (
     <header className={cn('flex items-start gap-3.5', className)}>
       {icon}

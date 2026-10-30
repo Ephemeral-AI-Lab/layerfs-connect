@@ -1,3 +1,4 @@
+import { t, localeTag, getLocale } from '@/i18n'
 // Shared look and wording for demo runs: state tones, kind colours, agent
 // colours and time formatting. Class names are literal, so Tailwind sees them.
 import type { AgentState, RunState, SegmentKind, StepResult } from '@shared/host-api'
@@ -182,16 +183,16 @@ export function duration(ms: number | null | undefined): string {
   if (ms === null || ms === undefined || !Number.isFinite(ms)) return '–'
   // the page's clock ticks once a second, so an event newer than its last tick would read negative
   ms = Math.max(0, ms)
-  if (ms < 1000) return `${Math.round(ms)} ms`
+  if (ms < 1000) return t('{n} ms', { n: Math.round(ms) })
   const s = ms / 1000
-  if (s < 9.95) return `${s.toFixed(1)} s`
+  if (s < 9.95) return t('{n} s', { n: s.toFixed(1) })
   // round once, before splitting, so 119.6 s reads 2 m 00 s and never 1 m 60 s
   const total = Math.round(s)
-  if (total < 60) return `${total} s`
+  if (total < 60) return t('{n} s', { n: total })
   const m = Math.floor(total / 60)
   const rest = total % 60
-  if (m < 60) return `${m} m ${String(rest).padStart(2, '0')} s`
-  return `${Math.floor(m / 60)} h ${String(m % 60).padStart(2, '0')} m`
+  if (m < 60) return t('{m} m {s} s', { m, s: String(rest).padStart(2, '0') })
+  return t('{h} h {m} m', { h: Math.floor(m / 60), m: String(m % 60).padStart(2, '0') })
 }
 
 /**
@@ -205,21 +206,21 @@ export function activity(
   now: number,
 ): string {
   if (call) return `${call.method} · ${duration(now - call.start)}`
-  if (a.thinking) return `thinking · ${duration(now - a.thinking)}`
+  if (a.thinking) return t('thinking · {duration}', { duration: duration(now - a.thinking) })
   const since = a.since ? ` · ${duration(now - a.since)}` : ''
   switch (a.state) {
     case 'running':
-      return 'working'
+      return t('working')
     case 'idle':
-      return `idle${since}`
+      return t('idle{since}', { since })
     case 'waiting':
-      return 'not started'
+      return t('not started')
     case 'done':
-      return a.since ? `done · ${ago(a.since, now)}` : 'done'
+      return a.since ? t('done · {time}', { time: ago(a.since, now) }) : t('done')
     case undefined:
       return ''
     default:
-      return a.state
+      return t(a.state)
   }
 }
 
@@ -229,21 +230,21 @@ export function clock(at: number | null | undefined): string {
   const d = new Date(at)
   const today = new Date()
   if (d.toDateString() === today.toDateString())
-    return d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })
-  return d.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false })
+    return d.toLocaleTimeString(localeTag(), { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })
+  return d.toLocaleString(localeTag(), { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false })
 }
 
 /** "just now", "5 min ago", "3 h ago", or a date. */
 export function ago(at: number | null | undefined, now = Date.now()): string {
   if (!at) return '–'
   const s = Math.max(0, (now - at) / 1000)
-  if (s < 45) return 'just now'
-  if (s < 3600) return `${Math.round(s / 60)} min ago`
-  if (s < 86400) return `${Math.round(s / 3600)} h ago`
-  return new Date(at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+  if (s < 45) return t('just now')
+  if (s < 3600) return new Intl.RelativeTimeFormat(localeTag(), { numeric: 'always' }).format(-Math.max(1, Math.round(s / 60)), 'minute')
+  if (s < 86400) return new Intl.RelativeTimeFormat(localeTag(), { numeric: 'always' }).format(-Math.round(s / 3600), 'hour')
+  return new Date(at).toLocaleDateString(localeTag(), { month: 'short', day: 'numeric' })
 }
 
-export const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`
+export const plural = (n: number, word: string) => getLocale() === 'zh-CN' ? `${n} ${t(word)}` : `${n} ${word}${n === 1 ? '' : 's'}`
 
 export const stepKey = (agent: string, index: number) => `${agent}:${index}`
 

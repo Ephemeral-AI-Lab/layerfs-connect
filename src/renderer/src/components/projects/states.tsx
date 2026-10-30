@@ -1,3 +1,4 @@
+import { t, useI18n } from '@/i18n'
 import { RotateCw, Unplug } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
@@ -12,17 +13,18 @@ export const unreachable = (error: Error) =>
 export function explain(error: Error, what = 'it'): { title: string; detail: string } {
   if (unreachable(error))
     return {
-      title: 'The Connect host is not reachable',
+      title: t('The Connect host is not reachable'),
       detail:
         error instanceof HostError
           ? error.message
-          : 'Connect could not talk to its host process. Restart Connect; if it keeps happening, check its log.',
+          : t('Connect could not talk to its host process. Restart Connect; if it keeps happening, check its log.'),
     }
-  return { title: `Could not read ${what}`, detail: error.message }
+  return { title: t('Could not read {what}', { what }), detail: error.message }
 }
 
 /** Something being read: three shimmering lines over the label, which stays the status's text. */
 export function Loading({ label, className }: { label: string; className?: string }) {
+  useI18n()
   return (
     <div role="status" className={cn('flex flex-col items-center justify-center gap-4 py-14', className)}>
       <div aria-hidden="true" className="flex w-full max-w-xs flex-col items-center gap-2 animate-in fade-in duration-500">
@@ -40,6 +42,7 @@ export function Loading({ label, className }: { label: string; className?: strin
 
 /** The icon of an Empty or LoadError: a lit tile, with a soft light behind it. */
 function StateIcon({ icon: Icon, tone = 'quiet', still }: { icon: React.ComponentType<{ className?: string }>; tone?: 'quiet' | 'danger'; still?: boolean }) {
+  useI18n()
   return (
     <span className={cn('relative mb-1 flex', !still && 'drift')}>
       <span
@@ -67,6 +70,7 @@ interface LoadErrorProps {
 }
 
 export function LoadError({ error, what, onRetry, className }: LoadErrorProps) {
+  useI18n()
   const { title, detail } = explain(error, what)
   return (
     <div
@@ -81,8 +85,7 @@ export function LoadError({ error, what, onRetry, className }: LoadErrorProps) {
       <p className="max-w-lg text-xs break-words text-muted-foreground">{detail}</p>
       {onRetry && (
         <Button variant="outline" size="sm" className="mt-2" onClick={onRetry}>
-          <RotateCw /> Try again
-        </Button>
+          <RotateCw />{t("Try again")}</Button>
       )}
     </div>
   )
@@ -98,6 +101,7 @@ interface EmptyProps {
 
 /** Nothing here yet: a gently drifting icon, a title, a line of help and an action. */
 export function Empty({ icon, title, children, action, className }: EmptyProps) {
+  useI18n()
   return (
     <div className={cn('reveal flex flex-col items-center gap-2 rounded-xl border border-dashed bg-card/40 px-6 py-14 text-center', className)}>
       <StateIcon icon={icon} />

@@ -10,7 +10,7 @@ import { spawn, type ChildProcess } from 'node:child_process'
 import { writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { createInterface } from 'node:readline'
-import { BrowserWindow, app, nativeTheme, shell } from 'electron'
+import { BrowserWindow, app, dialog, ipcMain, nativeTheme, shell } from 'electron'
 
 type HostAddress = { url: string; token: string } | { error: string }
 
@@ -79,15 +79,27 @@ function stopHost() {
 }
 
 function createWindow(): BrowserWindow {
+  const isMac = process.platform === 'darwin'
+  const isDark = nativeTheme.shouldUseDarkColors
+
   const win = new BrowserWindow({
     width: 1280,
     height: 820,
     minWidth: 900,
     minHeight: 600,
     show: false,
-    title: 'LayerFS Connect',
+    title: isMac ? '' : 'LayerFS Connect',
     icon: ICON,
-    backgroundColor: '#F6F6F7',
+    backgroundColor: isDark ? '#111113' : '#F6F6F7',
+    titleBarStyle: 'hidden',
+    trafficLightPosition: isMac ? { x: 16, y: 16 } : undefined,
+    titleBarOverlay: isMac
+      ? false
+      : {
+          color: isDark ? '#10121a' : '#f6f7fa',
+          symbolColor: isDark ? '#ededef' : '#18181b',
+          height: 38,
+        },
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       sandbox: true,
@@ -95,6 +107,19 @@ function createWindow(): BrowserWindow {
       additionalArguments: [`--connect-host=${JSON.stringify(hostAddress)}`],
     },
   })
+
+  if (!isMac && win.setTitleBarOverlay) {
+    const updateOverlay = () => {
+      if (win.isDestroyed()) return
+      const dark = nativeTheme.shouldUseDarkColors
+      win.setTitleBarOverlay({
+        color: dark ? '#10121a' : '#f6f7fa',
+        symbolColor: dark ? '#ededef' : '#18181b',
+        height: 38,
+      })
+    }
+    nativeTheme.on('updated', updateOverlay)
+  }
 
   win.once('ready-to-show', () => win.show())
 
@@ -115,7 +140,7 @@ function createWindow(): BrowserWindow {
   // Dev aid: CONNECT_SHOT=<file.png> saves the loaded window, then quits.
   const shot = process.env.CONNECT_SHOT
   if (shot) {
-    win.webContents.once('did-finish-load', () => {
+    win.once('ready-to-show', () => {
       setTimeout(async () => {
         // CONNECT_SCROLL=<px> scrolls the page's scrolling panes first.
         const scroll = Number(process.env.CONNECT_SCROLL ?? 0)
@@ -147,6 +172,18 @@ function createWindow(): BrowserWindow {
 }
 
 void app.whenReady().then(async () => {
+  ipcMain.handle('connect:choose-directory', async (event, defaultPath?: string, locale?: 'zh-CN' | 'en') => {
+    const owner = BrowserWindow.fromWebContents(event.sender)
+    if (!owner) throw new Error('The Connect window is no longer available.')
+    owner.focus()
+    const result = await dialog.showOpenDialog(owner, {
+      title: locale === 'zh-CN' ? '选择工作目录' : 'Choose working directory',
+      buttonLabel: locale === 'zh-CN' ? '使用此文件夹' : 'Use folder',
+      defaultPath,
+      properties: ['openDirectory', 'createDirectory'],
+    })
+    return result.canceled ? null : result.filePaths[0] ?? null
+  })
   // a packaged app takes its icon from the bundle; unpackaged, the Dock would show Electron's
   if (process.platform === 'darwin' && !app.isPackaged) app.dock?.setIcon(ICON)
   // Dev aid: CONNECT_THEME=dark or light overrides the system setting.

@@ -7,6 +7,7 @@
 export type Inline = { t: 'text' | 'code' | 'strong' | 'em'; s: string } | { t: 'link'; s: string; href: string }
 
 export type Block =
+  | { t: 'h'; level: 1 | 2 | 3; inl: Inline[] }
   | { t: 'p'; inl: Inline[] }
   | { t: 'list'; ordered: boolean; items: Inline[][] }
   | { t: 'code'; lang: string; text: string }
@@ -44,6 +45,7 @@ export function inline(s: string): Inline[] {
 
 const ITEM = /^\s*([-*]|\d+[.)])\s+/
 const FENCE = /^\s*```/
+const HEADING = /^\s*(#{1,3})\s+(.+?)\s*$/
 
 export function blocks(text: string): Block[] {
   const out: Block[] = []
@@ -58,6 +60,13 @@ export function blocks(text: string): Block[] {
       i = stop + 1
       continue
     }
+    const heading = HEADING.exec(l)
+    if (heading) {
+      const level = Math.min(3, heading[1].length) as 1 | 2 | 3
+      out.push({ t: 'h', level, inl: inline(heading[2]) })
+      i++
+      continue
+    }
     if (ITEM.test(l)) {
       const ordered = /\d/.test(l.trim()[0])
       const items: Inline[][] = []
@@ -70,7 +79,7 @@ export function blocks(text: string): Block[] {
       continue
     }
     const para: string[] = []
-    while (i < lines.length && lines[i].trim() && !ITEM.test(lines[i]) && !FENCE.test(lines[i])) para.push(lines[i++])
+    while (i < lines.length && lines[i].trim() && !ITEM.test(lines[i]) && !FENCE.test(lines[i]) && !HEADING.test(lines[i])) para.push(lines[i++])
     out.push({ t: 'p', inl: inline(para.join('\n')) })
   }
   return out

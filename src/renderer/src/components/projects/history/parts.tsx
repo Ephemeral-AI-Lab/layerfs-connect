@@ -1,3 +1,4 @@
+import { t, useI18n } from '@/i18n'
 // Small parts the History and Files panes share: a pane header, a search
 // field with a clear button, and the id chip.
 import './history.css'
@@ -11,6 +12,7 @@ import { cn } from '@/lib/utils'
 
 /** A pane's header: an eyebrow label, a count, anything on the right. Frosted and sticky in a scroller. */
 export function PaneHead({ label, count, children, className }: { label: string; count?: ReactNode; children?: ReactNode; className?: string }) {
+  useI18n()
   return (
     <div className={cn('hist-pane-head flex h-10 shrink-0 items-center gap-2 px-3', className)}>
       <span className="hist-eyebrow">{label}</span>
@@ -30,6 +32,7 @@ interface SearchFieldProps {
 
 /** A search box: an icon, the field, and a clear button (Escape clears too). */
 export function SearchField({ label, value, onChange, className, size = 'md' }: SearchFieldProps) {
+  useI18n()
   return (
     <div className={cn('relative', className)}>
       <Search aria-hidden="true" className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-faint" />
@@ -49,7 +52,7 @@ export function SearchField({ label, value, onChange, className, size = 'md' }: 
       {value && (
         <button
           type="button"
-          aria-label="Clear"
+          aria-label={t("Clear")}
           onClick={() => onChange('')}
           className="absolute top-1/2 right-1.5 flex size-5 -translate-y-1/2 items-center justify-center rounded text-faint outline-none animate-in fade-in zoom-in-75 hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
         >
@@ -62,6 +65,7 @@ export function SearchField({ label, value, onChange, className, size = 'md' }: 
 
 /** A Commit or Layer id, short, the full id on hover. */
 export function HashChip({ id, on, dim, className }: { id: string; on?: boolean; dim?: boolean; className?: string }) {
+  useI18n()
   return (
     <code title={id} data-on={on} className={cn('hash-chip', dim ? 'text-faint' : 'text-foreground/85', className)}>
       {shortId(id)}

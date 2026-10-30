@@ -4,6 +4,7 @@ interface Window {
   connect: {
     platform: string
     arch: string
+    chooseDirectory: (defaultPath?: string, locale?: 'zh-CN' | 'en') => Promise<string | null>
     host?: { url: string; token: string } | { error: string }
   }
 }

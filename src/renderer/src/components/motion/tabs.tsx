@@ -18,12 +18,12 @@ interface TabBarProps {
 export function TabBar({ className, children, ...aria }: TabBarProps) {
   const { container, indicator } = useIndicator<HTMLElement>({ axis: 'x' })
   return (
-    <nav ref={container} {...aria} className={cn('relative flex items-end gap-6 border-b', className)}>
+    <nav ref={container} {...aria} className={cn('relative flex min-w-0 items-end gap-5 overflow-x-auto border-b scrollbar-none', className)}>
       {children}
       <span
         ref={indicator}
         aria-hidden="true"
-        className="indicator top-auto -bottom-px h-0.5 rounded-full bg-brand shadow-[0_0_10px_0_var(--glow-strong)]"
+        className="indicator top-auto bottom-0 h-0.5 rounded-full bg-brand shadow-[0_0_10px_0_var(--glow-strong)]"
       />
     </nav>
   )
@@ -49,8 +49,8 @@ export function Tab({ active, quiet, onClick, title, className, children }: TabP
       onClick={onClick}
       title={title}
       className={cn(
-        'relative flex items-center pt-1 pb-2.5 font-medium outline-none transition-colors duration-(--dur-fast)',
-        'rounded-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+        'relative flex shrink-0 items-center whitespace-nowrap pt-1 pb-2.5 font-medium outline-none transition-colors duration-(--dur-fast)',
+        'rounded-md focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
         quiet ? 'text-[13px]' : 'text-sm',
         active ? 'text-foreground' : cn('hover:text-foreground', quiet ? 'text-faint' : 'text-muted-foreground'),
         className,
@@ -109,9 +109,9 @@ export function Segmented<T extends string>({ value, onChange, options, role = '
       role={role}
       {...aria}
       onKeyDown={onKeyDown}
-      className={cn('relative isolate flex w-fit gap-0.5 rounded-lg bg-muted p-0.5 ring-1 ring-foreground/[0.04] ring-inset', className)}
+      className={cn('relative isolate flex w-fit gap-0.5 rounded-xl bg-muted/80 backdrop-blur-xs p-1 ring-1 ring-foreground/[0.04] ring-inset', className)}
     >
-      <span ref={indicator} aria-hidden="true" className="indicator -z-10 rounded-md bg-card shadow-[var(--highlight),var(--elev-1)] ring-1 ring-foreground/[0.06] dark:bg-input" />
+      <span ref={indicator} aria-hidden="true" className="indicator -z-10 rounded-lg bg-card shadow-[var(--highlight),var(--elev-1)] ring-1 ring-foreground/[0.06] dark:bg-input" />
       {options.map((o) => {
         const on = o.value === value
         return (

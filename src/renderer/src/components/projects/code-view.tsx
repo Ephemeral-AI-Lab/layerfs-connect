@@ -1,3 +1,4 @@
+import { useI18n } from '@/i18n'
 import '@/components/projects/history/history.css'
 
 import { javascript } from '@codemirror/lang-javascript'
@@ -52,6 +53,7 @@ function language(path: string): Extension {
 
 /** A read-only file view. */
 export function CodeView({ path, text }: { path: string; text: string }) {
+  useI18n()
   const host = useRef<HTMLDivElement>(null)
 
   useEffect(() => {

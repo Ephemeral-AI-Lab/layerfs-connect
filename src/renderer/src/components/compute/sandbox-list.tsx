@@ -1,3 +1,4 @@
+import { t, useI18n } from '@/i18n'
 // Sandboxes by project, as table rows. A running Sandbox's row carries a
 // breathing brand edge and its capacity bar glows; rows rise in, staggered,
 // and open with an animated height to the Workspaces mounted in them.
@@ -39,11 +40,12 @@ export function sandboxTone(state: string): { tone: Tone; live?: boolean; label:
 }
 
 function Capacity({ used, live, wait }: { used: number; live: boolean; wait: number }) {
+  useI18n()
   const share = used / SANDBOX_CAPACITY
   return (
-    <span className="flex items-center gap-2 text-xs text-muted-foreground tabular-nums">
-      <Bar share={used > 0 ? Math.max(share, 0.06) : 0} tone={share >= 0.75 ? 'warning' : 'brand'} live={live && used > 0} wait={wait} className="w-16" />
-      <span>
+    <span className="flex min-w-0 flex-wrap items-center gap-2 text-xs text-muted-foreground tabular-nums">
+      <Bar share={used > 0 ? Math.max(share, 0.06) : 0} tone={share >= 0.75 ? 'warning' : 'brand'} live={live && used > 0} wait={wait} className="w-16 min-w-6" />
+      <span className="shrink-0 whitespace-nowrap">
         <span className="text-foreground">{used}</span> / {SANDBOX_CAPACITY}
       </span>
     </span>
@@ -63,6 +65,7 @@ interface SandboxListProps {
 
 /** Sandboxes by project; each opens to the Workspaces mounted in it. */
 export function SandboxList({ groups, showProject = true }: SandboxListProps) {
+  useI18n()
   // Sandboxes with a Workspace mounted start open.
   const [open, setOpen] = useState<Set<string>>(
     () => new Set(groups.flatMap((g) => g.sandboxes.filter((s) => s.workspaces.length > 0).map((s) => `${g.project}/${s.id}`))),
@@ -77,13 +80,13 @@ export function SandboxList({ groups, showProject = true }: SandboxListProps) {
 
   let n = 0
   return (
-    <div role="table" aria-label="Sandboxes and their Workspaces">
+    <div role="table" aria-label={t("Sandboxes and their Workspaces")}>
       <div role="row" className={cn(ROW, 'px-5 pt-2 pb-1.5 text-[11px] font-medium tracking-wide text-faint uppercase')}>
         <span />
-        <span role="columnheader">Sandbox</span>
-        <span role="columnheader">State</span>
-        <span role="columnheader">Workspaces</span>
-        <span role="columnheader">Image</span>
+        <span role="columnheader">{t("Sandbox")}</span>
+        <span role="columnheader">{t("State")}</span>
+        <span role="columnheader">{t("Workspaces")}</span>
+        <span role="columnheader">{t("Image")}</span>
       </div>
       {groups.map((g) => (
         <div key={g.project} role="rowgroup" className="border-t">
@@ -113,7 +116,7 @@ export function SandboxList({ groups, showProject = true }: SandboxListProps) {
                   <button
                     type="button"
                     aria-expanded={expanded}
-                    aria-label={`${expanded ? 'Hide' : 'Show'} Workspaces in ${s.name}`}
+                    aria-label={t("{value1} Workspaces in {value2}", {value1: t(expanded ? 'Hide' : 'Show'), value2: s.name})}
                     onClick={() => toggle(key)}
                     disabled={s.workspaces.length === 0}
                     className="flex size-5 items-center justify-center rounded text-muted-foreground outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-30"
@@ -124,11 +127,11 @@ export function SandboxList({ groups, showProject = true }: SandboxListProps) {
                     <span className="block truncate font-mono text-[13px]" title={s.name}>
                       {s.name}
                     </span>
-                    <span className="block text-xs text-faint">Sandbox {s.id}</span>
+                    <span className="block text-xs text-faint">{t("Sandbox ")}{s.id}</span>
                   </span>
                   <span>
                     <Chip tone={state.tone} live={state.live}>
-                      {state.label}
+                      {t(state.label)}
                     </Chip>
                   </span>
                   <Capacity used={s.workspaces.length} live={running} wait={250 + Math.min(at, 10) * 60} />
@@ -148,7 +151,7 @@ export function SandboxList({ groups, showProject = true }: SandboxListProps) {
                         <span aria-hidden="true" data-live={running} className="sc-wire w-8 shrink-0" />
                         <span className="flex min-w-0 items-center gap-1 rounded-md bg-card px-1.5 py-0.5 text-xs font-medium shadow-elev-1 ring-1 ring-foreground/10">
                           <LfsBranch className="size-3 shrink-0 text-muted-foreground" />
-                          <span className="truncate">{ws.branch || 'unknown Branch'}</span>
+                          <span className="truncate">{ws.branch || t('Unknown branch')}</span>
                         </span>
                       </span>
                     </div>

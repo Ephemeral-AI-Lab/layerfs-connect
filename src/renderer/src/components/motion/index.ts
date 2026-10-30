@@ -6,11 +6,13 @@
 // trace-sketch, side-in.
 export { Collapse } from '@/components/motion/collapse'
 export { CountUp, useCountUp } from '@/components/motion/count-up'
+export { CursorAura } from '@/components/motion/cursor-aura'
 export { HeroTile, Stat, StatSkeleton } from '@/components/motion/hero'
 export { useIndicator, type IndicatorOptions } from '@/components/motion/indicator'
 export { PageHeader } from '@/components/motion/page-header'
 export { prefersReducedMotion, useReducedMotion } from '@/components/motion/reduced-motion'
 export { Reveal, revealStyle } from '@/components/motion/reveal'
+export { RunAura } from '@/components/motion/run-aura'
 export { spotlight } from '@/components/motion/spotlight'
 export { Segmented, type SegmentedOption, Tab, TabBar } from '@/components/motion/tabs'
 export { type TransitionKind, viewTransition } from '@/components/motion/view-transition'

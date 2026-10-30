@@ -1,3 +1,4 @@
+import { t, useI18n } from '@/i18n'
 import { CircleAlert, GitCommitVertical, Network, X } from 'lucide-react'
 import { Suspense, lazy, useEffect, useMemo, useState } from 'react'
 
@@ -7,7 +8,7 @@ import { CommitDetail } from '@/components/projects/history/commit-detail'
 import { ForkMap } from '@/components/projects/history/fork-map'
 import { type HistoryItem, LineageGraph } from '@/components/projects/history/lineage-graph'
 import { HashChip, PaneHead, SearchField } from '@/components/projects/history/parts'
-import { LoadError, Loading } from '@/components/projects/states'
+import { Empty, LoadError, Loading } from '@/components/projects/states'
 import { host } from '@/host/client'
 import { useHostQuery } from '@/host/use-host'
 import { type ForkTree, ancestry, buildForkTree } from '@/data/forks'
@@ -88,17 +89,21 @@ interface HistoryTabProps {
 }
 
 export function HistoryTab({ project, runId, tick = 0, ...rest }: HistoryTabProps) {
+  const { locale } = useI18n()
   const q = useHostQuery(async () => {
     const state = await host.project(project)
     const lists = await Promise.all(state.branches.map((b) => host.commits(project, b.name)))
     const run = runId ? await host.run(runId).catch(() => undefined) : undefined
     return { state, commits: Object.fromEntries(state.branches.map((b, i) => [b.name, lists[i]])), run }
   }, [project, runId, tick])
-  const tree = useMemo(() => q.data && buildForkTree(q.data.state, q.data.commits, q.data.run), [q.data])
+  const tree = useMemo(() => q.data && buildForkTree(q.data.state, q.data.commits, q.data.run), [q.data, locale])
 
   if (!tree) {
-    if (q.error) return <LoadError error={q.error} what="this project's history" onRetry={q.reload} />
-    return <Loading label="Reading Branches and Commits" />
+    if (q.error) return <LoadError error={q.error} what={t("this project's history")} onRetry={q.reload} />
+    return <Loading label={t("Reading Branches and Commits")} />
+  }
+  if (q.data!.state.branches.length === 0 && q.data!.state.layers.length === 0 && q.data!.state.commits === 0) {
+    return <Empty icon={GitCommitVertical} title={t("No history yet")}>{t("No Commits or Layers yet.")}</Empty>
   }
   return <HistoryBody key={`${project}:${rest.initialItem?.id ?? ''}`} project={project} tree={tree} {...rest} />
 }
@@ -120,6 +125,7 @@ interface HistoryBodyProps {
 }
 
 function HistoryBody({ project, tree, initialBranch, initialView = 'lineage', autoplay, initialItem }: HistoryBodyProps) {
+  useI18n()
   const firstFocus = () => {
     const at = branchOf(tree, initialItem)
     if (at) return at
@@ -172,7 +178,7 @@ function HistoryBody({ project, tree, initialBranch, initialView = 'lineage', au
   const deepest = Math.max(0, ...branches.map((b) => b.depth))
 
   const counts = { all: branches.length - 1, open, done: branches.length - 1 - open }
-  const filters = FILTERS.map((f) => ({ value: f.id, label: f.label, count: counts[f.id] }))
+  const filters = FILTERS.map((f) => ({ value: f.id, label: t(f.id === 'open' ? 'Running' : f.label), count: counts[f.id] }))
   const kind = selected?.kind === 'layer' ? 'Layer' : 'Commit'
   const [look, setLook] = useMapLook()
   const openBranch = (name: string) => {
@@ -181,32 +187,32 @@ function HistoryBody({ project, tree, initialBranch, initialView = 'lineage', au
   }
 
   return (
-    <div className="hist-frame flex h-0 min-h-[30rem] flex-1 flex-col overflow-hidden rounded-2xl">
-      <div className="flex items-center gap-3 border-b bg-muted/25 px-3 py-2">
-        {SHOW_VIEWS && view === 'map' && <Segmented aria-label="Map view" value={look} onChange={setLook} options={LOOKS} />}
-        <SearchField label="Find a Branch or Commit" value={query} onChange={setQuery} className="w-60" />
-        <Segmented aria-label="Show Branches" value={filter} onChange={setFilter} options={filters} />
-        <span className="min-w-0 flex-1 truncate text-right text-xs text-muted-foreground tabular-nums">
+    <div className="hist-frame @container/history flex h-0 min-h-[34rem] flex-1 flex-col overflow-hidden rounded-2xl">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b bg-muted/25 px-3 py-2.5">
+        {SHOW_VIEWS && view === 'map' && <Segmented aria-label={t("Map view")} value={look} onChange={setLook} options={LOOKS.map((option) => ({...option, label: typeof option.label === 'string' ? t(option.label) : option.label}))} />}
+        <SearchField label={t("Find a Branch or Commit")} value={query} onChange={setQuery} className="min-w-40 flex-1 basis-48" />
+        <Segmented aria-label={t("Show Branches")} value={filter} onChange={setFilter} options={filters} />
+        <span className="min-w-0 flex-1 truncate text-right text-xs text-muted-foreground tabular-nums @max-[58rem]/history:order-last @max-[58rem]/history:basis-full @max-[58rem]/history:text-left">
           {tree.branches.size === 1
-            ? 'No Branches yet'
-            : `${tree.branches.size - 1} Branch${tree.branches.size === 2 ? '' : 'es'} · ${open} open · forks ${deepest} deep`}
+            ? t("No Branches yet")
+            : t("{branches} · {count} open · forks {depth} deep", {branches: t(tree.branches.size === 2 ? "{count} Branch" : "{count} Branches", {count: tree.branches.size - 1}), count: open, depth: deepest})}
           {' · '}
-          {tree.commits.size} Commit{tree.commits.size === 1 ? '' : 's'}
+          {tree.commits.size} {t(tree.commits.size === 1 ? "Commit" : "Commits")}
           {tree.layers[0] && (
             <>
-              {' · main at '}
+              {t(" · main at ")}
               <HashChip id={tree.layers[0].id} className="ml-0.5 text-[11px]" />
             </>
           )}
         </span>
-        <Segmented aria-label="View" value={view} onChange={setView} options={VIEWS} />
+        <Segmented aria-label={t("View")} value={view} onChange={setView} options={VIEWS.map((option) => ({...option, label: typeof option.label === 'string' ? t(option.label) : option.label}))} />
       </div>
       {missing && <MissingNote item={missing} onDismiss={() => setMissing(undefined)} />}
 
       {view === 'lineage' ? (
-        <div key="lineage" className="hist-swap grid min-h-0 flex-1 grid-cols-[15.5rem_minmax(0,1fr)_18rem]">
-          <aside aria-label="Branches" className="hist-side flex min-h-0 flex-col border-r">
-            <PaneHead label="Branches" count={shown.size} />
+        <div key="lineage" className="hist-swap grid min-h-0 flex-1 grid-cols-[11rem_minmax(0,1fr)] grid-rows-[minmax(14rem,1fr)_12rem] @min-[58rem]/history:grid-cols-[14rem_minmax(0,1fr)_17rem] @min-[58rem]/history:grid-rows-1">
+          <aside aria-label={t("Branches")} className="hist-side flex min-h-0 flex-col border-r">
+            <PaneHead label={t("Branches")} count={shown.size} />
             <BranchTree
               tree={tree}
               focus={focus}
@@ -229,8 +235,8 @@ function HistoryBody({ project, tree, initialBranch, initialView = 'lineage', au
             />
           </aside>
           <LineageGraph tree={tree} focus={focus} onFocus={setFocus} selected={selected} onSelect={setSelected} />
-          <section aria-label={`${kind} detail`} className="hist-side min-h-0 overflow-y-auto">
-            <PaneHead label={selected ? kind : 'Detail'} />
+          <section aria-label={t("{value1} detail", {value1: t(kind)})} className="hist-side col-span-2 min-h-0 overflow-y-auto border-t @min-[58rem]/history:col-span-1 @min-[58rem]/history:border-t-0">
+            <PaneHead label={selected ? t(kind) : t("Detail")} />
             <div key={selected ? `${selected.kind}:${selected.id}` : 'none'} className="hist-swap">
               <CommitDetail tree={tree} item={selected} onFocus={setFocus} />
             </div>
@@ -239,15 +245,15 @@ function HistoryBody({ project, tree, initialBranch, initialView = 'lineage', au
       ) : (
         <div key="map" className="hist-swap flex min-h-0 flex-1 flex-col">
           {look === 'game' ? (
-            <Suspense fallback={<Loading label="Loading the castle game" />}>
+            <Suspense fallback={<Loading label={t("Loading the castle game")} />}>
               <CastleGame tree={tree} onOpen={openBranch} autoplay={autoplay} />
             </Suspense>
           ) : look === '3d' ? (
-            <Suspense fallback={<Loading label="Loading the 3D view" />}>
+            <Suspense fallback={<Loading label={t("Loading the 3D view")} />}>
               <Citadel tree={tree} focus={focus} shown={shown} onOpen={openBranch} />
             </Suspense>
           ) : (
-            <ForkMap title={`Fork timeline of ${project}`} tree={tree} focus={focus} shown={shown} autoplay={autoplay} onOpen={openBranch} />
+            <ForkMap title={t("Fork timeline of {value1}", {value1: project})} tree={tree} focus={focus} shown={shown} autoplay={autoplay} onOpen={openBranch} />
           )}
         </div>
       )}
@@ -257,14 +263,14 @@ function HistoryBody({ project, tree, initialBranch, initialView = 'lineage', au
 
 /** A linked Commit or Layer History cannot find: said, not swapped for another Branch's head. */
 function MissingNote({ item, onDismiss }: { item: HistoryItem; onDismiss: () => void }) {
+  useI18n()
   const kind = item.kind === 'layer' ? 'Layer' : 'Commit'
   return (
     <div role="status" className="flex items-center gap-2 border-b bg-amber-500/10 px-3 py-1.5 text-xs text-amber-900 dark:text-amber-200">
       <CircleAlert className="size-3.5 shrink-0" />
       <span className="min-w-0 flex-1">
-        {kind} <HashChip id={item.id} className="mx-0.5 text-[11px]" /> is not in this project&apos;s history. It may not be read yet (it opens when it is), or its Branch was removed.
-      </span>
-      <button type="button" onClick={onDismiss} aria-label="Dismiss" className="rounded p-0.5 hover:bg-amber-500/20">
+        {kind} <HashChip id={item.id} className="mx-0.5 text-[11px]" />{t("is not in this project's history. It may not be read yet (it opens when it is), or its Branch was removed.")}</span>
+      <button type="button" onClick={onDismiss} aria-label={t("Dismiss")} className="inline-flex size-5 shrink-0 items-center justify-center rounded outline-none hover:bg-amber-500/20 focus-visible:ring-2 focus-visible:ring-ring">
         <X className="size-3.5" />
       </button>
     </div>
