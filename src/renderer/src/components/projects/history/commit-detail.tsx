@@ -1,3 +1,4 @@
+import { t, useI18n } from '@/i18n'
 import './history.css'
 
 import { FileMinus, FilePen, FilePlus, FileSymlink, GitCommitHorizontal, type LucideIcon } from 'lucide-react'
@@ -25,6 +26,7 @@ const changeOf = (kind: string) =>
 
 /** A path's folder, faint, then its name. */
 function PathName({ path }: { path: string }) {
+  useI18n()
   const at = path.lastIndexOf('/')
   return (
     <span className="min-w-0 flex-1 truncate font-mono text-xs" title={path}>
@@ -35,20 +37,21 @@ function PathName({ path }: { path: string }) {
 }
 
 function Changes({ changes }: { changes: FileChange[] }) {
+  useI18n()
   if (changes.length === 0)
-    return <p className="rounded-lg border border-dashed px-3 py-2.5 text-xs text-faint">LayerFS listed no changed paths with this entry.</p>
+    return <p className="rounded-lg border border-dashed px-3 py-2.5 text-xs text-faint">{t("LayerFS listed no changed paths with this entry.")}</p>
   // One tally per kind, in the order they first appear.
   const tally = new Map<string, number>()
   for (const ch of changes) tally.set(changeOf(ch.kind).label, (tally.get(changeOf(ch.kind).label) ?? 0) + 1)
   return (
     <Section
-      title={`${changes.length} path${changes.length === 1 ? '' : 's'} changed`}
+      title={t(changes.length === 1 ? "{count} path changed" : "{count} paths changed", {count: changes.length})}
       aside={
         <span className="flex gap-2 font-mono text-[11px] tabular-nums">
           {[...tally].map(([label, n]) => {
             const c = changeOf(label)
             return (
-              <span key={label} title={`${n} ${label}`} className={c.tone}>
+              <span key={label} title={t("{value1} {value2}", {value1: n, value2: label})} className={c.tone}>
                 {c.sign}
                 {n}
               </span>
@@ -70,7 +73,7 @@ function Changes({ changes }: { changes: FileChange[] }) {
                 <c.icon aria-hidden="true" className={cn('size-3', c.tone)} />
               </span>
               <PathName path={ch.path} />
-              <span className={cn('shrink-0 text-[11px]', c.tone)}>{c.label}</span>
+              <span className={cn('shrink-0 text-[11px]', c.tone)}>{t(c.label)}</span>
             </li>
           )
         })}
@@ -81,6 +84,7 @@ function Changes({ changes }: { changes: FileChange[] }) {
 
 /** A titled part of the detail. */
 function Section({ title, aside, children, index = 1 }: { title: string; aside?: ReactNode; children: ReactNode; index?: number }) {
+  useI18n()
   return (
     <div className="reveal flex flex-col gap-1.5" style={revealStyle(index)}>
       <div className="flex items-center gap-2">
@@ -94,11 +98,12 @@ function Section({ title, aside, children, index = 1 }: { title: string; aside?:
 
 /** A Branch name in its lane colour, opening its lineage. */
 function BranchLink({ name, depth, quiet, children, onFocus }: { name: string; depth: number; quiet?: boolean; children?: ReactNode; onFocus: (name: string) => void }) {
+  useI18n()
   return (
     <button
       type="button"
       onClick={() => onFocus(name)}
-      title={`Open ${name}`}
+      title={t("Open {value1}", {value1: name})}
       className={cn(
         'lane-chip flex max-w-full min-w-0 items-center gap-1.5 rounded-md px-1.5 py-0.5 text-xs font-medium outline-none focus-visible:ring-2 focus-visible:ring-ring',
         quiet && 'opacity-60',
@@ -119,6 +124,7 @@ interface CommitDetailProps {
 
 /** The selected Commit or Layer: who made it, where it sits, what it changed. */
 export function CommitDetail({ tree, item, onFocus }: CommitDetailProps) {
+  useI18n()
   const commit = item?.kind === 'commit' ? tree.commits.get(item.id) : undefined
   const layer = item?.kind === 'layer' ? tree.layers.find((l) => l.id === item.id) : undefined
   if (!commit && !layer)
@@ -127,7 +133,7 @@ export function CommitDetail({ tree, item, onFocus }: CommitDetailProps) {
         <span className="flex size-10 items-center justify-center rounded-xl border bg-card text-faint shadow-[var(--highlight),var(--elev-1)]">
           <GitCommitHorizontal aria-hidden="true" className="size-5" />
         </span>
-        <p className="text-sm text-muted-foreground">Pick a Commit or a Layer to see what it changed.</p>
+        <p className="text-sm text-muted-foreground">{t("Pick a Commit or a Layer to see what it changed.")}</p>
       </div>
     )
 
@@ -144,10 +150,10 @@ export function CommitDetail({ tree, item, onFocus }: CommitDetailProps) {
       <div className="reveal">
         <div className="flex flex-wrap items-center gap-1.5">
           <HashChip id={id} on className="text-xs" />
-          {layer && <Chip tone="neutral">Layer on main</Chip>}
-          {layer && layer.id === tree.layers[0]?.id && <Chip tone="info">Head of main</Chip>}
-          {isHead && <Chip tone="info">Head</Chip>}
-          {commit?.merged && <Chip tone="neutral">Merge</Chip>}
+          {layer && <Chip tone="neutral">{t("Layer on main")}</Chip>}
+          {layer && layer.id === tree.layers[0]?.id && <Chip tone="info">{t("Head of main")}</Chip>}
+          {isHead && <Chip tone="info">{t("Head")}</Chip>}
+          {commit?.merged && <Chip tone="neutral">{t("Merge")}</Chip>}
         </div>
         <h3 className="mt-2.5 text-[15px] leading-snug font-semibold tracking-[-0.01em] break-words">{commit?.message ?? layer?.message}</h3>
       </div>
@@ -155,9 +161,9 @@ export function CommitDetail({ tree, item, onFocus }: CommitDetailProps) {
       <dl className="reveal grid grid-cols-[4.5rem_minmax(0,1fr)] items-center gap-x-3 gap-y-2 rounded-xl border bg-card/60 px-3 py-2.5 text-[13px] shadow-[var(--highlight)]" style={revealStyle(1)}>
         {commit ? (
           <>
-            <dt className="text-xs text-faint">On</dt>
+            <dt className="text-xs text-faint">{t("On")}</dt>
             <dd className="flex min-w-0">{branch && <BranchLink name={branch.name} depth={branch.depth} onFocus={onFocus} />}</dd>
-            <dt className="text-xs text-faint">By</dt>
+            <dt className="text-xs text-faint">{t("By")}</dt>
             <dd className="min-w-0">
               {commit.by ? (
                 <span className="flex min-w-0 items-center gap-1.5">
@@ -165,34 +171,34 @@ export function CommitDetail({ tree, item, onFocus }: CommitDetailProps) {
                   <span className="truncate">{commit.by}</span>
                 </span>
               ) : (
-                <span className="text-faint italic">no agent recorded</span>
+                <span className="text-faint italic">{t("no agent recorded")}</span>
               )}
             </dd>
           </>
         ) : (
           <>
-            <dt className="text-xs text-faint">From</dt>
+            <dt className="text-xs text-faint">{t("From")}</dt>
             <dd className="flex min-w-0 text-muted-foreground">
               {from ? (
                 <BranchLink name={from.name} depth={from.depth} onFocus={onFocus} />
               ) : (
-                <span>{tree.layers[tree.layers.length - 1]?.id === layer?.id ? 'Init' : 'Published to main'}</span>
+                <span>{tree.layers[tree.layers.length - 1]?.id === layer?.id ? t("Init") : t("Published to main")}</span>
               )}
             </dd>
           </>
         )}
-        <dt className="text-xs text-faint">When</dt>
+        <dt className="text-xs text-faint">{t("When")}</dt>
         <dd className="truncate text-muted-foreground tabular-nums" title={when(at)}>
           {commit?.ago ?? layer?.ago}
         </dd>
-        <dt className="text-xs text-faint">Id</dt>
+        <dt className="text-xs text-faint">{t("Id")}</dt>
         <dd className="truncate font-mono text-xs text-muted-foreground" title={id}>
           {id}
         </dd>
       </dl>
 
       {mergedFrom && (
-        <Section title="Merged in" index={2}>
+        <Section title={t("Merged in")} index={2}>
           <div className="flex">
             <BranchLink name={mergedFrom.branch} depth={tree.branches.get(mergedFrom.branch)?.depth ?? 1} onFocus={onFocus}>
               <span className="font-mono font-normal opacity-70">{shortId(mergedFrom.id)}</span>
@@ -202,7 +208,7 @@ export function CommitDetail({ tree, item, onFocus }: CommitDetailProps) {
       )}
 
       {forks.length > 0 && (
-        <Section title="Forked here" index={2} aside={<span className="text-[11px] text-faint tabular-nums">{forks.length}</span>}>
+        <Section title={t("Forked here")} index={2} aside={<span className="text-[11px] text-faint tabular-nums">{forks.length}</span>}>
           <div className="flex flex-wrap gap-1.5">
             {forks.map((b) => (
               <BranchLink key={b.name} name={b.name} depth={b.depth} quiet={b.state === 'merged'} onFocus={onFocus}>
@@ -216,9 +222,7 @@ export function CommitDetail({ tree, item, onFocus }: CommitDetailProps) {
       {commit ? (
         <Changes changes={commit.changes} />
       ) : (
-        <p className="reveal text-xs leading-relaxed text-faint" style={revealStyle(2)}>
-          A Layer is main's whole tree at a publish; its Commits hold the changes.
-        </p>
+        <p className="reveal text-xs leading-relaxed text-faint" style={revealStyle(2)}>{t("A Layer is main's whole tree at a publish; its Commits hold the changes.")}</p>
       )}
     </div>
   )

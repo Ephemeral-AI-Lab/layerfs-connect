@@ -1,4 +1,5 @@
-import { RotateCw, Settings2 } from 'lucide-react'
+import { t, useI18n } from '@/i18n'
+import { ChevronDown, RotateCw, Settings2 } from 'lucide-react'
 
 import { CloudCards } from '@/components/compute/cloud-cards'
 import { DockerCard } from '@/components/compute/docker-card'
@@ -15,11 +16,12 @@ import type { HostStatus } from '@shared/host-api'
 const OS: Record<HostStatus['platform'], string> = { macos: 'darwin', linux: 'linux', windows: 'win32' }
 
 function Setting({ label, value, mono = true }: { label: string; value: string | null; mono?: boolean }) {
+  useI18n()
   return (
     <>
       <dt className="text-muted-foreground">{label}</dt>
       <dd className={mono ? 'min-w-0 truncate font-mono text-[13px]' : 'min-w-0 truncate'} title={value ?? undefined}>
-        {value ?? <span className="font-sans text-warning">not set</span>}
+        {value ?? <span className="font-sans text-warning">{t("not set")}</span>}
       </dd>
     </>
   )
@@ -33,6 +35,7 @@ interface ComputePageProps {
 }
 
 export function ComputePage({ platform, onPart }: ComputePageProps) {
+  useI18n()
   const status = useHostQuery(() => host.status(), [])
   // Every project's Sandboxes: one state read per project, none of which starts a Sandbox.
   const sandboxes = useHostQuery(async () => {
@@ -52,7 +55,7 @@ export function ComputePage({ platform, onPart }: ComputePageProps) {
   const os = platform ?? (s ? OS[s.platform] : window.connect.platform)
 
   return (
-    <div className="h-svh overflow-y-auto">
+    <div className="h-svh min-w-0 overflow-y-auto">
       <PageHeader
         sticky
         width="max-w-5xl"
@@ -64,63 +67,61 @@ export function ComputePage({ platform, onPart }: ComputePageProps) {
           <Button
             variant="outline"
             size="sm"
+            className="rounded-full px-3.5"
             onClick={() => {
               status.reload()
               sandboxes.reload()
             }}
           >
-            <RotateCw /> Refresh
-          </Button>
+            <RotateCw />{t("Refresh")}</Button>
         }
       />
-      <div className="mx-auto flex max-w-5xl flex-col gap-8 px-8 pt-2 pb-10">
+      <div className="mx-auto flex min-w-0 max-w-5xl flex-col gap-8 px-6 pt-2 pb-10 @min-[56rem]/workspace:px-8">
         {!s ? (
           status.error ? (
-            <LoadError error={status.error} what="the compute status" onRetry={status.reload} />
+            <LoadError error={status.error} what={t("the compute status")} onRetry={status.reload} />
           ) : (
-            <Loading label="Asking Docker and the worker" />
+            <Loading label={t("Asking Docker and the worker")} />
           )
         ) : (
           <>
-            <section className="flex flex-col gap-3">
+            <section className="flex min-w-0 flex-col gap-3">
               <div>
-                <h2 className="text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">This machine</h2>
+                <h2 className="text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">{t("This machine")}</h2>
                 <p className="text-xs text-faint">
-                  {s.platform === 'macos' ? 'macOS' : s.platform === 'windows' ? 'Windows' : 'Linux'} · {window.connect.arch}
+                  {s.platform === 'macos' ? t("macOS") : s.platform === 'windows' ? t("Windows") : t("Linux")} · {window.connect.arch}
                 </p>
               </div>
               <DockerCard status={s} groups={sandboxes.data?.groups} failed={sandboxes.data?.failed ?? []} />
-              {sandboxes.error && <LoadError error={sandboxes.error} what="the Sandboxes" onRetry={sandboxes.reload} />}
+              {sandboxes.error && <LoadError error={sandboxes.error} what={t("the Sandboxes")} onRetry={sandboxes.reload} />}
               <NativeCard platform={os} arch={window.connect.arch} />
             </section>
 
-            <section className="flex flex-col gap-3">
+            <section className="flex min-w-0 flex-col gap-3">
               <div>
-                <h2 className="text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">Cloud sandboxes</h2>
-                <p className="text-xs text-faint">They can't open a local SQLite file, so they wait on PostgreSQL storage too.</p>
+                <h2 className="text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">{t("Cloud sandboxes")}</h2>
+                <p className="text-xs text-muted-foreground font-medium">{t("Remote execution providers")}</p>
               </div>
               <CloudCards />
             </section>
 
-            <section className="flex flex-col gap-3">
-              <div>
-                <h2 className="flex items-center gap-1.5 text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">
-                  <Settings2 aria-hidden="true" className="size-3.5" /> Settings
-                </h2>
-                <p className="text-xs text-faint">
-                  Read only here. Edit <span className="font-mono">{s.settings.state}/settings.json</span> and restart Connect.
-                </p>
+            <details className="surface reveal group/settings min-w-0 rounded-2xl">
+              <summary className="flex cursor-pointer list-none items-center gap-1.5 rounded-2xl px-5 py-4 text-[11px] font-semibold tracking-wide text-muted-foreground uppercase outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                <Settings2 aria-hidden="true" className="size-3.5" />{t("Settings")}<ChevronDown aria-hidden="true" className="ml-auto size-3.5 transition-transform group-open/settings:rotate-180" />
+              </summary>
+              <div className="border-t px-5 py-4">
+                <p className="break-words text-xs text-faint">{t("Read only here. Edit ")}<span className="font-mono">{s.settings.state}{t("/settings.json")}</span>{t("and restart Connect.")}</p>
+                <dl className="mt-4 grid grid-cols-1 gap-x-4 gap-y-2.5 text-sm @min-[36rem]/workspace:grid-cols-[9rem_minmax(0,1fr)]">
+                  <Setting label={t("Settings file")} value={`${s.settings.state}/settings.json`} />
+                  <Setting label={t("LayerFS home")} value={s.settings.home} />
+                  <Setting label={t("Sandbox image")} value={s.settings.image} />
+                  <Setting label={t("LayerFS bundle")} value={s.settings.bundle} />
+                  <Setting label={t("Docker socket")} value={s.settings.docker} />
+                  <Setting label={t("Name prefix")} value={s.settings.containerPrefix} />
+                  {s.missing.length > 0 && <Setting label={t("Still missing")} value={s.missing.join(', ')} mono={false} />}
+                </dl>
               </div>
-              <dl className="surface reveal grid grid-cols-[9rem_minmax(0,1fr)] gap-x-4 gap-y-2.5 rounded-xl px-5 py-4 text-sm">
-                <Setting label="Settings file" value={`${s.settings.state}/settings.json`} />
-                <Setting label="LayerFS home" value={s.settings.home} />
-                <Setting label="Sandbox image" value={s.settings.image} />
-                <Setting label="LayerFS bundle" value={s.settings.bundle} />
-                <Setting label="Docker socket" value={s.settings.docker} />
-                <Setting label="Name prefix" value={s.settings.containerPrefix} />
-                {s.missing.length > 0 && <Setting label="Still missing" value={s.missing.join(', ')} mono={false} />}
-              </dl>
-            </section>
+            </details>
           </>
         )}
       </div>

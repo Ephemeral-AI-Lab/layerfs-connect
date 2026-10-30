@@ -1,42 +1,67 @@
 # LayerFS Connect
 
-## Install prompt
+Connect is a desktop coding agent powered by Pi, with **bash and subagents**
+as its tool surface. Chat runs real model conversations in a local folder or
+a managed LayerFS workspace; project views show their saved history.
 
-Paste this into a coding agent (Claude Code, Codex) on a Mac. It installs
-Connect on LayerFS `main`, opens the app, makes an empty project and plays the
-Tour scenario on it.
+## Start an agent session
 
-```text
-Install LayerFS Connect for me on this Mac, open the desktop app, make an empty project in it, and play the Tour scenario on that project.
+1. Run `pnpm install`, then `pnpm dev` in this repository.
+2. Open the model dropdown in the Chat header and choose **Manage models**. Enter
+   the provider, API URL and key, then use **Fetch models** to register the whole
+   model list and connection settings at once. All fetched models appear in the
+   Chat header's model selector immediately, keeping the current selection and
+   thinking level. There is no need to add or save models one by one; manual IDs
+   remain available. Supported endpoints return their live list; subscription and
+   other configured native providers without a listing API use their built-in catalog.
+   New custom providers default to Chat Completions; choose another API format
+   when needed. **Save & test** saves the configuration and makes a small real
+   model request; provider errors appear in the dialog.
+3. Open **Workspace settings** above the conversation. For **Local folder only**,
+   choose the shell's working directory with **Browse**, or enter its absolute
+   path. Commands in this mode act directly on that local folder.
+4. Alternatively choose a **LayerFS project**, or open a project and click
+   **New chat**. The first message creates a conversation with its own
+   `chat-<session id>` branch and managed container workspace. The lead agent
+   and all its subagents run bash in that workspace, rather than the local
+   folder or the project's original import source.
+5. Send a task. Text and reasoning arrive from Pi as they stream. Tool cards
+   show commands and output; subagent cards show delegated tasks and results.
 
-Rules:
-- macOS only, with Docker Desktop running. If this is not macOS, stop and tell me.
-- Pin exactly: https://github.com/Ephemeral-AI-Lab/layerfs at commit fabefdf87a, and the runtime Dockerfile from https://github.com/Ephemeral-AI-Lab/dsh-layerfs at commit b9bf3bc819. Connect itself is https://github.com/Ephemeral-AI-Lab/layerfs-connect (private: you need access) at main.
-- Change no code in any checkout. Don't commit, push, delete other Docker containers or volumes, or install system-wide software without asking me.
-- One attempt per step. If a step fails, stop and give me the exact error and its cause from the source; don't retry on your own.
+Model Settings opens with empty provider and model fields. **Add provider**
+starts another blank configuration; **Save provider** stores its connection
+without requiring a model or changing the current selection. Saved provider
+cards let you edit each connection independently. Choose one of its saved
+models explicitly, or enter an ID and use **Save model**. Several providers can
+keep different endpoints, keys and model limits at the same time.
+Expand **Request headers** below the API key to add name/value pairs for that
+provider. Values are hidden by default and sent as literal text with model
+discovery, connection tests and chat requests. Save the provider or model to
+keep them; remove its rows and save to clear them.
+Each saved provider has a **×** button. Confirming **Delete provider** removes
+its connection, credentials and model settings; saved conversations remain.
+Deleting the currently selected provider clears the main model selection.
 
-1. Check the tools and record each version: macOS, `node --version` (22.15 or newer), `pnpm --version` (11; `corepack enable` provides it), `docker info` (Docker Desktop, at least 20 GB free inside it), `git`, `python3 --version` (3.9 or newer) and `jq`. If something is missing, stop and tell me which.
-2. Checkouts, side by side in one folder (say ~/layerfs-lab): clone layerfs-connect and layerfs there. Connect's package.json links @layerfs/* to a LayerFS worktree at a fixed path, so in the layerfs clone run `git worktree add --detach .claude/worktrees/connect-main fabefdf87a`.
-3. Images, in Docker Desktop:
-   - build image: `printf 'FROM rust:1.85.1-bookworm\nRUN rustup component add clippy\n' | docker build -t layerfs-build:1.85.1 -`
-   - runtime image (Node 24, Rust and browsers for the scenarios): `curl -fsSL https://raw.githubusercontent.com/Ephemeral-AI-Lab/dsh-layerfs/b9bf3bc819/tools/runtime/Dockerfile | docker build -t layerfs-352-runtime:node24 -`
-   Record both sha256 image IDs (`docker image inspect -f '{{.Id}}' <tag>`).
-4. Sealed Linux LayerFS bundle, from the worktree of step 2 with its own launcher (see its docs/general/parallel-worktrees.md):
-   - `python3 tools/worktree.py register --worktree <worktree> --owner connect --build-image <build id> --runtime-image <runtime id> --sandbox-image <runtime id>` prints a resources.json path.
-   - `python3 tools/worktree.py prepare --resources <resources.json> --platform linux` (fetches the Cargo dependencies).
-   - `python3 tools/worktree.py build --resources <resources.json> --platform linux --profile release --jobs 6` prints the bundle folder (build-linux-…). The first build takes several minutes.
-   Check its manifest.json says "status": "sealed", and that it holds layerfs-daemon, layerfs.node and api/runtime/src/worker/server.js.
-5. Connect's settings: write ~/.layerfs-connect/settings.json as { "image": "<runtime id>", "bundle": "<bundle folder>", "containerPrefix": "lfc-" }. If the file already exists, copy it to a dated backup first and tell me.
-6. In layerfs-connect: `pnpm install` (Electron downloads its binary; a note about ignored build scripts of other packages is expected), then `pnpm typecheck`. `ls -l node_modules/@layerfs` must show agent, backend, cli and runtime linked into the worktree's api/.
-7. Open the app: `pnpm dev`, left running. In the window, open LayerFS, then its Storage tab: Local SQLite must show "Worker running" (the worker starts on first open; give it a minute).
-8. Make an empty project: in the sidebar, New session, then New project…. Keep "Empty", name it hello, and press Create project. Expected: hello appears in the sidebar and the page asks "What should the agent do on hello?".
-9. Play a scenario: in the box at the bottom type `/scenario tour` and press Enter. Tour is one agent in 14 steps (edits, an install, a build in Workspaces, merges and two publishes) and takes about a minute. Expected: a session /tour_1 under hello that plays every step and ends without a failed step; the project's Timeline and History tabs then show its Branches and Commits.
+Project conversations share one workspace between the lead and child agents.
+Their bash commands run one at a time, starting at the workspace root; use
+`cd` within a command for a subdirectory. Changed files are saved to the
+conversation's branch after each command, including changes made before an
+error or interruption once the command is confirmed stopped. Read-only
+commands do not create extra commits. Connect does not automatically merge or
+publish these commits to `main`.
 
-Report every step with its command and outcome (PASS, FAIL or NOT_RUN with the reason), the versions, both image IDs and the bundle folder.
-```
+The workspace row shows the host's actual branch, mounted path, execution and
+save state, and latest commit. **Branch history** opens that branch in the
+project's History, which refreshes as commits arrive. Stop, conversation
+deletion and graceful host shutdown stop active work, save remaining changes,
+unmount the workspace and close its sandbox. An incomplete cleanup remains
+visible as an error and retains the workspace for retry. Continuing a stopped
+conversation mounts the same saved branch again.
 
-The LayerFS desktop app. It runs on the real LayerFS: a local SQLite Store per
-project in a Docker volume, and Docker Sandboxes. Its projects are ten scripted
+## Runs: scripted demos and live sessions
+
+The LayerFS page runs on the real LayerFS: Stores in Docker volumes, and
+Docker Sandboxes. Its projects include ten scripted
 demos (tour, parallel, conflicts, merge, sandbox, agents, checkpoints, shop,
 depot, crew). `/scenario <name>` in a session plays one on that session's
 project, in a folder `/<scenario>_<n>/` of its own with its own Branches and
@@ -49,106 +74,174 @@ with their conversations. A
 project's page shows its Live view (agents, project, Sandboxes and
 Workspaces), Timeline (the fork map over time, replayable), History and
 Storage from the newest session; a session's page
-shows its conversation. There is no language model: every call comes from
-the scenario, and every call really runs.
+shows its conversation. A scenario uses no language model: every call comes
+from its script, and every call really runs. A live session drives a Pi agent
+with the `layerfs` command instead.
 
-Not implemented: PostgreSQL and cloud storage, and native and cloud compute.
-Those pages show them disabled.
+Project commands do not leave background processes running after they finish:
+Connect stops the command's process group and descendants before saving.
+Run checks in the foreground. Pi may put large-output logs on the host;
+its `fullOutputPath` cannot be read by container bash. Redirect large output
+to a file inside the workspace when the agent needs to inspect it later.
+
+Chat uses **full access** by default, including existing conversations when
+Connect opens. Root and child bash commands execute without individual approval
+prompts. The composer has no permission selector or access-confirmation dialog.
+Project conversations execute inside their managed LayerFS workspace; local
+conversations execute in the selected host folder with its OS permissions.
+Existing approval records remain available in the conversation history.
+
+The square button, or Escape in the composer, stops the current task and its children, clearing pending
+messages. During execution, sending adds a message to **Next up** above the
+composer. Pi follows up automatically, one message at a time, after the current
+work finishes. Each pending message can be expanded, removed, or promoted with
+**Steer** to guide the current task after its current step finishes. Pending
+messages enter the conversation only when the agent starts processing them.
+The upper-left history button
+opens **History** with search, switching and deletion. The **Context** tab shows
+the active session; its **Conversation transcript** can be searched and fully expanded to inspect messages, thinking,
+tool arguments and output in the saved context. **Compact** summarizes a long
+idle conversation; its summary replaces earlier context entries in the
+transcript. This is the saved Pi context, not a full raw-history archive. **New** starts another
+conversation. Model selection and thinking intensity remain visible together
+in the header and can change between turns; provider settings live in the model
+menu. **Recorded usage** adds provider-reported usage from the saved main-agent
+Pi tree, including copied and branched history. It is not a billing ledger for
+new requests or the complete cost of child agents. The context ring separately
+shows the current context-window estimate.
+
+The conversation menu provides **Run settings** before the first message and
+between runs: turn/runtime budgets, a default bash timeout, native retry limits
+and conversation instructions. Root and child agents also load the execution
+directory's project instructions automatically. **Continue** and **Retry** resume
+through Pi with completed tool results retained. Background run cards expose
+**Stop run** when Pi provides independent control; the main Stop action covers
+all child work. Long bash results have a paged full-output viewer.
+
+Attach UTF-8 text files or images with the composer. Image input requires a
+model that supports it. Draft text, attachments and new-chat run settings are
+saved locally per conversation or selected project/folder. The conversation
+menu also supports rename, archive/restore, copying the transcript and exporting
+Markdown or JSON. Archiving keeps the conversation and LayerFS branch history.
+Connection status shows when the event stream is reconnecting and refreshes
+the active snapshot when it recovers. See [the harness baseline](docs/agent-harness.md)
+for defaults, input limits and verification.
+
+Each user message has an actions menu with **Copy text**, **Edit & resend**,
+**Revert before this message**, and **Copy before this message**. Reverting
+restores the context before that message and puts its original text back in
+the composer without sending it. Editing restores the same point and sends
+the revised text. Copying before a message creates a separate conversation
+with that text as its unsent draft. **Duplicate chat** in the conversation or
+history menu copies the complete active context.
+
+For LayerFS project conversations, each user message records the file state
+when it enters the agent's context, including queued and steering messages.
+Revert and edit restore that snapshot on a new revision branch; the previous
+branch and Pi conversation entries remain in history. Copies receive an
+independent LayerFS branch and workspace. Local-folder conversations change
+only their chat context and continue using the original local folder. Stop
+active work before these operations; confirmations describe what will change.
+
+Each history row's actions menu includes **Delete conversation**. Confirm it by
+title and folder; running conversations offer **Stop and delete**, which first
+stops the current turn and its subagents. Deleting the current conversation
+returns Chat to a new session. This removes saved conversation data. Local
+folder files stay in place; a project workspace is stopped and unmounted,
+while its saved LayerFS branch history is kept. A failed deletion stays open with its error and a
+**Try again** action.
+
+Type **/** in Chat to open local shortcuts: `/new`, `/history`, `/model`,
+`/workspace`, `/compact` and `/stop`. Use Up/Down to choose, Tab to complete,
+Enter to run, or Escape to dismiss. Commands use the existing controls; an
+unknown slash command is sent as ordinary text. The small shortcut menu beside
+Send remembers **Enter** or **Cmd/Ctrl+Enter**; Shift+Enter adds a new line.
+Confirming a Chinese IME candidate does not send the message or run a command.
+
+The workspace panel's **Recent** menu reuses the six most recent local folders
+from saved local-folder sessions. Project sessions show their managed workspace
+instead of a local execution path. A session keeps its bound workspace; start
+a new one to choose another folder or project. The composer's context
+ring reads Pi's current context estimate, with used, remaining and limit
+details. Usage is unknown immediately after compaction until the next response,
+or after restarting until the session runs again; this estimate is not saved
+as a stale percentage.
+
+Connect stores its Pi configuration under `~/.layerfs-connect/pi/`: standard
+`auth.json` credentials, `models.json` provider definitions, and
+`connect-models.json` for the selected model. Conversations and Pi JSONL files
+live under `~/.layerfs-connect/chats/<session id>/`. A custom
+`LAYERFS_CONNECT_STATE` changes this root. Connect uses its own Pi directory;
+model secrets are kept in the host and are not returned by the settings API.
+
+Both the lead and child agents use bash for file reads, searches, writes and
+edits. The `pi-subagents` extension supplies delegation and supervision tools;
+`read`, `write`, `edit`, `find`, `grep` and `ls` are not separate model tools.
+
+The conversation controls adapt useful behavior from `conecode_副本`:
+provider-scoped model configuration, independent session streaming, stop and
+queued input, collapsible reasoning/tool output, slash commands, IME-aware
+shortcuts, workspace reuse, and context/token/cost display. Pi
+owns the model protocol, agent loop and session persistence.
 
 ## The UI
 
-One window: a sidebar on the left, and on the right the page it picks
-(`src/renderer/src/App.tsx`). A project and its sessions share one page; a
-session opens inside its project.
-Each screen has a file with an ASCII skeleton and its components in
-[docs/ui/](docs/ui/README.md).
+The language control at the bottom of the sidebar switches between Simplified
+Chinese and English immediately. The first launch follows the system language;
+the selected language is saved on this device. Switching keeps the current
+page, forms, drafts and running agent work. Interface labels and date formats
+are localized; project/model names, conversation content, source code and raw
+tool output remain unchanged. Renderer strings live in `src/renderer/src/i18n/`.
 
-```
-┌───────────────┬──────────────────────────────────────────────────────────┐
-│ LayerFS Connect│  Page header: title, facts, actions                      │
-│               │  Tab row                                                  │
-│ ▸ LayerFS   2 │ ┌──────────────────────────────────────────────────────┐ │
-│ ▸ Models      │ │                                                      │ │
-│               │ │  The tab's content                                   │ │
-│ + New session │ │                                                      │ │
-│               │ │                                                      │ │
-│ SESSIONS  All │ │                                                      │ │
-│ ▾ playground  │ │                                                      │ │
-│    /crew_2    │ └──────────────────────────────────────────────────────┘ │
-│    /depot_2   │  (on a session: the composer)                            │
-└───────────────┴──────────────────────────────────────────────────────────┘
-```
+The sidebar keeps four destinations: **Chat**, **Projects**, **Storage** and
+**Compute**. The brand is a single title with no subtitle. Demo scenarios,
+scripted sessions and replay controls are no longer part of the desktop UI.
 
-### Sidebar (`components/app-sidebar.tsx`)
-
-- **LayerFS**: opens the LayerFS page. Its count is the number of projects.
-- **Models**: opens the Models dialog (`components/models/`), where the
-  default model and its provider are set. The row shows the default model,
-  or a warning when there is none or it has no key.
-- **New session**: starts a session on a project, or makes a new project
-  (`projects/new-project-dialog.tsx`).
-- **Sessions**: one folder per project and, under it, its sessions, newest
-  first. Each row shows a replay tag, its age and whether it is running. A
-  project lists five, then "Show all". The filter shows all sessions or only
-  running ones.
-
-### LayerFS page
-
-Three parts in one tab row (`components/layerfs-tabs.tsx`):
-
-- **Projects** (`projects/projects-home.tsx`): a stats strip (projects,
-  sessions, playing now, Commits) and a card per project with its Store, its
-  last Commit and a New session button. A card opens the project.
-- **Storage** (`storage/storage-page.tsx`): a list of where Stores can live
-  (Local SQLite, then remote storage and sync locations, not available yet)
-  and the chosen one's detail: the worker, disk space, the LayerFS box and a
-  table of each project's Store volume.
-- **Compute** (`compute/compute-page.tsx`): where runs execute. Docker, with
-  its engine, socket and Sandboxes; native and cloud compute are shown
+- **Chat** opens interactive Pi sessions, with conversation history, model and
+  thinking controls. Its project picker lists existing user projects.
+- **Projects** lists existing LayerFS projects with search, refresh and **New project**.
+  The sidebar's **Your projects** list opens each project directly. It shares the
+  same directory with Projects and Chat, updates after creation from either entry
+  point, and reloads saved projects when Connect starts.
+  Each sidebar project has an **×** action that opens a confirmation dialog.
+  Confirming deletes its project storage and history through the existing host
+  API; original source folders and saved conversations remain. Failed deletions
+  stay in the dialog for retry, and successful deletions update the shared list.
+  The **+** beside Projects in the sidebar opens the same dialog. Entries marked
+  by the host as demo runs are omitted; their stored files are kept.
+- A **project page** reads the project directly, without requiring a demo run.
+  History, Worktrees, Storage and Sandboxes show the host's actual data. Empty
+  projects show empty states instead of sample workspaces or execution data.
+  **New chat** opens a fresh draft bound to that project without starting an
+  agent until the first message is sent.
+- **Storage** shows local volumes, disk and worker status. Project rows open
+  the actual project. Remote providers remain clearly marked as planned.
+- **Compute** shows Docker and sandbox status, with unavailable providers
   disabled.
 
-### Project page (`projects/project-view.tsx`)
+Remote Push/Pull/conflict mocks and hardcoded native sandboxes have been removed. Backend scenario fixtures and command-line test
+runners remain available for development; this cleanup does not delete project
+volumes, model configuration or saved Pi conversations.
 
-The header names the project and carries the replay control. The tabs read
-the project's newest session (wired in `runs/run-project-tabs.tsx` and
-`runs/run-view.tsx`); Sessions (on the right) lists all of them.
+### Create a project
 
-- **Live** (`runs/live-tab.tsx`): what is happening now. A stats row, the
-  agents on one side, the project in the middle with its Branches, the
-  Sandboxes and Workspaces on the other, and calls flowing between them.
-- **Timeline** (`projects/history-tab.tsx`, `TimelineTab`): the fork map
-  over time (`history/fork-map.tsx`), replayable, with search and All / Open /
-  Done filters. Main's Layers run along a spine, and each fork leaves its
-  parent where it forked. A 3D view (`history/citadel.tsx`) and a castle game
-  (`history/game/`) are built but hidden; `SHOW_VIEWS` in `history-tab.tsx`
-  brings back their switch.
-- **History** (`HistoryTab`): three panes. The Branch tree, the chosen
-  Branch's Commits and Layers, and the chosen Commit's detail with the paths
-  it changed. A Files switch shows the project's files instead
-  (`projects/files-tab.tsx`).
-- **Storage** (`ProjectStorage` in `projects/project-storage.tsx`): the Store on disk against the
-  raw history, how dedupe and compression get there, and each Commit's size.
-- **Sandboxes** (`ProjectSandboxes` in `projects/project-storage.tsx`): the
-  project's Sandboxes and their Workspaces.
-- **Sessions** (`runs/run-list.tsx`): every session of the project, with its
-  state, agents and progress.
+Choose **New project** in Projects, the sidebar **+**, or the **+** beside the
+LayerFS project field in a new Chat workspace. Enter a project name, then select
+**Empty project** or **Import folder**. The latter copies files from the chosen
+local folder into LayerFS; it does not move or delete the original folder.
 
-### Session page
+Creation uses the configured local SQLite runtime and reports its actual
+scan, storage and import stages. A duplicate name is rejected instead of
+replacing a project. Runtime or Docker setup errors remain visible in the
+form. If status polling is interrupted, **Check status** resumes the existing
+job without submitting another creation request.
 
-A session opens inside its project's page (`SessionPage` in
-`projects/project-view.tsx`, `runs/run-view.tsx`). The breadcrumb names the
-project and the agent shown; the agent switcher moves between the lead and
-its subagents.
-
-- **Conversation** (`runs/conversation.tsx`): the agent's turns. What it says,
-  its tool calls with LayerFS operations marked, subagents started and their
-  replies.
-- **Trace** (`runs/trace-view.tsx`): the same agent's steps as a list,
-  grouped by turn, with each LayerFS write and its auto-checkpoints, which
-  link into History.
-- **Composer** (`runs/composer.tsx`): under the conversation. A message to
-  the agent, `/scenario` to play a scenario, and the model for the next
-  message.
+Successful creation from Projects or the sidebar opens the project. Creating
+from Chat selects it in the current draft. Its agent will use a managed
+workspace; the import source is not the execution directory. Importing also
+remembers the source as the local-folder choice if you later switch back to
+**Local folder only**. Empty projects keep that local-folder choice unchanged.
+Saved conversations keep their existing project association.
 
 ### Look and motion
 
@@ -164,6 +257,7 @@ its subagents.
 
 ```
 host/          the backend: a plain Node process the app starts (host/README.md)
+  agents/      Pi sessions, model configuration, bash and pi-subagents integration
   runs/        scenario engine: agents, bash and subagent tools, jobs, expect checks
   parse/       splits every agent call into classified segments (workspace, fs, branch, …)
   checks/      final checks of a finished replay against its recording
@@ -174,7 +268,7 @@ src/
   main/        Electron main process: starts the host, opens windows
   preload/     hands the host's address to the renderer
   shared/      host-api.ts, the host ↔ renderer contract
-  renderer/    React UI: projects (demos), runs, files, history, storage, compute
+  renderer/    React UI: chat, projects, files, history, storage, compute
 ```
 
 ## Where LayerFS comes from
@@ -183,8 +277,10 @@ Connect never installs into or edits the LayerFS repository. `package.json`
 links `@layerfs/*` to the `api/` packages of a LayerFS worktree beside this
 repo, kept at LayerFS `main`
 (`../layerfs/.claude/worktrees/connect-main/api/{agent,backend,cli,runtime}`),
-and the host and every agent's bash call load `host/resolve-layerfs.js`, so
-`@layerfs/*` resolves from Connect's `node_modules`. The macOS worker runs a
+and the host loads `host/resolve-layerfs.js`, so `@layerfs/*` resolves from
+Connect's `node_modules`. Local-folder bash calls also receive this resolver;
+project bash runs through the host's LayerFS workspace execution bridge inside
+the container. The macOS worker runs a
 sealed Linux LayerFS build from the same worktree (`tools/worktree.py build`
 in LayerFS), named in `~/.layerfs-connect/settings.json`:
 
@@ -204,9 +300,21 @@ Needs Node 22.15 or later, pnpm, Docker and `jq`.
 pnpm install
 pnpm dev         # app with hot reload
 pnpm typecheck
+pnpm test:agents # real Pi/bash/subagents against a local test model; no API key needed
 pnpm build       # production build into out/
 pnpm start       # run the production build
 ```
+
+With Docker running and Connect's LayerFS image/bundle configured, verify real
+managed workspaces in a disposable project (local test model; no API key):
+
+```bash
+CONNECT_REAL_LAYERFS=1 node --import ./host/resolve-layerfs.js --test --test-timeout=200000 host/test/agent-layerfs-real.test.js
+```
+
+This covers root and child bash, separate conversation branches, large UTF-8
+output, saves after failed/stopped commands, immediate continuation and restored
+sessions. It removes its own project, worker and temporary state after the run.
 
 Host tests (each command stays under two minutes):
 
@@ -214,7 +322,7 @@ Host tests (each command stays under two minutes):
 node --import ./host/resolve-layerfs.js --test host/test/*.test.js tools/checks/tests/*.test.mjs
 ```
 
-Run demos without the window:
+Developer scenario fixtures can still run without the window:
 
 ```bash
 node --import ./host/resolve-layerfs.js host/run-demo.js tour
@@ -227,8 +335,7 @@ Drive the running app's host from a terminal (it writes
 node tools/connect-run.mjs start tour merge
 ```
 
-Dev aids: `CONNECT_VIEW=<hash>` opens a page (`projects/<demo>[/<tab>]`,
-`runs/<run id>[/<agent>]` for a session, `storage`, `compute`); `CONNECT_SHOT=<file.png>` saves a
+Dev aids: `CONNECT_VIEW=<hash>` opens a page (`chat`, `projects/<project>[/<tab>]`, `storage`, `compute`); `CONNECT_SHOT=<file.png>` saves a
 screenshot once loaded, then quits (`CONNECT_SHOT_DELAY` waits longer;
 `CONNECT_EVAL=<js>` runs in the page first and prints its result);
 `CONNECT_THEME=dark|light`.

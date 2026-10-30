@@ -53,7 +53,7 @@ export function useHostQuery<T>(load: () => Promise<T>, deps: unknown[], key?: s
 export function useHostEvents(listener: (event: RunEvent) => void) {
   const current = useRef(listener)
   current.current = listener
-  useEffect(() => onHostEvent((e) => e.type !== 'sync' && e.type !== 'storage' && current.current(e)), [])
+  useEffect(() => onHostEvent((e) => e.type !== 'sync' && e.type !== 'storage' && e.type !== 'chat' && e.type !== 'chat-navigate' && current.current(e)), [])
 }
 
 /**

@@ -1,5 +1,10 @@
 # Packages whose install scripts may run: Electron downloads its binary,
-# esbuild picks its platform build.
+# esbuild picks its platform build. Pi's transitive packages keep theirs off:
+# their scripts only print notices or no-op.
 allowBuilds:
   electron: true
   esbuild: true
+  '@google/genai': false
+  protobufjs: false
+minimumReleaseAgeExclude:
+  - pi-subagents@0.84.0

@@ -43,6 +43,12 @@ class FakeRuns extends EventEmitter {
   runs = (demo) => [{ id: 'r1', demo: demo ?? null }]
   run = (id) => (id === 'r1' ? { id } : null)
   stop = (id) => ({ id, state: 'stopped' })
+  remove = async (id) => {
+    if (id === 'r2') throw Object.assign(refusal('NotFound', 'no run named r2'), { status: 404 })
+    if (id === 'running') throw Object.assign(refusal('Busy', 'run is still playing'), { status: 409 })
+    if (id === 'blocked') throw refusal('EACCES', 'cannot remove saved history')
+    return { id }
+  }
 }
 
 const token = newToken()
@@ -161,12 +167,19 @@ test('demo and run routes go to the RunManager', async () => {
   assert.deepEqual((await call('GET', '/api/runs/r1')).body, { id: 'r1' })
   assert.equal((await call('GET', '/api/runs/r2')).status, 404)
   assert.deepEqual((await call('POST', '/api/runs/r1/stop')).body, { id: 'r1', state: 'stopped' })
+  assert.deepEqual((await call('DELETE', '/api/runs/r1')).body, { id: 'r1' })
+  assert.equal((await call('DELETE', '/api/runs/r2')).status, 404)
+  assert.equal((await call('DELETE', '/api/runs/running')).status, 409)
+  const failed = await call('DELETE', '/api/runs/blocked')
+  assert.equal(failed.status, 500)
+  assert.deepEqual(failed.body, { code: 'EACCES', message: 'cannot remove saved history' })
+  assert.equal((await call('DELETE', '/api/runs/r1', {})).status, 401)
 })
 
 test('without the engine, demo and run routes answer 503 with the reason', async () => {
   engine = null
   try {
-    for (const [method, path] of [['GET', '/api/demos'], ['GET', '/api/demos/tour'], ['POST', '/api/demos/tour/runs'], ['GET', '/api/runs'], ['GET', '/api/runs/r1'], ['POST', '/api/runs/r1/stop']]) {
+    for (const [method, path] of [['GET', '/api/demos'], ['GET', '/api/demos/tour'], ['POST', '/api/demos/tour/runs'], ['GET', '/api/runs'], ['GET', '/api/runs/r1'], ['POST', '/api/runs/r1/stop'], ['DELETE', '/api/runs/r1']]) {
       const res = await call(method, path)
       assert.equal(res.status, 503, path)
       assert.equal(res.body.code, 'engine-unavailable')

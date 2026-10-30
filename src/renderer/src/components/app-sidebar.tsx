@@ -1,5 +1,5 @@
 import { projectLabel, type RunSummary } from '@shared/host-api'
-import { Check, ChevronDown, ChevronRight, FolderPlus, Plus, RotateCw, Sparkles, Unplug } from 'lucide-react'
+import { Check, ChevronDown, ChevronRight, FolderPlus, MessageSquare, Plus, RotateCw, Sparkles, Unplug } from 'lucide-react'
 import { type CSSProperties, useEffect, useMemo, useState } from 'react'
 
 import { ConnectMark } from '@/components/connect-mark'
@@ -38,7 +38,7 @@ import { HostError, host } from '@/host/client'
 import { useHostQuery, useProjects } from '@/host/use-host'
 import { cn } from '@/lib/utils'
 
-export type NavId = 'projects' | 'storage' | 'compute'
+export type NavId = 'chat' | 'projects' | 'storage' | 'compute'
 
 /**
  * What the sidebar has selected: a page, or one demo project, optionally one
@@ -117,7 +117,11 @@ export function AppSidebar({ selected, onSelect }: AppSidebarProps) {
   const start = (project: string) => onSelect({ kind: 'project', id: project, draft: true })
 
   // one item for the LayerFS page; Projects, Storage and Compute are its tabs (layerfs-tabs.tsx)
-  const nav: NavItem[] = [{ id: 'projects', label: 'LayerFS', icon: LfsProject, count: projects.data?.length }]
+  // Chat: the Pi coding agent (chat/); LayerFS: Projects, Storage and Compute as its tabs
+  const nav: NavItem[] = [
+    { id: 'chat', label: 'Chat', icon: MessageSquare },
+    { id: 'projects', label: 'LayerFS', icon: LfsProject, count: projects.data?.length },
+  ]
   const unreachable = demos.error ?? (runsError && !runs ? runsError : undefined)
 
   // one highlight per part, gliding to whichever row is active
@@ -147,7 +151,7 @@ export function AppSidebar({ selected, onSelect }: AppSidebarProps) {
           <span ref={navGlide.indicator} aria-hidden="true" className={indicatorClass} />
           <SidebarMenu className="gap-1">
             {nav.map((item) => {
-              const active = selected.kind === 'nav'
+              const active = selected.kind === 'nav' && (item.id === 'chat' ? selected.id === 'chat' : selected.id !== 'chat')
               return (
                 <SidebarMenuItem key={item.id}>
                   <SidebarMenuButton

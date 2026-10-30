@@ -1,3 +1,4 @@
+import { t, useI18n } from '@/i18n'
 import './history.css'
 
 import { ChevronRight, CornerDownRight, Ellipsis } from 'lucide-react'
@@ -72,6 +73,7 @@ interface LineageGraphProps {
 }
 
 export function LineageGraph({ tree, focus, onFocus, selected, onSelect }: LineageGraphProps) {
+  useI18n()
   const path = useMemo(() => ancestry(tree, focus), [tree, focus])
   const rows = useMemo(() => lineageRows(tree, path), [tree, path])
   const branch = path[path.length - 1]
@@ -113,12 +115,13 @@ export function LineageGraph({ tree, focus, onFocus, selected, onSelect }: Linea
   }
 
   // Each lane runs from the row its fork point sits on to its newest row.
-  const segments = path.map((b, lane) => {
+  const segments = path.flatMap((b, lane) => {
     const own = rows.map((r, i) => (r.lane === lane ? i : -1)).filter((i) => i >= 0)
+    if (own.length === 0) return []
     const top = Math.min(...own)
     const bottom = Math.max(...own)
     const forkRow = lane > 0 ? rows.findIndex((r) => rowId(r) === b.forkedFrom?.id) : -1
-    return { b, lane, top, bottom, forkRow }
+    return [{ b, lane, top, bottom, forkRow }]
   })
   const mainFork = path[1] ? rows.findIndex((r) => rowId(r) === path[1].forkedFrom?.id) : -1
   const forkPoints = new Set(path.slice(1).map((b) => b.forkedFrom?.id))
@@ -135,14 +138,14 @@ export function LineageGraph({ tree, focus, onFocus, selected, onSelect }: Linea
   return (
     <section className="flex min-h-0 min-w-0 flex-col border-r">
       <header className="hist-pane-head flex flex-col gap-2 px-4 py-2.5">
-        <nav aria-label="Fork ancestry" className="flex min-w-0 items-center gap-1 text-[13px]">
+        <nav aria-label={t("Fork ancestry")} className="flex min-w-0 items-center gap-1 text-[13px]">
           {crumbs.map(({ b, folded }, i) => (
             <span key={b?.name ?? 'folded'} className={cn('flex items-center gap-1', i === crumbs.length - 1 ? 'min-w-0' : 'min-w-0 shrink')}>
               {i > 0 && <ChevronRight aria-hidden="true" className="size-3.5 shrink-0 text-faint" />}
               {folded ? (
                 <DropdownMenu>
                   <DropdownMenuTrigger
-                    aria-label={`${folded.length} more ancestors`}
+                    aria-label={t("{value1} more ancestors", {value1: folded.length})}
                     className="flex h-5 items-center rounded px-1 text-muted-foreground outline-none hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
                   >
                     <Ellipsis className="size-4" />
@@ -174,29 +177,32 @@ export function LineageGraph({ tree, focus, onFocus, selected, onSelect }: Linea
             </span>
           ))}
         </nav>
-        <div className="flex items-center gap-3">
-          <p title={branch.forkedFrom ? `Forked from ${parent?.name} at ${branch.forkedFrom.id}` : undefined} className="min-w-0 flex-1 truncate text-xs text-muted-foreground">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+          <p title={branch.forkedFrom ? t("Forked from {value1} at {value2}", {value1: parent?.name, value2: branch.forkedFrom.id}) : undefined} className="min-w-0 flex-1 truncate text-xs text-muted-foreground">
             {branch.name === 'main'
-              ? `${tree.layers.length} Layer${tree.layers.length === 1 ? '' : 's'} · the published line new mounts start from`
-              : `Forked from ${parent?.name}${branch.forkedFrom ? ` at ${shortId(branch.forkedFrom.id)}` : ''} · ${branch.commits.length} Commit${branch.commits.length === 1 ? '' : 's'} · ${branch.children.length} fork${branch.children.length === 1 ? '' : 's'}${branch.state === 'merged' ? ' · merged' : branch.state === 'published' ? ` · published${branch.publishedAs ? ` as ${shortId(branch.publishedAs)}` : ''}` : ''}`}
+              ? t("{layers} · the published line new mounts start from", { layers: t(tree.layers.length === 1 ? '{count} Layer' : '{count} Layers', { count: tree.layers.length }) })
+              : t("Forked from {parent}{point} · {commits} · {forks}{state}", {
+                parent: parent?.name,
+                point: branch.forkedFrom ? t(' at {id}', { id: shortId(branch.forkedFrom.id) }) : '',
+                commits: t(branch.commits.length === 1 ? '{count} Commit' : '{count} Commits', { count: branch.commits.length }),
+                forks: t(branch.children.length === 1 ? '{count} fork' : '{count} forks', { count: branch.children.length }),
+                state: branch.state === 'merged' ? t(' · merged') : branch.state === 'published' ? t(' · published{as}', { as: branch.publishedAs ? t(' as {id}', { id: shortId(branch.publishedAs) }) : '' }) : '',
+              })}
           </p>
-          <div role="group" aria-label="Branch actions" className="flex shrink-0 items-center gap-1">
+          <div role="group" aria-label={t("Branch actions")} className="flex max-w-full flex-wrap items-center gap-1">
             <Unavailable reason={BY_HAND}>
               <Button variant="ghost" size="sm" disabled>
-                <LfsFork /> Fork
-              </Button>
+                <LfsFork />{t("Fork")}</Button>
             </Unavailable>
             {parent && (
               <>
                 <Unavailable reason={BY_HAND}>
                   <Button variant="outline" size="sm" disabled>
-                    <LfsMerge /> Merge
-                  </Button>
+                    <LfsMerge />{t("Merge")}</Button>
                 </Unavailable>
                 <Unavailable reason={BY_HAND}>
                   <Button size="sm" disabled>
-                    <LfsPublish /> Publish
-                  </Button>
+                    <LfsPublish />{t("Publish")}</Button>
                 </Unavailable>
               </>
             )}
@@ -207,11 +213,12 @@ export function LineageGraph({ tree, focus, onFocus, selected, onSelect }: Linea
       <div
         ref={list}
         role="listbox"
-        aria-label={`Ancestry of ${branch.name}`}
+        aria-label={t("Ancestry of {value1}", {value1: branch.name})}
         tabIndex={0}
         onKeyDown={onKeyDown}
         className="relative min-h-0 flex-1 overflow-y-auto outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
       >
+        {rows.length === 0 && <p className="px-4 py-6 text-xs text-faint">{t("No Commits or Layers yet.")}</p>}
         {/* Keyed by the Branch, so its lineage draws in afresh when focus moves. */}
         <div key={branch.name} ref={container} className="relative isolate" style={{ height: rows.length * ROW + 8 }}>
           <span ref={indicator} aria-hidden="true" className="indicator hist-row-indicator -z-10" />
@@ -341,6 +348,7 @@ export function LineageGraph({ tree, focus, onFocus, selected, onSelect }: Linea
 
 /** A Branch's lane colour, as a small mark: square for main, round for a fork. */
 function LaneMark({ b }: { b: ForkBranch }) {
+  useI18n()
   return (
     <span
       aria-hidden="true"
@@ -365,12 +373,13 @@ interface RowLineProps {
 }
 
 function RowLine({ index, row, top, indent, tree, selected, label, onSelect, onFocus }: RowLineProps) {
+  useI18n()
   const style = revealStyle(index, { top, height: ROW, paddingLeft: indent + 6 })
   if (row.kind === 'earlier' || row.kind === 'empty')
     return (
       <div className="reveal absolute inset-x-0 flex items-center pr-4 text-xs text-faint" style={style}>
         <span className="rounded-md border border-dashed px-2 py-0.5">
-          {row.kind === 'earlier' ? `${row.count} earlier ${row.of}` : 'No Commits yet: forked, nothing committed'}
+          {row.kind === 'earlier' ? t("{value1} earlier {value2}", {value1: row.count, value2: t(row.of)}) : t("No Commits yet: forked, nothing committed")}
         </span>
       </div>
     )
@@ -415,7 +424,7 @@ function RowLine({ index, row, top, indent, tree, selected, label, onSelect, onF
         )}
         {row.kind === 'commit' && (
           <span
-            title={by ?? 'No agent recorded'}
+            title={by ?? t('No agent recorded')}
             className={cn('size-1.5 shrink-0 rounded-full', !by && 'ring-1 ring-faint')}
             style={by ? { background: agentColor(tree.agents, by) } : undefined}
           />
@@ -435,7 +444,7 @@ function RowLine({ index, row, top, indent, tree, selected, label, onSelect, onF
                 type="button"
                 tabIndex={-1}
                 onClick={() => onFocus(name)}
-                title={`Open ${name}, forked here`}
+                title={t("Open {value1}, forked here", {value1: name})}
                 className={cn(
                   'flex max-w-[7.5rem] items-center gap-1 rounded-md border bg-card px-1.5 py-0.5 text-[11px] shadow-[var(--highlight)] transition-colors hover:bg-muted hover:text-foreground',
                   kid?.state === 'merged' ? 'text-faint' : 'text-muted-foreground',

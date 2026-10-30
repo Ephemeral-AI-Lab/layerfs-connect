@@ -60,7 +60,7 @@ export class Run {
     this.spec = spec
     this.source = demo
     this.scenario = demo.scenario
-    this.emit = emit
+    this.emit = (event) => { if (!this.removed) emit(event) }
     this.loadSeed = loadSeed
     this.loadChecks = loadChecks
     this.after = after
@@ -141,6 +141,7 @@ export class Run {
 
   /** run.json: the detail, and where the project and folders are. */
   save(now = false) {
+    if (this.removed) return
     if (!now) {
       this.saveTimer ??= setTimeout(() => this.save(true), SAVE_MS)
       return
@@ -152,6 +153,13 @@ export class Run {
     mkdirSync(this.dir, { recursive: true })
     writeFileSync(`${file}.tmp`, JSON.stringify(value))
     renameSync(`${file}.tmp`, file)
+  }
+
+  /** A deleted record stays deleted when a stopped agent's pending work settles. */
+  forget() {
+    this.removed = true
+    clearTimeout(this.saveTimer)
+    clearTimeout(this.liveTimer)
   }
 
   changed(now = false) {

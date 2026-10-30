@@ -1,3 +1,4 @@
+import { t, useI18n } from '@/i18n'
 import './history.css'
 
 import { ChevronRight } from 'lucide-react'
@@ -17,12 +18,13 @@ export const laneColor = (depth: number) => (depth === 0 ? 'var(--primary)' : `v
 
 /** An agent's dot, pulsing while its call is in flight. */
 export function AgentDot({ tree, agent, className }: { tree: ForkTree; agent: string; className?: string }) {
+  useI18n()
   const color = agentColor(tree.agents, agent)
   const busy = tree.busy.has(agent)
   return (
     <span
       role="img"
-      aria-label={`${agent}${busy ? ', call in flight' : ''}`}
+      aria-label={t("{value1}{value2}", {value1: agent, value2: busy ? ', call in flight' : ''})}
       title={agent}
       className={cn('relative flex size-2 shrink-0', className)}
     >
@@ -67,6 +69,7 @@ interface BranchTreeProps {
 }
 
 export function BranchTree({ tree, focus, onFocus, expanded, onToggle, query, filter, onClear }: BranchTreeProps) {
+  useI18n()
   const { container, indicator } = useIndicator<HTMLDivElement>()
   const narrowing = query.trim() !== '' || filter !== 'all'
   const shown = useMemo(() => visibleBranches(tree, query, filter), [tree, query, filter])
@@ -113,7 +116,7 @@ export function BranchTree({ tree, focus, onFocus, expanded, onToggle, query, fi
     <div className="min-h-0 flex-1 overflow-y-auto px-1.5 py-2">
       <div ref={container} className="relative isolate">
         <span ref={indicator} aria-hidden="true" className="indicator hist-row-indicator -z-10" />
-        <ul role="tree" aria-label="Branches by fork" onKeyDown={onKeyDown}>
+        <ul role="tree" aria-label={t("Branches by fork")} onKeyDown={onKeyDown}>
           <Node
             name="main"
             tree={tree}
@@ -130,11 +133,9 @@ export function BranchTree({ tree, focus, onFocus, expanded, onToggle, query, fi
       </div>
       {empty && (
         <div className="hist-swap mx-1.5 mt-3 flex flex-col items-start gap-2 rounded-lg border border-dashed px-3 py-3">
-          <p className="text-xs text-muted-foreground">No Branch or Commit matches.</p>
+          <p className="text-xs text-muted-foreground">{t("No Branch or Commit matches.")}</p>
           {onClear && (
-            <Button variant="outline" size="xs" onClick={onClear}>
-              Show all Branches
-            </Button>
+            <Button variant="outline" size="xs" onClick={onClear}>{t("Show all Branches")}</Button>
           )}
         </div>
       )}
@@ -159,6 +160,7 @@ interface NodeProps {
 }
 
 function Node(props: NodeProps) {
+  useI18n()
   const { name, tree, focus, onFocus, isOpen, onToggle, shown, direct, narrowing, order } = props
   const b = tree.branches.get(name)
   if (!b || !shown.has(name)) return null
@@ -166,7 +168,7 @@ function Node(props: NodeProps) {
   const open = isOpen(name)
   const quiet = b.state === 'merged' || (narrowing && name !== 'main' && !direct.has(name))
   const selected = name === focus
-  const origin = b.forkedFrom ? `forked from ${b.parent} at ${shortId(b.forkedFrom.id)}` : 'the published line'
+  const origin = b.forkedFrom ? t('forked from {parent} at {id}', { parent: b.parent ?? 'main', id: shortId(b.forkedFrom.id) }) : t('the published line')
 
   return (
     <li role="treeitem" aria-expanded={kids.length > 0 ? open : undefined} aria-selected={selected}>
@@ -182,7 +184,7 @@ function Node(props: NodeProps) {
           <button
             type="button"
             tabIndex={-1}
-            aria-label={`${open ? 'Collapse' : 'Expand'} ${name}`}
+            aria-label={t("{value1} {value2}", {value1: t(open ? 'Collapse' : 'Expand'), value2: name})}
             onClick={() => onToggle(name)}
             disabled={narrowing}
             className="flex size-4 shrink-0 items-center justify-center rounded text-faint transition-colors hover:text-foreground"
@@ -196,7 +198,7 @@ function Node(props: NodeProps) {
           type="button"
           id={treeRowId(name)}
           tabIndex={selected ? 0 : -1}
-          title={`${name} · ${origin}`}
+          title={t("{value1} · {value2}", {value1: name, value2: origin})}
           onClick={() => onFocus(name)}
           className="flex h-full min-w-0 flex-1 items-center gap-1.5 rounded text-left outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
@@ -218,12 +220,12 @@ function Node(props: NodeProps) {
           {b.agent && <AgentDot tree={tree} agent={b.agent} />}
           <span className="shrink-0 font-mono text-[11px] text-faint tabular-nums">
             {name === 'main'
-              ? `${tree.layers.length} L`
+              ? t("{value1} L", {value1: tree.layers.length})
               : b.state === 'merged'
-                ? 'merged'
+                ? t("merged")
                 : b.state === 'published'
-                  ? 'published'
-                  : `+${b.commits.length}`}
+                  ? t("published")
+                  : t("+{value1}", {value1: b.commits.length})}
           </span>
         </button>
       </div>

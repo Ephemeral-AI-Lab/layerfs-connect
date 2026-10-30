@@ -8,7 +8,7 @@ import { host } from '@/host/client'
 import { useHostEvents, useHostQuery } from '@/host/use-host'
 import { stepKey } from '@/components/runs/run-format'
 
-const forRun = (e: RunEvent, id: string) => (e.type === 'run' ? e.run.id === id : e.run === id)
+const forRun = (e: RunEvent, id: string) => (e.type === 'run' ? e.run.id === id : e.type === 'run-removed' ? e.id === id : e.run === id)
 
 function unionCalls(a: TraceCall[], b: TraceCall[]): TraceCall[] {
   if (b.length === 0) return a

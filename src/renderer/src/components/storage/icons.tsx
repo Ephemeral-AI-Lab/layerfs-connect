@@ -1,3 +1,4 @@
+import { useI18n } from '@/i18n'
 import { FolderOpen } from 'lucide-react'
 import { type SimpleIcon, siCloudflare, siGoogledrive, siMinio, siPostgresql, siSqlite } from 'simple-icons'
 
@@ -47,6 +48,7 @@ export function brandColor(hex: string): { className: string; style: React.CSSPr
 
 /** A brand mark, in the brand's own colour. */
 export function Mark({ icon, className }: { icon: BrandMark; className?: string }) {
+  useI18n()
   const brand = brandColor(icon.hex)
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true" className={cn('fill-current', brand.className, className)} style={brand.style}>
@@ -56,13 +58,14 @@ export function Mark({ icon, className }: { icon: BrandMark; className?: string 
 }
 
 const TILE = {
-  sm: 'size-7 rounded-md [&_svg]:size-3.5 text-[10px]',
-  md: 'size-9 rounded-lg [&_svg]:size-[18px] text-[11px]',
-  lg: 'size-11 rounded-xl [&_svg]:size-[22px] text-[13px]',
+  sm: 'size-7 rounded-lg [&_svg]:size-3.5 text-[10px]',
+  md: 'size-9.5 rounded-xl [&_svg]:size-[18px] text-[11px]',
+  lg: 'size-12 rounded-2xl [&_svg]:size-[24px] text-[13px]',
 }
 
 /** A quiet square that holds one glyph, so every source lines up: a small lit layer. */
 export function Tile({ size = 'md', className, children }: { size?: keyof typeof TILE; className?: string; children: React.ReactNode }) {
+  useI18n()
   return (
     <span
       className={cn(
@@ -77,6 +80,7 @@ export function Tile({ size = 'md', className, children }: { size?: keyof typeof
 }
 
 export function ProviderGlyph({ provider, className }: { provider: Provider; className?: string }) {
+  useI18n()
   switch (provider) {
     case 'google-drive':
       return <Mark icon={siGoogledrive} className={className} />
@@ -92,6 +96,7 @@ export function ProviderGlyph({ provider, className }: { provider: Provider; cla
 }
 
 export function ProviderIcon({ provider, size }: { provider: Provider; size?: keyof typeof TILE }) {
+  useI18n()
   return (
     <Tile size={size}>
       <ProviderGlyph provider={provider} />
@@ -100,6 +105,7 @@ export function ProviderIcon({ provider, size }: { provider: Provider; size?: ke
 }
 
 export function DatabaseIcon({ kind, size }: { kind: 'sqlite' | 'postgres'; size?: keyof typeof TILE }) {
+  useI18n()
   return (
     <Tile size={size}>
       <Mark icon={kind === 'sqlite' ? siSqlite : siPostgresql} />

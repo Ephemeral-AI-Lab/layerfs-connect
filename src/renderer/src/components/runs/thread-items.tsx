@@ -1,18 +1,34 @@
-import { Ban, ChevronDown, CornerDownRight, MessageSquareReply, Send } from 'lucide-react'
-import { memo, useEffect, useState } from 'react'
+import { Ban, CheckCircle2, ChevronDown, CornerDownRight, MessageSquareReply, Send } from 'lucide-react'
+import { type ComponentType, memo, useEffect, useState } from 'react'
 
+import {
+  LfsBranch,
+  LfsCommit,
+  LfsConflict,
+  LfsExec,
+  LfsFork,
+  LfsMerge,
+  LfsMount,
+  LfsPublish,
+  LfsSandbox,
+  LfsWorkspace,
+} from '@/components/lfs-icons'
+import { spotlight } from '@/components/motion/spotlight'
 import { InlineText, Markdown, StepBlock } from '@/components/runs/blocks'
 import { KindChip, Spinner } from '@/components/runs/run-badges'
 import { type AgentColor, KIND, clock, duration } from '@/components/runs/run-format'
 import { type Entry, type Message, type Sender, kindCounts, targetOf } from '@/components/runs/thread'
 import { cn } from '@/lib/utils'
 import type { SegmentKind } from '@shared/host-api'
+import { useI18n } from '@/i18n'
 
 /** The user's request, as a chat shows what you sent. */
 export function UserMessage({ text }: { text: string }) {
   return (
     <div className="flex justify-end">
-      <Markdown text={text} className="max-w-[80%] rounded-2xl bg-muted px-4 py-2.5 text-[15px] leading-relaxed" />
+      <div onPointerMove={spotlight} className="glass-liquid spotlight max-w-[80%] rounded-2xl px-4 py-2.5 shadow-sm">
+        <Markdown text={text} className="text-[15px] leading-relaxed text-foreground" />
+      </div>
     </div>
   )
 }
@@ -28,7 +44,7 @@ const Cursor = () => <span aria-hidden="true" className="ml-0.5 inline-block h-[
  * mounts (text that arrived while the reader watched); whole otherwise. A
  * later change of `stream` does not restart or cut it.
  */
-function Streamed({ text, stream, className }: { text: string; stream?: boolean; className?: string }) {
+export function Streamed({ text, stream, className }: { text: string; stream?: boolean; className?: string }) {
   const [animate] = useState(!!stream)
   const tokens = animate ? text.split(/(\s+)/) : []
   const [shown, setShown] = useState(0)
@@ -44,10 +60,11 @@ function Streamed({ text, stream, className }: { text: string; stream?: boolean;
 
 /** The agent between steps: a model thinking. */
 export function ThinkingLine() {
+  const { t } = useI18n()
   return (
     <p role="status" className="flex items-center gap-2 text-sm text-muted-foreground">
       <Spinner className="size-3.5" />
-      <span className="animate-pulse">Thinking…</span>
+      <span className="animate-pulse">{t('Thinking…')}</span>
     </p>
   )
 }
@@ -71,25 +88,25 @@ export function ReceivedCard({ message, sender, script, open, onToggle }: Receiv
   const Icon = sender === 'child' ? MessageSquareReply : Send
   const title = script ? 'Task message' : RECEIVED_TITLE[sender](message.from)
   return (
-    <div className="overflow-hidden rounded-xl border border-border/70 bg-muted/45 dark:bg-muted/30">
+    <div onPointerMove={spotlight} className="glass-liquid spotlight overflow-hidden rounded-2xl shadow-xs">
       <button
         type="button"
         aria-expanded={open}
         onClick={onToggle}
-        className="flex w-full items-center gap-3 px-4 py-3 text-left outline-none focus-visible:bg-muted"
+        className="flex w-full items-center gap-3 px-4 py-3 text-left outline-none transition-colors hover:bg-foreground/[0.02] focus-visible:bg-muted/60"
       >
         <Icon aria-hidden="true" className="size-4 shrink-0 text-muted-foreground" />
-        <span className="shrink-0 text-sm text-muted-foreground">{title}</span>
+        <span className="shrink-0 text-sm font-medium text-foreground/85">{title}</span>
         {!open && (
-          <span className="min-w-0 flex-1 truncate text-sm text-faint">
+          <span className="min-w-0 flex-1 truncate text-sm text-muted-foreground">
             <InlineText text={message.text.replace(/\s+/g, ' ')} />
           </span>
         )}
         {open && <span className="flex-1" />}
-        {!script && <span className="shrink-0 text-xs text-faint tabular-nums">{clock(message.at)}</span>}
-        <ChevronDown aria-hidden="true" className={cn('size-3.5 shrink-0 text-faint transition-transform', open && 'rotate-180')} />
+        {!script && <span className="shrink-0 font-mono text-[11px] text-faint tabular-nums">{clock(message.at)}</span>}
+        <ChevronDown aria-hidden="true" className={cn('size-3.5 shrink-0 text-faint transition-transform duration-(--dur-base)', open && 'rotate-180')} />
       </button>
-      {open && <Markdown text={message.text} className="px-4 pb-3.5 pl-11 text-sm leading-relaxed text-foreground/90" />}
+      {open && <Markdown text={message.text} className="border-t border-foreground/[0.05] px-4 pt-3 pb-3.5 pl-11 text-sm leading-relaxed text-foreground/90" />}
     </div>
   )
 }
@@ -97,16 +114,24 @@ export function ReceivedCard({ message, sender, script, open, onToggle }: Receiv
 /** Plain text the agent says before its calls. */
 export function SayText({ text, stream }: { text: string; stream?: boolean }) {
   return (
-    <Streamed text={text} stream={stream} className="text-[15px] leading-relaxed" />
+    <Streamed text={text} stream={stream} className="px-1 text-[14.5px] leading-relaxed text-foreground/90" />
   )
 }
 
-/** The agent's reply: body text, with its time under it. */
+/** The agent's reply: body text in a clean conclusion card, with its time alongside it. */
 export function ReplyText({ text, at, stream }: { text: string; at?: number | null; stream?: boolean }) {
   return (
-    <div className="flex flex-col gap-2">
-      <Streamed text={text} stream={stream} className="text-[15px] leading-relaxed" />
-      {at ? <span className="text-xs text-faint tabular-nums">{clock(at)}</span> : null}
+    <div
+      onPointerMove={spotlight}
+      className="glass-liquid spotlight flex items-start gap-3 rounded-2xl px-4 py-3 shadow-xs"
+    >
+      <span className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-lg bg-success/10 text-success">
+        <CheckCircle2 aria-hidden="true" className="size-3.5" />
+      </span>
+      <div className="min-w-0 flex-1">
+        <Streamed text={text} stream={stream} className="text-[14.5px] leading-relaxed text-foreground/95" />
+      </div>
+      {at ? <span className="mt-1 shrink-0 font-mono text-[11px] text-faint tabular-nums">{clock(at)}</span> : null}
     </div>
   )
 }
@@ -151,34 +176,42 @@ export const CallsFold = memo(function CallsFold({ id, entries, folds, onToggle 
   const all = folds.get(id) ?? failed
   const shown = all || entries.length <= ROWS ? entries : entries.slice(0, ROWS - 1)
   const hidden = entries.length - shown.length
+  const counts = kindCounts(entries).slice(0, 4)
+
   return (
     <div className="flex flex-col gap-1.5">
       {entries.length > 1 && (
-        <div className="flex min-w-0 items-center gap-2 px-1 text-xs whitespace-nowrap text-faint">
-          <span
-            className={cn(
-              'flex shrink-0 items-center gap-1.5',
-              state.tone === 'stop' ? 'text-warning' : 'text-muted-foreground',
-            )}
-          >
-            {state.tone === 'run' && <Spinner className="size-3" />}
-            {state.label}
-          </span>
-          <span aria-hidden="true">·</span>
-          <span className="shrink-0">{entries.length} calls</span>
-          <span className="flex min-w-0 items-center gap-x-2 overflow-hidden">
-            {kindCounts(entries)
-              .slice(0, 5)
-              .map(([kind, n]) => (
-                <span key={kind} className="flex items-center gap-1">
-                  <span aria-hidden="true" className={cn('size-1.5 rounded-full', KIND[kind].dot)} />
-                  {KIND[kind].label} {n}
+        <div className="flex min-w-0 items-center justify-between gap-3 px-1.5 text-xs whitespace-nowrap text-faint tabular-nums">
+          <div className="flex items-center gap-2">
+            <span
+              className={cn(
+                'flex shrink-0 items-center gap-1.5 font-medium',
+                state.tone === 'stop' ? 'text-warning' : 'text-muted-foreground',
+              )}
+            >
+              {state.tone === 'run' && <Spinner className="size-3" />}
+              {state.label}
+            </span>
+            <span aria-hidden="true" className="text-border">·</span>
+            <span className="shrink-0 text-muted-foreground">{entries.length} calls</span>
+          </div>
+          {counts.length > 0 && (
+            <div className="hidden min-w-0 items-center gap-2.5 overflow-hidden sm:flex">
+              {counts.map(([kind, n]) => (
+                <span key={kind} className="inline-flex items-center gap-1 text-[11.5px] text-faint">
+                  <span aria-hidden="true" className={cn('size-1.5 rounded-full opacity-65', KIND[kind].dot)} />
+                  <span>{KIND[kind].label}</span>
+                  <span>{n}</span>
                 </span>
               ))}
-          </span>
+            </div>
+          )}
         </div>
       )}
-      <ol className="divide-y divide-border/60 overflow-hidden rounded-xl border border-border/70 bg-card">
+      <ol
+        onPointerMove={spotlight}
+        className="glass-liquid spotlight divide-y divide-foreground/[0.05] overflow-hidden rounded-2xl"
+      >
         {shown.map((e) => {
           const fallback = e.result?.state === 'failed'
           return (
@@ -192,15 +225,15 @@ export const CallsFold = memo(function CallsFold({ id, entries, folds, onToggle 
             />
           )
         })}
-        {hidden > 0 && (
+        {(hidden > 0 || (all && entries.length > ROWS)) && (
           <li>
             <button
               type="button"
               onClick={() => onToggle(id, failed)}
-              className="flex w-full items-center gap-1.5 px-3 py-1.5 text-left text-xs text-muted-foreground outline-none hover:bg-muted/50 hover:text-foreground focus-visible:bg-muted/60"
+              className="flex w-full items-center justify-center gap-1.5 bg-foreground/[0.015] px-4 py-2 text-xs font-medium text-muted-foreground outline-none transition-colors hover:bg-foreground/[0.035] hover:text-foreground focus-visible:bg-muted/60"
             >
-              <ChevronDown aria-hidden="true" className="size-3.5" />
-              Show {hidden} more call{hidden === 1 ? '' : 's'}
+              <ChevronDown aria-hidden="true" className={cn('size-3.5 transition-transform duration-(--dur-base)', hidden === 0 && 'rotate-180')} />
+              <span>{hidden > 0 ? `Show ${hidden} more call${hidden === 1 ? '' : 's'}` : 'Show fewer calls'}</span>
             </button>
           </li>
         )}
@@ -214,6 +247,24 @@ function callsOf(entry: Entry): { call: string; kind: SegmentKind }[] {
   const seen = new Map<string, SegmentKind>()
   for (const seg of entry.view?.segments ?? []) if (seg.call && !seen.has(seg.call)) seen.set(seg.call, seg.kind)
   return [...seen].map(([call, kind]) => ({ call, kind }))
+}
+
+/** Semantic icon for a step based on its LayerFS calls. */
+function stepIcon(calls: { call: string; kind: SegmentKind }[], hasConflict: boolean): ComponentType<{ className?: string }> {
+  if (hasConflict) return LfsConflict
+  const names = calls.map((c) => c.call)
+  if (names.includes('branch.publish')) return LfsPublish
+  if (names.includes('branch.merge')) return LfsMerge
+  if (names.includes('branch.fork')) return LfsFork
+  if (names.includes('workspace.commit')) return LfsCommit
+  if (names.some((n) => n.startsWith('fs.write') || n.startsWith('fs.edit') || n.startsWith('fs.apply'))) return LfsCommit
+  if (names.includes('workspace.mount')) return LfsMount
+  if (names.includes('workspace.unmount') || names.includes('sandbox.close')) return LfsSandbox
+  if (names.includes('workspace.exec')) return LfsExec
+  if (names.some((n) => n.startsWith('sandbox.'))) return LfsSandbox
+  if (names.some((n) => n.startsWith('workspace.'))) return LfsWorkspace
+  if (names.some((n) => n.startsWith('branch.') || n.startsWith('fs.'))) return LfsBranch
+  return LfsExec
 }
 
 /** A step's one-line title: its description, else its command's first line. */
@@ -233,33 +284,48 @@ interface StepRowProps {
 function StepRow({ entry, open, onToggle, full, onFull }: StepRowProps) {
   const calls = callsOf(entry)
   const r = entry.result
+  const refusedCall = r?.calls.find((c) => c.ok === false)
+  const hasConflict = Boolean(refusedCall || (r?.exitCode !== null && r?.exitCode !== undefined && r.exitCode !== 0))
+  const Icon = stepIcon(calls, hasConflict)
+  const ms = r?.ended ? Math.max(0, r.ended - r.started) : null
+
   return (
-    <li>
+    <li className="transition-colors hover:bg-foreground/[0.02]">
       <button
         type="button"
         aria-expanded={open}
         onClick={onToggle}
-        className="group flex w-full min-w-0 items-center gap-2.5 px-3 py-2 text-left outline-none hover:bg-muted/40 focus-visible:bg-muted/60"
+        className="group flex w-full min-w-0 items-center gap-3 px-4 py-2.5 text-left outline-none focus-visible:bg-muted/60"
       >
-        <RowMark entry={entry} />
-        <span className="min-w-0 flex-1 truncate text-[13px]" title={titleOf(entry)}>
+        <RowMark entry={entry} Icon={Icon} />
+
+        <span className="min-w-0 flex-1 truncate text-[13.5px] text-foreground/90 transition-colors group-hover:text-foreground" title={titleOf(entry)}>
           <InlineText text={titleOf(entry)} />
         </span>
-        <span className="hidden min-w-0 shrink items-center gap-1 overflow-hidden md:flex">
-          {calls.slice(0, 3).map((c) => (
+
+        {hasConflict && (
+          <span className="inline-flex h-5 shrink-0 items-center rounded-full bg-warning/10 px-2 text-[11px] font-medium text-warning">
+            {refusedCall?.code ?? 'refused'}
+          </span>
+        )}
+
+        <span className="hidden min-w-0 shrink items-center gap-1.5 overflow-hidden md:flex">
+          {calls.slice(0, 2).map((c) => (
             <KindChip key={c.call} kind={c.kind}>
               {c.call}
             </KindChip>
           ))}
-          {calls.length > 3 && <span className="text-[11px] text-faint">+{calls.length - 3}</span>}
+          {calls.length > 2 && <span className="font-mono text-[11px] text-faint">+{calls.length - 2}</span>}
         </span>
-        <span className="w-14 shrink-0 text-right text-xs text-faint tabular-nums">
-          {r?.ended ? duration(r.ended - r.started) : null}
+
+        <span className="w-13 shrink-0 text-right font-mono text-[11.5px] text-faint tabular-nums">
+          {ms !== null ? duration(ms) : null}
         </span>
-        <ChevronDown aria-hidden="true" className={cn('size-3.5 shrink-0 text-faint transition-transform group-hover:text-muted-foreground', open && 'rotate-180')} />
+
+        <ChevronDown aria-hidden="true" className={cn('size-3.5 shrink-0 text-faint/60 transition-all duration-(--dur-base) group-hover:text-foreground', open && 'rotate-180')} />
       </button>
       {open && (
-        <div className="flex flex-col gap-2 pr-3 pb-3 pl-9">
+        <div className="flex flex-col gap-2 pr-4 pb-3.5 pl-11">
           {entry.view?.note && <p className="text-xs text-muted-foreground italic">{entry.view.note}</p>}
           <StepBlock view={entry.view} result={entry.result} full={full} onFull={onFull} />
         </div>
@@ -268,12 +334,18 @@ function StepRow({ entry, open, onToggle, full, onFull }: StepRowProps) {
   )
 }
 
-/** A row's status: a spinner while it runs, a stop, else a dot. Pass or fail is the scenario's, not shown. */
-function RowMark({ entry }: { entry: Entry }) {
+/** A row's status and semantic LayerFS icon. */
+function RowMark({
+  entry,
+  Icon,
+}: {
+  entry: Entry
+  Icon: ComponentType<{ className?: string }>
+}) {
   const r = entry.result
-  if (r?.state === 'running') return <Spinner className="size-3.5" />
-  if (r?.state === 'stopped') return <Ban aria-label="stopped" className="size-3.5 shrink-0 text-warning" strokeWidth={2.5} />
-  return <span aria-hidden="true" className="mx-1 size-1.5 shrink-0 rounded-full bg-faint/60" />
+  if (r?.state === 'running') return <Spinner className="size-4" />
+  if (r?.state === 'stopped') return <Ban aria-label="stopped" className="size-4 shrink-0 text-warning" strokeWidth={2.25} />
+  return <Icon className="size-4 shrink-0 opacity-85 transition-opacity group-hover:opacity-100" />
 }
 
 interface ChipProps {
@@ -291,10 +363,11 @@ export function ThreadChip({ entry, colorOf, onOpenAgent }: ChipProps) {
   return (
     <button
       type="button"
+      onPointerMove={spotlight}
       onClick={() => onOpenAgent?.(other)}
       title={view?.tool === 'send_message' ? view.text : `Show ${other}'s conversation`}
       className={cn(
-        'flex w-fit max-w-full min-w-0 items-center gap-1.5 rounded-full border bg-card px-3 py-1 text-[13px] text-muted-foreground outline-none hover:border-input hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring',
+        'glass-liquid spotlight flex w-fit max-w-full min-w-0 items-center gap-1.5 rounded-full px-3.5 py-1 text-[13px] text-muted-foreground shadow-2xs outline-none transition-colors hover:border-foreground/15 hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring',
       )}
     >
       <CornerDownRight aria-hidden="true" className="size-3.5 shrink-0 text-faint" />

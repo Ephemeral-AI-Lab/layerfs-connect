@@ -5,6 +5,7 @@
 // 503 with the reason it did not load.
 import { createHash, randomBytes, timingSafeEqual } from 'node:crypto'
 import { createServer } from 'node:http'
+import { agentRoute } from './agents/routes.js'
 
 /** A comment line on every event stream this often, so idle proxies and sockets stay open. */
 export const HEARTBEAT_MS = 15_000
@@ -79,6 +80,7 @@ export function errorAnswer(error) {
  * @param {string} deps.token the bearer token every route needs
  * @param {object} deps.projects projects.js's Projects (or a stand-in)
  * @param {() => object | null} deps.runs the RunManager, null while it is missing
+ * @param {() => object | null} [deps.agents] the interactive Pi AgentManager
  * @param {() => string | null} [deps.runsError] why the RunManager is missing
  * @param {object} [deps.storage] storage.js's Storage: Stores, remotes, publish/push/pull/send/load/unlink, PostgreSQL (absent: those routes 404)
  * @param {object} [deps.models] models.js's Models: the model providers (absent: those routes 404)
@@ -86,7 +88,7 @@ export function errorAnswer(error) {
  * @param {(line: string) => void} [deps.log]
  */
 export function createHandler(deps) {
-  const { token, projects, storage = null, models = null, runs = () => null, runsError = () => null, heartbeatMs = HEARTBEAT_MS, log = (line) => process.stderr.write(`${line}\n`) } = deps
+  const { token, projects, storage = null, models = null, runs = () => null, agents = () => null, runsError = () => null, heartbeatMs = HEARTBEAT_MS, log = (line) => process.stderr.write(`${line}\n`) } = deps
   const streams = new Set()
 
   /** The RunManager, or a 503 naming why it is not there. */
@@ -103,6 +105,11 @@ export function createHandler(deps) {
   /** method + path segments -> the answer, or undefined when no route matches. */
   async function route(method, parts, query, body) {
     const [api, group, id, sub, ...rest] = parts
+    if (api === 'api' && group === 'agent') {
+      const manager = agents()
+      if (!manager) throw httpError(503, 'agent-unavailable', 'The agent runtime has not started.')
+      return agentRoute(manager, method, parts.slice(2), body ?? {}, query)
+    }
     if (api !== 'api') return undefined
     if (group === 'models' && models && parts.length === 5) {
       const action = rest[0]
@@ -161,7 +168,11 @@ export function createHandler(deps) {
       // layerfs#506: ?store= names the Store when the project's name is in several
       const store = query.get('store') || null
       if (!sub && method === 'GET') return projects.state(id, store)
-      if (!sub && method === 'DELETE') return projects.remove(id, store)
+      if (!sub && method === 'DELETE') {
+        // a project's chats release their Workspaces before the project goes
+        const manager = agents()
+        return manager ? manager.removeProject(id, () => projects.remove(id, store)) : projects.remove(id, store)
+      }
       if (method !== 'GET') return undefined
       const branch = query.get('branch') ?? 'main'
       if (sub === 'commits') return projects.commits(id, branch, query.get('limit'), store)
@@ -183,6 +194,7 @@ export function createHandler(deps) {
     if (group === 'runs') {
       if (!id && method === 'GET') return engine().runs(query.get('demo') || undefined)
       if (id && !sub && method === 'GET') return found(engine().run(id), `run ${id}`)
+      if (id && !sub && method === 'DELETE') return engine().remove(id)
       if (id && sub === 'trace' && method === 'GET') return engine().trace(id, { agent: query.get('agent'), before: query.get('before'), limit: query.get('limit') ?? undefined })
       if (id && sub === 'stop' && method === 'POST') return engine().stop(id)
       if (id && sub === 'messages' && method === 'POST') return engine().say(id, body ?? {})
@@ -200,9 +212,11 @@ export function createHandler(deps) {
     res.writeHead(200, { ...CORS, 'content-type': 'text/event-stream; charset=utf-8', 'cache-control': 'no-cache', connection: 'keep-alive' })
     res.write(': connected\n\n')
     const manager = runs()
+    const agentManager = agents()
     const forward = (event) => res.write(`data: ${JSON.stringify(event)}\n\n`)
     manager?.on('event', forward)
     storage?.on?.('event', forward)
+    agentManager?.on('event', forward)
     const beat = setInterval(() => res.write(': heartbeat\n\n'), heartbeatMs)
     const stream = { res, close: () => res.end() }
     streams.add(stream)
@@ -210,6 +224,7 @@ export function createHandler(deps) {
       clearInterval(beat)
       manager?.off('event', forward)
       storage?.off?.('event', forward)
+      agentManager?.off('event', forward)
       streams.delete(stream)
     }
     req.on('close', done)
@@ -243,7 +258,7 @@ export function createHandler(deps) {
       return events(req, res)
     }
     try {
-      const body = method === 'POST' ? await readBody(req) : undefined
+      const body = method === 'POST' ? await readBody(req, parts[1] === 'agent' ? AGENT_BODY_MAX : BODY_MAX) : undefined
       const answer = await route(method, parts, url.searchParams, body)
       if (answer === undefined) return send(res, 404, { code: 'not-found', message: `no route ${method} ${url.pathname}` })
       send(res, 200, answer)
@@ -263,14 +278,16 @@ export function createHandler(deps) {
 
 /** Most a request body may hold. */
 const BODY_MAX = 64 * 1024
+/** Agent messages carry attachments: at most 20 MiB of files, sent as base64. */
+const AGENT_BODY_MAX = 28 * 1024 * 1024
 
 /** A POST's JSON body (an object), or undefined when it sent none. */
-async function readBody(req) {
+async function readBody(req, max = BODY_MAX) {
   const chunks = []
   let size = 0
   for await (const chunk of req) {
     size += chunk.length
-    if (size > BODY_MAX) throw httpError(413, 'too-large', `a request body holds at most ${BODY_MAX} bytes`)
+    if (size > max) throw httpError(413, 'too-large', `a request body holds at most ${max} bytes`)
     chunks.push(chunk)
   }
   if (!size) return undefined

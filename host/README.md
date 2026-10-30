@@ -4,26 +4,185 @@ The host is Connect's backend: a plain Node process (system `node` ≥ 22.15,
 ESM JavaScript, no build step) that the Electron main process starts. It runs
 LayerFS through `@layerfs/runtime`, `@layerfs/agent` and `@layerfs/backend`,
 and replays scripted demo scenarios on the real LayerFS: the local SQLite
-Store and Docker Sandboxes. There are no language models: each agent's
-calls come from its scenario. Agents have only `bash` and the subagent tools,
-as in dsh-layerfs.
+Store and Docker Sandboxes. Interactive conversations use Pi's AgentSession
+API and the `pi-subagents` extension in `agents/`. The model's tool surface is
+bash plus delegation/supervision tools. File reads, writes and edits go
+through bash. The separate `runs/` engine keeps replaying fixed scenarios.
 
 The renderer talks to the host over HTTP on 127.0.0.1 (JSON, bearer token)
 and one server-sent event stream; the types are in
-[`src/shared/host-api.ts`](../src/shared/host-api.ts). Change both together.
+[`src/shared/host-api.ts`](../src/shared/host-api.ts) and
+[`src/shared/agent-api.ts`](../src/shared/agent-api.ts). Change both together.
+
+## Interactive agents (`agents/`)
+
+`AgentManager` creates, resumes and stops Pi sessions. It owns the UI metadata
+and forwards Pi events as `{ type: 'chat', session: <AgentSessionDetail> }` on
+the existing event stream. The client applies snapshots by their `updated`
+value and reads the active session again when the stream reconnects.
+
+`models.js` uses Pi's `ModelRuntime` for providers, credentials, supported
+thinking levels and model calls. The settings UI can select a built-in model
+or save a custom base URL, API format and model limits. A test saves that
+configuration and performs one real completion request. Settings responses
+contain `hasKey`, never the key value.
+
+All state stays beneath Connect's state folder (normally
+`~/.layerfs-connect`):
+
+- `pi/auth.json`: Pi's standard credential format.
+- `pi/models.json`: Pi's standard provider and model configuration.
+- `pi/connect-models.json`: the selected provider, model and thinking level.
+- `pi/agents/` and `pi/extensions/subagent/`: Connect's child-agent definitions
+  and subagent configuration.
+- `chats/<id>/chat.json`: conversation metadata and the display transcript.
+- `chats/<id>/*.jsonl`: Pi's persistent session; reopening uses SessionManager.
+- `chats/<id>/traces/`: LayerFS SDK traces from bash and child agents.
+- `chats/<id>/tool-output/`: private complete bash output, paged through the
+  authenticated session API and retained when copying conversations.
+- `chats/<id>/approval-connection.json`: the current local approval endpoint
+  and a session-scoped request token, shared by the root and child bash tools
+  for approval and managed-workspace execution.
+- `chats/<id>/pending-subagent-stops.json`: run IDs awaiting confirmed exit,
+  retained across stop retries and host restarts.
+
+The host sets `PI_CODING_AGENT_DIR` to its private `pi/` directory. Parent
+sessions explicitly select the allowed tools. The extension also constrains
+child tool selection, so a worker cannot restore Pi's default read/write/edit
+tools. The default worker uses bash; delegation, waiting and supervisor
+communication belong to the subagent tool group. Connect does not patch Pi
+or `pi-subagents`.
+
+Local-folder conversations execute bash directly in their selected host `cwd`.
+Project conversations use `agents/workspaces.js`: the first message opens a
+dedicated `chat-<session id>` branch forked from `main`, creates a sandbox and
+mounts that branch. The renderer can create this draft through a project's
+**New chat** action, with no session POST until the first message. Pi and its
+child processes retain a host control directory under `chats/<id>/`; that
+directory and the project's original import source are not the project bash
+execution path.
+
+`agents/workspace-bash.js` preserves Pi's bash schema, output handling and tool
+renderer while sending execution through the session-authenticated `/execute`
+bridge. The host resolves the actual mounted path before approval, then runs
+the approved command through LayerFS. Root, foreground, background and nested
+child agents all use this bridge and share one conversation workspace. Their
+bash commands are serialized. Each command starts at the workspace root, so
+subdirectory work uses `cd` inside the command. The command does not inherit
+the host's model credentials or control environment. There are no extra
+read/write/edit model tools and no implicit child-agent branches.
+
+After a command completes, fails or is interrupted, the host confirms that
+its process group and descendants have stopped before committing changes to
+the conversation branch. Read-only commands return `UpToDate` without adding
+a commit. The host never automatically merges or publishes these commits to
+`main`. Background shell processes do not outlive their command; use foreground
+checks. Pi's large-output `fullOutputPath` may refer to a host log that project
+container bash cannot access. Redirect large output to a workspace file when
+it must be read by a later command.
+
+Stop, conversation deletion and graceful host shutdown stop the agent and its
+children, save remaining workspace changes, unmount the workspace and close
+the sandbox. If stop or cleanup cannot be confirmed, the host reports an error
+and retains the workspace for retry rather than reporting successful cleanup.
+Saved branch history remains after conversation deletion. Continuing a stopped
+conversation mounts its existing branch again; it does not fork another branch
+or publish to `main`.
+
+Both session summaries and details expose `workspace: AgentWorkspace | null`.
+Local-folder sessions have `null`; older records may also have no workspace
+details until opened. The public object contains `branch`, `state`, `sandbox`,
+`path`, `head`, `commitCount`, `lastSaved` and `error`; execution-control fields
+remain private. States are `pending`, `preparing`, `ready`, `running`, `saving`,
+`closed` and `error`. Existing chat SSE snapshots carry these changes. The UI
+shows the real branch/path and save state, links to that branch's History,
+and coalesces history refreshes when workspace metadata changes or SSE
+reconnects; ordinary streaming text does not trigger repeated project reads.
+
+Message POSTs return after Pi durably accepts the user message; setup or
+checkpoint errors reject the request so the renderer keeps its draft. Further input can
+use `mode: "steer"` or `mode: "followUp"` while the session runs. Stop aborts
+the active Pi work and stops child tasks; an idle session can be compacted and
+continued. Pi JSONL is the authority for restored model context. The frontend
+history and tool cards are projections for display, including compacted and
+branch context summaries. The history drawer supports transcript search and
+full expansion of saved messages, thinking, tool arguments and output. Its
+usage count sums provider reports from that transcript; it is not the current
+context-window occupancy. Model and thinking controls share the Chat header,
+with provider configuration under the model dropdown.
+
+Sessions persist run limits (32 main-agent turns, 1,800 seconds, a 120-second
+default bash timeout and two native main-agent provider retries), conversation instructions, archive
+metadata and recorded usage. Runtime deadlines include background children and
+use the same verified stop/commit/release path as manual Stop. Continue uses
+Pi's high-level custom-message API without replaying completed tool calls.
+Execution phases and recovery state accompany snapshots; SSE omits attachment
+bytes, which remain available on full session responses.
+
+Root and child agents load project instructions from the actual execution
+directory, with custom conversation instructions appended. Pi's native context
+file loading is disabled to avoid duplicates and host control-directory rules.
+Project children fetch these files through authenticated `POST /context` on the
+internal approval bridge; the token cannot select arbitrary host paths. Context
+loading failures abort execution before a model request. Text and image inputs
+retain original prompt metadata through queued messages, edits and copies.
+See [the harness baseline](../docs/agent-harness.md) for limits and behavior.
+
+If the app is force-killed during a background task, the next stop/delete
+restores and stops that run. pi-subagents 0.84 may retain an unconfirmed
+process-exit record after the crash. Connect then reports `Subagent stop
+incomplete` and retains the conversation, including on repeated attempts;
+it does not treat a terminal display status as proof that cleanup completed.
+
+### Bash approval policy
+
+Every session persists `permissionMode: "ask" | "auto" | "full"`. New sessions
+default to `full`, and loaded conversations are migrated to `full`. The desktop
+has no policy selector or full-access confirmation dialog. The shared approval
+gate runs before root and foreground, background or nested child bash calls.
+The loopback approval service accepts approval requests and managed-workspace
+execution requests. Its session token cannot approve commands or change policy;
+those actions use the authenticated desktop API. `/execute` runs the same
+approval gate before forwarding a project command to its workspace.
+Stopping cancels outstanding requests. On restart, unfinished approvals are
+cancelled and commands must request a new decision.
+
+- `ask` pauses the exact command for a human approve/reject decision.
+- `auto` uses a separate model request with no tools to review the command
+  and its working directory. Routine project work can be approved by that
+  review. Risk, uncertainty or a review error leaves the command pending for
+  the user. A human can take over while the review is running.
+- `full` executes without a per-command prompt; it is the desktop default.
+  Setting it also releases pending/reviewing commands. OS permissions still apply.
+
+The host API retains explicit `ask`/`auto` modes for integrations and tests.
+Changing either mode reprocesses undecided requests under the selected policy.
+A user's decision cancels any in-flight review and cannot be overwritten by
+its later result. Session detail and chat events include `approvals`, whose
+entries contain `id`, `agent`, `toolCallId`, exact `command`, `cwd`, `created`,
+`status`, and optional `source`, `reason` and `decidedAt`. Statuses are
+`reviewing`, `pending`, `approved`, `rejected` and `cancelled`; sources are
+`user` or `model`. The renderer keeps completed requests in a collapsible
+audit view and shows active requests next to the conversation.
+
+The policy is an execution approval mechanism for these bash tools. It does
+not create a sandbox, and automatic model review does not enforce filesystem
+or network isolation. Project commands use their LayerFS container workspace
+under all three modes; local-folder commands retain direct host execution.
 
 ## Where LayerFS comes from
 
 Connect never installs into or edits the LayerFS repository. `package.json`
 links `@layerfs/{agent,backend,runtime,cli}` to the `api/` packages of a
 LayerFS worktree at `main` beside this repo
-(`../layerfs/.claude/worktrees/connect-main/api/...`), and every Node process Connect starts
-loads [`resolve-layerfs.js`](resolve-layerfs.js) first (`node --import`, and
-`NODE_OPTIONS=--import=…` in agents' bash calls), so `@layerfs/*` always
-resolves from Connect's `node_modules`. The `layerfs` command in agents' bash
-calls is a shim on PATH:
+(`../layerfs/.claude/worktrees/connect-main/api/...`). Host-side LayerFS calls
+load [`resolve-layerfs.js`](resolve-layerfs.js) first (`node --import`), so
+`@layerfs/*` resolves from Connect's `node_modules`. Local-folder bash also
+receives `NODE_OPTIONS=--import=…` and a `layerfs` shim on PATH:
 `node --import <host>/resolve-layerfs.js <api>/cli/src/layerfs.js "$@"`. `<api>` is the
-folder those links point at (`config.js` `API`).
+folder those links point at (`config.js` `API`). Project bash instead executes
+inside the managed container through the host's LayerFS SDK; it does not
+receive host resolver paths, credentials or shell environment.
 
 ## Deployment ([`config.js`](config.js))
 
@@ -35,7 +194,7 @@ folder those links point at (`config.js` `API`).
 - On macOS the runtime runs the home's worker container `<prefix>worker`
   (`lfc-worker`); every Store call goes there. Connect never touches another
   home's containers (dsh's are `layerfs-…`).
-- `deploymentEnv(spec, project)` / `layerfsEnv` give an agent's bash call
+- `deploymentEnv(spec, project)` / `layerfsEnv` give host-side replay calls
   its `LAYERFS_*` settings: PROJECT, HOME, DOCKER, IMAGE, DAEMON, VOLUME,
   STORE_PATH, CONTAINER_PREFIX, WORKER_ENDPOINT. The run adds LAYERFS_TRACE,
   LAYERFS_TRACE_STEP and LAYERFS_TRACE_START=1.
@@ -47,6 +206,10 @@ host/
   main.js              entry: opens the runtime, starts the worker, serves HTTP; prints one ready line
   server.js            routes and the event stream
   projects.js          real project reads (state, commits, files, Sandboxes) and removal
+  agents/              interactive Pi sessions, models, bash and subagent extension
+    workspaces.js      session branch/mount lifecycle, serialized execution and automatic commits
+    workspace-bash.js  root/child bash bridge to the host's managed workspace execution
+    history.js         immutable turn checkpoints and Pi session copies without replaying old work
   config.js            deployment (above)
   resolve-layerfs.js   @layerfs/* resolution (above)
   seed.js              writes a seed.json fixture out as a folder
@@ -89,6 +252,8 @@ errors are `{ code, message }` with a 4xx/5xx status. CORS allows any origin
 | `GET /api/status` | `HostStatus` |
 | `POST /api/worker/start` | `HostStatus` once the worker answers |
 | `GET /api/projects` | `ProjectSummary[]` |
+| `POST /api/projects` | `{ name, source? }` starts a real local SQLite Init and returns `ProjectInitJob`; omit `source` for an empty project, or provide an existing absolute folder to import. Existing names return 409 without changing the existing project. |
+| `GET /api/project-inits/:id` | `ProjectInitJob`: the runtime's `scan`, `volume`, `import`, `done` or `failed` step, live counts, terminal error, and `ProjectSummary` on success. Unknown or expired jobs return 404. Polling never restarts a job. |
 | `GET /api/projects/:name` | `ProjectState` (branches, layers, Sandboxes, last Commit, Commit count, Store file and size, Store totals and each Commit's added bytes) |
 | `GET /api/projects/:name/commits?branch=&limit=` | `CommitInfo[]`, newest first |
 | `GET /api/projects/:name/fs?branch=&path=` | `FsEntry[]` of one folder |
@@ -108,6 +273,7 @@ Since layerfs#506 a project name may be in several Stores. Every `/api/projects/
 | `GET /api/runs/:id/trace?agent=&before=&limit=` | `TracePage`: one agent's Trace rows (runs/trajectory.js), newest last; `limit` (default 400) rows before `before` (default the end). A live session's model side comes from pi's log, a replay's from the scenario's script |
 | `POST /api/runs/:id/messages` | `RunSummary`: the user's next message to a live session. Body `{ text, provider?, model?, thinking? }`; 409 while it works |
 | `POST /api/runs/:id/stop` | `RunSummary`: a replay stops; a live session's current turn stops (the session stays) |
+| `DELETE /api/runs/:id` | `{ id }`; removes a finished session's saved record and execution logs, keeping its LayerFS project; 409 while running |
 | `GET /api/events?token=` | `text/event-stream`, one `data: <HostEvent JSON>` per event: the RunManager's `RunEvent`s, and from `storage.js` `{ type: 'sync', job }` and `{ type: 'storage' }` (below) |
 
 ### Storage (layerfs#506, `docs/ui/storage-redesign.md`)
@@ -160,6 +326,59 @@ first check. The project list (`GET /api/projects`) adds `storeSync`,
 `storeProviders` and `connection` to each `ProjectSummary` from a Storage
 view at most 15 s old (or one read then, without sizes).
 
+### Chat (host/agents/)
+
+Interactive routes accept JSON request bodies:
+
+| Route | Input / answer |
+| --- | --- |
+| `GET /api/agent/models` | Models, provider connections (including custom headers, excluding API key values), selected model and default cwd |
+| `POST /api/agent/providers` | `{ provider, name?, baseUrl?, api?, apiKey?, headers? }`; saves one provider connection without requiring a model or changing selection, preserving its model definitions and other providers; returns the catalog |
+| `DELETE /api/agent/providers/:id` | Removes that provider’s configuration and credentials; clears selection only when it belongs to that provider, invalidates its pending model sync, and returns the latest catalog. Conversations stay in history. |
+| `POST /api/agent/models` | `{ provider, modelId, thinkingLevel, apiKey?, baseUrl?, api?, headers?, contextWindow?, maxTokens?, reasoning? }`; saves and returns the catalog |
+| `POST /api/agent/models/test` | Same settings; saves, tests the model, returns `{ text }` |
+| `POST /api/agent/models/discover` | `{ provider, baseUrl?, api?, apiKey?, headers? }`; reads models without saving, returns `{ models: [{ id, name, reasoning?, contextWindow?, maxTokens? }], source: "remote" \| "catalog" }` |
+| `POST /api/agent/models/sync` | Same input; discovers and persists all returned models plus provider connection settings in one operation, preserving current selection and existing overrides; returns the discovery result plus `catalog: AgentModels`. Empty/failed discovery keeps saved configuration intact. |
+| `GET /api/agent/sessions` | `AgentSessionSummary[]`, newest first |
+| `POST /api/agent/sessions` | `{ cwd?, project?, title?, provider?, modelId?, thinkingLevel?, permissionMode?, limits? }`; returns a new `AgentSessionDetail`. Project sessions reserve their own branch identity; opening for the first message prepares the managed workspace. Local-only sessions use `cwd`. |
+| `GET /api/agent/sessions/:id` | `AgentSessionDetail` with messages, queued inputs, tools, children, workspace, permissions, limits, execution/recovery state, recorded usage and archive metadata |
+| `POST /api/agent/sessions/:id/message` | `{ text, attachments?, mode?, provider?, modelId?, thinkingLevel? }`; starts or queues input and returns the snapshot |
+| `POST /api/agent/sessions/:id/continue` | `{ provider?, modelId?, thinkingLevel? }`; resumes an idle conversation through Pi while retaining completed results |
+| `POST /api/agent/sessions/:id/limits` | Partial `{ maxTurns, maxRuntimeSeconds, bashTimeoutSeconds, maxRetries, instructions }`; updates an idle conversation's settings |
+| `POST /api/agent/sessions/:id/update` | `{ title?, archived? }`; rename or archive/restore without deleting Pi files or branch history |
+| `GET /api/agent/sessions/:id/output/:artifactId?offset=0` | Reads an owned output artifact in UTF-8-safe pages; returns `{ text, offset, nextOffset, bytes, done }` |
+| `POST /api/agent/sessions/:id/children/:runId/stop` | Stops a controllable background run after terminal proof; foreground children use the conversation Stop action |
+| `POST /api/agent/sessions/:id/queue/:messageId` | `{ mode: "steer" }`; promotes a pending follow-up to guidance for the current task and returns the snapshot |
+| `DELETE /api/agent/sessions/:id/queue/:messageId` | Removes one pending message from Pi's queue and returns the snapshot |
+| `POST /api/agent/sessions/:id/stop` | Stops the task and children; project sessions save, unmount and close their workspace sandbox. Returns its snapshot or a cleanup error for retry. |
+| `POST /api/agent/sessions/:id/compact` | Compacts an idle session, returns its snapshot |
+| `POST /api/agent/sessions/:id/rollback` | `{ entryId }`; restores the active context before that user entry and its LayerFS checkpoint; returns `{ session, draft, attachments? }` without sending the draft |
+| `POST /api/agent/sessions/:id/edit` | `{ entryId, text, attachments?, provider?, modelId?, thinkingLevel? }`; restores before that user entry, sends the revised input and returns the updated session |
+| `POST /api/agent/sessions/:id/fork` | `{ entryId? }`; duplicates the whole active context, or only the context before a user entry; returns `{ session, draft?, attachments? }` for a new conversation and independent LayerFS branch |
+| `POST /api/agent/sessions/:id/permissions` | `{ mode: "ask" | "auto" | "full" }`; saves the policy and returns its snapshot |
+| `POST /api/agent/sessions/:id/approvals/:requestId` | `{ decision: "approve" | "reject" }`; decides a pending/reviewing command once and returns the snapshot |
+| `DELETE /api/agent/sessions/:id` | Stops and cleans up the workspace, then removes the saved conversation; keeps LayerFS branch history and returns `{ id }` |
+
+`headers` is a provider-scoped `Record<string, string>`: omitting it preserves
+saved headers, while `{}` clears them. Custom headers override generated
+headers with the same name. Values entered through Connect are literal text;
+Pi's native command/environment syntax is escaped when saved. Chat still uses
+Pi's configured API key or sign-in; headers alone do not configure its auth.
+
+History actions use Pi's stable `entryId`, exposed on transcript messages.
+User messages also carry `canRestore`; older project messages without a saved
+LayerFS checkpoint cannot restore files. The root `message_start` extension
+records a checkpoint before each consumed user message, covering queued and
+steering input as well as normal turns. File references name an immutable
+Commit or initial Layer, never the moving `main` branch.
+
+History mutations require idle work and hold a per-conversation barrier through
+cleanup and file/session changes. Pi's append-only entries remain in the old
+session file; the new cursor is persisted in a fresh Pi session. Copied pending
+subagent notices are inert, so historical work cannot restart in a copy.
+LayerFS restores create revision branches rather than erasing earlier history.
+Local-folder sessions change only their conversation context.
+
 ## The engine (`runs/`)
 
 `runs/index.js` exports `RunManager`:
@@ -173,9 +392,13 @@ await runs.startAll({ project })   // RunSummary[]: every scenario at once
 runs.runs(demo?)      // RunSummary[]
 runs.run(id)          // RunDetail | null
 runs.stop(id)         // RunSummary
+await runs.remove(id) // { id }; finished runs only, keeps the LayerFS project
 runs.on('event', (e) => …)  // RunEvent
 await runs.close()
 ```
+
+Successful removal emits `{ type: 'run-removed', id, demo }` so the sidebar,
+selected view, and project summaries can refresh together.
 
 A run plays a scenario on a project that is there, beside anything else
 playing on it. It makes the run folder `runs/<runId>/` (`work/` is every

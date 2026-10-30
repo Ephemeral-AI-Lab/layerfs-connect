@@ -1,7 +1,7 @@
 // The scenario engine (host/README.md, "The engine"):
 //   const runs = new RunManager({ spec, scenarios: '<connect>/scenarios' })
 //   runs.demos() · runs.demo(id) · await runs.start(id) · runs.runs(demo?)
-//   runs.run(id) · runs.stop(id) · runs.on('event', …) · await runs.close()
+//   runs.run(id) · runs.stop(id) · await runs.remove(id) · runs.on('event', …) · await runs.close()
 // Scenarios load with tools/lib/scenario.mjs (dsh-layerfs's checks, renamed)
 // and reload when their scenario.json changes; one that does not load is left
 // out and reported by loadErrors(). A scenario plays on a project that is
@@ -17,8 +17,8 @@
 // not overload Docker. A scenario of several sessions starts a run per session as one
 // launch (run.js, Launch): they share one folder and play in it at once.
 import { EventEmitter } from 'node:events'
-import { existsSync, readdirSync, readFileSync, renameSync, statSync, writeFileSync } from 'node:fs'
-import { join } from 'node:path'
+import { existsSync, readdirSync, readFileSync, renameSync, rmSync, statSync, writeFileSync } from 'node:fs'
+import { basename, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { compileScenario } from '../../tools/lib/scenario.mjs'
 import { keyOf, missing, notePostgresql, openRuntime, storeOf } from '../config.js'
@@ -445,6 +445,24 @@ export class RunManager extends EventEmitter {
     const r = this.records.get(id)
     if (!r) throw refuse('NotFound', 404, `no run named ${id}`)
     return pick(r)
+  }
+
+  /** Removes a finished run's saved history, leaving its LayerFS project intact. */
+  async remove(id) {
+    const live = this.live.get(id)
+    const record = live ?? this.records.get(id)
+    if (!record) throw refuse('NotFound', 404, `no run named ${id}`)
+    if (id === '.' || id === '..' || basename(id) !== id) throw refuse('InvalidInput', 400, 'a run id must be one directory name')
+    if (ACTIVE.has(record.state)) throw refuse('Busy', 409, `run ${id} is still playing; stop it before deleting it`)
+    // Cleanup and the startup sweep both write run.json after the run ends.
+    await Promise.all([this.sweeping, live?.finished])
+    if (!this.live.has(id) && !this.records.has(id)) throw refuse('NotFound', 404, `no run named ${id}`)
+    rmSync(join(this.spec.runs, id), { recursive: true, force: true })
+    live?.forget()
+    this.live.delete(id)
+    this.records.delete(id)
+    this.emit('event', { type: 'run-removed', id, demo: record.demo })
+    return { id }
   }
 
   /** Ends the runs still playing (failed: interrupted) and writes their records. */

@@ -1,5 +1,5 @@
 // The host's real LayerFS reads (README.md, "HTTP API"), mapped into the
-// types of src/shared/host-api.ts, and project removal.
+// types of src/shared/host-api.ts, with project creation and removal.
 //   status        runtime.status(), plus the worker start this host made
 //   list          runtime.project.list(), each marked with the run that made it
 //   state         runtime.project.get_state(name): Branches, Commits, Layers and

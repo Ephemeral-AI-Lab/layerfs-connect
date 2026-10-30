@@ -14,7 +14,9 @@ import { readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { APP, openRuntime, resolveSpec } from './config.js'
 import { Models } from './models.js'
+import { AgentManager } from './agents/index.js'
 import { Projects } from './projects.js'
+import { AgentWorkspaces } from './agents/workspaces.js'
 import { createHostServer, listen, newToken } from './server.js'
 import { Storage } from './storage.js'
 
@@ -70,6 +72,11 @@ async function main() {
   const runtime = await openRuntime(spec)
   const engine = { runs: null, error: 'loading' }
   const projects = new Projects({ spec, runs: () => engine.runs, log })
+  const agents = await AgentManager.create({ state: spec.state, projectEnvironment: (name) => projects.record(name), projectWorkspaces: new AgentWorkspaces({
+      // chats name a project; projects.open takes its runtime record (layerfs#506: a name may need its Store)
+      projects: { open: async (name) => projects.open(await projects.record(name)) },
+    }),
+  })
   const token = newToken()
   const models = new Models(spec)
   const storage = new Storage({ spec, projects, log })
@@ -79,7 +86,7 @@ async function main() {
   spec.postgresqlUrl = (store) => storage.urlForStore(store)
   // the project list shows each project's Store sync state and copy providers from the Storage view
   projects.storeJoin = () => storage.projectJoin()
-  const server = createHostServer({ token, projects, storage, models, runs: () => engine.runs, runsError: () => engine.error, log })
+  const server = createHostServer({ token, projects, storage, models, agents: () => agents, runs: () => engine.runs, runsError: () => engine.error, log })
 
   const endpoint = join(spec.state, 'host.json')
   let owned = false
@@ -93,13 +100,18 @@ async function main() {
       }, CLOSE_MS).unref()
       await new Promise((resolve) => server.close(() => resolve()))
       storage.close()
+      let clean = true
+      await agents.close().catch((error) => {
+        clean = false
+        log(`[host] closing agents: ${error.message}`)
+      })
       await Promise.resolve()
         .then(() => engine.runs?.close?.())
         .catch((error) => log(`[host] closing the engine: ${error?.message ?? error}`))
       await projects.close()
       await runtime.close().catch((error) => log(`[host] closing the runtime: ${error?.message ?? error}`))
       if (owned) rmSync(endpoint, { force: true })
-      process.exit(0)
+      process.exit(clean ? 0 : 1)
     })()
     return closing
   }

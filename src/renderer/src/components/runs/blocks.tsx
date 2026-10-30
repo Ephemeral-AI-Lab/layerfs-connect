@@ -14,6 +14,7 @@ import { KIND, duration, methodKind } from '@/components/runs/run-format'
 import { type Lang, type Token, highlight, highlightOutput } from '@/lib/highlight'
 import { type Inline, blocks, inline } from '@/lib/markdown'
 import { cn } from '@/lib/utils'
+import { useI18n } from '@/i18n'
 
 /** Lines a script shows before it folds its setup, and before it cuts. */
 const FOLD_OVER = 8
@@ -256,12 +257,13 @@ function Output({ text, stderr, full, tail, onFull }: { text: string; stderr?: b
 // The card
 
 function CopyButton({ text }: { text: string }) {
+  const { t } = useI18n()
   const [done, setDone] = useState(false)
   return (
     <button
       type="button"
-      aria-label="Copy the script"
-      title="Copy"
+      aria-label={t('Copy the script')}
+      title={t('Copy')}
       onClick={() => {
         void navigator.clipboard.writeText(text).then(() => {
           setDone(true)
@@ -311,11 +313,11 @@ export const StepBlock = memo(function StepBlock({ view, result, full, onFull }:
   const footer = result && (exit != null || extra.length > 0 || result.truncated || (full && cuts))
 
   return (
-    <div className="group/card relative overflow-hidden rounded-lg border bg-card font-mono text-[12.5px] leading-[1.65]">
+    <div className="group/card relative overflow-hidden rounded-xl border border-foreground/[0.08] bg-background/65 font-mono text-[12.5px] leading-[1.65] shadow-2xs backdrop-blur-xs">
       {text.trim() && (
         <>
-          <div className="absolute top-1 right-1.5 z-10 flex items-center gap-1 rounded-md bg-card/95 pl-1.5 opacity-0 transition-opacity group-hover/card:opacity-100 focus-within:opacity-100">
-            <span className="font-sans text-[10px] tracking-wide text-faint uppercase select-none">{labelOf(view)}</span>
+          <div className="absolute top-1.5 right-2 z-10 flex items-center gap-1 rounded-lg bg-card/90 px-1.5 py-0.5 opacity-0 shadow-2xs ring-1 ring-foreground/[0.06] backdrop-blur-xs transition-opacity group-hover/card:opacity-100 focus-within:opacity-100">
+            <span className="font-sans text-[10px] font-medium tracking-wider text-faint uppercase select-none">{labelOf(view)}</span>
             <CopyButton text={text} />
           </div>
           <Lines lines={lines} rows={script.rows} gutter={short ? 'prompt' : bash ? 'numbers' : 'none'} marks={marks} onFold={onFull} source={source} />
@@ -325,9 +327,9 @@ export const StepBlock = memo(function StepBlock({ view, result, full, onFull }:
       {answer && <Output text={answer} full={full} tail={false} onFull={onFull} />}
       {stderr && <Output text={stderr} stderr full={full} tail onFull={onFull} />}
       {footer && (
-        <div className="flex min-h-7 flex-wrap items-center gap-x-3 gap-y-1 border-t bg-muted/30 px-3 py-1 font-sans text-[11px] text-faint">
+        <div className="flex min-h-7 flex-wrap items-center gap-x-3 gap-y-1 border-t border-foreground/[0.06] bg-foreground/[0.02] px-3 py-1 font-sans text-[11px] text-faint">
           {exit != null && (
-            <span className={cn('font-mono', exit !== 0 && 'rounded bg-destructive/10 px-1 font-medium text-destructive')}>exit {exit}</span>
+            <span className={cn('font-mono', exit !== 0 && 'rounded-md bg-destructive/10 px-1.5 py-0.5 font-medium text-destructive')}>exit {exit}</span>
           )}
           {outLines === 0 && exit != null && <span>no output</span>}
           {extra.length > 0 && (
@@ -366,13 +368,13 @@ const FENCE_LANG: Record<string, Lang> = { sh: 'bash', bash: 'bash', shell: 'bas
 function FencedCode({ text, lang }: { text: string; lang: string }) {
   const lines = useMemo(() => highlight(text, FENCE_LANG[lang] ?? 'text'), [text, lang])
   return (
-    <div className="my-1 overflow-hidden rounded-lg border bg-card font-mono text-[12.5px] leading-[1.65]">
+    <div className="my-1 overflow-hidden rounded-xl border border-foreground/[0.08] bg-background/65 font-mono text-[12.5px] leading-[1.65] shadow-2xs backdrop-blur-xs">
       <Lines lines={lines} rows={lines.map((_, n) => ({ type: 'line', n }))} gutter="none" />
     </div>
   )
 }
 
-const CODE = 'rounded-[5px] bg-muted px-[0.3em] py-px font-mono text-[0.86em] ring-1 ring-foreground/[0.08] ring-inset'
+const CODE = 'rounded-md bg-foreground/[0.055] px-1.5 py-0.5 font-mono text-[0.85em] text-foreground/90'
 
 function Inlines({ items }: { items: Inline[] }) {
   return items.map((x, k) => {
@@ -410,6 +412,21 @@ export function Markdown({ text, tail, className }: { text: string; tail?: React
       {parts.map((b, k) => {
         const end = k === last ? tail : null
         switch (b.t) {
+          case 'h': {
+            const Tag = b.level === 1 ? 'h3' : b.level === 2 ? 'h4' : 'h5'
+            return (
+              <Tag
+                key={k}
+                className={cn(
+                  'font-semibold tracking-tight text-foreground',
+                  b.level === 1 ? 'text-[16px] leading-6' : b.level === 2 ? 'text-[15px] leading-5' : 'text-[14px] leading-5',
+                )}
+              >
+                <Inlines items={b.inl} />
+                {end}
+              </Tag>
+            )
+          }
           case 'p':
             return (
               <p key={k} className="whitespace-pre-wrap">

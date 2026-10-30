@@ -1,3 +1,4 @@
+import { t, useI18n } from '@/i18n'
 import './history.css'
 
 import { Minus, Pause, Play, Plus } from 'lucide-react'
@@ -28,8 +29,8 @@ interface Lane {
   y: number
 }
 
-const labelText = (b: ForkBranch) => (b.state === 'merged' ? `${b.name} · merged` : b.name)
-const labelWidth = (b: ForkBranch) => labelText(b).length * 7.25 + 18
+const labelText = (b: ForkBranch) => (b.state === 'merged' ? t('{name} · merged', { name: b.name }) : b.name)
+const labelWidth = (b: ForkBranch) => [...labelText(b)].reduce((width, char) => width + (/[\u2e80-\u9fff]/.test(char) ? 12 : 7.25), 18)
 /** A CSS translate, so moves glide (an SVG transform attribute would jump). */
 const at = (x: number, y: number): CSSProperties => ({ transform: `translate(${x}px, ${y}px)` })
 
@@ -95,6 +96,7 @@ interface ForkMapProps {
 
 /** History over time: main's Layers along a spine, each fork leaving its parent where it forked. */
 export function ForkMap({ title, tree, focus, shown, onOpen, autoplay }: ForkMapProps) {
+  const { locale } = useI18n()
   // Every Layer and Commit, oldest first by LayerFS's times; x is the event's
   // place in that order, so bursts and quiet stretches take the same room.
   const events = useMemo(
@@ -137,7 +139,7 @@ export function ForkMap({ title, tree, focus, shown, onOpen, autoplay }: ForkMap
   const x = (id: string | undefined) => PAD_LEFT + (order.get(id ?? '') ?? 0) * step
   // Lanes come from the full history, so replaying never moves a Branch.
   // biome-ignore lint/correctness/useExhaustiveDependencies: x depends only on order and step
-  const packed = useMemo(() => packLanes(tree, shown, x, step), [tree, shown, order, step])
+  const packed = useMemo(() => packLanes(tree, shown, x, step), [tree, shown, order, step, locale])
   // Lanes spread out to use a tall canvas, centring main.
   const rows = packed.above + packed.below
   const gap = rows > 0 && canvas.h > 0 ? clamp((canvas.h - PAD_Y * 2 - 24) / rows, LANE_MIN, LANE_MAX) : LANE_MIN
@@ -203,26 +205,26 @@ export function ForkMap({ title, tree, focus, shown, onOpen, autoplay }: ForkMap
     <div className="flex min-h-0 flex-1 flex-col">
       <div className="hist-pane-head relative flex items-center gap-3 px-4 py-2">
         <span className="flex items-center gap-1.5 text-xs tabular-nums">
-          <span className="font-mono">main @</span>
+          <span className="font-mono">{t("main @")}</span>
           {head ? <HashChip id={head.id} on={!replaying} /> : <span className="font-mono text-faint">—</span>}
           <span className="text-muted-foreground">
-            · {commitsSoFar} Commit{commitsSoFar === 1 ? '' : 's'}
-            {cut < last ? ` · replay at ${cutAt ? new Date(cutAt).toLocaleTimeString() : 'start'}` : ''}
+            · {commitsSoFar} {t(commitsSoFar === 1 ? "Commit" : "Commits")}
+            {cut < last ? t(" · replay at {value1}", {value1: cutAt ? new Date(cutAt).toLocaleTimeString() : 'start'}) : ''}
           </span>
         </span>
-        <span className="ml-auto text-xs text-faint">Click a Branch to open its lineage</span>
+        <span className="ml-auto text-xs text-faint">{t("Click a Branch to open its lineage")}</span>
         <Button variant={replaying ? 'default' : 'outline'} size="sm" onClick={play} className="min-w-[5.5rem]">
-          {playing ? <Pause /> : <Play />} {playing ? 'Pause' : cut < last ? 'Resume' : 'Replay'}
+          {playing ? <Pause /> : <Play />} {playing ? t("Pause") : cut < last ? t("Resume") : t("Replay")}
         </Button>
-        <div role="group" aria-label="Zoom" className="flex items-center rounded-lg border bg-card shadow-[var(--highlight),var(--elev-1)]">
-          <Button variant="ghost" size="icon-sm" aria-label="Zoom out" disabled={zoomOut === undefined} onClick={() => zoomOut && setZoom(zoomOut)}>
+        <div role="group" aria-label={t("Zoom")} className="flex items-center rounded-lg border bg-card shadow-[var(--highlight),var(--elev-1)]">
+          <Button variant="ghost" size="icon-sm" aria-label={t("Zoom out")} disabled={zoomOut === undefined} onClick={() => zoomOut && setZoom(zoomOut)}>
             <Minus />
           </Button>
           <button
             type="button"
             aria-pressed={zoom === null}
-            aria-label={`Fit to view, now ${Math.round((step / BASE) * 100)}%`}
-            title={zoom === null ? 'Fitted to the view' : 'Fit to view'}
+            aria-label={t("Fit to view, now {value1}%", {value1: Math.round((step / BASE) * 100)})}
+            title={zoom === null ? t("Fitted to the view") : t("Fit to view")}
             onClick={() => setZoom(null)}
             className={cn(
               'flex h-7 w-14 items-center justify-center gap-1 rounded-md text-xs tabular-nums outline-none transition-colors hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring',
@@ -232,7 +234,7 @@ export function ForkMap({ title, tree, focus, shown, onOpen, autoplay }: ForkMap
             {zoom === null && <span aria-hidden="true" className="size-1 rounded-full bg-primary shadow-[0_0_6px_var(--glow-strong)]" />}
             {Math.round((step / BASE) * 100)}%
           </button>
-          <Button variant="ghost" size="icon-sm" aria-label="Zoom in" disabled={zoomIn === undefined} onClick={() => zoomIn && setZoom(zoomIn)}>
+          <Button variant="ghost" size="icon-sm" aria-label={t("Zoom in")} disabled={zoomIn === undefined} onClick={() => zoomIn && setZoom(zoomIn)}>
             <Plus />
           </Button>
         </div>
@@ -272,9 +274,7 @@ export function ForkMap({ title, tree, focus, shown, onOpen, autoplay }: ForkMap
             {/* now */}
             <path d={`M${nowX} 14 V${height - 10}`} stroke="var(--faint)" strokeDasharray="3 4" data-playing={playing} className="map-now map-glide" />
             <g style={at(nowX, 11)} className="map-glide">
-              <text textAnchor="middle" className={cn('map-halo font-mono text-[10.5px]', playing ? 'fill-primary' : 'fill-muted-foreground')}>
-                now
-              </text>
+              <text textAnchor="middle" className={cn('map-halo font-mono text-[10.5px]', playing ? 'fill-primary' : 'fill-muted-foreground')}>{t("now")}</text>
             </g>
 
             {/* Branch lanes, drawn before main so the spine sits on top */}
@@ -316,11 +316,11 @@ export function ForkMap({ title, tree, focus, shown, onOpen, autoplay }: ForkMap
                 {own.map((c) =>
                   forkPoints.has(c.id) ? (
                     <circle key={c.id} cx={x(c.id)} cy={y} r={4.5} fill="var(--card)" stroke={color} strokeWidth={2} className="hist-pop map-pop map-glide">
-                      <title>{`${shortId(c.id)} · ${c.message} · ${when(c.at)}${c.by ? ` · ${c.by}` : ''}`}</title>
+                      <title>{t("{value1} · {value2} · {value3}{value4}", {value1: shortId(c.id), value2: c.message, value3: when(c.at), value4: c.by ? ` · ${c.by}` : ''})}</title>
                     </circle>
                   ) : (
                     <circle key={c.id} cx={x(c.id)} cy={y} r={3.5} fill={color} className="hist-pop map-pop map-glide">
-                      <title>{`${shortId(c.id)} · ${c.message} · ${when(c.at)}${c.by ? ` · ${c.by}` : ''}`}</title>
+                      <title>{t("{value1} · {value2} · {value3}{value4}", {value1: shortId(c.id), value2: c.message, value3: when(c.at), value4: c.by ? ` · ${c.by}` : ''})}</title>
                     </circle>
                   ),
                 )}
@@ -353,10 +353,10 @@ export function ForkMap({ title, tree, focus, shown, onOpen, autoplay }: ForkMap
                   strokeWidth={1}
                   className={cn('hist-pop map-pop map-glide', l === head && 'hist-head')}
                 >
-                  <title>{`${shortId(l.id)} · ${l.message} · ${when(l.at)}`}</title>
+                  <title>{t("{value1} · {value2} · {value3}", {value1: shortId(l.id), value2: l.message, value3: when(l.at)})}</title>
                 </rect>
                 <g style={at(x(l.id) + 5, mainY - 10)} className="map-glide hist-fade">
-                  <text className="map-halo fill-muted-foreground font-mono text-[10.5px]">L{tree.layers.length - tree.layers.indexOf(l)}</text>
+                  <text className="map-halo fill-muted-foreground font-mono text-[10.5px]">{t("L")}{tree.layers.length - tree.layers.indexOf(l)}</text>
                 </g>
               </g>
             ))}
@@ -369,7 +369,7 @@ export function ForkMap({ title, tree, focus, shown, onOpen, autoplay }: ForkMap
                   key={`label-${b.name}`}
                   role="button"
                   tabIndex={0}
-                  aria-label={`Open ${b.name}`}
+                  aria-label={t("Open {value1}", {value1: b.name})}
                   onClick={() => onOpen(b.name)}
                   onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && onOpen(b.name)}
                   className={cn('map-label map-glide hist-fade cursor-pointer outline-none', focused && 'hist-head')}
@@ -391,16 +391,14 @@ export function ForkMap({ title, tree, focus, shown, onOpen, autoplay }: ForkMap
             <g
               role="button"
               tabIndex={0}
-              aria-label="Open main"
+              aria-label={t("Open main")}
               onClick={() => onOpen('main')}
               onKeyDown={(e) => e.key === 'Enter' && onOpen('main')}
               className="map-label map-glide hist-head cursor-pointer outline-none"
               style={at(nowX + 10, mainY - 12)}
             >
               <rect width={50} height={24} rx={6} fill="var(--primary)" />
-              <text x={25} y={16} textAnchor="middle" className="font-mono text-[12px] font-semibold" fill="var(--primary-foreground)">
-                main
-              </text>
+              <text x={25} y={16} textAnchor="middle" className="font-mono text-[12px] font-semibold" fill="var(--primary-foreground)">{t("main")}</text>
             </g>
           </svg>
         )}

@@ -11,7 +11,8 @@
 
 @theme inline {
   --font-heading: var(--font-sans);
-  --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Inter Variable", "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "SF Mono", "JetBrains Mono", Menlo, Monaco, Consolas, ui-monospace, monospace;
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -68,14 +69,16 @@
   --animate-shimmer: shimmer 1.6s linear infinite;
   --animate-float: float 4s ease-in-out infinite;
   --radius-sm: calc(var(--radius) * 0.6);
-  --radius-md: calc(var(--radius) * 0.8);
+  --radius-md: calc(var(--radius) * 0.85);
   --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) * 1.4);
-  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-xl: calc(var(--radius) * 1.45);
+  --radius-2xl: calc(var(--radius) * 1.9);
+  --radius-3xl: calc(var(--radius) * 2.4);
+  --radius-4xl: calc(var(--radius) * 3);
 }
 
 :root {
-  --background: #f6f6f7;
+  --background: #ffffff;
   --foreground: #18181b;
   --card: #ffffff;
   --card-foreground: #18181b;
@@ -83,9 +86,9 @@
   --popover-foreground: #18181b;
   --primary: #4050c8;
   --primary-foreground: #ffffff;
-  --secondary: #f2f2f4;
+  --secondary: #f4f4f6;
   --secondary-foreground: #18181b;
-  --muted: #f2f2f4;
+  --muted: #f4f4f7;
   --muted-foreground: #5f5f69;
   --faint: #8b8b94;
   --accent: #eef0fc;
@@ -93,17 +96,17 @@
   --destructive: #c23b22;
   --success: #1c7a43;
   --warning: #8c5b00;
-  --border: #e7e7ea;
+  --border: #e8e8ed;
   --input: #d9d9de;
   --ring: #cbd0f4;
-  --radius: 0.75rem;
-  --sidebar: #fbfbfc;
+  --radius: 0.875rem;
+  --sidebar: #ffffff;
   --sidebar-foreground: #18181b;
   --sidebar-primary: #4050c8;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #edeef3;
+  --sidebar-accent: #f2f3f8;
   --sidebar-accent-foreground: #18181b;
-  --sidebar-border: #e7e7ea;
+  --sidebar-border: #e8e8ed;
   --sidebar-ring: #cbd0f4;
   /* A session's dot: its agent's colour while a call is in flight. */
   --idle: #d9d9de;
@@ -169,6 +172,16 @@
   --sync-unknown: var(--faint);
   /* A provider badge's cut-out ring (StoreIcon). */
   --badge-ring: var(--card);
+  /* Ambient pastel aurora palette (learned from agibase.dev: DeepMind & Apple pastel depth) */
+  --aura-lavender: #c7d2fe;
+  --aura-mint: #a7f3d0;
+  --aura-cyan: #ccfbf1;
+  --aura-rose: #fecdd3;
+  --aura-amber: #fef08a;
+  --aura-blue: #0071e3;
+  /* Pure monochrome transparent glass - colors appear ONLY where cursor moves */
+  --card-pastel-gradient: none;
+  --glass-sheen: none;
 }
 
 .dark {
@@ -231,9 +244,18 @@
   --elev-3: 0 24px 56px -16px rgb(0 0 0 / 0.7), 0 10px 20px -10px rgb(0 0 0 / 0.5);
   --highlight: inset 0 1px 0 0 rgb(255 255 255 / 0.06);
   --surface-sheen: linear-gradient(to bottom, rgb(255 255 255 / 0.03), transparent 3rem);
-  --ambient-1: color-mix(in oklab, var(--brand-2) 14%, transparent);
-  --ambient-2: color-mix(in oklab, var(--brand-3) 9%, transparent);
-  --grid-dot: color-mix(in oklab, var(--foreground) 9%, transparent);
+  --aura-violet: #a78bfa;
+  --aura-rose: #f472b6;
+  --aura-cyan: #38bdf8;
+  --aura-amber: #fbbf24;
+  --aura-mint: #34d399;
+  --ambient-1: color-mix(in oklab, var(--brand-2) 18%, transparent);
+  --ambient-2: color-mix(in oklab, var(--brand-3) 15%, transparent);
+  --ambient-3: color-mix(in oklab, var(--aura-rose) 12%, transparent);
+  --ambient-4: color-mix(in oklab, var(--aura-mint) 10%, transparent);
+  --grid-dot: rgba(255, 255, 255, 0.05);
+  --card-pastel-gradient: none;
+  --glass-sheen: none;
 }
 
 @layer base {
@@ -242,7 +264,31 @@
   }
   body {
     @apply bg-background text-foreground antialiased;
-    font-feature-settings: 'cv11', 'ss01';
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11', 'ss01';
+  }
+  code, kbd, samp, pre, .font-mono {
+    font-family: var(--font-mono);
+  }
+
+  /* Cross-platform Electron window dragging */
+  .app-drag {
+    -webkit-app-region: drag;
+    user-select: none;
+  }
+  .app-no-drag {
+    -webkit-app-region: no-drag;
+  }
+  .app-drag button,
+  .app-drag a,
+  .app-drag input,
+  .app-drag textarea,
+  .app-drag [role="button"],
+  .app-drag select {
+    -webkit-app-region: no-drag;
   }
   ::selection {
     background: color-mix(in oklab, var(--primary) 26%, transparent);
@@ -439,53 +485,289 @@
   }
 }
 
+/* Canvas ambient drift */
+@keyframes canvas-ambient-drift {
+  0% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0.85;
+  }
+  33% {
+    transform: translate(25px, -15px) scale(1.08);
+    opacity: 1;
+  }
+  66% {
+    transform: translate(-20px, 20px) scale(0.95);
+    opacity: 0.8;
+  }
+  100% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0.85;
+  }
+}
+
+/* Multi-color run breathing aura */
+@keyframes aura-pulse-1 {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0.22;
+  }
+  50% {
+    transform: translate(30px, -20px) scale(1.15);
+    opacity: 0.36;
+  }
+}
+@keyframes aura-pulse-2 {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0.18;
+  }
+  50% {
+    transform: translate(-35px, 25px) scale(1.2);
+    opacity: 0.32;
+  }
+}
+@keyframes aura-pulse-3 {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0.16;
+  }
+  50% {
+    transform: translate(20px, 30px) scale(1.12);
+    opacity: 0.28;
+  }
+}
+@keyframes aura-pulse-4 {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0.15;
+  }
+  50% {
+    transform: translate(-25px, -20px) scale(1.18);
+    opacity: 0.26;
+  }
+}
+
 @layer components {
-  /* The main canvas: a faint light from the top and a dot grid that fades out. */
+  /* The main canvas: soft porcelain pearl surface with delicate dot matrix so liquid glass cards gleam */
   .canvas {
     position: relative;
-    isolation: isolate;
-    background-color: var(--background);
-    background-image:
-      radial-gradient(56rem 26rem at 88% -8%, var(--ambient-1), transparent 70%),
-      radial-gradient(44rem 22rem at 18% -14%, var(--ambient-2), transparent 70%);
+    background: linear-gradient(180deg, #fafbfe 0%, #f5f7fc 100%);
   }
   .canvas::before {
     content: '';
     position: absolute;
     inset: 0;
-    z-index: -1;
+    z-index: 0;
     pointer-events: none;
-    background-image: radial-gradient(circle at 1px 1px, var(--grid-dot) 1px, transparent 0);
-    background-size: 22px 22px;
-    mask-image: radial-gradient(90rem 34rem at 60% -4rem, #000, transparent 75%);
+    background-image: radial-gradient(circle at 1px 1px, rgba(15, 23, 42, 0.032) 1px, transparent 0);
+    background-size: 24px 24px;
+    mask-image: radial-gradient(90rem 45rem at 50% 0%, #000, transparent 92%);
+  }
+  .canvas::after {
+    display: none;
   }
 
-  /* A card: a layer with a hairline edge, a lit top and resting elevation. */
+  .dark .canvas {
+    background: linear-gradient(180deg, #111217 0%, #0d0e13 100%);
+  }
+  .dark .canvas::before {
+    background-image: radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.04) 1px, transparent 0);
+  }
+  .dark .canvas::after {
+    display: none;
+  }
+
+  /* Optical Liquid Glass: multi-angle refractive sheen, bright specular rim, and soft ambient elevation */
+  .glass {
+    position: relative;
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.86) 0%, rgba(255, 255, 255, 0.66) 60%, rgba(255, 255, 255, 0.78) 100%);
+    border: 1px solid rgba(15, 23, 42, 0.06);
+    -webkit-backdrop-filter: blur(28px) saturate(180%);
+    backdrop-filter: blur(28px) saturate(180%);
+    box-shadow:
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.98),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.55),
+      0 2px 8px -2px rgba(15, 23, 42, 0.03),
+      0 8px 24px -6px rgba(15, 23, 42, 0.035);
+  }
+
+  .glass-strong {
+    position: relative;
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.94) 0%, rgba(255, 255, 255, 0.80) 60%, rgba(255, 255, 255, 0.88) 100%);
+    border: 1px solid rgba(15, 23, 42, 0.075);
+    -webkit-backdrop-filter: blur(36px) saturate(190%);
+    backdrop-filter: blur(36px) saturate(190%);
+    box-shadow:
+      inset 0 1px 0 0 rgba(255, 255, 255, 1),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.75),
+      0 4px 12px -2px rgba(15, 23, 42, 0.04),
+      0 16px 36px -10px rgba(15, 23, 42, 0.055);
+  }
+
+  .glass-liquid {
+    position: relative;
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.90) 0%, rgba(255, 255, 255, 0.72) 55%, rgba(255, 255, 255, 0.84) 100%);
+    border: 1px solid rgba(15, 23, 42, 0.06);
+    -webkit-backdrop-filter: blur(32px) saturate(190%);
+    backdrop-filter: blur(32px) saturate(190%);
+    box-shadow:
+      inset 0 1px 0 0 rgba(255, 255, 255, 1),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.65),
+      0 2px 6px -1px rgba(15, 23, 42, 0.025),
+      0 10px 28px -6px rgba(15, 23, 42, 0.045);
+  }
+
+  .dark .glass {
+    background: linear-gradient(145deg, rgba(26, 30, 42, 0.76) 0%, rgba(18, 21, 30, 0.62) 60%, rgba(22, 26, 38, 0.70) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    -webkit-backdrop-filter: blur(28px) saturate(190%);
+    backdrop-filter: blur(28px) saturate(190%);
+    box-shadow:
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.14),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.04),
+      0 10px 30px -10px rgba(0, 0, 0, 0.5);
+  }
+
+  .dark .glass-strong {
+    background: linear-gradient(145deg, rgba(32, 36, 50, 0.88) 0%, rgba(22, 26, 38, 0.78) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    -webkit-backdrop-filter: blur(36px) saturate(190%);
+    backdrop-filter: blur(36px) saturate(190%);
+    box-shadow:
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.20),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.06),
+      0 16px 36px -10px rgba(0, 0, 0, 0.65);
+  }
+
+  .dark .glass-liquid {
+    background: linear-gradient(145deg, rgba(28, 32, 46, 0.82) 0%, rgba(19, 22, 32, 0.68) 55%, rgba(24, 28, 40, 0.76) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.11);
+    -webkit-backdrop-filter: blur(32px) saturate(190%);
+    backdrop-filter: blur(32px) saturate(190%);
+    box-shadow:
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.16),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.05),
+      0 12px 32px -8px rgba(0, 0, 0, 0.6);
+  }
+
+  /* Sidebar Frosted Glass: subtle translucent depth against the porcelain canvas */
+  .sidebar-glass {
+    background: linear-gradient(180deg, rgba(242, 244, 250, 0.86) 0%, rgba(236, 239, 247, 0.80) 100%) !important;
+    -webkit-backdrop-filter: blur(36px) saturate(190%);
+    backdrop-filter: blur(36px) saturate(190%);
+    border-right: 1px solid rgba(15, 23, 42, 0.06);
+    box-shadow:
+      inset -1px 0 0 0 rgba(255, 255, 255, 0.7),
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.9);
+  }
+
+  .dark .sidebar-glass {
+    background: linear-gradient(180deg, rgba(16, 18, 26, 0.90) 0%, rgba(12, 14, 20, 0.86) 100%) !important;
+    -webkit-backdrop-filter: blur(36px) saturate(190%);
+    backdrop-filter: blur(36px) saturate(190%);
+    border-right: 1px solid rgba(255, 255, 255, 0.07);
+    box-shadow:
+      inset -1px 0 0 0 rgba(255, 255, 255, 0.04),
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.08);
+  }
+
+  /* Chase light: subtle optical sheen across cards on hover */
+  .sheen-sweep {
+    position: relative;
+    overflow: hidden;
+  }
+  .sheen-sweep::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      105deg,
+      transparent 25%,
+      rgba(255, 255, 255, 0.55) 48%,
+      hsla(var(--cursor-hue, 215), 70%, 75%, 0.08) 54%,
+      transparent 75%
+    );
+    transform: translateX(-100%);
+    transition: transform 0.75s cubic-bezier(0.22, 1, 0.36, 1);
+    pointer-events: none;
+    z-index: 1;
+  }
+  .sheen-sweep:hover::before {
+    transform: translateX(100%);
+  }
+
+  /* Surface: High-grade liquid glass card */
   .surface {
-    border: 1px solid var(--border);
-    background-color: var(--card);
-    background-image: var(--surface-sheen);
-    box-shadow: var(--highlight), var(--elev-1);
+    position: relative;
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.90) 0%, rgba(255, 255, 255, 0.72) 55%, rgba(255, 255, 255, 0.84) 100%);
+    border: 1px solid rgba(15, 23, 42, 0.06);
+    -webkit-backdrop-filter: blur(28px) saturate(185%);
+    backdrop-filter: blur(28px) saturate(185%);
+    box-shadow:
+      inset 0 1px 0 0 rgba(255, 255, 255, 1),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.65),
+      0 2px 6px -1px rgba(15, 23, 42, 0.025),
+      0 10px 28px -6px rgba(15, 23, 42, 0.04);
   }
   .surface-raised {
-    border: 1px solid var(--border);
-    background-color: var(--card);
-    background-image: var(--surface-sheen);
-    box-shadow: var(--highlight), var(--elev-2);
+    position: relative;
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.82) 100%);
+    border: 1px solid rgba(15, 23, 42, 0.075);
+    -webkit-backdrop-filter: blur(32px) saturate(190%);
+    backdrop-filter: blur(32px) saturate(190%);
+    box-shadow:
+      inset 0 1px 0 0 rgba(255, 255, 255, 1),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.75),
+      0 4px 12px -2px rgba(15, 23, 42, 0.035),
+      0 14px 34px -8px rgba(15, 23, 42, 0.055);
   }
-  /* A card that answers the pointer: lifts and tints its edge. */
+
+  .dark .surface {
+    background: linear-gradient(145deg, rgba(28, 32, 46, 0.82) 0%, rgba(19, 22, 32, 0.68) 55%, rgba(24, 28, 40, 0.76) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    -webkit-backdrop-filter: blur(28px) saturate(185%);
+    backdrop-filter: blur(28px) saturate(185%);
+    box-shadow:
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.16),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.05),
+      0 10px 28px -8px rgba(0, 0, 0, 0.55);
+  }
+  .dark .surface-raised {
+    background: linear-gradient(145deg, rgba(32, 38, 56, 0.88) 0%, rgba(24, 28, 42, 0.80) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    -webkit-backdrop-filter: blur(32px) saturate(190%);
+    backdrop-filter: blur(32px) saturate(190%);
+    box-shadow:
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.22),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.07),
+      0 14px 36px -8px rgba(0, 0, 0, 0.65);
+  }
+
+  /* Card hover: Light refraction catching the top edge */
   .card-hover {
     transition:
-      transform var(--dur-base) var(--ease-out-expo),
-      box-shadow var(--dur-base) var(--ease-out-soft),
-      border-color var(--dur-base) var(--ease-out-soft);
+      transform var(--dur-base) cubic-bezier(0.22, 1, 0.36, 1),
+      border-color var(--dur-base) cubic-bezier(0.22, 1, 0.36, 1),
+      box-shadow var(--dur-base) cubic-bezier(0.22, 1, 0.36, 1);
   }
   .card-hover:hover {
-    transform: translateY(-2px);
-    border-color: color-mix(in oklab, var(--primary) 32%, var(--border));
-    box-shadow: var(--highlight), var(--elev-2);
+    transform: translateY(-1.5px);
+    border-color: rgba(15, 23, 42, 0.10);
+    box-shadow:
+      inset 0 1px 0 0 rgba(255, 255, 255, 1),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.85),
+      0 4px 12px -2px rgba(15, 23, 42, 0.04),
+      0 16px 36px -8px rgba(15, 23, 42, 0.065);
   }
-  /* A light that follows the pointer; pair with onPointerMove={spotlight}. */
+  .dark .card-hover:hover {
+    border-color: rgba(255, 255, 255, 0.20);
+    box-shadow:
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.24),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.08),
+      0 16px 40px -8px rgba(0, 0, 0, 0.7);
+  }
+
+  /* Optical Specular Spotlight: delicate white core + whisper-soft single-hue refraction */
   .spotlight {
     position: relative;
     isolation: isolate;
@@ -494,15 +776,29 @@
     content: '';
     position: absolute;
     inset: 0;
-    z-index: -1;
+    z-index: 1;
     border-radius: inherit;
     pointer-events: none;
     opacity: 0;
-    background: radial-gradient(20rem circle at var(--mx, 50%) var(--my, 0%), color-mix(in oklab, var(--primary) 9%, transparent), transparent 65%);
-    transition: opacity var(--dur-base) var(--ease-out-soft);
+    background: radial-gradient(
+      400px circle at var(--mx, 50%) var(--my, 50%),
+      rgba(255, 255, 255, 0.55) 0%,
+      hsla(var(--cursor-hue, 215), 70%, 72%, 0.065) 38%,
+      transparent 72%
+    );
+    transition: opacity var(--dur-base) cubic-bezier(0.22, 1, 0.36, 1);
   }
   .spotlight:hover::after {
     opacity: 1;
+  }
+
+  .dark .spotlight::after {
+    background: radial-gradient(
+      400px circle at var(--mx, 50%) var(--my, 50%),
+      rgba(255, 255, 255, 0.08) 0%,
+      hsla(var(--cursor-hue, 215), 75%, 62%, 0.10) 38%,
+      transparent 72%
+    );
   }
 
   /* Entrances: fade and rise; --i staggers siblings, capped at 10 steps. */
@@ -601,42 +897,20 @@
     background: currentColor;
     animation: pulse-ring 1.6s var(--ease-out-soft) infinite;
   }
-  /* Live: a surface whose edge carries a turning band of brand light. */
+  /* Live: a surface marked as currently active; clean, static, restrained. */
   .live-border {
     position: relative;
     isolation: isolate;
     box-shadow:
-      0 0 0 1px color-mix(in oklab, var(--primary) 18%, transparent),
-      0 0 18px -8px var(--glow);
+      0 0 0 1.5px color-mix(in oklab, var(--primary) 45%, transparent),
+      0 1px 3px 0 rgba(0, 0, 0, 0.04);
   }
   .live-border::before {
-    content: '';
-    position: absolute;
-    inset: -1px;
-    z-index: 1;
-    padding: 1px;
-    border-radius: inherit;
-    pointer-events: none;
-    background: conic-gradient(
-      from var(--live-angle),
-      transparent 0 50%,
-      var(--brand-1) 66%,
-      var(--brand-2) 78%,
-      var(--brand-3) 90%,
-      transparent 100%
-    );
-    mask:
-      linear-gradient(#000 0 0) content-box,
-      linear-gradient(#000 0 0);
-    mask-composite: exclude;
-    animation: live-spin 3.2s linear infinite;
+    display: none;
   }
-  /* Live: a soft glow that breathes, for chips and small surfaces; --live-c tints it (primary by default). */
+  /* Live: a soft, calm ring for chips and small surfaces; --live-c tints it (primary by default). */
   .live-glow {
-    box-shadow:
-      0 0 0 1px color-mix(in oklab, var(--live-c, var(--primary)) 20%, transparent),
-      0 0 12px -6px color-mix(in oklab, var(--live-c, var(--primary)) 40%, transparent);
-    animation: live-breathe 2.4s ease-in-out infinite;
+    box-shadow: 0 0 0 1px color-mix(in oklab, var(--live-c, var(--primary)) 28%, transparent);
   }
   /* Brand light as text, for hero numbers. */
   .text-brand {
@@ -687,10 +961,19 @@
     border-bottom: 1px solid transparent;
   }
   .page-header[data-stuck] {
-    background-color: color-mix(in oklab, var(--background) 74%, transparent);
-    backdrop-filter: blur(14px) saturate(1.5);
-    border-bottom-color: var(--border);
-    box-shadow: 0 6px 18px -12px rgb(0 0 0 / 0.18);
+    background-color: color-mix(in oklab, var(--card) 75%, transparent);
+    background-image: var(--surface-sheen);
+    backdrop-filter: blur(18px) saturate(1.6);
+    -webkit-backdrop-filter: blur(18px) saturate(1.6);
+    border-bottom-color: color-mix(in oklab, var(--border) 60%, transparent);
+    box-shadow:
+      inset 0 1px 0 0 rgb(255 255 255 / 0.6),
+      0 8px 24px -10px rgb(0 0 0 / 0.12);
+  }
+  .dark .page-header[data-stuck] {
+    box-shadow:
+      inset 0 1px 0 0 rgb(255 255 255 / 0.08),
+      0 8px 24px -10px rgb(0 0 0 / 0.4);
   }
 }
 
@@ -765,11 +1048,17 @@
     height: 100%;
     align-items: center;
     justify-content: center;
-    border: 1px solid var(--border);
-    border-radius: 1rem;
-    background-color: var(--card);
-    background-image: var(--surface-sheen), radial-gradient(circle at 30% -10%, color-mix(in oklab, var(--brand-2) 16%, transparent), transparent 70%);
-    box-shadow: var(--highlight), var(--elev-2);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 1.25rem;
+    background-color: rgba(255, 255, 255, 0.85);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    backdrop-filter: blur(24px) saturate(180%);
+    box-shadow: inset 0 1px 1px 0 rgba(255, 255, 255, 0.95), var(--elev-2);
+  }
+  .dark .hero-tile-face {
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background-color: rgba(28, 30, 44, 0.85);
+    box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.12), var(--elev-2);
   }
 
   /* A hero header's facts: one row; if it ever overflows, its end fades rather than wrapping. */
@@ -813,30 +1102,24 @@
     color: var(--primary);
   }
 
-  /* Something is playing: a comet of brand light runs along a header's bottom edge. */
+  /* Something is playing: a calm, clean hairline along the header's bottom edge. */
   .live-line {
     position: absolute;
     inset: 100% 0 auto;
-    height: 2px;
+    height: 1.5px;
     overflow: hidden;
     pointer-events: none;
     background: linear-gradient(
       90deg,
       transparent,
-      color-mix(in oklab, var(--primary) 22%, transparent) 15%,
-      color-mix(in oklab, var(--brand-3) 22%, transparent) 85%,
+      color-mix(in oklab, var(--primary) 35%, transparent) 20%,
+      color-mix(in oklab, var(--brand-3) 35%, transparent) 80%,
       transparent
     );
-    animation: fade-in var(--dur-slow) var(--ease-out-soft);
+    opacity: 0.8;
   }
   .live-line::after {
-    content: '';
-    position: absolute;
-    inset: 0 auto 0 0;
-    width: 40%;
-    background: linear-gradient(90deg, transparent, var(--brand-1) 30%, var(--brand-2) 60%, var(--brand-3) 85%, transparent);
-    box-shadow: 0 0 10px 1px var(--glow);
-    animation: live-line 2.8s cubic-bezier(0.45, 0, 0.25, 1) infinite;
+    display: none;
   }
 
   /* The sidebar tree: rows slide in without ever hiding (a busy first render
@@ -853,13 +1136,12 @@
       inset 0 0 0 1px color-mix(in oklab, var(--foreground) 5%, transparent),
       0 0 16px -10px var(--glow);
   }
-  /* A playing session's row breathes in the colour of its running agent (--pulse). */
+  /* A playing session's row shows a calm tint in the colour of its running agent (--pulse). */
   .side-live {
     --pulse: var(--primary);
     position: relative;
     background-color: color-mix(in oklab, var(--pulse) 8%, transparent);
     box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--pulse) 22%, transparent);
-    animation: side-breathe 2.4s ease-in-out infinite;
   }
   /* Its progress through the scenario, a hairline along the row's foot. */
   .side-progress {

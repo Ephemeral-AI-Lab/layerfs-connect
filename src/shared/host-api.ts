@@ -329,6 +329,32 @@ export interface NewR2Remote {
 
 export type NewRemote = NewMinioRemote | NewR2Remote
 
+export interface NewProjectInput {
+  name: string
+  /** Omit to create an empty project; otherwise import this absolute directory. */
+  source?: string
+}
+
+export interface ProjectInitCounts {
+  entries: number
+  files: number
+  bytes: number
+}
+
+export interface ProjectInitJob {
+  id: string
+  name: string
+  source: string | null
+  started: number
+  ended: number | null
+  step: 'scan' | 'volume' | 'import' | 'done' | 'failed'
+  scanned: ProjectInitCounts | null
+  totals: ProjectInitCounts | null
+  imported: (ProjectInitCounts & { step: string }) | null
+  project: ProjectSummary | null
+  error: { code: string; message: string } | null
+}
+
 export interface BranchInfo {
   name: string
   /** The head Commit or Layer id this Branch points at. */
@@ -842,6 +868,7 @@ export interface RunLive {
 /** One server-sent event on /api/events. */
 export type RunEvent =
   | { type: 'run'; run: RunSummary }
+  | { type: 'run-removed'; id: string; demo: string }
   | { type: 'agent'; run: string; agent: AgentRun }
   | { type: 'step'; run: string; step: StepResult }
   | { type: 'call'; run: string; call: TraceCall }
@@ -849,13 +876,15 @@ export type RunEvent =
   | { type: 'checks'; run: string; checks: CheckResult[] }
   | { type: 'live'; run: string; live: RunLive }
 
-/** Every server-sent event on /api/events: the runs' events, and Storage's. */
+/** Every server-sent event on /api/events: the runs' events, Storage's and the chats'. */
 export type HostEvent =
   | RunEvent
   /** Each new sample of a running sync job, and its end. */
   | { type: 'sync'; job: SyncJob }
   /** The storage view changed (a check ended, a job ended): read /api/storage again. */
   | { type: 'storage' }
+  | { type: 'chat'; session: import('./agent-api').AgentSessionDetail }
+  | { type: 'chat-navigate'; fromId: string; sessionId: string }
 
 // ---------- model providers (host/models.js) ----------
 

@@ -82,7 +82,7 @@
     box-shadow var(--dur-slow) var(--ease-out-soft);
 }
 .sc-slot[data-on='true'] {
-  background: linear-gradient(135deg, var(--brand-1), var(--brand-2));
+  background: linear-gradient(135deg, hsl(var(--cursor-hue, 220), 85%, 55%), hsl(var(--cursor-hue, 220), 85%, 65%));
   box-shadow: 0 0 8px -2px var(--glow);
   animation: sc-slot-in var(--dur-slow) var(--ease-out-expo) backwards;
   animation-delay: var(--d, 0ms);
@@ -101,24 +101,15 @@
   overflow: hidden;
   background: color-mix(in oklab, var(--foreground) 12%, transparent);
 }
-.sc-wire[data-live='true']::after {
-  content: '';
-  position: absolute;
-  inset: 0 auto 0 0;
-  width: 40%;
-  background: linear-gradient(90deg, transparent, var(--brand-2), var(--brand-3), transparent);
-  animation: sc-travel 1.8s linear infinite;
+.sc-wire[data-live='true'] {
+  background: hsl(var(--cursor-hue, 220), 85%, 60%);
+  opacity: 0.75;
 }
-@keyframes sc-travel {
-  from {
-    transform: translateX(-100%);
-  }
-  to {
-    transform: translateX(260%);
-  }
+.sc-wire[data-live='true']::after {
+  display: none;
 }
 
-/* A running row: a thin brand edge on its left that breathes. */
+/* A running row: a thin monochromatic brand edge on its left. */
 .sc-live-row {
   position: relative;
 }
@@ -128,25 +119,23 @@
   inset: 8px auto 8px 0;
   width: 2px;
   border-radius: 2px;
-  background: linear-gradient(to bottom, var(--brand-1), var(--brand-3));
-  box-shadow: 0 0 10px 0 var(--glow);
-  animation: sc-breathe 2.4s ease-in-out infinite;
+  background: hsl(var(--cursor-hue, 220), 85%, 60%);
 }
-@keyframes sc-breathe {
-  50% {
-    opacity: 0.45;
-  }
+
+/* Dynamic monochromatic single-hue progress bar fill following cursor movement */
+.sc-bar-brand {
+  background: linear-gradient(90deg, hsl(var(--cursor-hue, 220), 85%, 54%) 0%, hsl(var(--cursor-hue, 220), 85%, 64%) 100%);
+  box-shadow: 0 0 10px -2px hsla(var(--cursor-hue, 220), 85%, 60%, 0.45);
 }
 
 /* A target or storage LayerFS cannot use yet: present, calm, plainly not live. */
 .sc-soon {
-  border: 1px dashed color-mix(in oklab, var(--foreground) 16%, transparent);
-  background-color: color-mix(in oklab, var(--card) 55%, transparent);
-  background-image: repeating-linear-gradient(
-    135deg,
-    transparent 0 10px,
-    color-mix(in oklab, var(--foreground) 2.2%, transparent) 10px 11px
-  );
+  backdrop-filter: blur(20px) saturate(1.5);
+  -webkit-backdrop-filter: blur(20px) saturate(1.5);
+  border: 1px dashed color-mix(in oklab, var(--foreground) 14%, transparent);
+  border-radius: 1.25rem;
+  background-color: color-mix(in oklab, var(--card) 60%, transparent);
+  box-shadow: var(--highlight), var(--elev-1);
 }
 .sc-soon-mark {
   filter: grayscale(1);
@@ -160,24 +149,29 @@
   opacity: 0.9;
 }
 
-/* The Storage page's list indicator: a lit card behind the chosen row, with a brand edge. */
+/* The Storage page's list indicator: a lit frosted liquid glass lens behind the chosen row */
 .sc-pick {
-  border-radius: 0.6rem;
-  background-color: var(--card);
-  background-image: var(--surface-sheen);
+  border-radius: 0.875rem;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.94) 0%, rgba(255, 255, 255, 0.80) 100%);
+  backdrop-filter: blur(28px) saturate(180%);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
+  border: 1px solid rgba(15, 23, 42, 0.08);
   box-shadow:
-    var(--highlight),
-    var(--elev-1),
-    0 0 0 1px var(--border);
+    inset 0 1px 1.5px 0 rgba(255, 255, 255, 1),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.75),
+    0 1px 2px 0 rgba(0, 0, 0, 0.02),
+    0 4px 14px -2px rgba(15, 23, 42, 0.06);
+}
+.dark .sc-pick {
+  background: linear-gradient(180deg, rgba(32, 38, 56, 0.88) 0%, rgba(22, 26, 40, 0.80) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow:
+    inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.24),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.07),
+    0 4px 14px -2px rgba(0, 0, 0, 0.4);
 }
 .sc-pick::before {
-  content: '';
-  position: absolute;
-  inset: 9px auto 9px -1px;
-  width: 2px;
-  border-radius: 2px;
-  background: linear-gradient(to bottom, var(--brand-1), var(--brand-3));
-  box-shadow: 0 0 8px 0 var(--glow);
+  display: none;
 }
 
 /* ===================================================================

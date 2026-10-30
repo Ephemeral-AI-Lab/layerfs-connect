@@ -127,7 +127,7 @@ function useRunDetails(idsKey: string): RunDetail[] {
   useEffect(() => () => cancelAnimationFrame(frame.current), [])
 
   useHostEvents((e) => {
-    const id = e.type === 'run' ? e.run.id : e.run
+    const id = e.type === 'run' ? e.run.id : e.type === 'run-removed' ? e.id : e.run
     if (!ids.includes(id)) return
     queue.current.push(e)
     if (frame.current) return
@@ -138,7 +138,7 @@ function useRunDetails(idsKey: string): RunDetail[] {
       setRuns((m) => {
         const byRun = new Map<string, RunEvent[]>()
         for (const ev of events) {
-          const rid = ev.type === 'run' ? ev.run.id : ev.run
+          const rid = ev.type === 'run' ? ev.run.id : ev.type === 'run-removed' ? ev.id : ev.run
           byRun.set(rid, [...(byRun.get(rid) ?? []), ev])
         }
         let next: Map<string, RunDetail> | null = null

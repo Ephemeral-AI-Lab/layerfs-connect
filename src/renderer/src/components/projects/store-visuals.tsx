@@ -1,3 +1,4 @@
+import { t as tr, useI18n } from '@/i18n'
 // The Storage tab's pictures: numbers that count up, the flow from raw
 // history to the bytes on disk (each stage arriving in turn), the share of
 // history saved, history against disk Commit by Commit, each Commit's added
@@ -36,6 +37,7 @@ const useSvgId = () => `sv${useId().replace(/[^\w-]/g, '')}`
 
 /** Bytes that count up to their value, after `wait` ms. */
 export function CountBytes({ value, wait = 0, className }: { value: number | null; wait?: number; className?: string }) {
+  useI18n()
   const arrived = useArrived(wait)
   const v = useCountUp(value === null ? null : arrived ? value : 0)
   return <span className={cn('tabular-nums', className)}>{bytes(v === null ? null : Math.round(v))}</span>
@@ -62,12 +64,13 @@ const TIP = 'pointer-events-none absolute bottom-full z-10 mb-2 rounded-lg borde
 
 /** A ring of how much of the raw history the disk did not need, drawn in brand light. */
 export function SavedRing({ saved, wait = 0 }: { saved: number; wait?: number }) {
+  useI18n()
   const id = useSvgId()
   const arrived = useArrived(wait)
   const shown = useCountUp(arrived ? saved * 100 : 0, { ms: 1100 })
   const R = 30
   return (
-    <div className="relative size-[76px] shrink-0" role="img" aria-label={`${pct(saved)} of the raw history saved on disk`}>
+    <div className="relative size-[76px] shrink-0" role="img" aria-label={tr("{value1} of the raw history saved on disk", {value1: pct(saved)})}>
       <svg viewBox="0 0 76 76" className="size-full -rotate-90" aria-hidden="true">
         <defs>
           <linearGradient id={`${id}-g`} x1="0" y1="0" x2="1" y2="1">
@@ -92,7 +95,7 @@ export function SavedRing({ saved, wait = 0 }: { saved: number; wait?: number })
       </svg>
       <span className="absolute inset-0 flex flex-col items-center justify-center leading-none">
         <span className="text-[15px] font-semibold tabular-nums">{Math.round(shown ?? 0)}%</span>
-        <span className="mt-0.5 text-[10px] text-faint">saved</span>
+        <span className="mt-0.5 text-[10px] text-faint">{tr("saved")}</span>
       </span>
     </div>
   )
@@ -129,6 +132,7 @@ const curve = (x0: number, x1: number, y0: number, y1: number) => {
  * Bytes keep flowing along the bands.
  */
 export function DiskFlow({ t, onDisk }: { t: StoreStats; onDisk: number }) {
+  useI18n()
   const [ref, width] = useWidth<HTMLDivElement>()
   const id = useSvgId()
   const stages: Stage[] = [
@@ -155,11 +159,11 @@ export function DiskFlow({ t, onDisk }: { t: StoreStats; onDisk: number }) {
           <div key={s.label} className="sc-fade flex flex-col items-center px-1" style={delay(at(i))}>
             <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
               <span className="size-2 rounded-full" style={{ background: s.color, boxShadow: i ? `0 0 6px ${s.color}` : undefined }} />
-              {s.label}
+              {tr(s.label)}
             </span>
             <CountBytes value={s.value} wait={at(i)} className="mt-1 text-xl font-semibold tracking-[-0.02em]" />
             <span className="text-[11px] text-faint tabular-nums">
-              {s.sub}
+              {tr(s.sub)}
               {i > 0 && t.logical > 0 && <> · {pct(s.value / t.logical)}</>}
             </span>
           </div>
@@ -225,7 +229,7 @@ export function DiskFlow({ t, onDisk }: { t: StoreStats; onDisk: number }) {
               style={delay(at(i) + 420, { left: (cx(i) + cx(i + 1)) / 2, transform: 'translate(-50%, -50%)' })}
             >
               <span className="font-semibold text-foreground">{n}</span>
-              <span className="text-muted-foreground">{what}</span>
+              <span className="text-muted-foreground">{tr(what)}</span>
             </span>
           ))}
       </div>
@@ -247,6 +251,7 @@ interface Point {
  * Init and the Layers left, so each line ends at the Store's own total.
  */
 export function GrowthChart({ t }: { t: StoreStats }) {
+  useI18n()
   const [ref, width] = useWidth<HTMLDivElement>()
   const id = useSvgId()
   const [hover, setHover] = useState<number | null>(null)
@@ -285,16 +290,16 @@ export function GrowthChart({ t }: { t: StoreStats }) {
         {series.map((s) => (
           <span key={s.key} className="flex items-center gap-1.5">
             <span className="h-0.5 w-3 rounded-full" style={{ background: s.color }} />
-            {s.label}
+            {tr(s.label)}
             <CountBytes value={last[s.key]} className="font-mono text-foreground" />
           </span>
         ))}
-        <span className="ml-auto text-faint">{t.commits.length ? 'Init → newest Commit' : 'only Init so far'}</span>
+        <span className="ml-auto text-faint">{t.commits.length ? tr("Init → newest Commit") : tr("only Init so far")}</span>
       </div>
       <div ref={ref} className="relative" style={{ height: H }} onMouseMove={onMove} onMouseLeave={() => setHover(null)}>
         <span className="pointer-events-none absolute top-0 left-0 font-mono text-[10px] text-faint">{bytes(top)}</span>
         {width > 0 && (
-          <svg width={width} height={H} className="absolute inset-0 overflow-visible" role="img" aria-label="Raw history and compressed content over the Commits">
+          <svg width={width} height={H} className="absolute inset-0 overflow-visible" role="img" aria-label={tr("Raw history and compressed content over the Commits")}>
             <defs>
               {series.map((s) => (
                 <linearGradient key={s.key} id={`${id}-${s.key}`} x1="0" x2="0" y1="0" y2="1">
@@ -351,14 +356,14 @@ export function GrowthChart({ t }: { t: StoreStats }) {
         )}
         {picked && (
           <div className={cn(TIP, 'w-64')} style={{ left: Math.min(Math.max(0, x(hover!) - 128), Math.max(0, width - 256)) }}>
-            <p className="truncate font-medium">{picked.commit ? picked.commit.message || shortId(picked.commit.id) : 'Init and the Layers'}</p>
+            <p className="truncate font-medium">{picked.commit ? picked.commit.message || shortId(picked.commit.id) : tr("Init and the Layers")}</p>
             {picked.commit && <p className="truncate font-mono text-[11px] text-faint">{picked.commit.branch}</p>}
             <dl className="mt-1.5 grid grid-cols-2 gap-2">
               {series.map((s) => (
                 <div key={s.key}>
                   <dt className="flex items-center gap-1 text-faint">
                     <span className="h-0.5 w-2.5 rounded-full" style={{ background: s.color }} />
-                    {s.label}
+                    {tr(s.label)}
                   </dt>
                   <dd className="font-mono tabular-nums">{bytes(picked[s.key])}</dd>
                 </div>
@@ -386,6 +391,7 @@ const kindOf = (kind: string | null) => KINDS.find((k) => k.kind === kind) ?? { 
 
 /** The newest Commits' added bytes, oldest left, coloured by how each was made. Bars grow in; a new Commit's bar grows as it lands. */
 export function CommitBars({ commits }: { commits: CommitStorage[] }) {
+  useI18n()
   const [hover, setHover] = useState<number | null>(null)
   const first = useRef(true)
   useEffect(() => {
@@ -399,7 +405,7 @@ export function CommitBars({ commits }: { commits: CommitStorage[] }) {
       <div className="relative" onMouseLeave={() => setHover(null)}>
         <div
           role="img"
-          aria-label={`Bytes each of the newest ${shown.length} Commits added`}
+          aria-label={tr("Bytes each of the newest {value1} Commits added", {value1: shown.length})}
           className="flex h-[156px] items-end gap-[3px] border-b border-border bg-[linear-gradient(to_top,var(--border)_1px,transparent_1px)] bg-[size:100%_50%]"
         >
           {shown.map((c, i) => {
@@ -430,29 +436,29 @@ export function CommitBars({ commits }: { commits: CommitStorage[] }) {
           >
             <div className="flex items-center gap-1.5">
               <span className="size-2 shrink-0 rounded-[2px]" style={{ background: kindOf(picked.kind).color }} />
-              <span className="font-medium whitespace-nowrap">{kindOf(picked.kind).label}</span>
+              <span className="font-medium whitespace-nowrap">{tr(kindOf(picked.kind).label)}</span>
               <span className="font-mono text-faint">{shortId(picked.id)}</span>
               <span className="ml-auto min-w-0 truncate font-mono text-muted-foreground">{picked.branch}</span>
             </div>
             {picked.message && <p className="mt-1 line-clamp-2 text-muted-foreground">{picked.message}</p>}
             <dl className="mt-1.5 grid grid-cols-3 gap-2 tabular-nums">
               <div>
-                <dt className="text-faint">added</dt>
+                <dt className="text-faint">{tr("added")}</dt>
                 <dd className="font-mono">{bytes(picked.stored)}</dd>
               </div>
               <div>
-                <dt className="text-faint">new unique</dt>
+                <dt className="text-faint">{tr("new unique")}</dt>
                 <dd className="font-mono">{bytes(picked.canonical)}</dd>
               </div>
               <div>
-                <dt className="text-faint">tree</dt>
+                <dt className="text-faint">{tr("tree")}</dt>
                 <dd className="font-mono">{bytes(picked.logical)}</dd>
               </div>
             </dl>
           </div>
         )}
       </div>
-      <p className="mt-2 text-[11px] text-faint">{shown.length < commits.length ? `Newest ${shown.length}, ` : ''}oldest left · hover a bar for its Commit</p>
+      <p className="mt-2 text-[11px] text-faint">{shown.length < commits.length ? tr("Newest {value1}, ", {value1: shown.length}) : ''}{tr("oldest left · hover a bar for its Commit")}</p>
     </div>
   )
 }
@@ -463,6 +469,7 @@ export function CommitBars({ commits }: { commits: CommitStorage[] }) {
  * kind's Commits and bytes.
  */
 export function CommitKinds({ commits }: { commits: CommitStorage[] }) {
+  useI18n()
   const total = commits.reduce((a, c) => a + c.stored, 0)
   const kinds = [...KINDS, ...[...new Set(commits.map((c) => c.kind ?? ''))].filter((k) => !KINDS.some((x) => x.kind === k)).map((k) => kindOf(k || null))]
     .map((k) => {
@@ -473,7 +480,7 @@ export function CommitKinds({ commits }: { commits: CommitStorage[] }) {
   if (kinds.length === 0) return null
   return (
     <div className="mt-4">
-      <div className="flex h-2 gap-[2px] overflow-hidden rounded-full bg-muted" role="img" aria-label="Added bytes by kind of Commit">
+      <div className="flex h-2 gap-[2px] overflow-hidden rounded-full bg-muted" role="img" aria-label={tr("Added bytes by kind of Commit")}>
         {kinds.map((k, i) => (
           <span
             key={k.kind}
@@ -491,10 +498,10 @@ export function CommitKinds({ commits }: { commits: CommitStorage[] }) {
         {kinds.map((k, i) => (
           <li key={k.kind} className="sc-fade flex min-w-0 items-baseline gap-1.5" style={delay(600 + i * 160)}>
             <span className="size-2 shrink-0 translate-y-px rounded-[2px]" style={{ background: k.color }} />
-            <span className="truncate text-muted-foreground">{k.label}</span>
+            <span className="truncate text-muted-foreground">{tr(k.label)}</span>
             <span className="ml-auto font-mono tabular-nums">{bytes(k.stored)}</span>
             <span className="w-[4.5rem] shrink-0 text-right text-faint tabular-nums">
-              {k.count} Commit{k.count === 1 ? '' : 's'}
+              {k.count} {tr(k.count === 1 ? "Commit" : "Commits")}
             </span>
           </li>
         ))}

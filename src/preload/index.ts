@@ -25,4 +25,5 @@ contextBridge.exposeInMainWorld('connect', {
   arch: process.arch,
   host: hostAddress(),
   pickFolder: (): Promise<string | null> => ipcRenderer.invoke('connect:pick-folder'),
+  chooseDirectory: (defaultPath?: string, locale?: 'zh-CN' | 'en') => ipcRenderer.invoke('connect:choose-directory', defaultPath, locale),
 })

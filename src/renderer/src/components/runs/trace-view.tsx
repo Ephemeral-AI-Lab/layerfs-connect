@@ -54,7 +54,7 @@ const KIND: Record<TraceRecord['kind'], { label: string; tone: string }> = {
   check: { label: 'Check', tone: 'text-success bg-success/10 ring-success/20' },
 }
 
-const forRun = (e: RunEvent, id: string) => (e.type === 'run' ? e.run.id === id : e.run === id)
+const forRun = (e: RunEvent, id: string) => (e.type === 'run' ? e.run.id === id : e.type === 'run-removed' ? e.id === id : e.run === id)
 const tokens = (n: number) => (n >= 10_000 ? `${(n / 1000).toFixed(0)}k` : n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(n))
 const offset = (at: number | null, started: number) => (at === null ? '' : `+${duration(at - started)}`)
 
