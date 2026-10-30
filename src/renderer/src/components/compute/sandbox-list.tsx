@@ -12,7 +12,7 @@ import { Chip, type Tone } from '@/components/storage/chips'
 import { Bar } from '@/components/storage/meters'
 import { shortDigest } from '@/data/format'
 import { cn } from '@/lib/utils'
-import type { SandboxInfo } from '@shared/host-api'
+import { projectLabel, type SandboxInfo } from '@shared/host-api'
 
 /** LayerFS refuses a mount past this many Workspaces in one Sandbox. */
 export const SANDBOX_CAPACITY = 16
@@ -53,6 +53,7 @@ function Capacity({ used, live, wait }: { used: number; live: boolean; wait: num
 }
 
 export interface SandboxGroup {
+  /** The project's key (`store/name` in a shared Store). */
   project: string
   sandboxes: SandboxInfo[]
 }
@@ -93,7 +94,7 @@ export function SandboxList({ groups, showProject = true }: SandboxListProps) {
           {showProject && (
             <div className="flex items-center gap-2 px-5 pt-3 pb-1.5 text-xs font-medium text-muted-foreground">
               <LayerfsMark className="size-3.5" />
-              {g.project}
+              {projectLabel(g.project)}
               <span className="text-faint tabular-nums">· {g.sandboxes.length}</span>
             </div>
           )}

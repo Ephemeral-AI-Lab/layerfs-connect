@@ -5,6 +5,15 @@ export async function agentRoute(manager, method, parts, body, query = new URLSe
     await manager.models.configureProvider(body)
     return manager.modelsSnapshot()
   }
+  // subscription sign-in (model-login.js): start one, then poll, answer, open its page or cancel it
+  if (group === 'providers' && id && action === 'login' && !requestId && method === 'POST') return manager.models.logins.start(id)
+  if (group === 'logins' && id && !requestId) {
+    if (!action && method === 'GET') return manager.models.logins.view(id)
+    if (action === 'respond' && method === 'POST') return manager.models.logins.respond(id, body)
+    if (action === 'cancel' && method === 'POST') return manager.models.logins.cancel(id)
+    if (action === 'open' && method === 'POST') return manager.models.logins.open(id)
+    return undefined
+  }
   if (group === 'providers' && id && !action && method === 'DELETE') {
     await manager.models.removeProvider(id)
     return manager.modelsSnapshot()

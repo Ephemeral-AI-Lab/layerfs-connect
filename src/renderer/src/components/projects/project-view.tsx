@@ -1,6 +1,7 @@
 import { t, useI18n } from '@/i18n'
 import { ChevronLeft, FolderTree, GitBranch, MessageSquarePlus, RotateCw } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import { projectLabel, projectRef } from '@shared/host-api'
 
 import { LfsBranch, LfsCommit, LfsLayer, LfsProject, LfsStore } from '@/components/lfs-icons'
 import { CountUp } from '@/components/motion/count-up'
@@ -13,6 +14,7 @@ import { FilesTab } from '@/components/projects/files-tab'
 import { HistoryTab, type HistoryView } from '@/components/projects/history-tab'
 import { ProjectSandboxesContent, ProjectStorageContent } from '@/components/projects/project-storage'
 import { LoadError, Loading } from '@/components/projects/states'
+import { StoreBadge, isProject, storeFacts, useStorageView } from '@/components/projects/store-facts'
 import { WorktreeContent } from '@/components/projects/worktree-view'
 import { Button } from '@/components/ui/button'
 import { ago, bytes } from '@/data/format'
@@ -42,6 +44,7 @@ function openingTab(initial?: string): ProjectTab {
 }
 
 interface ProjectViewProps {
+  /** The project key (projectKey: `store/name` in a shared Store). */
   project: string
   initialTab?: string
   initialBranch?: string
@@ -57,7 +60,10 @@ export function ProjectView({ project, initialTab, initialBranch, onBack, onNewC
   const [branch, setBranch] = useState(initialBranch)
   const [revision, setRevision] = useState(0)
   const state = useHostQuery(() => host.project(project), [project, revision])
-  const s = state.data?.project.name === project ? state.data : undefined
+  const storage = useStorageView()
+  const s = state.data && isProject(state.data.project, project) ? state.data : undefined
+  const store = s ? storeFacts(s.project, storage) : undefined
+  const label = projectLabel(project)
   const refresh = () => setRevision((value) => value + 1)
   const initialView: HistoryView = initialTab === 'map' ? 'map' : 'lineage'
 
@@ -92,8 +98,8 @@ export function ProjectView({ project, initialTab, initialBranch, onBack, onNewC
       <Stat icon={LfsLayer} index={3} label={s.commits === 1 ? t("Commit") : t("Commits")}>
         <CountUp value={s.commits} />
       </Stat>
-      <Stat icon={LfsStore} index={4} label={t("Store")} title={s.store.path ?? undefined}>
-        <CountUp value={s.store.bytes} format={bytes} />
+      <Stat icon={LfsStore} index={4} label={t("on disk")} title={s.store.path ?? undefined}>
+        <CountUp value={store?.size ?? s.store.bytes} format={bytes} />
       </Stat>
     </>
   ) : state.loading ? (
@@ -101,7 +107,7 @@ export function ProjectView({ project, initialTab, initialBranch, onBack, onNewC
   ) : undefined
 
   const body = !s ? (
-    state.error ? <LoadError error={state.error} what={project} onRetry={refresh} /> : <Loading label={t("Reading {value1}", {value1: project})} />
+    state.error ? <LoadError error={state.error} what={label} onRetry={refresh} /> : <Loading label={t("Reading {value1}", {value1: label})} />
   ) : tab === 'worktrees' ? (
     <WorktreeContent state={s} onBrowseFiles={(name) => {
       setBranch(name)
@@ -109,7 +115,7 @@ export function ProjectView({ project, initialTab, initialBranch, onBack, onNewC
       setTab('history')
     }} />
   ) : tab === 'storage' ? (
-    <ProjectStorageContent state={s} />
+    <ProjectStorageContent state={s} store={store!} />
   ) : tab === 'sandboxes' ? (
     <ProjectSandboxesContent state={s} />
   ) : (
@@ -139,7 +145,8 @@ export function ProjectView({ project, initialTab, initialBranch, onBack, onNewC
             <ChevronLeft className="size-4 transition-transform duration-(--dur-base) ease-out-expo group-hover/back:-translate-x-0.5" />{t("Projects")}</button>
         }
         icon={<HeroTile icon={LfsProject} />}
-        title={project}
+        title={projectRef(project).name}
+        badges={store && <StoreBadge facts={store} />}
         facts={facts}
         actions={
           <>
@@ -161,7 +168,7 @@ export function ProjectView({ project, initialTab, initialBranch, onBack, onNewC
       />
       <div className="vt-panel min-h-0 flex-1 overflow-y-auto">
         <div className="mx-auto flex min-h-full w-full min-w-0 max-w-7xl flex-col gap-4 px-6 py-6 @min-[56rem]/workspace:px-8">
-          {s && state.error && <LoadError error={state.error} what={project} onRetry={refresh} />}
+          {s && state.error && <LoadError error={state.error} what={label} onRetry={refresh} />}
           {body}
         </div>
       </div>

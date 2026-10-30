@@ -2,6 +2,7 @@ import { useI18n } from '@/i18n'
 import { Archive, ArchiveRestore, ChevronDown, CircleHelp, Copy, Download, FolderOpen, History, LoaderCircle, MoreHorizontal, Pencil, Play, Plus, Settings2, ShieldQuestion, WifiOff, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import type { AgentModels, AgentSessionDetail, AgentSessionSummary, ModelSelection } from '@shared/agent-api'
+import { projectKey, projectLabel, projectRef } from '@shared/host-api'
 
 import { ConnectMark } from '@/components/connect-mark'
 import { AgentMessage, ChildRuns } from '@/components/chat/agent-messages'
@@ -235,6 +236,15 @@ export function ChatHome({ projects, initialProject, onOpenProject }: ChatHomePr
   useEffect(() => {
     if (projects.removed.has(project)) changeProject('')
   }, [project, projects.removed])
+
+  // A project goes by its key (`store/name` in a shared Store, layerfs#506): a draft that kept a bare
+  // name (an older Connect) moves to the key of the one project with that name.
+  useEffect(() => {
+    const list = projects.data
+    if (!project || !list || activeId.current || list.some((item) => projectKey(item) === project)) return
+    const named = list.filter((item) => item.name === project)
+    if (named.length === 1) changeProject(projectKey(named[0]))
+  }, [project, projects.data])
 
   function newSession() {
     setConversationAction(null)
@@ -550,8 +560,8 @@ export function ChatHome({ projects, initialProject, onOpenProject }: ChatHomePr
             <FolderOpen className="size-3.5 shrink-0 opacity-75" />
             <span className="hidden min-w-0 truncate font-mono text-[11.5px] xl:block">{folderShort}</span>
             {activeProject && (
-              <span title={activeProject} className="hidden max-w-24 shrink-0 truncate rounded-full bg-primary/15 px-1.5 py-px text-[10px] font-semibold text-primary xl:block">
-                {activeProject}
+              <span title={projectLabel(activeProject)} className="hidden max-w-24 shrink-0 truncate rounded-full bg-primary/15 px-1.5 py-px text-[10px] font-semibold text-primary xl:block">
+                {projectRef(activeProject).name}
               </span>
             )}
             <ChevronDown className={cn('size-3 shrink-0 opacity-60 transition-transform duration-(--dur-base)', workspaceOpen && 'rotate-180')} />
@@ -768,9 +778,10 @@ export function ChatHome({ projects, initialProject, onOpenProject }: ChatHomePr
         initialFolder={cwd}
         onCreated={(created) => {
           projects.add(created)
-          setProject(created.name)
-          drafts.open(newDraftKey(created.name, created.source || cwd))
-          localStorage.setItem(LAST_PROJECT, created.name)
+          const key = projectKey(created)
+          setProject(key)
+          drafts.open(newDraftKey(key, created.source || cwd))
+          localStorage.setItem(LAST_PROJECT, key)
           if (created.source) changeDirectory(created.source)
         }}
       />

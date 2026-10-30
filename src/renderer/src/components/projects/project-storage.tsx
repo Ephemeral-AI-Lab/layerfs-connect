@@ -1,18 +1,22 @@
 import { t as tr, useI18n } from '@/i18n'
 // Storage and Sandboxes read from the LayerFS project's current state.
-// Storage: its Store (one SQLite file in its Docker volume) told as a story:
+// Storage: its Store (one SQLite file in its Docker volume, or a PostgreSQL
+// schema; layerfs#506 lets several projects share one) told as a story:
 // how raw history shrinks to the bytes on disk, how both grow Commit by
 // Commit, and what each Commit added, by kind. Sandboxes: the Sandboxes open
 // on it, as tiles.
 import type { ProjectState, StoreStats } from '@shared/host-api'
 import type { CSSProperties } from 'react'
 
-import { LfsSandbox, LfsStore } from '@/components/lfs-icons'
+import { LfsSandbox } from '@/components/lfs-icons'
 import { CountUp, spotlight } from '@/components/motion'
 import { SandboxTiles } from '@/components/projects/sandbox-tiles'
+import type { StoreFacts } from '@/components/projects/store-facts'
 import { CommitBars, CommitKinds, CountBytes, DiskFlow, GrowthChart, SavedRing, times, useLanded } from '@/components/projects/store-visuals'
 import { plural } from '@/components/runs/run-format'
 import { Tile } from '@/components/storage/icons'
+import { StoreIcon } from '@/components/storage/identity/store-icon'
+import { SyncPill } from '@/components/storage/sync/sync-pill'
 import { bytes, when } from '@/data/format'
 import { cn } from '@/lib/utils'
 
@@ -172,19 +176,41 @@ function StoreStatsBody({ s, t }: { s: ProjectState; t: StoreStats }) {
   )
 }
 
-function StoreCard({ s }: { s: ProjectState }) {
+/** The Store card's header (storage-links §6): the Store's mark, family and name, its sync state and its link, one chip. */
+function StoreCard({ s, store }: { s: ProjectState; store: StoreFacts }) {
   useI18n()
+  const postgresql = store.family === 'postgresql'
+  const family = postgresql ? 'PostgreSQL' : 'SQLite'
   return (
     <section onPointerMove={spotlight} className="glass-liquid spotlight reveal rounded-2xl shadow-xs overflow-hidden">
       <header className="flex items-start gap-4 px-6 py-6">
-        <Tile className="text-primary">
-          <LfsStore className="size-5" />
-        </Tile>
+        <StoreIcon family={store.family} providers={store.providers} size="md" />
         <div className="min-w-0 flex-1 basis-56">
           <div className="flex flex-wrap items-center gap-2">
-            <h3 className="text-sm font-semibold">{tr("Project Store")}</h3>
+            <h3 className="min-w-0 text-sm font-semibold [overflow-wrap:anywhere]">
+              {store.name ? <>{tr("{family} Store", { family })} <span className="font-mono">{store.name}</span></> : tr("Project Store")}
+            </h3>
+            {!postgresql && store.sync && <SyncPill state={store.sync} copy={store.link} compact />}
+            {!postgresql && store.name && (
+              <span className="max-w-full truncate rounded-full bg-foreground/[0.05] px-2 py-0.5 font-mono text-[11px] text-muted-foreground ring-1 ring-foreground/[0.05] ring-inset" title={store.link?.object}>
+                {store.link ? `${store.link.remote} / ${store.link.file}` : tr("local only")}
+              </span>
+            )}
           </div>
-          <p className="mt-1 text-xs text-muted-foreground font-medium">{tr("Copy-on-Write project history and storage usage")}</p>
+          <p className="mt-1 text-xs text-muted-foreground font-medium text-pretty">
+            {postgresql
+              ? tr("Every Commit, Branch and Layer of {project} lives in a schema of {connection}; each Commit goes straight there.", { project: s.project.name, connection: store.connection ?? tr("its database") })
+              : store.name
+                ? tr("Every Commit, Branch and Layer of {project} lives in this Store’s one SQLite file, in its Docker volume.", { project: s.project.name })
+                : tr("Copy-on-Write project history and storage usage")}
+          </p>
+          {store.shared && (
+            <p className="mt-1 text-xs text-muted-foreground">
+              {store.others.length > 0
+                ? tr(store.others.length === 1 ? "Shared with 1 other project: a push or pull moves it too." : "Shared with {count} other projects: a push or pull moves them too.", { count: store.others.length })
+                : tr("Shared with other projects: a push or pull moves them too.")}
+            </p>
+          )}
         </div>
       </header>
       {s.storage ? (
@@ -196,9 +222,15 @@ function StoreCard({ s }: { s: ProjectState }) {
       <dl className="grid grid-cols-2 gap-4 border-t bg-muted/25 px-6 py-4 sm:grid-cols-4">
         <Fact label={tr("Created")}>{when(s.project.created)}</Fact>
         <div className="col-span-1 sm:col-span-3">
-          <Fact label={tr("Volume")} mono>
-            {s.project.volume ?? '—'}
-          </Fact>
+          {store.family === 'postgresql' ? (
+            <Fact label={tr("Connection")} mono>
+              {store.connection ?? '—'}
+            </Fact>
+          ) : (
+            <Fact label={tr("Volume")} mono>
+              {s.project.volume ?? '—'}
+            </Fact>
+          )}
         </div>
         <div className="col-span-2 sm:col-span-4">
           <Fact label={tr("Store file")} mono>
@@ -250,9 +282,9 @@ function SandboxesCard({ s }: { s: ProjectState }) {
 }
 
 /** Project panels can render directly from state without a scripted session. */
-export function ProjectStorageContent({ state }: { state: ProjectState }) {
+export function ProjectStorageContent({ state, store }: { state: ProjectState; store: StoreFacts }) {
   useI18n()
-  return <StoreCard s={state} />
+  return <StoreCard s={state} store={store} />
 }
 
 export function ProjectSandboxesContent({ state }: { state: ProjectState }) {

@@ -17,6 +17,7 @@ import { AgentManager } from './agents/index.js'
 import { Projects } from './projects.js'
 import { AgentWorkspaces } from './agents/workspaces.js'
 import { createHostServer, listen, newToken } from './server.js'
+import { Storage } from './storage.js'
 
 /** How long shutdown may take before the process exits anyway. */
 const CLOSE_MS = 30_000
@@ -70,9 +71,17 @@ async function main() {
   const runtime = await openRuntime(spec)
   const engine = { runs: null, error: 'loading' }
   const projects = new Projects({ spec, runs: () => engine.runs, log })
-  const agents = await AgentManager.create({ state: spec.state, projectEnvironment: (name) => projects.record(name), projectWorkspaces: new AgentWorkspaces({ projects }) })
+  const storage = new Storage({ spec, projects, log })
+  // a PostgreSQL Store's projects are read with their connection's URL, which only storage.js holds
+  projects.postgresql = (store) => storage.urlForStore(store)
+  // and so are runs' clients and agents' bash calls (config.js notePostgresql)
+  spec.postgresqlUrl = (store) => storage.urlForStore(store)
+  // the project list shows each project's Store sync state and copy providers from the Storage view
+  projects.storeJoin = () => storage.projectJoin()
+  // a session's project is a project key: its name, or `store/name` in a shared Store (layerfs#506)
+  const agents = await AgentManager.create({ state: spec.state, projectEnvironment: (key) => projects.recordOf(key), projectWorkspaces: new AgentWorkspaces({ projects }) })
   const token = newToken()
-  const server = createHostServer({ token, projects, agents: () => agents, runs: () => engine.runs, runsError: () => engine.error, log })
+  const server = createHostServer({ token, projects, storage, agents: () => agents, runs: () => engine.runs, runsError: () => engine.error, log })
 
   const endpoint = join(spec.state, 'host.json')
   let owned = false
@@ -85,6 +94,7 @@ async function main() {
         process.exit(1)
       }, CLOSE_MS).unref()
       await new Promise((resolve) => server.close(() => resolve()))
+      storage.close()
       let clean = true
       await agents.close().catch((error) => {
         clean = false

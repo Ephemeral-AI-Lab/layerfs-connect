@@ -1,5 +1,5 @@
 import { Cpu, FolderClosed, FolderOpen, Plus, RefreshCw, Sparkles, X } from 'lucide-react'
-import type { ProjectSummary } from '@shared/host-api'
+import { projectKey, projectRef, type ProjectSummary } from '@shared/host-api'
 
 import { ConnectMark } from '@/components/connect-mark'
 import { LanguageSwitcher } from '@/components/language-switcher'
@@ -23,6 +23,7 @@ import { cn } from '@/lib/utils'
 import { useI18n } from '@/i18n'
 
 export type NavId = 'chat' | 'projects' | 'storage' | 'compute'
+/** A page, or a project by its key (projectKey: `store/name` in a shared Store). */
 export type Selection = { kind: 'nav'; id: NavId } | { kind: 'project'; id: string }
 
 interface NavItem {
@@ -135,26 +136,32 @@ export function AppSidebar({ selected, projects, onSelect, onNewProject, onDelet
             ) : items.length > 0 ? (
               <SidebarMenu className="gap-1">
                 {items.map((project) => {
-                  const active = selected.kind === 'project' && selected.id === project.name
+                  const key = projectKey(project)
+                  // a project in a shared Store also names its Store, faint after its name
+                  const store = projectRef(key).store
+                  const active = selected.kind === 'project' && selected.id === key
                   const Icon = active ? FolderOpen : FolderClosed
                   return (
-                    <SidebarMenuItem key={project.name}>
+                    <SidebarMenuItem key={key}>
                       <SidebarMenuButton
                         type="button"
                         isActive={active}
                         aria-current={active ? 'page' : undefined}
-                        title={project.name}
-                        onClick={() => onSelect({ kind: 'project', id: project.name })}
+                        title={store ? t('{name} in Store {store}', { name: project.name, store }) : project.name}
+                        onClick={() => onSelect({ kind: 'project', id: key })}
                         className={cn('h-10 gap-3 border px-3 text-[13px] group-has-data-[sidebar=menu-action]/menu-item:pr-10 [&_svg]:size-4', active
                           ? 'glass-liquid border-white/80 font-medium text-foreground shadow-xs dark:border-white/15 [&_svg]:text-primary'
                           : 'border-transparent text-foreground/80 hover:text-foreground [&_svg]:text-muted-foreground')}
                       >
                         <Icon />
-                        <span>{project.name}</span>
+                        <span className="flex min-w-0 items-baseline gap-1.5">
+                          <span className="truncate">{project.name}</span>
+                          {store && <span className="min-w-0 truncate text-[11px] font-normal text-muted-foreground">{store}</span>}
+                        </span>
                       </SidebarMenuButton>
                       <SidebarMenuAction
                         type="button"
-                        aria-label={t('Delete project {name}', { name: project.name })}
+                        aria-label={t('Delete project {name}', { name: store ? `${project.name} · ${store}` : project.name })}
                         title={t('Delete project')}
                         onClick={() => onDeleteProject(project)}
                         className="top-2 right-2 size-6 rounded-lg text-muted-foreground/70 transition-colors hover:bg-destructive/10 hover:text-destructive peer-data-[size=default]/menu-button:top-2 [&>svg]:size-3.5"

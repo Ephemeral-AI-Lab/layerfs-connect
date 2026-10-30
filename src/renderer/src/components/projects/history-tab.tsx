@@ -1,6 +1,7 @@
 import { t, useI18n } from '@/i18n'
 import { CircleAlert, GitCommitVertical, Network, X } from 'lucide-react'
-import { Suspense, lazy, useEffect, useMemo, useState } from 'react'
+import { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react'
+import { projectLabel, type CommitInfo, type ProjectState } from '@shared/host-api'
 
 import { Segmented, type SegmentedOption } from '@/components/motion'
 import { type BranchFilter, BranchTree, visibleBranches } from '@/components/projects/history/branch-tree'
@@ -73,7 +74,7 @@ function headOf(tree: ForkTree, name: string): HistoryItem | undefined {
 }
 
 interface HistoryTabProps {
-  /** The LayerFS project. */
+  /** The LayerFS project's key (`store/name` in a shared Store). */
   project: string
   /** The run that made it: its trace names each Commit's agent. */
   runId?: string
@@ -90,11 +91,18 @@ interface HistoryTabProps {
 
 export function HistoryTab({ project, runId, tick = 0, ...rest }: HistoryTabProps) {
   const { locale } = useI18n()
+  // the last read of this project: a reread asks only for the Branches whose head moved, all in one call
+  const last = useRef<{ project: string; state: ProjectState; commits: Record<string, CommitInfo[]> } | null>(null)
   const q = useHostQuery(async () => {
+    const before = last.current?.project === project ? last.current : null
     const state = await host.project(project)
-    const lists = await Promise.all(state.branches.map((b) => host.commits(project, b.name)))
+    const heads = new Map(before?.state.branches.map((b) => [b.name, b.head]))
+    const moved = state.branches.filter((b) => !before?.commits[b.name] || heads.get(b.name) !== b.head).map((b) => b.name)
+    const fresh = moved.length > 0 ? await host.branchCommits(project, moved) : {}
+    const commits = Object.fromEntries(state.branches.map((b) => [b.name, fresh[b.name] ?? before?.commits[b.name] ?? []]))
+    last.current = { project, state, commits }
     const run = runId ? await host.run(runId).catch(() => undefined) : undefined
-    return { state, commits: Object.fromEntries(state.branches.map((b, i) => [b.name, lists[i]])), run }
+    return { state, commits, run }
   }, [project, runId, tick])
   const tree = useMemo(() => q.data && buildForkTree(q.data.state, q.data.commits, q.data.run), [q.data, locale])
 
@@ -253,7 +261,7 @@ function HistoryBody({ project, tree, initialBranch, initialView = 'lineage', au
               <Citadel tree={tree} focus={focus} shown={shown} onOpen={openBranch} />
             </Suspense>
           ) : (
-            <ForkMap title={t("Fork timeline of {value1}", {value1: project})} tree={tree} focus={focus} shown={shown} autoplay={autoplay} onOpen={openBranch} />
+            <ForkMap title={t("Fork timeline of {value1}", {value1: projectLabel(project)})} tree={tree} focus={focus} shown={shown} autoplay={autoplay} onOpen={openBranch} />
           )}
         </div>
       )}

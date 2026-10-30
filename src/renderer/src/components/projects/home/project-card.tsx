@@ -1,10 +1,11 @@
 import { t, useI18n } from '@/i18n'
-import type { ProjectSummary } from '@shared/host-api'
+import { projectKey, type ProjectSummary } from '@shared/host-api'
 import { ArrowUpRight, FolderOpen } from 'lucide-react'
 
 import { LayerfsMark } from '@/components/layerfs-mark'
 import { revealStyle } from '@/components/motion/reveal'
 import { spotlight } from '@/components/motion/spotlight'
+import { StoreLine, storeFacts, useStorageView } from '@/components/projects/store-facts'
 import { Chip } from '@/components/storage/chips'
 import { ago, when } from '@/data/format'
 
@@ -14,16 +15,18 @@ interface ProjectCardProps {
   onOpen: () => void
 }
 
+/** A project: its name, its source, the Store that holds it (mark, link, size, sync state), and whether it is ready. */
 export function ProjectCard({ project, index, onOpen }: ProjectCardProps) {
   useI18n()
+  const facts = storeFacts(project, useStorageView())
   return (
     <button
       type="button"
-      data-flip={project.name}
+      data-flip={projectKey(project)}
       onClick={onOpen}
       onPointerMove={spotlight}
       style={revealStyle(index)}
-      className="home-card glass-liquid card-hover sheen-sweep spotlight reveal flex min-w-0 flex-col gap-5 rounded-2xl p-5 text-left outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      className="home-card glass-liquid card-hover sheen-sweep spotlight reveal flex min-w-0 flex-col gap-4 rounded-2xl p-5 text-left outline-none focus-visible:ring-2 focus-visible:ring-ring"
     >
       <span className="flex w-full items-center gap-3">
         <span className="home-mark" aria-hidden="true">
@@ -38,6 +41,7 @@ export function ProjectCard({ project, index, onOpen }: ProjectCardProps) {
         <FolderOpen aria-hidden="true" className="size-3.5 shrink-0" />
         <span className="truncate">{project.source || t('Empty workspace')}</span>
       </span>
+      <StoreLine facts={facts} />
       <span className="mt-auto flex w-full flex-wrap items-center justify-between gap-2 border-t border-foreground/[0.06] pt-3">
         <Chip tone={project.initialized ? 'success' : 'neutral'}>{project.initialized ? t("Ready") : t("Not initialized")}</Chip>
         {project.created !== null && (

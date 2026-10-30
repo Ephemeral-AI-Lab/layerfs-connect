@@ -1,10 +1,11 @@
 import { useI18n } from '@/i18n'
-import { Check, ChevronDown, Eye, EyeOff, Globe, KeyRound, LoaderCircle, PlugZap, Plus, SlidersHorizontal, Sparkles, X } from 'lucide-react'
+import { Check, ChevronDown, Eye, EyeOff, Globe, KeyRound, LoaderCircle, LogOut, PlugZap, Plus, SlidersHorizontal, Sparkles, X } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import type { AgentModels, DiscoveredModel, ModelSettings } from '@shared/agent-api'
 
 import { DeleteProviderDialog } from '@/components/chat/delete-provider-dialog'
 import { ModelDiscovery } from '@/components/chat/model-discovery'
+import { ModelSignIn, SubscriptionShortcuts } from '@/components/chat/model-sign-in'
 import { RequestHeaders, type RequestHeaderRow } from '@/components/chat/request-headers'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -52,7 +53,9 @@ export function ModelSettingsDialog({
   const [error, setError] = useState('')
   const [tested, setTested] = useState('')
   const [testedIsResponse, setTestedIsResponse] = useState(false)
-  const [deleteTarget, setDeleteTarget] = useState<string | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; signOut: boolean } | null>(null)
+  /** A provider whose sign-in starts as soon as its panel shows (chosen from a subscription shortcut). */
+  const [autoSignIn, setAutoSignIn] = useState<string | null>(null)
   const [headerRows, setHeaderRows] = useState<RequestHeaderRow[]>([])
   const headers = useMemo(() => Object.fromEntries(headerRows
     .filter((row) => row.name.trim() || row.value)
@@ -67,6 +70,9 @@ export function ModelSettingsDialog({
   // Only providers that the user has actually configured / authenticated
   const configuredProviders = models?.providers.filter((p) => p.custom || p.hasKey) ?? []
   const savedModels = configuredProviders.some((p) => p.id === provider.trim()) ? providerModels : []
+  // Providers offering a subscription sign-in that are not set up yet
+  const subscriptionProviders = models?.providers.filter((p) => p.signIn && !p.custom && !p.hasKey) ?? []
+  const keySaved = Boolean(knownProvider?.hasKey && !knownProvider.signedIn)
 
   useEffect(() => {
     if (!open) return
@@ -230,15 +236,24 @@ export function ModelSettingsDialog({
                     <span className={cn('mt-[7px] size-1.5 shrink-0 rounded-full', p.hasKey ? 'bg-success' : 'bg-muted-foreground/35')} />
                     <span className="min-w-0 flex-1">
                     <span className="flex h-5 min-w-0 items-center gap-2"><span className="min-w-0 flex-1 truncate text-xs font-medium leading-5" title={p.id}>{p.id}</span>{active && <Check className="size-3.5 shrink-0 text-primary" />}</span>
-                    <span className="mt-0.5 block text-[10px] text-muted-foreground">{count} {count === 1 ? t("model") : t("models")} · {p.hasKey ? t("Key configured") : t("No saved key")}</span>
+                    <span className="mt-0.5 block text-[10px] text-muted-foreground">{count} {count === 1 ? t("model") : t("models")} · {p.signedIn ? t("Signed in") : p.hasKey ? t("Key configured") : t("No saved key")}</span>
                     </span>
                   </button>
-                  <button type="button" aria-label={t("Delete provider {provider}", { provider: p.id })} title={t("Delete {name}", { name: p.id })} disabled={!!busy} onClick={() => setDeleteTarget(p.id)} className="inline-flex size-5 shrink-0 items-center justify-center rounded-md text-muted-foreground outline-none transition-colors hover:bg-destructive/[0.08] hover:text-destructive focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"><X className="size-3.5" /></button>
+                  <button type="button" aria-label={p.signedIn ? t("Sign out of {provider}", { provider: p.id }) : t("Delete provider {provider}", { provider: p.id })} title={p.signedIn ? t("Sign out of {provider}", { provider: p.id }) : t("Delete {name}", { name: p.id })} disabled={!!busy} onClick={() => setDeleteTarget({ id: p.id, signOut: Boolean(p.signedIn) })} className="inline-flex size-5 shrink-0 items-center justify-center rounded-md text-muted-foreground outline-none transition-colors hover:bg-destructive/[0.08] hover:text-destructive focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50">{p.signedIn ? <LogOut className="size-3" /> : <X className="size-3.5" />}</button>
                 </div>
               })}
             </div>
           ) : <p className="rounded-xl border border-dashed border-foreground/[0.09] px-3 py-3 text-xs text-muted-foreground">{t("Add your first provider below.")}</p>}
         </section>
+
+        <SubscriptionShortcuts
+          providers={subscriptionProviders}
+          disabled={!!busy}
+          onSignIn={(id) => {
+            changeProvider(id)
+            setAutoSignIn(id)
+          }}
+        />
 
         <form
           onSubmit={(e) => {
@@ -402,19 +417,29 @@ export function ModelSettingsDialog({
             </div>
           </div>
 
+          {knownProvider?.signIn && <ModelSignIn
+            key={knownProvider.id}
+            provider={knownProvider}
+            autoStart={autoSignIn === knownProvider.id}
+            onAutoStarted={() => setAutoSignIn(null)}
+            disabled={!!busy}
+            onSignedIn={onSaved}
+            onSignOut={() => setDeleteTarget({ id: knownProvider.id, signOut: true })}
+          />}
+
           {/* Row 3: API Key with Show/Hide toggle */}
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
               <Label htmlFor="agent-api-key" className="flex items-center gap-1.5 text-xs font-medium text-foreground/85">
                 <KeyRound className="size-3.5 text-faint" />
-                {t("API key")}{knownProvider?.hasKey && (
+                {knownProvider?.signIn ? t("Or use an API key") : t("API key")}{keySaved && (
                   <span className="ml-1 inline-flex items-center gap-1 rounded-full bg-success/10 px-2 py-0.5 text-[10.5px] font-medium text-success">
                     <span className="size-1.5 rounded-full bg-success" />
                     {t("Configured")}</span>
                 )}
               </Label>
               <span className="text-[11px] text-faint">
-                {knownProvider?.hasKey ? t("Leave blank to keep saved key") : t("Stored locally (0600)")}
+                {keySaved ? t("Leave blank to keep saved key") : t("Stored locally (0600)")}
               </span>
             </div>
             <div className="relative">
@@ -425,7 +450,7 @@ export function ModelSettingsDialog({
                 disabled={!!busy}
                 value={apiKey}
                 onChange={(e) => setApiKey(e.target.value)}
-                placeholder={knownProvider?.hasKey ? t("Leave blank to keep the saved key") : t("Enter API key or environment credential")}
+                placeholder={keySaved ? t("Leave blank to keep the saved key") : t("Enter API key or environment credential")}
                 className="h-9 pr-9 font-mono text-xs"
               />
               <button
@@ -563,8 +588,9 @@ export function ModelSettingsDialog({
       </DialogContent>
     </Dialog>
     {deleteTarget && <DeleteProviderDialog
-      provider={deleteTarget}
-      modelCount={models?.models.filter((model) => model.provider === deleteTarget).length ?? 0}
+      provider={deleteTarget.id}
+      signOut={deleteTarget.signOut}
+      modelCount={models?.models.filter((model) => model.provider === deleteTarget.id).length ?? 0}
       onClose={() => setDeleteTarget(null)}
       onDelete={async (id) => {
         const catalog = await agentHost.removeProvider(id)

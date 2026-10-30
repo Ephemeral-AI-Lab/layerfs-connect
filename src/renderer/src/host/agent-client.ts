@@ -1,4 +1,4 @@
-import type { AgentForkResult, AgentLimits, AgentModels, AgentOutputPage, AgentPrompt, AgentRestoreResult, AgentSessionDetail, AgentSessionSummary, ModelDiscoveryInput, ModelDiscoveryResult, ModelSettings, ModelSyncResult, NewAgentSession, PermissionMode, ProviderSettings } from '@shared/agent-api'
+import type { AgentForkResult, AgentLimits, AgentModels, AgentOutputPage, ModelLogin, AgentPrompt, AgentRestoreResult, AgentSessionDetail, AgentSessionSummary, ModelDiscoveryInput, ModelDiscoveryResult, ModelSettings, ModelSyncResult, NewAgentSession, PermissionMode, ProviderSettings } from '@shared/agent-api'
 import { call } from '@/host/client'
 
 const sessionPath = (id: string) => `/api/agent/sessions/${encodeURIComponent(id)}`
@@ -11,6 +11,14 @@ export const agentHost = {
   removeProvider: (id: string) => call<AgentModels>('DELETE', `/api/agent/providers/${encodeURIComponent(id)}`),
   saveModels: (settings: ModelSettings) => call<AgentModels>('POST', '/api/agent/models', settings),
   testModel: (settings: ModelSettings) => call<{ text: string }>('POST', '/api/agent/models/test', settings),
+  /** Starts a provider's subscription sign-in (AgentProvider.signIn); a running one for it is cancelled. Poll it with `login`. */
+  startLogin: (provider: string) => call<ModelLogin>('POST', `/api/agent/providers/${encodeURIComponent(provider)}/login`),
+  login: (id: string) => call<ModelLogin>('GET', `/api/agent/logins/${encodeURIComponent(id)}`),
+  /** Answers the sign-in's open question: an option's id, or a pasted code or redirect URL. */
+  respondLogin: (id: string, value: string) => call<ModelLogin>('POST', `/api/agent/logins/${encodeURIComponent(id)}/respond`, { value }),
+  cancelLogin: (id: string) => call<ModelLogin>('POST', `/api/agent/logins/${encodeURIComponent(id)}/cancel`),
+  /** Opens the sign-in's page (its URL, or the device-code page) in the system browser. */
+  openLogin: (id: string) => call<ModelLogin>('POST', `/api/agent/logins/${encodeURIComponent(id)}/open`),
   sessions: () => call<AgentSessionSummary[]>('GET', '/api/agent/sessions'),
   create: (options: NewAgentSession) => call<AgentSessionDetail>('POST', '/api/agent/sessions', options),
   session: (id: string) => call<AgentSessionDetail>('GET', sessionPath(id)),

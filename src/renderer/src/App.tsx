@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import type { ProjectSummary } from '@shared/host-api'
+import { projectKey, projectLabel, type ProjectSummary } from '@shared/host-api'
 
 import { AppSidebar, type NavId, type Selection } from '@/components/app-sidebar'
 import { ChatHome } from '@/components/chat/chat-home'
@@ -16,12 +16,15 @@ import { TooltipProvider } from '@/components/ui/tooltip'
 import { useProjects } from '@/host/use-projects'
 import { useI18n } from '@/i18n'
 
-// CONNECT_VIEW selects a page or a real project and its initial tab.
+// CONNECT_VIEW selects a page or a real project and its initial tab:
+// "#projects/<key>[/<tab>][/<branch>]", where a key in a shared Store is
+// written encoded ("team%2Fapp" for team/app).
 const [startPage, ...startRest] = window.location.hash.slice(1).split('/')
 const startId = startRest.join('/') || undefined
 const START_PAGES: NavId[] = ['chat', 'projects', 'storage', 'compute']
 const startPlatform = ['linux', 'win32', 'darwin'].find((p) => p === startId) ?? window.connect.platform
-const [startProject, startTab, ...startBranchParts] = startPage === 'projects' ? startRest : []
+const [startProjectPart, startTab, ...startBranchParts] = startPage === 'projects' ? startRest : []
+const startProject = startProjectPart ? decodeURIComponent(startProjectPart) : undefined
 const startBranch = startBranchParts.join('/') || undefined
 
 function opening(): Selection {
@@ -63,7 +66,7 @@ export function App() {
       return
     }
     const titles: Record<NavId, string> = { chat: 'Chat', projects: 'Projects', storage: 'Storage', compute: 'Compute' }
-    document.title = `${selected.kind === 'project' ? selected.id : t(titles[selected.id])} · LayerFS Connect`
+    document.title = `${selected.kind === 'project' ? projectLabel(selected.id) : t(titles[selected.id])} · LayerFS Connect`
   }, [selected, locale, t])
 
   return (
@@ -88,11 +91,11 @@ export function App() {
           {page === 'compute' && <ComputePage platform={startPlatform} />}
         </main>
       </SidebarProvider>
-      <NewProjectDialog open={newProjectOpen} onOpenChange={setNewProjectOpen} onCreated={(project) => { projects.add(project); openProject(project.name) }} />
-      {deleteTarget && <DeleteProjectDialog project={deleteTarget} onClose={() => setDeleteTarget(null)} onDelete={async (name) => {
-        await projects.remove(name)
-        if (localStorage.getItem('connect.agent.project') === name) localStorage.removeItem('connect.agent.project')
-        if (selected.kind === 'project' && selected.id === name) select({ kind: 'nav', id: 'projects' })
+      <NewProjectDialog open={newProjectOpen} onOpenChange={setNewProjectOpen} onCreated={(project) => { projects.add(project); openProject(projectKey(project)) }} />
+      {deleteTarget && <DeleteProjectDialog project={deleteTarget} onClose={() => setDeleteTarget(null)} onDelete={async (key) => {
+        await projects.remove(key)
+        if (localStorage.getItem('connect.agent.project') === key) localStorage.removeItem('connect.agent.project')
+        if (selected.kind === 'project' && selected.id === key) select({ kind: 'nav', id: 'projects' })
       }} />}
     </TooltipProvider>
   )

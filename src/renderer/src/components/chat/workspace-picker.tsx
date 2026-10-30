@@ -2,7 +2,7 @@ import { useI18n } from '@/i18n'
 import { Check, ChevronDown, Clock3, FolderOpen, Layers3, LoaderCircle, Plus, RefreshCw } from 'lucide-react'
 import { useMemo, useRef, useState } from 'react'
 import type { AgentSessionSummary, AgentWorkspace } from '@shared/agent-api'
-import type { ProjectSummary } from '@shared/host-api'
+import { projectKey, projectLabel, projectRef, type ProjectSummary } from '@shared/host-api'
 
 import { spotlight } from '@/components/motion/spotlight'
 import { Button } from '@/components/ui/button'
@@ -16,6 +16,7 @@ import { cn } from '@/lib/utils'
 
 interface WorkspacePickerProps {
   cwd: string
+  /** The project key (projectKey: `store/name` in a shared Store), or '' for a local folder. */
   project: string
   workspace: AgentWorkspace | null
   locked: boolean
@@ -32,7 +33,7 @@ interface WorkspacePickerProps {
 }
 
 const LOCAL_FOLDER = 'local-folder'
-const projectValue = (name: string) => `project:${name}`
+const projectValue = (key: string) => `project:${key}`
 
 export function WorkspacePicker({
   cwd, project, workspace, locked, disabled, sessions, projects, projectsLoading, projectError,
@@ -104,7 +105,7 @@ export function WorkspacePicker({
                         <span className="min-w-0 flex-1">
                           <span className="block truncate text-xs font-medium">{workspace.cwd.split(/[\\/]/).filter(Boolean).at(-1) || workspace.cwd}</span>
                           <span className="mt-0.5 block truncate font-mono text-[10px] text-muted-foreground" title={workspace.cwd}>{workspace.cwd}</span>
-                          {workspace.project && <span className="mt-0.5 block truncate text-[10px] text-primary">{workspace.project}</span>}
+                          {workspace.project && <span className="mt-0.5 block truncate text-[10px] text-primary">{projectLabel(workspace.project)}</span>}
                         </span>
                         {cwd === workspace.cwd && project === (workspace.project ?? '') && <Check className="size-3.5 shrink-0 text-primary" />}
                       </DropdownMenuItem>
@@ -153,10 +154,10 @@ export function WorkspacePicker({
               </div>
             </div>
             <Select value={project ? projectValue(project) : LOCAL_FOLDER} onValueChange={(value) => onProject(value === LOCAL_FOLDER ? '' : value.slice('project:'.length))} disabled={readOnly}>
-              <SelectTrigger id="agent-project" type="button" title={project || t("Local folder only")} aria-describedby={projectError ? 'workspace-project-error' : undefined} className="w-full min-w-0 gap-2.5 rounded-xl border-foreground/[0.09] bg-background/55 px-3 text-xs shadow-none data-[size=default]:h-10 hover:border-primary/25 focus-visible:border-primary/30 focus-visible:ring-2 focus-visible:ring-primary/10 disabled:opacity-70 [&>svg:last-child]:size-3.5 [&>svg:last-child]:transition-transform [&[data-state=open]>svg:last-child]:rotate-180">
+              <SelectTrigger id="agent-project" type="button" title={project ? projectLabel(project) : t("Local folder only")} aria-describedby={projectError ? 'workspace-project-error' : undefined} className="w-full min-w-0 gap-2.5 rounded-xl border-foreground/[0.09] bg-background/55 px-3 text-xs shadow-none data-[size=default]:h-10 hover:border-primary/25 focus-visible:border-primary/30 focus-visible:ring-2 focus-visible:ring-primary/10 disabled:opacity-70 [&>svg:last-child]:size-3.5 [&>svg:last-child]:transition-transform [&[data-state=open]>svg:last-child]:rotate-180">
                 <Layers3 aria-hidden="true" className="size-3.5 shrink-0 text-muted-foreground" />
                 <span className="min-w-0 flex-1 overflow-hidden text-left">
-                  <SelectValue><span className="block truncate">{project || t("Local folder only")}</span></SelectValue>
+                  <SelectValue><span className="block truncate">{project ? projectLabel(project) : t("Local folder only")}</span></SelectValue>
                 </span>
               </SelectTrigger>
               <SelectContent position="popper" align="end" sideOffset={6} collisionPadding={16} className="glass-strong w-(--radix-select-trigger-width) max-w-[calc(100vw-2rem)] rounded-2xl bg-transparent shadow-xl ring-0 [&>div[data-position=popper]]:max-h-64">
@@ -168,11 +169,11 @@ export function WorkspacePicker({
                     </span>
                   </SelectItem>
                   {(projects.length > 0 || project) && <SelectSeparator className="mx-2 my-1 bg-foreground/[0.06]" />}
-                  {project && !projects.some((item) => item.name === project) && (
-                    <SelectItem value={projectValue(project)} textValue={project} className="rounded-xl py-2.5 pr-8 pl-3 text-xs [overflow-wrap:anywhere] data-[state=checked]:bg-primary/[0.07] [&>span:last-child]:min-w-0">{project}</SelectItem>
+                  {project && !projects.some((item) => projectKey(item) === project) && (
+                    <SelectItem value={projectValue(project)} textValue={projectLabel(project)} className="rounded-xl py-2.5 pr-8 pl-3 text-xs [overflow-wrap:anywhere] data-[state=checked]:bg-primary/[0.07] [&>span:last-child]:min-w-0"><ProjectOption projectKey={project} /></SelectItem>
                   )}
                   {projects.map((item) => (
-                    <SelectItem key={item.name} value={projectValue(item.name)} textValue={item.name} className="rounded-xl py-2.5 pr-8 pl-3 text-xs [overflow-wrap:anywhere] data-[state=checked]:bg-primary/[0.07] [&>span:last-child]:min-w-0">{item.name}</SelectItem>
+                    <SelectItem key={projectKey(item)} value={projectValue(projectKey(item))} textValue={projectLabel(projectKey(item))} className="rounded-xl py-2.5 pr-8 pl-3 text-xs [overflow-wrap:anywhere] data-[state=checked]:bg-primary/[0.07] [&>span:last-child]:min-w-0"><ProjectOption projectKey={projectKey(item)} /></SelectItem>
                   ))}
                   {projects.length === 0 && !project && <SelectLabel className="px-3 py-2 text-[10.5px] font-normal text-muted-foreground">{projectsLoading ? t("Loading projects…") : t("No LayerFS projects yet")}</SelectLabel>}
                 </SelectGroup>
@@ -189,5 +190,16 @@ export function WorkspacePicker({
         )}
       </section>
     </div>
+  )
+}
+
+/** A project in the list: its name, and the shared Store it is in, faint beside it. */
+function ProjectOption({ projectKey: key }: { projectKey: string }) {
+  const { name, store } = projectRef(key)
+  return (
+    <span className="flex min-w-0 items-baseline gap-1.5">
+      <span className="min-w-0 truncate">{name}</span>
+      {store && <span className="min-w-0 truncate text-[10.5px] text-muted-foreground">{store}</span>}
+    </span>
   )
 }

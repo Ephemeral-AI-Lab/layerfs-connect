@@ -19,8 +19,54 @@ export interface ModelSelection {
 export interface AgentModels {
   models: AgentModel[]
   selected: ModelSelection | null
-  providers: { id: string; name?: string; baseUrl?: string; api?: string; headers?: Record<string, string>; hasKey: boolean; custom?: boolean }[]
+  providers: AgentProvider[]
   defaultCwd: string
+}
+
+export interface AgentProvider {
+  id: string
+  name?: string
+  baseUrl?: string
+  api?: string
+  headers?: Record<string, string>
+  /** It has a credential: an API key or a subscription sign-in. */
+  hasKey: boolean
+  custom?: boolean
+  /** Its subscription sign-in, when it offers one: the button's label and the plan's name. */
+  signIn?: { label: string; plan: string } | null
+  /** Its credential is a subscription sign-in (OAuth), not an API key. */
+  signedIn?: boolean
+}
+
+/** A step a sign-in shows: a page to open, or a code to enter on one. */
+export type ModelLoginStep =
+  | { type: 'auth_url'; url: string; instructions?: string }
+  | { type: 'device_code'; userCode: string; verificationUri: string; expires?: number }
+
+/** The question a sign-in waits on: a method to choose, or a code or redirect URL to paste. */
+export interface ModelLoginPrompt {
+  type: 'select' | 'manual_code' | 'text' | 'secret'
+  message: string
+  placeholder?: string
+  options?: { id: string; label: string; description?: string }[]
+}
+
+/**
+ * A subscription sign-in (host/agents/model-login.js), polled while it runs
+ * (GET /api/agent/logins/:id); readable for two minutes after it ends.
+ */
+export interface ModelLogin {
+  id: string
+  provider: string
+  /** The sign-in's name, e.g. "OpenAI (ChatGPT Plus/Pro)". */
+  name: string
+  state: 'starting' | 'waiting' | 'done' | 'failed' | 'cancelled'
+  step: ModelLoginStep | null
+  prompt: ModelLoginPrompt | null
+  progress: string | null
+  error: string | null
+  started: number
+  ended: number | null
 }
 
 export interface ModelSettings extends ModelSelection {

@@ -1,59 +1,73 @@
-# LayerFS: Projects
+# Projects
 
-Every LayerFS project in Connect's home, one card each, with totals on top. Opens from: the sidebar's
-LayerFS row (the Projects tab is the default), or the Projects tab on Storage or Compute.
+Every LayerFS project in Connect's home, one card each. Opens from: Projects in the sidebar's
+Workspace group. A card opens the project page.
 Source: `src/renderer/src/components/projects/projects-home.tsx` (main file; others named in Regions).
+
+A project goes by its **key** (`projectKey`, LayerFS #506): its name, or `store/name` for a project
+in a Store that holds other projects. Selection, routing, every host call and the Chat project
+choice use the key; the screens show it with `projectLabel` (`name · store`) or as the name with the
+Store beside it.
 
 ## Skeleton
 
 ```text
-+-[1] PageHeader ------------------------------------------------------------------------------+
-| LayerFS                                            [ New project ]  [ Search projects      ] |
-| Projects in Connect's home. A session works with an agent on one; /scenario plays a scena... |
-| +-[2] LayerFSTabs -------------------------------------------------------------------------+ |
-| |  Projects   Storage   Compute                                                            | |
-| |  ========                                                                                | |
-| +------------------------------------------------------------------------------------------+ |
-+----------------------------------------------------------------------------------------------+
-+-[3] StatsStrip ------------------------------------------------------------------------------+
-| PROJECTS                  | SESSIONS            | PLAYING NOW         | COMMITS              |
-| 2                         | 54                  | 0                   | 852                  |
-| In Connect's LayerFS home | On these projects   | Nothing playing     | 344 MB of Store      |
-+----------------------------------------------------------------------------------------------+
-+-[4] ProjectCard -----------------------+  +----------------------------------------+
-| /\ heavy-check                         |  | /\ playground                          |
-|    heavy-check                         |  |    playground                          |
-| Imported from /private/tmp/claude-501/ |  | An empty project.                      |
-| -Users-yifanxu-Ephemeral-AI-Lab-lay... |  |                                        |
++-[1] PageHeader -----------------------------------------------------------------------------+
+| Projects                                [ Search projects      ] [ Refresh ] [ + New project ] |
+| Your LayerFS workspaces.                                                                      |
++-----------------------------------------------------------------------------------------------+
+  3 projects
++-[2] ProjectCard -----------------------+  +----------------------------------------+
+| /\ shop                             -> |  | /\ api                              -> |
+| [] /Users/you/shop                     |  | [] Empty workspace                     |
+| +-[3] StoreLine ---------------------+ |  | +------------------------------------+ |
+| | [R2] team                [In sync] | |  | | [db] api              [Local only] | |
+| |      r2-main / team · 265 MB       | |  | |      Local only · 78.6 MB          | |
 | +------------------------------------+ |  | +------------------------------------+ |
-| | Local SQLite - 265 MB           ~~ | |  | | Local SQLite - 78.6 MB          ~~ | |
-| | main L17 - 288 Branches - 670 C... | |  | | main L9 - 134 Branches - 182 Co... | |
-| +------------------------------------+ |  | +------------------------------------+ |
-| o W1b 146 W...  2 h ago  crew_2.work.5 |  | o edit /...  3 h ago  merge_2.featu... |
 | -------------------------------------- |  | -------------------------------------- |
-| 26 sessions - last 2 h ago             |  | 28 sessions - last 3 h ago             |
-|                      [ + New session ] |  |                      [ + New session ] |
+| (Ready)                 Created 2 h ago|  | (Ready)                 Created 3 h ago|
 +----------------------------------------+  +----------------------------------------+
 ```
 
 ## Regions
 
-1. **Page header** (`PageHeader` in `ProjectsHome`, `projects/projects-home.tsx`): the title "LayerFS", a one-line description, and on the right New project and the search box. New project opens the New project dialog ([dialog-new-project.md](dialog-new-project.md)), and a project made there opens as a new session. The search filters cards by name, title, blurb and tag; Esc clears it. The header sticks to the top on scroll.
-2. **Tabs** (`LayerFSTabs`, `layerfs-tabs.tsx`): Projects, Storage and Compute, the LayerFS page's three parts, with a sliding underline. The same tab row heads [layerfs-storage.md](layerfs-storage.md) and [layerfs-compute.md](layerfs-compute.md).
-3. **Stats strip** (`StatsStrip`, `projects/home/stats-strip.tsx`): Projects, Sessions, Playing now and Commits, each with a note. The numbers count up as the cards report them. Commits sums what each card read, and its note gives the Store bytes.
-4. **Project cards** (`ProjectCard`, `projects/home/project-card.tsx`): a grid that fills the width (three columns at 1440). Each card shows:
-   - The project's title, its mono name (and the scenario's agent count) and its blurb.
-   - The Store well: Local SQLite and its size, then main's Layer, the Branches and the Commits, with a small stack of Layers on the right.
-   - The last Commit: its message, its age and its Branch.
-   - The session count with the last one's age, and New session.
+1. **Page header** (`PageHeader` in `ProjectsHome`): "Projects", "Your LayerFS workspaces.", the
+   search box, Refresh and New project ([dialog-new-project.md](dialog-new-project.md)). Search
+   matches the name, the Store and the source folder; Esc clears it.
+2. **Project cards** (`ProjectCard`, `projects/home/project-card.tsx`): a liquid-glass grid. Each
+   card shows the project's name, its source folder (or "Empty workspace"), its Store line, and in
+   the footer Ready / Not initialized and its age. The card opens the project page by key.
+3. **Store line** (`StoreLine`, `projects/store-facts.tsx`): the Store's `StoreIcon` (the SQLite or
+   PostgreSQL mark, or the linked provider's), its name, where it syncs (`remote / file`, "Local
+   only", or "on <connection>" for PostgreSQL) and its size, then its `SyncPill`. The facts come from
+   one cached `host.storage()` view shared by every card, reread on Storage events, ended sync jobs
+   and project changes. A LayerFS build without Stores shows "Local SQLite" and no pill.
 
-   The title opens the project page. New session opens a draft conversation on it.
+## Project page
+
+`projects/project-view.tsx`. The title is the project's name; beside it a `StoreBadge` (Store mark,
+name, sync state). The facts row keeps Last Commit, Branches, Commits and the Store's bytes on disk.
+Tabs: History (with Files), Worktrees, Storage, Sandboxes.
+
+- **History** (`history-tab.tsx`): reads the project, then every Branch's Commits in one
+  `host.branchCommits(key, branches)` call; a reread asks only for the Branches whose head moved.
+- **Storage** (`project-storage.tsx`): the Store card's header is the Store's mark, "SQLite Store
+  <name>" or "PostgreSQL Store <name>", its `SyncPill` and its link chip (`remote / file` or "local
+  only"), a family-specific line, and "Shared with N other projects" for a shared Store. The facts
+  show Volume (SQLite) or Connection (PostgreSQL).
 
 ## States
 
-- **Loading**: six skeleton cards; the strip reads "Reading" and "Reading the projects".
-- **Error**: `LoadError` ("the LayerFS projects") with Retry, in place of the strip and the grid.
-- **Empty**: "No projects yet" with a New project button.
-- **No match**: "No projects match" and "Nothing matches ...", with Clear search. While a search is typed, the box shows "1 of 2" and an x.
-- **Playing**: the header gets a "N playing" chip, and the strip's Playing now lights up with "N agents running". The card gets a lit border, a "<session> playing" chip, the phase and "done/of steps" with a progress bar, and "N sessions - one playing since ...". Its New session is disabled.
-- **Card without a Store**: "not created yet" and "The first session Inits it from the fixture" (a 404); "Reading the project" while it loads.
+- **Loading**: three skeleton cards.
+- **Error**: `LoadError` ("the projects") with Retry.
+- **Empty**: "No projects yet" with Create project.
+- **No match**: "No projects match" with Clear search; the count line reads "1 of 3 projects".
+- **Storage view unread or missing**: the Store line shows what the project summary carries
+  (`store`, `kind`, `storeSync`, `storeProviders`); size is left out until the view answers.
+
+## Delete
+
+The sidebar's x opens `DeleteProjectDialog` (`projects/delete-project-dialog.tsx`). It names the
+project and, for a project in a Store, says it is deleted from that Store and shows the Store line.
+When the Store holds other projects it says they and the Store stay, and that a linked copy keeps
+the project until the Store's next push. Deleting calls `host.removeProject(key)`.

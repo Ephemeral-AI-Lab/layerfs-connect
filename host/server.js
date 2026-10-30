@@ -1,8 +1,10 @@
 // The host's HTTP API (README.md, "HTTP API"): routes, the bearer token,
 // CORS and the event stream. It holds no LayerFS state of its own: project
-// routes go to `projects` (projects.js) and demo and run routes to `runs`
-// (the RunManager of runs/), which may be missing; then those routes answer
-// 503 with the reason it did not load.
+// routes go to `projects` (projects.js), Store, remote, PostgreSQL and sync
+// job routes to `storage` (storage.js), agent routes to the AgentManager
+// (agents/routes.js), and demo and run routes to `runs` (the RunManager of
+// runs/), which may be missing; then those routes answer 503 with the reason
+// it did not load.
 import { createHash, randomBytes, timingSafeEqual } from 'node:crypto'
 import { createServer } from 'node:http'
 import { agentRoute } from './agents/routes.js'
@@ -31,6 +33,16 @@ const STATUS = {
   NameTaken: 409,
   MountsActive: 409,
   NotComparable: 409,
+  // layerfs#509: one link per Store
+  Linked: 409,
+  NotLinked: 409,
+  InUse: 409,
+  NoSuchStore: 404,
+  NoSuchRemote: 404,
+  // a remote's failures (pull, load, files)
+  NoSuchFile: 404,
+  Denied: 403,
+  Unavailable: 502,
   Unsupported: 501,
 }
 
@@ -72,11 +84,12 @@ export function errorAnswer(error) {
  * @param {() => object | null} deps.runs the RunManager, null while it is missing
  * @param {() => object | null} [deps.agents] the interactive Pi AgentManager
  * @param {() => string | null} [deps.runsError] why the RunManager is missing
+ * @param {object} [deps.storage] storage.js's Storage: Stores, remotes, publish/push/pull/send/load/unlink, PostgreSQL (absent: those routes 404)
  * @param {number} [deps.heartbeatMs]
  * @param {(line: string) => void} [deps.log]
  */
 export function createHandler(deps) {
-  const { token, projects, runs = () => null, agents = () => null, runsError = () => null, heartbeatMs = HEARTBEAT_MS, log = (line) => process.stderr.write(`${line}\n`) } = deps
+  const { token, projects, storage = null, runs = () => null, agents = () => null, runsError = () => null, heartbeatMs = HEARTBEAT_MS, log = (line) => process.stderr.write(`${line}\n`) } = deps
   const streams = new Set()
 
   /** The RunManager, or a 503 naming why it is not there. */
@@ -99,6 +112,37 @@ export function createHandler(deps) {
       return agentRoute(manager, method, parts.slice(2), body, query)
     }
     if (api !== 'api' || rest.length) return undefined
+    // layerfs#506: Stores (each holding many projects), remotes and PostgreSQL connections
+    if (storage) {
+      if (group === 'storage' && !id && method === 'GET') return storage.view()
+      // re-reads the linked files' remote state, the connections' files and status: { store?, remote?, connection? }, empty for all
+      if (group === 'storage' && id === 'check' && !sub && method === 'POST') return storage.check(body ?? {})
+      if (group === 'stores') {
+        if (!id && method === 'POST') return storage.createStore(body ?? {})
+        if (id && !sub && method === 'DELETE') return storage.removeStore(id, { confirm: query.get('confirm') })
+        // layerfs#509: one link per Store
+        if (id && method === 'POST' && sub === 'publish') return storage.publish(id, body ?? {})
+        if (id && method === 'POST' && sub === 'push') return storage.push(id, body ?? {})
+        if (id && method === 'POST' && sub === 'pull') return storage.pull(id, body ?? {})
+        if (id && method === 'POST' && sub === 'send') return storage.send(id, body ?? {})
+        if (id && method === 'POST' && sub === 'unlink') return storage.unlink(id, body ?? {})
+        if (id && method === 'POST' && sub === 'import-postgresql') return storage.importPostgresql(id, body ?? {})
+        return undefined
+      }
+      if (group === 'remotes') {
+        if (!id && method === 'POST') return storage.addRemote(body ?? {})
+        if (id && !sub && method === 'DELETE') return storage.removeRemote(id)
+        if (id && sub === 'files' && method === 'GET') return storage.files(id)
+        if (id && sub === 'load' && method === 'POST') return storage.load(id, body ?? {})
+        return undefined
+      }
+      if (group === 'postgresql') {
+        if (!id && method === 'POST') return storage.addPostgresql(body ?? {})
+        if (id && !sub && method === 'DELETE') return storage.removePostgresql(id)
+        return undefined
+      }
+      if (group === 'sync-jobs' && id && !sub && method === 'GET') return storage.syncJob(id)
+    }
     if (group === 'status' && !id && method === 'GET') return projects.status()
     if (group === 'worker' && id === 'start' && !sub && method === 'POST') return projects.startWorker()
     if (group === 'projects') {
@@ -107,16 +151,26 @@ export function createHandler(deps) {
         if (method === 'POST') return projects.create(body)
         return undefined
       }
-      if (!sub && method === 'GET') return projects.state(id)
+      // layerfs#506: ?store= names the Store when the project's name is in several;
+      // without it the calls are made exactly as before Stores held several projects
+      const store = query.get('store') || null
+      const at = (...args) => (store ? [...args, store] : args)
+      if (!sub && method === 'GET') return projects.state(...at(id))
       if (!sub && method === 'DELETE') {
         const manager = agents()
-        return manager ? manager.removeProject(id, () => projects.remove(id)) : projects.remove(id)
+        if (!manager) return projects.remove(...at(id))
+        // agents' sessions name their project by key (`store/name` in a shared Store)
+        const found = store ? await projects.record(id, store) : null
+        const key = found?.shared ? `${store}/${id}` : id
+        return manager.removeProject(key, () => projects.remove(...at(id)))
       }
       if (method !== 'GET') return undefined
       const branch = query.get('branch') ?? 'main'
-      if (sub === 'commits') return projects.commits(id, branch, query.get('limit'))
-      if (sub === 'fs') return projects.listDir(id, branch, query.get('path') ?? '/')
-      if (sub === 'file') return projects.file(id, branch, query.get('path'))
+      if (sub === 'commits') return projects.commits(...at(id, branch, query.get('limit')))
+      // several Branches' Commits in one call: ?branch=a&branch=b
+      if (sub === 'branch-commits') return projects.branchCommits(id, query.getAll('branch'), store)
+      if (sub === 'fs') return projects.listDir(...at(id, branch, query.get('path') ?? '/'))
+      if (sub === 'file') return projects.file(...at(id, branch, query.get('path')))
       return undefined
     }
     if (group === 'project-inits' && id && !sub && method === 'GET') return projects.init(id)
@@ -137,7 +191,12 @@ export function createHandler(deps) {
     return undefined
   }
 
-  /** The event stream: one `data:` line per RunEvent, a comment heartbeat, cleaned up on close. */
+  /**
+   * The event stream: one `data:` line per HostEvent (the RunManager's
+   * RunEvents, the AgentManager's chat events, and storage.js's
+   * { type: 'sync', job } and { type: 'storage' }), a comment heartbeat,
+   * cleaned up on close.
+   */
   function events(req, res) {
     res.writeHead(200, { ...CORS, 'content-type': 'text/event-stream; charset=utf-8', 'cache-control': 'no-cache', connection: 'keep-alive' })
     res.write(': connected\n\n')
@@ -146,6 +205,7 @@ export function createHandler(deps) {
     const forward = (event) => res.write(`data: ${JSON.stringify(event)}\n\n`)
     manager?.on('event', forward)
     agentManager?.on('event', forward)
+    storage?.on?.('event', forward)
     const beat = setInterval(() => res.write(': heartbeat\n\n'), heartbeatMs)
     const stream = { res, close: () => res.end() }
     streams.add(stream)
@@ -153,6 +213,7 @@ export function createHandler(deps) {
       clearInterval(beat)
       manager?.off('event', forward)
       agentManager?.off('event', forward)
+      storage?.off?.('event', forward)
       streams.delete(stream)
     }
     req.on('close', done)

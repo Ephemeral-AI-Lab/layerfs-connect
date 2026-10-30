@@ -1,6 +1,7 @@
 import { useI18n } from '@/i18n'
 import { CircleAlert, FolderOpen, GitBranch, GitCommitVertical, LoaderCircle } from 'lucide-react'
 import type { AgentWorkspace } from '@shared/agent-api'
+import { projectLabel } from '@shared/host-api'
 
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
@@ -16,6 +17,7 @@ const labels: Record<AgentWorkspace['state'], string> = {
 }
 
 interface WorkspaceStatusProps {
+  /** The project key (`store/name` in a shared Store). */
   project: string
   workspace: AgentWorkspace | null
   started: boolean
@@ -33,7 +35,7 @@ export function WorkspaceStatus({ project, workspace, started, onOpenProject }: 
         <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1.5">
           <div className="flex min-w-0 flex-1 basis-40 items-center gap-1.5 text-foreground/80">
             <GitBranch className="size-3.5 shrink-0 text-primary" />
-            <span className="truncate" title={workspace?.branch ?? project}>{workspace?.branch ?? project}</span>
+            <span className="truncate" title={workspace?.branch ? `${projectLabel(project)} · ${workspace.branch}` : projectLabel(project)}>{workspace?.branch ?? projectLabel(project)}</span>
           </div>
           <span role="status" className={cn('flex shrink-0 items-center gap-1.5 text-muted-foreground', workspace?.state === 'error' && 'text-destructive')}>
             {busy && <LoaderCircle className="size-3 animate-spin" />}

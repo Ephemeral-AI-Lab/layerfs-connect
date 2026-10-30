@@ -3,7 +3,8 @@
 //   status        runtime.status(), plus the worker start this host made
 //   list          runtime.project.list(), each marked with the run that made it
 //   create/init   runtime.project.start_init()/get_init(), importing an empty
-//                 source or the selected folder, with the runtime's progress
+//                 source or the selected folder, with the runtime's progress;
+//                 with `store`, into that existing Store (layerfs#506)
 //   state         runtime.project.get_state(name): Branches, Commits, Layers and
 //                 the running Sandboxes' Workspaces, one read that starts no
 //                 Sandbox; runtime.sandbox.list() adds each container's state;
@@ -12,20 +13,28 @@
 //   commits       branch.list_commits, newest first, and each Commit's changed
 //                 paths from branch.diff_commits against its parent
 //   listDir/file  fs.list, fs.stat and fs.read
-//   remove        runtime.project.remove(name, { confirm: name })
+//   remove        runtime.project.delete(name, { confirm: name, store? }), or
+//                 project.remove on a LayerFS build from before layerfs#506
 //   storeBytes    the Store file's size (with its WAL): stat on Linux, one
 //                 stat in the home's worker container on macOS
 // Branch, Commit and file reads go through one @layerfs/agent client per
 // project, opened after the runtime (so on macOS it uses the home's worker)
 // and closed after a quiet minute. Every LayerFS call is made once; a
 // refusal passes through with its code.
+// Since layerfs#506 a Store holds many projects and a name may be in several
+// Stores: a project is found by name and, when needed, its Store (`?store=`),
+// and goes by its key (keyOf: `store/name` in a shared Store, else the name).
+// A PostgreSQL Store's project is read with its connection's URL, which only
+// storage.js holds (this.postgresql, set by main.js).
 import { execFile } from 'node:child_process'
 import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync } from 'node:fs'
 import { dirname, isAbsolute, join } from 'node:path'
 import { setTimeout as pause } from 'node:timers/promises'
 import { LayerFS } from '@layerfs/agent'
 import { LayerFSBackend } from '@layerfs/backend'
-import { VOLUMES, missing as missingSettings, openRuntime, withProjectEnv } from './config.js'
+import { keyOf, projectRef, storeOf, VOLUMES, missing as missingSettings, openRuntime, withProjectEnv } from './config.js'
+
+export { keyOf }
 
 /** A project's client is closed after this long unused. */
 const IDLE_MS = 60_000
@@ -183,13 +192,16 @@ export class Projects {
     return this.status()
   }
 
-  /** At startup: starts the worker when this platform has one, its settings are complete and it is not running. Never throws. */
+  /** At startup: starts the worker when this platform has one, its settings are complete and it is not running, or runs another build. Never throws. */
   async ensureWorker() {
     if (!this.spec.worker || missingSettings(this.spec).length) return
     try {
       const { worker } = await (await this.runtime()).status()
-      if (worker?.state === 'running') return
-      this.log(`[host] starting the worker ${worker?.name ?? ''} (${worker?.state ?? 'unknown'})`)
+      // a running worker of another build (the bundle setting changed) cannot
+      // see this bundle's daemon, so every Sandbox create fails; start replaces it
+      const stale = worker?.state === 'running' && !!worker.expected && worker.build !== worker.expected
+      if (worker?.state === 'running' && !stale) return
+      this.log(stale ? `[host] replacing the worker ${worker.name}: it runs ${worker.build}, the bundle is ${worker.expected}` : `[host] starting the worker ${worker?.name ?? ''} (${worker?.state ?? 'unknown'})`)
       await this.startWorker()
       this.log('[host] the worker is ready')
     } catch (error) {
@@ -229,21 +241,48 @@ export class Projects {
     return made
   }
 
-  summary(p, made) {
-    const by = made.get(p.name)
+  /**
+   * ProjectSummary. `join` (Store name -> { storeSync, storeProviders,
+   * connection }, from storage.js's view) adds the Store's sync state, copy
+   * providers and PostgreSQL connection; without it they are left out.
+   */
+  summary(p, made, join = null) {
+    // runs name their project by key: a project of a shared Store is not the run's same-named one (layerfs#506)
+    const by = made.get(keyOf(p))
     const source = p.source && dirname(p.source) !== this.emptySources ? p.source : null
-    return { name: p.name, volume: p.volume ?? null, source, created: p.created ?? null, initialized: !!p.initialized, demo: by?.demo ?? null, run: by?.run ?? null }
+    const joined = join ? (join.get(storeOf(p)) ?? { storeSync: null, storeProviders: [], connection: p.connection ?? null }) : null
+    return {
+      name: p.name,
+      volume: p.volume ?? null,
+      source,
+      created: p.created ?? null,
+      initialized: !!p.initialized,
+      demo: by?.demo ?? null,
+      run: by?.run ?? null,
+      // layerfs#506: the Store that holds the project (a build before it has one Store per project, unnamed)
+      store: typeof p.store === 'string' ? p.store : (p.store?.name ?? null),
+      kind: p.kind ?? null,
+      shared: !!p.shared,
+      key: keyOf(p),
+      ...(joined ? { storeSync: joined.storeSync, storeProviders: joined.storeProviders, connection: joined.connection } : {}),
+    }
   }
 
-  /** Starts a real Init, either from a supplied folder or an empty source. */
+  /**
+   * Starts a real Init, either from a supplied folder or an empty source.
+   * With `store` (layerfs#506) the project goes into that existing Store;
+   * without it, into a new Store of its own, as before.
+   */
   async create(input) {
-    const { name, source } = input ?? {}
+    const { name, source, store = null } = input ?? {}
     checkName(name)
-    if (this.initializing.has(name)) throw refuse(409, 'Exists', `a LayerFS project named ${name} is being created`)
+    if (store !== null) checkName(store)
+    const key = store === null ? name : `${store}/${name}`
+    if (this.initializing.has(key)) throw refuse(409, 'Exists', `a LayerFS project named ${name} is being created${store === null ? '' : ` in Store ${store}`}`)
     if (source !== undefined && (typeof source !== 'string' || !isAbsolute(source) || source.includes('\0') || !statSync(source, { throwIfNoEntry: false })?.isDirectory())) {
       throw refuse(400, 'InvalidInput', 'Choose an existing absolute source folder.')
     }
-    this.initializing.add(name)
+    this.initializing.add(key)
     let emptySource
     try {
       const runtime = await this.runtime()
@@ -251,18 +290,18 @@ export class Projects {
         mkdirSync(this.emptySources, { recursive: true, mode: 0o700 })
         emptySource = mkdtempSync(join(this.emptySources, 'empty-'))
       }
-      const job = await runtime.project.start_init(name, source ?? emptySource)
+      const job = await (store === null ? runtime.project.start_init(name, source ?? emptySource) : runtime.project.start_init(name, source ?? emptySource, { store }))
       // Init continues even when the requesting window is no longer polling.
       const completion = this.finishInit(runtime, job, emptySource).catch((error) => {
         this.log(`[host] creating ${name}: ${error.message}`)
       }).finally(() => {
-        this.initializing.delete(name)
+        this.initializing.delete(key)
         this.creations.delete(job.id)
       })
       this.creations.set(job.id, completion)
       return this.initSummary(job)
     } catch (error) {
-      this.initializing.delete(name)
+      this.initializing.delete(key)
       if (emptySource) rmSync(emptySource, { recursive: true, force: true })
       throw error
     }
@@ -297,23 +336,62 @@ export class Projects {
   /** ProjectSummary[]. */
   async list() {
     const made = this.madeBy()
-    return (await (await this.runtime()).project.list()).map((p) => this.summary(p, made))
+    const records = await (await this.runtime()).project.list()
+    // set by the host (storage.js projectJoin): never opens a Store; a failure leaves the fields out
+    const join = this.storeJoin ? await this.storeJoin().catch(() => null) : null
+    return records.map((p) => this.summary(p, made, join))
   }
 
-  /** The runtime's record of `name`; 404 when this home has no such project. */
-  async record(name) {
+  /**
+   * The runtime's record of `name`, of the Store `store` when given; 404
+   * when this home has no such project. Since layerfs#506 a name may be in
+   * several Stores: then the Store must be named (400 AmbiguousProject).
+   */
+  async record(name, store = null) {
     checkName(name)
-    const found = (await (await this.runtime()).project.list()).find((p) => p.name === name)
-    if (!found) throw refuse(404, 'NoSuchProject', `no LayerFS project named ${name}`)
-    return found
+    if (store != null && store !== '') checkName(store)
+    else store = null
+    const found = (await (await this.runtime()).project.list()).filter((p) => p.name === name && (store === null || storeOf(p) === store))
+    if (!found.length) throw refuse(404, 'NoSuchProject', `no LayerFS project named ${name}${store ? ` in Store ${store}` : ''}`)
+    if (found.length > 1) throw refuse(400, 'AmbiguousProject', `project ${name} is in Stores ${found.map(storeOf).join(', ')}: name its Store`)
+    return found[0]
+  }
+
+  /** The record of a project key (ProjectSummary.key): `store/name`, or a bare name. */
+  recordOf(key) {
+    const ref = projectRef(String(key))
+    return this.record(ref.name, ref.store)
+  }
+
+  /**
+   * One project's state read at a time: a poll while one runs shares it.
+   * get_state asks every mounted Workspace's daemon for its overlay storage,
+   * which a large Workspace takes minutes to scan; a read the page gave up on
+   * (STATE_MS) still runs in the daemon, so starting another per poll piled
+   * scans onto its connections until the agents' own calls waited forever.
+   */
+  oneRead(record, read) {
+    this.reading ??= new Map()
+    const key = keyOf(record)
+    let pending = this.reading.get(key)
+    if (!pending) {
+      pending = read().finally(() => this.reading.delete(key))
+      this.reading.set(key, pending)
+    }
+    return pending
   }
 
   /** ProjectState: one get_state read, Branch Commit counts and the containers' states. */
-  async state(name) {
-    const record = await this.record(name)
+  async state(name, store = null) {
+    const record = await this.record(name, store)
     const runtime = await this.runtime()
+    const read = () =>
+      record.kind === 'postgresql'
+        ? this.postgresqlUrl(record.store).then((url) => readState(runtime, name, record.store, url))
+        : readState(runtime, name, record.shared ? record.store : null)
     const [st, containers] = await Promise.all([
-      runtime.project.get_state(name),
+      // a Sandbox whose daemon stopped answering would hold the read forever: the page gets an error instead
+      withinMs(this.oneRead(record, read), STATE_MS, `reading ${name}'s state`),
       runtime.sandbox.list().catch((error) => {
         this.log(`[host] sandbox.list: ${error?.message ?? error}`)
         return []
@@ -322,11 +400,11 @@ export class Projects {
     // get_state lists 64 Branches at most (moreBranches): History needs them all
     if (st.moreBranches) {
       const seen = new Set((st.branches ?? []).map((b) => b.name))
-      const rest = (await this.use(name, ({ layerfs }) => listBranches(layerfs))).filter((b) => !seen.has(b.name))
+      const rest = (await this.use(record, ({ layerfs }) => listBranches(layerfs))).filter((b) => !seen.has(b.name))
       st.branches = [...(st.branches ?? []), ...rest.map(({ name, head, base, forkedFrom }) => ({ name, head, base, forkedFrom }))]
     }
     const byId = new Map((st.commits ?? []).map((c) => [c.id, c]))
-    const branches = await this.branchInfos(name, st, byId)
+    const branches = await this.branchInfos(record, st, byId)
     const layers = (st.layers ?? []).map((l) => {
       const source = l.sourceCommit ? byId.get(l.sourceCommit) : null
       return {
@@ -338,26 +416,26 @@ export class Projects {
     })
     let newest = null
     for (const c of byId.values()) if (typeof c.time === 'number' && (!newest || c.time > newest.time)) newest = c
-    const [bytes, totals] = await Promise.all([this.storeBytes(record.volume), this.storeTotals(name)])
-    const store = { path: record.volume ? storeFile(record.volume) : null, bytes }
+    const [bytes, totals] = await Promise.all([this.storeBytes(record.volume), this.storeTotals(record)])
+    const file = { path: record.volume ? storeFile(record.volume) : null, bytes }
     return {
       project: this.summary(record, this.madeBy()),
       branches,
       layers,
-      sandboxes: sandboxInfos(name, st, containers),
+      sandboxes: sandboxInfos(record, st, containers),
       last: newest ? commitInfo(newest) : null,
       commits: byId.size,
-      store,
+      store: file,
       storage: totals && storeStats(totals, st, branches, byId),
     }
   }
 
   /** backend.store.project.get_storage, or null (logged) when the Store cannot answer. */
-  async storeTotals(name) {
+  async storeTotals(record) {
     try {
-      return await this.use(name, ({ backend }) => backend.store.project.get_storage())
+      return await this.use(record, ({ backend }) => backend.store.project.get_storage())
     } catch (error) {
-      this.log(`[host] Store totals of ${name}: ${error?.message ?? error}`)
+      this.log(`[host] Store totals of ${keyOf(record)}: ${error?.message ?? error}`)
       return null
     }
   }
@@ -392,7 +470,7 @@ export class Projects {
   }
 
   /** BranchInfo[] from a get_state answer; Branches whose Commits it cut short are listed (branch.list_commits) to count them. */
-  async branchInfos(name, st, byId) {
+  async branchInfos(record, st, byId) {
     const list = st.branches ?? []
     const own = (b) => {
       let n = 0
@@ -407,7 +485,7 @@ export class Projects {
     const counts = new Map(list.map((b) => [b.name, own(b)]))
     const cut = list.filter((b) => counts.get(b.name) === null)
     if (cut.length) {
-      await this.use(name, async ({ layerfs }) => {
+      await this.use(record, async ({ layerfs }) => {
         await each(cut, WIDTH, async (b) => {
           for (let pos = 0; pos !== null; ) {
             const page = await layerfs.branch.list_commits(b.name, PAGE, pos)
@@ -432,32 +510,66 @@ export class Projects {
   }
 
   /** CommitInfo[] of `branch`, newest first, each with its changed paths when LayerFS can compare it with its parent. */
-  async commits(name, branch, limitText) {
+  async commits(name, branch, limitText, store = null) {
     checkName(name)
     checkBranch(branch)
     const limit = limitText == null || limitText === '' ? LIMIT : Number(limitText)
     if (!Number.isSafeInteger(limit) || limit < 1 || limit > PAGE) throw refuse(400, 'invalid-input', `limit must be a whole number from 1 to ${PAGE}`)
-    await this.record(name)
+    const record = await this.record(name, store)
     // main moves only by publish: its history is the Layers in the project's state
     if (branch === 'main') return []
-    return this.use(name, async (client) => {
-      // list_commits walks first parents past the fork into the parent Branch's
-      // Commits (labelled with this Branch); keep this Branch's own, as BranchInfo.commits counts them
+    return this.use(record, async (client) => {
       const forks = await listBranches(client.layerfs)
-      const fork = forks.find((b) => b.name === branch)?.forkedFrom ?? null
-      const page = await client.layerfs.branch.list_commits(branch, limit, 0)
-      const own = []
-      for (const c of page.items) {
-        if (c.id === fork) break
-        own.push(c)
-      }
-      const commits = own.map((c) => ({ ...commitInfo(c, branch), changes: undefined }))
-      await each(own, WIDTH, async (c, index) => {
-        const changes = await this.changesOf(client, c)
-        if (changes) commits[index].changes = changes
-      })
-      return commits
+      return this.ownCommits(client, branch, limit, forks.find((b) => b.name === branch)?.forkedFrom ?? null)
     })
+  }
+
+  /**
+   * The Commits of several Branches in one call, `{ [branch]: CommitInfo[] }`
+   * as commits() gives each (main's are []): History reads every Branch at
+   * once. A Branch gone since the caller saw it is left out.
+   */
+  async branchCommits(name, branches, store = null) {
+    checkName(name)
+    if (!Array.isArray(branches) || branches.length === 0) return {}
+    if (branches.length > PAGE) throw refuse(400, 'invalid-input', `at most ${PAGE} Branches at once`)
+    for (const b of branches) checkBranch(b)
+    const record = await this.record(name, store)
+    const wanted = [...new Set(branches)]
+    const out = Object.fromEntries(wanted.filter((b) => b === 'main').map((b) => [b, []]))
+    const rest = wanted.filter((b) => b !== 'main')
+    if (!rest.length) return out
+    return this.use(record, async (client) => {
+      const forks = new Map((await listBranches(client.layerfs)).map((b) => [b.name, b.forkedFrom ?? null]))
+      await each(rest, WIDTH, async (branch) => {
+        if (!forks.has(branch)) return
+        try {
+          out[branch] = await this.ownCommits(client, branch, LIMIT, forks.get(branch))
+        } catch (error) {
+          // removed between the list and its read
+          if (error?.code !== 'NoSuchBranch') throw error
+        }
+      })
+      return out
+    })
+  }
+
+  /** `branch`'s own Commits, newest first, with their changed paths. */
+  async ownCommits(client, branch, limit, fork) {
+    // list_commits walks first parents past the fork into the parent Branch's
+    // Commits (labelled with this Branch); keep this Branch's own, as BranchInfo.commits counts them
+    const page = await client.layerfs.branch.list_commits(branch, limit, 0)
+    const own = []
+    for (const c of page.items) {
+      if (c.id === fork) break
+      own.push(c)
+    }
+    const commits = own.map((c) => ({ ...commitInfo(c, branch), changes: undefined }))
+    await each(own, WIDTH, async (c, index) => {
+      const changes = await this.changesOf(client, c)
+      if (changes) commits[index].changes = changes
+    })
+    return commits
   }
 
   /**
@@ -493,12 +605,12 @@ export class Projects {
   }
 
   /** FsEntry[] of one folder, every page of it; files get their size when the folder has at most STAT_MAX. */
-  async listDir(name, branch, path) {
+  async listDir(name, branch, path, store = null) {
     checkName(name)
     checkBranch(branch)
     checkPath(path)
-    await this.record(name)
-    return this.use(name, async ({ layerfs }) => {
+    const record = await this.record(name, store)
+    return this.use(record, async ({ layerfs }) => {
       const items = []
       for (let pos = 0; pos !== null; ) {
         const page = await layerfs.fs.list(branch, path, PAGE, pos)
@@ -519,12 +631,12 @@ export class Projects {
   }
 
   /** `{ path, size, binary, text }`: text null when binary or over FILE_MAX; `truncated` when a line was too long to read whole. */
-  async file(name, branch, path) {
+  async file(name, branch, path, store = null) {
     checkName(name)
     checkBranch(branch)
     checkPath(path)
-    await this.record(name)
-    return this.use(name, async ({ layerfs }) => {
+    const record = await this.record(name, store)
+    return this.use(record, async ({ layerfs }) => {
       const stat = await layerfs.fs.stat(branch, path)
       if (stat.type === 'dir') throw refuse(400, 'IsDirectory', `${path} is a folder`)
       const size = typeof stat.size === 'number' ? stat.size : null
@@ -546,31 +658,55 @@ export class Projects {
     })
   }
 
-  /** Removes the project through the runtime (its Sandboxes must have closed): `{ removed: true }`. */
-  async remove(name) {
-    await this.record(name)
-    await this.forget(name)
-    await (await this.runtime()).project.remove(name, { confirm: name, stopSandboxes: false })
+  /**
+   * Removes the project through the runtime (its Sandboxes must have closed):
+   * `{ removed: true }`. runtime.project.delete names the Store of a shared
+   * Store's project, and a PostgreSQL Store's project needs its connection's
+   * URL; a LayerFS build from before layerfs#506 has project.remove instead.
+   */
+  async remove(name, store = null) {
+    const record = await this.record(name, store)
+    await this.forget(keyOf(record))
+    const runtime = await this.runtime()
+    const options = { confirm: name, stopSandboxes: false }
+    if (record.shared) options.store = record.store
+    if (record.kind === 'postgresql') options.url = await this.postgresqlUrl(record.store)
+    if (typeof runtime.project.delete === 'function') await runtime.project.delete(name, options)
+    else await runtime.project.remove(name, options)
     return { removed: true }
   }
 
   // ---------- clients ----------
 
-  /** Opens `name`'s client: the runtime first, then LayerFS.open with the project's LAYERFS_* settings. */
-  async open(name) {
-    const runtime = await this.runtime()
-    const record = (await runtime.project.list()).find((p) => p.name === name && p.initialized)
-    if (!record) throw refuse(404, 'NoSuchProject', `no initialized LayerFS project named ${name}`)
+  /**
+   * Opens a project's client: LayerFS.open with the project's LAYERFS_*
+   * settings. `target` is a runtime project record, or a project key (a
+   * name, or `store/name`) whose record is read first. A project of a
+   * PostgreSQL Store also gets its connection's URL
+   * (LAYERFS_STORE_POSTGRESQL), which only Connect holds.
+   */
+  async open(target) {
+    await this.runtime()
+    const record = typeof target === 'string' ? await this.recordOf(target) : target
+    if (!record?.initialized) throw refuse(404, 'NoSuchProject', `no initialized LayerFS project named ${typeof target === 'string' ? target : target?.name}`)
+    const extra = record.kind === 'postgresql' ? { LAYERFS_STORE_PATH: `postgresql:${record.store}`, LAYERFS_STORE_POSTGRESQL: JSON.stringify({ url: await this.postgresqlUrl(record.store) }) } : {}
     // LayerFS.open reads the environment before its first await
-    const layerfs = await withProjectEnv(this.spec, record, () => LayerFS.open(name))
+    const layerfs = await withProjectEnv(this.spec, record, () => LayerFS.open(record.name), extra)
     return { layerfs, backend: LayerFSBackend.of(layerfs) }
   }
 
-  /** Runs `fn(client)` with the project's open client, opened once and closed after IDLE_MS unused. */
-  async use(name, fn) {
+  /** The URL of the connection holding the PostgreSQL Store `store`, as the Store calls reach it; set by the host (storage.js). */
+  async postgresqlUrl(store) {
+    if (!this.postgresql) throw refuse(501, 'Unsupported', `the PostgreSQL Store ${store} needs its connection, which this host does not hold`)
+    return this.postgresql(store)
+  }
+
+  /** Runs `fn(client)` with the open client of `record` (a record, by keyOf, or a project key), opened once and closed after IDLE_MS unused. */
+  async use(record, fn) {
+    const name = typeof record === 'string' ? record : keyOf(record)
     let held = this.clients.get(name)
     if (!held) {
-      held = { opening: this.open(name), users: 0, timer: null }
+      held = { opening: this.open(record), users: 0, timer: null }
       this.clients.set(name, held)
       const opened = held
       held.opening.catch(() => {
@@ -640,8 +776,9 @@ function storeStats(t, st, branches, byId) {
 }
 
 /** SandboxInfo[]: get_state's running and gone Sandboxes, with their containers' states, and containers of the project neither lists. */
-function sandboxInfos(project, st, containers) {
-  const mine = new Map(containers.filter((c) => c.project === project && c.sandbox != null).map((c) => [String(c.sandbox), c]))
+function sandboxInfos(record, st, containers) {
+  const store = record.shared ? record.store : null
+  const mine = new Map(containers.filter((c) => c.project === record.name && (c.store ?? null) === store && c.sandbox != null).map((c) => [String(c.sandbox), c]))
   const seen = new Set()
   const workspace = (id) => (w) => {
     const path = w.path ?? w.directory
@@ -660,4 +797,38 @@ function sandboxInfos(project, st, containers) {
   ]
   for (const [id, c] of mine) if (!seen.has(id)) out.push({ id, name: c.name, state: c.state, image: c.image ?? null, workspaces: [] })
   return out
+}
+
+/** How long a project state read may take before the page is told so. */
+const STATE_MS = 45_000
+/** Reads of a project's state before a vanished Workspace or Sandbox fails it. */
+const STATE_TRIES = 5
+
+/**
+ * A read refused because a Workspace or Sandbox went away while it was read:
+ * get_state lists the Workspaces, then reads each one, and on a project where
+ * agents work they mount and unmount often.
+ */
+const vanished = (error) => /Workspace path absent|UnexpectedEof|NoSuchWorkspace|NoSuchSandbox/.test(`${error?.code ?? ''} ${error?.message ?? ''}`)
+
+/** runtime.project.get_state (of the shared Store `store` when given), read again (up to STATE_TRIES) when what it read went away meanwhile. */
+export async function readState(runtime, name, store = null, url = null) {
+  for (let attempt = 1; ; attempt++) {
+    try {
+      // a PostgreSQL Store's project is read with its connection's URL, for this call only (layerfs#506 d)
+      return await (store ? runtime.project.get_state(name, undefined, { store, ...(url ? { url } : {}) }) : runtime.project.get_state(name))
+    } catch (error) {
+      if (attempt >= STATE_TRIES || !vanished(error)) throw error
+      await new Promise((resolve) => setTimeout(resolve, 50 * attempt))
+    }
+  }
+}
+
+/** `promise`, or a 504 Timeout refusal after `ms`. */
+function withinMs(promise, ms, what) {
+  let timer
+  const late = new Promise((_, reject) => {
+    timer = setTimeout(() => reject(refuse(504, 'Timeout', `${what}: no answer in ${ms / 1000} s (a Sandbox's daemon may not be answering)`)), ms)
+  })
+  return Promise.race([promise, late]).finally(() => clearTimeout(timer))
 }

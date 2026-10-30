@@ -3,6 +3,7 @@ import './home.css'
 
 import { FolderOpen, FolderSearch, Plus, RotateCw, Search, X } from 'lucide-react'
 import { useLayoutEffect, useState } from 'react'
+import { projectKey } from '@shared/host-api'
 
 import { PageHeader } from '@/components/motion/page-header'
 import { revealStyle } from '@/components/motion/reveal'
@@ -33,7 +34,7 @@ export function ProjectsHome({ projects, onOpenProject, onNewProject }: Projects
 
   const q = query.trim().toLowerCase()
   const all = projects.data ?? []
-  const shown = all.filter((project) => !q || `${project.name} ${project.source ?? ''}`.toLowerCase().includes(q))
+  const shown = all.filter((project) => !q || `${project.name} ${project.store ?? ''} ${project.source ?? ''}`.toLowerCase().includes(q))
   useLayoutEffect(flip.play, [q, flip.play])
 
   return (
@@ -97,7 +98,7 @@ export function ProjectsHome({ projects, onOpenProject, onNewProject }: Projects
             title={t("No projects match")}
             action={<Button variant="outline" size="sm" onClick={() => search('')}>{t("Clear search")}</Button>}
             className="rounded-2xl"
-          >{t("Nothing matches “")}{query.trim()}{t("”. Search by name or source folder.")}</Empty>
+          >{t("Nothing matches “")}{query.trim()}{t("”. Search by name, Store or source folder.")}</Empty>
         ) : (
           <>
             <p aria-live="polite" className="px-1 text-xs text-muted-foreground tabular-nums">
@@ -105,7 +106,7 @@ export function ProjectsHome({ projects, onOpenProject, onNewProject }: Projects
             </p>
             <div ref={flip.container} className={GRID}>
               {shown.map((project, index) => (
-                <ProjectCard key={project.name} project={project} index={index} onOpen={() => onOpenProject(project.name)} />
+                <ProjectCard key={projectKey(project)} project={project} index={index} onOpen={() => onOpenProject(projectKey(project))} />
               ))}
             </div>
           </>

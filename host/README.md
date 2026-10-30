@@ -205,8 +205,13 @@ receive host resolver paths, credentials or shell environment.
 host/
   main.js              entry: opens the runtime, starts the worker, serves HTTP; prints one ready line
   server.js            routes and the event stream
-  projects.js          real project reads (state, commits, files, Sandboxes) and removal
+  projects.js          real project reads (state, commits, files, Sandboxes), creation and removal
+  storage.js           Stores, remotes, PostgreSQL connections and sync jobs (layerfs#506, #509)
+  storage-sync.js      the sync state of each Store's link (pure)
+  storage-checks.js    cached remote checks and sync job sampling
   agents/              interactive Pi sessions, models, bash and subagent extension
+    models.js          provider connections and model selection on Pi's ModelRuntime
+    model-login.js     subscription sign-in (ChatGPT, Claude, …) through Pi's OAuth flows
     workspaces.js      session branch/mount lifecycle, serialized execution and automatic commits
     workspace-bash.js  root/child bash bridge to the host's managed workspace execution
     history.js         immutable turn checkpoints and Pi session copies without replaying old work
@@ -252,13 +257,14 @@ errors are `{ code, message }` with a 4xx/5xx status. CORS allows any origin
 | `GET /api/status` | `HostStatus` |
 | `POST /api/worker/start` | `HostStatus` once the worker answers |
 | `GET /api/projects` | `ProjectSummary[]` |
-| `POST /api/projects` | `{ name, source? }` starts a real local SQLite Init and returns `ProjectInitJob`; omit `source` for an empty project, or provide an existing absolute folder to import. Existing names return 409 without changing the existing project. |
+| `POST /api/projects` | `{ name, source?, store? }` starts a real Init and returns `ProjectInitJob`; omit `source` for an empty project, or provide an existing absolute folder to import. With `store` the project goes into that existing Store (layerfs#506), else into a new SQLite Store of its own. Existing names return 409 without changing the existing project. |
 | `GET /api/project-inits/:id` | `ProjectInitJob`: the runtime's `scan`, `volume`, `import`, `done` or `failed` step, live counts, terminal error, and `ProjectSummary` on success. Unknown or expired jobs return 404. Polling never restarts a job. |
 | `GET /api/projects/:name` | `ProjectState` (branches, layers, Sandboxes, last Commit, Commit count, Store file and size, Store totals and each Commit's added bytes) |
 | `GET /api/projects/:name/commits?branch=&limit=` | `CommitInfo[]`, newest first |
+| `GET /api/projects/:name/branch-commits?branch=a&branch=b` | `{ [branch]: CommitInfo[] }`: several Branches' Commits in one call; main's are `[]`, a Branch gone meanwhile is left out |
 | `GET /api/projects/:name/fs?branch=&path=` | `FsEntry[]` of one folder |
 | `GET /api/projects/:name/file?branch=&path=` | `{ path, size, binary, text }` (text null when binary or over 1 MiB) |
-| `DELETE /api/projects/:name` | `{ removed: true }` (runtime removal, confirm by name) |
+| `DELETE /api/projects/:name` | `{ removed: true }` (`runtime.project.delete`, confirm by name; `project.remove` on a LayerFS build from before layerfs#506). Refused 409 `Busy` while an agent session on the project works |
 | `GET /api/demos` | `DemoSummary[]` |
 | `GET /api/demos/:id` | `DemoDetail` (every agent's steps, parsed) |
 | `POST /api/demos/:id/runs` | `RunSummary`: a replay. Resets the demo's project `<id>` (removed if there, Inited again from the fixture), then plays; 409 while the demo replays |
@@ -267,14 +273,66 @@ errors are `{ code, message }` with a 4xx/5xx status. CORS allows any origin
 | `GET /api/runs/:id/trace?agent=&before=&limit=` | `TracePage`: one agent's Trace rows (runs/trajectory.js), newest last; `limit` (default 400) rows before `before` (default the end). A live session's model side comes from pi's log, a replay's from the scenario's script |
 | `POST /api/runs/:id/stop` | `RunSummary` |
 | `DELETE /api/runs/:id` | `{ id }`; removes a finished session's saved record and execution logs, keeping its LayerFS project; 409 while running |
-| `GET /api/events?token=` | `text/event-stream`, one `data: <HostEvent JSON>` per event, including interactive chat snapshots |
+| `GET /api/events?token=` | `text/event-stream`, one `data: <HostEvent JSON>` per event: the runs' events, interactive chat snapshots, and from `storage.js` `{ type: 'sync', job }` and `{ type: 'storage' }` (below) |
+
+Since layerfs#506 a Store holds many projects and a project name may be in
+several Stores. Every `/api/projects/:name…` route above takes `store=` to
+name the project's Store; without it, a name in several Stores is refused
+400 `AmbiguousProject`. `ProjectSummary` carries `store`, `kind`, `shared`
+and `key` (`store/name` for a project in a shared Store, else the name), and
+`storeSync`, `storeProviders` and `connection` from a Storage view at most
+15 s old. The renderer's client (`src/renderer/src/host/client.ts`) takes a
+key and splits it into the route and `store=`; agent sessions name their
+project by key. A PostgreSQL Store's project is read with its connection's
+URL, which `storage.js` gives `projects.js`; `config.js` `notePostgresql`
+keeps it in this process only, and `deploymentEnv` gives such a project's
+clients `LAYERFS_STORE_POSTGRESQL` and no volume.
+
+### Storage (layerfs#506, #509; `docs/ui/storage-links.md`, `docs/ui/storage-redesign.md`)
+
+`storage.js` serves Stores, remotes and PostgreSQL connections;
+`storage-sync.js` is the pure sync state of each Store's link and
+`storage-checks.js` keeps the remote checks and samples the jobs. A SQLite
+Store links to at most one remote file; a remote file is linked by at most
+one Store of this home. A LayerFS build without these calls (such as the one
+`package.json` links today) answers each part `available: false` with the
+reason, and the changes 501 `Unsupported`.
+
+| Route | Answer |
+| --- | --- |
+| `GET /api/storage` | `StorageView`: Stores (size, open, link with its sync state, import origin, running job), remotes (location, files, bytes, health), connections (host, database, health, bytes), jobs, providers, totals, `supports`, `checkedAt`, `checking`. Uses the cached checks; never runs a remote HEAD and opens no Store |
+| `POST /api/storage/check` | `StorageView` after checking. Body `{ store?, remote?, connection? }`, empty for everything: one HEAD per matching link (`runtime.store.check`), each remote's listing (`runtime.remote.list_stores`) and each matching connection's `runtime.postgresql.status` |
+| `POST /api/stores` | `StorageView`: a new empty SQLite Store, body `{ name }` |
+| `DELETE /api/stores/:name?confirm=` | `StorageView`: the Store and every project in it removed |
+| `POST /api/stores/:name/publish` | `SyncJob`: an unlinked Store uploaded to a new file and linked. Body `{ remote, file? }` |
+| `POST /api/stores/:name/push` | `SyncJob` through the Store's link. Body `{ force? }`; `force: true` replaces a file that changed since the last push or pull |
+| `POST /api/stores/:name/pull` | `SyncJob`: the Store replaced by its linked file. Body `{ confirm: <store> }` |
+| `POST /api/stores/:name/send` | `SyncJob`: a copy to a new, unlinked file. Body `{ remote, file }` |
+| `POST /api/stores/:name/unlink` | `StorageView`: the Store becomes local only; the file stays. Body `{ confirm: <store> }` |
+| `POST /api/stores/:name/import-postgresql` | `SyncJob`. Body `{ connection, name?, schema? }` |
+| `POST /api/remotes`, `DELETE /api/remotes/:name` | `StorageView`; the keys stay in `<state>/storage.json` (owner-only) |
+| `GET /api/remotes/:name/files` | `RemoteFile[]`: the bucket's Store files now, each with the Store linked to it |
+| `POST /api/remotes/:name/load` | `SyncJob`: a new local Store from a file, linked to it. Body `{ file, store? }` |
+| `POST /api/postgresql`, `DELETE /api/postgresql/:name` | `StorageView`; the URL stays in `storage.json` |
+| `GET /api/sync-jobs/:id` | `SyncJob`: the job's last sample |
+
+While a job runs the host samples it (`runtime.sync.get`) every 500 ms and
+sends `{ type: 'sync', job }` for each changed sample and its end; when a job
+ends, a check ends, or a Store, remote or connection changes, it sends
+`{ type: 'storage' }` and the renderer reads `/api/storage` again. No view or
+event carries a remote key or a PostgreSQL password.
 
 Interactive routes accept JSON request bodies:
 
 | Route | Input / answer |
 | --- | --- |
-| `GET /api/agent/models` | Models, provider connections (including custom headers, excluding API key values), selected model and default cwd |
+| `GET /api/agent/models` | Models, provider connections (including custom headers, excluding API key values; `signIn` for a provider with a subscription sign-in, `signedIn` when its credential is one), selected model and default cwd |
 | `POST /api/agent/providers` | `{ provider, name?, baseUrl?, api?, apiKey?, headers? }`; saves one provider connection without requiring a model or changing selection, preserving its model definitions and other providers; returns the catalog |
+| `POST /api/agent/providers/:id/login` | `ModelLogin`: starts the provider's subscription sign-in (its `signIn` in the catalog; 400 for a key-only provider). A running sign-in for it is cancelled |
+| `GET /api/agent/logins/:id` | `ModelLogin`: its `state`, the `step` to show (a URL to open, a device code) and the `prompt` it waits on; readable 2 minutes after it ends |
+| `POST /api/agent/logins/:id/respond` | `{ value }`: answers the open prompt (an option's id, a pasted code or redirect URL); 409 when nothing is asked |
+| `POST /api/agent/logins/:id/cancel` | `ModelLogin`, cancelled |
+| `POST /api/agent/logins/:id/open` | `ModelLogin`; opens the step's page (a provider's own sign-in page only) in the system browser; 409 before there is one |
 | `DELETE /api/agent/providers/:id` | Removes that provider’s configuration and credentials; clears selection only when it belongs to that provider, invalidates its pending model sync, and returns the latest catalog. Conversations stay in history. |
 | `POST /api/agent/models` | `{ provider, modelId, thinkingLevel, apiKey?, baseUrl?, api?, headers?, contextWindow?, maxTokens?, reasoning? }`; saves and returns the catalog |
 | `POST /api/agent/models/test` | Same settings; saves, tests the model, returns `{ text }` |

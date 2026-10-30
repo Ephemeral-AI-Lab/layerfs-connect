@@ -1,19 +1,7 @@
 import { useI18n } from '@/i18n'
-import { FolderOpen } from 'lucide-react'
-import { type SimpleIcon, siCloudflare, siGoogledrive, siMinio, siPostgresql, siSqlite } from 'simple-icons'
+import type { SimpleIcon } from 'simple-icons'
 
 import { cn } from '@/lib/utils'
-
-/** Where a local Store's file could be copied to and from, once LayerFS has remotes. */
-export type Provider = 'google-drive' | 's3' | 'r2' | 'minio' | 'folder'
-
-export const PROVIDER_LABEL: Record<Provider, string> = {
-  'google-drive': 'Google Drive',
-  s3: 'Amazon S3',
-  r2: 'Cloudflare R2',
-  minio: 'MinIO',
-  folder: 'Folder',
-}
 
 type BrandMark = Pick<SimpleIcon, 'path' | 'hex'>
 
@@ -76,39 +64,5 @@ export function Tile({ size = 'md', className, children }: { size?: keyof typeof
     >
       {children}
     </span>
-  )
-}
-
-export function ProviderGlyph({ provider, className }: { provider: Provider; className?: string }) {
-  useI18n()
-  switch (provider) {
-    case 'google-drive':
-      return <Mark icon={siGoogledrive} className={className} />
-    case 'r2':
-      return <Mark icon={siCloudflare} className={className} />
-    case 'minio':
-      return <Mark icon={siMinio} className={className} />
-    case 'folder':
-      return <FolderOpen aria-hidden="true" className={className} />
-    case 's3':
-      return <Mark icon={AWS_MARK} className={className} />
-  }
-}
-
-export function ProviderIcon({ provider, size }: { provider: Provider; size?: keyof typeof TILE }) {
-  useI18n()
-  return (
-    <Tile size={size}>
-      <ProviderGlyph provider={provider} />
-    </Tile>
-  )
-}
-
-export function DatabaseIcon({ kind, size }: { kind: 'sqlite' | 'postgres'; size?: keyof typeof TILE }) {
-  useI18n()
-  return (
-    <Tile size={size}>
-      <Mark icon={kind === 'sqlite' ? siSqlite : siPostgresql} />
-    </Tile>
   )
 }

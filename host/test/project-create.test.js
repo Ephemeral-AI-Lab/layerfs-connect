@@ -55,7 +55,7 @@ test('empty project starts a real Init request; its generated source is removed 
   f.complete(job.id)
   const done = await f.projects.init(job.id)
   assert.equal(done.step, 'done')
-  assert.deepEqual(done.project, { name: 'new-project', volume: 'fixture-new-project', source: null, created: job.started, initialized: true, demo: null, run: null })
+  assert.deepEqual(done.project, { name: 'new-project', volume: 'fixture-new-project', source: null, created: job.started, initialized: true, demo: null, run: null, store: null, kind: null, shared: false, key: 'new-project' })
   await completion
   assert.equal(existsSync(source), false)
   assert.equal((await f.projects.list())[0].source, null)

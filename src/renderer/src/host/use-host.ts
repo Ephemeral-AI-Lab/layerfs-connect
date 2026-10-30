@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { onHostEvent } from '@/host/client'
-import type { RunEvent } from '@shared/host-api'
+import type { HostEvent, RunEvent } from '@shared/host-api'
 
 export interface Loaded<T> {
   data: T | undefined
@@ -34,9 +34,16 @@ export function useHostQuery<T>(load: () => Promise<T>, deps: unknown[]): Loaded
   return { data, error, loading, reload }
 }
 
-/** Calls `listener` for every host event while mounted. */
+/** Calls `listener` for every run event while mounted (chat events and Storage's `sync` and `storage` events go to onHostEvent's listeners only). */
 export function useHostEvents(listener: (event: RunEvent) => void) {
   const current = useRef(listener)
   current.current = listener
-  useEffect(() => onHostEvent((e) => { if (e.type !== 'chat' && e.type !== 'chat-navigate') current.current(e) }), [])
+  useEffect(() => onHostEvent((e) => { if (e.type !== 'chat' && e.type !== 'chat-navigate' && e.type !== 'sync' && e.type !== 'storage') current.current(e) }), [])
+}
+
+/** Calls `listener` for Storage's events while mounted: each `sync` job sample and each `storage` view change. */
+export function useStorageEvents(listener: (event: Extract<HostEvent, { type: 'sync' | 'storage' }>) => void) {
+  const current = useRef(listener)
+  current.current = listener
+  useEffect(() => onHostEvent((e) => { if (e.type === 'sync' || e.type === 'storage') current.current(e) }), [])
 }

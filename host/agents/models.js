@@ -5,6 +5,7 @@ import { join } from 'node:path'
 import { ModelRuntime } from '@earendil-works/pi-coding-agent'
 import { clampThinkingLevel, getSupportedThinkingLevels } from '@earendil-works/pi-ai'
 import { discoverModels } from './model-discovery.js'
+import { ModelLogins, signInOf } from './model-login.js'
 import { nativeHeaders, requestHeaders, savedHeaders } from './headers.js'
 
 const read = (file, initial) => existsSync(file) ? JSON.parse(readFileSync(file, 'utf8')) : initial
@@ -38,6 +39,8 @@ export class AgentModels {
     this.selected = read(this.selectionPath, null)
     this.syncVersions = new Map()
     this.pendingWrites = Promise.resolve()
+    /** Subscription sign-ins (model-login.js), served under /api/agent/logins. */
+    this.logins = new ModelLogins(this)
   }
 
   snapshot() {
@@ -52,6 +55,9 @@ export class AgentModels {
           headers: savedHeaders(config?.headers),
           hasKey: this.runtime.hasConfiguredAuth(provider.id),
           custom: Boolean(config),
+          // a subscription sign-in it offers, and whether its credential is one
+          signIn: signInOf(provider),
+          signedIn: this.runtime.isUsingOAuth?.(provider.id) ?? false,
         }
       }).sort((a, b) => Number(b.hasKey) - Number(a.hasKey) || a.name.localeCompare(b.name)),
       models: this.runtime.getModels().map((model) => ({

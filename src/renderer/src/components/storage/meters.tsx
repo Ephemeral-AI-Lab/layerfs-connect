@@ -1,10 +1,9 @@
 import { t, useI18n } from '@/i18n'
-// Small measures shared by Storage and Compute: a stat tile whose number
-// counts up, a bar that fills, and a free-space gauge with its low mark.
+// Small measures shared by Storage and Compute: a bar that fills, and a
+// free-space gauge with its low mark.
 // Fills run on transform only; the global reduced-motion rule settles them.
-import type { CSSProperties, ReactNode } from 'react'
+import type { CSSProperties } from 'react'
 
-import { CountUp, spotlight } from '@/components/motion'
 import { CountBytes } from '@/components/projects/store-visuals'
 import { cn } from '@/lib/utils'
 
@@ -14,43 +13,6 @@ import '@/components/storage/storage.css'
 export const LOW_DISK = 20e9
 /** A gauge reads full from here up. */
 const GAUGE_TOP = 100e9
-
-interface StatProps {
-  label: string
-  /** A number to count up to; or pass children. */
-  value?: number | null
-  /** Draw `value` as bytes. */
-  bytes?: boolean
-  hint?: ReactNode
-  tone?: 'brand' | 'warning'
-  index?: number
-  className?: string
-  children?: ReactNode
-}
-
-/** A labelled number on a lit tile. */
-export function Stat({ label, value, bytes: asBytes, hint, tone, index = 0, className, children }: StatProps) {
-  useI18n()
-  return (
-    <div
-      onPointerMove={spotlight}
-      className={cn('glass-liquid card-hover spotlight reveal min-w-0 rounded-2xl p-4.5 shadow-xs flex flex-col justify-between', className)}
-      style={{ '--i': index } as CSSProperties}
-    >
-      <dt className="text-[10.5px] font-semibold tracking-wider uppercase text-muted-foreground/80">{label}</dt>
-      <dd
-        className={cn(
-          'mt-1.5 text-2xl font-bold tracking-tight tabular-nums text-foreground',
-          tone === 'brand' && 'text-primary',
-          tone === 'warning' && 'text-amber-600 dark:text-amber-400',
-        )}
-      >
-        {children ?? (asBytes ? <CountBytes value={value ?? null} /> : <CountUp value={value ?? null} />)}
-      </dd>
-      {hint && <p className="mt-1 text-[11.5px] text-muted-foreground/85 font-medium">{hint}</p>}
-    </div>
-  )
-}
 
 interface BarProps {
   /** 0 to 1. */

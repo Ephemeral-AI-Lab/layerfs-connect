@@ -3,11 +3,14 @@ import { commonZh } from './common'
 import { chatZh } from './chat'
 import { settingsZh } from './settings'
 import { resourcesZh } from './resources'
+import { storageZh } from './storage'
+import { projectsZh } from './projects'
+import { signinZh } from './signin'
 
 export type Locale = 'zh-CN' | 'en'
 export type TranslationValues = Record<string, string | number>
 const STORAGE_KEY = 'connect.language'
-const chinese = { ...resourcesZh, ...settingsZh, ...chatZh, ...commonZh }
+const chinese = { ...resourcesZh, ...storageZh, ...projectsZh, ...signinZh, ...settingsZh, ...chatZh, ...commonZh }
 const english = Object.fromEntries(Object.entries(chinese).map(([key, value]) => [value, key]))
 const listeners = new Set<() => void>()
 const systemLocale = (): Locale => navigator.language.toLowerCase().startsWith('zh') ? 'zh-CN' : 'en'

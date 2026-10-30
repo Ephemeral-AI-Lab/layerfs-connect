@@ -1,299 +1,407 @@
-import { t, useI18n } from '@/i18n'
-// The Storage page: a list of where projects' history can live on the left
-// (a lit card glides behind the chosen one), its detail on the right, which
-// cross-fades when the choice changes. Only Local SQLite works today; the rest
-// are shown as quiet "not available yet" entries.
-import { Clock, Cloud, HardDrive, Laptop, Plus } from 'lucide-react'
-import { type CSSProperties, useState } from 'react'
+// The Storage page (docs/ui/layerfs-storage.md, storage-links §3). Stores
+// first: a summary strip, then every Store in two family bands, SQLite (files
+// on this machine, each linked to at most one remote file) and PostgreSQL
+// (schemas, live in a database); then every connection in one grid. A row or
+// card opens its own page; the view lives in the URL hash
+// (#storage/store/work), so back works. When the linked LayerFS build lacks
+// part of the storage view, a capabilities card says which part and why.
+import { ChevronDown, Cloud, Database, DatabaseZap, Download, Plus } from 'lucide-react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 
-import { PageHeader, revealStyle, useIndicator, viewTransition } from '@/components/motion'
-import { LoadError, Loading } from '@/components/projects/states'
-import { Chip } from '@/components/storage/chips'
-import { DatabaseIcon, PROVIDER_LABEL, type Provider, ProviderGlyph, Tile } from '@/components/storage/icons'
-import { LocalDetail, NOT_YET, workerChip } from '@/components/storage/local-detail'
+import { PageHeader, viewTransition } from '@/components/motion'
+import { LoadError } from '@/components/projects/states'
+import { parseRoute, type RemoveTarget, type Route, routeHash, StorageContext, type StorageActions } from '@/components/storage/actions'
+import { BucketDetail } from '@/components/storage/detail/bucket-detail'
+import { ConnectionDetail } from '@/components/storage/detail/connection-detail'
+import { MachineDetail } from '@/components/storage/detail/machine-detail'
+import { PostgresqlStoreDetail } from '@/components/storage/detail/postgresql-store-detail'
+import { SqliteStoreDetail } from '@/components/storage/detail/sqlite-store-detail'
+import { StorageDialogs, type DialogState } from '@/components/storage/dialogs/storage-dialogs'
+import { pullDiscards } from '@/components/storage/dialogs/pull-dialog'
+import { FamilyTile } from '@/components/storage/identity/store-icon'
+import { Overview } from '@/components/storage/overview/overview'
+import { SummaryStrip } from '@/components/storage/overview/summary-strip'
+import { PUSH_REPLACES } from '@/components/storage/sync/sync-state'
+import { isFailed } from '@/components/storage/transfers/phases'
+import { onJobEnded, putJob, type Transfers, useTransfers } from '@/components/storage/transfers/use-transfers'
 import { Unavailable } from '@/components/storage/unavailable'
+import { loadStorage, normalizeJob, normalizeView } from '@/components/storage/view'
 import { Button } from '@/components/ui/button'
-import { host } from '@/host/client'
-import { useHostEvents, useHostQuery } from '@/host/use-host'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import { host, onProjectsChanged } from '@/host/client'
+import { useHostQuery, useStorageEvents } from '@/host/use-host'
 import type { ProjectCatalog } from '@/host/use-projects'
+import { t, useI18n } from '@/i18n'
 import { cn } from '@/lib/utils'
+import { type ProjectSummary, projectKey, type StorageCheck, type StorageView, type StoreInfo } from '@shared/host-api'
 
 import '@/components/storage/storage.css'
 
-type Choice = 'local' | 'postgres' | Provider
+/** The view is read again this often while the page is visible and focused (§8.4). */
+const VIEW_MS = 15_000
+/** Link checks run on open when older than this, and again this often while visible. */
+const CHECK_STALE_MS = 2 * 60_000
+const CHECK_MS = 5 * 60_000
 
-const PROVIDERS: Provider[] = ['google-drive', 's3', 'r2', 'minio', 'folder']
+const visible = () => document.visibilityState === 'visible' && document.hasFocus()
 
-const PROVIDER_DESC: Record<Provider, string> = {
-  'google-drive': 'Cloud backup archive',
-  s3: 'AWS S3 bucket store',
-  r2: 'Cloudflare R2 replica',
-  minio: 'Self-hosted S3 object store',
-  folder: 'Local directory backup',
+const FALLBACK_REASON = 'This LayerFS build keeps one Store per project. Shared Stores, links and PostgreSQL need layerfs#506.'
+
+/** A host or LayerFS build without Stores (§10.4): each project's own Store, from /api/projects. */
+function fallbackView(projects: ProjectSummary[], base: StorageView | null): StorageView {
+  const byName = new Map<string, { name: string; kind: string; volume: string | null; projects: string[]; legacy: boolean; created: number | null; connection: string | null }>()
+  for (const p of projects) {
+    const name = p.store ?? p.name
+    const at = byName.get(name)
+    if (at) at.projects.push(p.name)
+    else byName.set(name, { name, kind: p.kind ?? 'sqlite', volume: p.volume, projects: [p.name], legacy: !p.store, created: p.created, connection: p.connection ?? null })
+  }
+  return normalizeView({
+    stores: { available: false, reason: base?.stores.reason ?? FALLBACK_REASON, list: [...byName.values()] },
+    remotes: base?.remotes ?? { available: false, reason: 'Needs layerfs#506.', list: [] },
+    postgresql: base?.postgresql ?? { available: false, reason: 'Needs layerfs#506.', connections: [] },
+    jobs: [],
+  })
 }
 
-const ABOUT: Record<Exclude<Choice, 'local'>, { title: string; body: string; kind: string }> = {
-  postgres: {
-    title: 'PostgreSQL',
-    kind: 'Remote storage',
-    body: 'Relational database over HTTP for concurrent multi-agent access.',
-  },
-  'google-drive': {
-    title: PROVIDER_LABEL['google-drive'],
-    kind: 'Sync location',
-    body: 'Encrypted backup copies in Google Drive.',
-  },
-  s3: {
-    title: PROVIDER_LABEL.s3,
-    kind: 'Sync location',
-    body: 'Snapshot replicas in Amazon S3 bucket.',
-  },
-  r2: {
-    title: PROVIDER_LABEL.r2,
-    kind: 'Sync location',
-    body: 'Zero-egress object replication in Cloudflare R2.',
-  },
-  minio: {
-    title: PROVIDER_LABEL.minio,
-    kind: 'Sync location',
-    body: 'Self-hosted S3-compatible snapshot store.',
-  },
-  folder: {
-    title: PROVIDER_LABEL.folder,
-    kind: 'Sync location',
-    body: 'Local directory or external volume backup.',
-  },
-}
-
-/** One stop on a not-yet path: a quiet tile and its name. */
-function Stop({ icon, label }: { icon: React.ReactNode; label: string }) {
-  useI18n()
-  return (
-    <span className="flex min-w-0 flex-col items-center gap-1.5 text-center">
-      <span className="sc-soon-mark">{icon}</span>
-      <span className="max-w-28 truncate text-[11px] text-muted-foreground">{t(label)}</span>
-    </span>
-  )
-}
-
-/** A dashed link between stops, named by what would travel along it. */
-function Link({ label }: { label: string }) {
-  useI18n()
-  return (
-    <span className="flex min-w-10 flex-1 flex-col items-center gap-1 pb-5">
-      <span className="text-[10px] text-faint">{t(label)}</span>
-      <span aria-hidden="true" className="h-px w-full border-t border-dashed border-foreground/20" />
-    </span>
-  )
-}
-
-/** Where history would go: PostgreSQL holds it live for cloud Sandboxes; a sync location keeps copies of a local Store. */
-function SoonPath({ choice }: { choice: Exclude<Choice, 'local'> }) {
-  useI18n()
-  const local = (
-    <Stop
-      label={t("Local SQLite")}
-      icon={
-        <Tile size="md">
-          <HardDrive aria-hidden="true" />
-        </Tile>
-      }
-    />
-  )
-  return (
-    <div className="mt-3 flex max-w-md items-start gap-2" role="img" aria-label={choice === 'postgres' ? t("Connect and cloud Sandboxes both open projects in PostgreSQL") : t("A local Store copied to and from {value1}", {value1: ABOUT[choice].title})}>
-      {choice === 'postgres' ? (
-        <>
-          <Stop label={t("Connect")} icon={<Tile size="md"><Laptop aria-hidden="true" /></Tile>} />
-          <Link label={t("live over HTTP")} />
-          <Stop label={t("PostgreSQL")} icon={<DatabaseIcon kind="postgres" size="md" />} />
-          <Link label={t("opens projects")} />
-          <Stop label={t("Cloud Sandboxes")} icon={<Tile size="md"><Cloud aria-hidden="true" /></Tile>} />
-        </>
-      ) : (
-        <>
-          {local}
-          <Link label={t("push & pull")} />
-          <Stop label={ABOUT[choice].title} icon={<Tile size="md"><ProviderGlyph provider={choice} /></Tile>} />
-        </>
-      )}
-    </div>
-  )
-}
-
-/** A not-yet choice's detail: what it would be, why it waits, and what works today. */
-function SoonDetail({ choice }: { choice: Exclude<Choice, 'local'> }) {
-  useI18n()
-  const about = ABOUT[choice]
-  return (
-    <div className="@container/storage-detail flex min-w-0 flex-col gap-6">
-      <header className="reveal flex items-start gap-4">
-        <div className="glass-liquid flex size-12 shrink-0 items-center justify-center rounded-2xl border border-border/50 shadow-xs">
-          {choice === 'postgres' ? (
-            <DatabaseIcon kind="postgres" size="md" />
-          ) : (
-            <ProviderGlyph provider={choice} />
-          )}
-        </div>
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2 text-[10.5px] font-semibold tracking-wider uppercase text-muted-foreground/80">
-            <span>{t(about.kind)}</span>
-            <span>·</span>
-            <span>{choice === 'postgres' ? t("PostgreSQL Cluster") : t("Remote Replication")}</span>
-          </div>
-          <div className="mt-1 flex flex-wrap items-center gap-2.5">
-            <h2 className="text-xl font-semibold tracking-tight text-foreground">{about.title}</h2>
-            <Chip tone="neutral" icon={Clock}>{t("Planned for remotes")}</Chip>
-          </div>
-          <p className="mt-1 max-w-xl text-xs text-muted-foreground">{t(about.body)}</p>
-        </div>
-      </header>
-
-      <section className="glass-liquid spotlight reveal rounded-2xl p-5 shadow-xs" style={revealStyle(1)}>
-        <div className="flex min-w-0 flex-col gap-4 @min-[38rem]/storage-detail:flex-row @min-[38rem]/storage-detail:items-center">
-          <div className="min-w-0 flex-1">
-            <h3 className="text-xs font-semibold uppercase tracking-wider text-faint">{t("Architecture & Data Flow")}</h3>
-            <SoonPath choice={choice} />
-          </div>
-          <Unavailable reason={NOT_YET}>
-            <Button variant="outline" size="sm" className="rounded-xl px-3.5" disabled>
-              <Plus className="mr-1 size-3.5" />{t("Connect ")}{about.title}
-            </Button>
-          </Unavailable>
-        </div>
-        <div className="mt-4 flex items-center gap-2 border-t pt-3.5 text-xs text-muted-foreground font-medium">
-          <HardDrive aria-hidden="true" className="size-3.5 shrink-0 text-muted-foreground" />
-          <span>{t("Primary store in local SQLite · Remote sync via S3 & PostgreSQL")}</span>
-        </div>
-      </section>
-    </div>
-  )
-}
+const NO_TRANSFERS: Transfers = { all: [], running: [], shown: [], jobFor: () => undefined, runningFor: () => undefined }
 
 interface StoragePageProps {
   catalog: ProjectCatalog
-  /** Dev aid: 'local', 'postgres' or a provider to select first. */
+  /** Dev aid: a view to open first when the hash names none ("store/work", "machine"). */
   initialId?: string
-  onOpenProject?: (project: string) => void
+  /** Opens a project's page by its key (`store/name` in a shared Store). */
+  onOpenProject?: (key: string) => void
 }
 
 export function StoragePage({ catalog, initialId, onOpenProject }: StoragePageProps) {
   useI18n()
-  const [selected, setSelected] = useState<Choice>(
-    () => (['local', 'postgres', ...PROVIDERS] as Choice[]).find((c) => c === initialId) ?? 'local',
-  )
-  const q = useHostQuery(() => host.status(), [catalog.removed])
-  useHostEvents((e) => {
-    if (e.type === 'run-removed') { q.reload(); catalog.reload() }
-  })
-  const status = q.data
+  // ---------- the view, its route and its data ----------
+  const [route, setRoute] = useState<Route>(() => parseRoute(window.location.hash) ?? (initialId ? parseRoute(`#storage/${initialId}`) : null) ?? { view: 'overview' })
+  const scroller = useRef<HTMLDivElement>(null)
+  const overviewTop = useRef(0)
+
+  const [tick, setTick] = useState(0)
+  const reload = useCallback(() => setTick((n) => n + 1), [])
+  const reloadCatalog = catalog.reload
+  useEffect(() => onProjectsChanged(reload), [reload])
+  const status = useHostQuery(() => host.status(), [tick])
+  const storage = useHostQuery(loadStorage, [tick])
   const projects = catalog.data
-  const error = q.error ?? catalog.error
-  const pick = useIndicator<HTMLElement, HTMLSpanElement>({ selector: '[aria-current="true"]' })
-  const choose = (id: Choice) => {
-    if (id !== selected) viewTransition(() => setSelected(id), 'tab')
+  const loaded = storage.data !== undefined
+  const raw = storage.data ?? null
+  const view = useMemo(() => (!loaded ? null : raw && raw.stores.available ? raw : fallbackView(projects ?? [], raw)), [loaded, raw, projects])
+  const transfers = useTransfers(raw?.jobs)
+
+  // ---------- navigation: hash, back button, Alt+←, mouse back ----------
+  const open = useCallback((next: Route) => {
+    if (routeHash(next) === window.location.hash) return
+    window.history.pushState({ storage: true }, '', routeHash(next))
+    viewTransition(() => setRoute(next), 'tab')
+  }, [])
+  useEffect(() => {
+    if (!parseRoute(window.location.hash)) window.history.replaceState({ storage: true }, '', routeHash(route))
+    const onPop = () => {
+      const next = parseRoute(window.location.hash)
+      if (next) viewTransition(() => setRoute(next), 'tab')
+    }
+    const back = () => {
+      if (parseRoute(window.location.hash)?.view === 'overview') return
+      if ((window.history.state as { storage?: boolean } | null)?.storage) window.history.back()
+      else open({ view: 'overview' })
+    }
+    const onKey = (e: KeyboardEvent) => {
+      if (e.altKey && e.key === 'ArrowLeft' && !document.querySelector('[role="dialog"]')) {
+        e.preventDefault()
+        back()
+      }
+    }
+    const onMouse = (e: MouseEvent) => {
+      if (e.button === 3) {
+        e.preventDefault()
+        back()
+      }
+    }
+    window.addEventListener('popstate', onPop)
+    window.addEventListener('keydown', onKey)
+    window.addEventListener('mouseup', onMouse)
+    return () => {
+      window.removeEventListener('popstate', onPop)
+      window.removeEventListener('keydown', onKey)
+      window.removeEventListener('mouseup', onMouse)
+      // leaving Storage: its hash no longer names the page on screen
+      if (parseRoute(window.location.hash)) window.history.replaceState(null, '', window.location.pathname + window.location.search)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open])
+  // the overview keeps its scroll position on the way back; a detail page opens at its top
+  const lastView = useRef(route.view)
+  useLayoutEffect(() => {
+    const el = scroller.current
+    if (!el) return
+    el.scrollTop = route.view === 'overview' ? overviewTop.current : 0
+    lastView.current = route.view
+  }, [route])
+  const trackScroll = () => {
+    if (lastView.current === 'overview' && scroller.current) overviewTop.current = scroller.current.scrollTop
   }
 
-  let n = 0
-  const row = (id: Choice, icon: React.ReactNode, title: string, note: React.ReactNode, soon?: boolean) => (
-    <li key={id} className="reveal min-w-0" style={revealStyle(n++)}>
-      <button
-        type="button"
-        aria-current={selected === id ? 'true' : undefined}
-        onClick={() => choose(id)}
-        className={cn(
-          'group relative flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left outline-none transition-colors duration-(--dur-fast) focus-visible:ring-2 focus-visible:ring-ring',
-          selected !== id ? 'hover:bg-foreground/[0.04]' : '',
-        )}
-      >
-        <span className={cn('transition-opacity duration-(--dur-base)', soon && selected !== id && 'opacity-70 group-hover:opacity-100')}>
-          {icon}
-        </span>
-        <span className="min-w-0 flex-1">
-          <span className={cn('block truncate text-[13px] font-medium transition-colors', selected === id ? 'text-primary font-semibold' : 'text-foreground')}>
-            {t(title)}
-          </span>
-          <span className="block truncate text-[11px] text-muted-foreground">{typeof note === 'string' ? t(note) : note}</span>
-        </span>
-        {soon && (
-          <span className="rounded-full bg-muted/70 px-2 py-0.5 text-[10px] font-medium text-muted-foreground ring-1 ring-foreground/[0.05]">{t("Soon")}</span>
-        )}
-      </button>
-    </li>
+  // ---------- polling, events and checks (§8.4) ----------
+  useEffect(() => {
+    const timer = setInterval(() => visible() && reload(), VIEW_MS)
+    return () => clearInterval(timer)
+  }, [reload])
+  useStorageEvents((e) => e.type === 'storage' && reload())
+  const [userChecking, setUserChecking] = useState(false)
+  const check = useCallback(
+    async (body: StorageCheck = {}) => {
+      setUserChecking(true)
+      try {
+        await host.checkStorage(body)
+      } finally {
+        setUserChecking(false)
+        reload()
+      }
+    },
+    [reload],
+  )
+  const canCheck = !!view && (view.supports.check || view.supports.postgresqlStatus)
+  const checkedAt = view?.checkedAt ?? null
+  const autoChecked = useRef(false)
+  useEffect(() => {
+    if (!canCheck) return
+    if (!autoChecked.current && (checkedAt === null || Date.now() - checkedAt > CHECK_STALE_MS)) {
+      autoChecked.current = true
+      host.checkStorage({}).then(reload, () => undefined)
+    }
+    const timer = setInterval(() => visible() && host.checkStorage({}).then(reload, () => undefined), CHECK_MS)
+    return () => clearInterval(timer)
+  }, [canCheck, checkedAt, reload])
+
+  // a job that ends: read the view and the projects again, and flash its Store once
+  const [flash, setFlash] = useState<StorageActions['flash']>(null)
+  useEffect(
+    () =>
+      onJobEnded((job) => {
+        reload()
+        reloadCatalog()
+        if (!isFailed(job)) setFlash({ store: job.kind === 'import' ? (job.from ?? job.store) : job.store, token: Date.now() })
+      }),
+    [reload, reloadCatalog],
+  )
+  const reveal = useCallback(
+    (store: string) => {
+      setFlash({ store, token: Date.now() })
+      if (route.view === 'overview') requestAnimationFrame(() => document.getElementById(`store-row-${store}`)?.scrollIntoView({ block: 'center', behavior: 'smooth' }))
+    },
+    [route.view],
   )
 
-  const group = (title: string, soon: boolean, rows: React.ReactNode) => (
-    <div className="mb-5 @min-[60rem]/workspace:mb-6">
-      <div className="mb-2.5 flex items-center justify-between px-2.5">
-        <h2 className="text-[10.5px] font-semibold tracking-wider text-muted-foreground/80 uppercase">{t(title)}</h2>
-        {soon && (
-          <span className="rounded-full bg-muted/60 px-2 py-0.5 text-[9.5px] text-muted-foreground font-semibold ring-1 ring-border/40">{t("Upcoming")}</span>
-        )}
-      </div>
-      <ul className="grid grid-cols-1 gap-1.5 @min-[30rem]/workspace:grid-cols-2 @min-[46rem]/workspace:grid-cols-3 @min-[60rem]/workspace:grid-cols-1">{rows}</ul>
-    </div>
+  // ---------- actions and dialogs ----------
+  const [dialog, setDialog] = useState<DialogState>(null)
+  const remotes = view?.remotes.list
+  const started = useCallback((job: unknown) => putJob(normalizeJob(job, remotes ?? [])), [remotes])
+  const [trayHidden, setTrayHidden] = useState(false)
+
+  const ctx: StorageActions | null = useMemo(() => {
+    if (!view) return null
+    const storeOf = (name: string) => view.stores.list.find((s) => s.name === name)
+    const pullNow = async (store: StoreInfo) => {
+      started(await host.pull(store.name, store.name))
+      setTrayHidden(false)
+    }
+    return {
+      view,
+      status: status.data ?? null,
+      transfers,
+      open,
+      publish: (store, remote) => setDialog({ kind: 'publish', store, remote }),
+      push: async (store) => {
+        if (store.link && PUSH_REPLACES.includes(store.link.sync)) {
+          setDialog({ kind: 'conflict', store })
+          return
+        }
+        started(await host.push(store.name))
+        setTrayHidden(false)
+      },
+      pushAnyway: (store) => setDialog({ kind: 'conflict', store }),
+      pull: async (store) => {
+        if (pullDiscards(store)) setDialog({ kind: 'pull', store })
+        else await pullNow(store)
+      },
+      send: (store) => setDialog({ kind: 'send', store }),
+      load: ({ remote, file }) => setDialog({ kind: 'load', remote, file }),
+      unlink: (store) => setDialog({ kind: 'unlink', store }),
+      importInto: (o = {}) => setDialog({ kind: 'import', ...o }),
+      addLocation: (o = {}) => setDialog({ kind: 'location', ...o }),
+      newStore: () => setDialog({ kind: 'new-store' }),
+      addProject: (store) => setDialog({ kind: 'add-project', store }),
+      remove: (target: RemoveTarget) => setDialog({ kind: 'remove', target }),
+      check,
+      checking: userChecking || view.checking > 0,
+      refusalActions: (job) => {
+        const store = storeOf(job.store)
+        if (!store) return { onMachine: () => open({ view: 'machine' }) }
+        return {
+          onPullFirst: () => setDialog({ kind: 'pull', store }),
+          onPushAnyway: () => setDialog({ kind: 'conflict', store }),
+          onPullAgain: () => void pullNow(store).catch(() => undefined),
+          onCheck: () => void check({ store: job.store }).catch(() => undefined),
+          onMachine: () => open({ view: 'machine' }),
+        }
+      },
+      flash,
+      openProject: onOpenProject
+        ? (store, name) => {
+            const p = projects?.find((x) => x.name === name && (x.store ?? x.name) === store)
+            onOpenProject(p ? projectKey(p) : store === name ? name : `${store}/${name}`)
+          }
+        : undefined,
+      sizeReason: status.data && status.data.docker.level !== 'ok' ? 'Docker is not answering' : null,
+    }
+  }, [view, status.data, transfers, open, started, check, userChecking, flash, onOpenProject, projects])
+
+  // ---------- the header ----------
+  const on = view?.stores.available === true
+  const remotesOn = view?.remotes.available === true
+  const pgOn = view?.postgresql.available === true
+  const headerActions = (
+    <>
+      {remotesOn || pgOn ? (
+        <SplitButton
+          label={t('Add connection')}
+          icon={<Plus />}
+          variant="outline"
+          onMain={() => setDialog({ kind: 'location' })}
+          items={[
+            { label: t('Bucket (MinIO, R2)…'), icon: <Cloud />, onSelect: () => setDialog({ kind: 'location', family: 'copy' }), disabled: !remotesOn },
+            { label: t('PostgreSQL connection…'), icon: <Database />, onSelect: () => setDialog({ kind: 'location', family: 'database' }), disabled: !pgOn },
+          ]}
+        />
+      ) : (
+        <Unavailable reason={view?.remotes.reason ?? 'Needs layerfs#506.'}>
+          <Button variant="outline" className="rounded-xl" disabled>
+            <Plus /> {t('Add connection')}
+          </Button>
+        </Unavailable>
+      )}
+      {on ? (
+        <SplitButton
+          label={t('New Store')}
+          icon={<Plus />}
+          onMain={() => setDialog({ kind: 'new-store' })}
+          items={[
+            { label: t('Load from a connection…'), icon: <Download />, onSelect: () => open({ view: 'location', id: view?.remotes.list[0]?.name ?? '' }), disabled: !view?.remotes.list.length },
+            { label: t('Import into PostgreSQL…'), icon: <DatabaseZap />, onSelect: () => setDialog({ kind: 'import' }), disabled: !view?.postgresql.connections.length },
+          ]}
+        />
+      ) : (
+        <Unavailable reason={view?.stores.reason ?? FALLBACK_REASON}>
+          <Button className="rounded-xl" disabled>
+            <Plus /> {t('New Store')}
+          </Button>
+        </Unavailable>
+      )}
+    </>
   )
 
+  const retry = () => {
+    reload()
+    reloadCatalog()
+  }
   return (
     <div className="flex h-svh min-w-0 flex-col">
       <PageHeader
-        title={t("Storage")}
-        description={t("SQLite embedded volumes, PostgreSQL clusters, and object stores.")}
-
+        title={t('Storage')}
+        description={t('Where projects’ history lives: SQLite Stores on this machine, each linked to at most one file in a bucket, and PostgreSQL Stores that live in a database.')}
+        live={transfers.running.length > 0}
+        actions={headerActions}
       />
-
-      <div className="min-h-0 min-w-0 flex-1 overflow-y-auto px-6 @min-[56rem]/workspace:px-8 @min-[60rem]/workspace:flex @min-[60rem]/workspace:gap-6 @min-[60rem]/workspace:overflow-hidden">
-        <nav ref={pick.container} aria-label={t("Storage")} className="relative min-w-0 pt-1 pb-3 @min-[60rem]/workspace:w-64 @min-[60rem]/workspace:shrink-0 @min-[60rem]/workspace:overflow-y-auto @min-[60rem]/workspace:pb-8">
-          <span ref={pick.indicator} aria-hidden="true" className="indicator sc-pick" />
-          {group(
-            t('Storage Engines'),
-            false,
-            <>
-              {row(
-                'local',
-                <Tile size="sm" className="text-primary">
-                  <HardDrive aria-hidden="true" />
-                </Tile>,
-                'Local SQLite',
-                projects
-                  ? t('{count} projects{worker}', { count: projects.length, worker: status ? ` · ${t(workerChip(status).label)}` : '' })
-                  : t('Reading…'),
-              )}
-              {row('postgres', <DatabaseIcon kind="postgres" size="sm" />, 'PostgreSQL', t('Multi-agent relational cluster'), true)}
-            </>,
-          )}
-
-          {group(
-            t('Sync & Remotes'),
-            true,
-            PROVIDERS.map((p) =>
-              row(
-                p,
-                <Tile size="sm">
-                  <ProviderGlyph provider={p} />
-                </Tile>,
-                PROVIDER_LABEL[p],
-                t(PROVIDER_DESC[p]),
-                true,
-              ),
-            ),
-          )}
-        </nav>
-
-        <div className="vt-panel min-w-0 pt-1 pb-8 @min-[60rem]/workspace:flex-1 @min-[60rem]/workspace:overflow-y-auto" style={{ scrollbarGutter: 'stable' } as CSSProperties}>
-          {selected === 'local' ? (
-            status && projects ? (
-              <LocalDetail status={status} projects={projects} onOpenProject={onOpenProject} />
-            ) : error ? (
-              <LoadError error={error} what={t("the local storage")} onRetry={() => { q.reload(); catalog.reload() }} />
+      <div ref={scroller} onScroll={trackScroll} className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto" style={{ scrollbarGutter: 'stable' }}>
+        <div className="@container/storage vt-panel flex w-full min-w-0 flex-col gap-5 px-6 pt-1 pb-12 @min-[56rem]/workspace:px-8">
+          {!ctx ? (
+            storage.error ? (
+              <LoadError error={storage.error} what={t('the storage')} onRetry={retry} />
             ) : (
-              <Loading label={t("Reading the LayerFS home")} />
+              <OverviewSkeleton />
             )
           ) : (
-            <SoonDetail choice={selected} />
+            <StorageContext.Provider value={ctx}>
+              {route.view === 'overview' && <Overview error={storage.error} onRetry={retry} trayHidden={trayHidden} setTrayHidden={setTrayHidden} loadedProjects={projects !== undefined} />}
+              {route.view === 'store' &&
+                (ctx.view.stores.list.find((s) => s.name === route.id)?.kind === 'postgresql' ? <PostgresqlStoreDetail name={route.id} /> : <SqliteStoreDetail name={route.id} />)}
+              {route.view === 'location' && <BucketDetail name={route.id} />}
+              {route.view === 'connection' && <ConnectionDetail name={route.id} />}
+              {route.view === 'machine' && <MachineDetail />}
+              <StorageDialogs dialog={dialog} setDialog={setDialog} started={started} reveal={reveal} reload={reload} />
+            </StorageContext.Provider>
           )}
         </div>
       </div>
+    </div>
+  )
+}
+
+/** A button with a menu of related ways beside it. */
+function SplitButton({
+  label,
+  icon,
+  variant = 'default',
+  onMain,
+  items,
+}: {
+  label: string
+  icon: React.ReactNode
+  variant?: 'default' | 'outline'
+  onMain: () => void
+  items: { label: string; icon: React.ReactNode; onSelect: () => void; disabled?: boolean }[]
+}) {
+  return (
+    <span className="inline-flex">
+      <Button variant={variant} onClick={onMain} className="rounded-l-xl rounded-r-none">
+        {icon} {label}
+      </Button>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant={variant}
+            aria-label={t('More ways: {label}', { label })}
+            className={cn('rounded-l-none rounded-r-xl px-1.5', variant === 'default' ? 'border-l border-l-primary-foreground/25' : '-ml-px')}
+          >
+            <ChevronDown />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-60 rounded-xl">
+          {items.map((it) => (
+            <DropdownMenuItem key={it.label} onSelect={it.onSelect} disabled={it.disabled}>
+              <span className="text-muted-foreground [&_svg]:size-4">{it.icon}</span> {it.label}
+            </DropdownMenuItem>
+          ))}
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </span>
+  )
+}
+
+/** The first load: the strip's cells, and each band's header reading over three rows (§10.1). */
+function OverviewSkeleton() {
+  return (
+    <div aria-busy="true" aria-label={t('Reading the storage')} className="flex flex-col gap-5">
+      <SummaryStrip view={null} transfers={NO_TRANSFERS} onAttention={() => {}} trayHidden={false} onShowTray={() => {}} />
+      {(['sqlite', 'postgresql'] as const).map((family) => (
+        <div key={family} className="glass-liquid rounded-2xl p-5 shadow-xs">
+          <div className="flex items-center gap-3">
+            <FamilyTile family={family} size="md" />
+            <span className="text-[15px] font-semibold tracking-tight">{family === 'sqlite' ? t('SQLite Stores') : t('PostgreSQL Stores')}</span>
+            <span className="text-xs text-muted-foreground">{t('Reading…')}</span>
+          </div>
+          <div className="mt-5 flex flex-col gap-3">
+            {[0, 1, 2].map((r) => (
+              <span key={r} className="shimmer h-7 rounded-xl" />
+            ))}
+          </div>
+        </div>
+      ))}
     </div>
   )
 }

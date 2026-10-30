@@ -10,7 +10,7 @@ import { LoadError, Loading } from '@/components/projects/states'
 import { Button } from '@/components/ui/button'
 import { host } from '@/host/client'
 import { useHostEvents, useHostQuery } from '@/host/use-host'
-import type { HostStatus } from '@shared/host-api'
+import { projectKey, projectLabel, type HostStatus } from '@shared/host-api'
 
 const OS: Record<HostStatus['platform'], string> = { macos: 'darwin', linux: 'linux', windows: 'win32' }
 
@@ -38,10 +38,11 @@ export function ComputePage({ platform }: ComputePageProps) {
   const sandboxes = useHostQuery(async () => {
     const projects = await host.projects()
     const states = await Promise.all(
-      projects.filter((p) => p.initialized).map((p) => host.project(p.name).then((s) => ({ name: p.name, s }), () => ({ name: p.name, s: null }))),
+      // by key: a project in a shared Store is `store/name` (layerfs#506)
+      projects.filter((p) => p.initialized).map((p) => projectKey(p)).map((key) => host.project(key).then((s) => ({ name: key, s }), () => ({ name: key, s: null }))),
     )
     const groups: SandboxGroup[] = states.flatMap(({ name, s }) => (s && s.sandboxes.length > 0 ? [{ project: name, sandboxes: s.sandboxes }] : []))
-    return { groups, failed: states.filter((x) => !x.s).map((x) => x.name) }
+    return { groups, failed: states.filter((x) => !x.s).map((x) => projectLabel(x.name)) }
   }, [])
   // A run that starts or ends opens or closes Sandboxes.
   useHostEvents((e) => {

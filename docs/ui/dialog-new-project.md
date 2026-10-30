@@ -1,51 +1,70 @@
 # New project dialog
 
-Makes a LayerFS project by Init, empty or as a copy of a folder, then opens a new session on it.
-Opens from: New project on the LayerFS Projects tab, or "New project..." in the sidebar's New session
-menu.
+Makes a LayerFS project by Init, empty or as a copy of a folder, in a Store the user picks, then
+opens it. Opens from: New project on the Projects page, the + beside Projects in the sidebar, and
+the + in Chat's workspace picker.
 Source: `src/renderer/src/components/projects/new-project-dialog.tsx` (every region is in this file).
 
 ## Skeleton
 
-Drawn with "From a folder" chosen; the dialog opens on Empty, without the Folder field.
+Drawn with "Import folder" and an existing Store chosen.
 
 ```text
-+--------------------------------------------------------------------+
-| +-[1] DialogHeader ----------------------------------------------+ |
-| | New project                                                  x | |
-| | A LayerFS project of its own: empty, or a copy of a folder.    | |
-| | Changes in the folder later do not reach the project.          | |
-| +----------------------------------------------------------------+ |
-| +-[2] Start from ------------------------------------------------+ |
-| | +----------------------------+  +----------------------------+ | |
-| | | ( ) Empty                  |  | (*) From a folder          | | |
-| | |     main with no files     |  |     Import its files       | | |
-| | +----------------------------+  +----------------------------+ | |
-| +----------------------------------------------------------------+ |
-| +-[3] Folder ----------------------------------------------------+ |
-| | Folder                                                         | |
-| | [ /Users/you/my-app                            ] [ Choose... ] | |
-| | Everything in it is imported, node_modules and .git included.  | |
-| +----------------------------------------------------------------+ |
-| +-[4] Name ------------------------------------------------------+ |
-| | Name                                                           | |
-| | [ my-app                                                     ] | |
-| +----------------------------------------------------------------+ |
-| +-[5] DialogFooter ----------------------------------------------+ |
-| |                                 [ Cancel ]  [ Create project ] | |
-| +----------------------------------------------------------------+ |
-+--------------------------------------------------------------------+
++--------------------------------------------------------------+
+| +-[1] DialogHeader ----------------------------------------+ |
+| | [+] New project                                        x | |
+| |     A LayerFS workspace with its own history.            | |
+| +----------------------------------------------------------+ |
+| +-[2] Project name ----------------------------------------+ |
+| | [ my-project                                           ] | |
+| | Lowercase letters, numbers, dots, hyphens and underscores.| |
+| +----------------------------------------------------------+ |
+| +-[3] Start with ------------------------------------------+ |
+| | +- Empty project ------+  +- Import folder ------------+ | |
+| | | A clean workspace    |  | Copy existing files        | | |
+| | +----------------------+  +----------------------------+ | |
+| +----------------------------------------------------------+ |
+| +-[4] Source folder ---------------------------------------+ |
+| | [ /Users/you/my-app                        ] [ Browse ]  | |
+| +----------------------------------------------------------+ |
+| +-[5] StoreField ------------------------------------------+ |
+| | Store                                                    | |
+| | [ [R2] team                                          v ] | |
+| | It shares team's file and its link: pushes to r2-main /  | |
+| | team carry every project in it.                          | |
+| +----------------------------------------------------------+ |
+| +-[6] Footer ----------------------------------------------+ |
+| | (db) Store team                [ Cancel ] [ Create ]     | |
+| +----------------------------------------------------------+ |
++--------------------------------------------------------------+
 ```
 
 ## Regions
 
-1. **Header** (`DialogHeader` in `NewProjectDialog`, `projects/new-project-dialog.tsx`): "New project", the description, and the close x.
-2. **Start from** (`NewProjectDialog` radiogroup, `projects/new-project-dialog.tsx`): two cards, Empty ("main with no files") and From a folder ("Import its files"). From a folder opens the system folder picker when no folder is set yet.
-3. **Folder** (`NewProjectDialog`, `projects/new-project-dialog.tsx`), only for From a folder: an absolute path field (placeholder "/Users/you/my-app") and "Choose..." when the app can pick folders. A note says everything is imported; it reads "An absolute path" in red for a relative one. Picking a folder fills Name from the folder's name until Name is typed.
-4. **Name** (`NewProjectDialog`, `projects/new-project-dialog.tsx`): the project name, mono, placeholder "my-project". Under it in red: "Lowercase letters, digits, _ . and -, starting and ending with a letter or digit", or "A project has this name".
-5. **Footer** (`DialogFooter`, `projects/new-project-dialog.tsx`): Cancel, and Create project, which is enabled once the name (and the folder) is valid.
+1. **Header**: "New project" and "A LayerFS workspace with its own history."
+2. **Project name**: lowercase letters, numbers, `.`, `-` and `_`, 1–63 long.
+3. **Start with**: Empty project or Import folder.
+4. **Source folder** (Import folder only): the path and Browse (the system folder picker).
+5. **Store** (`StoreField`): a Select of the local SQLite Stores from `host.storage()`, each with
+   its `StoreIcon`, its project count and size, and its `SyncPill`; then "New SQLite Store…". The
+   first choice is the Store the last project went into (`connect.newProject.store`), else the
+   first Store, else a new one. A new Store takes a name (filled from the project name until
+   typed; 1–32 lowercase letters, numbers and hyphens, not taken) and a note that more projects
+   can join it later. An existing Store's note says the project shares its file and its link.
+6. **Footer**: where the project goes ("Store team", "New Store team", or "Local SQLite"), Cancel,
+   and Create project.
+
+Create makes the new Store first (`host.createStore`) when one is asked for, then calls
+`host.createProject({ name, source?, store })` and follows `host.projectInit(id)` until it ends.
+The created project opens by its key.
 
 ## States
 
-- **Creating**: a status row appears above the footer, showing a spinner, the Init step and, once counted, "N files - size". The steps are Counting the folder, Making the Store volume, Importing and Done. Every control is disabled, the button reads "Creating...", and the dialog cannot be closed. When it is done, the dialog closes and a draft session opens on the new project.
-- **Failed**: the step reads "Failed", and the error shows with a warning icon above the footer.
+- **No Stores in this LayerFS build** (`storage().stores.available` false, or no Storage view):
+  the Store field is not shown and the footer reads "Local SQLite"; Create sends no `store`, so
+  Init makes the project's own Store as before.
+- **Reading Stores**: the Store field shows "Reading Stores…" and Create waits for it.
+- **Creating**: a status row shows the Init step and, once counted, "N files · size"; controls
+  are disabled and the dialog cannot close.
+- **Failed**: the error shows in red; a Store made for this project stays, chosen, for a retry.
+- **Status lost**: "Could not update creation status" with Check status.
