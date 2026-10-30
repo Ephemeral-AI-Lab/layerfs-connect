@@ -184,7 +184,6 @@ export const chatZh: Record<string, string> = {
   "Send with {shortcut}": "使用 {shortcut} 发送",
   "{shortcut}Enter to send": "按 {shortcut}Enter 发送",
   "Run {command}": "执行 {command}",
-  "{status}: /{command}": "{status}：/{command}",
   "Stop run {name}": "停止 {name} 的运行",
   "Actions for {title}": "{title} 的操作",
   "Context usage: {usage}": "上下文用量：{usage}",

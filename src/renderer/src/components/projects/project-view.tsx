@@ -1,7 +1,7 @@
 import { t, useI18n } from '@/i18n'
-import { ChevronLeft, FolderTree, GitBranch, MessageSquarePlus, RotateCw } from 'lucide-react'
-import { useEffect, useState } from 'react'
-import { projectLabel, projectRef } from '@shared/host-api'
+import { ChevronLeft, FolderTree, GitBranch, MessageSquarePlus, RotateCw, TriangleAlert, X } from 'lucide-react'
+import { useCallback, useEffect, useState } from 'react'
+import { projectLabel, projectRef, type RunSummary } from '@shared/host-api'
 
 import { LfsBranch, LfsCommit, LfsLayer, LfsProject, LfsStore } from '@/components/lfs-icons'
 import { CountUp } from '@/components/motion/count-up'
@@ -12,10 +12,20 @@ import { Tab, TabBar } from '@/components/motion/tabs'
 import { viewTransition } from '@/components/motion/view-transition'
 import { FilesTab } from '@/components/projects/files-tab'
 import { HistoryTab, type HistoryView } from '@/components/projects/history-tab'
+import type { HistoryItem } from '@/components/projects/history/lineage-graph'
+import { ScenarioPicker, useDemos } from '@/components/projects/scenario-picker'
 import { ProjectSandboxesContent, ProjectStorageContent } from '@/components/projects/project-storage'
 import { LoadError, Loading } from '@/components/projects/states'
 import { StoreBadge, isProject, storeFacts, useStorageView } from '@/components/projects/store-facts'
-import { WorktreeContent } from '@/components/projects/worktree-view'
+import { DemoScript } from '@/components/runs/demo-script'
+import { activeRun } from '@/components/runs/live-data'
+import { LiveTab } from '@/components/runs/live-tab'
+import { isLive } from '@/components/runs/run-format'
+import { useNow } from '@/components/runs/use-run'
+import { RunList } from '@/components/runs/run-list'
+import { RunView } from '@/components/runs/run-view'
+import type { HistoryTarget } from '@/components/runs/trace-view'
+import { useRuns, useStartRun } from '@/components/runs/use-runs'
 import { Button } from '@/components/ui/button'
 import { ago, bytes } from '@/data/format'
 import { host, onHostEvent } from '@/host/client'
@@ -23,12 +33,11 @@ import { useHostQuery } from '@/host/use-host'
 
 import '@/components/projects/history/history.css'
 
-type ProjectTab = 'history' | 'worktrees' | 'storage' | 'sandboxes'
+type ProjectTab = 'history' | 'storage' | 'sandboxes' | 'sessions' | 'script'
 type HistoryPart = 'history' | 'files'
 
 const PROJECT_TABS: { id: ProjectTab; label: string }[] = [
   { id: 'history', label: 'History' },
-  { id: 'worktrees', label: 'Worktrees' },
   { id: 'storage', label: 'Storage' },
   { id: 'sandboxes', label: 'Sandboxes' },
 ]
@@ -38,34 +47,71 @@ const HISTORY_PARTS: SegmentedOption<HistoryPart>[] = [
   { value: 'files', label: 'Files', icon: FolderTree },
 ]
 
-function openingTab(initial?: string): ProjectTab {
-  if (initial === 'work' || initial === 'worktree') return 'worktrees'
-  return PROJECT_TABS.find((tab) => tab.id === initial)?.id ?? 'history'
+/** A `#projects/<key>/<tab>` hash's tab (older names too); undefined picks Sessions when the project has runs, else History. */
+function openingTab(initial?: string): ProjectTab | undefined {
+  if (initial === 'work' || initial === 'worktree' || initial === 'worktrees') return 'sandboxes'
+  if (initial === 'runs' || initial === 'replays' || initial === 'live') return 'sessions'
+  if (initial === 'files' || initial === 'blame' || initial === 'map') return 'history'
+  if (initial === 'sessions' || initial === 'script') return initial
+  return PROJECT_TABS.find((tab) => tab.id === initial)?.id
 }
+
+/** A Trace checkpoint as a History selection: its Commit or Layer. */
+const historyItem = (at: HistoryTarget): HistoryItem | undefined =>
+  at.layer ? { kind: 'layer', id: at.layer } : at.commit ? { kind: 'commit', id: at.commit } : undefined
 
 interface ProjectViewProps {
   /** The project key (projectKey: `store/name` in a shared Store). */
   project: string
   initialTab?: string
   initialBranch?: string
+  /** A scenario run on the project: its page shows instead of the project's. */
+  run?: string
+  /** The run's agent shown; its root when absent. */
+  agent?: string
+  /** Opens a run of the project (and an agent of it), or back to the project page with no run. */
+  onOpenRun: (run?: string, agent?: string) => void
+  /** The scenario whose run made the project (ProjectSummary.demo), if any. */
+  ownScenario?: string | null
   onBack: () => void
   onNewChat: () => void
 }
 
 /** Real project state and history are available independently of agent sessions. */
-export function ProjectView({ project, initialTab, initialBranch, onBack, onNewChat }: ProjectViewProps) {
+export function ProjectView({ project, initialTab, initialBranch, run, agent, onOpenRun, ownScenario, onBack, onNewChat }: ProjectViewProps) {
   useI18n()
-  const [tab, setTab] = useState<ProjectTab>(() => openingTab(initialTab))
+  const [chosenTab, setTab] = useState<ProjectTab | undefined>(() => openingTab(initialTab))
+  const [historyAt, setHistoryAt] = useState<HistoryTarget>()
+  const runs = useRuns(project)
+  const demos = useDemos()
+  const own = ownScenario ?? demos.data?.find((d) => d.id === projectRef(project).name)?.id ?? null
+  const onStarted = useCallback((started: RunSummary[]) => { if (started[0]) onOpenRun(started[0].id) }, [onOpenRun])
+  const { start, starting, error: refused, clearError } = useStartRun(onStarted)
+  const hasRuns = !!runs.runs?.length
+  const tab: ProjectTab = chosenTab === 'script' && !own ? 'history' : chosenTab ?? (hasRuns ? 'sessions' : 'history')
+  const playing = runs.runs?.some((r) => isLive(r.state) && !r.queued) ?? false
+  // Sessions opens with the live diagram while a run plays or ended a moment ago
+  const now = useNow(hasRuns, 30_000)
+  const showLive = runs.runs?.some((r) => activeRun(r, now)) ?? false
   const [historyPart, setHistoryPart] = useState<HistoryPart>(initialTab === 'files' || initialTab === 'blame' ? 'files' : 'history')
   const [branch, setBranch] = useState(initialBranch)
   const [revision, setRevision] = useState(0)
-  const state = useHostQuery(() => host.project(project), [project, revision])
+  // keyed like Live's read, so a revisit or a tab switch paints the last answer at once
+  const state = useHostQuery(() => host.project(project), [project, revision], `project:${project}`)
   const storage = useStorageView()
   const s = state.data && isProject(state.data.project, project) ? state.data : undefined
   const store = s ? storeFacts(s.project, storage) : undefined
   const label = projectLabel(project)
   const refresh = () => setRevision((value) => value + 1)
   const initialView: HistoryView = initialTab === 'map' ? 'map' : 'lineage'
+  const select = (next: ProjectTab) => viewTransition(() => setTab(next), 'tab')
+  const openHistory = (at: HistoryTarget) => {
+    setHistoryAt(at)
+    if (at.branch) setBranch(at.branch)
+    setHistoryPart('history')
+    setTab('history')
+    onOpenRun()
+  }
 
   useEffect(() => {
     const seen = new Map<string, { updated: number; signature: string }>()
@@ -106,24 +152,34 @@ export function ProjectView({ project, initialTab, initialBranch, onBack, onNewC
     <>{[28, 20, 22, 20].map((width, index) => <StatSkeleton key={index} style={{ width: `${width * 0.25}rem` }} />)}</>
   ) : undefined
 
-  const body = !s ? (
+  const body = tab === 'sessions' ? (
+    <>
+      {showLive && <LiveTab project={project} runs={runs.runs} onOpenRun={onOpenRun} />}
+      <RunList
+      runs={runs.runs}
+      error={runs.error}
+      reload={runs.reload}
+      onOpenRun={(id) => onOpenRun(id)}
+      titleOf={(id) => demos.data?.find((d) => d.id === id)?.title}
+      action={<ScenarioPicker variant="primary" onPlay={(id) => void start(id, project)} starting={starting} own={own} disabled={!s?.project.initialized} />}
+      />
+    </>
+  ) : !s ? (
     state.error ? <LoadError error={state.error} what={label} onRetry={refresh} /> : <Loading label={t("Reading {value1}", {value1: label})} />
-  ) : tab === 'worktrees' ? (
-    <WorktreeContent state={s} onBrowseFiles={(name) => {
-      setBranch(name)
-      setHistoryPart('files')
-      setTab('history')
-    }} />
   ) : tab === 'storage' ? (
     <ProjectStorageContent state={s} store={store!} />
   ) : tab === 'sandboxes' ? (
-    <ProjectSandboxesContent state={s} />
+    <ProjectSandboxesContent project={project} state={s} tick={revision} onBrowseFiles={(name) => {
+      setBranch(name)
+      setHistoryPart('files')
+      select('history')
+    }} />
   ) : (
     <>
       <Segmented role="tablist" aria-label={t("History")} size="md" value={historyPart} onChange={setHistoryPart} options={HISTORY_PARTS.map((part) => ({ ...part, label: typeof part.label === 'string' ? t(part.label) : part.label }))} />
       <div className="hist-swap flex min-h-0 flex-1 flex-col">
         {historyPart === 'history' ? (
-          <HistoryTab key={project} project={project} tick={revision} initialBranch={branch} initialView={initialView} />
+          <HistoryTab key={`${project}:${historyAt?.commit ?? historyAt?.layer ?? historyAt?.branch ?? ''}`} project={project} state={s} initialBranch={branch} initialView={initialView} initialItem={historyAt && historyItem(historyAt)} />
         ) : (
           <FilesTab key={`${project}:${branch ?? ''}`} project={project} branches={s.branches} tick={revision} initialBranch={branch} />
         )}
@@ -131,9 +187,12 @@ export function ProjectView({ project, initialTab, initialBranch, onBack, onNewC
     </>
   )
 
+  if (run) return <RunView key={run} runId={run} project={project} agent={agent} onAgent={(name) => onOpenRun(run, name)} onBack={() => onOpenRun()} onOpenHistory={openHistory} />
+
   return (
     <div className="flex h-svh min-h-0 flex-col">
       <PageHeader
+        live={playing}
         size="md"
         className="[&>div]:pt-3"
         eyebrow={
@@ -152,6 +211,7 @@ export function ProjectView({ project, initialTab, initialBranch, onBack, onNewC
           <>
             <Button variant="outline" size="sm" className="rounded-xl" disabled={state.loading} onClick={refresh}>
               <RotateCw className={state.loading ? 'size-3.5 animate-spin' : 'size-3.5'} />{t("Refresh")}</Button>
+            <ScenarioPicker onPlay={(id) => void start(id, project)} starting={starting} own={own} disabled={!s?.project.initialized} />
             <Button size="sm" className="rounded-xl" disabled={!s?.project.initialized} onClick={onNewChat}>
               <MessageSquarePlus className="size-3.5" />{t("New chat")}</Button>
           </>
@@ -159,19 +219,50 @@ export function ProjectView({ project, initialTab, initialBranch, onBack, onNewC
         tabs={
           <TabBar aria-label={t("Project")}>
             {PROJECT_TABS.map((item) => (
-              <Tab key={item.id} active={tab === item.id} onClick={() => viewTransition(() => setTab(item.id), 'tab')}>
+              <Tab key={item.id} active={tab === item.id} onClick={() => select(item.id)}>
                 {t(item.label)}
               </Tab>
             ))}
+            <span aria-hidden="true" className="mb-2.5 h-4 w-px shrink-0 bg-border" />
+            <Tab active={tab === 'sessions'} onClick={() => select('sessions')}>
+              {playing && <span aria-hidden="true" className="pulse-ring mr-2 inline-block size-1.5 rounded-full bg-primary text-primary" />}
+              {t('Sessions')}
+              {runs.runs && runs.runs.length > 0 && (
+                <span className="ml-1.5 rounded-full bg-foreground/[0.05] px-1.5 text-[11px] leading-[18px] font-medium text-muted-foreground tabular-nums">
+                  <CountUp value={runs.runs.length} />
+                </span>
+              )}
+            </Tab>
+            {own && (
+              <Tab active={tab === 'script'} onClick={() => select('script')}>
+                {t('Script')}
+              </Tab>
+            )}
           </TabBar>
         }
-      />
+      >
+        {refused && (
+          <div role="alert" className="flex items-start gap-2 rounded-xl bg-destructive/[0.06] px-3.5 py-2.5 text-[13px] text-destructive">
+            <TriangleAlert aria-hidden="true" className="mt-0.5 size-3.5 shrink-0" />
+            <span className="min-w-0 flex-1 break-words">{t('Could not start the scenario: {message}', { message: refused.message })}</span>
+            <button type="button" aria-label={t('Dismiss')} onClick={clearError} className="rounded-full p-0.5 hover:bg-destructive/10">
+              <X className="size-3.5" />
+            </button>
+          </div>
+        )}
+      </PageHeader>
+      {tab === 'script' && own ? (
+        <div className="vt-panel flex min-h-0 flex-1 flex-col pt-4">
+          <DemoScript demo={own} />
+        </div>
+      ) : (
       <div className="vt-panel min-h-0 flex-1 overflow-y-auto">
         <div className="mx-auto flex min-h-full w-full min-w-0 max-w-7xl flex-col gap-4 px-6 py-6 @min-[56rem]/workspace:px-8">
           {s && state.error && <LoadError error={state.error} what={label} onRetry={refresh} />}
           {body}
         </div>
       </div>
+      )}
     </div>
   )
 }

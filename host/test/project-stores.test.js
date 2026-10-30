@@ -1,11 +1,11 @@
 // A project's name may be in several Stores (layerfs#506): projects.js finds
 // a project by name and Store, keys it as the runtime does, reads a shared
-// Store's project with { store }, and reads a PostgreSQL Store's project
-// with its connection's URL. A stand-in runtime; no LayerFS.
+// Store's project with { store }, reads a PostgreSQL Store's project
+// with its connection's URL, and reads each Sandbox on its own. A stand-in runtime; no LayerFS.
 //   node --import ./host/resolve-layerfs.js --test host/test/project-stores.test.js
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { keyOf, Projects, readState } from '../projects.js'
+import { keyOf, Projects } from '../projects.js'
 
 const LIST = [
   { name: 'shop', store: 'shop', kind: 'sqlite', volume: 'v-shop', initialized: true, shared: false },
@@ -36,14 +36,6 @@ test('keys and summaries: store/name in a shared Store, the name in its own', as
   assert.deepEqual({ key: s.key, store: s.store, kind: s.kind, shared: s.shared }, { key: 'team-pg/todo', store: 'team-pg', kind: 'postgresql', shared: true })
 })
 
-test('get_state names the Store of a shared project, and only then', async () => {
-  const seen = []
-  const runtime = { project: { get_state: async (...args) => (seen.push(args), { kind: 'ok' }) } }
-  await readState(runtime, 'todo', 'team')
-  await readState(runtime, 'shop')
-  assert.deepEqual(seen, [['todo', undefined, { store: 'team' }], ['shop']])
-})
-
 test('a PostgreSQL Store project needs the URL the host gives; without it the read is Unsupported', async () => {
   const p = projects()
   await assert.rejects(p.postgresqlUrl('team-pg'), { status: 501, code: 'Unsupported' })
@@ -64,6 +56,13 @@ test('at startup a running worker of another build is replaced, one of this buil
   assert.equal(await run({ name: 'lfc-worker', state: 'running', build: 'build-old', expected: 'build-new' }), 1)
   assert.equal(await run({ name: 'lfc-worker', state: 'running', build: 'build-new', expected: 'build-new' }), 0)
   assert.equal(await run({ name: 'lfc-worker', state: 'missing' }), 1)
+})
+
+test('a stuck Sandbox is stopped by the container name LayerFS gives it', async () => {
+  const { sandboxContainer } = await import('../runs/run.js')
+  const { projectRef } = await import('../config.js')
+  assert.equal(sandboxContainer('lfc-', projectRef('r2-examples-clone/scenarios'), '6'), 'lfc-r2-examples-clone.scenarios-6')
+  assert.equal(sandboxContainer('lfc-', projectRef('heavy-check'), '1'), 'lfc-heavy-check-1')
 })
 
 test('one state read per project at a time: polls while it runs share it, a later poll reads again', async () => {
@@ -135,4 +134,53 @@ test('create into an existing Store passes { store } to Init; without one, Init 
   } finally {
     rmSync(source, { recursive: true, force: true })
   }
+})
+
+/** Projects whose client lists Sandboxes 1 to 4 and answers list_workspaces from `answer(sandbox)`. */
+function withSandboxes(answer) {
+  const p = projects()
+  const runtime = { project: { list: async () => LIST }, sandbox: {} }
+  p.runtime = async () => runtime
+  const container = (sandbox, running) => ({ project: 'shop', store: null, sandbox, name: `lfc-shop-${sandbox}`, state: running ? 'running' : 'exited', running, image: 'img' })
+  runtime.sandbox.list = async () => [container('1', true), container('2', true), container('3', false), container('5', true)]
+  const asked = []
+  const layerfs = {
+    project: { list_sandboxes: async () => ({ items: ['1', '2', '3', '4'].map((sandbox) => ({ sandbox, name: `s${sandbox}`, image: 'img' })) }) },
+    sandbox: { list_workspaces: (sandbox) => (asked.push(sandbox), answer(sandbox)) },
+  }
+  p.use = async (_record, fn) => fn({ layerfs, backend: {} })
+  return { p, asked }
+}
+
+test('Sandboxes: each read on its own; a silent daemon shows busy, a refusal unreachable, and neither fails the read', async () => {
+  const { p, asked } = withSandboxes((sandbox) =>
+    sandbox === '1'
+      ? Promise.resolve({ items: [{ path: '/w/a', branch: 'main', mounted: true }, { path: '/w/b', branch: 'x', mounted: false }] })
+      : new Promise(() => {}),
+  )
+  const t0 = Date.now()
+  const all = await p.sandboxes('shop')
+  assert.ok(Date.now() - t0 < 6_000, 'one silent daemon costs at most its own limit')
+  assert.deepEqual(asked, ['1', '2'], 'a stopped container and a Sandbox with no container are not asked')
+  const by = Object.fromEntries(all.map((s) => [s.id, s]))
+  assert.deepEqual(by['1'].workspaces, [{ ws: '1:/w/a', branch: 'main', path: '/w/a' }])
+  assert.equal(by['2'].reach, 'busy')
+  assert.deepEqual(by['2'].workspaces, [])
+  assert.equal(by['3'].state, 'exited')
+  assert.equal(by['4'].state, 'gone')
+  assert.equal(by['5'].name, 'lfc-shop-5', 'a container no record lists is still shown')
+  // the busy one rests: the next read answers at once without asking it again
+  const again = await p.sandboxes('shop')
+  assert.deepEqual(asked, ['1', '2', '1'])
+  assert.equal(again.find((s) => s.id === '2').reach, 'busy')
+})
+
+test('Sandboxes: a refused daemon is unreachable; one closed meanwhile is gone', async () => {
+  const refusal = (code) => Object.assign(new Error(`${code} here`), { code })
+  const { p } = withSandboxes((sandbox) => Promise.reject(refusal(sandbox === '1' ? 'ConnectionRefused' : 'NoSuchSandbox')))
+  const by = Object.fromEntries((await p.sandboxes('shop')).map((s) => [s.id, s]))
+  assert.equal(by['1'].reach, 'unreachable')
+  assert.match(by['1'].detail, /ConnectionRefused/)
+  assert.equal(by['2'].state, 'gone')
+  assert.equal(by['2'].reach, undefined)
 })

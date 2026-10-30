@@ -259,3 +259,9 @@ export const ownProject = (run: { demo: string; project: string }) => run.projec
 
 /** A call's milliseconds: one decimal under 10 ms, whole above. */
 export const ms = (n: number | null | undefined) => (n === null || n === undefined ? '–' : n < 10 ? n.toFixed(1) : String(Math.round(n)))
+
+/** A scenario run's name: its folder ("crew_2"), with its session in a demo of several ("teams_1 · docs"); a run from before folders, runLabel's. */
+export function runName(run: { id: string; project: string; folder?: string | null; replay?: number | null; session?: string | null }): string {
+  if (!run.folder) return runLabel(run)
+  return run.session ? `${run.folder} · ${run.session}` : run.folder
+}

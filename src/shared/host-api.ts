@@ -407,7 +407,12 @@ export interface SandboxInfo {
   name: string
   state: string
   image: string | null
+  /** Its mounted Workspaces: read only by GET /api/projects/<key>/sandboxes (the project read leaves them empty). */
   workspaces: { ws: string; branch: string; path: string }[]
+  /** Its daemon did not answer that read in time (busy) or refused it (unreachable); its Workspaces are then unknown. */
+  reach?: 'busy' | 'unreachable'
+  /** What the daemon said, when it refused. */
+  detail?: string
 }
 
 export interface ProjectState {
@@ -559,9 +564,9 @@ export interface DemoSummary {
   tags: string[]
   agents: DemoAgent[]
   /**
-   * A demo of several sessions: each is a run of its own, started together on
-   * the demo's project; its root agent is named after it and starts with its
-   * prompt. Null for a demo of one session.
+   * A demo of several sessions: each is a run of its own, started together in
+   * one folder of the project they play on; its root agent is named after it
+   * and starts with its prompt. Null for a demo of one session.
    */
   sessions?: DemoSession[] | null
   /** Total steps over every agent. */
@@ -582,15 +587,33 @@ export interface DemoDetail extends DemoSummary {
 
 export type RunState = 'starting' | 'running' | 'passed' | 'failed' | 'stopped'
 
+/**
+ * 'replay': a scenario played on a project, in a folder of its own. 'live': a
+ * Pi session an earlier build of the engine saved; the host lists and reads
+ * them but no longer starts or continues them (Chat replaces them).
+ */
+export type RunKind = 'replay' | 'live'
+
 export interface RunSummary {
   id: string
+  /** Always sent by this host; 'replay' for every run it starts. */
+  kind?: RunKind
   demo: string
   /**
-   * The LayerFS project this run replayed on: the demo's own project (named
-   * after it), reset by each replay. Runs from before one project per demo
-   * name their own project (`<demo>-<n>`).
+   * The key of the LayerFS project this run played on: its name, or
+   * `store/name` in a shared Store (ProjectSummary.key; projectRef reads it
+   * back). A scenario plays in a folder of its own there (`folder`); older
+   * runs reset a project named after the demo, or older still made their own
+   * (`<demo>-<n>`).
    */
   project: string
+  /**
+   * A scenario run's folder and name, `<scenario>_<n>`: its files are under
+   * /<folder>/, its Branches are `<folder>.<name>`, and `<folder>.main`,
+   * `<folder>.main.1`, … (one per publish) stand for main; once it passed it
+   * lands on main (check `main.landed`). Null until set up, and on older runs.
+   */
+  folder?: string | null
   /** The replay's number among its demo's (1, 2, …); null on runs from before one project per demo. */
   replay: number | null
   /** A demo of several sessions: the session this run plays (its root agent's name); null otherwise. */
@@ -598,6 +621,12 @@ export interface RunSummary {
   /** A demo of several sessions: the launch that started its sessions together; null otherwise. */
   launch?: string | null
   state: RunState
+  /**
+   * A heavy scenario waiting its turn (two play at once, host runs/index.js HEAVY_AT_ONCE): state
+   * 'starting', not set up yet; `phase` says so. Its `started` is reset when
+   * it begins to play.
+   */
+  queued?: boolean
   started: number
   ended: number | null
   error: string | null

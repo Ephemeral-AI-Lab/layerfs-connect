@@ -1,6 +1,6 @@
 # Project: History
 
-The project's Branches, the focused Branch's lineage and the selected Commit or Layer; a switch shows the project's files instead. Opens from: the History tab of a project page, a Branch label on the Timeline, or an auto-checkpoint link in a session's Trace (opens on that Commit).
+The project's Branches, the focused Branch's lineage and the selected Commit or Layer; a switch shows the project's files instead. Opens from: the History tab of a project page, or an auto-checkpoint link in a session's Trace (opens on that Commit).
 Source: `src/renderer/src/components/projects/history-tab.tsx` (`HistoryTab`; others named in Regions).
 
 ## Skeleton
@@ -9,7 +9,7 @@ History:
 
 ```text
 +-[1] Tab row -------------------------------------------------------------------------------------+
-| Live   Timeline   History   Storage   Sandboxes                |  Sessions 28   [ > Replay | v ] |
+| History   Storage   Sandboxes                                  |  Sessions 28   [ > Replay | v ] |
 |                   =======                                                                        |
 +--------------------------------------------------------------------------------------------------+
 [2] ( History | Files )
@@ -53,9 +53,9 @@ Files:
 
 ## Regions
 
-1. **Tab row** (`ProjectPage`, `projects/project-view.tsx`): the project page's first row (the sidebar names the project): Live, Timeline, History, Storage, Sandboxes, then Sessions with its count, then `ReplayControl` (`runs/replay-control.tsx`), shown once the demo is read. Every tab reads the project's newest session (`RunPanel`, `runs/run-view.tsx`).
+1. **Tab row** (`ProjectPage`, `projects/project-view.tsx`): the project page's first row (the sidebar names the project): History, Storage, Sandboxes, then Sessions with its count, then `ReplayControl` (`runs/replay-control.tsx`), shown once the demo is read. Every tab reads the project's newest session (`RunPanel`, `runs/run-view.tsx`).
 2. **History / Files switch** (`RunHistoryTab`, `runs/run-project-tabs.tsx`): a `Segmented` switch between the history (region 3 on) and the project's files (regions 7-8).
-3. **Toolbar** (`Toolbar`, `projects/history-tab.tsx`): as on the Timeline: "Find a Branch or Commit", All / Open / Done with counts, and the counts line ending "main at 9d16ac44".
+3. **Toolbar** (`Toolbar`, `projects/history-tab.tsx`): "Find a Branch or Commit", All / Open / Done with counts, and the counts line ending "main at 9d16ac44".
 4. **BranchTree** (`BranchTree`, `projects/history/branch-tree.tsx`): `PaneHead` "Branches" and the shown count (`projects/history/parts.tsx`), then the Branches by fork: lane-coloured dots, names, and main's Layers ("10 L"), "+N" Commits, "published" or "merged". Merged Branches with forks start folded. A click focuses a Branch; arrow keys move and fold.
 5. **LineageGraph** (`LineageGraph`, `projects/history/lineage-graph.tsx`): the ancestor breadcrumb (past three, the middle folds into a "..." menu). Under it, the Branch's line ("Forked from merge_2.main at 171cfbac · 3 Commits · 0 forks"; for main, "10 Layers · the published line new mounts start from") and Fork, Merge, Publish (always disabled: "Connect's runs fork, merge and publish; doing it by hand is not available yet"). Then the ancestry, newest first: lanes, a `HashChip`, the Branch chip on a lane's first row, the agent dot, message, age, and the Branch forked there ("+9" more). The head glows; "7 earlier Layers on main" ends the list.
 6. **CommitDetail** (`CommitDetail`, `projects/history/commit-detail.tsx`): `PaneHead` "Commit" ("Layer", or "Detail" with nothing picked), the `HashChip` and chips (Head, Merge, Layer on main, Head of main), and the message. A card shows On / By / When / Id (a Layer: From / When / Id). Then "Merged in" and "Forked here" when they apply, and "1 path changed" with a tally per kind and a row per path.

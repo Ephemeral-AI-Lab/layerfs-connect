@@ -4,10 +4,15 @@ import type {
   CommitInfo,
   HostStatus,
   ProjectState,
+  SandboxInfo,
   ProjectSummary,
   NewProjectInput,
   ProjectInitJob,
+  DemoDetail,
+  DemoSummary,
   RunDetail,
+  RunSummary,
+  TracePage,
   HostEvent,
   NewRemote,
   RemoteFile,
@@ -33,7 +38,40 @@ export function hostEndpoint(): { url: string; token: string } | { error: string
   return window.connect.host ?? { error: 'The Connect host did not start.' }
 }
 
-export async function call<T>(method: string, path: string, body?: unknown): Promise<T> {
+/**
+ * A read of one address in flight, or queued behind the one in flight.
+ * Reads of an address go one at a time: callers while one runs share the next
+ * (it starts when that one ends, so it sees what changed meanwhile). A read the
+ * host is slow to answer (a project's state under load can take 45 s) then
+ * holds one of the browser's six connections to the host, not all of them,
+ * and every other call is not left waiting behind them.
+ */
+interface Flight {
+  promise: Promise<unknown>
+  started: boolean
+}
+const flights = new Map<string, Flight>()
+
+function oneAtATime<T>(path: string, run: () => Promise<T>): Promise<T> {
+  const last = flights.get(path)
+  if (last && !last.started) return last.promise as Promise<T>
+  const flight: Flight = { promise: Promise.resolve(), started: false }
+  const begin = () => {
+    flight.started = true
+    return run()
+  }
+  flight.promise = (last ? last.promise.catch(() => undefined).then(begin) : begin()).finally(() => {
+    if (flights.get(path) === flight) flights.delete(path)
+  })
+  flights.set(path, flight)
+  return flight.promise as Promise<T>
+}
+
+export function call<T>(method: string, path: string, body?: unknown): Promise<T> {
+  return method === 'GET' ? oneAtATime(path, () => send<T>(method, path)) : send<T>(method, path, body)
+}
+
+async function send<T>(method: string, path: string, body?: unknown): Promise<T> {
   const host = hostEndpoint()
   if ('error' in host) throw new HostError('no-host', host.error, 0)
   const res = await fetch(`${host.url}${path}`, {
@@ -81,6 +119,8 @@ export const host = {
     call<ProjectInitJob>('GET', `/api/project-inits/${enc(id)}`).then((job) => (job.ended ? projectsChanged(job) : job)),
   // `project` below is a project key (ProjectSummary.key, else its name): `store/name` sends ?store= (layerfs#506)
   project: (project: string) => call<ProjectState>('GET', `${at(project).path}${q({ store: at(project).store })}`),
+  /** The project's Sandboxes with their mounted Workspaces: the one project read that asks Sandbox daemons. */
+  projectSandboxes: (project: string) => call<SandboxInfo[]>('GET', `${at(project).path}/sandboxes${q({ store: at(project).store })}`),
   commits: (project: string, branch: string, limit = 200) =>
     call<CommitInfo[]>('GET', `${at(project).path}/commits${q({ branch, limit, store: at(project).store })}`),
   /** Several Branches' Commits in one call (a Branch gone meanwhile is left out; main's are []). */
@@ -98,7 +138,24 @@ export const host = {
     ),
   removeProject: (project: string) =>
     call<{ removed: true }>('DELETE', `${at(project).path}${q({ store: at(project).store })}`).then(projectsChanged),
+
+  // ---------- scenarios and their runs (host/runs) ----------
+
+  demos: () => call<DemoSummary[]>('GET', '/api/demos'),
+  demo: (id: string) => call<DemoDetail>('GET', `/api/demos/${enc(id)}`),
+  /** Plays scenario `id` on `project` (a project key: `store/name` in a shared Store), in a folder of its own. */
+  startRun: (id: string, project: string) => call<RunSummary>('POST', `/api/demos/${enc(id)}/runs`, { project }),
+  /** Plays every scenario on `project` at once, each in its own folder: the first run of each. */
+  startAll: (project: string) => call<RunSummary[]>('POST', '/api/demos/all/runs', { project }),
+  /** Runs, newest first; of scenario `demo` alone when given. */
+  runs: (demo?: string) => call<RunSummary[]>('GET', `/api/runs${q({ demo })}`),
   run: (id: string) => call<RunDetail>('GET', `/api/runs/${enc(id)}`),
+  /** One agent's Trace rows, the newest `limit` before `before` (default: the end). */
+  trace: (id: string, o: { agent?: string; before?: number; limit?: number } = {}) =>
+    call<TracePage>('GET', `/api/runs/${enc(id)}/trace${q(o)}`),
+  stopRun: (id: string) => call<RunSummary>('POST', `/api/runs/${enc(id)}/stop`),
+  /** Deletes a finished run's saved record and traces; its project stays. 409 while it plays. */
+  removeRun: (id: string) => call<{ id: string }>('DELETE', `/api/runs/${enc(id)}`),
 
   // ---------- Storage (layerfs#506, #509) ----------
 
@@ -161,7 +218,7 @@ export function onHostConnection(listener: (state: HostConnection) => void): () 
   return () => { connectionListeners.delete(listener) }
 }
 
-/** Subscribes to the host's events (runs, chat, and Storage's `sync` and `storage`); answers the unsubscribe. */
+/** Subscribes to the host's events (runs' RunEvents, chat, and Storage's `sync` and `storage`); answers the unsubscribe. */
 export function onHostEvent(listener: (event: HostEvent) => void, onConnect?: () => void): () => void {
   const host = hostEndpoint()
   if ('error' in host) return () => {}

@@ -1,5 +1,6 @@
 import { t, useI18n } from '@/i18n'
 import { ChevronDown, RotateCw, Settings2 } from 'lucide-react'
+import { useEffect, useRef } from 'react'
 
 import { CloudCards } from '@/components/compute/cloud-cards'
 import { DockerCard } from '@/components/compute/docker-card'
@@ -34,19 +35,28 @@ interface ComputePageProps {
 export function ComputePage({ platform }: ComputePageProps) {
   useI18n()
   const status = useHostQuery(() => host.status(), [])
-  // Every project's Sandboxes: one state read per project, none of which starts a Sandbox.
+  // Every project's Sandboxes with their Workspaces: one Sandboxes read per project (each
+  // Sandbox asked on its own, a busy one marked busy), none of which starts a Sandbox.
   const sandboxes = useHostQuery(async () => {
     const projects = await host.projects()
     const states = await Promise.all(
       // by key: a project in a shared Store is `store/name` (layerfs#506)
-      projects.filter((p) => p.initialized).map((p) => projectKey(p)).map((key) => host.project(key).then((s) => ({ name: key, s }), () => ({ name: key, s: null }))),
+      projects.filter((p) => p.initialized).map((p) => projectKey(p)).map((key) => host.projectSandboxes(key).then((s) => ({ name: key, s }), () => ({ name: key, s: null }))),
     )
-    const groups: SandboxGroup[] = states.flatMap(({ name, s }) => (s && s.sandboxes.length > 0 ? [{ project: name, sandboxes: s.sandboxes }] : []))
+    const groups: SandboxGroup[] = states.flatMap(({ name, s }) => (s && s.length > 0 ? [{ project: name, sandboxes: s }] : []))
     return { groups, failed: states.filter((x) => !x.s).map((x) => projectLabel(x.name)) }
-  }, [])
-  // A run that starts or ends opens or closes Sandboxes.
+  }, [], 'compute:sandboxes')
+  // A run that starts or ends opens or closes Sandboxes; its progress events come often, so reread at most every 3 s.
+  const rereadAt = useRef(0)
+  const reread = useRef<ReturnType<typeof setTimeout>>(undefined)
+  useEffect(() => () => clearTimeout(reread.current), [])
   useHostEvents((e) => {
-    if (e.type === 'run') sandboxes.reload()
+    if (e.type !== 'run' || reread.current) return
+    reread.current = setTimeout(() => {
+      reread.current = undefined
+      rereadAt.current = Date.now()
+      sandboxes.reload()
+    }, Math.max(0, rereadAt.current + 3000 - Date.now()))
   })
 
   const s = status.data

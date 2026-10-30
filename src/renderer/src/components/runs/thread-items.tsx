@@ -20,7 +20,7 @@ import { type AgentColor, KIND, clock, duration } from '@/components/runs/run-fo
 import { type Entry, type Message, type Sender, kindCounts, targetOf } from '@/components/runs/thread'
 import { cn } from '@/lib/utils'
 import type { SegmentKind } from '@shared/host-api'
-import { useI18n } from '@/i18n'
+import { t, useI18n } from '@/i18n'
 
 /** The user's request, as a chat shows what you sent. */
 export function UserMessage({ text }: { text: string }) {
@@ -70,9 +70,9 @@ export function ThinkingLine() {
 }
 
 const RECEIVED_TITLE: Record<Sender, (from: string) => string> = {
-  parent: () => 'Task message received',
-  child: (from) => `Reply from ${from}`,
-  other: (from) => `Message from ${from}`,
+  parent: () => t('Task message received'),
+  child: (from) => t('Reply from {name}', { name: from }),
+  other: (from) => t('Message from {name}', { name: from }),
 }
 
 /** A message the agent received: folded to a title and time, opening to its text. */
@@ -86,7 +86,7 @@ interface ReceivedProps {
 
 export function ReceivedCard({ message, sender, script, open, onToggle }: ReceivedProps) {
   const Icon = sender === 'child' ? MessageSquareReply : Send
-  const title = script ? 'Task message' : RECEIVED_TITLE[sender](message.from)
+  const title = script ? t('Task message') : RECEIVED_TITLE[sender](message.from)
   return (
     <div onPointerMove={spotlight} className="glass-liquid spotlight overflow-hidden rounded-2xl shadow-xs">
       <button
@@ -141,14 +141,14 @@ function groupState(entries: Entry[]): { label: React.ReactNode; tone: 'run' | '
   const results = entries.map((e) => e.result).filter((r) => r !== undefined)
   if (results.length === 0) {
     const n = entries.length
-    return { label: `${n} call${n === 1 ? '' : 's'}`, tone: 'script' }
+    return { label: t(n === 1 ? '{n} call' : '{n} calls', { n }), tone: 'script' }
   }
   const first = Math.min(...results.map((r) => r.started))
   const last = Math.max(...results.map((r) => r.ended ?? r.started))
   const took = duration(Math.max(0, last - first))
-  if (results.some((r) => r.state === 'running')) return { label: 'Running…', tone: 'run' }
-  if (results.some((r) => r.state === 'stopped')) return { label: `Stopped after ${took}`, tone: 'stop' }
-  return { label: `Done in ${took}`, tone: 'ok' }
+  if (results.some((r) => r.state === 'running')) return { label: t('Running…'), tone: 'run' }
+  if (results.some((r) => r.state === 'stopped')) return { label: t('Stopped after {time}', { time: took }), tone: 'stop' }
+  return { label: t('Done in {time}', { time: took }), tone: 'ok' }
 }
 
 export const groupFailed = (entries: Entry[]) => entries.some((e) => e.result?.state === 'failed')
@@ -233,7 +233,7 @@ export const CallsFold = memo(function CallsFold({ id, entries, folds, onToggle 
               className="flex w-full items-center justify-center gap-1.5 bg-foreground/[0.015] px-4 py-2 text-xs font-medium text-muted-foreground outline-none transition-colors hover:bg-foreground/[0.035] hover:text-foreground focus-visible:bg-muted/60"
             >
               <ChevronDown aria-hidden="true" className={cn('size-3.5 transition-transform duration-(--dur-base)', hidden === 0 && 'rotate-180')} />
-              <span>{hidden > 0 ? `Show ${hidden} more call${hidden === 1 ? '' : 's'}` : 'Show fewer calls'}</span>
+              <span>{hidden > 0 ? t(hidden === 1 ? 'Show {n} more call' : 'Show {n} more calls', { n: hidden }) : t('Show fewer calls')}</span>
             </button>
           </li>
         )}
@@ -358,14 +358,14 @@ interface ChipProps {
 export function ThreadChip({ entry, colorOf, onOpenAgent }: ChipProps) {
   const { view, result } = entry
   const other = targetOf(view) ?? '?'
-  const verb = view?.tool === 'subagent' ? 'Started' : view?.tool === 'interrupt_agent' ? 'Interrupted' : 'Message to'
+  const verb = t(view?.tool === 'subagent' ? 'Started' : view?.tool === 'interrupt_agent' ? 'Interrupted' : 'Message to')
   const text = view?.tool === 'send_message' ? view.text.replace(/\s+/g, ' ').trim() : ''
   return (
     <button
       type="button"
       onPointerMove={spotlight}
       onClick={() => onOpenAgent?.(other)}
-      title={view?.tool === 'send_message' ? view.text : `Show ${other}'s conversation`}
+      title={view?.tool === 'send_message' ? view.text : t('Show {name}’s conversation', { name: other })}
       className={cn(
         'glass-liquid spotlight flex w-fit max-w-full min-w-0 items-center gap-1.5 rounded-full px-3.5 py-1 text-[13px] text-muted-foreground shadow-2xs outline-none transition-colors hover:border-foreground/15 hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring',
       )}

@@ -6,6 +6,9 @@ interface CursorAuraProps {
   className?: string
 }
 
+/** How often the hue may restyle the page. */
+const HUE_MS = 120
+
 /** Shortest arc circular angular lerp (degrees) */
 function lerpAngle(current: number, target: number, factor: number): number {
   let diff = (target - current) % 360
@@ -102,53 +105,70 @@ export function CursorAura({ className }: CursorAuraProps) {
       if (idleTimer) clearTimeout(idleTimer)
       idleTimer = setTimeout(() => {
         targetOpacity = 0
+        wake()
       }, 1600)
+      wake()
     }
 
     const onPointerLeave = () => {
       isInside = false
       targetOpacity = 0
       if (idleTimer) clearTimeout(idleTimer)
+      wake()
     }
 
     const onPointerEnter = () => {
       isInside = true
       targetOpacity = 0.22
+      wake()
     }
 
-    const animate = () => {
-      // Smooth opacity fade
+    // The loop runs only while something moves and stops when the glow has
+    // settled; a pointer event starts it again. The hue is written (orbs and
+    // the root's --cursor-hue, which restyles every element that reads it)
+    // only when it moves a whole degree, at most every HUE_MS.
+    let shownHue = -1
+    let hueAt = 0
+    let shownOpacity = ''
+    const animate = (now: number) => {
+      rafId = null
       currentOpacity += (targetOpacity - currentOpacity) * 0.08
-      if (currentOpacity < 0.005) {
-        currentOpacity = 0
-      }
+      if (Math.abs(targetOpacity - currentOpacity) < 0.005) currentOpacity = targetOpacity
 
       if (currentOpacity > 0) {
-        // Smooth cursor tracking
         currentX += (targetX - currentX) * 0.12
         currentY += (targetY - currentY) * 0.12
-
-        // Smooth shortest-arc hue shift
         currentHue = lerpAngle(currentHue, targetHue, 0.07)
-        const h = currentHue.toFixed(1)
 
-        // Center monochromatic orbs at cursor position
-        orbWide.style.transform = `translate3d(${currentX - 280}px, ${currentY - 280}px, 0)`
-        orbCore.style.transform = `translate3d(${currentX - 140}px, ${currentY - 140}px, 0)`
+        orbWide.style.transform = `translate3d(${(currentX - 280).toFixed(1)}px, ${(currentY - 280).toFixed(1)}px, 0)`
+        orbCore.style.transform = `translate3d(${(currentX - 140).toFixed(1)}px, ${(currentY - 140).toFixed(1)}px, 0)`
 
-        // Single monochromatic color gradient (only ONE hue with varying opacity)
-        orbWide.style.background = `radial-gradient(circle, hsla(${h}, 80%, 65%, 0.30) 0%, hsla(${h}, 80%, 65%, 0.12) 45%, hsla(${h}, 80%, 65%, 0.02) 70%, transparent 85%)`
-        orbCore.style.background = `radial-gradient(circle, hsla(${h}, 85%, 72%, 0.38) 0%, hsla(${h}, 85%, 72%, 0.15) 45%, transparent 75%)`
-
-        container.style.opacity = currentOpacity.toFixed(3)
-
-        // Broadcast single hue to all spotlight cards
-        document.documentElement.style.setProperty('--cursor-hue', `${h}`)
-      } else {
-        container.style.opacity = '0'
+        const hue = Math.round(currentHue) % 360
+        if (hue !== shownHue && now - hueAt >= HUE_MS) {
+          shownHue = hue
+          hueAt = now
+          orbWide.style.background = `radial-gradient(circle, hsla(${hue}, 80%, 65%, 0.30) 0%, hsla(${hue}, 80%, 65%, 0.12) 45%, hsla(${hue}, 80%, 65%, 0.02) 70%, transparent 85%)`
+          orbCore.style.background = `radial-gradient(circle, hsla(${hue}, 85%, 72%, 0.38) 0%, hsla(${hue}, 85%, 72%, 0.15) 45%, transparent 75%)`
+          document.documentElement.style.setProperty('--cursor-hue', String(hue))
+        }
+      }
+      const opacity = currentOpacity.toFixed(3)
+      if (opacity !== shownOpacity) {
+        shownOpacity = opacity
+        container.style.opacity = opacity
       }
 
-      rafId = requestAnimationFrame(animate)
+      const moving =
+        currentOpacity !== targetOpacity ||
+        (currentOpacity > 0 &&
+          (Math.abs(targetX - currentX) > 0.5 ||
+            Math.abs(targetY - currentY) > 0.5 ||
+            Math.abs(lerpAngle(currentHue, targetHue, 1) - currentHue) > 0.5 ||
+            Math.round(currentHue) % 360 !== shownHue))
+      if (moving) rafId = requestAnimationFrame(animate)
+    }
+    const wake = () => {
+      if (rafId === null) rafId = requestAnimationFrame(animate)
     }
 
     window.addEventListener('pointermove', onPointerMove, { passive: true })
@@ -157,7 +177,7 @@ export function CursorAura({ className }: CursorAuraProps) {
     document.addEventListener('pointerleave', onPointerLeave)
     document.addEventListener('pointerenter', onPointerEnter)
 
-    rafId = requestAnimationFrame(animate)
+    wake()
 
     return () => {
       if (rafId) cancelAnimationFrame(rafId)

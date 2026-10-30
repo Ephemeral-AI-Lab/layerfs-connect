@@ -4,6 +4,8 @@
 // from a demo's script alone (no results, only the subagent's prompt).
 import type { RunDetail, SegmentKind, StepResult, StepView } from '@shared/host-api'
 
+import { t } from '@/i18n'
+
 export type Message = RunDetail['messages'][number]
 
 /** One step: its script view and, in a run, its result. */
@@ -154,5 +156,5 @@ export function kindCounts(entries: Entry[]): [SegmentKind, number][] {
 /** "8 turns · 15 steps" for the footer. */
 export function threadSize(turns: Turn[], steps: number): string {
   const n = turns.length
-  return `${n} turn${n === 1 ? '' : 's'} · ${steps} step${steps === 1 ? '' : 's'}`
+  return `${t(n === 1 ? '{n} turn' : '{n} turns', { n })} · ${t(steps === 1 ? '{n} step' : '{n} steps', { n: steps })}`
 }

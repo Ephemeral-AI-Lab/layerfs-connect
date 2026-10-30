@@ -47,7 +47,11 @@ Store beside it.
 
 `projects/project-view.tsx`. The title is the project's name; beside it a `StoreBadge` (Store mark,
 name, sync state). The facts row keeps Last Commit, Branches, Commits and the Store's bytes on disk.
-Tabs: History (with Files), Worktrees, Storage, Sandboxes.
+Actions: Refresh, Play scenario (see [project-sessions.md](project-sessions.md)) and New chat.
+Tabs: History (with Files),
+Storage, Sandboxes, then Sessions with its count and, on a project with a scenario of its
+own, Script. Old `worktrees` / `work` tab hashes open Sandboxes, whose Workspace rows carry
+"Browse files" (the Files view on that Workspace's Branch).
 
 - **History** (`history-tab.tsx`): reads the project, then every Branch's Commits in one
   `host.branchCommits(key, branches)` call; a reread asks only for the Branches whose head moved.

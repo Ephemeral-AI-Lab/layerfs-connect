@@ -34,10 +34,11 @@ const projects = {
 class FakeRuns extends EventEmitter {
   demos = () => [{ id: 'tour' }]
   demo = (id) => (id === 'tour' ? { id } : null)
-  start = async (id) => {
+  start = async (id, { project = null } = {}) => {
     if (id === 'boom') throw new Error('engine broke')
-    return { id: 'r1', demo: id }
+    return project === null ? { id: 'r1', demo: id } : { id: 'r1', demo: id, project }
   }
+  startAll = async ({ project = null } = {}) => [{ id: 'r1', demo: 'tour', project }, { id: 'r2', demo: 'crew', project }]
   runs = (demo) => [{ id: 'r1', demo: demo ?? null }]
   run = (id) => (id === 'r1' ? { id } : null)
   stop = (id) => ({ id, state: 'stopped' })
@@ -142,6 +143,10 @@ test('demo and run routes go to the RunManager', async () => {
   assert.deepEqual((await call('GET', '/api/demos/tour')).body, { id: 'tour' })
   assert.equal((await call('GET', '/api/demos/nope')).status, 404)
   assert.deepEqual((await call('POST', '/api/demos/tour/runs')).body, { id: 'r1', demo: 'tour' })
+  // a scenario plays on the project the body names (a key: store/name in a shared Store)
+  const post = async (path, body) => (await fetch(url + path, { method: 'POST', headers: { ...auth, 'content-type': 'application/json' }, body: JSON.stringify(body) })).json()
+  assert.deepEqual(await post('/api/demos/tour/runs', { project: 'team/shop' }), { id: 'r1', demo: 'tour', project: 'team/shop' })
+  assert.deepEqual(await post('/api/demos/all/runs', { project: 'shop' }), [{ id: 'r1', demo: 'tour', project: 'shop' }, { id: 'r2', demo: 'crew', project: 'shop' }])
   assert.deepEqual((await call('GET', '/api/runs?demo=tour')).body, [{ id: 'r1', demo: 'tour' }])
   assert.deepEqual((await call('GET', '/api/runs')).body, [{ id: 'r1', demo: null }])
   assert.deepEqual((await call('GET', '/api/runs/r1')).body, { id: 'r1' })
@@ -159,7 +164,7 @@ test('demo and run routes go to the RunManager', async () => {
 test('without the engine, demo and run routes answer 503 with the reason', async () => {
   engine = null
   try {
-    for (const [method, path] of [['GET', '/api/demos'], ['GET', '/api/demos/tour'], ['POST', '/api/demos/tour/runs'], ['GET', '/api/runs'], ['GET', '/api/runs/r1'], ['POST', '/api/runs/r1/stop'], ['DELETE', '/api/runs/r1']]) {
+    for (const [method, path] of [['GET', '/api/demos'], ['GET', '/api/demos/tour'], ['POST', '/api/demos/tour/runs'], ['POST', '/api/demos/all/runs'], ['GET', '/api/runs'], ['GET', '/api/runs/r1'], ['POST', '/api/runs/r1/stop'], ['DELETE', '/api/runs/r1']]) {
       const res = await call(method, path)
       assert.equal(res.status, 503, path)
       assert.equal(res.body.code, 'engine-unavailable')

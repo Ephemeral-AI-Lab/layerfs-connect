@@ -1,0 +1,87 @@
+/* Project > Sessions: an edge that draws in on hover, a playing row's soft
+   tint, and each run's progress as a bar that fills. Restrained: no sweeps,
+   no glow (docs/frontend-polish-prompt.md). */
+
+.run-row {
+  position: relative;
+}
+/* The row's left edge: hidden at rest, drawn on hover or focus, steady while playing. */
+.run-row::before {
+  content: '';
+  position: absolute;
+  top: 10px;
+  bottom: 10px;
+  left: 0;
+  width: 2px;
+  border-radius: 0 2px 2px 0;
+  background: color-mix(in oklab, var(--foreground) 28%, transparent);
+  transform: scaleY(0);
+  transition: transform var(--dur-base) var(--ease-out-expo);
+}
+.run-row:hover::before,
+.run-row:focus-within::before {
+  transform: scaleY(1);
+}
+.run-row[data-live] {
+  background-image: linear-gradient(90deg, hsla(var(--cursor-hue, 215), 70%, 60%, 0.07), transparent 55%);
+}
+.run-row[data-live]::before {
+  background: var(--primary);
+  transform: none;
+}
+
+/* "Open": the chevron slides as the row is hovered. */
+.run-open > svg {
+  transition: transform var(--dur-base) var(--ease-out-expo);
+}
+.run-row:hover .run-open > svg,
+.run-row:focus-within .run-open > svg {
+  transform: translateX(2px);
+}
+
+/* Progress: done over the scenario's steps. */
+.run-bar {
+  position: relative;
+  display: block;
+  width: 88px;
+  height: 4px;
+  overflow: hidden;
+  border-radius: 4px;
+  background: color-mix(in oklab, var(--foreground) 8%, transparent);
+}
+.run-bar > span {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: color-mix(in oklab, var(--foreground) 28%, transparent);
+  transform-origin: left;
+  transition: transform var(--dur-slow) var(--ease-out-expo);
+  @starting-style {
+    transform: scaleX(0);
+  }
+}
+.run-bar[data-tone='stopped'] > span {
+  background: color-mix(in oklab, var(--warning) 70%, transparent);
+}
+.run-bar[data-tone='live'] {
+  background: color-mix(in oklab, var(--primary) 14%, transparent);
+}
+.run-bar[data-tone='live'] > span {
+  background: var(--primary);
+}
+
+/* A run's agents: overlapping colour dots. */
+.run-agents > span + span {
+  margin-left: -3px;
+}
+.run-agents > span {
+  box-shadow: 0 0 0 1.5px var(--background);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .run-row::before,
+  .run-open > svg,
+  .run-bar > span {
+    transition: none;
+  }
+}

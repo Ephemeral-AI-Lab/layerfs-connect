@@ -1,7 +1,9 @@
 // Headless: runs one demo through the engine on the real LayerFS and prints
 // one line per finished step, then the final checks. Exit 0 only when the
-// run passed (for a scenario of several sessions: every session's run).
-//   node --import ./host/resolve-layerfs.js host/run-demo.js <demo> [--state <dir>] [--scenarios <dir>]
+// run passed (for a scenario of several sessions: every session's run). It
+// plays on project <key> (a name, or store/name in a shared Store), which must
+// be there, in a folder /<demo>_<n>/ of its own (runs/folder.js).
+//   node --import ./host/resolve-layerfs.js host/run-demo.js <demo> --project <key> [--state <dir>] [--scenarios <dir>]
 import { resolveSpec } from './config.js'
 import { RunManager } from './runs/index.js'
 
@@ -14,9 +16,10 @@ const option = (name) => {
 }
 const state = option('--state')
 const scenarios = option('--scenarios')
+const project = option('--project')
 const [id] = argv
-if (!id) {
-  console.error('usage: run-demo.js <demo> [--state <dir>] [--scenarios <dir>]')
+if (!id || !project) {
+  console.error('usage: run-demo.js <demo> --project <key> [--state <dir>] [--scenarios <dir>]')
   process.exit(2)
 }
 
@@ -46,12 +49,12 @@ const show = (event) => {
   }
   if (event.type === 'run' && ids.has(event.run.id) && event.run.state === 'running' && !shown.has(event.run.id)) {
     shown.add(event.run.id)
-    console.log(`project ${event.run.project} ready; ${event.run.session ? `session ${event.run.session} ` : ''}playing ${event.run.of} steps`)
+    console.log(`project ${event.run.project} /${event.run.folder} ready; ${event.run.session ? `session ${event.run.session} ` : ''}playing ${event.run.of} steps`)
   }
 }
 const shown = new Set()
 
-const started = await runs.start(id)
+const started = await runs.start(id, { project })
 runId = started.id
 const launch = runs.launchOf(runId).map((r) => r.id)
 ids = new Set(launch)

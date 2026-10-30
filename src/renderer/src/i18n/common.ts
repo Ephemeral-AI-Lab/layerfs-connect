@@ -8,6 +8,7 @@ export const commonZh: Record<string, string> = {
   "Your projects": "我的项目",
   "New project": "新建项目",
   "Create project": "创建项目",
+  "All projects": "所有项目",
   "Delete project": "删除项目",
   "Delete project {name}": "删除项目 {name}",
   "Refresh sidebar projects": "刷新侧栏项目",

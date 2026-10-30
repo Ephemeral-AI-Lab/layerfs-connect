@@ -1,24 +1,14 @@
-// One SQLite Store on the board (storage-links §3.1): identity with its
-// projects and size, the one remote file it links to (provider mark,
-// connection / file) or "Local only", one sync pill, and Push and Pull (or
-// Publish… for a local-only Store). While a job runs on it, the Linked-to
-// cell shows the job instead (layerfs#509).
+// A SQLite Store's actions (storage-links §2): the menu of every action, on
+// its card and its page, and the page's Push and Pull (or Publish…) buttons.
 import { ArrowDownToLine, ArrowUpFromLine, CloudUpload, CopyPlus, DatabaseZap, ExternalLink, RefreshCw, Trash2, Unlink } from 'lucide-react'
 import { useState } from 'react'
 
-import { count, useStorage } from '@/components/storage/actions'
+import { useStorage } from '@/components/storage/actions'
 import { message } from '@/components/storage/dialogs/fields'
-import { ProviderMark, StoreIcon, storeProviders } from '@/components/storage/identity/store-icon'
 import { MoreButton } from '@/components/storage/overview/row-parts'
-import { SizeText } from '@/components/storage/size'
-import { SyncPill } from '@/components/storage/sync/sync-pill'
-import { TransferRow } from '@/components/storage/transfers/transfer-row'
 import { Button } from '@/components/ui/button'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
-import { ago } from '@/data/format'
 import { t, useI18n } from '@/i18n'
-import { cn } from '@/lib/utils'
 import type { StoreInfo } from '@shared/host-api'
 
 const BUSY = 'A transfer is running'
@@ -138,106 +128,5 @@ export function ContextAction({ store, size = 'xs' }: { store: StoreInfo; size?:
         </span>
       )}
     </span>
-  )
-}
-
-/** The Linked-to cell: provider mark, connection / file, or "Local only". */
-function LinkedTo({ store, narrow }: { store: StoreInfo; narrow?: boolean }) {
-  const s = useStorage()
-  const link = store.link
-  if (!link) return <span className="text-[13px] text-muted-foreground">{t('Local only')}</span>
-  return (
-    <button
-      type="button"
-      onClick={() => s.open({ view: 'location', id: link.remote })}
-      title={link.object}
-      className="flex min-w-0 items-center gap-1.5 rounded-md text-left outline-none hover:text-primary focus-visible:ring-2 focus-visible:ring-ring"
-    >
-      <ProviderMark provider={link.provider} className="size-3.5 shrink-0" />
-      {!narrow && <span className="truncate font-mono text-[12.5px] text-muted-foreground">{link.remote}</span>}
-      {!narrow && (
-        <span aria-hidden="true" className="text-faint">
-          /
-        </span>
-      )}
-      <span className="truncate font-mono text-[12.5px]">{link.file}</span>
-    </button>
-  )
-}
-
-/** "pushed 3 h ago", under an unknown pill, so the row is still useful without E2/E3. */
-function lastTransfer(store: StoreInfo): string | null {
-  if (store.sync.state !== 'unknown' || !store.link?.last?.at) return null
-  return t(store.link.last.direction === 'pull' ? 'pulled {ago}' : 'pushed {ago}', { ago: ago(store.link.last.at) })
-}
-
-interface SqliteStoreRowProps {
-  store: StoreInfo
-  /** The project the search matched, shown as "has <project>". */
-  match?: string | null
-}
-
-export function SqliteStoreRow({ store, match }: SqliteStoreRowProps) {
-  useI18n()
-  const s = useStorage()
-  const job = s.transfers.runningFor(store.name)
-  const providers = storeProviders(store, s.view.remotes.list)
-  const flash = s.flash?.store === store.name ? s.flash.token : null
-  const projects = store.projects
-  const last = lastTransfer(store)
-  const projectsTip = projects.length ? projects.slice(0, 8).join(', ') + (projects.length > 8 ? ` ${t('and {n} more', { n: projects.length - 8 })}` : '') : t('No projects yet')
-  return (
-    <div
-      role="row"
-      key={flash ?? undefined}
-      id={`store-row-${store.name}`}
-      className={cn('sc-row sc-sqlite-row relative transition-colors duration-(--dur-fast) hover:bg-foreground/[0.025]', job && 'sc-live-row bg-primary/[0.025]', flash !== null && 'live-flash [--flash:var(--primary)]')}
-    >
-      <span role="rowheader" className="sc-a-name flex min-w-0 items-center gap-3">
-        <StoreIcon family="sqlite" providers={providers} size="sm" />
-        <span className="min-w-0">
-          <span className="flex min-w-0 items-center gap-1.5">
-            <button
-              type="button"
-              onClick={() => s.open({ view: 'store', id: store.name })}
-              className="truncate rounded-md text-left text-[13.5px] font-semibold tracking-tight outline-none hover:text-primary focus-visible:ring-2 focus-visible:ring-ring"
-            >
-              {store.name}
-            </button>
-            {store.legacy && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span className="shrink-0 rounded-full bg-muted/80 px-1.5 text-[10px] font-semibold text-muted-foreground ring-1 ring-foreground/[0.06] ring-inset">{t('own Store')}</span>
-                </TooltipTrigger>
-                <TooltipContent>{t('A project’s own Store, from before Stores held several projects.')}</TooltipContent>
-              </Tooltip>
-            )}
-          </span>
-          {match && <span className="block truncate text-[11.5px] text-muted-foreground">{t('has {project}', { project: match })}</span>}
-          <span className="sc-under-name truncate text-[11.5px] text-muted-foreground tabular-nums" title={projectsTip}>
-            {count(projects.length, 'project')} · <SizeText store={store} reason={s.sizeReason} />
-          </span>
-        </span>
-      </span>
-      <span role="cell" className="sc-a-copies min-w-0">
-        {job ? <TransferRow job={job} form="compact" /> : <LinkedTo store={store} />}
-      </span>
-      <span role="cell" className="sc-a-meta items-center gap-2 text-[12px] text-muted-foreground">
-        <SizeText store={store} reason={s.sizeReason} />
-        <span aria-hidden="true">·</span>
-        <span>{count(projects.length, 'project')}</span>
-        {store.link && <LinkedTo store={store} narrow />}
-      </span>
-      <span role="cell" className="sc-a-pill">
-        <span className="flex min-w-0 flex-col items-start gap-0.5">
-          <SyncPill state={store.sync.state} copy={store.link} job={job ?? null} />
-          {last && <span className="text-[11px] text-muted-foreground">{last}</span>}
-        </span>
-      </span>
-      <span role="cell" className="sc-a-action flex items-center gap-1">
-        <ContextAction store={store} />
-        <StoreMenu store={store} />
-      </span>
-    </div>
   )
 }

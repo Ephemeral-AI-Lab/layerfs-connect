@@ -133,7 +133,9 @@ export function ForkMap({ title, tree, focus, shown, onOpen, autoplay }: ForkMap
   const zoomOut = [...STEPS].reverse().find((s) => s < step - 0.5)
   const zoomIn = STEPS.find((s) => s > step + 0.5)
   const last = events.length - 1
-  const [cut, setCut] = useState(autoplay ? 0 : last)
+  // null follows the end, so Commits read later show at once; a number is a replay's place
+  const [cutState, setCut] = useState<number | null>(autoplay ? 0 : null)
+  const cut = cutState === null ? last : Math.min(cutState, last)
   const [playing, setPlaying] = useState(Boolean(autoplay))
 
   const x = (id: string | undefined) => PAD_LEFT + (order.get(id ?? '') ?? 0) * step
@@ -150,7 +152,7 @@ export function ForkMap({ title, tree, focus, shown, onOpen, autoplay }: ForkMap
 
   useEffect(() => {
     if (!playing) return
-    const timer = setInterval(() => setCut((c) => Math.min(c + 1, last)), TICK_MS)
+    const timer = setInterval(() => setCut((c) => (c === null || c + 1 >= last ? null : c + 1)), TICK_MS)
     return () => clearInterval(timer)
   }, [playing, last])
   if (playing && cut >= last) setPlaying(false)

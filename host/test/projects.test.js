@@ -75,6 +75,10 @@ test('state: main and feature-home, the Init Layer, the Sandboxes', async () => 
   assert.equal(st.layers.at(-1).message, 'Init')
   assert.ok(Array.isArray(st.sandboxes))
   for (const s of st.sandboxes) assert.ok(s.id && s.state && Array.isArray(s.workspaces))
+  // the Sandboxes read lists the same Sandboxes, each with its Workspaces or why they are unknown
+  const sandboxes = await projects.sandboxes(NAME)
+  assert.deepEqual(sandboxes.map((s) => s.id).sort(), st.sandboxes.map((s) => s.id).sort())
+  for (const s of sandboxes) assert.ok(Array.isArray(s.workspaces) && (s.reach === undefined || ['busy', 'unreachable'].includes(s.reach)))
   // the Store's totals; main's head Layer is a full snapshot
   assert.ok(st.storage)
   assert.ok(st.storage.logical > 0 && st.storage.canonical > 0)

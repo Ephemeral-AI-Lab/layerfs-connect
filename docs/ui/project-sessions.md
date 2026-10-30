@@ -1,72 +1,76 @@
-# Project: Sessions
+# Project: Sessions, Script and Play scenario
 
-Every session of the project, newest first, each a row that opens its session page. Opens from: the "Sessions N" tab at the right of a project page's tab row (or `CONNECT_VIEW=projects/<project>/sessions`).
-Source: `src/renderer/src/components/runs/run-list.tsx` (main file; others named in Regions).
+The project's scenario runs, newest first, each a row that opens its run page; the scenario's
+script; and the "Play scenario" picker that starts runs. Opens from: the "Sessions N" tab after
+the divider in a project page's tab row (or `CONNECT_VIEW=projects/<project>/sessions`; old
+`live` links open it too).
+Source: `src/renderer/src/components/runs/run-list.tsx` (Sessions),
+`runs/demo-script.tsx` (Script), `projects/scenario-picker.tsx` (Play scenario).
 
 ## Skeleton
 
 ```text
-+-[1] TabBar ----------------------------------------------------------------------------------+
-| Live   Timeline   History   Storage   Sandboxes        |   Sessions 28   [2][ > Replay | v ] |
-|                                                            ===========                       |
++-[1] PageHeader ------------------------------------------------------------------------------+
+| < Projects                                                                                   |
+| [P] shop   (Store badge)                     [ Refresh ] [ > Play scenario v ] [ New chat ]  |
+| (Last Commit 3 min ago) (4 Branches) (12 Commits) (2 MB on disk)                             |
+| History   Storage   Sandboxes   |   Sessions 3   Script                                       |
+|                                                       ========                               |
 +----------------------------------------------------------------------------------------------+
++-[2b] Live card: the live diagram (project-live.md), while a run plays or ended < 5 min ago --+
 +-[3] RunList ---------------------------------------------------------------------------------+
-| Sessions 28   * 1 playing                                                  [ + New session ] |
-+-[4] RunRow ----------------------------------------------------------------------------------+
-| SESSION                      STARTED    DURATION  STEPS               AGENTS    PROJECT      |
-| * /crew_1  Working           3 min ago  2 m 40 s  [==------]  31/967  ** 2      playground > |
-| * /checkpoints_2             3 h ago    2 m 12 s  [=-------]  5/37    *** 3     playground > |
-| * /teams_2 - docs  Stopped   3 h ago    2 m 11 s  [==------]  4/17    ** 2      playground > |
-| * hi                         3 h ago    3 h 11 m  [========]  1/1     * 1       playground > |
-| * /agents_2                  3 h ago    4 m 55 s  [=-------]  19/199  ****** 6  playground > |
-| ...                                                                                          |
+| Sessions 3   (* 1 playing)                                                                   |
+| SESSION                              STARTED    DURATION  STEPS              AGENTS          |
+| * crew_2   Running                   2 min ago  2 m 05 s  [====------] 31/96  ** 2  [Stop] > |
+|   Crew                                                                                       |
+| o depot_1  (Queued)                  1 min ago  –         [----------]  0/40  –     [Stop] > |
+|   Depot · waiting for a heavy scenario                                                       |
+| o crew_1                             3 h ago    2 m 40 s  [==========] 96/96  ** 2  [ 🗑 ] > |
+|   Crew                                                                                       |
 +----------------------------------------------------------------------------------------------+
 ```
 
 ## Regions
 
-1. **TabBar** (`ProjectPage`, `projects/project-view.tsx`): the page's first row, a `TabBar`; there is no title, as the sidebar names the project. Live, Timeline, History, Storage and Sandboxes, a divider, then the quiet "Sessions N" tab (active here, its count counting up).
-2. **ReplayControl** (`ReplayControl`, `runs/replay-control.tsx`): only on a scenario's project. Idle, the primary "Replay" pill starts a new session of the scenario; while one plays it shows a progress ring and "76/535" and opens that session. Its menu (v) holds "View scenario" and, while one plays, "Stop session".
-3. **RunList** (`RunList`, `runs/run-list.tsx`): "Sessions" and its count, an "N playing" chip while any session plays, and "New session", which starts one ("Starting..." meanwhile) and opens it.
-4. **RunRow** (`RunRow`, `runs/run-list.tsx`; styles in `runs/run-list.css`): one row per session; a click or Enter opens its session page.
-   - SESSION: a state dot (`RunDot`, `runs/run-badges.tsx`) and the name from `runLabel` ("/crew_2", "/teams_2 · docs", a live session's title). A playing row adds "Starting" or "Working" in the primary colour, a stopped one "Stopped" in amber.
-   - STARTED: how long ago (the clock time on hover). DURATION: counts up while the session plays.
-   - STEPS: the `run-bar` progress bar and "done/of"; "N steps" when the session has no script total.
-   - AGENTS: up to 6 overlapping agent colour dots, then the count ("–" when none).
-   - PROJECT: the LayerFS project, in mono. The last cell shows "Open >" on hover, else ">".
+1. **PageHeader** (`ProjectView`, `projects/project-view.tsx`): a live line runs under it while a
+   run plays (not while one is only queued). Sessions is the default tab once the project has runs,
+   and gets a pulsing dot while a run plays. It opens with the Live card (`LiveTab`,
+   [project-live.md](project-live.md)) while a run plays or ended in the last 5 minutes, then
+   the list. A refused start shows a
+   red alert under the facts, "Could not start the scenario: <message>", with a dismiss ×.
+2. **Play scenario** (`ScenarioPicker`, `projects/scenario-picker.tsx`): an outline button with a
+   menu of `host.demos()`, the project's own scenario first ("This project's"), each with its title,
+   agent count and blurb; then "All scenarios". A choice calls `host.startRun(id, projectKey)` or
+   `host.startAll(projectKey)` (`useStartRun`, `runs/use-runs.ts`) and opens the first new run's
+   page. Disabled until the project is initialised; "Starting…" with a spinner meanwhile.
+3. **RunList** (`RunList`, `runs/run-list.tsx`, styles in `runs/run-list.css`): a liquid-glass
+   card, "Sessions" with its count and an "N playing" chip. Columns fold away under 44 rem.
+4. **RunRow**: a click on the name (or the chevron) opens the run page.
+   - SESSION: `RunDot` and the run's folder in mono (`runName`: `crew_2`, or `teams_1 · docs` for a
+     session of a multi-session scenario); "Running"/"Starting" in the primary colour, "Stopped" in
+     amber, or a "Queued" chip with an hourglass for a heavy scenario waiting its turn. Under it the
+     scenario's title, and the run's phase while it starts.
+   - STARTED (clock time on hover), DURATION (counts up while it plays; "–" while queued), STEPS (a
+     calm progress bar and done/of), AGENTS (up to 6 colour dots and the count).
+   - Actions: Stop (`host.stopRun`) while it plays or waits; once ended a trash button that turns
+     into Delete / Cancel, and Delete calls `host.removeRun` (the record and traces go; the project
+     and its history stay). A failed action shows its message under the row.
+
+Old run records saved by an earlier engine as live Pi sessions (`kind: 'live'`, or state `idle`)
+are hidden here, in the sidebar and on the run page; Chat replaces them.
 
 ## States
 
-- **Loading**: three skeleton bars under the header.
-- **Error**: `LoadError` ("the sessions") with a retry button, in place of the table.
-- **Empty**: `Empty`, "No sessions yet": a session Inits the project from its fixture and plays its agents on the real backend.
-- **Start refused**: a red alert under the header, "Could not start a session: <message>", with "Dismiss".
-- **Playing**: the "N playing" chip; a playing row glows, its dot pulses and its bar shimmers. In the tab row, Live gets a pulsing dot and a live line runs under the header.
+- **Loading**: three skeleton bars.
+- **Error**: `LoadError` ("the sessions") with Try again.
+- **Empty**: "No sessions yet", with the Play scenario picker as its action.
+- **Live**: rows follow the host's `run`, `agent` and `run-removed` events (`useRuns`).
 
-## Script view
+## Script
 
-The scenario's script, one agent at a time, before any session plays it. Opens from: "View scenario" in the Replay control's menu (or `CONNECT_VIEW=projects/<project>/script`); a quiet "Scenario" tab then appears after "Sessions N", active. Source: `runs/demo-script.tsx` (`DemoScript`).
-
-```text
-+-[1] TabBar ----------------------------------------------------------------------------------+
-| Live   Timeline   History   Storage   Sandboxes   |  Sessions 28  Scenario  [ > Replay | v ] |
-|                                                                   ========                   |
-+----------------------------------------------------------------------------------------------+
-+-[5] Script ----------------------------------------------------------------------------------+
-| SCENARIO   ( * root  9 )  ( * a01  6 )  ( * a02  6 )                     3 agents - 21 steps |
-| ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ |
-| * workspace 4   * fs 6   * branch 8   * subagent 3                                           |
-+----------------------------------------------------------------------------------------------+
-+-[6] Conversation ----------------------------------------------------------------------------+
-| Four ranges, two agents each. Each range ends at a checkpoint.                               |
-| +------------------------------------------------------------------------------------------+ |
-| | * Range 1: merge the lanes and publish            {* branch.merge} {* branch.publish}  v | |
-| +------------------------------------------------------------------------------------------+ |
-| (-> Started * a01)  (-> Started * a02)                                                       |
-| ...                                                                                          |
-|                                       1 turn - 21 steps                                      |
-+----------------------------------------------------------------------------------------------+
-```
-
-5. **Script** (`Script`, `runs/demo-script.tsx`): "SCENARIO", the agents (parent before child) with their step counts, and "N agents · N steps". Up to 8 agents fit the `AgentRail` pill row; more get the `AgentSwitcher` dropdown (`runs/agent-switcher.tsx`). Under them, `KindBar` (the script's calls by kind) and `KindLegend` with counts.
-6. **Conversation** (`Conversation` with `script`, `runs/conversation.tsx`): the shown agent's thread, drawn as on the session page but with no times; a subagent's first card reads "Task message". Its footer gives "N turns · N steps". Loading shows skeleton cards; a failed load shows "Could not load the script" with "Try again".
+The project's own scenario (the one whose run made it, `ProjectSummary.demo`, or the scenario
+named like the project), shown only when it has one. `DemoScript` (`runs/demo-script.tsx`): a glass
+card with "Script", the agents (an `AgentRail` of pills for up to 8, else the `AgentSwitcher`
+dropdown), "N agents · N steps", the blurb, a bar of the script's calls by kind and its legend;
+under it the shown agent's thread in the run page's conversation look, with no times
+(`Conversation` with `script`). Loading shows `Loading`; a failed read shows `LoadError`.

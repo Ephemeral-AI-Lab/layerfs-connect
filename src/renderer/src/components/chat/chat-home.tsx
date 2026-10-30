@@ -10,7 +10,7 @@ import { attachmentPayload, hydrateMessageAttachments } from '@/components/chat/
 import { newDraftKey, sessionDraftKey, useChatDraft } from '@/components/chat/chat-drafts'
 import { SessionSettingsDialog, type SessionSettingsTarget } from '@/components/chat/session-settings'
 import { conversationMarkdown, exportConversation } from '@/components/chat/transcript-export'
-import { Composer } from '@/components/chat/composer'
+import { Composer, type ComposerCommand } from '@/components/chat/composer'
 import { ConversationActionDialog, type ConversationActionTarget } from '@/components/chat/conversation-actions'
 import { ContextMeter } from '@/components/chat/context-meter'
 import { ModelSettingsDialog } from '@/components/chat/model-settings'
@@ -22,12 +22,13 @@ import { Suggestions } from '@/components/chat/suggestions'
 import { WorkspacePicker } from '@/components/chat/workspace-picker'
 import { WorkspaceStatus } from '@/components/chat/workspace-status'
 import { NewProjectDialog } from '@/components/projects/new-project-dialog'
+import { useDemos } from '@/components/projects/scenario-picker'
 import { spotlight } from '@/components/motion/spotlight'
 import { ThinkingLine } from '@/components/runs/thread-items'
 import { Button } from '@/components/ui/button'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { agentHost } from '@/host/agent-client'
-import { onHostConnection, onHostEvent, type HostConnection } from '@/host/client'
+import { host, onHostConnection, onHostEvent, type HostConnection } from '@/host/client'
 import type { ProjectCatalog } from '@/host/use-projects'
 import { cn } from '@/lib/utils'
 import './chat.css'
@@ -49,10 +50,16 @@ const mergeHistory = (current: AgentSessionSummary[], incoming: AgentSessionSumm
 interface ChatHomeProps {
   projects: ProjectCatalog
   initialProject?: string
+  /** A conversation to open (from the sidebar); a new one opens when absent. */
+  initialSession?: string
   onOpenProject?: (project: string, branch?: string) => void
+  /** Opens a scenario run's page: `/scenario` started it on `project`. */
+  onOpenRun?: (project: string, run: string) => void
+  /** Says which conversation is open now (null for a new one), for the sidebar. */
+  onActiveSession?: (id: string | null) => void
 }
 
-export function ChatHome({ projects, initialProject, onOpenProject }: ChatHomeProps) {
+export function ChatHome({ projects, initialProject, initialSession, onOpenProject, onOpenRun, onActiveSession }: ChatHomeProps) {
   const { t } = useI18n()
   const [models, setModels] = useState<AgentModels>()
   const [selection, setSelection] = useState<ModelSelection | null>(null)
@@ -78,6 +85,7 @@ export function ChatHome({ projects, initialProject, onOpenProject }: ChatHomePr
   const activeId = useRef<string | null>(null)
   const navigation = useRef(0)
   const skipRestore = useRef(initialProject !== undefined)
+  const demos = useDemos()
   const sendInFlight = useRef(false)
   const conversationInFlight = useRef(false)
   const conversationTrigger = useRef<HTMLButtonElement>(null)
@@ -175,7 +183,7 @@ export function ChatHome({ projects, initialProject, onOpenProject }: ChatHomePr
       setSelection(catalog.selected)
       setCwd((value) => value || catalog.defaultCwd)
       setSessions((all) => mergeHistory(all, history, deletedIds.current))
-      const last = activeId.current ?? (skipRestore.current ? null : localStorage.getItem(LAST_SESSION))
+      const last = activeId.current ?? initialSession ?? (skipRestore.current ? null : localStorage.getItem(LAST_SESSION))
       if (last && history.some((s) => s.id === last && !s.archived)) {
         const detail = await agentHost.session(last)
         if (view === navigation.current) activate(detail, !catalog.selected, catalog)
@@ -194,7 +202,8 @@ export function ChatHome({ projects, initialProject, onOpenProject }: ChatHomePr
   }
 
   useEffect(() => {
-    if (initialProject !== undefined) {
+    if (initialSession) localStorage.setItem(LAST_SESSION, initialSession)
+    else if (initialProject !== undefined) {
       localStorage.removeItem(LAST_SESSION)
       localStorage.setItem(LAST_PROJECT, initialProject)
     }
@@ -215,6 +224,13 @@ export function ChatHome({ projects, initialProject, onOpenProject }: ChatHomePr
       connectionOff()
     }
   }, [])
+
+  const reportSession = useRef(onActiveSession)
+  reportSession.current = onActiveSession
+  const shownId = session?.id ?? null
+  useEffect(() => {
+    if (!loading) reportSession.current?.(shownId)
+  }, [shownId, loading])
 
   useEffect(() => {
     if (followBottom.current && scroller.current) scroller.current.scrollTop = scroller.current.scrollHeight
@@ -285,6 +301,14 @@ export function ChatHome({ projects, initialProject, onOpenProject }: ChatHomePr
   async function send(text = input) {
     const prompt = text.trim()
     if ((!prompt && !attachments.length) || !drafts.ready || pending || sendInFlight.current || conversationInFlight.current) return
+    // `/scenario …` never goes to the model; without a LayerFS project it only explains
+    const scenario = /^\/scenario(?:\s+(\S+))?\s*$/.exec(prompt)
+    if (scenario) {
+      if (!(session ? session.project : project)) setNotice(t("/scenario plays on a LayerFS project. Choose a project in Workspace, then try again."))
+      else if (scenario[1]) { setInput(''); void playScenario(scenario[1]) }
+      else setInput('/scenario ')
+      return
+    }
     if (!selection) {
       setInput(prompt)
       setModelsOpen(true)
@@ -504,13 +528,47 @@ export function ChatHome({ projects, initialProject, onOpenProject }: ChatHomePr
     void saveSelection({ ...selection, thinkingLevel: level })
   }
 
-  const commands = [
+  // `/scenario <name>` plays a scenario on the chat's LayerFS project, in a folder of its own; nothing goes to the model
+  async function playScenario(name: string) {
+    const target = activeProject
+    if (!target) return
+    setError('')
+    setNotice('')
+    try {
+      const started = name === 'all' ? await host.startAll(target) : [await host.startRun(name, target)]
+      if (started[0] && onOpenRun) onOpenRun(target, started[0].id)
+      else setNotice(t("Scenario started on {project}.", { project: projectLabel(target) }))
+    } catch (e) {
+      setError(t("Could not start the scenario: {message}", { message: (e as Error).message }))
+    }
+  }
+  const scenarioCommand: ComposerCommand = activeProject
+    ? {
+        id: 'scenario',
+        label: t("Play scenario"),
+        description: t("Play a scenario here, in a folder of its own"),
+        onSelect: () => {},
+        options: [
+          ...(demos.data ?? []).map((demo) => ({ id: demo.id, label: demo.title, description: demo.blurb ?? undefined })),
+          ...((demos.data?.length ?? 0) > 1 ? [{ id: 'all', label: t("All scenarios"), description: t("Every scenario at once, each in its own folder") }] : []),
+        ],
+        onArgument: (name) => void playScenario(name),
+      }
+    : {
+        id: 'scenario',
+        label: t("Play scenario"),
+        description: t("Needs a LayerFS project: choose one in Workspace first"),
+        onSelect: () => setNotice(t("/scenario plays on a LayerFS project. Choose a project in Workspace, then try again.")),
+      }
+
+  const commands: ComposerCommand[] = [
     { id: 'new', label: t("New session"), description: t("Start a fresh conversation in this workspace"), onSelect: newSession },
     { id: 'history', label: t("History & context"), description: t("Find a session or inspect its saved context"), onSelect: openHistoryDrawer },
     { id: 'model', label: t("Select model"), description: running ? t("Available after the current turn") : t("Choose the model for your next message"), disabled: running, onSelect: () => setModelMenuOpen(true) },
     { id: 'workspace', label: t("Workspace"), description: t("Working directory, project and recent folders"), onSelect: () => setWorkspaceOpen(true) },
     { id: 'compact', label: t("Compact context"), description: running ? t("Stop the agent before compacting") : !messages.length ? t("Start a conversation first") : t("Summarize earlier turns to free context"), disabled: !messages.length || running, onSelect: () => void sessionAction('compact') },
     { id: 'stop', label: t("Stop agent"), description: running ? t("Stop the current turn") : t("No agent is running"), disabled: !running, onSelect: () => void sessionAction('stop') },
+    scenarioCommand,
   ]
 
   return (

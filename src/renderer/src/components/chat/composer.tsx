@@ -16,6 +16,31 @@ export interface ComposerCommand {
   description: string
   disabled?: boolean
   onSelect: () => void
+  /** A command that takes an argument (`/scenario <name>`): picking it completes `/<id> `, and its choices show after the space. */
+  options?: ComposerOption[]
+  /** Runs `/<id> <argument>`; set together with `options`. */
+  onArgument?: (argument: string) => void
+}
+
+/** One choice of a command's argument. */
+export interface ComposerOption {
+  id: string
+  label: string
+  description?: string
+}
+
+/** One row of the slash menu: a command, or a choice of a command's argument. */
+interface MenuItem {
+  key: string
+  /** The row's mono lead: `/scenario`, or a choice's id. */
+  lead: string
+  label: string
+  description?: string
+  disabled?: boolean
+  /** What Tab completes the input to. */
+  complete: string
+  /** What Enter or a click does: run it, or (a command taking an argument) complete it. */
+  run: () => void
 }
 
 interface ComposerProps {
@@ -74,13 +99,43 @@ export function Composer({
   const modifierLabel = window.connect.platform === 'darwin' ? '⌘' : 'Ctrl+'
   const sendShortcut = sendKey === 'enter' ? '↵' : `${modifierLabel}↵`
   const query = /^\/([^\s/]*)$/.exec(value)?.[1].toLowerCase()
-  const matches = query === undefined ? [] : commands.filter((command) => command.id.toLowerCase().startsWith(query))
+  // `/<command> <argument>`: a command that takes one, and the argument typed so far
+  const argument = /^\/([^\s/]+)\s+(\S*)$/.exec(value)
+  const argCommand = argument ? commands.find((command) => command.onArgument && command.id.toLowerCase() === argument[1].toLowerCase()) : undefined
+  const argQuery = argument?.[2].toLowerCase() ?? ''
+  const matches: MenuItem[] = argCommand
+    ? (argCommand.options ?? [])
+        .filter((option) => option.id.toLowerCase().startsWith(argQuery) || option.label.toLowerCase().includes(argQuery))
+        .map((option) => ({
+          key: option.id,
+          lead: option.id,
+          label: option.label,
+          description: option.description,
+          complete: `/${argCommand.id} ${option.id}`,
+          run: () => runArgument(argCommand, option.id),
+        }))
+    : query === undefined
+      ? []
+      : commands
+          .filter((command) => command.id.toLowerCase().startsWith(query))
+          .map((command) => ({
+            key: command.id,
+            lead: `/${command.id}`,
+            label: command.label,
+            description: command.description,
+            disabled: command.disabled,
+            complete: command.onArgument ? `/${command.id} ` : `/${command.id}`,
+            run: command.onArgument ? () => onChange(`/${command.id} `) : () => selectCommand(command),
+          }))
   const selectedIndex = Math.min(commandIndex, Math.max(0, matches.length - 1))
   const showCommands = focused && !disabled && !commandsDismissed && matches.length > 0
-  const selectedCommand = showCommands ? matches[selectedIndex] : undefined
+  const selectedItem = showCommands ? matches[selectedIndex] : undefined
   const exactCommand = query === undefined ? undefined : commands.find((command) => command.id.toLowerCase() === query)
-  const submitCommand = selectedCommand ?? exactCommand
-  const canSend = (value.trim().length > 0 || attachments.length > 0) && !disabled && !reading && !submitCommand?.disabled
+  const exactItem: MenuItem | undefined = argCommand
+    ? argQuery ? { key: argQuery, lead: argQuery, label: argCommand.label, complete: value, run: () => runArgument(argCommand, argument![2]) } : undefined
+    : exactCommand && { key: exactCommand.id, lead: `/${exactCommand.id}`, label: exactCommand.label, disabled: exactCommand.disabled, complete: value, run: exactCommand.onArgument ? () => onChange(`/${exactCommand.id} `) : () => selectCommand(exactCommand) }
+  const submitItem = selectedItem ?? exactItem
+  const canSend = (value.trim().length > 0 || attachments.length > 0) && !disabled && !reading && !submitItem?.disabled
 
   useEffect(() => {
     setCommandIndex(0)
@@ -107,9 +162,16 @@ export function Composer({
     command.onSelect()
   }
 
+  function runArgument(command: ComposerCommand, value: string) {
+    if (disabled || isComposing()) return
+    onChange('')
+    setCommandsDismissed(true)
+    command.onArgument?.(value)
+  }
+
   function submit() {
     if (!canSend || isComposing()) return
-    if (submitCommand) selectCommand(submitCommand)
+    if (submitItem) submitItem.run()
     else onSend()
   }
 
@@ -131,9 +193,9 @@ export function Composer({
         setCommandIndex((selectedIndex + (event.key === 'ArrowDown' ? 1 : -1) + matches.length) % matches.length)
         return
       }
-      if (event.key === 'Tab' && !event.shiftKey && selectedCommand && value !== `/${selectedCommand.id}`) {
+      if (event.key === 'Tab' && !event.shiftKey && selectedItem && value !== selectedItem.complete) {
         event.preventDefault()
-        onChange(`/${selectedCommand.id}`)
+        onChange(selectedItem.complete)
         return
       }
       if (event.key === 'Enter' && !event.shiftKey) {
@@ -160,7 +222,7 @@ export function Composer({
           <div id={commandListId} role="listbox" aria-label={t("Chat commands")} className="max-h-60 overflow-y-auto">
             {matches.map((command, index) => (
               <button
-                key={command.id}
+                key={command.key}
                 id={`${commandListId}-${index}`}
                 type="button"
                 role="option"
@@ -169,11 +231,11 @@ export function Composer({
                 tabIndex={-1}
                 onMouseDown={(event) => event.preventDefault()}
                 onMouseEnter={() => setCommandIndex(index)}
-                onClick={() => selectCommand(command)}
+                onClick={() => { if (!command.disabled) command.run() }}
                 className={cn('flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left transition-colors', selectedIndex === index && 'bg-foreground/[0.06]', command.disabled ? 'cursor-not-allowed opacity-50' : 'hover:bg-foreground/[0.06]')}
               >
-                <span className="min-w-20 font-mono text-xs text-foreground">/{command.id}</span>
-                <span className="min-w-0 flex-1"><span className="block text-xs font-medium text-foreground">{command.label}</span><span className="mt-0.5 block text-[11px] leading-relaxed text-muted-foreground">{command.description}</span></span>
+                <span className="min-w-20 font-mono text-xs text-foreground">{command.lead}</span>
+                <span className="min-w-0 flex-1"><span className="block text-xs font-medium text-foreground">{command.label}</span>{command.description && <span className="mt-0.5 line-clamp-2 block text-[11px] leading-relaxed text-muted-foreground">{command.description}</span>}</span>
                 {command.disabled && <span className="shrink-0 text-[10px] text-muted-foreground">{t("Unavailable")}</span>}
               </button>
             ))}
@@ -253,8 +315,8 @@ export function Composer({
               disabled={!canSend}
               onMouseDown={(event) => event.preventDefault()}
               onClick={submit}
-              title={submitCommand ? t("{status}: /{command}", { status: submitCommand.disabled ? t("Unavailable") : t("Run"), command: submitCommand.id }) : `${sendLabel} (${sendShortcut})`}
-              aria-label={submitCommand ? t("Run {command}", { command: submitCommand.label }) : sendLabel}
+              title={submitItem ? t("{status}: {command}", { status: submitItem.disabled ? t("Unavailable") : t("Run"), command: submitItem.lead }) : `${sendLabel} (${sendShortcut})`}
+              aria-label={submitItem ? t("Run {command}", { command: submitItem.label }) : sendLabel}
               className={cn(
                 'flex size-8 items-center justify-center rounded-full transition-all duration-(--dur-fast) outline-none focus-visible:ring-2 focus-visible:ring-ring',
                 canSend

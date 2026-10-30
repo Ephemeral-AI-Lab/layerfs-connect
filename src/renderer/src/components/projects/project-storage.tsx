@@ -5,12 +5,13 @@ import { t as tr, useI18n } from '@/i18n'
 // how raw history shrinks to the bytes on disk, how both grow Commit by
 // Commit, and what each Commit added, by kind. Sandboxes: the Sandboxes open
 // on it, as tiles.
-import type { ProjectState, StoreStats } from '@shared/host-api'
+import type { ProjectState, SandboxInfo, StoreStats } from '@shared/host-api'
 import type { CSSProperties } from 'react'
 
 import { LfsSandbox } from '@/components/lfs-icons'
 import { CountUp, spotlight } from '@/components/motion'
 import { SandboxTiles } from '@/components/projects/sandbox-tiles'
+import { useProjectSandboxes } from '@/components/projects/use-sandboxes'
 import type { StoreFacts } from '@/components/projects/store-facts'
 import { CommitBars, CommitKinds, CountBytes, DiskFlow, GrowthChart, SavedRing, times, useLanded } from '@/components/projects/store-visuals'
 import { plural } from '@/components/runs/run-format'
@@ -242,11 +243,11 @@ function StoreCard({ s, store }: { s: ProjectState; store: StoreFacts }) {
   )
 }
 
-function SandboxesCard({ s }: { s: ProjectState }) {
+function SandboxesCard({ sandboxes, reading, onBrowseFiles }: { sandboxes: SandboxInfo[]; reading: boolean; onBrowseFiles?: (branch: string) => void }) {
   useI18n()
-  const open = s.sandboxes.filter((x) => x.state !== 'gone').length
-  const running = s.sandboxes.filter((x) => x.state === 'running').length
-  const mounted = s.sandboxes.filter((x) => x.state !== 'gone').reduce((n, x) => n + x.workspaces.length, 0)
+  const open = sandboxes.filter((x) => x.state !== 'gone').length
+  const running = sandboxes.filter((x) => x.state === 'running').length
+  const mounted = sandboxes.filter((x) => x.state !== 'gone').reduce((n, x) => n + x.workspaces.length, 0)
   return (
     <section onPointerMove={spotlight} className="glass-liquid spotlight reveal rounded-2xl shadow-xs overflow-hidden">
       <header className="flex flex-wrap items-start gap-x-3 gap-y-4 px-6 py-5">
@@ -269,13 +270,13 @@ function SandboxesCard({ s }: { s: ProjectState }) {
           <div>
             <dt className="text-[11px] text-faint">{tr("Workspaces")}</dt>
             <dd className="text-lg leading-6 font-semibold tabular-nums text-primary">
-              <CountUp value={mounted} />
+              <CountUp value={reading ? null : mounted} />
             </dd>
           </div>
         </dl>
       </header>
       <div className="border-t bg-muted/25 p-4">
-        <SandboxTiles sandboxes={s.sandboxes} />
+        <SandboxTiles sandboxes={sandboxes} reading={reading} onBrowseFiles={onBrowseFiles} />
       </div>
     </section>
   )
@@ -287,7 +288,14 @@ export function ProjectStorageContent({ state, store }: { state: ProjectState; s
   return <StoreCard s={state} store={store} />
 }
 
-export function ProjectSandboxesContent({ state }: { state: ProjectState }) {
+/**
+ * The project's Sandboxes: drawn at once from the project read (no
+ * Workspaces), then with their Workspaces from the Sandboxes read, reread
+ * every 5 s and when `tick` moves. `onBrowseFiles` opens the Files view on a
+ * mounted Workspace's Branch.
+ */
+export function ProjectSandboxesContent({ project, state, tick, onBrowseFiles }: { project: string; state: ProjectState; tick?: unknown; onBrowseFiles?: (branch: string) => void }) {
   useI18n()
-  return <SandboxesCard s={state} />
+  const q = useProjectSandboxes(project, 5000, tick)
+  return <SandboxesCard sandboxes={q.data ?? state.sandboxes} reading={!q.data} onBrowseFiles={onBrowseFiles} />
 }

@@ -169,6 +169,8 @@ export function createHandler(deps) {
       if (sub === 'commits') return projects.commits(...at(id, branch, query.get('limit')))
       // several Branches' Commits in one call: ?branch=a&branch=b
       if (sub === 'branch-commits') return projects.branchCommits(id, query.getAll('branch'), store)
+      // the Sandboxes with their mounted Workspaces: the one read that asks Sandbox daemons
+      if (sub === 'sandboxes') return projects.sandboxes(...at(id))
       if (sub === 'fs') return projects.listDir(...at(id, branch, query.get('path') ?? '/'))
       if (sub === 'file') return projects.file(...at(id, branch, query.get('path')))
       return undefined
@@ -177,7 +179,10 @@ export function createHandler(deps) {
     if (group === 'demos') {
       if (!id && method === 'GET') return engine().demos()
       if (id && !sub && method === 'GET') return found(engine().demo(id), `demo ${id}`)
-      if (id && sub === 'runs' && method === 'POST') return engine().start(id)
+      // every scenario at once, each in its own folder of the project: { project }
+      if (id === 'all' && sub === 'runs' && method === 'POST') return engine().startAll({ project: body?.project ?? null })
+      // one scenario in a folder of its own on a project that is there: { project } (a project key)
+      if (id && sub === 'runs' && method === 'POST') return engine().start(id, { project: body?.project ?? null })
       return undefined
     }
     if (group === 'runs') {

@@ -5,11 +5,16 @@
 //   create/init   runtime.project.start_init()/get_init(), importing an empty
 //                 source or the selected folder, with the runtime's progress;
 //                 with `store`, into that existing Store (layerfs#506)
-//   state         runtime.project.get_state(name): Branches, Commits, Layers and
-//                 the running Sandboxes' Workspaces, one read that starts no
-//                 Sandbox; runtime.sandbox.list() adds each container's state;
+//   state         the Store's facts only, no Sandbox daemon asked:
+//                 backend.store.project.get_history() (Branches, Commits,
+//                 Layers), project.list_sandboxes() and runtime.sandbox.list()
+//                 (each Sandbox's record and container state, no Workspaces),
 //                 backend.store.project.get_storage() the Store's totals, and
 //                 each Commit record its own added bytes
+//   sandboxes     the project's Sandboxes with their mounted Workspaces:
+//                 sandbox.list_workspaces per running Sandbox, each with its
+//                 own SANDBOX_MS limit; one that does not answer is marked
+//                 `reach: busy | unreachable` instead of failing the read
 //   commits       branch.list_commits, newest first, and each Commit's changed
 //                 paths from branch.diff_commits against its parent
 //   listDir/file  fs.list, fs.stat and fs.read
@@ -218,7 +223,7 @@ export class Projects {
     const manager = this.runs()
     if (manager) {
       try {
-        for (const r of manager.runs()) if (r?.project && !made.has(r.project)) made.set(r.project, { demo: r.demo ?? null, run: r.id ?? null })
+        for (const r of manager.runs()) if (r?.project && r.kind !== 'live' && !made.has(r.project)) made.set(r.project, { demo: r.demo ?? null, run: r.id ?? null })
         return made
       } catch (error) {
         this.log(`[host] runs(): ${error?.message ?? error}; reading run.json files instead`)
@@ -233,7 +238,7 @@ export class Projects {
     for (const folder of folders) {
       try {
         const r = JSON.parse(readFileSync(join(this.spec.runs, folder.name, 'run.json'), 'utf8'))
-        if (typeof r?.project === 'string' && !made.has(r.project)) made.set(r.project, { demo: r.demo ?? null, run: r.id ?? folder.name })
+        if (typeof r?.project === 'string' && r.kind !== 'live' && !made.has(r.project)) made.set(r.project, { demo: r.demo ?? null, run: r.id ?? folder.name })
       } catch {
         // a run folder without a readable record made no project we can name
       }
@@ -364,15 +369,14 @@ export class Projects {
   }
 
   /**
-   * One project's state read at a time: a poll while one runs shares it.
-   * get_state asks every mounted Workspace's daemon for its overlay storage,
-   * which a large Workspace takes minutes to scan; a read the page gave up on
-   * (STATE_MS) still runs in the daemon, so starting another per poll piled
-   * scans onto its connections until the agents' own calls waited forever.
+   * One read of `record` at a time: a poll while one runs shares it. A read
+   * the page gave up on still runs, so starting another per poll would pile
+   * calls onto the same connections. `kind` keeps the history read and the
+   * Sandboxes read apart.
    */
-  oneRead(record, read) {
+  oneRead(record, read, kind = 'state') {
     this.reading ??= new Map()
-    const key = keyOf(record)
+    const key = `${kind}:${keyOf(record)}`
     let pending = this.reading.get(key)
     if (!pending) {
       pending = read().finally(() => this.reading.delete(key))
@@ -381,23 +385,21 @@ export class Projects {
     return pending
   }
 
-  /** ProjectState: one get_state read, Branch Commit counts and the containers' states. */
+  /**
+   * ProjectState from the Store alone: its history, Branch Commit counts, its
+   * totals, and its Sandboxes from their records and containers. No Sandbox
+   * daemon is asked, so a busy or restarted Sandbox never slows or fails it;
+   * their Workspaces come from sandboxes().
+   */
   async state(name, store = null) {
     const record = await this.record(name, store)
     const runtime = await this.runtime()
-    const read = () =>
-      record.kind === 'postgresql'
-        ? this.postgresqlUrl(record.store).then((url) => readState(runtime, name, record.store, url))
-        : readState(runtime, name, record.shared ? record.store : null)
-    const [st, containers] = await Promise.all([
-      // a Sandbox whose daemon stopped answering would hold the read forever: the page gets an error instead
-      withinMs(this.oneRead(record, read), STATE_MS, `reading ${name}'s state`),
-      runtime.sandbox.list().catch((error) => {
-        this.log(`[host] sandbox.list: ${error?.message ?? error}`)
-        return []
-      }),
+    const [st, listed, containers] = await Promise.all([
+      withinMs(this.oneRead(record, () => this.use(record, ({ backend }) => backend.store.project.get_history())), STATE_MS, `reading ${name}'s history`),
+      this.listSandboxes(record),
+      this.containers(runtime),
     ])
-    // get_state lists 64 Branches at most (moreBranches): History needs them all
+    // get_history lists 64 Branches at most (moreBranches): History needs them all
     if (st.moreBranches) {
       const seen = new Set((st.branches ?? []).map((b) => b.name))
       const rest = (await this.use(record, ({ layerfs }) => listBranches(layerfs))).filter((b) => !seen.has(b.name))
@@ -422,11 +424,77 @@ export class Projects {
       project: this.summary(record, this.madeBy()),
       branches,
       layers,
-      sandboxes: sandboxInfos(record, st, containers),
+      sandboxes: sandboxInfos(record, listed, containers),
       last: newest ? commitInfo(newest) : null,
       commits: byId.size,
       store: file,
       storage: totals && storeStats(totals, st, branches, byId),
+    }
+  }
+
+  /** SandboxInfo[] with each running Sandbox's mounted Workspaces, each Sandbox asked on its own (sandboxRead). */
+  async sandboxes(name, store = null) {
+    const record = await this.record(name, store)
+    const runtime = await this.runtime()
+    const [listed, containers] = await Promise.all([this.listSandboxes(record), this.containers(runtime)])
+    const mine = containersOf(record, containers)
+    const reads = await Promise.all(listed.map((s) => this.sandboxRead(record, String(s.id), mine.get(String(s.id)))))
+    return sandboxInfos(record, listed, containers, reads)
+  }
+
+  /** The project's Sandbox records (project.list_sandboxes, one page), or none (logged) when the Store cannot answer. */
+  async listSandboxes(record) {
+    try {
+      const page = await this.use(record, ({ layerfs }) => layerfs.project.list_sandboxes(1000, 0))
+      return page.items.map(({ sandbox, ...rest }) => ({ id: sandbox, ...rest }))
+    } catch (error) {
+      this.log(`[host] list_sandboxes of ${keyOf(record)}: ${error?.message ?? error}`)
+      return []
+    }
+  }
+
+  /** runtime.sandbox.list(), or none (logged) when Docker cannot answer. */
+  containers(runtime) {
+    return runtime.sandbox.list().catch((error) => {
+      this.log(`[host] sandbox.list: ${error?.message ?? error}`)
+      return []
+    })
+  }
+
+  /**
+   * One Sandbox's mounted Workspaces: `{ workspaces }`, `{ gone: true }`, or
+   * `{ reach, detail }` when its daemon did not answer within SANDBOX_MS
+   * (`busy`) or refused (`unreachable`). A Sandbox whose container is not
+   * running is not asked. A call still in flight is shared, not repeated, and
+   * a Sandbox that did not answer is not asked again for SANDBOX_REST_MS.
+   */
+  async sandboxRead(record, id, container) {
+    if (!container) return { gone: true }
+    if (!container.running) return { workspaces: [] }
+    this.sandboxReads ??= new Map()
+    this.sandboxRests ??= new Map()
+    const key = `${keyOf(record)}#${id}`
+    const rest = this.sandboxRests.get(key)
+    if (rest && rest.until > Date.now()) return rest.answer
+    let pending = this.sandboxReads.get(key)
+    if (!pending) {
+      pending = this.use(record, ({ layerfs }) => layerfs.sandbox.list_workspaces(id, 1000, 0)).finally(() => this.sandboxReads.delete(key))
+      this.sandboxReads.set(key, pending)
+    }
+    try {
+      const page = await withinMs(pending, SANDBOX_MS, `Sandbox ${id}`)
+      this.sandboxRests.delete(key)
+      return { workspaces: page.items }
+    } catch (error) {
+      if (error?.code === 'NoSuchSandbox') return { gone: true }
+      const busy = error?.code === 'Timeout' || error?.code === 'Busy'
+      // the reason is at the end of a daemon's refusal, after the request it echoes
+      const message = String(error?.message ?? error)
+      const answer = { reach: busy ? 'busy' : 'unreachable', detail: `${error?.code ?? 'Failed'}: ${message.length > 300 ? `…${message.slice(-300)}` : message}`, workspaces: [] }
+      // only a daemon that did not answer rests: one that refused at once is asked again next read
+      if (busy) this.sandboxRests.set(key, { until: Date.now() + SANDBOX_REST_MS, answer })
+      this.log(`[host] Sandbox ${id} of ${keyOf(record)}: ${error?.code ?? ''} ${answer.detail}`)
+      return answer
     }
   }
 
@@ -469,7 +537,7 @@ export class Projects {
     })
   }
 
-  /** BranchInfo[] from a get_state answer; Branches whose Commits it cut short are listed (branch.list_commits) to count them. */
+  /** BranchInfo[] from a get_history answer; Branches whose Commits it cut short are listed (branch.list_commits) to count them. */
   async branchInfos(record, st, byId) {
     const list = st.branches ?? []
     const own = (b) => {
@@ -775,60 +843,52 @@ function storeStats(t, st, branches, byId) {
   }
 }
 
-/** SandboxInfo[]: get_state's running and gone Sandboxes, with their containers' states, and containers of the project neither lists. */
-function sandboxInfos(record, st, containers) {
+/** The project's Sandbox containers by Sandbox number. */
+function containersOf(record, containers) {
   const store = record.shared ? record.store : null
-  const mine = new Map(containers.filter((c) => c.project === record.name && (c.store ?? null) === store && c.sandbox != null).map((c) => [String(c.sandbox), c]))
+  return new Map(containers.filter((c) => c.project === record.name && (c.store ?? null) === store && c.sandbox != null).map((c) => [String(c.sandbox), c]))
+}
+
+/**
+ * SandboxInfo[]: the project's Sandbox records with their containers' states,
+ * then containers of the project no record lists. With `reads` (sandboxRead
+ * per record) each also has its mounted Workspaces, or `reach` when its daemon
+ * did not answer; without, the Workspaces are not read.
+ */
+function sandboxInfos(record, listed, containers, reads = null) {
+  const mine = containersOf(record, containers)
   const seen = new Set()
   const workspace = (id) => (w) => {
     const path = w.path ?? w.directory
     const branch = typeof w.branch === 'string' ? w.branch : (w.branch?.name ?? '')
     return { ws: `${id}:${path}`, branch, path }
   }
-  const info = (s, fallback, workspaces) => {
+  const out = listed.map((s, i) => {
     const id = String(s.id)
     seen.add(id)
     const c = mine.get(id)
-    return { id, name: s.name ?? c?.name ?? id, state: c?.state ?? fallback, image: s.image ?? c?.image ?? null, workspaces }
-  }
-  const out = [
-    ...(st.sandboxes ?? []).map((s) => info(s, 'running', (s.workspaces ?? []).filter((w) => w.mounted !== false && (w.path ?? w.directory)).map(workspace(String(s.id))))),
-    ...(st.gone ?? []).map((s) => info(s, 'gone', [])),
-  ]
+    const read = reads?.[i]
+    const info = { id, name: s.name ?? c?.name ?? id, state: read?.gone || !c ? 'gone' : c.state, image: s.image ?? c?.image ?? null, workspaces: [] }
+    if (read?.workspaces) info.workspaces = read.workspaces.filter((w) => w.mounted !== false && (w.path ?? w.directory)).map(workspace(id))
+    if (read?.reach) Object.assign(info, { reach: read.reach, detail: read.detail })
+    return info
+  })
   for (const [id, c] of mine) if (!seen.has(id)) out.push({ id, name: c.name, state: c.state, image: c.image ?? null, workspaces: [] })
   return out
 }
 
-/** How long a project state read may take before the page is told so. */
+/** How long the Store's history read may take before the page is told so. */
 const STATE_MS = 45_000
-/** Reads of a project's state before a vanished Workspace or Sandbox fails it. */
-const STATE_TRIES = 5
-
-/**
- * A read refused because a Workspace or Sandbox went away while it was read:
- * get_state lists the Workspaces, then reads each one, and on a project where
- * agents work they mount and unmount often.
- */
-const vanished = (error) => /Workspace path absent|UnexpectedEof|NoSuchWorkspace|NoSuchSandbox/.test(`${error?.code ?? ''} ${error?.message ?? ''}`)
-
-/** runtime.project.get_state (of the shared Store `store` when given), read again (up to STATE_TRIES) when what it read went away meanwhile. */
-export async function readState(runtime, name, store = null, url = null) {
-  for (let attempt = 1; ; attempt++) {
-    try {
-      // a PostgreSQL Store's project is read with its connection's URL, for this call only (layerfs#506 d)
-      return await (store ? runtime.project.get_state(name, undefined, { store, ...(url ? { url } : {}) }) : runtime.project.get_state(name))
-    } catch (error) {
-      if (attempt >= STATE_TRIES || !vanished(error)) throw error
-      await new Promise((resolve) => setTimeout(resolve, 50 * attempt))
-    }
-  }
-}
+/** How long one Sandbox's daemon may take to list its Workspaces before the Sandbox shows as busy. */
+const SANDBOX_MS = 4_000
+/** How long a Sandbox that did not answer is left alone before it is asked again. */
+const SANDBOX_REST_MS = 10_000
 
 /** `promise`, or a 504 Timeout refusal after `ms`. */
 function withinMs(promise, ms, what) {
   let timer
   const late = new Promise((_, reject) => {
-    timer = setTimeout(() => reject(refuse(504, 'Timeout', `${what}: no answer in ${ms / 1000} s (a Sandbox's daemon may not be answering)`)), ms)
+    timer = setTimeout(() => reject(refuse(504, 'Timeout', `${what}: no answer in ${ms / 1000} s (the Store may be busy)`)), ms)
   })
   return Promise.race([promise, late]).finally(() => clearTimeout(timer))
 }

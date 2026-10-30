@@ -7,6 +7,8 @@
 //   final.closed   no Sandbox of the project still runs
 // A scenario without final.json has no final checks. Each check is one
 // attempt; one that throws fails with its error, and the next still runs.
+// A run in a scope (host/runs/scope.js) is checked on its folder, Branches,
+// trunks and Sandboxes only: other runs may be playing in the project.
 import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { LayerFSBackend } from '@layerfs/backend'
@@ -38,7 +40,7 @@ export function readFinal(scenarioDir) {
  *   backend: its LayerFSBackend, made from client when not given (tests pass a stand-in)
  * @returns {Promise<{ name: string, ok: boolean, detail: string }[]>}
  */
-export async function finalChecks({ scenarioDir, project, client, backend }) {
+export async function finalChecks({ scenarioDir, project, client, backend, scope = null }) {
   let final
   try {
     final = readFinal(scenarioDir)
@@ -55,23 +57,25 @@ export async function finalChecks({ scenarioDir, project, client, backend }) {
     }
   }
   await attempt('final.order', async () => {
-    const order = await orderFailures(final, client, backend ?? LayerFSBackend.of(client))
+    const order = await orderFailures(final, client, backend ?? LayerFSBackend.of(client), scope)
     return result(
       'final.order',
       order.failures,
-      `${project}: every Branch's Commits, forks, merges and publishes as recorded (${order.branches} Branches, ${order.layers} Layers)`,
+      scope
+        ? `/${scope.run}: every Branch's Commits, forks, merges and publishes as recorded (${order.branches} Branches, ${order.layers - 1} publishes to its trunk)`
+        : `${project}: every Branch's Commits, forks, merges and publishes as recorded (${order.branches} Branches, ${order.layers} Layers)`,
     )
   })
   await attempt('final.tree', async () => {
-    const tree = await finalTreeFailures(final, client)
+    const tree = await finalTreeFailures(final, client, scope)
     return result(
       'final.tree',
       tree.failures,
-      `${tree.files} tracked files on main as recorded (${tree.varies.stamped} by stamped name, ${tree.varies.content} by presence)`,
+      `${tree.files} tracked files ${scope ? `in /${scope.run} on ${scope.trunk().branch}` : 'on main'} as recorded (${tree.varies.stamped} by stamped name, ${tree.varies.content} by presence)`,
     )
   })
   await attempt('final.closed', async () => {
-    const open = await openSandboxes(client)
+    const open = await openSandboxes(client, scope)
     return result(
       'final.closed',
       open.map((s) => `${s} still runs`),

@@ -9,44 +9,39 @@ Source: `src/renderer/src/App.tsx` (the shell), `src/renderer/src/components/`.
 
 ```text
 +-[1] Sidebar ---------------------+-[2] Screen --------------------------------------------------+
-| (o) LayerFS Connect              | Page header: title, facts                [ action ] [ ...  ] |
-|     Demo replays on real LayerFS |  Tab   Tab   Tab                                    Tab N    |
-|                                  |  ===                                                         |
-| > LayerFS                    2   |                                                              |
-| > Models   ChatGPT - gpt-6.1-sol | +----------------------------------------------------------+ |
-|                                  | |                                                          | |
-| [ + New session            v ]   | |  The tab's content                                       | |
-|                                  | |                                                          | |
-| SESSIONS                  All v  | |                                                          | |
-| v playground                 28  | |                                                          | |
-|     * /crew_2   REPLAY  3 h ago  | |                                                          | |
-|     * /depot_2  REPLAY  3 h ago  | +----------------------------------------------------------+ |
-|     Show all 28                  | [3] Composer (a session only)                                |
+| [o] LayerFS Connect              | Page header: title, facts       [ Play scenario v ] [ ... ] |
+|  * Projects                    + |  History   Storage   Sandboxes | Sessions 3 |               |
+| RESOURCES                        |  ====                                                        |
+|    Storage                       | +----------------------------------------------------------+ |
+|    Compute                       | |                                                          | |
+| YOUR PROJECTS  3       All v  ↻  | |  The tab's content                                       | |
+| > [] shop               *  + x   | |                                                          | |
+|   | o Fix the checkout test      | |                                                          | |
+|   | * Crew  crew_2 · 31/96       | +----------------------------------------------------------+ |
+| LOCAL CHATS                    + |                                                              |
 +----------------------------------+--------------------------------------------------------------+
 ```
 
-1. **Sidebar** (`AppSidebar`, `app-sidebar.tsx`): navigation and every
-   session. See [sidebar.md](sidebar.md).
-2. **Screen** (`App`, `App.tsx`): the LayerFS page, a project page or a
-   session page. A change of screen cross-fades.
-3. **Composer** (`Composer`, `runs/composer.tsx`): under a session's
-   conversation only.
+1. **Sidebar** (`AppSidebar`, `app-sidebar.tsx`): the pages, every project
+   with its chat conversations and scenario runs, and local chats. See
+   [sidebar.md](sidebar.md).
+2. **Screen** (`App`, `App.tsx`): Projects (the default), Storage, Compute,
+   Chat, a project page or a run page. A change of screen cross-fades.
 
-## The screens (15 files)
+## The screens
 
 | Group | Screen | File |
 |---|---|---|
 | Shell | Sidebar | [sidebar.md](sidebar.md) |
-| LayerFS page | Projects | [layerfs-projects.md](layerfs-projects.md) |
+| Pages | Projects | [layerfs-projects.md](layerfs-projects.md) |
 | | Storage | [layerfs-storage.md](layerfs-storage.md) |
 | | Compute | [layerfs-compute.md](layerfs-compute.md) |
-| Project page | Live | [project-live.md](project-live.md) |
-| | Timeline | [project-timeline.md](project-timeline.md) |
+| Project page | Live (top of Sessions) | [project-live.md](project-live.md) |
 | | History (and Files) | [project-history.md](project-history.md) |
 | | Storage | [project-storage.md](project-storage.md) |
 | | Sandboxes | [project-sandboxes.md](project-sandboxes.md) |
-| | Sessions (and Script) | [project-sessions.md](project-sessions.md) |
-| Session page | Conversation (and Composer) | [session-conversation.md](session-conversation.md) |
+| | Sessions, Script and Play scenario | [project-sessions.md](project-sessions.md) |
+| Run page | Conversation and Checks | [session-conversation.md](session-conversation.md) |
 | | Trace | [session-trace.md](session-trace.md) |
 | Dialogs | Models | [dialog-models.md](dialog-models.md) |
 | | New project | [dialog-new-project.md](dialog-new-project.md) |
@@ -55,18 +50,16 @@ Source: `src/renderer/src/App.tsx` (the shell), `src/renderer/src/components/`.
 
 ```text
 Sidebar
- |- LayerFS ---------> LayerFS page:  Projects | Storage | Compute
- |                        |
- |                        '- a project card -----> Project page
- |- Models ----------> Models dialog
- |- New session -----> a project's draft session, or the New project dialog
- '- a session row ---> Session page (inside its project)
+ |- Projects / Storage / Compute --> those pages
+ |- a project row -----------------> Project page
+ |- a chat row, + on a project, + on Local chats --> Chat
+ '- a run row ---------------------> Run page (under its project)
 
-Project page:  Live | Timeline | History | Storage | Sandboxes          Sessions N
-                                    ^                                       |
-                                    |                                       '- a row -> Session page
-Session page:  Conversation | Trace |
-                              '- an auto-checkpoint link --> History, on that Commit
+Project page:  History | Storage | Sandboxes  |  Sessions N (Live on top) | Script
+   |- Play scenario (or /scenario in a chat on the project) --> the new run's page
+   '- Sessions: a row --> Run page
+Run page:  Conversation | Checks | Trace
+                                    '- an auto-checkpoint link --> History, on that Commit
 ```
 
 ## Shared pieces
@@ -84,9 +77,9 @@ Session page:  Conversation | Trace |
 
 Open a screen directly with `CONNECT_VIEW`:
 
-- `projects`
-- `projects/<project>[/<tab>]`
-- `runs/<session id>[/<agent>]`
+- `projects` (the default) or `chat`
+- `projects/<project>[/<tab>]` (tabs: history, storage, sandboxes, sessions, script; `live` opens Sessions)
+- `runs/<run id>[/<agent>]`
 - `storage`
 - `compute`
 

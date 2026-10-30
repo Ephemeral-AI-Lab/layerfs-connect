@@ -45,7 +45,7 @@ function parseArgs(argv) {
 async function loadRuns(spec, projects) {
   try {
     const { RunManager } = await import('./runs/index.js')
-    return { runs: new RunManager({ spec, scenarios: join(APP, 'scenarios'), beforeRemove: (name) => projects.forget(name) }), error: null }
+    return { runs: new RunManager({ spec, scenarios: join(APP, 'scenarios') }), error: null }
   } catch (error) {
     log(`[host] the demo engine did not load: ${error?.code === 'ERR_MODULE_NOT_FOUND' ? error.message : (error?.stack ?? error)}`)
     return { runs: null, error: error?.message ?? String(error) }

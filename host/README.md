@@ -183,6 +183,11 @@ receives `NODE_OPTIONS=--import=…` and a `layerfs` shim on PATH:
 folder those links point at (`config.js` `API`). Project bash instead executes
 inside the managed container through the host's LayerFS SDK; it does not
 receive host resolver paths, credentials or shell environment.
+A scenario run's agents' bash calls (`runs/`) get the same import and shim,
+plus `LAYERFS_CONNECT_SCOPE` (the run's scope folder): with it set,
+`resolve-layerfs.js` loads the SDK's `client.js` through
+`runs/scope-client.js`, which puts each call in the run's scope first (see
+"Where a run plays").
 
 ## Deployment ([`config.js`](config.js))
 
@@ -196,8 +201,9 @@ receive host resolver paths, credentials or shell environment.
   home's containers (dsh's are `layerfs-…`).
 - `deploymentEnv(spec, project)` / `layerfsEnv` give host-side replay calls
   its `LAYERFS_*` settings: PROJECT, HOME, DOCKER, IMAGE, DAEMON, VOLUME,
-  STORE_PATH, CONTAINER_PREFIX, WORKER_ENDPOINT. The run adds LAYERFS_TRACE,
-  LAYERFS_TRACE_STEP and LAYERFS_TRACE_START=1.
+  STORE_PATH, STORE, CONTAINER_PREFIX, WORKER_ENDPOINT (a PostgreSQL Store's
+  project: STORE_POSTGRESQL and no VOLUME). The run adds LAYERFS_TRACE,
+  LAYERFS_TRACE_STEP, LAYERFS_TRACE_START=1 and LAYERFS_CONNECT_SCOPE.
 
 ## Layout
 
@@ -221,6 +227,9 @@ host/
   checks/              final checks of a finished run (final.json …)
   parse/               the call parser: splits each step into classified segments
   runs/                the scenario engine: loader, runner, agents, tools, expect, traces
+    folder.js          a run's folder /<scenario>_<n>/ and trunk in its project; landing on main
+    scope.js           a run's scope: its folder, Branch namespace, trunks and Sandbox numbers
+    scope-client.js    the SDK's client.js for a run's bash calls, each call put in the scope first
   run-demo.js          headless: runs one demo through the same engine, prints progress, exits 0 on pass
   test/                node:test files (each run ≤ 120 s)
 scenarios/<id>/        scenario.json (+ seed.json, changes/, final.json)
@@ -259,7 +268,8 @@ errors are `{ code, message }` with a 4xx/5xx status. CORS allows any origin
 | `GET /api/projects` | `ProjectSummary[]` |
 | `POST /api/projects` | `{ name, source?, store? }` starts a real Init and returns `ProjectInitJob`; omit `source` for an empty project, or provide an existing absolute folder to import. With `store` the project goes into that existing Store (layerfs#506), else into a new SQLite Store of its own. Existing names return 409 without changing the existing project. |
 | `GET /api/project-inits/:id` | `ProjectInitJob`: the runtime's `scan`, `volume`, `import`, `done` or `failed` step, live counts, terminal error, and `ProjectSummary` on success. Unknown or expired jobs return 404. Polling never restarts a job. |
-| `GET /api/projects/:name` | `ProjectState` (branches, layers, Sandboxes, last Commit, Commit count, Store file and size, Store totals and each Commit's added bytes) |
+| `GET /api/projects/:name` | `ProjectState` from the Store alone (branches, layers, Sandboxes from their records and containers with no Workspaces, last Commit, Commit count, Store file and size, Store totals and each Commit's added bytes); asks no Sandbox daemon |
+| `GET /api/projects/:name/sandboxes` | `SandboxInfo[]` with each running Sandbox's mounted Workspaces (`sandbox.list_workspaces`, each Sandbox on its own with a 4 s limit); one that did not answer has `reach: 'busy'` (left alone 10 s), one that refused `reach: 'unreachable'`, both with `detail` |
 | `GET /api/projects/:name/commits?branch=&limit=` | `CommitInfo[]`, newest first |
 | `GET /api/projects/:name/branch-commits?branch=a&branch=b` | `{ [branch]: CommitInfo[] }`: several Branches' Commits in one call; main's are `[]`, a Branch gone meanwhile is left out |
 | `GET /api/projects/:name/fs?branch=&path=` | `FsEntry[]` of one folder |
@@ -267,11 +277,12 @@ errors are `{ code, message }` with a 4xx/5xx status. CORS allows any origin
 | `DELETE /api/projects/:name` | `{ removed: true }` (`runtime.project.delete`, confirm by name; `project.remove` on a LayerFS build from before layerfs#506). Refused 409 `Busy` while an agent session on the project works |
 | `GET /api/demos` | `DemoSummary[]` |
 | `GET /api/demos/:id` | `DemoDetail` (every agent's steps, parsed) |
-| `POST /api/demos/:id/runs` | `RunSummary`: a replay. Resets the demo's project `<id>` (removed if there, Inited again from the fixture), then plays; 409 while the demo replays |
+| `POST /api/demos/:id/runs` | `RunSummary`: scenario `id` plays on project `project` (body `{ project }`, a project key: `store/name` in a shared Store; 400 without it, 404 when it is not there), in a folder `/<id>_<n>/` of its own (see "Where a run plays"); other runs and Chat sessions there go on |
+| `POST /api/demos/all/runs` | `RunSummary[]`: every scenario on `project` at once (body `{ project }`), each in its own folder; the first run of each |
 | `GET /api/runs?demo=` | `RunSummary[]`, newest first |
 | `GET /api/runs/:id` | `RunDetail` |
-| `GET /api/runs/:id/trace?agent=&before=&limit=` | `TracePage`: one agent's Trace rows (runs/trajectory.js), newest last; `limit` (default 400) rows before `before` (default the end). A live session's model side comes from pi's log, a replay's from the scenario's script |
-| `POST /api/runs/:id/stop` | `RunSummary` |
+| `GET /api/runs/:id/trace?agent=&before=&limit=` | `TracePage`: one agent's Trace rows (runs/trajectory.js), newest last; `limit` (default 400) rows before `before` (default the end). A replay's model side comes from the scenario's script (a live session an earlier build saved: pi's log) |
+| `POST /api/runs/:id/stop` | `RunSummary`: the run stops (a queued one is dropped) |
 | `DELETE /api/runs/:id` | `{ id }`; removes a finished session's saved record and execution logs, keeping its LayerFS project; 409 while running |
 | `GET /api/events?token=` | `text/event-stream`, one `data: <HostEvent JSON>` per event: the runs' events, interactive chat snapshots, and from `storage.js` `{ type: 'sync', job }` and `{ type: 'storage' }` (below) |
 
@@ -386,7 +397,8 @@ Local-folder sessions change only their conversation context.
 const runs = new RunManager({ spec, scenarios: '<connect>/scenarios' })
 runs.demos()          // DemoSummary[]
 runs.demo(id)         // DemoDetail | null
-await runs.start(id)  // RunSummary; the run goes on in the background
+await runs.start(id, { project })  // RunSummary; the run goes on in the background
+await runs.startAll({ project })   // RunSummary[]: every scenario at once
 runs.runs(demo?)      // RunSummary[]
 runs.run(id)          // RunDetail | null
 runs.stop(id)         // RunSummary
@@ -398,36 +410,91 @@ await runs.close()
 Successful removal emits `{ type: 'run-removed', id, demo }` so the sidebar,
 selected view, and project summaries can refresh together.
 
-A run is a replay. Each demo has one LayerFS project, named after it
-(`tour`, `crew`, …). A replay removes that project if it is there (its
-Sandboxes stopped; the host's open client of it is closed first), Inits it
-again from the demo's fixture (seed demos write their seed out first), makes
-the run folder
-`runs/<runId>/` (`work/` is every agent's bash cwd, `traces/<agent>.jsonl`
-the SDK trace per agent, `run.json` the record), then plays the root agent.
-Each agent is a session of the project. A scenario of several sessions
+A run plays a scenario on a project that is there (`project` is its key:
+the name, or `store/name` in a shared Store), beside anything else playing
+on it, Chat sessions included. It makes the run folder `runs/<runId>/`
+(`work/` is every agent's bash cwd, `traces/<agent>.jsonl` the SDK trace per
+agent, `scope/` the run's scope state, `run.json` the record), sets up its
+folder in the project (seed scenarios write their seed out first), then
+plays the root agent. A scenario of several sessions
 (scenarios/README.md) starts a run per session as one launch (`Launch` in
-run.js): the first resets the project, the others wait for its Init, all
-play on it at once, a cut-short one stops the others, and the project's
-Sandboxes are closed once. Only the newest replay's Branches,
-Commits and Sandboxes are in the project; earlier replays keep their record
-(conversation, trace, checks).
+run.js): the first sets up the folder, the others wait for it, all play in
+it at once, a cut-short one stops the others, the scope's Sandboxes are
+closed once, and the folder lands once every session passed. A project of a
+PostgreSQL Store plays too: `config.js` `notePostgresql` notes its
+connection's URL in this process for the run's clients, bash calls and
+Sandboxes.
+
+### Where a run plays
+
+- **Folder and trunk** (`runs/folder.js`). The run is named
+  `<scenario>_<n>` (`-` as `_`; the lowest `n` whose trunk is free). It
+  forks the trunk `<run>.main` from main and Commits the scenario's fixture
+  into `/<run>/` on it, in a Workspace (tar through `workspace.exec`, so
+  modes and symlinks are kept). A fixture's `/.lww` also goes to the root,
+  its rules moved under the folder, since LayerFS reads only the root's.
+- **Scope** (`runs/scope.js`, `runs/scope-client.js`). Every agent bash call
+  has `LAYERFS_CONNECT_SCOPE` set, and `resolve-layerfs.js` then loads the
+  SDK's `client.js` through `scope-client.js`, which puts each call in the
+  run's scope before the real client traces and sends it: paths under
+  `/<run>/`; `main` is the current trunk; Branch `x` is `<run>.x`; Commit
+  and Layer ids pass; `workspace.exec` and `process.start` run `cd <run>`
+  first; Sandbox numbers are the run's own, from 1, mapped to the
+  project's. `branch.publish B [commit]` becomes `branch.fork
+  <run>.main.<k>` from B (or the Commit), and the trunk moves to it only
+  when the fork worked: one trunk Branch per publish, as main has one Layer
+  per publish. Answers come back in the script's names (its Sandbox
+  numbers, Branch names, paths), so scripts run as written. A Workspace's
+  Branch that `sandbox.list_workspaces` leaves null (it names Branches only
+  among a project's first 64,
+  [Ephemeral-AI-Lab/layerfs#480](https://github.com/Ephemeral-AI-Lab/layerfs/issues/480))
+  is filled from the run's own mounts. The trace
+  records the real calls, so an expect of `branch.publish:<kind>` is read
+  as `branch.fork:Forked` (`scopedScenario`).
+- **Checks** (`checks/`). With the scope, `final.order` compares the run's
+  own Branches (names without the prefix) and its trunks as main's Layers
+  (`scopedHistoryOf`; the record's forks from a published Layer read as forks
+  from the Commit it published, `translateRecorded`). Two things differ
+  between merging a Layer and merging a trunk Branch, and both are read the
+  recorded way: a `merge x main` that fast-forwards onto the trunk starts
+  the new Branch's own Commits there (the scope keeps these in `ffs/`), and
+  a recorded merge of a Layer that published an ancestor of the merge's
+  first input may be absent (on a trunk there is nothing to merge).
+  `final.tree` hashes `/<run>/` on the last trunk, and `final.closed` looks
+  at the run's Sandboxes only. Cleanup (`closeRunSandboxes`) closes only
+  those too; one whose daemon does not answer within 30 s is stopped as a
+  container (`sandboxContainer`: `<prefix>[<store>.]<project>-<n>`).
+- **Landing on main.** When the checks pass, the last trunk joins main, one
+  run at a time per project (`landOnMain`): a Branch `<run>.land` from the
+  trunk with main's `/.lww` put back, merged with main into `<run>.landed`,
+  which is published. Runs touch only their own folders, so the merge is
+  clean; its result is the check `main.landed`, and the run passes only
+  with it. A failed or stopped run leaves main alone; its Branches stay.
+
 Semantics follow dsh-layerfs exactly (its `packages/mock/src`: scenario.js,
 plan.js, progress.js, expect.js; dsh's tool schemas for subagent,
 send_message, job_* and bash). One attempt per call, nothing retried; a
-failed step fails the run; a run has 15 minutes. Two replays (of different
-demos) may play at once; a launch's sessions count as one.
+failed step fails the run; a run has 15 minutes, counted from when it starts
+playing. Up to 16 launches play at once (`MAX_PLAYING`; a launch's sessions
+count as one), and of those at most `HEAVY_AT_ONCE` (2) heavy ones: a
+scenario tagged `node` or `rust` (it installs and builds) or with 100 steps or
+more (`isHeavy`). A heavy launch past that is queued, `starting` with
+`queued: true` and a phase that says so, and plays when one ends; one stopped
+while it waits is dropped. Eleven at once, four heavy among them, timed most
+runs out on an 8 GiB Docker VM. Live Pi sessions of the engine (an earlier
+build's `kind: 'live'` runs) are not served: Chat (`agents/`) replaces them;
+their saved records still list and read.
 
 The run follows its agents' trace start and end lines
 ([`runs/live.js`](runs/live.js)): the calls running now, the Sandboxes each
 agent made and the Workspaces it mounted (with each one's last exec and
 Commit count). `RunDetail.live` holds them and a `live` event carries them,
 at most every 120 ms; the renderer's Live tab draws them.
-A run that does not pass closes its project's Sandboxes (background
+A run that does not pass closes its scope's Sandboxes (background
 processes cancelled, Workspaces unmounted with discard) and records
 `swept: true`; a host that starts finds any run left unswept by a host that
-was killed and sweeps it once (only the newest run on a project: an
-earlier replay's project is gone).
+was killed and sweeps it once (a record from before scopes: only the newest
+run on a project, since a newer replay reset it).
 
 ## The parser (`parse/`)
 

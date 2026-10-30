@@ -6,6 +6,7 @@ import { t, useI18n } from '@/i18n'
 // Cards and Workspaces rise in as they appear.
 import type { SandboxInfo } from '@shared/host-api'
 import type { CSSProperties } from 'react'
+import { FolderTree } from 'lucide-react'
 
 import { SANDBOX_CAPACITY, sandboxTone } from '@/components/compute/sandbox-list'
 import { LfsBranch, LfsSandbox, LfsWorkspace } from '@/components/lfs-icons'
@@ -32,7 +33,7 @@ function Slots({ used }: { used: number }) {
   )
 }
 
-function SandboxTile({ s, index }: { s: SandboxInfo; index: number }) {
+function SandboxTile({ s, index, reading, onBrowseFiles }: { s: SandboxInfo; index: number; reading?: boolean; onBrowseFiles?: (branch: string) => void }) {
   useI18n()
   const state = sandboxTone(s.state)
   const running = s.state === 'running'
@@ -70,7 +71,15 @@ function SandboxTile({ s, index }: { s: SandboxInfo; index: number }) {
         <Slots used={s.workspaces.length} />
       </div>
       <ul className="mt-3 flex flex-1 flex-col gap-1.5 px-4" aria-label={t("Mounted Workspaces")}>
-        {s.workspaces.length === 0 ? (
+        {s.reach ? (
+          <li className="flex items-center gap-2 rounded-lg border border-dashed border-warning/40 px-3 py-2.5 text-xs text-warning" title={s.detail}>
+            <LfsWorkspace className="size-3.5 opacity-60" />
+            {s.reach === 'busy' ? t('Busy: its daemon did not answer in time, so its Workspaces are not shown') : t('Not reachable: its daemon refused, so its Workspaces are not shown')}
+          </li>
+        ) : reading && s.workspaces.length === 0 && running ? (
+          <li className="flex items-center gap-2 rounded-lg border border-dashed px-3 py-2.5 text-xs text-faint">
+            <LfsWorkspace className="size-3.5 animate-pulse opacity-60" />{t('Reading its Workspaces…')}</li>
+        ) : s.workspaces.length === 0 ? (
           <li className="flex items-center gap-2 rounded-lg border border-dashed px-3 py-2.5 text-xs text-faint">
             <LfsWorkspace className="size-3.5 opacity-60" />{t("No Workspace mounted")}</li>
         ) : (
@@ -89,6 +98,17 @@ function SandboxTile({ s, index }: { s: SandboxInfo; index: number }) {
                 <LfsBranch className="size-3 shrink-0 text-muted-foreground" />
                 <span className="min-w-0 break-all">{ws.branch || t('Unknown branch')}</span>
               </span>
+              {onBrowseFiles && ws.branch && (
+                <button
+                  type="button"
+                  onClick={() => onBrowseFiles(ws.branch)}
+                  title={t('Browse the files on {branch}', { branch: ws.branch })}
+                  className="flex shrink-0 items-center gap-1 rounded-lg px-1.5 py-0.5 font-medium text-muted-foreground outline-none transition-colors hover:bg-foreground/[0.05] hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  <FolderTree className="size-3" />
+                  {t('Browse files')}
+                </button>
+              )}
             </li>
           ))
         )}
@@ -102,7 +122,7 @@ function SandboxTile({ s, index }: { s: SandboxInfo; index: number }) {
 }
 
 /** Open Sandboxes as tiles, closed ones as a row of names. */
-export function SandboxTiles({ sandboxes }: { sandboxes: SandboxInfo[] }) {
+export function SandboxTiles({ sandboxes, reading, onBrowseFiles }: { sandboxes: SandboxInfo[]; reading?: boolean; onBrowseFiles?: (branch: string) => void }) {
   useI18n()
   const open = sandboxes.filter((s) => s.state !== 'gone')
   const closed = sandboxes.filter((s) => s.state === 'gone')
@@ -110,7 +130,7 @@ export function SandboxTiles({ sandboxes }: { sandboxes: SandboxInfo[] }) {
     <div className="@container/sandboxes flex min-w-0 flex-col gap-4">
       <div className="grid gap-3 @min-[44rem]/sandboxes:grid-cols-2">
         {open.map((s, i) => (
-          <SandboxTile key={s.id} s={s} index={i} />
+          <SandboxTile key={s.id} s={s} index={i} reading={reading} onBrowseFiles={onBrowseFiles} />
         ))}
         {open.length === 0 && (
           <div className="col-span-full flex flex-col items-center gap-2 rounded-xl border border-dashed px-6 py-10 text-center">

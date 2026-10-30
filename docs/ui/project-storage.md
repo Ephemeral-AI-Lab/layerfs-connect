@@ -7,7 +7,7 @@ Source: `src/renderer/src/components/projects/project-storage.tsx` (`ProjectStor
 
 ```text
 +-[1] Tab row -------------------------------------------------------------------------------------+
-| Live   Timeline   History   Storage   Sandboxes                |  Sessions 28   [ > Replay | v ] |
+| History   Storage   Sandboxes                                  |  Sessions 28   [ > Replay | v ] |
 |                             =======                                                              |
 +--------------------------------------------------------------------------------------------------+
      +-[2] StoreCard -------------------------------------------------------------------------+
@@ -55,7 +55,7 @@ Source: `src/renderer/src/components/projects/project-storage.tsx` (`ProjectStor
 
 ## Regions
 
-1. **Tab row** (`ProjectPage`, `projects/project-view.tsx`): the project page's first row (the sidebar names the project): Live, Timeline, History, Storage, Sandboxes, then Sessions with its count, then `ReplayControl` (`runs/replay-control.tsx`), shown once the demo is read. Every tab reads the project's newest session (`RunPanel`, `runs/run-view.tsx`).
+1. **Tab row** (`ProjectPage`, `projects/project-view.tsx`): the project page's first row (the sidebar names the project): History, Storage, Sandboxes, then Sessions with its count, then `ReplayControl` (`runs/replay-control.tsx`), shown once the demo is read. Every tab reads the project's newest session (`RunPanel`, `runs/run-view.tsx`).
 2. **StoreCard** (`StoreCard`, `projects/project-storage.tsx`): "Local SQLite Store" and a line on what it holds, then the story (`StoreStatsBody`), in a 1000 px column.
 3. **StoreStatsBody headline** (`StoreStatsBody`, `projects/project-storage.tsx`; `CountBytes`, `SavedRing`, `projects/store-visuals.tsx`): "ON DISK" bytes counting up, "for 2.0 GB of history", "25x smaller" (shown from 1.1x), the Commit, Branch and Layer counts, and the ring "96% saved".
 4. **DiskFlow** (`DiskFlow`, `projects/store-visuals.tsx`), section 1 "From history to disk": four stages (Every snapshot, Unique, Compressed, On disk) with bytes and share. A band whose thickness is the bytes is marked "8.1x dedupe", "3.6x compression" and "+ 7.4 MB metadata". Pills follow: "main, latest, raw", "from Init" (when known), "SQLite pages", and "free" (when any).

@@ -190,7 +190,9 @@ scripted sessions and replay controls are no longer part of the desktop UI.
   The **+** beside Projects in the sidebar opens the same dialog. Entries marked
   by the host as demo runs are omitted; their stored files are kept.
 - A **project page** reads the project directly, without requiring a demo run.
-  History, Worktrees, Storage and Sandboxes show the host's actual data. Empty
+  History, Storage and Sandboxes show the host's actual data; Sessions (with
+  the Live diagram on top while a run plays) and Script appear for projects
+  that play scenarios. Empty
   projects show empty states instead of sample workspaces or execution data.
   **New chat** opens a fresh draft bound to that project without starting an
   agent until the first message is sent.
@@ -305,7 +307,7 @@ node --import ./host/resolve-layerfs.js --test host/test/*.test.js tools/checks/
 Developer scenario fixtures can still run without the window:
 
 ```bash
-node --import ./host/resolve-layerfs.js host/run-demo.js tour
+node --import ./host/resolve-layerfs.js host/run-demo.js tour --project <key>  # an existing project; plays in /tour_<n>/
 ```
 
 Drive the running app's host from a terminal (it writes

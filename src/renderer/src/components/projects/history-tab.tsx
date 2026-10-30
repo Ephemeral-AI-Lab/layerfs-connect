@@ -1,6 +1,6 @@
 import { t, useI18n } from '@/i18n'
 import { CircleAlert, GitCommitVertical, Network, X } from 'lucide-react'
-import { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react'
+import { Suspense, lazy, useEffect, useMemo, useState } from 'react'
 import { projectLabel, type CommitInfo, type ProjectState } from '@shared/host-api'
 
 import { Segmented, type SegmentedOption } from '@/components/motion'
@@ -80,6 +80,8 @@ interface HistoryTabProps {
   runId?: string
   /** Changes when the run moved on, so the history reloads. */
   tick?: number
+  /** The project as the page already read it: the tab reads only Commits then, not the project again. */
+  state?: ProjectState
   /** Dev aid: the Branch to focus and the view to open on. */
   initialBranch?: string
   initialView?: HistoryView
@@ -89,21 +91,25 @@ interface HistoryTabProps {
   initialItem?: HistoryItem
 }
 
-export function HistoryTab({ project, runId, tick = 0, ...rest }: HistoryTabProps) {
+/**
+ * Each project's last read, kept across remounts: a reread asks only for the
+ * Branches whose head moved, all in one call, and a remount paints at once.
+ */
+const lastRead = new Map<string, { state: ProjectState; commits: Record<string, CommitInfo[]> }>()
+
+export function HistoryTab({ project, runId, tick = 0, state: given, ...rest }: HistoryTabProps) {
   const { locale } = useI18n()
-  // the last read of this project: a reread asks only for the Branches whose head moved, all in one call
-  const last = useRef<{ project: string; state: ProjectState; commits: Record<string, CommitInfo[]> } | null>(null)
   const q = useHostQuery(async () => {
-    const before = last.current?.project === project ? last.current : null
-    const state = await host.project(project)
+    const before = lastRead.get(project)
+    const state = given ?? (await host.project(project))
     const heads = new Map(before?.state.branches.map((b) => [b.name, b.head]))
     const moved = state.branches.filter((b) => !before?.commits[b.name] || heads.get(b.name) !== b.head).map((b) => b.name)
     const fresh = moved.length > 0 ? await host.branchCommits(project, moved) : {}
     const commits = Object.fromEntries(state.branches.map((b) => [b.name, fresh[b.name] ?? before?.commits[b.name] ?? []]))
-    last.current = { project, state, commits }
+    lastRead.set(project, { state, commits })
     const run = runId ? await host.run(runId).catch(() => undefined) : undefined
     return { state, commits, run }
-  }, [project, runId, tick])
+  }, given ? [project, runId, given] : [project, runId, tick], `history:${project}:${runId ?? ''}`)
   const tree = useMemo(() => q.data && buildForkTree(q.data.state, q.data.commits, q.data.run), [q.data, locale])
 
   if (!tree) {
