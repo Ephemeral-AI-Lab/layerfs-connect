@@ -82,7 +82,7 @@ export function DiskGauge({
         </dt>
         <dd className="mt-2">
           <div className="flex items-baseline gap-2">
-            <span className={cn('text-2xl font-bold tracking-tight tabular-nums', low ? 'text-amber-600 dark:text-amber-400' : 'text-foreground')}>
+            <span className={cn('text-2xl font-medium tracking-tight tabular-nums', low ? 'text-amber-600 dark:text-amber-400' : 'text-foreground')}>
               {free === null ? (
                 <span className="text-base font-medium text-muted-foreground">{unknown}</span>
               ) : (

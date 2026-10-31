@@ -111,8 +111,8 @@ export function CursorAura({ className }: CursorAuraProps) {
     }
 
     // The loop runs only while something moves and stops when the glow has
-    // settled; a pointer event starts it again. The hue is written (orbs and
-    // the root's --cursor-hue, which restyles every element that reads it)
+    // settled; a pointer event starts it again. The root's --cursor-hue
+    // (which restyles every element that reads it) is written
     // only when it moves a whole degree, at most every HUE_MS.
     let shownHue = -1
     let hueAt = 0
@@ -134,13 +134,6 @@ export function CursorAura({ className }: CursorAuraProps) {
         if (hue !== shownHue && now - hueAt >= HUE_MS) {
           shownHue = hue
           hueAt = now
-          const isDark = document.documentElement.classList.contains('dark')
-          const sat = isDark ? 42 : 58
-          const light = isDark ? 58 : 80
-          const op1 = isDark ? 0.08 : 0.18
-          const op2 = isDark ? 0.025 : 0.06
-          orbWide.style.background = `radial-gradient(circle, hsla(${hue}, ${sat}%, ${light}%, ${op1}), hsla(${hue}, ${sat}%, ${light}%, ${op2}) 42%, transparent 72%)`
-          orbCore.style.background = `radial-gradient(circle, hsla(${hue}, ${sat}%, ${light + 6}%, ${op1 * 0.7}), hsla(${hue}, ${sat}%, ${light + 6}%, ${op2 * 0.5}) 40%, transparent 72%)`
           document.documentElement.style.setProperty('--cursor-hue', String(hue))
         }
       }
@@ -186,20 +179,20 @@ export function CursorAura({ className }: CursorAuraProps) {
       aria-hidden="true"
       style={{ opacity: 0 }}
       className={cn(
-        'pointer-events-none fixed inset-0 z-0 overflow-hidden will-change-[opacity]',
+        'cursor-aura pointer-events-none fixed inset-0 z-0 overflow-hidden will-change-[opacity]',
         className,
       )}
     >
       {/* Monochromatic Outer Diffusion: Single-color fade */}
       <span
         ref={orbWideRef}
-        className="cursor-orb absolute top-0 left-0 size-[720px] rounded-full will-change-transform"
+        className="cursor-orb cursor-orb-wide absolute top-0 left-0 size-[720px] rounded-full will-change-transform"
       />
 
       {/* Monochromatic Specular Core: Exact same single-color hue */}
       <span
         ref={orbCoreRef}
-        className="cursor-orb absolute top-0 left-0 size-[320px] rounded-full will-change-transform"
+        className="cursor-orb cursor-orb-core absolute top-0 left-0 size-[320px] rounded-full will-change-transform"
       />
     </div>
   )

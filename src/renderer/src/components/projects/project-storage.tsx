@@ -26,7 +26,7 @@ function StorageDetails({ s, store, stats }: { s: ProjectState; store: StoreFact
     <dl className="grid gap-x-6 gap-y-4 px-5 pb-5 sm:grid-cols-2 lg:grid-cols-3">
       <Fact label={t('Created')}>{when(s.project.created)}</Fact>
       <Fact label={t(store.family === 'postgresql' ? 'Connection' : 'Volume')}>
-        <span className="font-mono text-xs">{store.family === 'postgresql' ? store.connection ?? '—' : s.project.volume ?? '—'}</span>
+        <span className="text-xs">{store.family === 'postgresql' ? store.connection ?? '—' : s.project.volume ?? '—'}</span>
       </Fact>
       {stats && <>
         <Fact label={t('Current snapshot')}>{bytes(stats.main)}</Fact>
@@ -63,7 +63,7 @@ export function ProjectStorageContent({ state: s, store }: { state: ProjectState
     <dl className="grid grid-cols-2 gap-x-5 gap-y-5 px-5 pt-2 pb-6 sm:grid-cols-4">
       {metrics.map(({ label, value }) => <div key={label} className="min-w-0">
         <dt className="text-xs text-muted-foreground">{t(label)}</dt>
-        <dd className="mt-1.5 text-xl font-semibold tracking-tight tabular-nums">{bytes(value)}</dd>
+        <dd className="mt-1.5 text-xl font-medium tracking-tight tabular-nums">{bytes(value)}</dd>
       </div>)}
     </dl>
     {store.shared && <p className="px-5 pb-4 text-xs leading-relaxed text-muted-foreground">{t('Shared Store. Sync affects its other projects.')}</p>}

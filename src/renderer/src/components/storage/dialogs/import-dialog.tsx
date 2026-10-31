@@ -107,7 +107,7 @@ export function ImportForm({ view, store: fixedStore, connection: fixedConnectio
           </span>
           <div className="flex min-w-0 items-center justify-end gap-2.5 text-right">
             <div className="min-w-0">
-              <p className="truncate font-mono text-[13px] font-semibold">{target?.name ?? t('connection')}</p>
+              <p className="truncate text-[13px] font-semibold">{target?.name ?? t('connection')}</p>
               <p className="truncate text-[11.5px] text-muted-foreground">{t('new Store {name}', { name: name || '…' })}</p>
             </div>
             <FamilyTile family="postgresql" size="md" />
@@ -130,7 +130,7 @@ export function ImportForm({ view, store: fixedStore, connection: fixedConnectio
                 <SelectContent>
                   {sqlite.map((s) => (
                     <SelectItem key={s.name} value={s.name}>
-                      <span className="font-mono text-[13px]">{s.name}</span>
+                      <span className="text-[13px]">{s.name}</span>
                       <span className="text-[12px] text-muted-foreground">{count(s.projects.length, 'project')}</span>
                     </SelectItem>
                   ))}
@@ -145,7 +145,7 @@ export function ImportForm({ view, store: fixedStore, connection: fixedConnectio
                 <SelectContent>
                   {connections.map((c) => (
                     <SelectItem key={c.name} value={c.name}>
-                      <span className="font-mono text-[13px]">{c.name}</span>
+                      <span className="text-[13px]">{c.name}</span>
                       <HealthDot health={c.health} quiet />
                     </SelectItem>
                   ))}
@@ -171,7 +171,7 @@ export function ImportForm({ view, store: fixedStore, connection: fixedConnectio
                 }}
                 spellCheck={false}
                 autoComplete="off"
-                className="rounded-xl font-mono text-[13px]"
+                className="rounded-xl text-[13px]"
                 aria-invalid={!!problem}
               />
             </Field>

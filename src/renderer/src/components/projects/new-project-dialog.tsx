@@ -326,7 +326,7 @@ function StoreField({ stores, remotes, value, chosen, newStore, problem, onChang
                 ) : (
                   <span className="flex min-w-0 items-center gap-2">
                     <StoreIcon family="sqlite" providers={chosen ? storeProviders(chosen, remotes) : []} size="sm" className="[&>span]:size-6" />
-                    <span className="truncate font-mono">{value}</span>
+                    <span className="truncate">{value}</span>
                   </span>
                 )}
               </SelectValue>
@@ -339,7 +339,7 @@ function StoreField({ stores, remotes, value, chosen, newStore, problem, onChang
               <SelectItem key={item.name} value={item.name} textValue={item.name} className="rounded-xl py-2 pr-8 pl-2.5 data-[state=checked]:bg-primary/[0.07] [&>span:last-child]:min-w-0 [&>span:last-child]:flex-1">
                 <StoreIcon family="sqlite" providers={storeProviders(item, remotes)} size="sm" />
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate font-mono text-xs font-medium">{item.name}</span>
+                  <span className="block truncate text-xs font-medium">{item.name}</span>
                   <span className="mt-0.5 block truncate text-[10.5px] text-muted-foreground tabular-nums">
                     {t(item.projects.length === 1 ? "{count} project" : "{count} projects", { count: item.projects.length })} · {item.size ? bytes(item.size.bytes) : t("size unknown")}
                   </span>
@@ -348,7 +348,7 @@ function StoreField({ stores, remotes, value, chosen, newStore, problem, onChang
               </SelectItem>
             ))}
             {pending && (
-              <SelectItem value={pending} textValue={pending} className="rounded-xl py-2 pr-8 pl-2.5 font-mono text-xs">{pending}</SelectItem>
+              <SelectItem value={pending} textValue={pending} className="rounded-xl py-2 pr-8 pl-2.5 text-xs">{pending}</SelectItem>
             )}
             {(stores?.length ?? 0) > 0 && <SelectSeparator className="mx-2 my-1 bg-foreground/[0.06]" />}
             <SelectItem value={NEW_STORE} textValue={t("New SQLite Store")} className="rounded-xl py-2.5 pr-8 pl-2.5 text-xs data-[state=checked]:bg-primary/[0.07]">
@@ -360,7 +360,7 @@ function StoreField({ stores, remotes, value, chosen, newStore, problem, onChang
       </Select>
       {making ? (
         <>
-          <Input aria-label={t("New Store name")} value={newStore} maxLength={32} autoComplete="off" spellCheck={false} placeholder={t("my-store")} aria-invalid={!!problem} className="h-9 rounded-xl font-mono text-xs md:text-xs" onChange={(event) => onNewStore(event.target.value)} />
+          <Input aria-label={t("New Store name")} value={newStore} maxLength={32} autoComplete="off" spellCheck={false} placeholder={t("my-store")} aria-invalid={!!problem} className="h-9 rounded-xl text-xs md:text-xs" onChange={(event) => onNewStore(event.target.value)} />
           <p className={cn('text-[11px] leading-relaxed', problem ? 'text-destructive' : 'text-muted-foreground')}>
             {problem ? t(problem) : t("A new SQLite Store in its own Docker volume; more projects can join it later.")}
           </p>

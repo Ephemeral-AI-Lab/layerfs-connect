@@ -6,7 +6,7 @@
 .chat-markdown > * + * { margin-top: 12px; }
 .chat-markdown :where(h1, h2, h3, h4, h5, h6) {
   color: var(--foreground);
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold, 550);
   line-height: 1.45;
   letter-spacing: -0.02em;
 }
@@ -101,7 +101,7 @@
 .chat-md-table { overflow-x: auto; }
 .chat-md-table table { width: 100%; border-collapse: collapse; font-size: 13px; text-align: left; }
 .chat-md-table :where(th, td) { min-width: 100px; padding: 8px 12px; vertical-align: top; }
-.chat-md-table th { background: color-mix(in oklab, var(--foreground) 3%, transparent); font-weight: 600; }
+.chat-md-table th { background: color-mix(in oklab, var(--foreground) 3%, transparent); font-weight: 500; }
 .chat-md-table tbody tr { border-top: 1px solid color-mix(in oklab, var(--foreground) 6%, transparent); }
 .chat-md-table :where(th + th, td + td) { border-left: 1px solid color-mix(in oklab, var(--foreground) 5%, transparent); }
 .chat-md-image { display: block; max-width: 100%; max-height: 480px; height: auto; margin: 8px 0; border-radius: 10px; object-fit: contain; }

@@ -183,7 +183,7 @@ function SqliteList({ pane, pick, locked }: ListProps) {
         <>
           <Label>{t('Buckets')}</Label>
           {buckets.map((r) => (
-            <Item key={r.name} icon={<ProviderMark provider={r.provider} className="size-3.5" />} health={r.health} mono {...item({ kind: 'bucket', name: r.name })}>
+            <Item key={r.name} icon={<ProviderMark provider={r.provider} className="size-3.5" />} health={r.health} {...item({ kind: 'bucket', name: r.name })}>
               {r.name}
             </Item>
           ))}
@@ -219,7 +219,7 @@ function PostgresqlList({ pane, pick, locked }: ListProps) {
         <>
           <Label>{t('Databases')}</Label>
           {connections.map((c) => (
-            <Item key={c.name} icon={<Database />} health={c.health} mono {...item({ kind: 'database', name: c.name })}>
+            <Item key={c.name} icon={<Database />} health={c.health} {...item({ kind: 'database', name: c.name })}>
               {c.name}
             </Item>
           ))}
@@ -246,7 +246,6 @@ interface ItemProps {
   /** Why it can't be used now; shown on hover, and the line dims. */
   off?: string | null
   health?: Health
-  mono?: boolean
   /** A "+" line: quieter until chosen. */
   quiet?: boolean
   locked: boolean
@@ -255,7 +254,7 @@ interface ItemProps {
 }
 
 /** One line of the list: an icon, the words, a health dot; chosen, it sits on a raised pill. */
-function Item({ icon, on, off, health, mono, quiet, locked, onClick, children }: ItemProps) {
+function Item({ icon, on, off, health, quiet, locked, onClick, children }: ItemProps) {
   const w = health ? healthWords(health) : null
   return (
     <button
@@ -272,7 +271,7 @@ function Item({ icon, on, off, health, mono, quiet, locked, onClick, children }:
       )}
     >
       <span className={cn('flex w-4 shrink-0 justify-center text-muted-foreground [&_svg]:size-3.5', off && 'opacity-60')}>{icon}</span>
-      <span className={cn('min-w-0 flex-1 truncate', mono && 'font-mono text-[12.5px]')}>{children}</span>
+      <span className="min-w-0 flex-1 truncate">{children}</span>
       {w && <Dot tone={w.tone} label={t(w.label)} />}
     </button>
   )
@@ -379,7 +378,7 @@ function BucketPane({ name, onLoad, onPage }: { name: string; onLoad: (remote: s
   if (!r) return <Off title={name} reason={t('This connection is gone.')} />
   return (
     <>
-      <PaneHead mark={<ProviderTile provider={r.provider} size="sm" />} title={<span className="font-mono">{r.name}</span>}>
+      <PaneHead mark={<ProviderTile provider={r.provider} size="sm" />} title={r.name}>
         {providerLabel(r.provider)}
       </PaneHead>
       <Facts
@@ -402,7 +401,7 @@ function DatabasePane({ name, onPage }: { name: string; onPage: (r: Route) => vo
   const stores = s.view.stores.list.filter((x) => x.connection === c.name)
   return (
     <>
-      <PaneHead mark={<FamilyTile family="postgresql" size="sm" />} title={<span className="font-mono">{c.name}</span>}>
+      <PaneHead mark={<FamilyTile family="postgresql" size="sm" />} title={c.name}>
         PostgreSQL{c.health.serverVersion ? ` ${c.health.serverVersion}` : ''}
       </PaneHead>
       <Facts
@@ -417,7 +416,7 @@ function DatabasePane({ name, onPage }: { name: string; onPage: (r: Route) => vo
         {stores.length ? (
           stores.map((x) => (
             <button key={x.name} type="button" onClick={() => onPage({ view: 'store', id: x.name })} className={ROW}>
-              <span className="min-w-0 flex-1 truncate font-mono text-[13px]">{x.name}</span>
+              <span className="min-w-0 flex-1 truncate text-[13px]">{x.name}</span>
               <span className="text-[11.5px] text-muted-foreground">{count(x.projects.length, 'project')}</span>
             </button>
           ))
@@ -441,7 +440,7 @@ function Files({ remote, titled, onLoad, onPage }: { remote: RemoteInfo; titled?
           {titled ? (
             <>
               <ProviderMark provider={remote.provider} className="size-3" />
-              <span className="truncate font-mono">{remote.name}</span>
+              <span className="truncate">{remote.name}</span>
             </>
           ) : (
             t('Files')

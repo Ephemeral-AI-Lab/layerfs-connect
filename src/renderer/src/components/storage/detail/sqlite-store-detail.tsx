@@ -63,7 +63,7 @@ function InPostgresql({ store, index }: { store: StoreInfo; index: number }) {
                   <span className="min-w-0 flex-1">
                     <span className="block truncate font-semibold group-hover:text-primary">{x.name}</span>
                     <span className="block truncate text-xs text-muted-foreground">
-                      <span className="font-mono">{x.connection}</span> · <SizeText store={x} />
+                      {x.connection} · <SizeText store={x} />
                       {x.importedFrom?.at ? ` · ${t('imported {ago}', { ago: ago(x.importedFrom.at) })}` : ''}
                     </span>
                   </span>
@@ -122,7 +122,7 @@ export function SqliteStoreDetail({ name }: { name: string }) {
             <>
               <span aria-hidden="true">·</span>
               <span>
-                {t('volume')} <span className="font-mono text-[12px]">{store.volume}</span>
+                {t('volume')} <span className="text-[12px]">{store.volume}</span>
               </span>
             </>
           )}
@@ -160,7 +160,7 @@ export function SqliteStoreDetail({ name }: { name: string }) {
 
       <Section index={6} aria-label={t('Facts')}>
         <dl className="grid grid-cols-2 items-end gap-x-6 gap-y-3 px-5 py-4 @min-[760px]/storage:grid-cols-[1fr_1fr_auto]">
-          <Fact label={t('Volume')} mono>
+          <Fact label={t('Volume')}>
             {store.volume ?? '—'}
           </Fact>
           <Fact label={t('Created')} title={when(store.created)}>

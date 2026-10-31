@@ -44,7 +44,7 @@ export function ModelSelector({ models, provider, modelId, thinking, thinkingOpt
         {models.length === 0 ? <p className="px-2.5 py-3 text-xs text-muted-foreground">{t("Add a provider in Manage models to get started.")}</p> : models.map((model) => {
           const selected = provider === model.provider && modelId === model.id
           return <DropdownMenuItem key={`${model.provider}/${model.id}`} disabled={disabled} onSelect={() => onModel(model.provider, model.id)} className="gap-2 rounded-lg px-2.5 py-2">
-            <span className="min-w-0 flex-1"><span className={cn('block truncate text-xs', selected && 'font-medium text-foreground')}>{model.name || model.id}</span><span className="mt-0.5 block truncate font-mono text-[10px] text-faint">{model.provider}/{model.id}</span></span>
+            <span className="min-w-0 flex-1"><span className={cn('block truncate text-xs', selected && 'font-medium text-foreground')}>{model.name || model.id}</span><span className="mt-0.5 block truncate text-[10px] text-faint">{model.provider}/{model.id}</span></span>
             {selected && <Check className="size-3.5 shrink-0 text-foreground" />}
           </DropdownMenuItem>
         })}

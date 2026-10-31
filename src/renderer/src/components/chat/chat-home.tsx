@@ -625,8 +625,8 @@ export function ChatHome({ projects, initialProject, initialSession, startNew, o
     ...(session ? [{ id: 'trace' as const, label: 'Trace' }] : []),
     ...(activeProject ? PROJECT_VIEWS : []),
   ].map((item) => ({ ...item, label: t(item.label) })))
-  // a new chat before its first message: no header, the title and the composer in the middle of the page
-  const fresh = !session && !loading && messages.length === 0 && shown === 'chat'
+  // Leave the welcome layout as soon as submission starts, before the session is created.
+  const fresh = !session && !loading && !pending && messages.length === 0 && shown === 'chat'
   const workspaceMenus = () => (
     <WorkspaceMenus
       cwd={session?.cwd ?? cwd}
@@ -772,12 +772,12 @@ export function ChatHome({ projects, initialProject, initialSession, startNew, o
             <div role="status" className="flex items-center justify-center gap-2 py-24 text-sm text-muted-foreground">
               <LoaderCircle className="size-4 animate-spin text-primary" />  {t("Loading…")}
             </div>
-          ) : messages.length === 0 ? (
+          ) : fresh ? (
             <h2 className="flex items-center justify-center gap-3 text-center text-[26px] font-semibold tracking-[-0.025em] text-foreground">
               <ConnectMark className="size-9 shrink-0" />
               {t("What would you like to build?")}
             </h2>
-          ) : (
+          ) : messages.length > 0 ? (
             <ConversationMessages
               key={session?.id}
               sessionId={session?.id}
@@ -788,7 +788,7 @@ export function ChatHome({ projects, initialProject, initialSession, startNew, o
               onProcessToggle={() => { followBottom.current = false }}
               onAction={(action, target, returnFocus) => { if (session) setConversationAction({ action, session, message: target, returnFocus }) }}
             />
-          )}
+          ) : null}
 
           {running && waitingApprovals === 0 && messages.at(-1)?.status !== 'running' && (
             <div className="flex min-h-8 items-center py-1">
@@ -915,7 +915,7 @@ export function ChatHome({ projects, initialProject, initialSession, startNew, o
         </div>
       </div>
       {/* below the composer: half the free height while the chat is new, so the title and composer sit in the middle */}
-      <div aria-hidden="true" className={cn('shrink-0 transition-[flex-grow] duration-(--dur-slow) ease-out-expo', fresh ? 'grow' : 'grow-0')} />
+      {fresh && <div aria-hidden="true" className="grow shrink-0" />}
 
       </div>
 

@@ -65,8 +65,8 @@ export function PullDialog({ open, onOpenChange, store, onPull }: PullDialogProp
         </p>
       )}
       <p className="text-xs text-muted-foreground">
-        <span className="font-mono text-foreground">
-          {link.remote} / {link.file}
+        <span className="text-foreground">
+          {link.remote} / <span className="font-mono">{link.file}</span>
         </span>
         : {linkFacts(link)}
       </p>

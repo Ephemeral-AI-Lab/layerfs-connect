@@ -153,7 +153,7 @@ export interface AgentColor {
 
 // Agents take colours in the order they appear, root first.
 const AGENT_COLORS: AgentColor[] = [
-  { dot: 'bg-primary', text: 'text-primary', ring: 'ring-primary/30', soft: 'bg-primary/10' },
+  { dot: 'bg-(--icon-accent)', text: 'text-(--icon-accent)', ring: 'ring-(--icon-accent)/30', soft: 'bg-(--icon-accent)/10' },
   { dot: 'bg-agent-builder', text: 'text-agent-builder', ring: 'ring-agent-builder/30', soft: 'bg-agent-builder/10' },
   { dot: 'bg-agent-docs', text: 'text-agent-docs', ring: 'ring-agent-docs/30', soft: 'bg-agent-docs/10' },
   { dot: 'bg-agent-tester', text: 'text-agent-tester', ring: 'ring-agent-tester/30', soft: 'bg-agent-tester/10' },

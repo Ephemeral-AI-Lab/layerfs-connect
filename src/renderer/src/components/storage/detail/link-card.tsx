@@ -100,8 +100,8 @@ function SentNotice({ store }: { store: StoreInfo }) {
       <CopyPlus aria-hidden="true" className="size-4 text-primary" />
       <span>
         {t('Sent to')}{' '}
-        <span className="font-mono text-[12.5px]">
-          {sent.target} / {sent.file}
+        <span className="text-[12.5px]">
+          {sent.target} / <span className="font-mono">{sent.file}</span>
         </span>
         {sent.ended ? <span className="text-muted-foreground"> · {ago(sent.ended)}</span> : null}
       </span>
@@ -193,7 +193,7 @@ export function LinkCard({ store, index }: { store: StoreInfo; index?: number })
             <ProviderTile provider={link.provider} size="sm" />
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                <button type="button" onClick={() => s.open({ view: 'location', id: link.remote })} className="rounded-md font-mono text-[13.5px] font-semibold outline-none hover:text-primary focus-visible:ring-2 focus-visible:ring-ring">
+                <button type="button" onClick={() => s.open({ view: 'location', id: link.remote })} className="rounded-md text-[13.5px] font-semibold outline-none hover:text-primary focus-visible:ring-2 focus-visible:ring-ring">
                   {link.remote}
                 </button>
                 <span aria-hidden="true" className="text-faint">

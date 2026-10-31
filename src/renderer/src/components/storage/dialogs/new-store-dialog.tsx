@@ -63,7 +63,7 @@ export function NewStoreForm({ taken, onCreated, onClose, onLock }: NewStoreForm
         }}
       >
         <Field id={id} label={t('Name')} problem={problem}>
-          <Input id={id} value={name} onChange={(e) => setName(e.target.value)} placeholder="work" autoFocus disabled={busy} className="rounded-xl font-mono text-[13px]" aria-invalid={!!problem} />
+          <Input id={id} value={name} onChange={(e) => setName(e.target.value)} placeholder="work" autoFocus disabled={busy} className="rounded-xl text-[13px]" aria-invalid={!!problem} />
         </Field>
         <FormError error={error} />
         <div className="mt-auto">

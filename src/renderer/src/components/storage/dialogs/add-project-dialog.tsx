@@ -70,7 +70,7 @@ export function AddProjectDialog({ store, open, onOpenChange, onDone }: { store:
           }}
         >
           <Field id={ids.name} label={t('Name')} problem={problem}>
-            <Input id={ids.name} value={name} onChange={(e) => setName(e.target.value)} placeholder="my-project" autoFocus disabled={busy} className="rounded-xl font-mono text-[13px]" aria-invalid={!!problem} />
+            <Input id={ids.name} value={name} onChange={(e) => setName(e.target.value)} placeholder="my-project" autoFocus disabled={busy} className="rounded-xl text-[13px]" aria-invalid={!!problem} />
           </Field>
           <Field
             id={ids.folder}

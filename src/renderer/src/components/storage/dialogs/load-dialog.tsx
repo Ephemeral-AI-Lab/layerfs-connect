@@ -103,8 +103,8 @@ export function LoadForm({ view, remote, file, free, onDone, onOpenStore, onClos
         >
           <p className={`${INSET} flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px]`}>
             <ProviderMark provider={r?.provider} className="size-3.5" />
-            <span className="font-mono font-medium">
-              {remote} / {file}
+            <span className="font-medium">
+              {remote} / <span className="font-mono">{file}</span>
             </span>
             <span className="text-xs text-muted-foreground">
               · {listed ? bytes(listed.bytes) : t('size unknown')}
@@ -113,7 +113,7 @@ export function LoadForm({ view, remote, file, free, onDone, onOpenStore, onClos
           </p>
           {linkedBy ? (
             <p role="alert" className="flex flex-wrap items-center gap-2 text-xs text-warning">
-              {t('Already linked as')} <span className="font-mono">{linkedBy}</span>.
+              {t('Already linked as')} {linkedBy}.
               <Button
                 type="button"
                 size="xs"
@@ -130,7 +130,7 @@ export function LoadForm({ view, remote, file, free, onDone, onOpenStore, onClos
           ) : (
             <fieldset disabled={running} className="flex flex-col gap-3">
               <Field id={id} label={t('New Store')} problem={problem}>
-                <Input id={id} value={into} onChange={(e) => setInto(e.target.value)} spellCheck={false} autoComplete="off" className="rounded-xl font-mono text-[13px]" aria-invalid={!!problem} autoFocus />
+                <Input id={id} value={into} onChange={(e) => setInto(e.target.value)} spellCheck={false} autoComplete="off" className="rounded-xl text-[13px]" aria-invalid={!!problem} autoFocus />
               </Field>
               <p className={cn('-mt-1 text-[11.5px]', left !== null && left < LOW_DISK ? 'text-warning' : 'text-muted-foreground')}>
                 {listed?.bytes != null ? t('Needs {size} in the Docker volumes;', { size: bytes(listed.bytes) }) : t('Needs about the file’s size in the Docker volumes;')}{' '}

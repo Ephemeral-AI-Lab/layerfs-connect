@@ -130,7 +130,7 @@ export function StoreLine({ facts, className }: { facts: StoreFacts; className?:
       <StoreIcon family={facts.family} providers={facts.providers} size="sm" />
       <span className="min-w-0 flex-1">
         <span className="block truncate text-xs font-medium" title={facts.name ?? undefined}>{storeTitle(facts, t)}</span>
-        {detail && <span className="mt-0.5 block truncate font-mono text-[10.5px] text-muted-foreground" title={facts.link?.object ?? detail}>{detail}</span>}
+        {detail && <span className="mt-0.5 block truncate text-[10.5px] text-muted-foreground" title={facts.link?.object ?? detail}>{detail}</span>}
       </span>
     </span>
   )

@@ -26,7 +26,7 @@ export function ConnectionDetail({ name }: { name: string }) {
   if (!c)
     return (
       <>
-        <Breadcrumb items={[{ label: 'PostgreSQL' }, { label: name, mono: true }]} />
+        <Breadcrumb items={[{ label: 'PostgreSQL' }, { label: name }]} />
         <Gone what={name} />
       </>
     )
@@ -38,11 +38,11 @@ export function ConnectionDetail({ name }: { name: string }) {
   const notAnswering = down ? t('{name} is not answering', { name: c.name }) : undefined
   return (
     <>
-      <Breadcrumb items={[{ label: 'PostgreSQL' }, { label: c.name, mono: true }]} />
+      <Breadcrumb items={[{ label: 'PostgreSQL' }, { label: c.name }]} />
       <DetailHeader
         icon={<FamilyTile family="postgresql" size="lg" />}
         eyebrow={t('PostgreSQL connection')}
-        title={<span className="font-mono">{c.name}</span>}
+        title={c.name}
         badges={
           <span className="flex flex-wrap items-center gap-x-2.5 text-xs text-muted-foreground">
             <HealthDot health={h} />

@@ -1,19 +1,8 @@
-// The Live tab's moving parts, drawn straight into one SVG over the cards:
-// lanes from an agent through the Branch row it touched to the Workspace or
-// Sandbox it reached, the dots that travel them (out in the agent's colour,
-// back green or red), and the tree guides from each subagent to its parent.
-// Positions come from the cards' data-anchor elements, reread at most every
-// LAYOUT_MS while anything moves (and at once after a change), so lanes follow
-// cards as they come, go and fold. A frame writes only what changed, and dots
-// travel their lane's own path.
-//
-// The look is in live.css: a lane is a soft, wide line in its agent's colour
-// that widens with traffic; one that stays drawn (a mount, or the Branch an
-// agent works on) rests at that, and while it carries calls dashes flow along
-// it toward the target. Each lane has a socket at the card edges it touches,
-// plugs into its Branch row's edges, and a dot travels with a halo and a
-// short tail. Under reduced motion nothing
-// travels: lanes still light up and the cards a call reaches still ring.
+// Stable routes connect agents, Branches and Workspaces. A single chevron
+// follows a route for each call: outward in the agent's colour, back in green
+// or red. Running calls keep a brighter, still route between those moments.
+// Idle and reduced-motion scenes do not run an animation loop. Hover/focus
+// isolates a node's routes without intercepting its controls.
 
 /** Where a call travels: from an agent, through a Branch row (or the hub), to a target. */
 export interface FlowRoute {
@@ -32,6 +21,8 @@ export interface FlowScene {
   color: (agent: string) => string
   /** Lanes that stay drawn: a Workspace mounted by an agent, and the Branch an agent works on. */
   mounts: { key: string; route: FlowRoute }[]
+  /** Calls still running: their routes remain visible without repeated packets. */
+  active: FlowRoute[]
   /** Tree guides, as [child anchor, parent anchor]. */
   tree: [string, string][]
   /** Faint resting connectors between placeholders, as [from anchor, to anchor]: left card's right edge to right card's left edge. */
@@ -48,69 +39,53 @@ interface Rect {
 
 interface Lane {
   route: FlowRoute
-  /** The lane itself: a soft, wide line in the agent's colour, wider with traffic. */
+  el: SVGGElement
+  /** A fixed-width line; activity changes its emphasis, never its geometry. */
   path: SVGPathElement
-  /** Its dashes, flowing toward the target while it carries calls. */
-  dash: SVGPathElement
-  /** Sockets where the lane meets a card's edge. */
-  ports: SVGGElement
-  heat: number
-  /** Recent calls on it, decaying: sets its width. */
-  load: number
   /** It stays drawn: a mount, or where an agent works. */
   mounted: boolean
-  dots: number
+  active: boolean
+  packets: number
   /** What was last written to the DOM, so a frame only touches what changed. */
-  cls: string
-  flow: boolean
   d: string
   /** The path's length, measured when `d` changes. */
   len: number
-  style: string
 }
 
-interface Dot {
-  lane: Lane
-  /** The dot's group: removed when it arrives. */
+interface Link {
   el: SVGGElement
-  /** Halo and core, moved by transform. */
-  head: SVGGElement
-  tail: SVGCircleElement
+  path: SVGPathElement
+  lanes: Lane[]
+}
+
+interface Packet {
+  lane: Lane
+  el: SVGGElement
   t0: number
-  ms: number
   back: boolean
+  color: string
+  promise: Promise<void>
   done: () => void
 }
 
 const NS = 'http://www.w3.org/2000/svg'
 /** The shortest a leg is drawn, however fast the call: a 9 ms call still shows. */
-export const LEG_MS = 550
-/** A lane's glow after its last call. */
-const COOL_MS = 3000
-/** Dots on one lane at once; more calls only keep it warm. */
-const LANE_DOTS = 3
-const MAX_DOTS = 40
-/** A lane above this heat is carrying calls: its dashes flow. */
-const FLOW_HEAT = 0.12
-/** How far a dot's tail trails it, in px. */
-const TAIL_PX = 11
-/** The project's core rings at most this often, however many calls arrive. */
-const CORE_MS = 180
+export const LEG_MS = 650
+const MAX_PACKETS = 24
 /** Card positions are reread at most this often while lanes move. */
 const LAYOUT_MS = 100
-/** A lane's load halves over about this long. */
-const LOAD_MS = 6000
-/** A lane's width at rest, and the most traffic adds to it. */
-const LANE_W = 3
-const LANE_W_MAX = 6
 
 export const OK_CLASS = 'text-success'
 export const FAIL_CLASS = 'text-destructive'
 
 const laneKey = (r: FlowRoute) => `${r.agent}|${r.via ?? ''}|${r.to ?? ''}`
-const curve = (a: { x: number; y: number }, b: { x: number; y: number }) => {
-  const dx = (b.x - a.x) / 2
-  return `C ${a.x + dx} ${a.y}, ${b.x - dx} ${b.y}, ${b.x} ${b.y}`
+/** Rounded elbows keep every turn in the space between columns. */
+const elbow = (a: { x: number; y: number }, b: { x: number; y: number }, x: number) => {
+  const turn = Math.sign(b.y - a.y)
+  const r = Math.min(10, Math.abs(b.y - a.y) / 2, (b.x - a.x) / 4)
+  if (!turn) return `M ${a.x} ${a.y} H ${b.x}`
+  x = Math.max(a.x + r, Math.min(b.x - r, x))
+  return `M ${a.x} ${a.y} H ${x - r} Q ${x} ${a.y} ${x} ${a.y + turn * r} V ${b.y - turn * r} Q ${x} ${b.y} ${x + r} ${b.y} H ${b.x}`
 }
 const ease = (k: number) => (k < 0.5 ? 2 * k * k : 1 - (-2 * k + 2) ** 2 / 2)
 
@@ -121,15 +96,17 @@ export function colorVar(textClass: string): string {
 }
 
 export class FlowEngine {
-  private scene: FlowScene = { origin: (a) => `agent-${a}`, color: () => 'text-primary', mounts: [], tree: [] }
+  private scene: FlowScene = { origin: (a) => `agent-${a}`, color: () => 'text-primary', mounts: [], active: [], tree: [] }
   private lanes = new Map<string, Lane>()
-  private dots: Dot[] = []
+  private packets: Packet[] = []
+  private links = new Map<string, Link>()
+  private linkOrder: Link[] = []
   private raf = 0
-  private last = 0
   private disposed = false
   private rects = new Map<string, Rect | null>()
   private base: DOMRect | null = null
-  private coreAt = 0
+  private pointerAnchor: string | null = null
+  private focusAnchor: string | null = null
   /** When card positions were last read; 0 rereads them on the next frame. */
   private layoutAt = 0
   private treeD = ''
@@ -137,15 +114,18 @@ export class FlowEngine {
   private readonly treeEl: SVGPathElement
   private readonly ghostEl: SVGPathElement
   private readonly laneLayer: SVGGElement
-  private readonly dotLayer: SVGGElement
+  private readonly packetLayer: SVGGElement
+  private readonly linkLayer: SVGGElement
   private readonly observer: ResizeObserver
-  private readonly motion: boolean
+  private readonly motionQuery: MediaQueryList
+
+  private get motion() { return !this.motionQuery.matches }
 
   constructor(
     private readonly root: HTMLElement,
     svg: SVGSVGElement,
   ) {
-    this.motion = !window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    this.motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
     this.ghostEl = svg.appendChild(document.createElementNS(NS, 'path'))
     this.ghostEl.setAttribute('fill', 'none')
     this.ghostEl.setAttribute('class', 'live-ghost')
@@ -154,13 +134,20 @@ export class FlowEngine {
     this.treeEl.setAttribute('fill', 'none')
     this.treeEl.setAttribute('class', 'live-tree')
     this.treeEl.setAttribute('stroke-width', '1.5')
+    this.linkLayer = svg.appendChild(document.createElementNS(NS, 'g'))
     this.laneLayer = svg.appendChild(document.createElementNS(NS, 'g'))
-    this.dotLayer = svg.appendChild(document.createElementNS(NS, 'g'))
+    this.packetLayer = svg.appendChild(document.createElementNS(NS, 'g'))
     this.observer = new ResizeObserver(() => this.relayout())
     this.observer.observe(root)
-    // cards rise in and fold with CSS; draw once more when they settle
-    root.addEventListener('animationend', this.relayout)
+    // Reposition connectors when card transitions settle.
+    root.addEventListener('animationend', this.animationEnd)
     root.addEventListener('transitionend', this.relayout)
+    root.addEventListener('scroll', this.relayout, true)
+    root.addEventListener('pointerover', this.pointerOver)
+    root.addEventListener('pointerleave', this.pointerLeave)
+    root.addEventListener('focusin', this.focusIn)
+    root.addEventListener('focusout', this.focusOut)
+    this.motionQuery.addEventListener('change', this.motionChanged)
   }
 
   dispose() {
@@ -168,11 +155,35 @@ export class FlowEngine {
     cancelAnimationFrame(this.raf)
     this.raf = 0
     this.observer.disconnect()
-    this.root.removeEventListener('animationend', this.relayout)
+    this.root.removeEventListener('animationend', this.animationEnd)
     this.root.removeEventListener('transitionend', this.relayout)
-    const dots = this.dots
-    this.dots = []
-    for (const d of dots) d.done()
+    this.root.removeEventListener('scroll', this.relayout, true)
+    this.root.removeEventListener('pointerover', this.pointerOver)
+    this.root.removeEventListener('pointerleave', this.pointerLeave)
+    this.root.removeEventListener('focusin', this.focusIn)
+    this.root.removeEventListener('focusout', this.focusOut)
+    this.motionQuery.removeEventListener('change', this.motionChanged)
+    for (const layer of [this.ghostEl, this.treeEl, this.linkLayer, this.laneLayer, this.packetLayer]) layer.remove()
+    this.clearPackets()
+  }
+
+  private clearPackets() {
+    const packets = this.packets
+    this.packets = []
+    for (const packet of packets) {
+      packet.el.remove()
+      packet.lane.packets--
+      packet.done()
+    }
+  }
+
+  private motionChanged = () => {
+    if (this.motion) return
+    this.clearPackets()
+    for (const el of this.root.querySelectorAll('.live-flash')) el.classList.remove('live-flash')
+    cancelAnimationFrame(this.raf)
+    this.raf = 0
+    this.relayout()
   }
 
   /** The cards' current state: called on every render, so a frame follows each change. */
@@ -184,77 +195,119 @@ export class FlowEngine {
       lane.mounted = true
       keep.add(laneKey(m.route))
     }
-    for (const [key, lane] of this.lanes)
-      if (lane.mounted && !keep.has(key)) {
-        // unmounted: it fades out like any lane after its last call
-        lane.mounted = false
-        lane.heat = Math.max(lane.heat, 0.6)
-      }
+    const active = new Set<string>()
+    for (const route of scene.active) {
+      this.lane(route)
+      active.add(laneKey(route))
+    }
+    for (const [key, lane] of this.lanes) {
+      lane.mounted = keep.has(key)
+      lane.active = active.has(key)
+    }
+    this.emphasize()
     this.relayout()
   }
 
-  /**
-   * Sends one leg of a call along `route`: out in the agent's colour (a folded
-   * card it starts from rings, and the Branch row and target ring when it
-   * arrives), or back in `color`. Resolves when the dot arrives: at once
-   * without motion, or when the lane is too busy for another dot.
-   */
+  /** One outward/return packet. Concurrent calls share a direction; the return waits for departure. */
   send(route: FlowRoute, opts: { back?: boolean; color?: string } = {}): Promise<void> {
     if (this.disposed) return Promise.resolve()
     const lane = this.lane(route)
-    const agentColor = this.scene.color(route.agent)
-    lane.heat = 1
-    this.kick()
-    if (!opts.back) {
-      lane.load += 1
-      const origin = this.scene.origin(route.agent)
-      if (origin !== `agent-${route.agent}`) this.flash(origin, agentColor)
-    } else if (opts.color) {
-      // the call ended where it landed: that card glows green, or red when it failed
-      this.flash(route.to ?? route.via, opts.color)
-    }
-    const arrived = () => {
-      if (opts.back) return
-      this.flash(route.via, agentColor)
-      this.flash(route.to, agentColor)
-      const now = performance.now()
-      if (now - this.coreAt > CORE_MS) {
-        this.coreAt = now
-        this.flash('hub-core', agentColor)
+    const pending = this.packets.find((packet) => packet.lane === lane)
+    if (pending) {
+      if (pending.back !== !!opts.back) return pending.promise.then(() => this.send(route, opts))
+      // A failed result remains visible when several results share the return.
+      if (opts.color === FAIL_CLASS && pending.color !== FAIL_CLASS) {
+        pending.color = FAIL_CLASS
+        pending.el.setAttribute('class', `live-packet ${FAIL_CLASS}`)
+        this.flash(route.to ?? route.via ?? 'hub-core', FAIL_CLASS)
       }
+      return pending.promise
     }
-    if (!this.motion || lane.dots >= LANE_DOTS || this.dots.length >= MAX_DOTS) {
-      arrived()
-      return Promise.resolve()
-    }
-    return new Promise((resolve) => {
-      const { el, head, tail } = this.dot(opts.color ?? agentColor)
-      lane.dots++
-      this.dots.push({
-        lane,
-        el,
-        head,
-        tail,
-        t0: performance.now(),
-        ms: LEG_MS,
-        back: !!opts.back,
-        done: () => {
-          arrived()
-          resolve()
-        },
-      })
-    })
+    if (opts.back && opts.color) this.flash(route.to ?? route.via ?? 'hub-core', opts.color)
+    this.kick()
+    if (!this.motion || this.packets.length >= MAX_PACKETS) return Promise.resolve()
+    const color = opts.color ?? this.scene.color(route.agent)
+    const el = this.packet(color)
+    let done!: () => void
+    const promise = new Promise<void>((resolve) => { done = resolve })
+    lane.packets++
+    this.packets.push({ lane, el, color, back: !!opts.back, t0: performance.now(), promise, done })
+    this.emphasize()
+    return promise
   }
 
-  /** Rings an anchor's element in a colour (a Branch row a call reached, a folded card whose subagent called). */
+  /** One brief result on the destination, without restarting feedback already in progress. */
   flash(anchor: string | null, colorClass: string) {
-    if (!anchor) return
+    if (!anchor || !this.motion || this.disposed) return
     const el = this.element(anchor)
     if (!el) return
     el.style.setProperty('--flash', colorVar(colorClass))
-    el.classList.remove('live-flash')
-    void el.offsetWidth // restart the animation
     el.classList.add('live-flash')
+  }
+
+  private animationEnd = (event: AnimationEvent) => {
+    if (event.animationName === 'live-call-feedback' || event.animationName === 'live-core-feedback') {
+      if (event.target instanceof Element) event.target.classList.remove('live-flash')
+    } else this.relayout()
+  }
+
+  private anchorOf(target: EventTarget | null): string | null {
+    const el = target instanceof Element ? target.closest<HTMLElement>('[data-anchor]') : null
+    return el && this.root.contains(el) ? el.dataset.anchor ?? null : null
+  }
+
+  private pointerOver = (event: PointerEvent) => {
+    this.pointerAnchor = this.anchorOf(event.target)
+    this.emphasize()
+  }
+
+  private pointerLeave = () => {
+    this.pointerAnchor = null
+    this.emphasize()
+  }
+
+  private focusIn = (event: FocusEvent) => {
+    this.pointerAnchor = null
+    this.focusAnchor = this.anchorOf(event.target)
+    this.emphasize()
+  }
+
+  private focusOut = (event: FocusEvent) => {
+    this.focusAnchor = this.anchorOf(event.relatedTarget)
+    this.emphasize()
+  }
+
+  private emphasize() {
+    const anchor = this.pointerAnchor ?? this.focusAnchor
+    const selected = anchor ? this.element(anchor) : null
+    const relates = (route: FlowRoute) => !!selected && (
+      anchor === 'hub' || anchor === 'hub-core' || anchor === 'hub-rows' ||
+      [this.scene.origin(route.agent), route.via, route.to].some((key) => key && (key === anchor || selected.contains(this.element(key))))
+    )
+    const mark = (el: SVGGElement, route: FlowRoute) => {
+      const related = relates(route)
+      el.toggleAttribute('data-related', related)
+      el.toggleAttribute('data-dimmed', !!selected && !related)
+    }
+    for (const lane of this.lanes.values()) mark(lane.el, lane.route)
+    for (const packet of this.packets) mark(packet.el, packet.lane.route)
+    for (const link of this.links.values()) {
+      const related = link.lanes.filter((lane) => relates(lane.route))
+      const highlighted = related.find((lane) => lane.active) ?? related[0]
+      const active = link.lanes.find((lane) => lane.active || lane.packets > 0)
+      const owner = highlighted ?? active
+      link.el.toggleAttribute('data-related', related.length > 0)
+      link.el.toggleAttribute('data-dimmed', !!selected && related.length === 0)
+      link.el.toggleAttribute('data-active', !!active)
+      link.el.style.setProperty('--route-color', owner ? colorVar(this.scene.color(owner.route.agent)) : 'var(--muted-foreground)')
+    }
+    // Shared rail portions must not paint a quiet line over the highlighted route.
+    const priority = (link: Link) => link.el.hasAttribute('data-related') ? 2 : link.el.hasAttribute('data-active') ? 1 : 0
+    const ordered = [...this.links.values()].sort((a, b) => priority(a) - priority(b))
+    if (ordered.some((link, i) => this.linkOrder[i] !== link) || ordered.length !== this.linkOrder.length) {
+      for (const link of ordered) this.linkLayer.appendChild(link.el)
+      this.linkOrder = ordered
+    }
   }
 
   // ---------- drawing ----------
@@ -269,39 +322,32 @@ export class FlowEngine {
     if (!this.raf && !this.disposed) this.raf = requestAnimationFrame(this.frame)
   }
 
-  /** A dot: a soft halo and a bright core that move together, and a tail placed behind them. */
-  private dot(colorClass: string) {
-    const el = this.dotLayer.appendChild(document.createElementNS(NS, 'g'))
-    el.setAttribute('class', colorClass)
-    el.setAttribute('fill', 'currentColor')
-    const tail = el.appendChild(document.createElementNS(NS, 'circle'))
-    tail.setAttribute('r', '2.5')
-    tail.setAttribute('class', 'live-dot-tail')
-    const head = el.appendChild(document.createElementNS(NS, 'g'))
-    const halo = head.appendChild(document.createElementNS(NS, 'circle'))
-    halo.setAttribute('r', '9')
-    halo.setAttribute('class', 'live-dot-halo')
-    const core = head.appendChild(document.createElementNS(NS, 'circle'))
-    core.setAttribute('r', '4')
-    // the head moves by transform; the tail sits beside it so it can trail
-    return { el, head, tail }
+  /** The arrow tip follows the path tangent; no halo, trail or second moving line. */
+  private packet(colorClass: string) {
+    const el = this.packetLayer.appendChild(document.createElementNS(NS, 'g'))
+    el.setAttribute('class', `live-packet ${colorClass}`)
+    el.setAttribute('visibility', 'hidden')
+    const arrow = el.appendChild(document.createElementNS(NS, 'path'))
+    arrow.setAttribute('d', 'M -5 -3.5 L 0 0 L -5 3.5')
+    arrow.setAttribute('fill', 'none')
+    arrow.setAttribute('stroke', 'currentColor')
+    arrow.setAttribute('stroke-width', '2')
+    arrow.setAttribute('stroke-linecap', 'round')
+    arrow.setAttribute('stroke-linejoin', 'round')
+    return el
   }
 
   private lane(route: FlowRoute): Lane {
     const key = laneKey(route)
     let lane = this.lanes.get(key)
     if (!lane) {
-      const path = this.laneLayer.appendChild(document.createElementNS(NS, 'path'))
+      const el = this.laneLayer.appendChild(document.createElementNS(NS, 'g'))
+      el.setAttribute('class', 'live-route')
+      const path = el.appendChild(document.createElementNS(NS, 'path'))
       path.setAttribute('fill', 'none')
-      path.setAttribute('stroke', 'currentColor')
-      path.setAttribute('stroke-linecap', 'round')
-      const dash = this.laneLayer.appendChild(document.createElementNS(NS, 'path'))
-      dash.setAttribute('fill', 'none')
-      dash.setAttribute('stroke', 'currentColor')
-      dash.setAttribute('stroke-width', '2')
-      const ports = this.laneLayer.appendChild(document.createElementNS(NS, 'g'))
-      ports.setAttribute('fill', 'currentColor')
-      lane = { route, path, dash, ports, heat: 0, load: 0, mounted: false, dots: 0, cls: '', flow: false, d: '', len: 0, style: '' }
+      path.setAttribute('stroke', 'none')
+      path.setAttribute('class', 'live-lane')
+      lane = { route, el, path, mounted: false, active: false, packets: 0, d: '', len: 0 }
       this.layoutAt = 0
       this.lanes.set(key, lane)
     }
@@ -325,51 +371,83 @@ export class FlowEngine {
     return r
   }
 
-  /**
-   * The lane's path and the points where it meets a card's edge (its sockets).
-   * It plugs into the Branch row it passes: in at the row's left edge, out at
-   * its right edge toward the target, so a dot seems to pass through the
-   * Branch. A row scrolled out of the hub's list, or no row, uses the hub's
-   * edges instead. The path never crosses a card: it jumps (M) over the one
-   * it passes through.
-   */
-  private legs(route: FlowRoute): { d: string; ports: { x: number; y: number }[] } | null {
-    const a = this.rect(this.scene.origin(route.agent))
+  /** Dock at the hub's outside edge, aligned with its visible Branch row. */
+  private dock(route: FlowRoute): { hub: Rect; y: number } | null {
     const hub = this.rect('hub')
-    if (!a || !hub) return null
+    if (!hub) return null
     let row = route.via ? this.rect(route.via) : null
     const list = row ? this.rect('hub-rows') : null
     if (row && list && (row.y < list.t || row.y > list.b)) row = null
-    const y = row ? row.y : route.via ? Math.min(Math.max(hub.y, hub.t + 16), hub.b - 16) : hub.y
-    const inX = row ? row.l : hub.l
-    const outX = row ? row.r : hub.r
-    const from = { x: a.r, y: a.y }
-    const d = `M ${from.x} ${from.y} ${curve(from, { x: inX, y })}`
-    const to = route.to ? this.rect(route.to) : null
-    if (!to) return { d, ports: [from, { x: inX, y }] }
-    return {
-      d: `${d} M ${outX} ${y} ${curve({ x: outX, y }, { x: to.l, y: to.y })}`,
-      ports: [from, { x: inX, y }, { x: outX, y }, { x: to.l, y: to.y }],
-    }
+    return { hub, y: row?.y ?? hub.y }
   }
 
-  /** Places a lane's sockets: half-hidden circles under the cards' edges. */
-  private placePorts(lane: Lane, ports: { x: number; y: number }[]) {
-    const g = lane.ports
-    while (g.childNodes.length < ports.length) g.appendChild(document.createElementNS(NS, 'circle')).setAttribute('r', '3.5')
-    while (g.childNodes.length > ports.length) g.lastChild!.remove()
-    ports.forEach((p, i) => {
-      const c = g.childNodes[i] as SVGCircleElement
-      c.setAttribute('cx', String(p.x))
-      c.setAttribute('cy', String(p.y))
-    })
+  /** One stable rail in each gutter: adding calls does not fan out the wiring. */
+  private rails() {
+    const hub = this.rect('hub')
+    if (!hub) return { left: 0, right: 0 }
+    let fromX = 0
+    let toX = this.base!.width
+    for (const lane of this.lanes.values()) {
+      const from = this.rect(this.scene.origin(lane.route.agent))
+      if (from) fromX = Math.max(fromX, from.r)
+      const to = lane.route.to ? this.rect(lane.route.to) : null
+      if (to) toX = Math.min(toX, to.l)
+    }
+    return { left: (fromX + hub.l) / 2, right: (hub.r + toX) / 2 }
+  }
+
+  /** Logical packet paths jump across cards; visible links share identical legs. */
+  private legs(route: FlowRoute, rails: ReturnType<FlowEngine['rails']>): { d: string; parts: string[] } | null {
+    const a = this.rect(this.scene.origin(route.agent))
+    const dock = this.dock(route)
+    if (!a || !dock) return null
+    const { hub, y } = dock
+    const from = { x: a.r, y: a.y }
+    const entry = { x: hub.l, y }
+    const parts = [elbow(from, entry, rails.left)]
+    const to = route.to ? this.rect(route.to) : null
+    if (to) {
+      const exit = { x: hub.r, y }
+      const end = { x: to.l, y: to.y }
+      parts.push(elbow(exit, end, rails.right))
+    }
+    return { d: parts.join(' '), parts }
+  }
+
+  private syncLinks(parts: Map<string, Lane[]>) {
+    for (const [d, link] of this.links) {
+      if (!parts.has(d)) { link.el.remove(); this.links.delete(d) }
+    }
+    for (const [d, lanes] of parts) {
+      let link = this.links.get(d)
+      if (!link) {
+        const el = this.linkLayer.appendChild(document.createElementNS(NS, 'g'))
+        el.setAttribute('class', 'live-link')
+        const path = el.appendChild(document.createElementNS(NS, 'path'))
+        path.setAttribute('d', d)
+        path.setAttribute('fill', 'none')
+        path.setAttribute('stroke-width', '1.25')
+        path.setAttribute('stroke-linecap', 'round')
+        path.setAttribute('stroke-linejoin', 'round')
+        link = { el, path, lanes }
+        this.links.set(d, link)
+      }
+      link.lanes = lanes
+    }
+    this.emphasize()
   }
 
   private frame = (now: number) => {
     this.raf = 0
-    const dt = this.last ? Math.min(100, now - this.last) : 16
-    this.last = now
-    const layout = now - this.layoutAt >= LAYOUT_MS
+    // Drop finished routes before laying out their shared connections.
+    for (const [key, lane] of this.lanes) {
+      if (!lane.mounted && !lane.active && lane.packets === 0) {
+        lane.el.remove()
+        this.lanes.delete(key)
+        this.layoutAt = 0
+      }
+    }
+    const layout = this.layoutAt === 0 || now - this.layoutAt >= LAYOUT_MS
     if (layout) {
       this.layoutAt = now
       this.rects.clear()
@@ -377,90 +455,66 @@ export class FlowEngine {
       this.placeGuides()
     }
 
-    let warm = false
-    for (const [key, lane] of this.lanes) {
-      lane.heat = Math.max(0, lane.heat - dt / COOL_MS)
-      lane.load *= Math.exp(-dt / LOAD_MS)
-      if (!lane.mounted && lane.heat === 0 && lane.dots === 0) {
-        lane.path.remove()
-        lane.dash.remove()
-        lane.ports.remove()
-        this.lanes.delete(key)
-        continue
-      }
-      // a lane narrows back as its traffic fades
-      if (lane.heat > 0 || lane.load > 0.05) warm = true
-      if (layout) {
-        const legs = this.legs(lane.route)
+    const rails = layout ? this.rails() : null
+    const links = new Map<string, Lane[]>()
+    for (const lane of this.lanes.values()) {
+      if (rails) {
+        const legs = this.legs(lane.route, rails)
+        for (const part of legs?.parts ?? []) links.set(part, [...(links.get(part) ?? []), lane])
         const d = legs?.d ?? ''
         if (d !== lane.d) {
           lane.d = d
           lane.path.setAttribute('d', d)
-          lane.dash.setAttribute('d', d)
           lane.len = d ? lane.path.getTotalLength() : 0
-          this.placePorts(lane, legs?.ports ?? [])
         }
       }
-      const color = this.scene.color(lane.route.agent)
-      if (lane.cls !== color) {
-        lane.cls = color
-        lane.path.setAttribute('class', `live-lane ${color}`)
-        lane.dash.setAttribute('class', `live-lane-dash ${color}`)
-        lane.ports.setAttribute('class', color)
-      }
-      // a lane carrying calls flows: its dashes run toward the target over the soft line
-      const flow = lane.heat > FLOW_HEAT
-      if (lane.flow !== flow) {
-        lane.flow = flow
-        lane.dash.toggleAttribute('data-flow', flow)
-      }
-      // at rest a soft, wide line (a lane that stays drawn), wider with traffic
-      const width = LANE_W + Math.min(LANE_W_MAX, lane.load * 0.7)
-      const opacity = (lane.mounted ? 0.2 : 0) + lane.heat * (lane.mounted ? 0.12 : 0.28)
-      const dash = Math.min(0.85, lane.heat * 1.2)
-      const style = `${width.toFixed(1)}|${opacity.toFixed(2)}|${dash.toFixed(2)}`
-      if (style !== lane.style) {
-        lane.style = style
-        lane.path.setAttribute('stroke-width', width.toFixed(1))
-        lane.path.setAttribute('stroke-opacity', opacity.toFixed(2))
-        lane.dash.setAttribute('stroke-opacity', dash.toFixed(2))
-        lane.ports.setAttribute('fill-opacity', Math.min(1, 0.45 + opacity + dash).toFixed(2))
-      }
+      lane.el.toggleAttribute('data-active', lane.active)
     }
 
-    this.dots = this.dots.filter((dot) => {
-      const { path, len } = dot.lane
-      const k = Math.min(1, (now - dot.t0) / dot.ms)
+    if (rails) this.syncLinks(links)
+    else this.emphasize()
+
+    let finished = false
+    this.packets = this.packets.filter((packet) => {
+      const { path, len } = packet.lane
+      const k = Math.min(1, (now - packet.t0) / LEG_MS)
       if (len > 0) {
         const e = ease(k)
-        const at = (dot.back ? 1 - e : e) * len
+        const at = (packet.back ? 1 - e : e) * len
         const p = path.getPointAtLength(at)
-        dot.head.setAttribute('transform', `translate(${p.x.toFixed(1)} ${p.y.toFixed(1)})`)
-        // the tail trails by a few px, less at the ends where the dot is slow
-        const lag = TAIL_PX * Math.min(1, 4 * Math.min(k, 1 - k) + 0.2)
-        const q = path.getPointAtLength(Math.min(len, Math.max(0, dot.back ? at + lag : at - lag)))
-        dot.tail.setAttribute('cx', q.x.toFixed(1))
-        dot.tail.setAttribute('cy', q.y.toFixed(1))
+        const before = path.getPointAtLength(Math.max(0, at - 1))
+        const after = path.getPointAtLength(Math.min(len, at + 1))
+        const angle = Math.atan2(after.y - before.y, after.x - before.x) * 180 / Math.PI + (packet.back ? 180 : 0)
+        packet.el.setAttribute('visibility', 'visible')
+        packet.el.setAttribute('transform', `translate(${p.x.toFixed(1)} ${p.y.toFixed(1)}) rotate(${angle.toFixed(1)})`)
       }
       if (k < 1 && len > 0) return true
-      dot.el.remove()
-      dot.lane.dots--
-      dot.done()
+      packet.el.remove()
+      packet.lane.packets--
+      packet.done()
+      finished = true
       return false
     })
 
-    if (this.dots.length || warm) this.kick()
+    // One last frame clears transient lanes and returns mounted ones to rest.
+    if (this.packets.length || finished) this.kick()
   }
 
   /** The tree guides and the resting ghosts: rewritten only when they change. */
   private placeGuides() {
     let tree = ''
+    const children = new Map<string, Rect[]>()
     for (const [child, parent] of this.scene.tree) {
       const c = this.rect(child)
+      if (c) children.set(parent, [...(children.get(parent) ?? []), c])
+    }
+    for (const [parent, nodes] of children) {
       const p = this.rect(parent)
-      if (!c || !p) continue
+      if (!p) continue
       const x = p.l + 14
-      tree += `M ${x} ${p.b} V ${c.y - 6} Q ${x} ${c.y} ${x + 6} ${c.y} H ${c.l} `
+      const bottom = Math.max(...nodes.map((c) => c.y))
+      tree += `M ${x} ${p.b} V ${bottom - 6} `
+      for (const c of nodes) tree += `M ${x} ${c.y - 6} Q ${x} ${c.y} ${x + 6} ${c.y} H ${c.l} `
     }
     if (tree !== this.treeD) this.treeEl.setAttribute('d', (this.treeD = tree))
 
@@ -470,7 +524,7 @@ export class FlowEngine {
       const t = this.rect(to)
       if (!f || !t) continue
       const a = { x: f.r, y: f.y }
-      ghosts += `M ${a.x} ${a.y} ${curve(a, { x: t.l, y: t.y })} `
+      ghosts += `${elbow(a, { x: t.l, y: t.y }, (a.x + t.l) / 2)} `
     }
     if (ghosts !== this.ghostD) this.ghostEl.setAttribute('d', (this.ghostD = ghosts))
   }

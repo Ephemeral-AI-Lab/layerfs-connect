@@ -296,7 +296,7 @@ export function FilesTab({ project, branches, tick = 0, initialBranch }: FilesTa
                   {others.map((b) => (
                     <SelectItem key={b.name} value={b.name}>
                       <span className={cn('font-medium', b.state === 'merged' && 'text-muted-foreground')}>{b.name}</span>
-                      <span className="font-mono text-xs text-muted-foreground">
+                      <span className="text-xs text-muted-foreground tabular-nums">
                         {b.state === 'open' ? t("+{value1}", {value1: b.commits}) : t(b.state)}
                       </span>
                     </SelectItem>

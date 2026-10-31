@@ -98,7 +98,7 @@ function Where({ store }: { store: StoreInfo }) {
   const down = store.kind === 'postgresql' && isDown(s, store.connection)
   const place =
     store.kind === 'postgresql' ? (
-      <button type="button" onClick={() => s.open({ view: 'connection', id: store.connection ?? '' })} className="truncate rounded-md font-mono outline-none hover:text-primary focus-visible:ring-2 focus-visible:ring-ring">
+      <button type="button" onClick={() => s.open({ view: 'connection', id: store.connection ?? '' })} className="truncate rounded-md outline-none hover:text-primary focus-visible:ring-2 focus-visible:ring-ring">
         {store.connection}
       </button>
     ) : link ? (
@@ -106,11 +106,11 @@ function Where({ store }: { store: StoreInfo }) {
         type="button"
         onClick={() => s.open({ view: 'location', id: link.remote })}
         title={link.object}
-        className="flex min-w-0 items-center gap-1.5 rounded-md font-mono outline-none hover:text-primary focus-visible:ring-2 focus-visible:ring-ring"
+        className="flex min-w-0 items-center gap-1.5 rounded-md outline-none hover:text-primary focus-visible:ring-2 focus-visible:ring-ring"
       >
         <ProviderMark provider={link.provider} className="size-3 shrink-0" />
         <span className="truncate">
-          {link.remote} / {link.file}
+          {link.remote} / <span className="font-mono">{link.file}</span>
         </span>
       </button>
     ) : (

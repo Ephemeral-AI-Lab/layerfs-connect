@@ -180,6 +180,15 @@
   padding: 10px 0;
   border-radius: 6px;
 }
+.sidebar-chat-label {
+  color: var(--muted-foreground);
+  transition: color var(--dur-fast);
+}
+.sidebar-chat-row[data-active='true'] .sidebar-chat-label,
+.sidebar-chat-open:hover .sidebar-chat-label,
+.sidebar-chat-open:focus-visible .sidebar-chat-label {
+  color: color-mix(in oklab, var(--foreground) 85%, var(--muted-foreground));
+}
 .sidebar-chat-delete {
   display: flex;
   width: 28px;

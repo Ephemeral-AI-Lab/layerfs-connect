@@ -1,39 +1,156 @@
-/* Live activity uses the same quiet glass surfaces as the rest of the project.
-   Only changing data communicates progress; there are no decorative loops. */
-.live-panel { container-type: inline-size; min-width: 0; }
-.live-sections { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: 24px; padding: 20px; }
-.live-section { display: flex; min-width: 0; flex-direction: column; gap: 10px; }
-.live-section-heading { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
-.live-section > h3, .live-section-heading { min-height: 24px; margin-bottom: 2px; }
-.live-empty { display: flex; min-height: 180px; align-items: center; justify-content: center; flex-direction: column; gap: 8px; padding: 32px 20px; text-align: center; }
-.live-empty-row { padding: 12px 4px; font-size: 12px; color: var(--muted-foreground); }
-.live-session, .live-sandbox { min-width: 0; border: 1px solid var(--glass-border); border-radius: 12px; background: var(--glass-field-bg); }
-.live-session-heading { display: flex; min-width: 0; align-items: center; gap: 2px; padding: 6px; }
-.live-session-toggle { display: flex; min-width: 0; flex: 1; align-items: center; gap: 8px; min-height: 32px; padding: 4px 6px; border-radius: 8px; text-align: left; }
-.live-open { display: flex; width: 30px; height: 30px; flex: none; align-items: center; justify-content: center; border-radius: 8px; color: var(--muted-foreground); }
-.live-session-toggle:hover, .live-open:hover, .live-sandbox-heading:hover { background: color-mix(in srgb, var(--foreground) 3%, transparent); }
-.live-agents { padding: 0 12px 8px; }
-.live-agent { min-width: 0; padding: 8px 0; }
-.live-agent + .live-agent { border-top: 1px solid color-mix(in srgb, var(--foreground) 5%, transparent); }
-.live-agent-heading { display: flex; min-width: 0; align-items: center; gap: 8px; }
-.live-agent-name { min-width: 0; overflow: hidden; border-radius: 4px; font-size: 12px; font-weight: 500; text-overflow: ellipsis; white-space: nowrap; }
-.live-agent-name:hover { color: var(--primary); }
-.live-agent-fold { display: flex; flex: none; align-items: center; gap: 3px; margin-left: auto; padding: 2px 4px; border-radius: 4px; color: var(--muted-foreground); font-size: 11px; }
-.live-agent-activity { display: flex; min-width: 0; flex-direction: column; gap: 4px; margin-top: 5px; padding-left: 16px; color: var(--muted-foreground); font-size: 12px; }
-.live-call { display: flex; min-width: 0; align-items: baseline; gap: 8px; color: var(--muted-foreground); font-size: 11px; line-height: 18px; }
-.live-run-error { margin: 0 12px 10px; overflow-wrap: anywhere; font-size: 12px; line-height: 1.6; color: var(--destructive); }
-.live-sandbox-heading { display: flex; min-width: 0; align-items: center; gap: 8px; min-height: 44px; padding: 8px 12px; border-radius: 12px; cursor: pointer; list-style: none; }
-.live-sandbox-heading::-webkit-details-marker { display: none; }
-.live-sandbox[open] > summary .live-disclosure { transform: rotate(90deg); }
-.live-workspaces { padding: 0 12px 8px; }
-.live-workspace { min-width: 0; padding: 8px 0; border-top: 1px solid color-mix(in srgb, var(--foreground) 6%, transparent); }
-.live-more { width: fit-content; padding: 4px 8px; border-radius: 6px; color: var(--muted-foreground); font-size: 12px; }
-.live-error { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 12px; padding: 12px 20px; font-size: 12px; color: var(--destructive); }
+/* The Live flow map keeps movement on calls, not on the surrounding cards.
+   Agent colours identify routes; node surfaces follow the app's neutral theme. */
+.live-panel {
+  container-type: inline-size;
+  min-width: 0;
+  color: var(--foreground);
+}
+
+/* A quiet field gives the connectors room without adding a coloured glow. */
+.live-field {
+  position: relative;
+  isolation: isolate;
+}
+.live-field::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image: radial-gradient(circle at 1px 1px, color-mix(in srgb, var(--foreground) 7%, transparent) 1px, transparent 0);
+  background-size: 20px 20px;
+  mask-image: radial-gradient(44rem 24rem at 50% 50%, #000, transparent 78%);
+}
+.live-light { display: none; }
+
+/* Guides and routes stay still. Only an actual call sends a direction marker. */
+.live-tree {
+  stroke: color-mix(in srgb, var(--foreground) 18%, transparent);
+}
+.live-ghost {
+  stroke: color-mix(in srgb, var(--foreground) 14%, transparent);
+  stroke-dasharray: 2 6;
+  stroke-linecap: round;
+}
+.live-link,
+.live-packet { transition: opacity 140ms ease-out; }
+.live-link { stroke: color-mix(in srgb, var(--foreground) 18%, var(--card)); }
+.live-link[data-active] { stroke: color-mix(in srgb, var(--route-color) 58%, var(--card)); }
+.live-link[data-related] { stroke: var(--route-color); }
+.live-link[data-dimmed],
+.live-packet[data-dimmed] { opacity: 0.16; }
+.live-packet { pointer-events: none; }
+
+/* A busy node keeps one fine colour ring, without an expanding halo. */
+.live-ring {
+  position: absolute;
+  inset: -1px;
+  border: 1px solid color-mix(in srgb, currentColor 45%, transparent);
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--dur-base) ease-out;
+}
+[data-busy] > .live-ring { opacity: 1; }
+.live-accent {
+  position: absolute;
+  top: 10px;
+  bottom: 10px;
+  left: -1px;
+  width: 2px;
+  border-radius: 0 2px 2px 0;
+  background: currentColor;
+  pointer-events: none;
+  opacity: 0.35;
+  transition: opacity var(--dur-base) ease-out;
+}
+[data-busy] > .live-accent { opacity: 0.9; }
+
+/* Keep the old avatar hook for restored graph nodes; its ring is now still. */
+.live-spin {
+  position: absolute;
+  inset: -3px;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  pointer-events: none;
+  opacity: 0.65;
+}
+.live-panel .pulse-ring { box-shadow: none; }
+.live-panel .pulse-ring::after { display: none; }
+.live-panel .live-glow { box-shadow: none; }
+.live-panel .live-border { box-shadow: none; }
+
+/* Only the destination answers a completed call, briefly and without a fill. */
+.live-core {
+  position: relative;
+  isolation: isolate;
+}
+.live-core::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border: 1px solid var(--flash, var(--icon-accent));
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+}
+.live-panel .live-flash { animation: live-call-feedback 260ms ease-out; }
+.live-panel .live-core.live-flash { animation: none; }
+.live-core.live-flash::after { animation: live-core-feedback 260ms ease-out; }
+@keyframes live-call-feedback {
+  from { box-shadow: 0 0 0 1px color-mix(in srgb, var(--flash, var(--icon-accent)) 50%, transparent); }
+  to { box-shadow: 0 0 0 1px transparent; }
+}
+@keyframes live-core-feedback {
+  from { opacity: 0.5; }
+  to { opacity: 0; }
+}
+
+/* Moving SVG lanes would make backdrop blur resample every card each frame.
+   Use token-based, opaque surfaces here and keep only the overlay composited. */
+.live-panel,
+.live-panel .glass-liquid,
+.live-panel .live-node {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+.live-panel .glass-liquid,
+.live-panel .live-node {
+  background: linear-gradient(160deg, color-mix(in srgb, var(--card) 97%, var(--foreground)), var(--card));
+  border-color: var(--glass-border);
+  box-shadow: var(--highlight), 0 2px 6px rgb(0 0 0 / 4%);
+}
+.live-panel .live-node { position: relative; border-width: 1px; }
+.live-overlay { will-change: transform; }
+
+.live-more {
+  width: fit-content;
+  padding: 4px 8px;
+  border-radius: 6px;
+  color: var(--muted-foreground);
+  font-size: 12px;
+}
+.live-error {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px 12px;
+  padding: 12px 20px;
+  font-size: 12px;
+  color: var(--destructive);
+}
 .live-error button { border-radius: 4px; text-decoration: underline; text-underline-offset: 3px; }
 .live-error details { flex-basis: 100%; }
 .live-error summary { width: fit-content; cursor: pointer; }
 .live-error details p { margin-top: 6px; overflow-wrap: anywhere; }
 .live-panel :is(button, summary):focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
-@container (max-width: 680px) {
-  .live-sections { grid-template-columns: minmax(0, 1fr); gap: 20px; padding: 16px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .live-packet { display: none; }
+  .live-panel .live-flash,
+  .live-core.live-flash::after { animation: none; }
+  .live-link,
+  .live-packet,
+  .live-ring,
+  .live-accent { transition: none; }
 }

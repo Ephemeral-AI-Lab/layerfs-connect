@@ -267,7 +267,7 @@ export function ForkMap({ title, tree, focus, shown, filterKey, onOpen }: ForkMa
             {/* now */}
             <path d={`M${nowX} 14 V${height - 10}`} stroke="var(--faint)" strokeDasharray="3 4" data-playing={playing} className="map-now map-glide" />
             <g style={at(nowX, 11)} className="map-glide">
-              <text textAnchor="middle" className={cn('map-halo font-mono text-[10.5px]', playing ? 'fill-primary' : 'fill-muted-foreground')}>{t("now")}</text>
+              <text textAnchor="middle" className={cn('map-halo text-[10.5px]', playing ? 'fill-primary' : 'fill-muted-foreground')}>{t("now")}</text>
             </g>
 
             {/* Branch lanes, drawn before main so the spine sits on top */}
@@ -349,7 +349,7 @@ export function ForkMap({ title, tree, focus, shown, filterKey, onOpen }: ForkMa
                   <title>{t("{value1} · {value2} · {value3}", {value1: shortId(l.id), value2: l.message, value3: when(l.at)})}</title>
                 </rect>
                 <g style={at(x(l.id) + 5, mainY - 10)} className="map-glide hist-fade">
-                  <text className="map-halo fill-muted-foreground font-mono text-[10.5px]">{t("L")}{tree.layers.length - tree.layers.indexOf(l)}</text>
+                  <text className="map-halo fill-muted-foreground text-[10.5px] tabular-nums">{t("L")}{tree.layers.length - tree.layers.indexOf(l)}</text>
                 </g>
               </g>
             ))}

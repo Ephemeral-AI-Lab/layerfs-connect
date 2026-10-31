@@ -89,7 +89,7 @@ export function ProviderForm({ entry, values, onChange, problems, disabled }: Pr
                 spellCheck={false}
                 disabled={disabled}
                 aria-invalid={!!problems[f.key]}
-                className={cn(INPUT, f.mono && 'font-mono text-[13px]', f.placeholder && 'placeholder:font-sans placeholder:italic')}
+                className={cn(INPUT, 'text-[13px]', f.mono && 'font-mono', f.placeholder && 'placeholder:font-sans placeholder:italic')}
               />
             )}
           </Field>,
@@ -124,7 +124,7 @@ export function PostgresqlForm({ values, onChange, problems, disabled }: { value
     <div className="flex flex-col gap-3.5">
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-[10rem_1fr]">
         <Field id={ids.name} label={t('Name')} problem={problems.name}>
-          <Input id={ids.name} value={values.name} onChange={(e) => onChange({ ...values, name: e.target.value })} disabled={disabled} className={cn(INPUT, 'font-mono text-[13px]')} aria-invalid={!!problems.name} />
+          <Input id={ids.name} value={values.name} onChange={(e) => onChange({ ...values, name: e.target.value })} disabled={disabled} className={cn(INPUT, 'text-[13px]')} aria-invalid={!!problems.name} />
         </Field>
         <Field id={ids.url} label="URL" problem={problems.url}>
           <Input

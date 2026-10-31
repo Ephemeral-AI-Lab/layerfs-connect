@@ -36,7 +36,7 @@ export function SizeCard({ store, index }: { store: StoreInfo; index?: number })
       <div className="grid grid-cols-1 gap-x-10 gap-y-5 px-5 py-4 @min-[760px]/storage:grid-cols-2">
         <div className="min-w-0">
           <p className={LABEL}>{t('Size on this machine')}</p>
-          <p className="mt-1.5 text-2xl font-bold tracking-tight tabular-nums">
+          <p className="mt-1.5 text-2xl font-medium tracking-tight tabular-nums">
             {store.size ? <CountBytes value={store.size.bytes} /> : <span className="text-base font-medium text-muted-foreground">{t('size unknown')}</span>}
           </p>
           <p className="mt-1 text-xs font-medium text-muted-foreground">
@@ -49,7 +49,7 @@ export function SizeCard({ store, index }: { store: StoreInfo; index?: number })
             <span>{t('Free in the Docker volumes')}</span>
             {need !== null && <span className="tabular-nums normal-case tracking-normal">{t('push needs ~{size}', { size: bytes(need) })}</span>}
           </p>
-          <p className={cn('mt-1.5 text-2xl font-bold tracking-tight tabular-nums', short !== null && 'text-warning')}>
+          <p className={cn('mt-1.5 text-2xl font-medium tracking-tight tabular-nums', short !== null && 'text-warning')}>
             {free !== null ? <CountBytes value={free} /> : <span className="text-base font-medium text-muted-foreground">{t('Docker is not answering')}</span>}
           </p>
           <span className="relative mt-2.5 block h-2 overflow-hidden rounded-full bg-muted/90 ring-1 ring-foreground/[0.06] ring-inset">

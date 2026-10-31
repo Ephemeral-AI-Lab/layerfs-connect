@@ -39,7 +39,7 @@ export function PostgresqlStoreDetail({ name }: { name: string }) {
   return (
     <>
       <Breadcrumb
-        items={[{ label: 'PostgreSQL' }, { label: store.connection ?? t('connection'), to: store.connection ? { view: 'connection', id: store.connection } : undefined, mono: true }, { label: store.name }]}
+        items={[{ label: 'PostgreSQL' }, { label: store.connection ?? t('connection'), to: store.connection ? { view: 'connection', id: store.connection } : undefined }, { label: store.name }]}
       />
       <DetailHeader
         icon={<StoreIcon family="postgresql" size="lg" />}
@@ -95,13 +95,13 @@ export function PostgresqlStoreDetail({ name }: { name: string }) {
           <Fact label={t('Connection')}>
             {c ? (
               <span className="flex flex-col gap-0.5">
-                <button type="button" onClick={() => s.open({ view: 'connection', id: c.name })} className="w-fit rounded-md font-mono text-[13px] outline-none hover:text-primary focus-visible:ring-2 focus-visible:ring-ring">
+                <button type="button" onClick={() => s.open({ view: 'connection', id: c.name })} className="w-fit rounded-md text-[13px] outline-none hover:text-primary focus-visible:ring-2 focus-visible:ring-ring">
                   {c.name}
                 </button>
                 <HealthDot health={c.health} />
               </span>
             ) : (
-              <span className="font-mono text-[13px]">{store.connection ?? '—'}</span>
+              <span className="text-[13px]">{store.connection ?? '—'}</span>
             )}
           </Fact>
           <Fact label={t('Schema')} mono>

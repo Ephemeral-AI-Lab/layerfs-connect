@@ -27,7 +27,7 @@ export interface ProviderField {
   placeholder?: string
   default?: string
   options?: { value: string; label: string }[]
-  /** Mono input text (names, paths, keys). */
+  /** Mono input text for literal paths, URLs, keys and IDs. */
   mono?: boolean
   /** A problem with the value as typed, or null; empty values are reported by `missing`. */
   validate?: (value: string, values: FieldValues) => string | null
@@ -61,13 +61,12 @@ export interface ProviderEntry {
 }
 
 const join = (...parts: (string | null | undefined)[]) => parts.filter((p) => p).join('/')
-const nameField: ProviderField = { key: 'name', label: 'Name', kind: 'text', mono: true, validate: (v) => (NAME.test(v) ? null : 'Lower-case letters, digits and hyphens.') }
+const nameField: ProviderField = { key: 'name', label: 'Name', kind: 'text', validate: (v) => (NAME.test(v) ? null : 'Lower-case letters, digits and hyphens.') }
 const bucketField: ProviderField = {
   key: 'bucket',
   label: 'Bucket',
   kind: 'text',
   placeholder: 'your bucket’s name',
-  mono: true,
   needed: 'bucket',
   validate: (v) => (!v || BUCKET.test(v) ? null : '3–63 lower-case letters, digits, dots and hyphens.'),
 }

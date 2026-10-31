@@ -116,7 +116,7 @@ export function AppSidebar({ selected, projects, onSelect, onNewProject, onDelet
           <span className="glass-liquid relative flex size-9.5 shrink-0 items-center justify-center rounded-xl">
             <ConnectMark className="size-6 transition-transform duration-(--dur-slow) ease-out-expo group-hover/brand:scale-[1.05]" />
           </span>
-          <span className="min-w-0 flex-1 truncate text-[15px] font-semibold leading-tight tracking-[-0.015em] text-foreground">LayerFS Connect</span>
+          <span className="min-w-0 flex-1 truncate text-[15px] font-medium leading-tight tracking-[-0.015em] text-foreground/90">LayerFS Connect</span>
           <button type="button" onClick={() => setOpen(false)} aria-label={t('Hide sidebar')} title={`${t('Hide sidebar')} (${isMac ? '⌘B' : 'Ctrl+B'})`} className={HEAD_BUTTON}>
             <PanelLeftClose className="size-4" />
           </button>
@@ -137,7 +137,7 @@ export function AppSidebar({ selected, projects, onSelect, onNewProject, onDelet
           {groups.map((group, g) => (
             <SidebarGroup key={group.label ?? g} className={cn('px-3 pb-2', group.label ? 'pt-3' : 'pt-1')}>
               {group.label && (
-                <SidebarGroupLabel className="px-3 text-[11px] font-semibold tracking-wider uppercase text-muted-foreground">
+                <SidebarGroupLabel className="px-3 text-[11px] font-medium tracking-wider uppercase text-muted-foreground">
                   {t(group.label)}
                 </SidebarGroupLabel>
               )}
@@ -151,10 +151,10 @@ export function AppSidebar({ selected, projects, onSelect, onNewProject, onDelet
                         onClick={(e) => onSelect({ kind: 'nav', id: item.id }, inNewTab(e))}
                         onAuxClick={(e) => { if (e.button === 1) onSelect({ kind: 'nav', id: item.id }, true) }}
                         className={cn(
-                          'h-10 gap-3 px-3 text-[13px] font-medium [&_svg]:size-[17px] [&_svg]:transition-colors [&_svg]:duration-(--dur-base)',
+                          'h-10 gap-3 px-3 text-[13px] font-normal [&_svg]:size-[17px] [&_svg]:transition-colors [&_svg]:duration-(--dur-base)',
                           active
-                            ? 'font-semibold text-foreground [&_svg]:text-(--icon-accent)'
-                            : 'text-foreground/80 hover:text-foreground [&_svg]:text-muted-foreground hover:[&_svg]:text-foreground',
+                            ? 'data-active:font-medium text-foreground/90 [&_svg]:text-(--icon-accent)'
+                            : 'text-muted-foreground hover:text-foreground [&_svg]:text-muted-foreground hover:[&_svg]:text-foreground',
                         )}
                       >
                         <item.icon />
@@ -178,7 +178,7 @@ export function AppSidebar({ selected, projects, onSelect, onNewProject, onDelet
           aria-haspopup="dialog"
           aria-expanded={settingsOpen}
           onClick={onOpenSettings}
-          className="shell-settings-button app-no-drag flex h-13 w-full items-center gap-2.5 rounded-none px-6 text-[13px] text-foreground outline-none transition-colors hover:bg-foreground/[0.05] aria-expanded:bg-foreground/[0.05]"
+          className="shell-settings-button app-no-drag flex h-13 w-full items-center gap-2.5 rounded-none px-6 text-[13px] text-muted-foreground outline-none transition-colors hover:bg-foreground/[0.05] hover:text-foreground aria-expanded:bg-foreground/[0.05] aria-expanded:text-foreground"
         >
           <Settings className="size-[18px] shrink-0 text-muted-foreground" strokeWidth={1.7} />
           <span className="truncate">{t('Settings')}</span>
@@ -241,7 +241,7 @@ function ProjectList({ selected, projects, onSelect, onNewProject, onDeleteChat,
           title={t('All projects')}
           onClick={(e) => onSelect({ kind: 'nav', id: 'projects' }, inNewTab(e))}
           className={cn(
-            'flex h-8 min-w-0 flex-1 items-center gap-2 rounded-md px-3 text-left text-[11px] font-semibold tracking-wider uppercase transition-colors outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring',
+            'flex h-8 min-w-0 flex-1 items-center gap-2 rounded-md px-3 text-left text-[11px] font-medium tracking-wider uppercase transition-colors outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring',
             onPage ? 'text-foreground' : 'text-muted-foreground',
           )}
         >
@@ -338,7 +338,7 @@ function ProjectRow({ index, name, store, active, chats, open, openChat, onSelec
         className={cn(
           'sidebar-project-open glass-liquid h-10 gap-3 px-3 pr-9 text-[14px] [&_svg]:size-[18px]',
           active
-            ? 'font-semibold text-foreground'
+            ? 'data-active:font-medium text-foreground/90'
             : 'font-medium text-foreground/80 hover:text-foreground',
         )}
       >
@@ -616,7 +616,7 @@ function ChatRow({ index, chat, active, onOpen, onDelete }: { index: number; cha
       <button type="button" onClick={onOpen} aria-current={active ? 'page' : undefined} className={ROW} title={chat.title}>
         <span className="sidebar-chat-title flex h-6 items-center gap-2">
           <MessageSquare aria-hidden="true" className="size-[18px] shrink-0 text-muted-foreground" />
-          <span className={cn('truncate text-[15px] font-normal leading-6', active ? 'text-foreground' : 'text-foreground/90')}>{chat.title || t('New session')}</span>
+          <span className="sidebar-chat-label truncate text-[15px] font-normal leading-6">{chat.title || t('New session')}</span>
         </span>
       </button>
       <button type="button" className="sidebar-chat-delete" aria-haspopup="dialog" aria-label={t('Delete conversation {name}', { name: chat.title || t('New session') })} title={t('Delete conversation')} onClick={(event) => onDelete(chat, event.currentTarget)}>

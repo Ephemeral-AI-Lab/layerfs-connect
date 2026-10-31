@@ -63,7 +63,7 @@ export function WorkerSection({ status, index = 0 }: { status: HostStatus; index
       </header>
       {w && (
         <dl className="mt-4 grid grid-cols-1 gap-4 border-t border-foreground/[0.06] pt-4 @min-[32rem]/worker:grid-cols-3">
-          <Fact label={t('Container')} mono>
+          <Fact label={t('Container')}>
             {w.name}
           </Fact>
           <Fact label={t('State')}>

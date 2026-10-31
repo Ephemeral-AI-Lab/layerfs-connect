@@ -10,6 +10,7 @@
 - 图标保留现有品牌色和状态色，单独使用 `--icon-accent`，不随灰白主按钮一起去色。
 - 导航按钮、输入框与浮层使用同一材质变量，正文和代码区优先保证可读性。背景模糊不作用于文字、图标。深色去掉扫光、彩色光晕和悬停位移。
 - 下文光标色相、彩色玻璃与上浮动效仅适用于既有浅色方案；深色遵循本节约定。
+- 光标跟随光保留在全局最底层：浅色为淡彩单色，深色为低亮度灰白；卡片与文字始终在上层。静止后减淡，离开窗口后淡出，减少动态效果时关闭；独立预览复用同一组件与分层。
 
 ## 任务背景与核心使命
 
@@ -73,12 +74,12 @@
 ## 三、形状、排版与字体系统
 
 1. **统一字体规范（Typography Stack）**：
-   - **全局西文字体**：`-apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Inter Variable", "Inter", ui-sans-serif, system-ui, sans-serif`
+   - **全局界面字体**：统一读取 `--font-sans`：`"Inter Variable", -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei UI", "Noto Sans CJK SC", sans-serif`。标题、导航、表单、模型与资源名称、弹窗和统计数字共用这一字体栈。
    - **等宽代码字体**：`"SF Mono", "JetBrains Mono", Menlo, Monaco, Consolas, ui-monospace, monospace`
    - **文字层级与字距**：
-     - 大数值标头：`text-[26px]` 或 `text-2xl font-bold tracking-tight tabular-nums`；
-     - 类别上标（Kicker）：`text-[10.5px] font-semibold tracking-wider text-muted-foreground/80 uppercase`；
-     - 正文与说明：`text-xs` 或 `text-[13px] text-muted-foreground font-medium`；
+     - 大数值标头：`text-[26px]` 或 `text-2xl font-medium tracking-tight tabular-nums`；
+     - 类别上标（Kicker）：`text-[10.5px] font-medium tracking-wider text-muted-foreground uppercase`；
+     - 正文 400，操作与项目名称 500，标题 550，强调 600；说明使用实色 `text-muted-foreground`；
      - 代码与哈希：`font-mono text-xs text-foreground/90`。
 2. **Squircle 连续大圆角节奏**：
    - 主卡片 / 模态框 / 容器面板：统一采用 `rounded-2xl`（16px / 1rem）；

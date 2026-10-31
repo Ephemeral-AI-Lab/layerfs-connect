@@ -105,7 +105,7 @@ export function DockerCard({ status, groups, failed }: DockerCardProps) {
         <Stat label={worker ? t("Worker") : t("Store access")} index={2}>
           {worker ? (
             <span className="flex min-w-0 items-center gap-1.5" title={worker.error ?? undefined}>
-              <span className="truncate font-mono text-[13px]">{worker.name}</span>
+              <span className="truncate text-[13px]">{worker.name}</span>
               <Chip tone={chip.tone} live={chip.live} className="shrink-0">
                 {t(worker.state)}
               </Chip>

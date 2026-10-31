@@ -172,9 +172,9 @@ export function TransferRow({ job, form, onDismiss, actions, className }: Transf
             {job.kind === 'pull' || job.kind === 'load' ? '←' : '→'}
           </span>
           <TargetMark job={job} />
-          <span className="truncate font-mono text-[12px] text-muted-foreground">
+          <span className="truncate text-[12px] text-muted-foreground">
             {targetName(job)}
-            {job.kind === 'import' && job.from ? ` / ${job.from}` : job.file ? ` / ${job.file}` : ''}
+            {job.kind === 'import' && job.from ? ` / ${job.from}` : job.file ? <> / <span className="font-mono">{job.file}</span></> : ''}
           </span>
           {job.force && <span className="shrink-0 rounded-full bg-warning/10 px-1.5 text-[10.5px] font-semibold text-warning ring-1 ring-warning/25 ring-inset">{t('forced')}</span>}
         </span>

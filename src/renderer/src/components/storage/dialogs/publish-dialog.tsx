@@ -135,7 +135,7 @@ export function UploadDialog({ open, onOpenChange, view, store, mode, remote: pr
                       {g.list.map((x) => (
                         <SelectItem key={x.name} value={x.name}>
                           <ProviderMark provider={x.provider} className="size-3.5" />
-                          <span className="font-mono text-[13px]">{x.name}</span>
+                          <span className="text-[13px]">{x.name}</span>
                           <span className="text-[12px] text-muted-foreground">{t(HEALTH[x.health.state])}</span>
                         </SelectItem>
                       ))}

@@ -43,7 +43,7 @@ function FileRow({ remote, file }: { remote: RemoteInfo; file: RemoteFile }) {
           <span className="flex min-w-0 items-center gap-2 text-[13px]">
             {store && <StoreIcon family="sqlite" providers={storeProviders(store, s.view.remotes.list)} size="sm" />}
             <span className="truncate">
-              {t('Linked to')} <span className="font-mono">{file.linkedBy}</span>
+              {t('Linked to')} {file.linkedBy}
             </span>
             {store?.link && <SyncPill state={store.sync.state} copy={store.link} compact />}
           </span>
@@ -124,7 +124,7 @@ export function BucketDetail({ name }: { name: string }) {
   if (!remote)
     return (
       <>
-        <Breadcrumb items={[{ label: t('Connections') }, { label: name, mono: true }]} />
+        <Breadcrumb items={[{ label: t('Connections') }, { label: name }]} />
         <Gone what={name} />
       </>
     )
@@ -136,11 +136,11 @@ export function BucketDetail({ name }: { name: string }) {
   const linkedBy = remote.stores.length ? t('Linked by {stores}: unlink them first', { stores: remote.stores.join(', ') }) : undefined
   return (
     <>
-      <Breadcrumb items={[{ label: t('Connections') }, { label: remote.name, mono: true }]} />
+      <Breadcrumb items={[{ label: t('Connections') }, { label: remote.name }]} />
       <DetailHeader
         icon={<ProviderTile provider={remote.provider} size="lg" />}
         eyebrow={`${t('Connection')} · ${label}`}
-        title={<span className="font-mono">{remote.name}</span>}
+        title={remote.name}
         badges={
           <>
             {remote.hasSecret && <HealthDot health={h} />}
@@ -211,7 +211,7 @@ export function BucketDetail({ name }: { name: string }) {
 
       <Section index={3} title={t('Settings')} note={t('What LayerFS and Connect keep for this connection. It binds no Store. To change it, remove it and add it again.')}>
         <dl className="grid grid-cols-2 gap-x-6 gap-y-4 px-5 pt-4 pb-4 @min-[760px]/storage:grid-cols-4">
-          <Fact label={t('Name')} mono>
+          <Fact label={t('Name')}>
             {remote.name}
           </Fact>
           <Fact label={t('Provider')}>{label}</Fact>
@@ -227,7 +227,7 @@ export function BucketDetail({ name }: { name: string }) {
               {remote.endpoint}
             </Fact>
           )}
-          <Fact label={t('Bucket')} mono>
+          <Fact label={t('Bucket')}>
             {remote.bucket}
           </Fact>
           <Fact label={t('Prefix')} mono>

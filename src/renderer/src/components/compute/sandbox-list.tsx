@@ -125,7 +125,7 @@ export function SandboxList({ groups, showProject = true }: SandboxListProps) {
                     <ChevronRight className="chevron size-4" />
                   </button>
                   <span className="min-w-0">
-                    <span className="block truncate font-mono text-[13px]" title={s.name}>
+                    <span className="block truncate text-[13px]" title={s.name}>
                       {s.name}
                     </span>
                     <span className="block text-xs text-faint">{t("Sandbox ")}{s.id}</span>
