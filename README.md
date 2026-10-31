@@ -4,6 +4,56 @@ Connect is a desktop coding agent powered by Pi, with **bash and subagents**
 as its tool surface. Chat runs real model conversations in a local folder or
 a managed LayerFS workspace; project views show their saved history.
 
+## Install with an agent
+
+Paste this into a coding agent (Claude Code, Codex, …) opened in the folder
+that should hold both repositories:
+
+```text
+Install LayerFS Connect on this machine. Work in the current folder; Connect
+and LayerFS sit side by side in it as ./layerfs-connect and ./layerfs.
+
+Branches: Connect is used at its `main`. LayerFS is used at the tip of its
+`layerfs_v2_0_0` branch, through a worktree at
+./layerfs/.claude/worktrees/connect-main that Connect's package.json links to.
+
+1. Check the prerequisites and report any that are missing; ask me before
+   installing system software: git, Node 22.15 or later, pnpm (via
+   `corepack enable`; the version is pinned in package.json), Docker (running),
+   jq and python3.
+2. Clone what is missing, and leave existing checkouts on their branches:
+   https://github.com/Ephemeral-AI-Lab/layerfs-connect into ./layerfs-connect
+   (branch main) and https://github.com/Ephemeral-AI-Lab/layerfs into ./layerfs.
+3. Make the LayerFS worktree Connect builds against:
+     git -C layerfs fetch origin layerfs_v2_0_0
+     git -C layerfs worktree add --detach .claude/worktrees/connect-main origin/layerfs_v2_0_0
+   If that worktree already exists, do not recreate it. If it is clean, move
+   it to the branch tip with
+     git -C layerfs/.claude/worktrees/connect-main checkout --detach origin/layerfs_v2_0_0
+   If it has uncommitted changes, stop and tell me.
+4. In ./layerfs-connect run `pnpm install`. Confirm node_modules/@layerfs/cli
+   resolves into the connect-main worktree.
+5. Verify: `pnpm typecheck` and `pnpm test:agents` (a local test model; no
+   API key needed).
+6. Managed LayerFS projects need ~/.layerfs-connect/settings.json:
+     { "image": "sha256:…", "bundle": "/abs/path/build-linux-…", "containerPrefix": "lfc-" }
+   `image` is the sandbox image's ID, and `bundle` is a sealed Linux LayerFS
+   build of the connect-main worktree. Make it by following
+   layerfs/docs/general/parallel-worktrees.md (register, prepare, then
+   `build --platform linux`) with images that already exist locally. Do not
+   pull, build or retag Docker images without asking me. If settings.json
+   exists, back it up before changing it. Then run the real-workspace check
+   from README.md's "Develop" section (CONNECT_REAL_LAYERFS=1 …). Local-folder
+   chats work without this step; if it is blocked, say why and go on.
+7. Start the app with `pnpm dev`. Do not ask for or store model API keys;
+   I add models in the app (Chat header > model dropdown > Manage models).
+
+Never edit, commit to or switch branches in the LayerFS repository beyond the
+worktree above, and do not commit in layerfs-connect. Finish with a short
+report: the commit each repository is on, which checks passed, and anything
+skipped or blocked.
+```
+
 ## Start an agent session
 
 1. Run `pnpm install`, then `pnpm dev` in this repository.
