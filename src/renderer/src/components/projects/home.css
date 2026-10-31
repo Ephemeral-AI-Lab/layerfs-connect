@@ -23,6 +23,7 @@
   transform: translateY(-1px) rotate(-4deg);
   box-shadow: var(--highlight), var(--elev-2);
 }
+.dark .home-mark { border-color: var(--glass-border); }
 
 .home-arrow {
   opacity: 0.45;

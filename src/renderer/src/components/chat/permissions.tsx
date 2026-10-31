@@ -50,7 +50,7 @@ export function ApprovalPanel({ approvals, onDecision }: {
   const waiting = approvals.filter((request) => request.status === 'pending' || request.status === 'reviewing')
   const history = approvals.filter((request) => request.status !== 'pending' && request.status !== 'reviewing')
   if (!approvals.length) return null
-  return <section aria-label={t("Command approvals")} className="space-y-3 sm:ml-11">
+  return <section aria-label={t("Command approvals")} className="space-y-3">
     {waiting.length > 0 && <>
       <div className="flex items-center gap-2 px-1 text-[11px] font-medium text-muted-foreground"><ShieldQuestion className="size-3.5 text-warning" /> {t("{count} commands awaiting approval or review", { count: waiting.length })}</div>
       {waiting.map((request) => <ApprovalCard key={request.id} request={request} onDecision={onDecision} />)}

@@ -4,19 +4,14 @@ import './history.css'
 import { ChevronRight, CornerDownRight, Ellipsis } from 'lucide-react'
 import { type CSSProperties, type KeyboardEvent, useEffect, useMemo, useRef } from 'react'
 
-import { revealStyle, useIndicator } from '@/components/motion'
 
-import { LfsFork, LfsMerge, LfsPublish } from '@/components/lfs-icons'
 import { laneColor } from '@/components/projects/history/branch-tree'
 import { HashChip } from '@/components/projects/history/parts'
-import { Unavailable } from '@/components/storage/unavailable'
-import { Button } from '@/components/ui/button'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { type ForkBranch, type ForkTree, type HistoryCommit, type Layer, ancestry } from '@/data/forks'
-import { agentColor, shortId, when } from '@/data/format'
+import { agentColor, when } from '@/data/format'
 import { cn } from '@/lib/utils'
 
-const BY_HAND = "Connect's runs fork, merge and publish; doing it by hand is not available yet"
 const ROW = 40
 const LANE = 16
 const PAD = 12
@@ -81,14 +76,13 @@ export function LineageGraph({ tree, focus, onFocus, selected, onSelect }: Linea
   const lanes = path.length
   const width = PAD * 2 + (lanes - 1) * LANE
   const list = useRef<HTMLDivElement>(null)
-  const { container, indicator } = useIndicator<HTMLDivElement>()
   const x = (lane: number) => PAD + lane * LANE
   const y = (i: number) => i * ROW + ROW / 2
 
   const selectedIndex = rows.findIndex((r) => rowId(r) === selected?.id)
   useEffect(() => {
     list.current?.querySelector('[aria-current="true"]')?.scrollIntoView({ block: 'nearest' })
-  }, [selectedIndex])
+  }, [focus, selected?.id])
 
   const selectable = rows.map((r, i) => (rowId(r) ? i : -1)).filter((i) => i >= 0)
   const onKeyDown = (e: KeyboardEvent) => {
@@ -126,9 +120,6 @@ export function LineageGraph({ tree, focus, onFocus, selected, onSelect }: Linea
   const mainFork = path[1] ? rows.findIndex((r) => rowId(r) === path[1].forkedFrom?.id) : -1
   const forkPoints = new Set(path.slice(1).map((b) => b.forkedFrom?.id))
   const firstOfLane = new Map(segments.map((s) => [s.top, s.b]))
-  // The Branch's newest entry glows; it breathes while its agent is working.
-  const headId = branch.name === 'main' ? (branch.commits[0] && tree.layers[0] && branch.commits[0].at > tree.layers[0].at ? branch.commits[0].id : tree.layers[0]?.id) : branch.commits[0]?.id
-  const live = branch.agent !== undefined && tree.busy.has(branch.agent)
   // Long ancestries keep main, the parent and the Branch; the middle folds into a menu.
   const crumbs: { b?: ForkBranch; folded?: ForkBranch[] }[] =
     path.length > 3
@@ -177,37 +168,12 @@ export function LineageGraph({ tree, focus, onFocus, selected, onSelect }: Linea
             </span>
           ))}
         </nav>
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-          <p title={branch.forkedFrom ? t("Forked from {value1} at {value2}", {value1: parent?.name, value2: branch.forkedFrom.id}) : undefined} className="min-w-0 flex-1 truncate text-xs text-muted-foreground">
-            {branch.name === 'main'
-              ? t("{layers} · the published line new mounts start from", { layers: t(tree.layers.length === 1 ? '{count} Layer' : '{count} Layers', { count: tree.layers.length }) })
-              : t("Forked from {parent}{point} · {commits} · {forks}{state}", {
-                parent: parent?.name,
-                point: branch.forkedFrom ? t(' at {id}', { id: shortId(branch.forkedFrom.id) }) : '',
-                commits: t(branch.commits.length === 1 ? '{count} Commit' : '{count} Commits', { count: branch.commits.length }),
-                forks: t(branch.children.length === 1 ? '{count} fork' : '{count} forks', { count: branch.children.length }),
-                state: branch.state === 'merged' ? t(' · merged') : branch.state === 'published' ? t(' · published{as}', { as: branch.publishedAs ? t(' as {id}', { id: shortId(branch.publishedAs) }) : '' }) : '',
-              })}
-          </p>
-          <div role="group" aria-label={t("Branch actions")} className="flex max-w-full flex-wrap items-center gap-1">
-            <Unavailable reason={BY_HAND}>
-              <Button variant="ghost" size="sm" disabled>
-                <LfsFork />{t("Fork")}</Button>
-            </Unavailable>
-            {parent && (
-              <>
-                <Unavailable reason={BY_HAND}>
-                  <Button variant="outline" size="sm" disabled>
-                    <LfsMerge />{t("Merge")}</Button>
-                </Unavailable>
-                <Unavailable reason={BY_HAND}>
-                  <Button size="sm" disabled>
-                    <LfsPublish />{t("Publish")}</Button>
-                </Unavailable>
-              </>
-            )}
-          </div>
-        </div>
+        <p title={branch.forkedFrom ? t("Forked from {value1} at {value2}", {value1: parent?.name, value2: branch.forkedFrom.id}) : undefined} className="text-xs text-muted-foreground tabular-nums">
+          {branch.name === 'main'
+            ? t('{count} entries', { count: tree.layers.length + branch.commits.length })
+            : t(branch.commits.length === 1 ? '{count} Commit' : '{count} Commits', { count: branch.commits.length })}
+          {branch.state !== 'open' && <span> · {t(branch.state)}</span>}
+        </p>
       </header>
 
       <div
@@ -219,9 +185,8 @@ export function LineageGraph({ tree, focus, onFocus, selected, onSelect }: Linea
         className="relative min-h-0 flex-1 overflow-y-auto outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
       >
         {rows.length === 0 && <p className="px-4 py-6 text-xs text-faint">{t("No Commits or Layers yet.")}</p>}
-        {/* Keyed by the Branch, so its lineage draws in afresh when focus moves. */}
-        <div key={branch.name} ref={container} className="relative isolate" style={{ height: rows.length * ROW + 8 }}>
-          <span ref={indicator} aria-hidden="true" className="indicator hist-row-indicator -z-10" />
+        {/* One stable list with a quiet selection highlight. */}
+        <div key={branch.name} className="relative isolate" style={{ height: rows.length * ROW + 8 }}>
           <svg aria-hidden="true" width={width} height={rows.length * ROW} className="absolute top-0 left-0 overflow-visible">
             {segments.map(({ b, lane, top, bottom, forkRow }) => {
               const color = laneColor(b.depth)
@@ -253,7 +218,6 @@ export function LineageGraph({ tree, focus, onFocus, selected, onSelect }: Linea
                         opacity={0.3}
                         pathLength={1}
                         className="hist-draw"
-                        style={revealStyle(4)}
                       />
                     )}
                   </g>
@@ -273,7 +237,6 @@ export function LineageGraph({ tree, focus, onFocus, selected, onSelect }: Linea
                   strokeDasharray={dashed ? '3 3' : undefined}
                   pathLength={dashed ? undefined : 1}
                   className={dashed ? 'hist-fade' : 'hist-draw'}
-                  style={revealStyle(lane * 3)}
                 />
               )
             })}
@@ -281,15 +244,9 @@ export function LineageGraph({ tree, focus, onFocus, selected, onSelect }: Linea
               const color = laneColor(path[r.lane].depth)
               const id = rowId(r)
               const on = id !== undefined && id === selected?.id
-              const head = id !== undefined && id === headId
-              const pop = { className: cn('hist-pop hist-node', head && 'hist-head'), style: revealStyle(i, { '--head': color } as CSSProperties) }
               const key = id ?? `${r.kind}-${i}`
-              const halo = head && live && (
-                <circle key={`${key}-halo`} cx={x(r.lane)} cy={y(i)} r={6} fill="none" stroke={color} strokeWidth={1.5} className="hist-halo" />
-              )
               if (r.kind === 'layer')
                 return [
-                  halo,
                   <rect
                     key={key}
                     x={x(0) - (on ? 6 : 5)}
@@ -301,13 +258,11 @@ export function LineageGraph({ tree, focus, onFocus, selected, onSelect }: Linea
                     opacity={r.dim ? 0.35 : 1}
                     stroke={on ? 'var(--foreground)' : 'none'}
                     strokeWidth={2}
-                    {...pop}
                   />,
                 ]
               if (r.kind === 'commit') {
                 const hollow = forkPoints.has(r.commit.id)
                 return [
-                  halo,
                   <circle
                     key={key}
                     cx={x(r.lane)}
@@ -316,12 +271,11 @@ export function LineageGraph({ tree, focus, onFocus, selected, onSelect }: Linea
                     fill={hollow ? 'var(--card)' : color}
                     stroke={on ? 'var(--foreground)' : color}
                     strokeWidth={hollow || on ? 2 : 0}
-                    {...pop}
                   />,
                 ]
               }
               if (r.kind === 'empty')
-                return <circle key={key} cx={x(r.lane)} cy={y(i)} r={4.5} fill="var(--card)" stroke={color} strokeWidth={1.5} strokeDasharray="2 2" {...pop} />
+                return <circle key={key} cx={x(r.lane)} cy={y(i)} r={4.5} fill="var(--card)" stroke={color} strokeWidth={1.5} strokeDasharray="2 2" />
               return null
             })}
           </svg>
@@ -329,13 +283,12 @@ export function LineageGraph({ tree, focus, onFocus, selected, onSelect }: Linea
           {rows.map((r, i) => (
             <RowLine
               key={rowId(r) ?? `${r.kind}-${i}`}
-              index={i}
               row={r}
               top={i * ROW}
               indent={width}
               tree={tree}
               selected={rowId(r) === selected?.id}
-              label={firstOfLane.get(i)}
+              label={firstOfLane.get(i)?.name === branch.name ? undefined : firstOfLane.get(i)}
               onSelect={onSelect}
               onFocus={onFocus}
             />
@@ -359,8 +312,6 @@ function LaneMark({ b }: { b: ForkBranch }) {
 }
 
 interface RowLineProps {
-  /** Its place, for the entrance stagger. */
-  index: number
   row: Row
   top: number
   indent: number
@@ -372,14 +323,14 @@ interface RowLineProps {
   onFocus: (name: string) => void
 }
 
-function RowLine({ index, row, top, indent, tree, selected, label, onSelect, onFocus }: RowLineProps) {
+function RowLine({ row, top, indent, tree, selected, label, onSelect, onFocus }: RowLineProps) {
   useI18n()
-  const style = revealStyle(index, { top, height: ROW, paddingLeft: indent + 6 })
+  const style = { top, height: ROW, paddingLeft: indent + 6 }
   if (row.kind === 'earlier' || row.kind === 'empty')
     return (
-      <div className="reveal absolute inset-x-0 flex items-center pr-4 text-xs text-faint" style={style}>
+      <div className="absolute inset-x-0 flex items-center pr-4 text-xs text-faint" style={style}>
         <span className="rounded-md border border-dashed px-2 py-0.5">
-          {row.kind === 'earlier' ? t("{value1} earlier {value2}", {value1: row.count, value2: t(row.of)}) : t("No Commits yet: forked, nothing committed")}
+          {row.kind === 'earlier' ? t("{value1} earlier {value2}", {value1: row.count, value2: t(row.of)}) : t("No Commits yet")}
         </span>
       </div>
     )
@@ -393,7 +344,7 @@ function RowLine({ index, row, top, indent, tree, selected, label, onSelect, onF
   const shownForks = row.forks.slice(0, 1)
 
   return (
-    <div className="reveal absolute inset-x-0 flex items-center gap-2 pr-3" style={revealStyle(index, { top, height: ROW, paddingLeft: indent })}>
+    <div className="absolute inset-x-0 flex items-center gap-2 pr-3" style={{ top, height: ROW, paddingLeft: indent }}>
       <button
         type="button"
         role="option"
@@ -402,9 +353,10 @@ function RowLine({ index, row, top, indent, tree, selected, label, onSelect, onF
         data-active={selected}
         tabIndex={-1}
         onClick={() => onSelect({ kind: row.kind, id })}
+        title={message}
         className={cn(
           'flex h-[34px] min-w-0 flex-1 items-center gap-2 rounded-lg px-2 text-left outline-none transition-colors duration-(--dur-fast)',
-          !selected && 'hover:bg-muted/60',
+          selected ? 'hist-row-indicator text-foreground' : 'hover:bg-muted/60',
         )}
       >
         <HashChip id={id} dim={dim} className="w-[4.75rem] shrink-0 justify-center" />
@@ -422,10 +374,10 @@ function RowLine({ index, row, top, indent, tree, selected, label, onSelect, onF
             {label.name}
           </span>
         )}
-        {row.kind === 'commit' && (
+        {row.kind === 'commit' && by && (
           <span
-            title={by ?? t('No agent recorded')}
-            className={cn('size-1.5 shrink-0 rounded-full', !by && 'ring-1 ring-faint')}
+            title={by}
+            className="size-1.5 shrink-0 rounded-full"
             style={by ? { background: agentColor(tree.agents, by) } : undefined}
           />
         )}

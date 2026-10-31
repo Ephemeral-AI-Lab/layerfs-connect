@@ -21,6 +21,21 @@ const modelMetadata = (model = {}) => defined(Object.fromEntries([
   'contextWindow', 'maxTokens', 'samplingParams', 'samplingParamsByThinkingLevel', 'compat',
 ].map((field) => [field, model[field]])))
 const positive = (value) => typeof value === 'number' && Number.isFinite(value) && value > 0 ? Math.round(value) : undefined
+const inputTypes = (input) => {
+  const types = Array.isArray(input) ? input.filter((type) => type === 'text' || type === 'image') : []
+  return types.length ? types : undefined
+}
+const apiInput = (model) => inputTypes(model?.apiInput)
+// Pi requires a concrete input list and otherwise silently drops images. Keep
+// its permissive transport setting separate from capabilities reported by API.
+const piInput = (model) => apiInput(model) ?? ['text', 'image']
+const providerInputs = (provider) => ({
+  ...provider,
+  ...(provider.models ? { models: provider.models.map((model) => ({ ...model, input: piInput(model) })) } : {}),
+  ...(provider.modelOverrides ? { modelOverrides: Object.fromEntries(Object.entries(provider.modelOverrides).map(([id, override]) => [id,
+    override.input ? { ...override, input: piInput(provider.models?.find((model) => model.id === id)) } : override,
+  ])) } : {}),
+})
 /** A provider's model list as the settings page edits it: id, name, limits, input types, reasoning. */
 const listedModel = (model = {}) => defined({
   id: model.id,
@@ -28,7 +43,7 @@ const listedModel = (model = {}) => defined({
   contextWindow: positive(model.contextWindow),
   maxTokens: positive(model.maxTokens),
   reasoning: typeof model.reasoning === 'boolean' ? model.reasoning : undefined,
-  input: Array.isArray(model.input) ? model.input.filter((type) => type === 'text' || type === 'image') : undefined,
+  input: inputTypes(model.input),
 })
 
 /** Checks a model list sent by the settings page; every id must be present and unique. */
@@ -41,7 +56,10 @@ function modelList(models) {
     if (!id) throw new Error('Model ID is required.')
     if (seen.has(id)) throw new Error('Model ID must be unique.')
     seen.add(id)
-    return listedModel({ ...model, id })
+    const listed = listedModel({ ...model, id })
+    // An API refresh can explicitly clear previously known modalities.
+    if (Array.isArray(model.input)) listed.input = inputTypes(model.input) ?? []
+    return listed
   })
 }
 
@@ -49,6 +67,9 @@ export class AgentModels {
   static async create(agentDir) {
     mkdirSync(agentDir, { recursive: true, mode: 0o700 })
     const models = new AgentModels(agentDir)
+    const config = { ...models.config, providers: Object.fromEntries(Object.entries(models.config.providers).map(([id, provider]) => [id, providerInputs(provider)])) }
+    if (JSON.stringify(config) !== JSON.stringify(models.config)) write(models.modelsPath, config)
+    models.config = config
     models.runtime = await ModelRuntime.create({ authPath: models.authPath, modelsPath: models.modelsPath, allowModelNetwork: false })
     const error = models.runtime.getError()
     if (error) throw new Error(error)
@@ -83,7 +104,7 @@ export class AgentModels {
           // Pi ships it (a catalog provider), rather than models.json declaring it
           builtIn: this.runtime.builtins?.has?.(provider.id) ?? !config,
           // the models models.json lists for it: all of a declared provider's, extras for a built-in one
-          savedModels: (config?.models ?? []).map((model) => listedModel(model)),
+          savedModels: (config?.models ?? []).map((model) => listedModel({ ...model, input: apiInput(model) })),
           // a subscription sign-in it offers, and whether its credential is one
           signIn: signInOf(provider),
           signedIn: this.runtime.isUsingOAuth?.(provider.id) ?? false,
@@ -94,7 +115,7 @@ export class AgentModels {
         id: model.id,
         name: model.name,
         reasoning: model.reasoning,
-        input: model.input,
+        input: this.input(model.provider, model.id),
         contextWindow: model.contextWindow,
         maxTokens: model.maxTokens,
         thinkingLevels: getSupportedThinkingLevels(model),
@@ -139,6 +160,7 @@ export class AgentModels {
     return this.saveProvider({
       id,
       models,
+      discoveredInputs: models && Object.fromEntries(models.filter((model) => model.input !== undefined).map((model) => [model.id, model.input])),
       name: input.name?.trim() || undefined,
       baseUrl: baseUrl || undefined,
       api: input.api?.trim() || this.config.providers[id]?.api || (this.runtime.getProvider(id) ? undefined : 'openai-completions'),
@@ -147,12 +169,19 @@ export class AgentModels {
     })
   }
 
-  async persistProvider({ id, name, baseUrl, api, apiKey, models, modelOverrides, headers }) {
+  async persistProvider({ id, name, baseUrl, api, apiKey, models, modelOverrides, headers, discoveredInputs }) {
     if (!id?.trim()) throw new Error('Provider ID is required.')
+    const saved = this.config.providers[id]
     const config = {
-      ...this.config.providers[id],
+      ...saved,
       ...defined({ name, baseUrl, api, models, modelOverrides, headers: nativeHeaders(headers) }),
     }
+    const endpointChanged = saved && ((baseUrl !== undefined && baseUrl !== saved.baseUrl) || (api !== undefined && api !== saved.api))
+    if (config.models) config.models = config.models.map((model) => ({
+      ...model,
+      apiInput: discoveredInputs?.[model.id] ?? (endpointChanged ? undefined : apiInput(model) ?? apiInput(saved?.models?.find((old) => old.id === model.id))),
+    }))
+    Object.assign(config, providerInputs(config))
     // an emptied model list goes away rather than staying as []
     if (Array.isArray(config.models) && !config.models.length) delete config.models
     const previous = this.config
@@ -223,7 +252,11 @@ export class AgentModels {
     if (!selection) throw new Error('Configure a model in Models before starting a chat.')
     const model = this.runtime.getModel(selection.provider, selection.modelId ?? selection.model)
     if (!model) throw new Error(`Unknown model: ${selection.provider}/${selection.modelId ?? selection.model}`)
-    return model
+    return { ...model, input: this.input(model.provider, model.id) ?? ['text', 'image'] }
+  }
+
+  input(provider, id) {
+    return apiInput(this.config.providers[provider]?.models?.find((model) => model.id === id))
   }
 
   removeProvider(id) {
@@ -287,27 +320,32 @@ export class AgentModels {
     const saved = this.config.providers[provider]
     const known = this.runtime.getProvider(provider)
     const first = this.runtime.getModels(provider)[0]
-    const models = new Map((saved?.models ?? []).map((model) => [model.id, model]))
+    const baseUrl = input.baseUrl?.trim() || saved?.baseUrl || known?.baseUrl || first?.baseUrl
+    const api = input.api?.trim() || saved?.api || first?.api
+    const endpointChanged = baseUrl !== saved?.baseUrl || api !== saved?.api
+    const models = new Map((saved?.models ?? []).map((model) => [model.id, endpointChanged ? { ...model, apiInput: undefined } : model]))
     for (const model of result.models) {
       // Preserve manually configured definitions and modelOverrides, including
-      // IDs the endpoint no longer lists. Keep Pi's richer built-in metadata.
+      // IDs the endpoint no longer lists. Input capability always comes from
+      // this API response, never an old definition or Pi's bundled catalog.
       models.set(model.id, {
         ...modelMetadata(this.runtime.getModel(provider, model.id)),
         ...model,
         ...models.get(model.id),
+        apiInput: model.input,
       })
     }
     const config = {
       ...this.config,
       providers: {
         ...this.config.providers,
-        [provider]: {
+        [provider]: providerInputs({
           ...saved,
-          api: input.api?.trim() || saved?.api || first?.api,
-          baseUrl: input.baseUrl?.trim() || saved?.baseUrl || known?.baseUrl || first?.baseUrl,
+          api,
+          baseUrl,
           ...defined({ headers: nativeHeaders(input.headers) }),
           models: [...models.values()],
-        },
+        }),
       },
     }
     const apiKey = input.apiKey?.trim()

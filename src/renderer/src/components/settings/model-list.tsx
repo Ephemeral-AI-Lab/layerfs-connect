@@ -1,10 +1,11 @@
 import { ChevronDown, ChevronRight, Plus, Trash2 } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { DiscoveredModel, ModelDiscoveryInput, ProviderModel } from '@shared/agent-api'
 
 import { SmallModal } from '@/components/settings/parts'
 import { agentHost } from '@/host/agent-client'
 import { useI18n } from '@/i18n'
+import { imageInputSupport } from '@/lib/model-input'
 
 /** One model row as typed: capacities stay text until saved ("256K", "1M"). */
 export interface ModelDraft {
@@ -82,11 +83,16 @@ export function ModelListEditor({ models, onChange, probe, probeBlocked, meta, d
   const [expanded, setExpanded] = useState<ReadonlySet<string>>(() => new Set())
   const [fetching, setFetching] = useState(false)
   const [failure, setFailure] = useState('')
+  const [notice, setNotice] = useState('')
   const [candidates, setCandidates] = useState<DiscoveredModel[]>()
   const [picked, setPicked] = useState<ReadonlySet<string>>(() => new Set())
   const [query, setQuery] = useState('')
   /** A row "Add model" just made: its Model ID takes the focus. */
   const [added, setAdded] = useState<string>()
+  const active = useRef(true)
+  const currentModels = useRef(models)
+  currentModels.current = models
+  useEffect(() => { active.current = true; return () => { active.current = false } }, [])
 
   const patch = (key: string, change: Partial<ModelDraft>) => onChange(models.map((model) => model.key === key ? { ...model, ...change } : model))
 
@@ -94,12 +100,19 @@ export function ModelListEditor({ models, onChange, probe, probeBlocked, meta, d
     if (!probe) return
     setFetching(true)
     setFailure('')
+    setNotice('')
     try {
       const result = await agentHost.discoverModels(probe)
-      const have = new Set(models.map((model) => model.id.trim()))
+      if (!active.current) return
+      const fetched = new Map(result.models.map((model) => [model.id, model]))
+      onChange(currentModels.current.map((model) => {
+        const remote = fetched.get(model.id.trim())
+        return remote ? { ...model, input: remote.input ?? [] } : model
+      }))
+      const have = new Set(currentModels.current.map((model) => model.id.trim()))
       const fresh = result.models.filter((model) => !have.has(model.id))
       if (!result.models.length) setFailure(t('The provider listed no models. Add them by hand.'))
-      else if (!fresh.length) setFailure(t('Every model the provider lists is already here.'))
+      else if (!fresh.length) setNotice(t('Model capabilities refreshed.'))
       else {
         setCandidates(fresh)
         setPicked(new Set())
@@ -120,7 +133,7 @@ export function ModelListEditor({ models, onChange, probe, probeBlocked, meta, d
 
   function adopt() {
     const chosen = (candidates ?? []).filter((model) => picked.has(model.id))
-    onChange([...models, ...chosen.map((model) => toDraft({ ...model, name: model.name !== model.id ? model.name : undefined }))])
+    onChange([...models, ...chosen.map((model) => toDraft({ ...model, input: model.input ?? [], name: model.name !== model.id ? model.name : undefined }))])
     setCandidates(undefined)
   }
 
@@ -147,7 +160,7 @@ export function ModelListEditor({ models, onChange, probe, probeBlocked, meta, d
         const position = index + 1
         return <div key={model.key} className="st-model">
           <div className="st-model-row">
-            <input className="st-input" type="text" spellCheck={false} autoFocus={model.key === added} value={model.id} placeholder={t('Model ID')} aria-label={`${t('Model ID')} ${position}`} disabled={disabled} onChange={(event) => patch(model.key, { id: event.target.value })} />
+            <input className="st-input" type="text" spellCheck={false} autoFocus={model.key === added} value={model.id} placeholder={t('Model ID')} aria-label={`${t('Model ID')} ${position}`} disabled={disabled} onChange={(event) => patch(model.key, { id: event.target.value, input: undefined })} />
             <input className="st-input" type="text" value={model.name} placeholder={t('Display name')} aria-label={`${t('Display name')} ${position}`} disabled={disabled} onChange={(event) => patch(model.key, { name: event.target.value })} />
             <button
               type="button"
@@ -177,25 +190,18 @@ export function ModelListEditor({ models, onChange, probe, probeBlocked, meta, d
               <span className="st-model-label">{t('Max output tokens')}</span>
               <input className="st-input" type="text" inputMode="numeric" value={model.maxTokens} placeholder={t('Uses the provider default')} aria-label={`${t('Max output tokens')} ${position}`} disabled={disabled} onChange={(event) => patch(model.key, { maxTokens: event.target.value })} />
             </label>
-            <fieldset className="st-checks">
-              <legend className="st-model-label">{t('Input types')}</legend>
-              {(['text', 'image'] as const).map((type) => {
-                const current = model.input ?? ['text']
-                return <label key={type} className="st-check">
-                  <input
-                    type="checkbox"
-                    checked={current.includes(type)}
-                    disabled={disabled || (type === 'text' && current.length === 1 && current[0] === 'text')}
-                    onChange={(event) => patch(model.key, { input: event.target.checked ? [...current, type] : current.filter((item) => item !== type) })}
-                  />
-                  {type === 'text' ? t('Text') : t('Images')}
-                </label>
-              })}
+            <div className="st-model-field">
+              <span className="st-model-label">{t('Image input')}</span>
+              <span className="text-[13px] leading-5">{t(imageInputSupport(model.input) === undefined
+                ? 'Unknown · images allowed'
+                : imageInputSupport(model.input) ? 'Supported by the API' : 'Not supported by the API')}</span>
+            </div>
+            <div className="flex items-center">
               <label className="st-check">
                 <input type="checkbox" checked={model.reasoning} disabled={disabled} onChange={(event) => patch(model.key, { reasoning: event.target.checked })} />
                 {t('Supports reasoning')}
               </label>
-            </fieldset>
+            </div>
           </div>}
         </div>
       })}
@@ -208,6 +214,7 @@ export function ModelListEditor({ models, onChange, probe, probeBlocked, meta, d
       <Plus /> {t('Add model')}
     </button>
     {failure && <p className="st-error">{failure}</p>}
+    {notice && <p className="st-hint" role="status">{notice}</p>}
     <SmallModal
       open={candidates !== undefined}
       title={t('Choose models to add')}

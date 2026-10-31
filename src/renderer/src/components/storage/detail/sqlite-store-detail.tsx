@@ -67,7 +67,7 @@ function InPostgresql({ store, index }: { store: StoreInfo; index: number }) {
                       {x.importedFrom?.at ? ` · ${t('imported {ago}', { ago: ago(x.importedFrom.at) })}` : ''}
                     </span>
                   </span>
-                  <ArrowUpRight aria-hidden="true" className="sc-arrow size-4 shrink-0 text-primary" />
+                  <ArrowUpRight aria-hidden="true" className="sc-arrow size-4 shrink-0 text-(--icon-accent)" />
                 </button>
               </li>
             ))}

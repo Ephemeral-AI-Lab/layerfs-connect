@@ -54,7 +54,7 @@ export function SearchField({ label, value, onChange, className, size = 'md' }: 
           type="button"
           aria-label={t("Clear")}
           onClick={() => onChange('')}
-          className="absolute top-1/2 right-1.5 flex size-5 -translate-y-1/2 items-center justify-center rounded text-faint outline-none animate-in fade-in zoom-in-75 hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
+          className="absolute top-1/2 right-1.5 flex size-5 -translate-y-1/2 items-center justify-center rounded text-faint outline-none hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
         >
           <X className="size-3" />
         </button>

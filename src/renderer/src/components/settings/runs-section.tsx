@@ -36,7 +36,6 @@ export function RunsSection() {
   }, [waiting])
 
   if (!settings || !draft) return <div className="st-section" data-testid="runs-section">
-    <h2 className="st-title">{t('Runs')}</h2>
     {error ? <p className="st-error" role="alert">{error}</p> : <p className="st-hint">{t('Loading…')}</p>}
   </div>
 
@@ -59,7 +58,6 @@ export function RunsSection() {
   }
 
   return <div className="st-section" data-testid="runs-section">
-    <h2 className="st-title">{t('Runs')}</h2>
     <p className="st-intro">{t('How every chat’s runs handle slow commands and failed model requests. Changes apply to each chat’s next run.')}</p>
     <div className="st-card">
       {FIELDS.map(({ key, label, help, min, max }) => <label key={key} className="st-card-row">

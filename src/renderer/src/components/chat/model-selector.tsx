@@ -4,7 +4,7 @@ import type { AgentModel } from '@shared/agent-api'
 
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
-  DropdownMenuSeparator, DropdownMenuTrigger,
+  DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuSeparator, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { cn } from '@/lib/utils'
 
@@ -23,19 +23,22 @@ export function ModelSelector({ models, provider, modelId, thinking, thinkingOpt
   onManage: () => void
 }) {
   const { t } = useI18n()
-  return <div className="flex items-center gap-1">
+  const current = models.find((model) => model.provider === provider && model.id === modelId)
+  const name = current?.name || modelId || t("Select model")
+  const displayName = name === modelId ? name.split('/').at(-1) : name
+  return <div className="chat-model-selectors">
     <DropdownMenu open={open} onOpenChange={onOpenChange}>
     <DropdownMenuTrigger
-      aria-label={t("Select model")}
+      aria-label={modelId ? t("Select model: {model}", { model: name }) : t("Select model")}
       title={modelId ? t("{model} · Thinking: {level}", { model: `${provider}/${modelId}`, level: t(thinking) }) : t("Select model")}
       disabled={busy}
-      className="inline-flex h-7 min-w-0 items-center gap-1.5 rounded-full bg-foreground/[0.04] px-2.5 text-xs font-medium text-foreground/85 outline-none transition-colors hover:bg-foreground/[0.08] focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
+      className="chat-model-trigger"
     >
-      {busy ? <LoaderCircle className="size-3 animate-spin" /> : <span aria-hidden="true" className={cn('size-1.5 shrink-0 rounded-full', modelId ? 'bg-success' : 'bg-faint')} />}
-      <span className="max-w-28 truncate xl:max-w-40">{modelId ?? t("Select model")}</span>
+      {busy && <LoaderCircle className="size-3.5 shrink-0 animate-spin" />}
+      <span className="min-w-0 truncate">{displayName}</span>
       <ChevronDown className="size-3 shrink-0 opacity-60" />
     </DropdownMenuTrigger>
-    <DropdownMenuContent align="end" side="top" className="chat-popover w-72 p-1.5">
+    <DropdownMenuContent align="start" side="top" className="chat-popover w-72 p-1.5">
       <DropdownMenuLabel className="px-2.5 text-[11px]">{t("Model")} {disabled && <span className="font-normal text-faint">{t("· available after this turn")}</span>}</DropdownMenuLabel>
       <div className="max-h-60 overflow-y-auto">
         {models.length === 0 ? <p className="px-2.5 py-3 text-xs text-muted-foreground">{t("Add a provider in Manage models to get started.")}</p> : models.map((model) => {
@@ -55,15 +58,17 @@ export function ModelSelector({ models, provider, modelId, thinking, thinkingOpt
       aria-label={t("Thinking level: {level}", { level: t(thinking) })}
       title={t("Thinking intensity")}
       disabled={!modelId || disabled || busy}
-      className="inline-flex h-7 items-center gap-1.5 rounded-full px-2 text-[11px] font-medium text-muted-foreground outline-none transition-colors hover:bg-foreground/[0.05] hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
+      className="chat-thinking-trigger"
     >
       <Brain className="size-3.5 opacity-75" />
-      <span className="capitalize">{t(thinking)}</span>
+      <span>{t("Thinking: {level}", { level: t(thinking) })}</span>
       <ChevronDown className="size-3 opacity-50" />
     </DropdownMenuTrigger>
-    <DropdownMenuContent align="end" side="top" className="chat-popover w-40 p-1">
-      <DropdownMenuLabel className="text-[11px]">{t("Thinking intensity")}</DropdownMenuLabel>
-      {thinkingOptions.map((level) => <DropdownMenuItem key={level} onSelect={() => onThinking(level)} className="justify-between text-xs capitalize"><span>{t(level)}</span>{thinking === level && <Check className="size-3 text-foreground" />}</DropdownMenuItem>)}
+    <DropdownMenuContent align="start" side="top" sideOffset={8} collisionPadding={16} className="chat-popover chat-choice-menu chat-thinking-menu">
+      <DropdownMenuLabel>{t("Thinking intensity")}</DropdownMenuLabel>
+      <DropdownMenuRadioGroup value={thinking} onValueChange={onThinking} aria-label={t("Thinking intensity")}>
+        {thinkingOptions.map((level) => <DropdownMenuRadioItem key={level} value={level} className="capitalize"><span>{t(level)}</span></DropdownMenuRadioItem>)}
+      </DropdownMenuRadioGroup>
     </DropdownMenuContent>
   </DropdownMenu>
   </div>

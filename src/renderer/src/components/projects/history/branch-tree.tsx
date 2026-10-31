@@ -4,7 +4,6 @@ import './history.css'
 import { ChevronRight } from 'lucide-react'
 import { type KeyboardEvent, useMemo } from 'react'
 
-import { Collapse, revealStyle, useIndicator } from '@/components/motion'
 import { Button } from '@/components/ui/button'
 
 import type { ForkBranch, ForkTree } from '@/data/forks'
@@ -16,7 +15,7 @@ export type BranchFilter = 'all' | 'open' | 'done'
 /** One colour per fork depth; main takes the primary colour. */
 export const laneColor = (depth: number) => (depth === 0 ? 'var(--primary)' : `var(--lane-${((depth - 1) % 4) + 1})`)
 
-/** An agent's dot, pulsing while its call is in flight. */
+/** A stable agent marker; its accessible label carries the running state. */
 export function AgentDot({ tree, agent, className }: { tree: ForkTree; agent: string; className?: string }) {
   useI18n()
   const color = agentColor(tree.agents, agent)
@@ -28,7 +27,7 @@ export function AgentDot({ tree, agent, className }: { tree: ForkTree; agent: st
       title={agent}
       className={cn('relative flex size-2 shrink-0', className)}
     >
-      <span className={cn('relative size-2 rounded-full', busy && 'pulse-ring')} style={{ background: color, color }} />
+      <span className="relative size-2 rounded-full" style={{ background: color, color }} />
     </span>
   )
 }
@@ -70,7 +69,6 @@ interface BranchTreeProps {
 
 export function BranchTree({ tree, focus, onFocus, expanded, onToggle, query, filter, onClear }: BranchTreeProps) {
   useI18n()
-  const { container, indicator } = useIndicator<HTMLDivElement>()
   const narrowing = query.trim() !== '' || filter !== 'all'
   const shown = useMemo(() => visibleBranches(tree, query, filter), [tree, query, filter])
   const direct = useMemo(() => {
@@ -111,11 +109,9 @@ export function BranchTree({ tree, focus, onFocus, expanded, onToggle, query, fi
   }
 
   const empty = narrowing && shown.size === 1 && direct.size === 0
-  const order = new Map(rows.map((n, i) => [n, i]))
   return (
     <div className="min-h-0 flex-1 overflow-y-auto px-1.5 py-2">
-      <div ref={container} className="relative isolate">
-        <span ref={indicator} aria-hidden="true" className="indicator hist-row-indicator -z-10" />
+      <div>
         <ul role="tree" aria-label={t("Branches by fork")} onKeyDown={onKeyDown}>
           <Node
             name="main"
@@ -127,7 +123,6 @@ export function BranchTree({ tree, focus, onFocus, expanded, onToggle, query, fi
             shown={shown}
             direct={direct}
             narrowing={narrowing}
-            order={order}
           />
         </ul>
       </div>
@@ -155,13 +150,11 @@ interface NodeProps {
   shown: Set<string>
   direct: Set<string>
   narrowing: boolean
-  /** Each drawn row's place, for the entrance stagger. */
-  order: Map<string, number>
 }
 
 function Node(props: NodeProps) {
   useI18n()
-  const { name, tree, focus, onFocus, isOpen, onToggle, shown, direct, narrowing, order } = props
+  const { name, tree, focus, onFocus, isOpen, onToggle, shown, direct, narrowing } = props
   const b = tree.branches.get(name)
   if (!b || !shown.has(name)) return null
   const kids = b.children.filter((k) => shown.has(k))
@@ -175,10 +168,9 @@ function Node(props: NodeProps) {
       <div
         data-active={selected}
         className={cn(
-          'reveal group flex h-8 items-center gap-1 rounded-lg pr-1.5 text-[13px] transition-colors duration-(--dur-fast)',
-          selected ? 'text-accent-foreground' : 'hover:bg-muted/70',
+          'group flex h-9 items-center gap-1 rounded-lg pr-1.5 text-[13px] transition-colors duration-(--dur-fast)',
+          selected ? 'hist-row-indicator text-accent-foreground' : 'hover:bg-muted/70',
         )}
-        style={revealStyle(order.get(name) ?? 0)}
       >
         {kids.length > 0 ? (
           <button
@@ -211,14 +203,14 @@ function Node(props: NodeProps) {
             )}
             style={{
               background: laneColor(b.depth),
-              boxShadow: selected ? `0 0 0 3px color-mix(in oklab, ${laneColor(b.depth)} 22%, transparent), 0 0 8px ${laneColor(b.depth)}` : undefined,
+              boxShadow: selected ? `0 0 0 2px color-mix(in oklab, ${laneColor(b.depth)} 15%, transparent)` : undefined,
             }}
           />
           <span className={cn('min-w-0 flex-1 truncate', name === 'main' && 'font-semibold', quiet && 'text-faint')}>
             {name}
           </span>
           {b.agent && <AgentDot tree={tree} agent={b.agent} />}
-          <span className="shrink-0 font-mono text-[11px] text-faint tabular-nums">
+          <span className="shrink-0 text-[11px] text-muted-foreground tabular-nums">
             {name === 'main'
               ? t("{value1} L", {value1: tree.layers.length})
               : b.state === 'merged'
@@ -229,8 +221,7 @@ function Node(props: NodeProps) {
           </span>
         </button>
       </div>
-      {kids.length > 0 && (
-        <Collapse open={open} appear={false}>
+      {kids.length > 0 && open && (
           <ul
             role="group"
             className="ml-[7px] border-l pl-1"
@@ -240,7 +231,6 @@ function Node(props: NodeProps) {
               <Node key={k} {...props} name={k} />
             ))}
           </ul>
-        </Collapse>
       )}
     </li>
   )

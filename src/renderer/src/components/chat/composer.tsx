@@ -1,10 +1,9 @@
 import { t, useI18n } from '@/i18n'
-import { ArrowUp, Check, ChevronDown, LoaderCircle, Plus, Sparkles, Square } from 'lucide-react'
+import { ArrowUp, LoaderCircle, Paperclip, Plus, Sparkles, Square } from 'lucide-react'
 import { type KeyboardEvent, type ReactNode, useEffect, useId, useRef, useState } from 'react'
 import type { AgentAttachment } from '@shared/agent-api'
 import { AttachmentList, readAttachments } from '@/components/chat/attachments'
-import { spotlight } from '@/components/motion/spotlight'
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { cn } from '@/lib/utils'
 
 const SEND_KEY_STORAGE = 'connect.agent.send-key'
@@ -51,8 +50,6 @@ interface ComposerProps {
   loading?: boolean
   onStop?: () => void
   controls?: ReactNode
-  /** Controls on the right of the bar, before the send shortcut (the model and thinking pickers). */
-  trailing?: ReactNode
   commands?: ComposerCommand[]
   sendLabel?: string
   placeholder?: string
@@ -70,12 +67,11 @@ export function Composer({
   loading = false,
   onStop,
   controls,
-  trailing,
   commands = [],
   sendLabel = t("Send message"),
   placeholder = t("Give the agent a task…"),
   className,
-  attachments = [], onAttachments, supportsImages = false,
+  attachments = [], onAttachments, supportsImages,
 }: ComposerProps) {
   const { t } = useI18n()
   const textareaRef = useRef<HTMLTextAreaElement>(null)
@@ -219,7 +215,7 @@ export function Composer({
   }
 
   return (
-    <div className={cn('relative mx-auto w-full max-w-3xl', className)} onDragOver={(event) => { if (event.dataTransfer.types.includes('Files')) event.preventDefault() }} onDrop={(event) => { if (event.dataTransfer.files.length) { event.preventDefault(); void addFiles([...event.dataTransfer.files]) } }}>
+    <div className={cn('chat-composer relative w-full', className)} onDragOver={(event) => { if (event.dataTransfer.types.includes('Files')) event.preventDefault() }} onDrop={(event) => { if (event.dataTransfer.files.length) { event.preventDefault(); void addFiles([...event.dataTransfer.files]) } }}>
       {showCommands && (
         <div className="chat-popover glass-strong absolute right-0 bottom-full left-0 z-30 mb-2 overflow-hidden rounded-2xl border border-foreground/[0.08] p-1.5 shadow-lg">
           <div id={commandListId} role="listbox" aria-label={t("Chat commands")} className="max-h-60 overflow-y-auto">
@@ -247,8 +243,7 @@ export function Composer({
         </div>
       )}
       <div
-        onPointerMove={spotlight}
-        className="glass-liquid spotlight relative flex flex-col gap-1.5 rounded-3xl p-2.5 transition-all duration-(--dur-base) focus-within:border-primary/25 focus-within:shadow-[0_14px_36px_-10px_rgba(15,23,42,0.08),inset_0_1px_0_rgba(255,255,255,1)] dark:focus-within:border-primary/35 dark:focus-within:shadow-[0_16px_36px_-12px_rgba(0,0,0,0.7)]"
+        className="chat-composer-surface glass-liquid relative flex flex-col gap-1.5 rounded-3xl p-2.5 transition-[border-color,box-shadow] duration-(--dur-base) focus-within:border-primary/25 focus-within:shadow-[0_14px_36px_-10px_rgba(15,23,42,0.08),inset_0_1px_0_rgba(255,255,255,1)]"
       >
         {onAttachments && <input ref={picker} type="file" multiple className="hidden" tabIndex={-1} accept="text/*,application/json,application/javascript,application/typescript,application/xml,application/yaml,application/x-yaml,image/png,image/jpeg,image/webp,image/gif,.md,.ts,.tsx,.jsx,.py,.sh,.toml,.log" aria-label={t("Attach files")} onChange={(event) => { void addFiles([...event.target.files ?? []]); event.target.value = '' }} />}
         {!!attachments.length && <div className="px-2 pt-1"><AttachmentList attachments={attachments} disabled={disabled || reading} onRemove={(id) => onAttachments?.(attachments.filter((attachment) => attachment.id !== id))} /></div>}
@@ -274,34 +269,40 @@ export function Composer({
           className="w-full resize-none bg-transparent px-3 py-1.5 text-[14.5px] leading-relaxed text-foreground placeholder:text-faint outline-none scrollbar-none"
         />
 
-        <div className="flex items-center justify-between gap-2 px-2 pt-0.5 pb-0.5 text-xs text-faint">
-          <div className="flex min-w-0 items-center gap-1">
-          {onAttachments && <button type="button" aria-label={t("Add attachments")} title={t("Attach text files or images")} disabled={disabled || reading} onClick={() => picker.current?.click()} className="flex size-7 shrink-0 items-center justify-center rounded-full text-muted-foreground outline-none hover:bg-foreground/[0.05] focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50">{reading ? <LoaderCircle className="size-3.5 animate-spin" /> : <Plus className="size-4" />}</button>}
-          {controls ?? (
-            <span className="flex items-center gap-1.5 text-muted-foreground/80">
-              <Sparkles className="size-3.5 text-primary" />
-              <span>{t("Shift+↵ for new line")}</span>
-            </span>
-          )}
-          </div>
-
-          <div className="flex shrink-0 items-center gap-2">
-            {trailing}
+        <div className="chat-composer-toolbar">
+          <div className="chat-composer-tools">
             <DropdownMenu>
-              <DropdownMenuTrigger aria-label={t("Send shortcut")} title={t("Send with {shortcut}", { shortcut: sendShortcut })} className="flex items-center gap-0.5 rounded-md px-1 py-1 text-[10px] text-muted-foreground outline-none hover:bg-foreground/[0.05] focus-visible:ring-2 focus-visible:ring-ring">
-                <span>{sendShortcut}</span><ChevronDown className="size-2.5 opacity-60" />
+              <DropdownMenuTrigger aria-label={t("Composer options")} title={t("Attachments and send options")} className="chat-composer-more">
+                {reading ? <LoaderCircle className="size-4 animate-spin" /> : <Plus className="size-4" />}
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" side="top" className="chat-popover w-52 p-1" onCloseAutoFocus={(event) => { event.preventDefault(); textareaRef.current?.focus() }}>
-                <DropdownMenuLabel className="text-[11px]">{t("Send shortcut")}</DropdownMenuLabel>
-                {(['enter', 'modifier'] as const).map((key) => (
-                  <DropdownMenuItem key={key} onSelect={() => changeSendKey(key)} className="justify-between text-xs">
-                    <span>{key === 'enter' ? t("Enter to send") : t("{shortcut}Enter to send", { shortcut: modifierLabel })}</span>
-                    {sendKey === key && <Check className="size-3" />}
-                  </DropdownMenuItem>
-                ))}
-                <p className="px-2 py-1.5 text-[10px] text-faint">{t("Shift+Enter always adds a new line.")}</p>
+              <DropdownMenuContent align="start" side="top" sideOffset={8} collisionPadding={16} className="chat-popover chat-choice-menu chat-composer-options" onCloseAutoFocus={(event) => { event.preventDefault(); textareaRef.current?.focus() }}>
+                {onAttachments && <>
+                  <DropdownMenuItem disabled={disabled || reading} onSelect={() => picker.current?.click()}><Paperclip className="size-3.5 text-muted-foreground" />{t("Add attachments")}</DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                </>}
+                <DropdownMenuLabel>{t("Send shortcut")}</DropdownMenuLabel>
+                <DropdownMenuRadioGroup value={sendKey} onValueChange={(key) => changeSendKey(key as SendKey)}>
+                  {(['enter', 'modifier'] as const).map((key) => (
+                    <DropdownMenuRadioItem key={key} value={key} aria-label={key === 'enter' ? t("Enter to send") : t("{shortcut}Enter to send", { shortcut: modifierLabel })}>
+                      <span className="chat-shortcut-keys">{key === 'modifier' && <kbd>{window.connect.platform === 'darwin' ? '⌘' : 'Ctrl'}</kbd>}<kbd>Enter</kbd></span>
+                      <span>{t("Send message")}</span>
+                    </DropdownMenuRadioItem>
+                  ))}
+                </DropdownMenuRadioGroup>
+                <div className="chat-composer-options-hint" aria-label={t("Shift+Enter always adds a new line.")}>
+                  <span>{t("New line")}</span><span className="chat-shortcut-keys"><kbd>Shift</kbd><kbd>Enter</kbd></span>
+                </div>
               </DropdownMenuContent>
             </DropdownMenu>
+            {controls ?? (
+              <span className="flex items-center gap-1.5 text-muted-foreground">
+                <Sparkles className="size-3.5 text-(--icon-accent)" />
+                <span>{t("Shift+↵ for new line")}</span>
+              </span>
+            )}
+          </div>
+
+          <div className="chat-composer-send">
             {loading && onStop && (
               <button
                 type="button"
@@ -309,7 +310,7 @@ export function Composer({
                 disabled={disabled}
                 title={t("Stop agent (Esc)")}
                 aria-label={t("Stop agent")}
-                className="flex size-8 items-center justify-center rounded-full bg-foreground/90 text-background shadow-xs transition-transform hover:bg-foreground hover:scale-105 active:scale-95"
+                className="flex size-8 shrink-0 items-center justify-center rounded-full bg-foreground/90 text-background shadow-xs transition-transform hover:bg-foreground hover:scale-105 active:scale-95"
               >
                 <Square className="size-3 fill-current" />
               </button>
@@ -322,7 +323,7 @@ export function Composer({
               title={submitItem ? t("{status}: {command}", { status: submitItem.disabled ? t("Unavailable") : t("Run"), command: submitItem.lead }) : `${sendLabel} (${sendShortcut})`}
               aria-label={submitItem ? t("Run {command}", { command: submitItem.label }) : sendLabel}
               className={cn(
-                'flex size-8 items-center justify-center rounded-full transition-all duration-(--dur-fast) outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                'flex size-8 shrink-0 items-center justify-center rounded-full transition-all duration-(--dur-fast) outline-none focus-visible:ring-2 focus-visible:ring-ring',
                 canSend
                   ? 'btn-primary bg-primary text-primary-foreground shadow-sm hover:scale-105 active:scale-95'
                   : 'bg-foreground/[0.06] text-faint/60 cursor-not-allowed',

@@ -4,10 +4,8 @@ import '@/components/projects/history/history.css'
 import { ChevronRight, FileQuestion, FileText, Folder, FolderOpen, Link2, X } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
-import { Collapse, revealStyle, useIndicator } from '@/components/motion'
-
 import { CodeView } from '@/components/projects/code-view'
-import { PaneHead, SearchField } from '@/components/projects/history/parts'
+import { SearchField } from '@/components/projects/history/parts'
 import { LoadError, Loading, explain } from '@/components/projects/states'
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { bytes, shortId } from '@/data/format'
@@ -23,21 +21,21 @@ function FileBadge({ entry }: { entry: Pick<FsEntry, 'name' | 'kind'> }) {
   if (entry.kind === 'symlink') return <Link2 aria-hidden="true" className="size-4 shrink-0 text-faint" />
   const [text, tone] =
     name === 'package.json'
-      ? ['npm', 'text-[#c4502a] bg-[#c4502a]/10']
+      ? ['npm', 'text-[#c4502a] bg-[#c4502a]/10 dark:text-(--commit-exec)']
       : name.endsWith('-lock.json') || name.endsWith('.lock')
         ? ['lock', 'text-faint bg-muted']
         : name === '.gitignore'
-          ? ['git', 'text-[#e0703a] bg-[#e0703a]/10']
+          ? ['git', 'text-[#e0703a] bg-[#e0703a]/10 dark:text-(--commit-exec)']
           : name.endsWith('.sh')
             ? ['$', 'text-success bg-success/10']
             : name.endsWith('.md')
-              ? ['i', 'text-primary bg-primary/10']
+              ? ['i', 'text-(--icon-accent) bg-primary/10']
               : /\.[cm]?[tj]sx?$/.test(name)
-                ? [/\.[cm]?tsx?$/.test(name) ? 'TS' : 'JS', 'text-[#2d5bb5] bg-[#2d5bb5]/10']
+                ? [/\.[cm]?tsx?$/.test(name) ? 'TS' : 'JS', 'text-[#2d5bb5] bg-[#2d5bb5]/10 dark:text-(--icon-accent)']
                 : name.endsWith('.json')
                   ? ['{}', 'text-warning bg-warning/10']
                   : name.endsWith('.py')
-                    ? ['py', 'text-[#3572a5] bg-[#3572a5]/10']
+                    ? ['py', 'text-[#3572a5] bg-[#3572a5]/10 dark:text-(--hl-function)']
                     : ['', '']
   if (!text) return <FileText aria-hidden="true" className="size-4 shrink-0 text-faint" />
   return (
@@ -83,8 +81,7 @@ function Tree({ path, depth, dirs, open, selected, onToggle, onOpenFile }: TreeP
   if (dir === undefined || dir === 'loading')
     return (
       <p role="status" style={pad} className="flex items-center gap-2 py-1.5 pr-3 text-xs text-faint">
-        <span aria-hidden="true" className="shimmer h-2 w-24 rounded-full" />
-        <span className="sr-only">{t("Reading…")}</span>
+        {t("Reading…")}
       </p>
     )
   if (dir instanceof Error)
@@ -99,7 +96,7 @@ function Tree({ path, depth, dirs, open, selected, onToggle, onOpenFile }: TreeP
     )
   return (
     <ul role={depth === 0 ? 'tree' : 'group'} aria-label={depth === 0 ? t("Files") : undefined}>
-      {[...dir].sort(byKind).map((n, i) => {
+      {[...dir].sort(byKind).map((n) => {
         const expanded = open.has(n.path)
         const on = n.path === selected
         return (
@@ -109,21 +106,21 @@ function Tree({ path, depth, dirs, open, selected, onToggle, onOpenFile }: TreeP
               data-active={on}
               onClick={() => (n.kind === 'dir' ? onToggle(n.path) : onOpenFile(n))}
               title={n.kind === 'dir' ? n.path : t("{value1} · {value2}", {value1: n.path, value2: bytes(n.size)})}
-              style={revealStyle(i, { paddingLeft: `${0.5 + depth * 1}rem` })}
+              style={{ paddingLeft: `${0.5 + depth * 1}rem` }}
               className={cn(
-                'reveal flex h-7 w-full items-center gap-2 rounded-md pr-3 text-left text-[13px] outline-none transition-colors duration-(--dur-fast) focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset',
-                on ? 'text-accent-foreground' : 'hover:bg-muted/70',
+                'flex h-8 w-full items-center gap-2 rounded-md pr-3 text-left text-[13px] outline-none transition-colors duration-(--dur-fast) focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset',
+                on ? 'bg-accent text-accent-foreground' : 'hover:bg-muted/70',
               )}
             >
               {n.kind === 'dir' ? (
                 <>
                   <ChevronRight aria-hidden="true" data-open={expanded} className="chevron size-3.5 shrink-0 text-faint" />
                   {expanded ? (
-                    <FolderOpen aria-hidden="true" className="size-4 shrink-0 text-primary/80" />
+                    <FolderOpen aria-hidden="true" className="size-4 shrink-0 text-(--icon-accent)/80" />
                   ) : (
                     <Folder
                       aria-hidden="true"
-                      className={cn('size-4 shrink-0', n.name.startsWith('.') || n.name === 'node_modules' ? 'text-faint' : 'text-primary/80')}
+                      className={cn('size-4 shrink-0', n.name.startsWith('.') || n.name === 'node_modules' ? 'text-faint' : 'text-(--icon-accent)/80')}
                     />
                   )}
                 </>
@@ -135,11 +132,7 @@ function Tree({ path, depth, dirs, open, selected, onToggle, onOpenFile }: TreeP
               )}
               <span className={cn('truncate', on && 'font-medium')}>{n.name}</span>
             </button>
-            {n.kind === 'dir' && (
-              <Collapse open={expanded} appear={false}>
-                <Tree path={n.path} depth={depth + 1} dirs={dirs} open={open} selected={selected} onToggle={onToggle} onOpenFile={onOpenFile} />
-              </Collapse>
-            )}
+            {n.kind === 'dir' && expanded && <Tree path={n.path} depth={depth + 1} dirs={dirs} open={open} selected={selected} onToggle={onToggle} onOpenFile={onOpenFile} />}
           </li>
         )
       })}
@@ -172,7 +165,7 @@ function FileBody({ project, branch, path, tick }: { project: string; branch: st
           {data && `${bytes(data.size)} · `}{t("at ")}{branch}
         </span>
       </div>
-      <div key={path} className="hist-fade min-h-0 flex-1">
+      <div key={path} className="min-h-0 flex-1">
         {!data ? (
           q.error ? (
             <LoadError error={q.error} what={path} onRetry={q.reload} className="m-6" />
@@ -276,18 +269,15 @@ export function FilesTab({ project, branches, tick = 0, initialBranch }: FilesTa
   const matches = q ? loaded.filter((n) => n.kind !== 'dir' && n.path.toLowerCase().includes(q)).slice(0, 200) : []
   const branch = branches.find((b) => b.name === ref)
   const others = branches.filter((b) => b.name !== 'main')
-  const tree = useIndicator<HTMLDivElement>()
-  const strip = useIndicator<HTMLDivElement>({ axis: 'x' })
 
   return (
-    <div className="hist-frame grid h-0 min-h-[28rem] flex-1 grid-cols-[17rem_minmax(0,1fr)] overflow-hidden rounded-2xl">
+    <div className="hist-frame grid h-0 min-h-[24rem] flex-1 grid-cols-[minmax(10rem,13rem)_minmax(0,1fr)] overflow-hidden rounded-2xl @min-[64rem]/workspace:grid-cols-[15rem_minmax(0,1fr)]">
       <aside aria-label={t("Files")} className="hist-side flex min-h-0 flex-col border-r">
-        <PaneHead label={t("Files")} count={tabs.length > 0 ? `${tabs.length} open` : undefined} />
         <div className="flex flex-col gap-2 border-b p-3">
           <Select value={ref} onValueChange={setRef}>
-            <SelectTrigger aria-label={t("Branch")} className="w-full">
+            <SelectTrigger aria-label={t("Branch")} title={branch?.head ?? undefined} className="w-full">
               <SelectValue>
-                {ref} {branch?.head && <span className="font-mono text-xs text-muted-foreground">· {shortId(branch.head)}</span>}
+                {ref}
               </SelectValue>
             </SelectTrigger>
             <SelectContent>
@@ -318,23 +308,21 @@ export function FilesTab({ project, branches, tick = 0, initialBranch }: FilesTa
           <SearchField label={t("Find in opened folders")} value={query} onChange={setQuery} size="sm" />
         </div>
         <div className="min-h-0 flex-1 overflow-y-auto px-1.5 py-1.5">
-          <div ref={tree.container} className="relative isolate">
-            <span ref={tree.indicator} aria-hidden="true" className="indicator hist-row-indicator -z-10" />
+          <div>
             {q ? (
               matches.length === 0 ? (
-                <p className="hist-swap mx-1.5 mt-1.5 rounded-lg border border-dashed px-3 py-3 text-xs text-muted-foreground">{t("No file in the opened folders matches.")}</p>
+                <p className="px-3 py-3 text-xs text-muted-foreground">{t("No file in the opened folders matches.")}</p>
               ) : (
                 <ul aria-label={t("Matching files")}>
-                  {matches.map((n, i) => (
+                  {matches.map((n) => (
                     <li key={n.path}>
                       <button
                         type="button"
                         data-active={n.path === active}
                         onClick={() => openFile(n)}
-                        style={revealStyle(i)}
                         className={cn(
-                          'reveal flex h-7 w-full items-center gap-2 rounded-md px-2.5 text-left text-[13px] outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset',
-                          n.path !== active && 'hover:bg-muted/70',
+                          'flex h-8 w-full items-center gap-2 rounded-md px-2.5 text-left text-[13px] outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset',
+                          n.path === active ? 'bg-accent text-accent-foreground' : 'hover:bg-muted/70',
                         )}
                       >
                         <FileBadge entry={n} />
@@ -353,7 +341,6 @@ export function FilesTab({ project, branches, tick = 0, initialBranch }: FilesTa
 
       <section className="flex min-h-0 min-w-0 flex-col">
         <div
-          ref={strip.container}
           role="tablist"
           aria-label={t("Open files")}
           className="relative flex h-10 shrink-0 items-center gap-0.5 overflow-x-auto border-b bg-muted/25 px-1.5"
@@ -368,7 +355,7 @@ export function FilesTab({ project, branches, tick = 0, initialBranch }: FilesTa
                 aria-selected={on}
                 data-active={on}
                 className={cn(
-                  'reveal-scale group flex h-7 shrink-0 items-center gap-1 rounded-md pr-1 pl-2.5 text-[13px] transition-[background-color,color,box-shadow] duration-(--dur-fast)',
+                  'group flex h-7 shrink-0 items-center gap-1 rounded-md pr-1 pl-2.5 text-[13px] transition-[background-color,color,box-shadow] duration-(--dur-fast)',
                   on ? 'bg-card text-foreground shadow-[var(--highlight),var(--elev-1)] ring-1 ring-foreground/[0.06]' : 'text-muted-foreground hover:bg-muted/70 hover:text-foreground',
                 )}
               >
@@ -376,7 +363,7 @@ export function FilesTab({ project, branches, tick = 0, initialBranch }: FilesTa
                   type="button"
                   title={p}
                   onClick={() => setActive(p)}
-                  className="flex items-center gap-1.5 rounded font-mono text-xs outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  className="flex items-center gap-1.5 rounded text-xs outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   <FileBadge entry={{ name, kind: 'file' }} />
                   {name}
@@ -395,17 +382,15 @@ export function FilesTab({ project, branches, tick = 0, initialBranch }: FilesTa
               </div>
             )
           })}
-          {tabs.length === 0 && <span className="px-2 text-xs text-faint">{t("No files open")}</span>}
-          <span ref={strip.indicator} aria-hidden="true" className="indicator file-tab-indicator" />
+          {tabs.length === 0 && <span className="px-2 text-xs text-muted-foreground">{t("Read-only files")}</span>}
         </div>
 
         {active ? (
           <FileBody project={project} branch={ref} path={active} tick={tick} />
         ) : (
-          <div className="hist-swap flex flex-1 flex-col items-center justify-center gap-2 text-center">
+          <div className="flex flex-1 flex-col items-center justify-center gap-2 px-4 text-center">
             <EmptyMark icon={FileText} />
             <p className="text-sm font-medium">{t("Open a file from the tree")}</p>
-            <p className="text-xs text-muted-foreground">{t("Files open read-only, at the Branch picked above the tree.")}</p>
           </div>
         )}
       </section>

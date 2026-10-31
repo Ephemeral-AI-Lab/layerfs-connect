@@ -40,7 +40,6 @@ async function fixture(t, extension, respond = () => 'Done.') {
   let manager = await AgentManager.create({ state, defaultCwd: cwd })
   const baseUrl = `http://127.0.0.1:${server.address().port}/v1`
   await manager.models.configure({ provider: 'native-input-fixture', modelId: 'fixture', api: 'openai-completions', baseUrl, apiKey: 'local-native-input-key' })
-  await manager.models.saveProvider({ id: 'native-input-fixture', baseUrl, api: 'openai-completions', models: [{ id: 'fixture', input: ['text', 'image'] }] })
   const cleanup = []
   t.after(async () => {
     for (const finish of cleanup) finish()
@@ -117,6 +116,7 @@ test('promoting a queue item respects handled and transform results and retains 
     return 'Done.'
   })
   f.cleanup(() => gate.resolve())
+  assert.equal(f.manager.models.snapshot().models.find((model) => model.provider === 'native-input-fixture' && model.id === 'fixture').input, undefined)
   const chat = await f.manager.create()
   await f.manager.message(chat.id, { text: 'HOLD' }); await started.promise
   const drop = await f.manager.message(chat.id, { text: 'DROP' })

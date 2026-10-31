@@ -316,7 +316,7 @@ function AddBucket({ onChanged, onClose, onLock }: { onChanged: () => void; onCl
     <>
       <PaneHead
         mark={
-          <span className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-primary/[0.08] text-primary">
+          <span className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-primary/[0.08] text-(--icon-accent)">
             <Plus className="size-4" />
           </span>
         }
@@ -358,7 +358,7 @@ function AllFiles({ onLoad, onPage }: { onLoad: (remote: string, file: string) =
     <>
       <PaneHead
         mark={
-          <span className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-primary/[0.08] text-primary">
+          <span className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-primary/[0.08] text-(--icon-accent)">
             <Download className="size-4" />
           </span>
         }

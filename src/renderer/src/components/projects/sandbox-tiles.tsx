@@ -1,156 +1,67 @@
-import { t, useI18n } from '@/i18n'
-// The Sandboxes tab's tiles: one card per open Sandbox with its Workspace
-// slots and each mounted Workspace's Branch; closed Sandboxes in a quiet row
-// under them. A running Sandbox glows: its edge carries a turning band of
-// light, its icon pulses and bytes travel from each Workspace to its Branch.
-// Cards and Workspaces rise in as they appear.
+import { useI18n } from '@/i18n'
 import type { SandboxInfo } from '@shared/host-api'
-import type { CSSProperties } from 'react'
-import { FolderTree } from 'lucide-react'
+import { ChevronDown, FolderTree } from 'lucide-react'
 
-import { SANDBOX_CAPACITY, sandboxTone } from '@/components/compute/sandbox-list'
+import { sandboxTone } from '@/components/compute/sandbox-list'
 import { LfsBranch, LfsSandbox, LfsWorkspace } from '@/components/lfs-icons'
-import { revealStyle, spotlight } from '@/components/motion'
 import { Chip } from '@/components/storage/chips'
-import { shortDigest } from '@/data/format'
-import { cn } from '@/lib/utils'
 
-import '@/components/storage/storage.css'
-
-/** The Sandbox's Workspace slots: a lit square per mounted Workspace. */
-function Slots({ used }: { used: number }) {
-  useI18n()
-  return (
-    <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-      <div className="grid grid-cols-16 gap-[3px]" aria-hidden="true">
-        {Array.from({ length: SANDBOX_CAPACITY }, (_, i) => (
-          <span key={i} data-on={i < used} className="sc-slot size-2 rounded-[2px]" style={{ '--d': `${250 + i * 50}ms` } as CSSProperties} />
-        ))}
-      </div>
-      <span className="text-xs text-muted-foreground tabular-nums">
-        <span className="font-medium text-foreground">{used}</span> / {SANDBOX_CAPACITY}{t("Workspaces")}</span>
-    </div>
-  )
-}
-
-function SandboxTile({ s, index, reading, onBrowseFiles }: { s: SandboxInfo; index: number; reading?: boolean; onBrowseFiles?: (branch: string) => void }) {
-  useI18n()
-  const state = sandboxTone(s.state)
-  const running = s.state === 'running'
-  return (
-    <article
-      onPointerMove={spotlight}
-      className={cn('glass-liquid card-hover sheen-sweep spotlight reveal flex min-w-0 flex-col rounded-xl', running && 'live-border')}
-      style={revealStyle(index)}
-      aria-label={t("Sandbox {value1}, {value2}", {value1: s.name, value2: t(state.label)})}
-    >
-      <header className="flex flex-wrap items-start gap-x-3 gap-y-2 px-4 pt-4">
-        <span
-          className={cn(
-            'relative flex size-9 shrink-0 items-center justify-center rounded-lg ring-1 ring-inset',
-            running ? 'bg-primary/10 text-primary ring-primary/25' : 'bg-muted text-muted-foreground ring-foreground/[0.07]',
-          )}
-        >
-          <LfsSandbox className="relative size-[18px]" />
-          {running && <span aria-hidden="true" className="pulse-ring absolute -top-0.5 -right-0.5 size-2 rounded-full bg-success text-success" />}
-        </span>
-        <div className="min-w-0 flex-1 basis-36">
-          <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
-            <p className="min-w-0 max-w-full break-all font-mono text-[13px] font-medium" title={s.name}>
-              {s.name}
-            </p>
-            <span className="rounded-full bg-muted/80 px-2 py-0.5 text-[10px] font-medium text-foreground/80 ring-1 ring-border">{t("Docker")}</span>
-          </div>
-          <p className="break-all text-xs text-faint">{t("Sandbox ")}{s.id}</p>
-        </div>
-        <Chip tone={state.tone} live={state.live}>
-          {t(state.label)}
-        </Chip>
-      </header>
-      <div className="px-4 pt-3.5">
-        <Slots used={s.workspaces.length} />
-      </div>
-      <ul className="mt-3 flex flex-1 flex-col gap-1.5 px-4" aria-label={t("Mounted Workspaces")}>
-        {s.reach ? (
-          <li className="flex items-center gap-2 rounded-lg border border-dashed border-warning/40 px-3 py-2.5 text-xs text-warning" title={s.detail}>
-            <LfsWorkspace className="size-3.5 opacity-60" />
-            {s.reach === 'busy' ? t('Busy: its daemon did not answer in time, so its Workspaces are not shown') : t('Not reachable: its daemon refused, so its Workspaces are not shown')}
-          </li>
-        ) : reading && s.workspaces.length === 0 && running ? (
-          <li className="flex items-center gap-2 rounded-lg border border-dashed px-3 py-2.5 text-xs text-faint">
-            <LfsWorkspace className="size-3.5 animate-pulse opacity-60" />{t('Reading its Workspaces…')}</li>
-        ) : s.workspaces.length === 0 ? (
-          <li className="flex items-center gap-2 rounded-lg border border-dashed px-3 py-2.5 text-xs text-faint">
-            <LfsWorkspace className="size-3.5 opacity-60" />{t("No Workspace mounted")}</li>
-        ) : (
-          s.workspaces.map((ws, k) => (
-            <li
-              key={ws.ws}
-              className="reveal flex min-w-0 flex-wrap items-center gap-2 rounded-lg bg-muted/50 px-3 py-2 text-xs ring-1 ring-foreground/[0.05] ring-inset"
-              style={revealStyle(index + k + 2)}
-            >
-              <LfsWorkspace className={cn('size-3.5 shrink-0', running ? 'text-primary' : 'text-muted-foreground')} />
-              <span className="min-w-0 max-w-full break-all font-mono" title={ws.path}>
-                {ws.path}
-              </span>
-              <span aria-hidden="true" data-live={running} className="sc-wire mx-1 min-w-6 flex-1" />
-              <span className="flex min-w-0 max-w-full items-center gap-1 rounded-md bg-card px-1.5 py-0.5 font-medium shadow-elev-1 ring-1 ring-foreground/10">
-                <LfsBranch className="size-3 shrink-0 text-muted-foreground" />
-                <span className="min-w-0 break-all">{ws.branch || t('Unknown branch')}</span>
-              </span>
-              {onBrowseFiles && ws.branch && (
-                <button
-                  type="button"
-                  onClick={() => onBrowseFiles(ws.branch)}
-                  title={t('Browse the files on {branch}', { branch: ws.branch })}
-                  className="flex shrink-0 items-center gap-1 rounded-lg px-1.5 py-0.5 font-medium text-muted-foreground outline-none transition-colors hover:bg-foreground/[0.05] hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
-                >
-                  <FolderTree className="size-3" />
-                  {t('Browse files')}
-                </button>
-              )}
-            </li>
-          ))
-        )}
-      </ul>
-      <footer className="mt-3.5 flex items-center gap-2 border-t px-4 py-2.5 font-mono text-[11px] text-faint" title={s.image ?? undefined}>
-        <span className="font-sans">{t("image")}</span>
-        <span className="truncate">{shortDigest(s.image)}</span>
-      </footer>
-    </article>
-  )
-}
-
-/** Open Sandboxes as tiles, closed ones as a row of names. */
-export function SandboxTiles({ sandboxes, reading, onBrowseFiles }: { sandboxes: SandboxInfo[]; reading?: boolean; onBrowseFiles?: (branch: string) => void }) {
-  useI18n()
-  const open = sandboxes.filter((s) => s.state !== 'gone')
-  const closed = sandboxes.filter((s) => s.state === 'gone')
-  return (
-    <div className="@container/sandboxes flex min-w-0 flex-col gap-4">
-      <div className="grid gap-3 @min-[44rem]/sandboxes:grid-cols-2">
-        {open.map((s, i) => (
-          <SandboxTile key={s.id} s={s} index={i} reading={reading} onBrowseFiles={onBrowseFiles} />
-        ))}
-        {open.length === 0 && (
-          <div className="col-span-full flex flex-col items-center gap-2 rounded-xl border border-dashed px-6 py-10 text-center">
-            <LfsSandbox className="size-6 text-faint" />
-            <p className="text-sm font-medium">{t("No active Sandboxes")}</p>
-            <p className="text-xs text-muted-foreground">{t("Sandboxes connected to this project will appear here.")}</p>
-          </div>
-        )}
-      </div>
-      {closed.length > 0 && (
-        <div className="reveal flex flex-wrap items-center gap-2 text-xs text-faint" style={revealStyle(open.length + 2)}>
-          <span className="font-medium">{t("Closed")}</span>
-          {closed.map((s) => (
-            <span key={s.id} className="flex items-center gap-1.5 rounded-md bg-muted/70 px-2 py-1 font-mono text-muted-foreground ring-1 ring-foreground/[0.05] ring-inset">
-              <LfsSandbox className="size-3.5 opacity-60" />
-              {s.name}
+function SandboxTile({ sandbox, reading, unavailable, onBrowseFiles }: { sandbox: SandboxInfo; reading?: boolean; unavailable?: boolean; onBrowseFiles?: (branch: string) => void }) {
+  const { t } = useI18n()
+  const state = sandboxTone(sandbox.state)
+  return <article className="min-w-0 border-t border-border/70 px-5 py-4" aria-label={t('Sandbox {value1}, {value2}', { value1: sandbox.name, value2: t(state.label) })}>
+    <header className="flex min-w-0 items-center gap-2.5">
+      <LfsSandbox className="size-4 shrink-0 text-muted-foreground" />
+      <h4 className="min-w-0 flex-1 truncate text-[13px] font-medium" title={sandbox.name}>{sandbox.name}</h4>
+      <Chip tone={state.tone}>{t(state.label)}</Chip>
+    </header>
+    <ul className="mt-3 space-y-1" aria-label={t('Mounted Workspaces')}>
+      {sandbox.reach ? <li className="rounded-lg bg-warning/5 px-3 py-2 text-xs text-warning" title={sandbox.detail}>
+        {t(sandbox.reach === 'busy' ? 'Workspace status timed out.' : 'Workspace status unavailable.')}
+      </li> : reading && !sandbox.workspaces.length && sandbox.state === 'running' ? <li className="py-1 text-xs text-muted-foreground">{t('Reading its Workspaces…')}</li>
+        : unavailable ? <li className="py-1 text-xs text-muted-foreground">{t('Workspace status unavailable.')}</li>
+          : !sandbox.workspaces.length ? <li className="py-1 text-xs text-muted-foreground">{t('No Workspace mounted')}</li>
+          : sandbox.workspaces.map((workspace) => <li key={workspace.ws} className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-2 rounded-lg bg-muted/40 px-3 py-2 text-xs">
+            <span className="flex min-w-0 flex-1 basis-40 items-center gap-2" title={workspace.path}>
+              <LfsWorkspace className="size-3.5 shrink-0 text-muted-foreground" />
+              <span className="truncate font-mono">{workspace.path}</span>
             </span>
-          ))}
-        </div>
-      )}
-    </div>
-  )
+            <span className="flex min-w-0 max-w-full items-center gap-1.5 text-muted-foreground" title={workspace.branch}>
+              <LfsBranch className="size-3.5 shrink-0" /><span className="max-w-56 truncate">{workspace.branch || t('Unknown branch')}</span>
+            </span>
+            {onBrowseFiles && workspace.branch && <button type="button" onClick={() => onBrowseFiles(workspace.branch)} title={t('Browse the files on {branch}', { branch: workspace.branch })} className="inline-flex shrink-0 items-center gap-1.5 rounded-lg px-2 py-1 text-foreground outline-none hover:bg-foreground/[0.05] focus-visible:ring-2 focus-visible:ring-ring">
+              <FolderTree className="size-3.5" />{t('Browse files')}
+            </button>}
+          </li>)}
+    </ul>
+    <details className="group mt-2 text-xs text-muted-foreground">
+      <summary className="inline-flex cursor-pointer list-none items-center gap-1.5 rounded-md py-1 outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
+        {t('Details')}<ChevronDown className="size-3 group-open:rotate-180" />
+      </summary>
+      <dl className="mt-1 grid grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-2 leading-relaxed">
+        <dt>ID</dt><dd className="break-all font-mono">{sandbox.id}</dd>
+        <dt>{t('image')}</dt><dd className="break-all font-mono">{sandbox.image || '—'}</dd>
+        {sandbox.detail && <><dt>{t('Status')}</dt><dd className="break-words">{sandbox.detail}</dd></>}
+      </dl>
+    </details>
+  </article>
+}
+
+/** Quiet rows keep the mounted paths and their file actions in the same place. */
+export function SandboxTiles({ sandboxes, reading, unavailable, onBrowseFiles }: { sandboxes: SandboxInfo[]; reading?: boolean; unavailable?: boolean; onBrowseFiles?: (branch: string) => void }) {
+  const { t } = useI18n()
+  const open = sandboxes.filter((sandbox) => sandbox.state !== 'gone')
+  const closed = sandboxes.filter((sandbox) => sandbox.state === 'gone')
+  return <div className="min-w-0">
+    {open.map((sandbox) => <SandboxTile key={sandbox.id} sandbox={sandbox} reading={reading} unavailable={unavailable} onBrowseFiles={onBrowseFiles} />)}
+    {!open.length && <p className="border-t border-border/70 px-5 py-10 text-center text-sm text-muted-foreground">{t(reading ? 'Reading Sandboxes…' : 'No active Sandboxes')}</p>}
+    {closed.length > 0 && <details className="group border-t border-border/70 px-5 py-3">
+      <summary className="flex cursor-pointer list-none items-center gap-2 rounded-md py-1 text-xs text-muted-foreground outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
+        {t('Closed')}<span className="tabular-nums">{closed.length}</span><ChevronDown className="ml-auto size-3.5 group-open:rotate-180" />
+      </summary>
+      <ul className="mt-2 space-y-2 pb-1 text-xs text-muted-foreground">
+        {closed.map((sandbox) => <li key={sandbox.id} className="flex min-w-0 items-center gap-2" title={sandbox.id}><LfsSandbox className="size-3.5 shrink-0" /><span className="truncate">{sandbox.name}</span></li>)}
+      </ul>
+    </details>}
+  </div>
 }

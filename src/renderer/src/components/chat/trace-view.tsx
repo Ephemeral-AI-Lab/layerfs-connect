@@ -278,7 +278,7 @@ export function TraceView({ source, load, watch, live, started, onOpenHistory }:
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <div className="group/search relative min-w-48 flex-1">
-              <Search aria-hidden="true" className="pointer-events-none absolute top-1/2 left-3 size-3.5 -translate-y-1/2 text-muted-foreground transition-colors group-focus-within/search:text-primary" />
+              <Search aria-hidden="true" className="pointer-events-none absolute top-1/2 left-3 size-3.5 -translate-y-1/2 text-muted-foreground transition-colors group-focus-within/search:text-(--icon-accent)" />
               <Input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}

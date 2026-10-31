@@ -5,8 +5,7 @@
 /* The instrument: one raised layer that holds the panes. */
 .hist-frame {
   border: 1px solid var(--border);
-  background-color: var(--card);
-  background-image: var(--surface-sheen);
+  background: var(--glass-card-bg);
   box-shadow: var(--highlight), var(--elev-2);
 }
 
@@ -21,11 +20,9 @@
 }
 /* The small caps label that names a pane. */
 .hist-eyebrow {
-  font-size: 10.5px;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--faint);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--muted-foreground);
 }
 /* Nested trees: a chevron follows its own row, not an expanded ancestor. */
 .chevron[data-open='false'] {
@@ -36,42 +33,21 @@
   background-color: color-mix(in oklab, var(--muted) 28%, transparent);
 }
 
-/* A part or a selection changes: the new content fades in and settles. */
-@keyframes hist-swap {
-  from {
-    opacity: 0;
-    transform: translateY(4px);
-  }
-}
-.hist-swap {
-  animation: hist-swap var(--dur-base) var(--ease-out-expo) backwards;
-}
-@keyframes hist-fade {
-  from {
-    opacity: 0;
-  }
-}
-.hist-fade {
-  animation: hist-fade var(--dur-slow) var(--ease-out-soft) backwards;
+/* Selection is immediate, without a travelling highlight or glow. */
+.hist-row-indicator {
+  border-radius: 8px;
+  background-color: var(--accent);
 }
 
-/* The selected row's highlight, gliding between rows (useIndicator). */
-.hist-row-indicator {
-  border-radius: 0.5rem;
-  background-color: var(--accent);
-  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--primary) 16%, transparent);
+.hist-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  padding: 12px;
+  border-bottom: 1px solid var(--border);
 }
-.hist-row-indicator::before {
-  content: '';
-  position: absolute;
-  top: 7px;
-  bottom: 7px;
-  left: 0;
-  width: 2px;
-  border-radius: 2px;
-  background-image: var(--brand-gradient);
-  box-shadow: 0 0 8px 0 var(--glow-strong);
-}
+.hist-toolbar > :last-child { margin-left: auto; }
 
 /* A Commit or Layer id. */
 .hash-chip {
@@ -79,7 +55,7 @@
   align-items: center;
   border-radius: 0.375rem;
   padding: 1px 6px;
-  font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+  font-family: var(--font-mono);
   font-size: 11.5px;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.01em;
@@ -107,91 +83,16 @@
   background-color: color-mix(in oklab, var(--lane) 16%, transparent);
 }
 
-/* Graphs: edges draw in, nodes pop in by --i, the head glows. */
-@keyframes hist-draw {
-  from {
-    stroke-dashoffset: 1;
-  }
-  to {
-    stroke-dashoffset: 0;
-  }
-}
-.hist-draw {
-  stroke-dasharray: 1;
-  animation: hist-draw var(--dur-xslow) var(--ease-out-expo) backwards;
-  animation-delay: calc(min(var(--i, 0), 10) * var(--stagger));
-}
-@keyframes hist-pop {
-  from {
-    opacity: 0;
-    transform: scale(0.2);
-  }
-  70% {
-    transform: scale(1.18);
-  }
-}
-.hist-pop {
-  transform-box: fill-box;
-  transform-origin: center;
-  animation: hist-pop var(--dur-slow) var(--ease-out-expo) backwards;
-  animation-delay: calc(min(var(--i, 0), 10) * var(--stagger) + 120ms);
-}
-/* A lineage node grows a little when selected. */
-.hist-node {
-  transition: r var(--dur-fast) var(--ease-out-expo);
-}
-.hist-head {
-  filter: drop-shadow(0 0 4px var(--head, var(--glow-strong)));
-}
-@keyframes hist-halo {
-  from {
-    transform: scale(0.7);
-    opacity: 0.55;
-  }
-  to {
-    transform: scale(2.2);
-    opacity: 0;
-  }
-}
-/* Around a head whose agent is working now. */
-.hist-halo {
-  transform-box: fill-box;
-  transform-origin: center;
-  animation: hist-halo 1.6s var(--ease-out-soft) infinite;
-}
-
-/* The Map: lanes, nodes and labels glide when the zoom changes or a lane grows. */
-.map-glide {
-  transition:
-    d var(--dur-base) var(--ease-out-expo),
-    cx var(--dur-base) var(--ease-out-expo),
-    cy var(--dur-base) var(--ease-out-expo),
-    x var(--dur-base) var(--ease-out-expo),
-    y var(--dur-base) var(--ease-out-expo),
-    r var(--dur-fast) var(--ease-out-expo),
-    width var(--dur-fast) var(--ease-out-expo),
-    height var(--dur-fast) var(--ease-out-expo),
-    transform var(--dur-base) var(--ease-out-expo),
-    opacity var(--dur-base) var(--ease-out-soft);
-}
-.map-label rect {
-  transition:
-    fill var(--dur-fast) ease-out,
-    stroke-width var(--dur-fast) ease-out;
-}
+/* Graphs stay still; only explicit replay advances the timeline. */
+.hist-draw { stroke-dasharray: none; }
+.hist-halo { display: none; }
+.hist-head { filter: none; }
 .map-label:hover rect,
-.map-label:focus-visible rect {
-  stroke-width: 2;
-}
-.map-label:focus-visible {
-  filter: drop-shadow(0 0 4px var(--glow-strong));
-}
+.map-label:focus-visible rect { stroke-width: 2; }
+
 /* The Map's canvas: a faint dot grid that scrolls with the drawing. */
 .map-canvas {
   background-color: color-mix(in oklab, var(--muted) 18%, var(--card));
-  background-image: radial-gradient(circle at 1px 1px, var(--grid-dot) 1px, transparent 0);
-  background-size: 20px 20px;
-  background-attachment: local;
 }
 /* Small labels on the Map keep a halo of canvas, so lines never cut through them. */
 .map-halo {
@@ -203,38 +104,11 @@
 .map-label > rect {
   filter: drop-shadow(0 1px 1.5px rgb(0 0 0 / 0.12));
 }
-/* Map nodes pop the moment they appear (a replay ticks fast). */
-.map-pop {
-  animation-delay: 0ms;
-}
-/* "now" glows and its dash flows while replaying. */
-@keyframes map-flow {
-  to {
-    stroke-dashoffset: -14;
-  }
-}
-.map-now[data-playing='true'] {
-  stroke: var(--primary);
-  filter: drop-shadow(0 0 3px var(--glow-strong));
-  animation: map-flow 0.7s linear infinite;
-}
-/* A thin bar under the Map's header: how far the replay is. */
+.map-now[data-playing='true'] { stroke: var(--primary); }
 .map-progress {
   height: 2px;
   transform-origin: left;
-  background-image: var(--brand-gradient);
-  box-shadow: 0 0 8px 0 var(--glow);
-  transition: transform 140ms linear;
-}
-
-/* Files: the open-file strip's underline. */
-.file-tab-indicator {
-  height: 2px;
-  top: auto;
-  bottom: -1px;
-  border-radius: 2px;
-  background-image: var(--brand-gradient);
-  box-shadow: 0 0 10px 0 var(--glow-strong);
+  background-color: var(--primary);
 }
 
 /* The code view: a hairline gutter and a soft line hover. */
@@ -246,20 +120,4 @@
 }
 .code-view .cm-line:hover {
   background-color: color-mix(in oklab, var(--muted) 55%, transparent);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .hist-draw {
-    stroke-dasharray: none;
-    animation: none;
-  }
-  .hist-halo,
-  .map-now[data-playing='true'] {
-    animation: none;
-  }
-  .map-glide,
-  .hist-node,
-  .map-progress {
-    transition: none;
-  }
 }

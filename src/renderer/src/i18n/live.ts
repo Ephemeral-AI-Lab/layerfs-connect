@@ -1,5 +1,12 @@
 // Chinese for the Live and Timeline tabs: English source text -> zh-CN.
 export const liveZh: Record<string, string> = {
+  'Ended': '已结束',
+  'Stopped': '已停止',
+  'Could not load sandboxes.': '沙箱加载失败。',
+  'Reading activity…': '正在读取活动…',
+  'No active chats': '暂无运行中的对话',
+  'Start a chat to see activity here.': '开始对话后，在这里查看运行状态。',
+  'No mounted workspaces': '暂无挂载的工作区',
   // Live: header and stat row
   '{n} chat working': '{n} 个对话正在工作',
   '{n} chats working': '{n} 个对话正在工作',

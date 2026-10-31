@@ -3,6 +3,15 @@ import type { RunLive, TraceCall, TracePage } from '@shared/host-api'
 import { call } from '@/host/client'
 
 const sessionPath = (id: string) => `/api/agent/sessions/${encodeURIComponent(id)}`
+const removedChats = new Set<string>()
+const removalListeners = new Set<(id: string) => void>()
+
+/** Successful removals stay excluded from older HTTP responses and queued host events. */
+export const isChatRemoved = (id: string) => removedChats.has(id)
+export function onChatRemoved(listener: (id: string) => void): () => void {
+  removalListeners.add(listener)
+  return () => { removalListeners.delete(listener) }
+}
 
 export const agentHost = {
   models: () => call<AgentModels>('GET', '/api/agent/models'),
@@ -45,7 +54,7 @@ export const agentHost = {
   },
   /** A chat's Live: its newest LayerFS calls and what its agents hold in LayerFS now. */
   live: (id: string) => call<{ calls: TraceCall[]; live: RunLive }>('GET', `${sessionPath(id)}/live`),
-  sessions: () => call<AgentSessionSummary[]>('GET', '/api/agent/sessions'),
+  sessions: () => call<AgentSessionSummary[]>('GET', '/api/agent/sessions').then((sessions) => sessions.filter((session) => !isChatRemoved(session.id))),
   create: (options: NewAgentSession) => call<AgentSessionDetail>('POST', '/api/agent/sessions', options),
   session: (id: string) => call<AgentSessionDetail>('GET', sessionPath(id)),
   update: (id: string, patch: { title?: string; archived?: boolean }) => call<AgentSessionDetail>('POST', `${sessionPath(id)}/update`, patch),
@@ -66,5 +75,11 @@ export const agentHost = {
   permissions: (id: string, mode: PermissionMode) => call<AgentSessionDetail>('POST', `${sessionPath(id)}/permissions`, { mode }),
   approve: (id: string, requestId: string, decision: 'approve' | 'reject') =>
     call<AgentSessionDetail>('POST', `${sessionPath(id)}/approvals/${encodeURIComponent(requestId)}`, { decision }),
-  remove: (id: string) => call<{ id: string }>('DELETE', sessionPath(id)),
+  remove: async (id: string) => {
+    const result = await call<{ id: string }>('DELETE', sessionPath(id))
+    removedChats.add(id)
+    if (localStorage.getItem('connect.agent.last-session') === id) localStorage.removeItem('connect.agent.last-session')
+    for (const listener of [...removalListeners]) listener(id)
+    return result
+  },
 }

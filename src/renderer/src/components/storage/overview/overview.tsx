@@ -226,7 +226,7 @@ function SearchField({ query, onQuery }: { query: string; onQuery: (q: string) =
         }}
         placeholder={t('Search Stores and projects')}
         aria-label={t('Search Stores and projects')}
-        className="glass-liquid h-9 rounded-xl pr-8 pl-8.5"
+        className="glass-liquid h-9 rounded-full pr-8 pl-8.5"
       />
       {query ? (
         <button

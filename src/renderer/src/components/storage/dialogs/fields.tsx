@@ -16,7 +16,7 @@ export const SHEET = 'max-h-[calc(100dvh-3rem)] gap-5 overflow-y-auto rounded-3x
 export const BTN = 'h-8 rounded-xl px-3.5'
 
 const TONE = {
-  brand: 'bg-primary/[0.08] text-primary',
+  brand: 'bg-primary/[0.08] text-(--icon-accent)',
   danger: 'bg-destructive/[0.07] text-destructive',
   warning: 'bg-warning/[0.08] text-warning',
 }

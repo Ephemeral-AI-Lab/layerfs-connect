@@ -102,7 +102,7 @@ export function ImportForm({ view, store: fixedStore, connection: fixedConnectio
               <p className="truncate text-[11.5px] text-muted-foreground">SQLite{source ? ` · ${count(source.projects.length, 'project')} · ${totalText(source.size?.bytes ?? 0, source.size ? 0 : 1, 1)}` : ''}</p>
             </div>
           </div>
-          <span className="sc-bridge flex items-center text-primary">
+          <span className="sc-bridge flex items-center text-(--icon-accent)">
             <ArrowRight className="size-4" />
           </span>
           <div className="flex min-w-0 items-center justify-end gap-2.5 text-right">

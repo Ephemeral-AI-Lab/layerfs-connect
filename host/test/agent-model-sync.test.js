@@ -4,8 +4,10 @@ import { mkdtemp, readFile, readdir, rm, stat, writeFile } from 'node:fs/promise
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import test from 'node:test'
+import { ModelRuntime } from '@earendil-works/pi-coding-agent'
 import { AgentModels } from '../agents/models.js'
 import { agentRoute } from '../agents/routes.js'
+import { normalizePrompt } from '../agents/attachments.js'
 
 async function fixture(t, respond = () => ({ data: [{ id: 'first-model' }, { id: 'second-model' }] })) {
   const dir = await mkdtemp(join(tmpdir(), 'connect-model-sync-'))
@@ -75,6 +77,97 @@ test('sync route registers every fetched ID with one reload; restart and real Pi
   assert.equal(invocation.body.model, 'second-model')
   assert.equal(invocation.body.stream, true)
   assert.equal(invocation.headers.authorization, 'Bearer local-sync-test-key')
+})
+
+test('API image capabilities survive restart and provider edits, and unknown models send real Pi images', { timeout: 20_000 }, async (t) => {
+  let advertised = [
+    { id: 'image-model', architecture: { input_modalities: ['text', 'image'] } },
+    { id: 'text-model', capabilities: { image_input: { supported: false } } },
+    { id: 'unknown-model' },
+  ]
+  const { dir, models, baseUrl, requests } = await fixture(t, () => ({ data: advertised }))
+  await models.sync(settings(baseUrl))
+  const restored = await AgentModels.create(dir)
+  const expected = new Map([
+    ['image-model', ['text', 'image']], ['text-model', ['text']], ['unknown-model', undefined],
+  ])
+  const checkCapabilities = (current) => {
+    const snapshot = current.snapshot()
+    const provider = snapshot.providers.find((provider) => provider.id === 'sync-fixture')
+    for (const [id, input] of expected) {
+      assert.deepEqual(snapshot.models.find((model) => model.provider === provider.id && model.id === id).input, input, id)
+      assert.deepEqual(provider.savedModels.find((model) => model.id === id).input, input, id)
+      assert.deepEqual(current.resolve({ provider: provider.id, modelId: id }).input, input ?? ['text', 'image'], id)
+    }
+  }
+  checkCapabilities(restored)
+  await restored.configureProvider({ provider: 'sync-fixture', models: advertised.map(({ id }) => ({ id, name: `Edited ${id}` })) })
+  checkCapabilities(restored)
+  checkCapabilities(await AgentModels.create(dir))
+
+  // A child agent creates its own Pi runtime from these files, bypassing AgentModels.resolve.
+  const runtime = await ModelRuntime.create({ authPath: restored.authPath, modelsPath: restored.modelsPath, allowModelNetwork: false })
+  const image = { id: 'pixel', name: 'pixel.png', mimeType: 'image/png', data: 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jR1kAAAAASUVORK5CYII=' }
+  for (const id of ['image-model', 'unknown-model']) {
+    const model = runtime.getModel('sync-fixture', id)
+    const prompt = normalizePrompt({ text: 'Describe this image.', attachments: [image] }, model)
+    const reply = await runtime.completeSimple(model, { messages: [{ role: 'user', content: [{ type: 'text', text: prompt.text }, ...prompt.images], timestamp: Date.now() }] }, { maxTokens: 16, maxRetries: 0 })
+    assert.equal(reply.stopReason, 'stop', reply.errorMessage)
+    const wire = requests.findLast((request) => request.method === 'POST').body.messages.findLast((message) => message.role === 'user')
+    assert.ok(wire.content.some((part) => part.type === 'image_url' && part.image_url.url === `data:image/png;base64,${image.data}`), id)
+  }
+  assert.throws(() => normalizePrompt({ attachments: [image] }, runtime.getModel('sync-fixture', 'text-model')), /does not support image/)
+
+  // New API metadata replaces previous results; omitted capabilities become unknown again.
+  advertised = [{ id: 'image-model', input: ['text'] }, { id: 'text-model' }, { id: 'unknown-model', capabilities: { vision: true } }]
+  await restored.sync(settings(baseUrl))
+  expected.set('image-model', ['text'])
+  expected.set('text-model', undefined)
+  expected.set('unknown-model', ['text', 'image'])
+  checkCapabilities(await AgentModels.create(dir))
+
+  // The settings editor also refreshes capabilities through discovery + save.
+  await restored.configureProvider({
+    provider: 'sync-fixture',
+    models: restored.snapshot().providers.find((provider) => provider.id === 'sync-fixture').savedModels
+      .map((model) => model.id === 'image-model' ? { ...model, input: [] } : model),
+  })
+  expected.set('image-model', undefined)
+  checkCapabilities(await AgentModels.create(dir))
+})
+
+test('legacy text defaults and manual input overrides cannot override API image capabilities', async (t) => {
+  const { dir, models, baseUrl } = await fixture(t, () => ({ data: [
+    { id: 'legacy-model' },
+    { id: 'image-model', input_modalities: ['text', 'image'] },
+    { id: 'text-model', input_modalities: ['text'] },
+  ] }))
+  await models.configure({ ...settings(baseUrl), modelId: 'legacy-model' })
+  const old = JSON.parse(await readFile(models.modelsPath, 'utf8'))
+  old.providers['sync-fixture'].models = [
+    { id: 'legacy-model', input: ['text'] },
+    { id: 'image-model', input: ['text'] },
+    { id: 'text-model', input: ['text', 'image'] },
+  ]
+  old.providers['sync-fixture'].modelOverrides = {
+    'image-model': { input: ['text'], maxTokens: 2048 },
+    'text-model': { input: ['text', 'image'], maxTokens: 4096 },
+  }
+  await writeFile(models.modelsPath, JSON.stringify(old))
+  const upgraded = await AgentModels.create(dir)
+  assert.equal(upgraded.snapshot().models.find((model) => model.provider === 'sync-fixture' && model.id === 'legacy-model').input, undefined)
+  assert.deepEqual(upgraded.resolve({ provider: 'sync-fixture', modelId: 'legacy-model' }).input, ['text', 'image'])
+  await upgraded.sync(settings(baseUrl))
+  const restored = await AgentModels.create(dir)
+  const definition = (id) => restored.config.providers['sync-fixture'].models.find((model) => model.id === id)
+  assert.equal(definition('legacy-model').apiInput, undefined)
+  assert.deepEqual(definition('legacy-model').input, ['text', 'image'])
+  assert.deepEqual(definition('image-model').apiInput, ['text', 'image'])
+  assert.deepEqual(definition('text-model').apiInput, ['text'])
+  assert.deepEqual(restored.resolve({ provider: 'sync-fixture', modelId: 'image-model' }).input, ['text', 'image'])
+  assert.deepEqual(restored.resolve({ provider: 'sync-fixture', modelId: 'text-model' }).input, ['text'])
+  assert.equal(restored.resolve({ provider: 'sync-fixture', modelId: 'image-model' }).maxTokens, 2048)
+  assert.equal(restored.resolve({ provider: 'sync-fixture', modelId: 'text-model' }).maxTokens, 4096)
 })
 
 test('sync preserves manual IDs, explicit model overrides, unrelated providers and saved credentials', async (t) => {

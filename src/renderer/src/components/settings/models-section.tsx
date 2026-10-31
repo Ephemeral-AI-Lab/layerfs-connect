@@ -8,6 +8,7 @@ import { providerLabel, providerName, ProviderEditor } from '@/components/settin
 import { publishModels } from '@/components/settings/settings-context'
 import { agentHost } from '@/host/agent-client'
 import { useI18n } from '@/i18n'
+import { sortByLabelLength } from '@/lib/utils'
 
 type AddMode = 'catalog' | 'custom'
 
@@ -95,7 +96,6 @@ export function ModelsSection() {
 
   if (!catalog) {
     return <div className="st-section">
-      <h2 className="st-title">{t('Models')}</h2>
       <p className="st-intro">{t('Enter your API keys to use models from the following providers.')}</p>
       {loadError && <>
         <p className="st-error">{t('Loading the provider directory failed')}: {t(loadError)}</p>
@@ -111,9 +111,12 @@ export function ModelsSection() {
   const draft = addable.find((p) => p.id === adding) ?? addable[0]
   const mounted = (candidate: AddMode) => mode === candidate || visited.has(candidate)
   const deleteSignsOut = Boolean(deleteTarget?.signedIn)
+  const addModes = sortByLabelLength([
+    { value: 'catalog' as const, label: t('Third-party model provider') },
+    { value: 'custom' as const, label: t('Custom model API') },
+  ])
 
   return <div className="st-section">
-    <h2 className="st-title">{t('Models')}</h2>
     <p className="st-intro">{t('Enter your API keys to use models from the following providers.')}</p>
     {saved && <p className="st-saved" role="status" aria-live="polite">{t('Saved {provider}.', { provider: providerLabel(saved) })}</p>}
 
@@ -177,7 +180,7 @@ export function ModelsSection() {
     {addOpen ? <div className="st-add-card">
       <div className="st-add-modes">
         <div className="st-seg" role="tablist" aria-label={t('How to add')}>
-          {(['catalog', 'custom'] as const).map((value) => <button
+          {addModes.map(({ value, label }) => <button
             key={value}
             id={`${addId}-${value}`}
             type="button"
@@ -191,7 +194,7 @@ export function ModelsSection() {
               setVisited((current) => new Set([...current, value]))
             }}
           >
-            {value === 'catalog' ? t('Third-party model provider') : t('Custom model API')}
+            {label}
           </button>)}
         </div>
         <p className="st-hint">{mode === 'catalog'

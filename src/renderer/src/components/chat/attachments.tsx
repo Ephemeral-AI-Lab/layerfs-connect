@@ -26,7 +26,7 @@ export function rememberAttachments(items: AgentAttachment[]) { retainAttachment
 const imageTypes = new Set(['image/png', 'image/jpeg', 'image/webp', 'image/gif'])
 const textTypes = new Set(['application/json', 'application/javascript', 'application/typescript', 'application/xml', 'application/yaml', 'application/x-yaml'])
 const textExtension = /\.(txt|md|mdx|csv|tsv|json|jsonl|js|jsx|ts|tsx|mjs|cjs|xml|ya?ml|toml|ini|log|py|sh|bash|css|html|sql|rs|go|java|c|h|cpp|rb|vue|svelte)$/i
-export async function readAttachments(files: File[], existing: AgentAttachment[], supportsImages: boolean) {
+export async function readAttachments(files: File[], existing: AgentAttachment[], supportsImages?: boolean) {
   if (existing.length + files.length > 10) throw new Error(t("Attach up to 10 files at a time."))
   let total = existing.reduce((sum, item) => sum + (item.size ?? Math.floor((item.data?.length ?? 0) * 3 / 4)), 0)
   const additions: AgentAttachment[] = []
@@ -34,7 +34,7 @@ export async function readAttachments(files: File[], existing: AgentAttachment[]
     const mimeType = textExtension.test(file.name) && !file.type.startsWith('text/') && !textTypes.has(file.type) ? 'text/plain' : file.type
     const image = imageTypes.has(mimeType)
     if (!image && !mimeType.startsWith('text/') && !textTypes.has(mimeType)) throw new Error(t("{name}: choose a text file or a PNG, JPEG, WebP or GIF image.", { name: file.name }))
-    if (image && !supportsImages) throw new Error(t("Choose a model that supports images before attaching an image."))
+    if (image && supportsImages === false) throw new Error(t("Choose a model that supports images before attaching an image."))
     if (file.size > (image ? 10 : 1) * 1024 * 1024) throw new Error(t("{name}: {limit}.", { name: file.name, limit: image ? t("images must be at most 10 MiB") : t("text files must be at most 1 MiB") }))
     total += file.size
     if (total > 20 * 1024 * 1024) throw new Error(t("Attachments must total at most 20 MiB."))

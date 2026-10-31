@@ -52,7 +52,7 @@ export function ProjectsHome({ projects, onOpenProject, onNewProject, onOpenChat
             <div className="group/search relative min-w-40 flex-1 basis-52">
               <Search
                 aria-hidden="true"
-                className="pointer-events-none absolute top-1/2 left-3 z-10 size-3.5 -translate-y-1/2 text-muted-foreground transition-colors group-focus-within/search:text-primary"
+                className="pointer-events-none absolute top-1/2 left-3 z-10 size-3.5 -translate-y-1/2 text-muted-foreground transition-colors group-focus-within/search:text-(--icon-accent)"
               />
               <Input
                 aria-label={t("Search projects")}

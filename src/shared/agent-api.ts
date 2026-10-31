@@ -7,6 +7,7 @@ export interface AgentModel {
   contextWindow: number
   maxTokens?: number
   thinkingLevels?: string[]
+  /** Input types explicitly reported by the provider API; missing means unknown. */
   input?: string[]
 }
 
@@ -49,6 +50,7 @@ export interface ProviderModel {
   contextWindow?: number
   maxTokens?: number
   reasoning?: boolean
+  /** API-reported input types; unknown capabilities allow images. */
   input?: ('text' | 'image')[]
 }
 
@@ -118,6 +120,7 @@ export interface DiscoveredModel {
   reasoning?: boolean
   contextWindow?: number
   maxTokens?: number
+  input?: ('text' | 'image')[]
 }
 
 export interface ModelDiscoveryResult {

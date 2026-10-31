@@ -4,7 +4,7 @@ import { ArrowLeft, ChevronDown, ChevronRight, GitFork, LoaderCircle, Square } f
 import { useEffect, useRef, useState } from 'react'
 import type { ChatMessage, ChildRun } from '@shared/agent-api'
 
-import { AgentMessage } from '@/components/chat/agent-messages'
+import { ConversationMessages } from '@/components/chat/conversation-messages'
 import { SayText } from '@/components/chat/markdown'
 import { Button } from '@/components/ui/button'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
@@ -98,7 +98,7 @@ export function SubagentsMenu({ children, open, onOpenChange, current, onOpen }:
               {[child.task?.split('\n')[0], t(child.state)].filter(Boolean).join(' · ')}
             </span>
           </span>
-          <span className="flex shrink-0 flex-col items-end font-mono text-[11px] text-muted-foreground tabular-nums">
+          <span className="flex shrink-0 flex-col items-end text-[11px] text-muted-foreground tabular-nums">
             <span>{format.tokens(child.tokens)}</span>
             <span>{format.duration(elapsed(child))}</span>
           </span>
@@ -118,7 +118,7 @@ export function SubagentsSummary({ children, onOpen }: { children: ChildRun[]; o
   return <button
     type="button"
     onClick={onOpen}
-    className="chat-inset inline-flex w-fit items-center gap-2 self-start rounded-xl border border-foreground/[0.06] px-3 py-2 text-xs text-muted-foreground outline-none transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring sm:ml-11"
+    className="chat-inset inline-flex w-fit items-center gap-2 self-start rounded-xl border border-foreground/[0.06] px-3 py-2 text-xs text-muted-foreground outline-none transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
   >
     {running ? <LoaderCircle className="size-3.5 animate-spin text-primary" /> : <GitFork className="size-3.5" />}
     <span className="font-medium text-foreground">{t('{count} subagents', { count: children.length })}</span>
@@ -145,6 +145,7 @@ export function ChildConversationView({ sessionId, child, onBack, onStop }: {
   const [stopping, setStopping] = useState(false)
   const [taskOpen, setTaskOpen] = useState(false)
   const active = childActive(child)
+  const latestTaskComplete = /^(completed|done|complete|passed)$/.test(child.state) && !child.error && !error
   useTick(active)
   // reload when the child's numbers or state change, at most twice a second
   const version = `${child.state}:${child.turns}:${child.tokens}:${child.endedAt}:${child.conversation}`
@@ -168,8 +169,8 @@ export function ChildConversationView({ sessionId, child, onBack, onStop }: {
     format.duration(elapsed(child)),
   ].filter(Boolean)
 
-  return <div className="min-h-0 flex-1 overflow-y-auto px-6 pt-3 pb-8" data-child-view={child.id}>
-    <div className="mx-auto flex max-w-3xl flex-col gap-5">
+  return <div className="chat-content-gutter min-h-0 flex-1 overflow-y-auto pt-3 pb-8" data-child-view={child.id}>
+    <div className="flex w-full min-w-0 flex-col gap-5">
       <div className="chat-glass-card glass-liquid flex flex-col gap-2.5 rounded-2xl px-4 py-3.5">
         <div className="flex items-center gap-2">
           <StateDot state={child.state} />
@@ -183,7 +184,7 @@ export function ChildConversationView({ sessionId, child, onBack, onStop }: {
             }}>{stopping ? <LoaderCircle className="size-3 animate-spin" /> : <Square className="size-2.5" />}{t('Stop run')}</Button>}
           </span>
         </div>
-        <p className="font-mono text-[11px] text-muted-foreground tabular-nums">{facts.join(' · ')}</p>
+        <p className="text-[11px] text-muted-foreground tabular-nums">{facts.join(' · ')}</p>
         {child.task && <button type="button" onClick={() => setTaskOpen(!taskOpen)} className="text-left text-xs text-muted-foreground outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring">
           <span className="font-medium text-foreground">{t('Task')}: </span>
           <span className={cn('whitespace-pre-wrap', !taskOpen && 'line-clamp-2')}>{child.task}</span>
@@ -197,10 +198,17 @@ export function ChildConversationView({ sessionId, child, onBack, onStop }: {
         <span>{active ? t('This subagent’s conversation shows here once it saves; its latest output is below.') : t('This subagent left no conversation to show.')}</span>
         {child.text && <div className="text-foreground"><SayText text={child.text} /></div>}
       </div>}
-      {messages?.map((message) => <AgentMessage key={message.id} sessionId={sessionId} message={message} disabled running={active} author={child.agent} />)}
+      {messages && <ConversationMessages
+        key={`${sessionId}:${child.id}`}
+        messages={messages}
+        sessionId={sessionId}
+        disabled
+        running={active}
+        latestTaskComplete={latestTaskComplete}
+      />}
     </div>
 
-    <div className="pointer-events-none sticky bottom-0 mx-auto mt-6 flex max-w-3xl justify-center">
+    <div className="pointer-events-none sticky bottom-0 mt-6 flex w-full justify-center">
       <button
         type="button"
         onClick={onBack}

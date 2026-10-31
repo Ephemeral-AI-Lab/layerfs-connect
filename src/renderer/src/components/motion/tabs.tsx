@@ -1,30 +1,23 @@
-// Tabs and segmented controls whose indicator slides between options.
-// TabBar + Tab: a page's tabs, an underline in brand light (nav + aria-current,
-// as the pages had). Segmented: a small radio group or tab list with a raised
-// pill behind the chosen option; arrow keys, Home and End move the choice.
+// Page navigation uses quiet glass buttons. Segmented controls keep their
+// sliding selection and support arrow keys, Home and End.
 import type { ComponentType, KeyboardEvent, ReactNode } from 'react'
 
 import { useIndicator } from '@/components/motion/indicator'
 import { cn } from '@/lib/utils'
+import './tabs.css'
 
 interface TabBarProps {
   'aria-label': string
   className?: string
-  /** <Tab>s, and anything else that sits in the row (a divider, a count). */
+  /** Page navigation buttons. */
   children: ReactNode
 }
 
-/** A row of page tabs with an underline that glides to the active <Tab>. */
+/** A horizontally scrollable row of glass navigation buttons. */
 export function TabBar({ className, children, ...aria }: TabBarProps) {
-  const { container, indicator } = useIndicator<HTMLElement>({ axis: 'x' })
   return (
-    <nav ref={container} {...aria} className={cn('relative flex min-w-0 items-end gap-5 overflow-x-auto border-b scrollbar-none', className)}>
+    <nav {...aria} className={cn('view-nav scrollbar-none', className)}>
       {children}
-      <span
-        ref={indicator}
-        aria-hidden="true"
-        className="indicator top-auto bottom-0 h-0.5 rounded-full bg-brand shadow-[0_0_10px_0_var(--glow-strong)]"
-      />
     </nav>
   )
 }
@@ -49,10 +42,8 @@ export function Tab({ active, quiet, onClick, title, className, children }: TabP
       onClick={onClick}
       title={title}
       className={cn(
-        'relative flex shrink-0 items-center whitespace-nowrap pt-1 pb-2.5 font-medium outline-none transition-colors duration-(--dur-fast)',
-        'rounded-md focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
-        quiet ? 'text-[13px]' : 'text-sm',
-        active ? 'text-foreground' : cn('hover:text-foreground', quiet ? 'text-faint' : 'text-muted-foreground'),
+        'glass-liquid view-button',
+        quiet && 'view-button-quiet',
         className,
       )}
     >

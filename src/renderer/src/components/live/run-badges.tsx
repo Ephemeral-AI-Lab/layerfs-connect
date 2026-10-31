@@ -7,16 +7,15 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { cn } from '@/lib/utils'
 import { useI18n } from '@/i18n'
 
-/** A state dot; while live it glows and sends out a ring (`pulse-ring`), at rest it is still. */
-export function StateDot({ tone, live, label, className }: { tone: Tone; live?: boolean; label: string; className?: string }) {
+/** A steady state dot; activity is communicated through status and call text. */
+export function StateDot({ tone, label, className }: { tone: Tone; live?: boolean; label: string; className?: string }) {
   const { t } = useI18n()
   return (
     <span role="img" aria-label={t(label)} title={t(label)} className={cn('relative flex size-2 shrink-0', className)}>
       <span
         className={cn(
-          'size-2 rounded-full transition-colors duration-(--dur-base)',
+          'size-2 rounded-full',
           DOT[tone],
-          live ? 'pulse-ring' : 'shadow-[0_0_0_2.5px_color-mix(in_oklab,currentColor_13%,transparent)]',
         )}
       />
     </span>
@@ -26,9 +25,9 @@ export function StateDot({ tone, live, label, className }: { tone: Tone; live?: 
 export function RunDot({ state, className }: { state: RunState; className?: string }) {
   return (
     <StateDot
-      tone={RUN_TONE[state]}
+      tone={state === 'failed' ? 'danger' : RUN_TONE[state]}
       live={state === 'running' || state === 'starting'}
-      label={RUN_LABEL[state]}
+      label={state === 'failed' ? 'Failed' : RUN_LABEL[state]}
       className={className}
     />
   )
@@ -40,10 +39,9 @@ export function AgentDot({ state }: { state: AgentState }) {
 
 export function RunStateBadge({ state }: { state: RunState }) {
   const { t } = useI18n()
-  const live = state === 'running' || state === 'starting'
   const icon = state === 'stopped' ? Ban : undefined
   return (
-    <Chip tone={RUN_TONE[state]} live={live} icon={icon}>
+    <Chip tone={RUN_TONE[state]} icon={icon}>
       {t(RUN_LABEL[state])}
     </Chip>
   )

@@ -28,12 +28,12 @@ const highlight = HighlightStyle.define([
 
 const theme = EditorView.theme({
   '&': { fontSize: '13px', backgroundColor: 'transparent', color: 'var(--foreground)', height: '100%' },
-  '.cm-scroller': { fontFamily: 'ui-monospace, "SF Mono", Menlo, monospace', lineHeight: '1.7', fontVariantLigatures: 'none' },
+  '.cm-scroller': { fontFamily: 'var(--font-mono)', lineHeight: '1.7', fontVariantLigatures: 'none' },
   '.cm-content': { padding: '12px 0', caretColor: 'transparent' },
   '.cm-gutters': {
     backgroundColor: 'color-mix(in oklab, var(--muted) 30%, transparent)',
     border: 'none',
-    color: 'color-mix(in oklab, var(--faint) 75%, transparent)',
+    color: 'var(--code-line-number, color-mix(in oklab, var(--faint) 75%, transparent))',
   },
   '.cm-lineNumbers .cm-gutterElement': { padding: '0 12px 0 18px', minWidth: '48px', fontVariantNumeric: 'tabular-nums', fontSize: '11.5px' },
   '.cm-line': { padding: '0 16px' },
@@ -75,5 +75,5 @@ export function CodeView({ path, text }: { path: string; text: string }) {
     return () => view.destroy()
   }, [path, text])
 
-  return <div ref={host} className="code-view h-full min-h-0 overflow-hidden [&_.cm-editor]:h-full" />
+  return <div ref={host} className="code-view h-full min-h-0 overflow-hidden dark:[--code-line-number:var(--muted-foreground)] [&_.cm-editor]:h-full" />
 }

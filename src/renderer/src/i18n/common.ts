@@ -1,4 +1,5 @@
 export const commonZh: Record<string, string> = {
+  "Read-only files": "文件预览 · 只读",
   "Chat": "对话",
   "Projects": "项目",
   "Storage": "存储",
@@ -59,7 +60,7 @@ export const commonZh: Record<string, string> = {
   "Thinking…": "正在思考…",
   "Copy the script": "复制脚本",
   "History": "历史记录",
-  "Duplicate chat": "复制对话",
+  "Duplicate chat": "创建对话副本",
   "Stop the agent before changing this conversation.": "请先停止 Agent，再修改此对话。",
   "low": "低",
   "max": "最高",

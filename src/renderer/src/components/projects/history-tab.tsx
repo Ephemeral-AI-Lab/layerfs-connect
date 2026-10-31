@@ -1,6 +1,6 @@
 import { t, useI18n } from '@/i18n'
 import { CircleAlert, GitCommitVertical, Network, X } from 'lucide-react'
-import { Suspense, lazy, useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { projectLabel, type CommitInfo, type ProjectState } from '@shared/host-api'
 
 import { Segmented, type SegmentedOption } from '@/components/motion'
@@ -13,55 +13,19 @@ import { Empty, LoadError, Loading } from '@/components/projects/states'
 import { host } from '@/host/client'
 import { useHostQuery } from '@/host/use-host'
 import { type ForkTree, ancestry, buildForkTree } from '@/data/forks'
+import { sortByLabelLength } from '@/lib/utils'
 
 export type HistoryView = 'lineage' | 'map'
 
-const VIEWS: SegmentedOption<HistoryView>[] = [
+const VIEWS = [
   { value: 'lineage', label: 'Lineage', icon: GitCommitVertical },
   { value: 'map', label: 'Map', icon: Network },
-]
-
-/** The Map in 3D (three.js), loaded only when it is asked for. */
-const Citadel = lazy(() => import('@/components/projects/history/citadel'))
-/** The Map as a game: the castle built by the heroes, replayable (three.js, loaded on demand). */
-const CastleGame = lazy(() => import('@/components/projects/history/game/castle-game'))
-
-type MapLook = '2d' | '3d' | 'game'
-const LOOK_KEY = 'connect.timeline.view'
-const LOOKS = [
-  { value: '2d' as const, label: '2D' },
-  { value: '3d' as const, label: '3D' },
-  { value: 'game' as const, label: 'Game' },
-]
-/** The 3D and Game views are hidden from the app for now; their code stays, and true brings the switch back. */
-const SHOW_VIEWS = false
-
-/** The Map's look, kept on this machine (2D when nothing is kept). */
-function useMapLook(): [MapLook, (v: MapLook) => void] {
-  const [look, setLook] = useState<MapLook>(() => {
-    if (!SHOW_VIEWS) return '2d'
-    try {
-      const kept = localStorage.getItem(LOOK_KEY)
-      return kept === '3d' || kept === 'game' ? kept : '2d'
-    } catch {
-      return '2d'
-    }
-  })
-  const set = (v: MapLook) => {
-    setLook(v)
-    try {
-      localStorage.setItem(LOOK_KEY, v)
-    } catch {
-      // not kept: 2D next time
-    }
-  }
-  return [look, set]
-}
+] satisfies SegmentedOption<HistoryView>[]
 
 const FILTERS: { id: BranchFilter; label: string }[] = [
   { id: 'all', label: 'All' },
-  { id: 'open', label: 'Open' },
-  { id: 'done', label: 'Done' },
+  { id: 'open', label: 'Open branches' },
+  { id: 'done', label: 'Finished branches' },
 ]
 
 /** The newest thing on a Branch: its head Commit, or main's head Layer. */
@@ -85,8 +49,6 @@ interface HistoryTabProps {
   /** Dev aid: the Branch to focus and the view to open on. */
   initialBranch?: string
   initialView?: HistoryView
-  /** Dev aid: open the Map already replaying. */
-  autoplay?: boolean
   /** A Commit or Layer to open on: its Branch focused (main for a Layer), it selected. */
   initialItem?: HistoryItem
 }
@@ -134,11 +96,10 @@ interface HistoryBodyProps {
   tree: ForkTree
   initialBranch?: string
   initialView?: HistoryView
-  autoplay?: boolean
   initialItem?: HistoryItem
 }
 
-function HistoryBody({ project, tree, initialBranch, initialView = 'lineage', autoplay, initialItem }: HistoryBodyProps) {
+function HistoryBody({ project, tree, initialBranch, initialView = 'lineage', initialItem }: HistoryBodyProps) {
   useI18n()
   const firstFocus = () => {
     const at = branchOf(tree, initialItem)
@@ -187,44 +148,25 @@ function HistoryBody({ project, tree, initialBranch, initialView = 'lineage', au
     // once, when a later read brings the item
   }, [found])
 
-  const branches = [...tree.branches.values()]
-  const open = branches.filter((b) => b.name !== 'main' && b.state === 'open').length
-  const deepest = Math.max(0, ...branches.map((b) => b.depth))
-
-  const counts = { all: branches.length - 1, open, done: branches.length - 1 - open }
-  const filters = FILTERS.map((f) => ({ value: f.id, label: t(f.id === 'open' ? 'Running' : f.label), count: counts[f.id] }))
+  const filters = sortByLabelLength(FILTERS.map((f) => ({ value: f.id, label: t(f.label) })))
+  const views = sortByLabelLength(VIEWS.map((option) => ({ ...option, label: t(option.label) })))
   const kind = selected?.kind === 'layer' ? 'Layer' : 'Commit'
-  const [look, setLook] = useMapLook()
   const openBranch = (name: string) => {
     setFocus(name)
     setView('lineage')
   }
 
   return (
-    <div className="hist-frame @container/history flex h-0 min-h-[34rem] flex-1 flex-col overflow-hidden rounded-2xl">
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b bg-muted/25 px-3 py-2.5">
-        {SHOW_VIEWS && view === 'map' && <Segmented aria-label={t("Map view")} value={look} onChange={setLook} options={LOOKS.map((option) => ({...option, label: typeof option.label === 'string' ? t(option.label) : option.label}))} />}
-        <SearchField label={t("Find a Branch or Commit")} value={query} onChange={setQuery} className="min-w-40 flex-1 basis-48" />
+    <div className="hist-frame hist-history @container/history flex h-0 min-h-[30rem] flex-1 flex-col overflow-hidden rounded-2xl">
+      <div className="hist-toolbar">
+        <SearchField label={t("Search branches or commits")} value={query} onChange={setQuery} className="min-w-40 flex-1 basis-52" />
         <Segmented aria-label={t("Show Branches")} value={filter} onChange={setFilter} options={filters} />
-        <span className="min-w-0 flex-1 truncate text-right text-xs text-muted-foreground tabular-nums @max-[58rem]/history:order-last @max-[58rem]/history:basis-full @max-[58rem]/history:text-left">
-          {tree.branches.size === 1
-            ? t("No Branches yet")
-            : t("{branches} · {count} open · forks {depth} deep", {branches: t(tree.branches.size === 2 ? "{count} Branch" : "{count} Branches", {count: tree.branches.size - 1}), count: open, depth: deepest})}
-          {' · '}
-          {tree.commits.size} {t(tree.commits.size === 1 ? "Commit" : "Commits")}
-          {tree.layers[0] && (
-            <>
-              {t(" · main at ")}
-              <HashChip id={tree.layers[0].id} className="ml-0.5 text-[11px]" />
-            </>
-          )}
-        </span>
-        <Segmented aria-label={t("View")} value={view} onChange={setView} options={VIEWS.map((option) => ({...option, label: typeof option.label === 'string' ? t(option.label) : option.label}))} />
+        <Segmented aria-label={t("View")} value={view} onChange={setView} options={views} />
       </div>
       {missing && <MissingNote item={missing} onDismiss={() => setMissing(undefined)} />}
 
       {view === 'lineage' ? (
-        <div key="lineage" className="hist-swap grid min-h-0 flex-1 grid-cols-[11rem_minmax(0,1fr)] grid-rows-[minmax(14rem,1fr)_12rem] @min-[58rem]/history:grid-cols-[14rem_minmax(0,1fr)_17rem] @min-[58rem]/history:grid-rows-1">
+        <div key="lineage" className="hist-swap grid min-h-0 flex-1 grid-cols-[11rem_minmax(0,1fr)] grid-rows-[minmax(14rem,1fr)_13rem] @min-[58rem]/history:grid-cols-[12rem_minmax(0,1fr)_16rem] @min-[58rem]/history:grid-rows-1">
           <aside aria-label={t("Branches")} className="hist-side flex min-h-0 flex-col border-r">
             <PaneHead label={t("Branches")} count={shown.size} />
             <BranchTree
@@ -258,17 +200,7 @@ function HistoryBody({ project, tree, initialBranch, initialView = 'lineage', au
         </div>
       ) : (
         <div key="map" className="hist-swap flex min-h-0 flex-1 flex-col">
-          {look === 'game' ? (
-            <Suspense fallback={<Loading label={t("Loading the castle game")} />}>
-              <CastleGame tree={tree} onOpen={openBranch} autoplay={autoplay} />
-            </Suspense>
-          ) : look === '3d' ? (
-            <Suspense fallback={<Loading label={t("Loading the 3D view")} />}>
-              <Citadel tree={tree} focus={focus} shown={shown} onOpen={openBranch} />
-            </Suspense>
-          ) : (
-            <ForkMap title={t("Fork timeline of {value1}", {value1: projectLabel(project)})} tree={tree} focus={focus} shown={shown} autoplay={autoplay} onOpen={openBranch} />
-          )}
+          <ForkMap title={t("Fork timeline of {value1}", {value1: projectLabel(project)})} tree={tree} focus={focus} shown={shown} filterKey={JSON.stringify([query, filter])} onOpen={openBranch} />
         </div>
       )}
     </div>
@@ -283,7 +215,7 @@ function MissingNote({ item, onDismiss }: { item: HistoryItem; onDismiss: () => 
     <div role="status" className="flex items-center gap-2 border-b bg-amber-500/10 px-3 py-1.5 text-xs text-amber-900 dark:text-amber-200">
       <CircleAlert className="size-3.5 shrink-0" />
       <span className="min-w-0 flex-1">
-        {kind} <HashChip id={item.id} className="mx-0.5 text-[11px]" />{t("is not in this project's history. It may not be read yet (it opens when it is), or its Branch was removed.")}</span>
+        {kind} <HashChip id={item.id} className="mx-0.5 text-[11px]" />{t("is not available in this history.")}</span>
       <button type="button" onClick={onDismiss} aria-label={t("Dismiss")} className="inline-flex size-5 shrink-0 items-center justify-center rounded outline-none hover:bg-amber-500/20 focus-visible:ring-2 focus-visible:ring-ring">
         <X className="size-3.5" />
       </button>

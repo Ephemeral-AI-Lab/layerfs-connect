@@ -63,7 +63,7 @@ export function MachineDetail() {
         index={2}
         title={
           <span className="flex items-center gap-2">
-            <HardDrive aria-hidden="true" className="size-4 text-primary" /> {t('Disk')}
+            <HardDrive aria-hidden="true" className="size-4 text-(--icon-accent)" /> {t('Disk')}
           </span>
         }
         note={t('Free space where the Stores are written')}

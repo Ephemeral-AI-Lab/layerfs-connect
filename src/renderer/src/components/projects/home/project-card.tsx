@@ -35,7 +35,7 @@ export function ProjectCard({ project, index, onOpen }: ProjectCardProps) {
         <span className="min-w-0 flex-1 truncate text-[15px] font-semibold tracking-[-0.01em]" title={project.name}>
           {project.name}
         </span>
-        <ArrowUpRight aria-hidden="true" className="home-arrow size-4 shrink-0 text-primary" />
+        <ArrowUpRight aria-hidden="true" className="home-arrow size-4 shrink-0 text-(--icon-accent)" />
       </span>
       <span className="flex w-full min-w-0 items-center gap-2 text-xs text-muted-foreground" title={project.source ?? undefined}>
         <FolderOpen aria-hidden="true" className="size-3.5 shrink-0" />

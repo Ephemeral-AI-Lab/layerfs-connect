@@ -63,14 +63,17 @@ interface StoragePageProps {
   catalog: ProjectCatalog
   /** Dev aid: a view to open first when the hash names none ("store/work", "machine"). */
   initialId?: string
+  /** The storage route retained by this tab, including when returning from a project. */
+  initialRoute?: string
+  onRoute?: (hash: string) => void
   /** Opens a project's page by its key (`store/name` in a shared Store). */
   onOpenProject?: (key: string) => void
 }
 
-export function StoragePage({ catalog, initialId, onOpenProject }: StoragePageProps) {
+export function StoragePage({ catalog, initialId, initialRoute, onRoute, onOpenProject }: StoragePageProps) {
   useI18n()
   // ---------- the view, its route and its data ----------
-  const [route, setRoute] = useState<Route>(() => parseRoute(window.location.hash) ?? (initialId ? parseRoute(`#storage/${initialId}`) : null) ?? { view: 'overview' })
+  const [route, setRoute] = useState<Route>(() => parseRoute(initialRoute ?? window.location.hash) ?? (initialId ? parseRoute(`#storage/${initialId}`) : null) ?? { view: 'overview' })
   const scroller = useRef<HTMLDivElement>(null)
   const overviewTop = useRef(0)
 
@@ -87,13 +90,14 @@ export function StoragePage({ catalog, initialId, onOpenProject }: StoragePagePr
   const transfers = useTransfers(raw?.jobs)
 
   // ---------- navigation: hash, back button, Alt+←, mouse back ----------
+  useEffect(() => { onRoute?.(routeHash(route)) }, [route, onRoute])
   const open = useCallback((next: Route) => {
     if (routeHash(next) === window.location.hash) return
     window.history.pushState({ storage: true }, '', routeHash(next))
     viewTransition(() => setRoute(next), 'tab')
   }, [])
   useEffect(() => {
-    if (!parseRoute(window.location.hash)) window.history.replaceState({ storage: true }, '', routeHash(route))
+    if (window.location.hash !== routeHash(route)) window.history.replaceState({ storage: true }, '', routeHash(route))
     const onPop = () => {
       const next = parseRoute(window.location.hash)
       if (next) viewTransition(() => setRoute(next), 'tab')

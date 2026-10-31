@@ -49,6 +49,15 @@ test('attachments reject unsupported models, binary data, malformed encoding and
   assert.throws(() => normalizePrompt({ attachments: [bigImage, bigImage, attachment('one.txt', 'text/plain', '1')] }, model), /20 MiB/)
 })
 
+test('attachments allow unknown image capability without losing native image content', () => {
+  const image = attachment('screen.png', 'image/png', 'image-fixture')
+  for (const unknown of [undefined, {}, { input: [] }]) {
+    const normalized = normalizePrompt({ attachments: [image] }, unknown)
+    assert.deepEqual(normalized.images, [{ type: 'image', mimeType: image.mimeType, data: image.data }])
+    assert.equal(normalized.attachments[0].data, image.data)
+  }
+})
+
 test('local parent and child instructions load before each run in scope order', async (t) => {
   const root = await fixture(t)
   const cwd = join(root, 'nested')

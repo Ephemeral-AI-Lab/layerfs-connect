@@ -11,7 +11,7 @@
 
 @theme inline {
   --font-heading: var(--font-sans);
-  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Inter Variable", "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Inter Variable", -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei UI", "Noto Sans CJK SC", sans-serif;
   --font-mono: "SF Mono", "JetBrains Mono", Menlo, Monaco, Consolas, ui-monospace, monospace;
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
@@ -87,12 +87,33 @@
   --accent: #eef0fc;
   --accent-foreground: #2d3a9a;
   --destructive: #c23b22;
+  --danger-label: var(--destructive);
   --success: #1c7a43;
   --warning: #8c5b00;
   --border: #e8e8ed;
   --input: #d9d9de;
   --ring: #cbd0f4;
   --radius: 0.875rem;
+  /* Apple Liquid Glass: 3-stop optical meniscus, dual specular rim, crystal depth */
+  --glass-card-bg: linear-gradient(180deg, rgba(255, 255, 255, 0.80) 0%, rgba(255, 255, 255, 0.54) 50%, rgba(255, 255, 255, 0.68) 100%);
+  --glass-panel-bg: linear-gradient(180deg, rgba(255, 255, 255, 0.88) 0%, rgba(255, 255, 255, 0.68) 50%, rgba(255, 255, 255, 0.78) 100%);
+  --glass-border: rgba(15, 23, 42, 0.08);
+  --glass-shadow:
+    inset 0 1px 1px 0 rgba(255, 255, 255, 0.95),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.55),
+    inset 0 2px 6px -2px rgba(15, 23, 42, 0.03),
+    inset 0 -1px 1px 0 rgba(255, 255, 255, 0.75),
+    0 1px 2px 0 rgba(0, 0, 0, 0.02),
+    0 8px 24px -4px rgba(15, 23, 42, 0.05),
+    0 20px 48px -12px rgba(15, 23, 42, 0.03);
+  --glass-panel-shadow:
+    inset 0 1.5px 1.5px 0 rgba(255, 255, 255, 1),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.70),
+    inset 0 3px 8px -2px rgba(15, 23, 42, 0.04),
+    inset 0 -1px 1.5px 0 rgba(255, 255, 255, 0.85),
+    0 2px 4px 0 rgba(0, 0, 0, 0.03),
+    0 14px 36px -8px rgba(15, 23, 42, 0.07);
+  --glass-field-bg: rgba(255, 255, 255, 0.6);
   --sidebar: #ffffff;
   --sidebar-foreground: #18181b;
   --sidebar-primary: #4050c8;
@@ -127,6 +148,7 @@
   /* the LayerFS icon tones (assets/icons): light = committed, dark = live */
   --lfs-light: #93b1e0;
   --lfs-dark: #2f5bb5;
+  --icon-accent: var(--primary);
   --lfs-warn: #e0a030;
   --lfs-surface: var(--card);
   /* Brand light: the primary indigo, extended to violet and sky. Use sparingly:
@@ -134,7 +156,7 @@
   --brand-1: #4050c8;
   --brand-2: #7a4fd6;
   --brand-3: #1c9bd6;
-  --brand-gradient: linear-gradient(120deg, var(--brand-1), var(--brand-2) 55%, var(--brand-3));
+  --brand-gradient: linear-gradient(135deg, color-mix(in oklab, var(--primary) 78%, white), var(--primary));
   --glow: color-mix(in oklab, var(--primary) 32%, transparent);
   --glow-strong: color-mix(in oklab, var(--primary) 55%, transparent);
   /* Elevation: 1 resting card, 2 hovered or raised, 3 popovers and dialogs. */
@@ -160,81 +182,109 @@
   --aura-amber: #fef08a;
   --aura-blue: #0071e3;
   --grid-dot: rgba(0, 0, 0, 0.045);
-  /* Pure monochrome transparent glass - colors appear ONLY where cursor moves */
+  /* Shared glass tint follows the current hue; the canvas retains a soft ambient light. */
   --card-pastel-gradient: none;
   --glass-sheen: none;
 }
 
 .dark {
+  /* Smoke glass on a neutral canvas: a soft rim gives depth without a colored wash. */
+  --glass-card-bg: linear-gradient(165deg, rgb(62 62 62 / 64%), rgb(38 38 38 / 78%) 52%, rgb(48 48 48 / 68%));
+  --glass-panel-bg: linear-gradient(155deg, rgb(54 54 54 / 92%), rgb(36 36 36 / 94%) 58%, rgb(43 43 43 / 92%));
+  --glass-border: rgb(255 255 255 / 11%);
+  --glass-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 15%),
+    inset 0 -1px 0 rgb(255 255 255 / 4%),
+    0 2px 8px rgb(0 0 0 / 14%);
+  --glass-panel-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 18%),
+    inset 0 -1px 0 rgb(255 255 255 / 5%),
+    0 18px 48px -12px rgb(0 0 0 / 48%);
+  --glass-field-bg: rgb(255 255 255 / 5%);
+
+  /* Main canvas, content, raised panels and sidebar use an achromatic scale. */
+  --background: #1f1f1f;
+  --foreground: #ededed;
+  --card: #262626;
+  --card-foreground: #ededed;
+  --popover: #2c2c2c;
+  --popover-foreground: #ededed;
+
+  /* Actions are gray-white; icons, status and syntax retain their colors. */
+  --primary: #ededed;
+  --primary-foreground: #1b1b1b;
+  --secondary: #303030;
+  --secondary-foreground: #ededed;
+  --muted: #2b2b2b;
+  --muted-foreground: #bcbcbc;
+  --faint: #b4b4b4;
+  --accent: #363636;
+  --accent-foreground: #ededed;
+  --destructive: #f07878;
+  --danger-label: #ffaaaa;
+  --success: #22c55e;
+  --warning: #f59e0b;
+  --border: #363636;
+  --input: #474747;
+  --ring: #858585;
+
+  /* Sidebar sits one step below the workspace. */
+  --sidebar: #181818;
+  --sidebar-foreground: #ededed;
+  --sidebar-primary: #ededed;
+  --sidebar-primary-foreground: #1b1b1b;
+  --sidebar-accent: #2b2b2b;
+  --sidebar-accent-foreground: #ededed;
+  --sidebar-border: #2b2b2b;
+  --sidebar-ring: #858585;
+
+  --idle: #707070;
+  --agent-builder: #f97316;
+  --agent-reviewer: #818cf8;
+  --agent-tester: #fbbf24;
+  --agent-docs: #34d399;
+  --lane-1: #f59e0b;
+  --lane-2: #10b981;
+  --lane-3: #f43f5e;
+  --lane-4: #a855f7;
+  --commit-fs: #5880f0;
+  --commit-exec: #f97316;
+  --commit-merge: #10b981;
+  --hl-comment: var(--muted-foreground);
+  --hl-keyword: #a78bfa;
+  --hl-string: #4ade80;
+  --hl-number: #fb923c;
+  --hl-function: #60a5fa;
+  --hl-type: #facc15;
+  --hl-property: #93c5fd;
+  --lfs-light: #93b1e0;
   --lfs-dark: #6f93e6;
-  --background: #111113;
-  --foreground: #ededef;
-  --card: #18181b;
-  --card-foreground: #ededef;
-  --popover: #18181b;
-  --popover-foreground: #ededef;
-  --primary: #7b88e8;
-  --primary-foreground: #111113;
-  --secondary: #222226;
-  --secondary-foreground: #ededef;
-  --muted: #222226;
-  --muted-foreground: #a1a1aa;
-  --faint: #71717a;
-  --accent: #262a45;
-  --accent-foreground: #c3c9f7;
-  --destructive: #f2877a;
-  --success: #4cc488;
-  --warning: #e0a83e;
-  --border: #2a2a2e;
-  --input: #34343a;
-  --ring: #4a538f;
-  --sidebar: #161618;
-  --sidebar-foreground: #ededef;
-  --sidebar-primary: #7b88e8;
-  --sidebar-primary-foreground: #111113;
-  --sidebar-accent: #24242a;
-  --sidebar-accent-foreground: #ededef;
-  --sidebar-border: #2a2a2e;
-  --sidebar-ring: #4a538f;
-  --idle: #4a4a52;
-  --agent-builder: #e07a55;
-  --agent-reviewer: #9486f0;
-  --agent-tester: #d39a3e;
-  --agent-docs: #3fbf8c;
-  --lane-1: #dd9a45;
-  --lane-2: #3cc0ad;
-  --lane-3: #e57aa3;
-  --lane-4: #9b8ef2;
-  --commit-fs: #7a80e8;
-  --commit-exec: #d06a45;
-  --commit-merge: #2aa896;
-  --hl-comment: #71717a;
-  --hl-keyword: #a99cf5;
-  --hl-string: #6fd3a5;
-  --hl-number: #f09a78;
-  --hl-function: #8fb2f2;
-  --hl-type: #e3b562;
-  --hl-property: #c3c9f7;
-  --brand-1: #7b88e8;
-  --brand-2: #a483f2;
-  --brand-3: #52bdf0;
-  --glow: color-mix(in oklab, var(--primary) 40%, transparent);
-  --glow-strong: color-mix(in oklab, var(--primary) 65%, transparent);
-  --elev-1: 0 1px 2px rgb(0 0 0 / 0.35), 0 0 0 0.5px rgb(0 0 0 / 0.2);
-  --elev-2: 0 8px 20px -6px rgb(0 0 0 / 0.55), 0 2px 6px -2px rgb(0 0 0 / 0.4);
-  --elev-3: 0 24px 56px -16px rgb(0 0 0 / 0.7), 0 10px 20px -10px rgb(0 0 0 / 0.5);
-  --highlight: inset 0 1px 0 0 rgb(255 255 255 / 0.06);
-  --surface-sheen: linear-gradient(to bottom, rgb(255 255 255 / 0.03), transparent 3rem);
-  --aura-violet: #a78bfa;
-  --aura-rose: #f472b6;
-  --aura-cyan: #38bdf8;
-  --aura-amber: #fbbf24;
-  --aura-mint: #34d399;
-  --ambient-1: color-mix(in oklab, var(--brand-2) 18%, transparent);
-  --ambient-2: color-mix(in oklab, var(--brand-3) 15%, transparent);
-  --ambient-3: color-mix(in oklab, var(--aura-rose) 12%, transparent);
-  --ambient-4: color-mix(in oklab, var(--aura-mint) 10%, transparent);
-  --grid-dot: rgba(255, 255, 255, 0.05);
+  --icon-accent: #8aa7f8;
+
+  /* Neutral surfaces preserve the existing colors of icons and status marks. */
+  --brand-1: #dedede;
+  --brand-2: #b7b7b7;
+  --brand-3: #929292;
+  --brand-gradient: linear-gradient(#dedede, #dedede);
+  --glow: transparent;
+  --glow-strong: transparent;
+
+  --elev-1: 0 0 0 transparent;
+  --elev-2: 0 2px 8px rgb(0 0 0 / 16%);
+  --elev-3: 0 16px 40px rgb(0 0 0 / 32%);
+  --highlight: inset 0 1px 0 rgb(255 255 255 / 8%);
+  --surface-sheen: none;
+
+  --aura-violet: #a0a0a0;
+  --aura-rose: #a0a0a0;
+  --aura-cyan: #a0a0a0;
+  --aura-amber: #a0a0a0;
+  --aura-mint: #a0a0a0;
+  --ambient-1: transparent;
+  --ambient-2: transparent;
+  --ambient-3: transparent;
+  --ambient-4: transparent;
+  --grid-dot: transparent;
   --card-pastel-gradient: none;
   --glass-sheen: none;
 }
@@ -246,6 +296,8 @@
   body {
     @apply bg-background text-foreground antialiased;
     font-family: var(--font-sans);
+    font-size: 14px;
+    line-height: 1.55;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
@@ -532,7 +584,7 @@
   /* The main canvas: soft porcelain pearl surface with delicate dot matrix so liquid glass cards gleam */
   .canvas {
     position: relative;
-    background: linear-gradient(180deg, #fafbfe 0%, #f5f7fc 100%);
+    background: linear-gradient(180deg, rgb(250 251 254 / 36%), rgb(242 245 252 / 44%));
   }
   .canvas::before {
     content: '';
@@ -549,86 +601,64 @@
   }
 
   .dark .canvas {
-    background: linear-gradient(180deg, #111217 0%, #0d0e13 100%);
+    background: var(--background);
   }
   .dark .canvas::before {
-    background-image: radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.04) 1px, transparent 0);
+    display: none;
   }
   .dark .canvas::after {
     display: none;
   }
 
-  /* Optical Liquid Glass: multi-angle refractive sheen, bright specular rim, and soft ambient elevation */
-  .glass {
+  /* Apple Liquid Glass: continuous optical refraction, natural surface tension, no harsh cutouts */
+  .glass, .glass-liquid, .surface {
     position: relative;
-    background: linear-gradient(145deg, rgba(255, 255, 255, 0.86) 0%, rgba(255, 255, 255, 0.66) 60%, rgba(255, 255, 255, 0.78) 100%);
-    border: 1px solid rgba(15, 23, 42, 0.06);
-    -webkit-backdrop-filter: blur(28px) saturate(180%);
-    backdrop-filter: blur(28px) saturate(180%);
-    box-shadow:
-      inset 0 1px 0 0 rgba(255, 255, 255, 0.98),
-      inset 0 0 0 1px rgba(255, 255, 255, 0.55),
-      0 2px 8px -2px rgba(15, 23, 42, 0.03),
-      0 8px 24px -6px rgba(15, 23, 42, 0.035);
+    background: var(--glass-card-bg);
+    border: 1px solid var(--glass-border);
+    -webkit-backdrop-filter: blur(28px) saturate(190%) contrast(102%) brightness(104%);
+    backdrop-filter: blur(28px) saturate(190%) contrast(102%) brightness(104%);
+    box-shadow: var(--glass-shadow);
+    transition:
+      transform var(--dur-base) cubic-bezier(0.22, 1, 0.36, 1),
+      border-color var(--dur-base) cubic-bezier(0.22, 1, 0.36, 1),
+      box-shadow var(--dur-base) cubic-bezier(0.22, 1, 0.36, 1);
   }
-
-  .glass-strong {
+  .glass-strong, .surface-raised {
     position: relative;
-    background: linear-gradient(145deg, rgba(255, 255, 255, 0.94) 0%, rgba(255, 255, 255, 0.80) 60%, rgba(255, 255, 255, 0.88) 100%);
-    border: 1px solid rgba(15, 23, 42, 0.075);
-    -webkit-backdrop-filter: blur(36px) saturate(190%);
-    backdrop-filter: blur(36px) saturate(190%);
-    box-shadow:
-      inset 0 1px 0 0 rgba(255, 255, 255, 1),
-      inset 0 0 0 1px rgba(255, 255, 255, 0.75),
-      0 4px 12px -2px rgba(15, 23, 42, 0.04),
-      0 16px 36px -10px rgba(15, 23, 42, 0.055);
+    background: var(--glass-panel-bg);
+    border: 1px solid var(--glass-border);
+    -webkit-backdrop-filter: blur(34px) saturate(195%) contrast(103%) brightness(105%);
+    backdrop-filter: blur(34px) saturate(195%) contrast(103%) brightness(105%);
+    box-shadow: var(--glass-panel-shadow);
   }
 
-  .glass-liquid {
-    position: relative;
-    background: linear-gradient(145deg, rgba(255, 255, 255, 0.90) 0%, rgba(255, 255, 255, 0.72) 55%, rgba(255, 255, 255, 0.84) 100%);
-    border: 1px solid rgba(15, 23, 42, 0.06);
-    -webkit-backdrop-filter: blur(32px) saturate(190%);
-    backdrop-filter: blur(32px) saturate(190%);
-    box-shadow:
-      inset 0 1px 0 0 rgba(255, 255, 255, 1),
-      inset 0 0 0 1px rgba(255, 255, 255, 0.65),
-      0 2px 6px -1px rgba(15, 23, 42, 0.025),
-      0 10px 28px -6px rgba(15, 23, 42, 0.045);
+  /* Blur belongs to the background; content and icons remain sharp and unfiltered. */
+  .dark :is(.glass, .glass-liquid, .surface, .glass-strong, .surface-raised) {
+    -webkit-backdrop-filter: blur(24px) saturate(100%);
+    backdrop-filter: blur(24px) saturate(100%);
   }
 
-  .dark .glass {
-    background: linear-gradient(145deg, rgba(26, 30, 42, 0.76) 0%, rgba(18, 21, 30, 0.62) 60%, rgba(22, 26, 38, 0.70) 100%);
-    border: 1px solid rgba(255, 255, 255, 0.09);
-    -webkit-backdrop-filter: blur(28px) saturate(190%);
-    backdrop-filter: blur(28px) saturate(190%);
-    box-shadow:
-      inset 0 1px 0 0 rgba(255, 255, 255, 0.14),
-      inset 0 0 0 1px rgba(255, 255, 255, 0.04),
-      0 10px 30px -10px rgba(0, 0, 0, 0.5);
+  /* Pure Apple Liquid Glass inputs, search pills, and floating controls */
+  input.glass,
+  input.glass-liquid {
+    background: var(--glass-card-bg) !important;
+    border: 1px solid var(--glass-border) !important;
+    -webkit-backdrop-filter: blur(28px) saturate(190%) contrast(102%) brightness(104%) !important;
+    backdrop-filter: blur(28px) saturate(190%) contrast(102%) brightness(104%) !important;
+    box-shadow: var(--glass-shadow) !important;
+    transition: all var(--dur-base) cubic-bezier(0.22, 1, 0.36, 1) !important;
   }
-
-  .dark .glass-strong {
-    background: linear-gradient(145deg, rgba(32, 36, 50, 0.88) 0%, rgba(22, 26, 38, 0.78) 100%);
-    border: 1px solid rgba(255, 255, 255, 0.14);
-    -webkit-backdrop-filter: blur(36px) saturate(190%);
-    backdrop-filter: blur(36px) saturate(190%);
-    box-shadow:
-      inset 0 1px 0 0 rgba(255, 255, 255, 0.20),
-      inset 0 0 0 1px rgba(255, 255, 255, 0.06),
-      0 16px 36px -10px rgba(0, 0, 0, 0.65);
+  .dark input:is(.glass, .glass-liquid) {
+    background: var(--glass-field-bg) !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
   }
-
-  .dark .glass-liquid {
-    background: linear-gradient(145deg, rgba(28, 32, 46, 0.82) 0%, rgba(19, 22, 32, 0.68) 55%, rgba(24, 28, 40, 0.76) 100%);
-    border: 1px solid rgba(255, 255, 255, 0.11);
-    -webkit-backdrop-filter: blur(32px) saturate(190%);
-    backdrop-filter: blur(32px) saturate(190%);
-    box-shadow:
-      inset 0 1px 0 0 rgba(255, 255, 255, 0.16),
-      inset 0 0 0 1px rgba(255, 255, 255, 0.05),
-      0 12px 32px -8px rgba(0, 0, 0, 0.6);
+  input.glass:focus,
+  input.glass:focus-visible,
+  input.glass-liquid:focus,
+  input.glass-liquid:focus-visible {
+    border-color: color-mix(in oklab, var(--primary) 55%, var(--glass-border)) !important;
+    box-shadow: var(--glass-shadow), 0 0 0 3px color-mix(in oklab, var(--primary) 28%, transparent) !important;
   }
 
   /* Sidebar Frosted Glass: subtle translucent depth against the porcelain canvas */
@@ -643,13 +673,11 @@
   }
 
   .dark .sidebar-glass {
-    background: linear-gradient(180deg, rgba(16, 18, 26, 0.90) 0%, rgba(12, 14, 20, 0.86) 100%) !important;
-    -webkit-backdrop-filter: blur(36px) saturate(190%);
-    backdrop-filter: blur(36px) saturate(190%);
-    border-right: 1px solid rgba(255, 255, 255, 0.07);
-    box-shadow:
-      inset -1px 0 0 0 rgba(255, 255, 255, 0.04),
-      inset 0 1px 0 0 rgba(255, 255, 255, 0.08);
+    background: var(--sidebar) !important;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    border-right: 1px solid var(--sidebar-border);
+    box-shadow: none;
   }
 
   /* Chase light: subtle optical sheen across cards on hover */
@@ -677,54 +705,7 @@
     transform: translateX(100%);
   }
 
-  /* Surface: High-grade liquid glass card */
-  .surface {
-    position: relative;
-    background: linear-gradient(145deg, rgba(255, 255, 255, 0.90) 0%, rgba(255, 255, 255, 0.72) 55%, rgba(255, 255, 255, 0.84) 100%);
-    border: 1px solid rgba(15, 23, 42, 0.06);
-    -webkit-backdrop-filter: blur(28px) saturate(185%);
-    backdrop-filter: blur(28px) saturate(185%);
-    box-shadow:
-      inset 0 1px 0 0 rgba(255, 255, 255, 1),
-      inset 0 0 0 1px rgba(255, 255, 255, 0.65),
-      0 2px 6px -1px rgba(15, 23, 42, 0.025),
-      0 10px 28px -6px rgba(15, 23, 42, 0.04);
-  }
-  .surface-raised {
-    position: relative;
-    background: linear-gradient(145deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.82) 100%);
-    border: 1px solid rgba(15, 23, 42, 0.075);
-    -webkit-backdrop-filter: blur(32px) saturate(190%);
-    backdrop-filter: blur(32px) saturate(190%);
-    box-shadow:
-      inset 0 1px 0 0 rgba(255, 255, 255, 1),
-      inset 0 0 0 1px rgba(255, 255, 255, 0.75),
-      0 4px 12px -2px rgba(15, 23, 42, 0.035),
-      0 14px 34px -8px rgba(15, 23, 42, 0.055);
-  }
-
-  .dark .surface {
-    background: linear-gradient(145deg, rgba(28, 32, 46, 0.82) 0%, rgba(19, 22, 32, 0.68) 55%, rgba(24, 28, 40, 0.76) 100%);
-    border: 1px solid rgba(255, 255, 255, 0.10);
-    -webkit-backdrop-filter: blur(28px) saturate(185%);
-    backdrop-filter: blur(28px) saturate(185%);
-    box-shadow:
-      inset 0 1px 0 0 rgba(255, 255, 255, 0.16),
-      inset 0 0 0 1px rgba(255, 255, 255, 0.05),
-      0 10px 28px -8px rgba(0, 0, 0, 0.55);
-  }
-  .dark .surface-raised {
-    background: linear-gradient(145deg, rgba(32, 38, 56, 0.88) 0%, rgba(24, 28, 42, 0.80) 100%);
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    -webkit-backdrop-filter: blur(32px) saturate(190%);
-    backdrop-filter: blur(32px) saturate(190%);
-    box-shadow:
-      inset 0 1px 0 0 rgba(255, 255, 255, 0.22),
-      inset 0 0 0 1px rgba(255, 255, 255, 0.07),
-      0 14px 36px -8px rgba(0, 0, 0, 0.65);
-  }
-
-  /* Card hover: Light refraction catching the top edge */
+  /* Card hover: Light refraction catching the top edge and dynamic single-hue projection */
   .card-hover {
     transition:
       transform var(--dur-base) cubic-bezier(0.22, 1, 0.36, 1),
@@ -732,20 +713,19 @@
       box-shadow var(--dur-base) cubic-bezier(0.22, 1, 0.36, 1);
   }
   .card-hover:hover {
-    transform: translateY(-1.5px);
-    border-color: rgba(15, 23, 42, 0.10);
+    transform: translateY(-2px);
+    border-color: rgba(255, 255, 255, 0.85);
     box-shadow:
-      inset 0 1px 0 0 rgba(255, 255, 255, 1),
-      inset 0 0 0 1px rgba(255, 255, 255, 0.85),
-      0 4px 12px -2px rgba(15, 23, 42, 0.04),
-      0 16px 36px -8px rgba(15, 23, 42, 0.065);
+      inset 0 1.5px 1.5px 0 rgba(255, 255, 255, 1),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.70),
+      0 2px 6px 0 rgba(0, 0, 0, 0.02),
+      0 12px 32px -4px rgba(15, 23, 42, 0.07),
+      0 24px 52px -12px hsla(var(--cursor-hue, 215), 65%, 45%, 0.06);
   }
   .dark .card-hover:hover {
-    border-color: rgba(255, 255, 255, 0.20);
-    box-shadow:
-      inset 0 1px 0 0 rgba(255, 255, 255, 0.24),
-      inset 0 0 0 1px rgba(255, 255, 255, 0.08),
-      0 16px 40px -8px rgba(0, 0, 0, 0.7);
+    transform: none;
+    border-color: var(--input);
+    box-shadow: var(--glass-shadow);
   }
 
   /* Optical Specular Spotlight: delicate white core + whisper-soft single-hue refraction */
@@ -773,13 +753,10 @@
     opacity: 1;
   }
 
-  .dark .spotlight::after {
-    background: radial-gradient(
-      400px circle at var(--mx, 50%) var(--my, 50%),
-      rgba(255, 255, 255, 0.08) 0%,
-      hsla(var(--cursor-hue, 215), 75%, 62%, 0.10) 38%,
-      transparent 72%
-    );
+  .dark .spotlight::after,
+  .dark .sheen-sweep::before,
+  .dark .cursor-orb {
+    display: none;
   }
 
   /* Entrances: fade and rise; --i staggers siblings, capped at 10 steps. */
@@ -933,6 +910,17 @@
     animation: sheen 0.7s var(--ease-out-soft);
   }
 
+  .dark .btn-primary {
+    background: var(--primary) !important;
+    color: var(--primary-foreground) !important;
+    border-color: transparent !important;
+    box-shadow: none !important;
+  }
+  .dark .btn-primary:hover:not(:disabled) {
+    background: #d8d8d8 !important;
+  }
+  .dark .btn-primary::after { display: none; }
+
   /* The page header: sticky and frosted once content scrolls under it (see <PageHeader>). */
   .page-header {
     transition:
@@ -952,9 +940,8 @@
       0 8px 24px -10px rgb(0 0 0 / 0.12);
   }
   .dark .page-header[data-stuck] {
-    box-shadow:
-      inset 0 1px 0 0 rgb(255 255 255 / 0.08),
-      0 8px 24px -10px rgb(0 0 0 / 0.4);
+    background: var(--background);
+    box-shadow: none;
   }
 }
 
@@ -1022,9 +1009,9 @@
     box-shadow: inset 0 1px 1px 0 rgba(255, 255, 255, 0.95), var(--elev-2);
   }
   .dark .hero-tile-face {
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    background-color: rgba(28, 30, 44, 0.85);
-    box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.12), var(--elev-2);
+    border-color: var(--glass-border);
+    background: var(--glass-card-bg);
+    box-shadow: var(--glass-shadow);
   }
 
   /* Something is playing: a calm, clean hairline along the header's bottom edge. */

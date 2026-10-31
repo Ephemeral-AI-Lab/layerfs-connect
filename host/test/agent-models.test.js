@@ -215,7 +215,7 @@ test('the settings page replaces a provider model list, and a rejected save leav
 
   // dropping the selected model clears the selection
   const snapshot = await models.configureProvider({ provider: 'list-fixture', models: [{ id: 'two' }] })
-  assert.deepEqual(snapshot.providers.find((p) => p.id === 'list-fixture').savedModels, [{ id: 'two' }])
+  assert.deepEqual(snapshot.providers.find((p) => p.id === 'list-fixture').savedModels, [{ id: 'two', input: ['text', 'image'] }])
   assert.equal(snapshot.selected, null)
   assert.deepEqual(snapshot.models.filter((m) => m.provider === 'list-fixture').map((m) => m.id), ['two'])
 

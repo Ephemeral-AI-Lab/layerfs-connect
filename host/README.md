@@ -27,6 +27,13 @@ or save a custom base URL, API format and model limits. A test saves that
 configuration and performs one real completion request. Settings responses
 contain `hasKey`, never the key value.
 
+Image capability comes only from the provider's model-list API. Missing
+metadata is unknown and allows images; only an explicit text-only result
+blocks them. Each saved model keeps the reported modalities in `apiInput`,
+separate from Pi's effective `input` list, which includes images when unknown
+so Pi does not silently remove them. Old catalog/default input flags are not
+treated as API capability data.
+
 All state stays beneath Connect's state folder (normally
 `~/.layerfs-connect`):
 

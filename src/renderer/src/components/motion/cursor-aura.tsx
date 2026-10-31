@@ -19,8 +19,8 @@ function lerpAngle(current: number, target: number, factor: number): number {
 
 /**
  * Global monochromatic cursor-following aura.
- * Renders a single-hue chromatic light that tracks the cursor and diffuses through
- * frosted glass surfaces (backdrop-filter: blur).
+ * Renders a soft, single-hue light behind the workspace's glass surfaces.
+ * Cards, text, controls and dialogs are always painted above it.
  *
  * Requirements:
  * - Single monochromatic hue at any given instant (no multi-colored rainbow collisions).
@@ -63,21 +63,14 @@ export function CursorAura({ className }: CursorAuraProps) {
     let rafId: number | null = null
     let idleTimer: ReturnType<typeof setTimeout> | null = null
 
-    // Cache container bounds and update on resize/scroll
-    let containerRect: DOMRect = container.getBoundingClientRect()
-    const updateRect = () => {
-      containerRect = container.getBoundingClientRect()
-    }
-
     const onPointerMove = (e: PointerEvent) => {
-      const x = e.clientX - containerRect.left
-      const y = e.clientY - containerRect.top
+      if (e.pointerType === 'touch') return
+      const x = e.clientX
+      const y = e.clientY
 
-      const dx = e.clientX - lastX
-      const dy = e.clientY - lastY
-      const moveDist = Math.sqrt(dx * dx + dy * dy)
-      lastX = e.clientX
-      lastY = e.clientY
+      const moveDist = isInside ? Math.hypot(x - lastX, y - lastY) : 0
+      lastX = x
+      lastY = y
 
       targetX = x
       targetY = y
@@ -89,7 +82,7 @@ export function CursorAura({ className }: CursorAuraProps) {
       }
 
       isInside = true
-      targetOpacity = 0.22
+      targetOpacity = 0.5
 
       // Hue calculation:
       // 1. Position on screen maps gracefully across soft pastel spectrum (180° to 340°)
@@ -101,10 +94,10 @@ export function CursorAura({ className }: CursorAuraProps) {
       accumulatedDistance = (accumulatedDistance + moveDist * 0.08) % 360
       targetHue = (posHue + accumulatedDistance) % 360
 
-      // Idle fade-out: smoothly fade when cursor rests
+      // Rest softly at the cursor; leaving the window fades the light out.
       if (idleTimer) clearTimeout(idleTimer)
       idleTimer = setTimeout(() => {
-        targetOpacity = 0
+        targetOpacity = 0.16
         wake()
       }, 1600)
       wake()
@@ -114,12 +107,6 @@ export function CursorAura({ className }: CursorAuraProps) {
       isInside = false
       targetOpacity = 0
       if (idleTimer) clearTimeout(idleTimer)
-      wake()
-    }
-
-    const onPointerEnter = () => {
-      isInside = true
-      targetOpacity = 0.22
       wake()
     }
 
@@ -136,19 +123,24 @@ export function CursorAura({ className }: CursorAuraProps) {
       if (Math.abs(targetOpacity - currentOpacity) < 0.005) currentOpacity = targetOpacity
 
       if (currentOpacity > 0) {
-        currentX += (targetX - currentX) * 0.12
-        currentY += (targetY - currentY) * 0.12
+        currentX += (targetX - currentX) * 0.2
+        currentY += (targetY - currentY) * 0.2
         currentHue = lerpAngle(currentHue, targetHue, 0.07)
 
-        orbWide.style.transform = `translate3d(${(currentX - 280).toFixed(1)}px, ${(currentY - 280).toFixed(1)}px, 0)`
-        orbCore.style.transform = `translate3d(${(currentX - 140).toFixed(1)}px, ${(currentY - 140).toFixed(1)}px, 0)`
+        orbWide.style.transform = `translate3d(${(currentX - 360).toFixed(1)}px, ${(currentY - 360).toFixed(1)}px, 0)`
+        orbCore.style.transform = `translate3d(${(currentX - 160).toFixed(1)}px, ${(currentY - 160).toFixed(1)}px, 0)`
 
         const hue = Math.round(currentHue) % 360
         if (hue !== shownHue && now - hueAt >= HUE_MS) {
           shownHue = hue
           hueAt = now
-          orbWide.style.background = `radial-gradient(circle, hsla(${hue}, 80%, 65%, 0.30) 0%, hsla(${hue}, 80%, 65%, 0.12) 45%, hsla(${hue}, 80%, 65%, 0.02) 70%, transparent 85%)`
-          orbCore.style.background = `radial-gradient(circle, hsla(${hue}, 85%, 72%, 0.38) 0%, hsla(${hue}, 85%, 72%, 0.15) 45%, transparent 75%)`
+          const isDark = document.documentElement.classList.contains('dark')
+          const sat = isDark ? 42 : 58
+          const light = isDark ? 58 : 80
+          const op1 = isDark ? 0.08 : 0.18
+          const op2 = isDark ? 0.025 : 0.06
+          orbWide.style.background = `radial-gradient(circle, hsla(${hue}, ${sat}%, ${light}%, ${op1}), hsla(${hue}, ${sat}%, ${light}%, ${op2}) 42%, transparent 72%)`
+          orbCore.style.background = `radial-gradient(circle, hsla(${hue}, ${sat}%, ${light + 6}%, ${op1 * 0.7}), hsla(${hue}, ${sat}%, ${light + 6}%, ${op2 * 0.5}) 40%, transparent 72%)`
           document.documentElement.style.setProperty('--cursor-hue', String(hue))
         }
       }
@@ -163,7 +155,7 @@ export function CursorAura({ className }: CursorAuraProps) {
         (currentOpacity > 0 &&
           (Math.abs(targetX - currentX) > 0.5 ||
             Math.abs(targetY - currentY) > 0.5 ||
-            Math.abs(lerpAngle(currentHue, targetHue, 1) - currentHue) > 0.5 ||
+            Math.abs(((targetHue - currentHue + 540) % 360) - 180) > 0.5 ||
             Math.round(currentHue) % 360 !== shownHue))
       if (moving) rafId = requestAnimationFrame(animate)
     }
@@ -172,10 +164,8 @@ export function CursorAura({ className }: CursorAuraProps) {
     }
 
     window.addEventListener('pointermove', onPointerMove, { passive: true })
-    window.addEventListener('resize', updateRect, { passive: true })
-    window.addEventListener('scroll', updateRect, { passive: true })
+    window.addEventListener('blur', onPointerLeave)
     document.addEventListener('pointerleave', onPointerLeave)
-    document.addEventListener('pointerenter', onPointerEnter)
 
     wake()
 
@@ -183,10 +173,8 @@ export function CursorAura({ className }: CursorAuraProps) {
       if (rafId) cancelAnimationFrame(rafId)
       if (idleTimer) clearTimeout(idleTimer)
       window.removeEventListener('pointermove', onPointerMove)
-      window.removeEventListener('resize', updateRect)
-      window.removeEventListener('scroll', updateRect)
+      window.removeEventListener('blur', onPointerLeave)
       document.removeEventListener('pointerleave', onPointerLeave)
-      document.removeEventListener('pointerenter', onPointerEnter)
     }
   }, [reducedMotion])
 
@@ -205,13 +193,13 @@ export function CursorAura({ className }: CursorAuraProps) {
       {/* Monochromatic Outer Diffusion: Single-color fade */}
       <span
         ref={orbWideRef}
-        className="cursor-orb absolute top-0 left-0 size-[560px] rounded-full blur-[105px] will-change-transform"
+        className="cursor-orb absolute top-0 left-0 size-[720px] rounded-full will-change-transform"
       />
 
       {/* Monochromatic Specular Core: Exact same single-color hue */}
       <span
         ref={orbCoreRef}
-        className="cursor-orb absolute top-0 left-0 size-[280px] rounded-full blur-[65px] will-change-transform"
+        className="cursor-orb absolute top-0 left-0 size-[320px] rounded-full will-change-transform"
       />
     </div>
   )

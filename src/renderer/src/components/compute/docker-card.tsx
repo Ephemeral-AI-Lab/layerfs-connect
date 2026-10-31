@@ -70,7 +70,7 @@ export function DockerCard({ status, groups, failed }: DockerCardProps) {
         className="px-5 pt-5"
         icon={
           <span className="relative">
-            {up && <span aria-hidden="true" className="absolute -inset-2 rounded-2xl bg-[#1D63ED] opacity-15 blur-lg dark:opacity-25" />}
+            {up && <span aria-hidden="true" className="absolute -inset-2 rounded-2xl bg-[#1D63ED] opacity-15 blur-lg dark:opacity-10" />}
             <TargetIcon id="docker" size="lg" />
             {up && <span aria-hidden="true" className="pulse-ring absolute -top-0.5 -right-0.5 size-2.5 rounded-full bg-success text-success ring-2 ring-card" />}
           </span>

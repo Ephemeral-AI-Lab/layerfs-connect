@@ -207,7 +207,7 @@ export function NewProjectDialog({ open, onOpenChange, onCreated, initialFolder 
       <DialogContent showCloseButton={canClose} className="flex max-h-[calc(100dvh-3rem)] flex-col gap-0 overflow-hidden rounded-3xl p-0 [--dialog-inset:1.5rem] sm:max-w-[480px]">
         <DialogHeader className="shrink-0 px-6 pt-6 pb-5">
           <DialogTitle className="flex items-start gap-2.5 text-base font-semibold">
-            <span className="glass-liquid flex size-7 shrink-0 items-center justify-center rounded-lg text-primary"><FolderPlus className="size-4" /></span>
+            <span className="glass-liquid flex size-7 shrink-0 items-center justify-center rounded-lg text-(--icon-accent)"><FolderPlus className="size-4" /></span>
             <span className="min-w-0">{t("New project")}</span>
           </DialogTitle>
           <DialogDescription className="text-xs leading-relaxed">{t("A LayerFS workspace with its own history.")}</DialogDescription>
@@ -230,7 +230,7 @@ export function NewProjectDialog({ open, onOpenChange, onCreated, initialFolder 
                     <label key={option.id} className="relative min-w-0 cursor-pointer has-disabled:cursor-default">
                       <input type="radio" name="project-source" value={option.id} checked={source === option.id} onChange={() => { setSource(option.id); setError('') }} className="peer sr-only" />
                       <span className={cn('flex min-w-0 flex-col gap-2 rounded-2xl border px-3.5 py-3 transition-colors peer-focus-visible:ring-2 peer-focus-visible:ring-primary/30', source === option.id ? 'border-primary/30 bg-primary/[0.06]' : 'border-foreground/[0.08] bg-background/40 hover:bg-background/70')}>
-                        <option.icon className={cn('size-4', source === option.id ? 'text-primary' : 'text-muted-foreground')} />
+                        <option.icon className={cn('size-4', source === option.id ? 'text-(--icon-accent)' : 'text-muted-foreground')} />
                         <span className="space-y-1"><span className="block text-xs font-medium">{t(option.label)}</span><span className="block text-[10.5px] text-muted-foreground">{t(option.description)}</span></span>
                       </span>
                     </label>
@@ -322,7 +322,7 @@ function StoreField({ stores, remotes, value, chosen, newStore, problem, onChang
             ) : (
               <SelectValue placeholder={t("Choose a Store")}>
                 {making ? (
-                  <span className="flex min-w-0 items-center gap-2"><FolderPlus className="size-3.5 shrink-0 text-primary" /><span className="truncate">{t("New SQLite Store")}</span></span>
+                  <span className="flex min-w-0 items-center gap-2"><FolderPlus className="size-3.5 shrink-0 text-(--icon-accent)" /><span className="truncate">{t("New SQLite Store")}</span></span>
                 ) : (
                   <span className="flex min-w-0 items-center gap-2">
                     <StoreIcon family="sqlite" providers={chosen ? storeProviders(chosen, remotes) : []} size="sm" className="[&>span]:size-6" />
@@ -352,7 +352,7 @@ function StoreField({ stores, remotes, value, chosen, newStore, problem, onChang
             )}
             {(stores?.length ?? 0) > 0 && <SelectSeparator className="mx-2 my-1 bg-foreground/[0.06]" />}
             <SelectItem value={NEW_STORE} textValue={t("New SQLite Store")} className="rounded-xl py-2.5 pr-8 pl-2.5 text-xs data-[state=checked]:bg-primary/[0.07]">
-              <FolderPlus className="size-3.5 text-primary" />
+              <FolderPlus className="size-3.5 text-(--icon-accent)" />
               <span className="font-medium">{t("New SQLite Store…")}</span>
             </SelectItem>
           </SelectGroup>

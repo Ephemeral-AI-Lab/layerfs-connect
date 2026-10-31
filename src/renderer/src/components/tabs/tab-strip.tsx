@@ -125,14 +125,14 @@ export function TabStrip({ tabs, onNewTab, onClose }: TabStripProps) {
   }
 
   return (
-    <div className={cn('tab-strip app-drag relative z-10 flex h-11 shrink-0 items-center gap-1 pl-2 transition-[padding] duration-(--dur-slow) ease-out-expo', isMac ? 'pr-3' : 'pr-36', isMac && !sidebar.open && 'pl-[78px]')}>
+    <div className="tab-strip shell-tab-strip app-drag relative z-10 shrink-0" data-platform={isMac ? 'mac' : 'other'} data-sidebar-open={sidebar.open}>
       {!sidebar.open && (
         <button
           type="button"
           onClick={() => sidebar.setOpen(true)}
           aria-label={t('Show sidebar')}
           title={`${t('Show sidebar')} (${isMac ? '⌘B' : 'Ctrl+B'})`}
-          className="app-no-drag flex size-7 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-foreground/[0.05] hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="shell-toolbar-button shell-sidebar-toggle app-no-drag"
         >
           <PanelLeftOpen className="size-4" />
         </button>
@@ -140,7 +140,7 @@ export function TabStrip({ tabs, onNewTab, onClose }: TabStripProps) {
       <div
         role="tablist"
         aria-label={t('Open tabs')}
-        className="no-scrollbar flex min-w-0 items-center gap-1 overflow-x-auto py-1"
+        className="shell-tab-list no-scrollbar"
         onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setDropAt(null) }}
       >
         {tabs.tabs.map((tab, index) => {
@@ -167,11 +167,9 @@ export function TabStrip({ tabs, onNewTab, onClose }: TabStripProps) {
                 tabs.move(id, from < to ? to - 1 : to)
               }}
               onDragEnd={() => setDropAt(null)}
+              data-active={active}
               className={cn(
-                'app-no-drag group/tab relative flex h-8 w-[13rem] min-w-[7.5rem] shrink items-center rounded-lg border transition-colors duration-(--dur-fast)',
-                active
-                  ? 'glass-liquid border-white/80 text-foreground shadow-xs dark:border-white/15'
-                  : 'border-transparent text-muted-foreground hover:bg-foreground/[0.04] hover:text-foreground',
+                'shell-tab app-no-drag group/tab relative',
                 dropAt === index && 'before:absolute before:-left-[3px] before:inset-y-1 before:w-0.5 before:rounded-full before:bg-primary',
                 dropAt === index + 1 && index === tabs.tabs.length - 1 && 'after:absolute after:-right-[3px] after:inset-y-1 after:w-0.5 after:rounded-full after:bg-primary',
               )}
@@ -184,9 +182,9 @@ export function TabStrip({ tabs, onNewTab, onClose }: TabStripProps) {
                 onClick={() => tabs.activate(tab.id)}
                 onMouseDown={(e) => { if (e.button === 1) e.preventDefault() }}
                 onAuxClick={(e) => { if (e.button === 1) onClose(tab.id) }}
-                className="flex h-full min-w-0 flex-1 items-center gap-2 rounded-lg pl-2.5 pr-1 text-left text-[13px] outline-none focus-visible:ring-2 focus-visible:ring-ring [&_svg]:size-[15px] [&_svg]:shrink-0"
+                className="shell-tab-label"
               >
-                <span className={cn('relative flex', active ? '[&_svg]:text-primary' : 'opacity-80')}>
+                <span className={cn('relative flex', active ? '[&_svg]:text-(--icon-accent)' : 'opacity-80')}>
                   {icon}
                   {status && (
                     <span
@@ -206,7 +204,7 @@ export function TabStrip({ tabs, onNewTab, onClose }: TabStripProps) {
                 title={`${t('Close tab')} (${isMac ? '⌘W' : 'Ctrl+W'})`}
                 onClick={() => onClose(tab.id)}
                 className={cn(
-                  'mr-1 flex size-5 shrink-0 items-center justify-center rounded-md text-muted-foreground outline-none transition-opacity hover:bg-foreground/[0.08] hover:text-foreground focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-ring',
+                  'shell-tab-close focus-visible:opacity-100',
                   active ? 'opacity-100' : 'opacity-0 group-hover/tab:opacity-100',
                 )}
               >
@@ -221,7 +219,7 @@ export function TabStrip({ tabs, onNewTab, onClose }: TabStripProps) {
         aria-label={t('New tab')}
         title={`${t('New tab')} (${isMac ? '⌘T' : 'Ctrl+T'})`}
         onClick={onNewTab}
-        className="flex size-7 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-foreground/[0.06] hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        className="shell-toolbar-button shell-new-tab app-no-drag"
       >
         <Plus className="size-4" />
       </button>

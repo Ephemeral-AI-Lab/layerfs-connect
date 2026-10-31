@@ -1,6 +1,4 @@
-/* The Settings dialog, after DeepSeek Harness's settings shell and Models page
- * (an 800x800 panel, a 188px nav rail, provider cards with Edit and Delete).
- * Colors come from the app's theme tokens, so dark mode follows them. */
+/* Settings uses the same optical surfaces and typography as the workspace. */
 
 .st-root {
   --st-label: var(--foreground);
@@ -13,7 +11,10 @@
   --st-hover: color-mix(in oklab, var(--foreground) 5%, transparent);
   --st-active: color-mix(in oklab, var(--foreground) 7.5%, transparent);
   --st-danger-hover: color-mix(in oklab, var(--destructive) 9%, transparent);
-  --st-field: var(--background);
+  --st-field: color-mix(in oklab, var(--background) 72%, transparent);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  line-height: 1.55;
   color: var(--st-label);
 }
 
@@ -23,8 +24,9 @@
   position: fixed;
   inset: 0;
   z-index: 50;
-  background: rgb(0 0 0 / 24%);
-  backdrop-filter: blur(2px);
+  background: color-mix(in oklab, var(--foreground) 16%, transparent);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
 }
 
 .st-panel {
@@ -33,14 +35,17 @@
   left: 50%;
   z-index: 50;
   display: flex;
-  width: 800px;
-  max-width: calc(100vw - 48px);
-  height: min(800px, calc(100vh - 48px));
+  width: 920px;
+  max-width: calc(100vw - 64px);
+  height: min(680px, calc(100dvh - 64px));
   transform: translate(-50%, -50%);
   overflow: hidden;
   border-radius: 24px;
-  background: var(--popover);
-  box-shadow: 0 24px 64px rgb(0 0 0 / 18%), 0 0 0 0.5px var(--st-stroke);
+  background: var(--glass-panel-bg, linear-gradient(140deg, rgb(255 255 255 / 86%), rgb(242 245 252 / 76%)));
+  border: 1px solid var(--glass-border, var(--st-stroke));
+  -webkit-backdrop-filter: blur(36px) saturate(150%);
+  backdrop-filter: blur(36px) saturate(150%);
+  box-shadow: var(--glass-shadow, inset 0 1px 0 rgb(255 255 255 / 90%)), 0 24px 72px rgb(20 27 50 / 18%);
   outline: none;
   font-size: 14px;
 }
@@ -49,16 +54,27 @@
   flex: none;
   display: flex;
   flex-direction: column;
-  gap: 18px;
-  width: 188px;
-  padding: 22px 12px 0;
+  gap: 16px;
+  width: 184px;
+  padding: 22px 12px 16px;
+  border-right: 1px solid var(--st-stroke);
+  background: hsl(var(--cursor-hue, 215) 60% 80% / 10%);
   box-sizing: border-box;
 }
+
+/* Dark overlays dim the workspace; surfaces carry the shared graphite tint. */
+.dark .st-mask { background: rgb(0 0 0 / 42%); }
+.dark .st-panel {
+  box-shadow: var(--glass-panel-shadow);
+  -webkit-backdrop-filter: blur(36px) saturate(100%);
+  backdrop-filter: blur(36px) saturate(100%);
+}
+.dark .st-nav { background: color-mix(in oklab, var(--foreground) 2%, transparent); }
 
 .st-nav-title {
   margin: 0;
   padding: 0 12px;
-  font-size: 16px;
+  font-size: 15px;
   line-height: 24px;
   font-weight: 500;
 }
@@ -74,8 +90,8 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  height: 40px;
-  padding: 9px 16px 9px 12px;
+  min-height: 38px;
+  padding: 8px 12px;
   box-sizing: border-box;
   border: none;
   border-radius: 12px;
@@ -90,9 +106,15 @@
 }
 
 .st-nav-cell:hover { background: var(--st-hover); }
-.st-nav-cell[aria-current='true'] { background: var(--st-active); }
+.st-nav-cell[aria-current='true'] {
+  background: var(--glass-card-bg, rgb(255 255 255 / 66%));
+  color: var(--primary);
+  box-shadow: inset 0 0 0 1px var(--glass-border, var(--st-stroke)), 0 2px 8px rgb(20 27 50 / 4%);
+  font-weight: 600;
+}
 .st-nav-cell:focus-visible { box-shadow: 0 0 0 2px var(--ring); }
 .st-nav-cell svg { flex: none; width: 16px; height: 16px; }
+.st-nav-cell[aria-current='true'] svg { color: var(--icon-accent); }
 
 .st-content {
   flex: 1;
@@ -104,10 +126,10 @@
 .st-header {
   flex: none;
   display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  height: 54px;
-  padding: 20px 14px 8px 10px;
+  align-items: center;
+  gap: 16px;
+  min-height: 68px;
+  padding: 18px 22px 14px 28px;
   box-sizing: border-box;
 }
 
@@ -124,12 +146,13 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
+  flex: none;
   padding: 0;
-  border: none;
-  border-radius: 8px;
-  background: transparent;
+  border: 1px solid var(--glass-border, var(--st-stroke));
+  border-radius: 10px;
+  background: var(--glass-card-bg, transparent);
   color: var(--st-label);
   cursor: pointer;
   outline: none;
@@ -141,8 +164,10 @@
 .st-options {
   flex: 1;
   min-height: 0;
-  padding: 0 24px 24px;
+  padding: 0 28px 28px;
   overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
 }
 
 /* ---------- section ---------- */
@@ -150,20 +175,21 @@
 .st-section {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 14px;
   max-width: 720px;
+  min-width: 0;
 }
 
 .st-title {
   margin: 0;
-  font-size: 16px;
-  line-height: 24px;
-  font-weight: 500;
+  font-size: 17px;
+  line-height: 26px;
+  font-weight: 600;
 }
 
 .st-intro {
-  margin: 0;
-  font-size: 14px;
+  margin: 0 0 4px;
+  font-size: 13px;
   line-height: 22px;
   color: var(--st-label-3);
 }
@@ -186,10 +212,11 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
-  padding: 12px 14px;
-  border: 0.5px solid var(--st-stroke-strong);
+  padding: 14px 16px;
+  border: 1px solid var(--glass-border, var(--st-stroke));
   border-radius: 16px;
-  background: var(--background);
+  background: var(--glass-card-bg, rgb(255 255 255 / 58%));
+  box-shadow: inset 0 1px 0 color-mix(in oklab, var(--background) 80%, transparent), 0 3px 12px rgb(20 27 50 / 3%);
 }
 
 .st-row-head {
@@ -210,10 +237,11 @@
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: 14px;
-  line-height: 22px;
-  font-weight: 500;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  font-size: 13px;
+  line-height: 21px;
+  font-weight: 600;
 }
 
 .st-tag {
@@ -277,8 +305,10 @@
   outline: none;
 }
 
-.st-btn-primary { background: var(--foreground); color: var(--background); }
-.st-btn-primary:hover:not(:disabled) { background: color-mix(in oklab, var(--foreground) 86%, var(--background)); }
+.st-btn-primary { background: var(--primary); color: var(--primary-foreground); box-shadow: inset 0 1px 0 rgb(255 255 255 / 22%), 0 2px 6px rgb(20 27 50 / 9%); }
+.st-btn-primary:hover:not(:disabled) { background: color-mix(in oklab, var(--primary) 90%, var(--foreground)); }
+.dark .st-btn-primary { box-shadow: none; }
+.dark .st-btn-primary:hover:not(:disabled) { background: #d8d8d8; }
 
 .st-btn,
 .st-add {
@@ -290,7 +320,7 @@
 .st-btn:hover:not(:disabled),
 .st-add:hover:not(:disabled) { background: var(--st-hover); }
 
-.st-btn-danger { background: transparent; color: var(--destructive); }
+.st-btn-danger { background: transparent; color: var(--danger-label); }
 .st-btn-danger:hover:not(:disabled) { background: var(--st-danger-hover); }
 .st-btn-danger.st-outlined { border: 0.5px solid var(--destructive); }
 
@@ -664,13 +694,22 @@ select.st-input {
   box-sizing: border-box;
   transform: translate(-50%, -50%);
   border-radius: 20px;
-  background: var(--popover);
-  box-shadow: 0 24px 64px rgb(0 0 0 / 20%), 0 0 0 0.5px var(--st-stroke);
+  background: var(--glass-panel-bg, var(--popover));
+  border: 1px solid var(--glass-border, var(--st-stroke));
+  -webkit-backdrop-filter: blur(32px) saturate(150%);
+  backdrop-filter: blur(32px) saturate(150%);
+  box-shadow: 0 24px 64px rgb(0 0 0 / 20%), inset 0 1px 0 color-mix(in oklab, var(--background) 80%, transparent);
   outline: none;
   font-size: 14px;
 }
 
 .st-modal-mask { z-index: 60; }
+.dark .st-modal-mask { background: rgb(0 0 0 / 28%); }
+.dark .st-modal {
+  box-shadow: var(--glass-panel-shadow);
+  -webkit-backdrop-filter: blur(32px) saturate(100%);
+  backdrop-filter: blur(32px) saturate(100%);
+}
 .st-modal-title { margin: 0; font-size: 16px; line-height: 24px; font-weight: 500; }
 .st-modal-text { margin: 0; font-size: 14px; line-height: 22px; color: var(--st-label-3); }
 
@@ -716,23 +755,24 @@ select.st-input {
 .st-card {
   display: flex;
   flex-direction: column;
-  margin-top: 12px;
-  border: 0.5px solid var(--st-stroke-strong);
+  margin-top: 4px;
+  border: 1px solid var(--glass-border, var(--st-stroke));
   border-radius: 16px;
-  background: var(--background);
+  background: var(--glass-card-bg, rgb(255 255 255 / 58%));
+  box-shadow: inset 0 1px 0 color-mix(in oklab, var(--background) 80%, transparent), 0 3px 12px rgb(20 27 50 / 3%);
 }
 
 .st-card-row {
   display: flex;
   align-items: center;
   gap: 16px;
-  min-height: 56px;
-  padding: 10px 14px;
+  min-height: 68px;
+  padding: 14px 16px;
 }
 
 .st-card-row + .st-card-row { border-top: 0.5px solid var(--st-stroke); }
 .st-card-text { flex: 1; min-width: 0; display: flex; flex-direction: column; }
-.st-card-label { font-size: 14px; line-height: 22px; }
+.st-card-label { font-size: 13px; line-height: 22px; font-weight: 500; }
 .st-card-desc { font-size: 12px; line-height: 18px; color: var(--st-label-3); }
 
 /* the sign-in panel and request headers keep their own look, inside the editor */
@@ -746,7 +786,10 @@ select.st-input {
 
 .st-mono, .st-command, .st-chip { font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace); }
 .st-row-dense { gap: 6px; }
-.st-row-dense .st-row-head { min-height: 24px; }
+.st-row-dense .st-row-head { min-height: 24px; align-items: flex-start; }
+.st-row-dense .st-row-actions { min-height: 22px; flex: none; gap: 8px; }
+.st-row-heading { display: flex; flex-direction: column; min-width: 0; gap: 2px; }
+.st-row-identifier { font-family: var(--font-mono); font-size: 11.5px; line-height: 18px; color: var(--st-label-3); overflow-wrap: anywhere; }
 .st-row-desc { margin: 0; font-size: 13px; line-height: 20px; color: var(--st-label-2); }
 .st-group-title {
   display: flex;
@@ -821,3 +864,33 @@ select.st-input {
   overflow-wrap: anywhere;
 }
 .st-call-desc { font-size: 12px; line-height: 18px; color: var(--st-label-3); }
+
+/* Keep every section usable on compact windows without squeezing its fields. */
+@media (max-width: 760px) {
+  .st-panel { max-width: calc(100vw - 32px); height: min(680px, calc(100dvh - 32px)); }
+  .st-nav { width: 156px; padding-inline: 8px; }
+  .st-nav-cell { gap: 8px; padding-inline: 10px; font-size: 13px; }
+  .st-header { padding-inline: 20px 16px; }
+  .st-options { padding-inline: 20px; }
+  .st-row-head, .st-row-identity { flex-wrap: wrap; }
+  .st-row-actions { flex: none; }
+  .st-status { font-size: 12px; }
+}
+
+@media (max-width: 560px) {
+  .st-panel { flex-direction: column; border-radius: 20px; }
+  .st-nav { width: 100%; padding: 12px; border-right: 0; border-bottom: 1px solid var(--st-stroke); }
+  .st-nav-title { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); padding: 0; }
+  .st-nav-list { flex-direction: row; overflow-x: auto; }
+  .st-nav-cell { flex: none; }
+  .st-content { min-height: 0; }
+  .st-header { min-height: 60px; padding: 14px 16px; gap: 8px; }
+  .st-options { padding: 0 16px 20px; }
+  .st-card-row { flex-wrap: wrap; gap: 10px; }
+  .st-card-text { flex-basis: 160px; }
+  .st-facts { flex-direction: column; gap: 4px; }
+  .st-facts-label { width: auto; }
+  .st-switches { width: 100%; }
+  .st-switch-row { flex-wrap: wrap; }
+  .st-actions { flex-wrap: wrap; }
+}

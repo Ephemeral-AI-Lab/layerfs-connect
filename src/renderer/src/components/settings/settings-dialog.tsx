@@ -13,6 +13,7 @@ import { ToolsSection } from '@/components/settings/tools-section'
 import type { SettingsSection } from '@/components/settings/settings-context'
 import { agentHost } from '@/host/agent-client'
 import { useI18n, type Locale } from '@/i18n'
+import { sortByLabelLength } from '@/lib/utils'
 import './settings.css'
 
 const SECTIONS: { id: SettingsSection; label: string; icon: typeof Settings }[] = [
@@ -27,11 +28,7 @@ const SECTIONS: { id: SettingsSection; label: string; icon: typeof Settings }[] 
   { id: 'commands', label: 'Commands', icon: SquareSlash },
 ]
 
-/**
- * The Settings dialog, after DeepSeek Harness's settings shell: a centered
- * 800x800 panel with the section nav on the left, the page's action and
- * Close at the top right, and the page below, scrolling on its own.
- */
+/** Shared glass shell; navigation and the current page scroll independently. */
 export function SettingsDialog({ open, section, onOpenChange, onSection }: {
   open: boolean
   section: SettingsSection
@@ -39,6 +36,8 @@ export function SettingsDialog({ open, section, onOpenChange, onSection }: {
   onSection: (section: SettingsSection) => void
 }) {
   const { t } = useI18n()
+  const sections = sortByLabelLength(SECTIONS.map((item) => ({ ...item, label: t(item.label) })))
+  const current = sections.find((item) => item.id === section)!
   return <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
     <DialogPrimitive.Portal>
       <DialogPrimitive.Overlay className="st-mask" />
@@ -48,7 +47,7 @@ export function SettingsDialog({ open, section, onOpenChange, onSection }: {
         <nav className="st-nav" aria-label={t('Settings')}>
           <DialogPrimitive.Title className="st-nav-title">{t('Settings')}</DialogPrimitive.Title>
           <div className="st-nav-list">
-            {SECTIONS.map(({ id, label, icon: Icon }) => <button
+            {sections.map(({ id, label, icon: Icon }) => <button
               key={id}
               type="button"
               className="st-nav-cell"
@@ -57,12 +56,13 @@ export function SettingsDialog({ open, section, onOpenChange, onSection }: {
               onClick={() => onSection(id)}
             >
               <Icon strokeWidth={1.7} />
-              <span>{t(label)}</span>
+              <span>{label}</span>
             </button>)}
           </div>
         </nav>
         <div className="st-content">
           <div className="st-header">
+            <h2 className="st-title">{current.label}</h2>
             <div className="st-header-actions">{section === 'models' && <OpenConfigAction />}{section === 'sdks' && <OpenSdkConfigAction />}</div>
             <DialogPrimitive.Close className="st-close" aria-label={t('Close')}><X className="size-3.5" /></DialogPrimitive.Close>
           </div>
@@ -104,7 +104,7 @@ const LANGUAGES: { value: Locale; label: string }[] = [
 function GeneralSection() {
   const { t, locale, setLocale } = useI18n()
   return <div className="st-section">
-    <h2 className="st-title">{t('General')}</h2>
+    <p className="st-intro">{t('Make Connect feel at home. Changes take effect immediately.')}</p>
     <div className="st-card">
       <div className="st-card-row">
         <div className="st-card-text">

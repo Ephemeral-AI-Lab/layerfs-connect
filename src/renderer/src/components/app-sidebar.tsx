@@ -8,9 +8,6 @@ import { LfsProject, LfsStore } from '@/components/lfs-icons'
 import { Collapse } from '@/components/motion/collapse'
 import { useIndicator } from '@/components/motion/indicator'
 import { revealStyle } from '@/components/motion/reveal'
-import { StateDot } from '@/components/storage/chips'
-import { ago } from '@/data/format'
-import { useNow } from '@/lib/use-now'
 import {
   Sidebar,
   SidebarContent,
@@ -30,6 +27,7 @@ import { chatLive, chatProject, useChatSessions } from '@/host/use-chat-sessions
 import type { ProjectCatalog } from '@/host/use-projects'
 import { cn } from '@/lib/utils'
 import { useI18n } from '@/i18n'
+import './app-shell.css'
 
 export type NavId = 'chat' | 'projects' | 'storage' | 'compute'
 /**
@@ -86,6 +84,7 @@ interface AppSidebarProps {
   onSelect: (selection: Selection, newTab?: boolean) => void
   onNewProject: () => void
   onDeleteProject: (project: ProjectSummary) => void
+  onDeleteChat: (chat: AgentSessionSummary, returnFocus: HTMLElement) => void
   /** Opens a chat conversation on the Chat page. */
   onOpenChat: (session: string) => void
   /** A new chat on project `project`, or on a local folder when it is ''. */
@@ -97,7 +96,7 @@ interface AppSidebarProps {
   onOpenSettings: () => void
 }
 
-export function AppSidebar({ selected, projects, onSelect, onNewProject, onDeleteProject, onOpenChat, onNewChat, onNewSession, settingsOpen, onOpenSettings }: AppSidebarProps) {
+export function AppSidebar({ selected, projects, onSelect, onNewProject, onDeleteProject, onDeleteChat, onOpenChat, onNewChat, onNewSession, settingsOpen, onOpenSettings }: AppSidebarProps) {
   const { t } = useI18n()
   const { container, indicator } = useIndicator<HTMLDivElement>()
   const isMac = window.connect.platform === 'darwin'
@@ -111,8 +110,8 @@ export function AppSidebar({ selected, projects, onSelect, onNewProject, onDelet
       style={{ width: open ? 'var(--sidebar-width)' : 0 }}
       className="relative z-10 h-svh shrink-0 overflow-hidden transition-[width] duration-(--dur-slow) ease-out-expo"
     >
-    <Sidebar collapsible="none" className="sidebar-glass relative z-10 h-svh shrink-0">
-      <SidebarHeader className={cn('px-3 pb-3 app-drag', isMac ? 'pt-11' : 'pt-4')}>
+    <Sidebar collapsible="none" className="shell-sidebar sidebar-glass relative z-10 h-svh shrink-0">
+      <SidebarHeader className={cn('shell-sidebar-header px-3 pb-3 app-drag', isMac ? 'pt-[52px]' : 'pt-4')}>
         <div className="group/brand flex items-center gap-2.5 px-1.5 app-no-drag">
           <span className="glass-liquid relative flex size-9.5 shrink-0 items-center justify-center rounded-xl">
             <ConnectMark className="size-6 transition-transform duration-(--dur-slow) ease-out-expo group-hover/brand:scale-[1.05]" />
@@ -125,7 +124,7 @@ export function AppSidebar({ selected, projects, onSelect, onNewProject, onDelet
         <button
           type="button"
           onClick={onNewSession}
-          className="glass-liquid app-no-drag mt-4 flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-white/80 text-[14px] font-medium text-foreground shadow-xs transition-colors hover:bg-foreground/[0.03] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring dark:border-white/15 [&_svg]:size-4 [&_svg]:text-muted-foreground"
+          className="shell-new-chat app-no-drag"
         >
           <MessageSquarePlus />
           {t('New chat')}
@@ -134,7 +133,7 @@ export function AppSidebar({ selected, projects, onSelect, onNewProject, onDelet
 
       <SidebarContent className="gap-0 overflow-hidden pb-3">
         <div ref={container} className="side-tree relative shrink-0">
-          <span ref={indicator} aria-hidden="true" className="indicator glass-liquid rounded-xl shadow-xs border border-white/80 dark:border-white/15" />
+          <span ref={indicator} aria-hidden="true" className="indicator glass-liquid rounded-xl shadow-xs border border-white/80 dark:border-(--glass-border)" />
           {groups.map((group, g) => (
             <SidebarGroup key={group.label ?? g} className={cn('px-3 pb-2', group.label ? 'pt-3' : 'pt-1')}>
               {group.label && (
@@ -152,9 +151,9 @@ export function AppSidebar({ selected, projects, onSelect, onNewProject, onDelet
                         onClick={(e) => onSelect({ kind: 'nav', id: item.id }, inNewTab(e))}
                         onAuxClick={(e) => { if (e.button === 1) onSelect({ kind: 'nav', id: item.id }, true) }}
                         className={cn(
-                          'h-10 gap-3 px-3 text-[14.5px] font-medium [&_svg]:size-[18px] [&_svg]:transition-colors [&_svg]:duration-(--dur-base)',
+                          'h-10 gap-3 px-3 text-[13px] font-medium [&_svg]:size-[17px] [&_svg]:transition-colors [&_svg]:duration-(--dur-base)',
                           active
-                            ? 'font-semibold text-foreground [&_svg]:text-primary'
+                            ? 'font-semibold text-foreground [&_svg]:text-(--icon-accent)'
                             : 'text-foreground/80 hover:text-foreground [&_svg]:text-muted-foreground hover:[&_svg]:text-foreground',
                         )}
                       >
@@ -168,10 +167,10 @@ export function AppSidebar({ selected, projects, onSelect, onNewProject, onDelet
             </SidebarGroup>
           ))}
         </div>
-        <ProjectList selected={selected} projects={projects} onSelect={onSelect} onNewProject={onNewProject} onOpenChat={onOpenChat} onNewChat={onNewChat} />
-        {SHOW_PROJECT_TREE && <ProjectTree selected={selected} projects={projects} onSelect={onSelect} onNewProject={onNewProject} onDeleteProject={onDeleteProject} onOpenChat={onOpenChat} onNewChat={onNewChat} />}
+        <ProjectList selected={selected} projects={projects} onSelect={onSelect} onNewProject={onNewProject} onDeleteChat={onDeleteChat} onOpenChat={onOpenChat} onNewChat={onNewChat} />
+        {SHOW_PROJECT_TREE && <ProjectTree selected={selected} projects={projects} onSelect={onSelect} onNewProject={onNewProject} onDeleteProject={onDeleteProject} onDeleteChat={onDeleteChat} onOpenChat={onOpenChat} onNewChat={onNewChat} />}
       </SidebarContent>
-      <SidebarFooter className="shrink-0 px-3 py-2">
+      <SidebarFooter className="shell-sidebar-footer shrink-0 p-0">
         <button
           type="button"
           data-testid="open-settings"
@@ -179,7 +178,7 @@ export function AppSidebar({ selected, projects, onSelect, onNewProject, onDelet
           aria-haspopup="dialog"
           aria-expanded={settingsOpen}
           onClick={onOpenSettings}
-          className="app-no-drag flex h-[42px] w-full items-center gap-2 rounded-xl px-2.5 text-sm text-foreground outline-none transition-colors hover:bg-foreground/[0.05] focus-visible:ring-2 focus-visible:ring-ring aria-expanded:bg-foreground/[0.05]"
+          className="shell-settings-button app-no-drag flex h-13 w-full items-center gap-2.5 rounded-none px-6 text-[13px] text-foreground outline-none transition-colors hover:bg-foreground/[0.05] aria-expanded:bg-foreground/[0.05]"
         >
           <Settings className="size-[18px] shrink-0 text-muted-foreground" strokeWidth={1.7} />
           <span className="truncate">{t('Settings')}</span>
@@ -197,7 +196,7 @@ export function AppSidebar({ selected, projects, onSelect, onNewProject, onDelet
  * on it, and, folding under it, its chat sessions. It sits under Resources and
  * fills the rest of the column; the list scrolls.
  */
-function ProjectList({ selected, projects, onSelect, onNewProject, onOpenChat, onNewChat }: Pick<AppSidebarProps, 'selected' | 'projects' | 'onSelect' | 'onNewProject' | 'onOpenChat' | 'onNewChat'>) {
+function ProjectList({ selected, projects, onSelect, onNewProject, onDeleteChat, onOpenChat, onNewChat }: Pick<AppSidebarProps, 'selected' | 'projects' | 'onSelect' | 'onNewProject' | 'onDeleteChat' | 'onOpenChat' | 'onNewChat'>) {
   const { t } = useI18n()
   const items = projects.data ?? []
   const onPage = selected.kind === 'nav' && selected.id === 'projects'
@@ -233,8 +232,6 @@ function ProjectList({ selected, projects, onSelect, onNewProject, onOpenChat, o
   }, [selectedProject, openChatProject])
   const isOpen = (key: string, chats: AgentSessionSummary[]) =>
     chats.length > 0 && (toggled.get(key) ?? (recent.has(key) || key === selectedProject || key === openChatProject || chats.some(chatLive)))
-  const working = (sessions ?? []).some((c) => !c.archived && chatLive(c))
-  const now = useNow(!!sessions?.length, working ? 5000 : 30_000)
   return (
     <SidebarGroup aria-label={t('Projects')} className="flex min-h-0 flex-1 flex-col px-3 pt-3 pb-0">
       <div className="flex shrink-0 items-center gap-1 pr-1">
@@ -280,7 +277,6 @@ function ProjectList({ selected, projects, onSelect, onNewProject, onOpenChat, o
               const active = selected.kind === 'project' && selected.id === key
               const chats = byProject.get(key) ?? []
               const open = isOpen(key, chats)
-              const live = chats.some(chatLive)
               return (
                 <ProjectRow
                   key={key}
@@ -290,12 +286,11 @@ function ProjectList({ selected, projects, onSelect, onNewProject, onOpenChat, o
                   active={active}
                   chats={chats}
                   open={open}
-                  live={live}
                   openChat={openChat}
-                  now={now}
                   onSelect={(newTab) => onSelect({ kind: 'project', id: key }, newTab)}
                   onToggle={() => setToggled((m) => new Map(m).set(key, !open))}
                   onOpenChat={onOpenChat}
+                  onDeleteChat={onDeleteChat}
                   onNewChat={() => onNewChat(key)}
                 />
               )
@@ -315,19 +310,17 @@ interface ProjectRowProps {
   /** Its chats, newest first. */
   chats: AgentSessionSummary[]
   open: boolean
-  /** One of its chats is working. */
-  live: boolean
   /** The conversation open on the Chat page. */
   openChat?: string
-  now: number
   onSelect: (newTab: boolean) => void
   onToggle: () => void
   onOpenChat: (session: string) => void
+  onDeleteChat: AppSidebarProps['onDeleteChat']
   onNewChat: () => void
 }
 
 /** A project's row (opens its page; + starts a chat on it, shown on hover; the chevron folds its chats), and under it its chats. */
-function ProjectRow({ index, name, store, active, chats, open, live, openChat, now, onSelect, onToggle, onOpenChat, onNewChat }: ProjectRowProps) {
+function ProjectRow({ index, name, store, active, chats, open, openChat, onSelect, onToggle, onOpenChat, onDeleteChat, onNewChat }: ProjectRowProps) {
   const { t } = useI18n()
   const [all, setAll] = useState(false)
   const shown = all ? chats : chats.slice(0, SHOWN)
@@ -343,10 +336,10 @@ function ProjectRow({ index, name, store, active, chats, open, live, openChat, n
         onClick={(e) => onSelect(inNewTab(e))}
         onAuxClick={(e) => { if (e.button === 1) onSelect(true) }}
         className={cn(
-          'h-10 gap-3 border px-3 pr-9 text-[14px] [&_svg]:size-[18px]',
+          'sidebar-project-open glass-liquid h-10 gap-3 px-3 pr-9 text-[14px] [&_svg]:size-[18px]',
           active
-            ? 'glass-liquid border-white/80 font-semibold text-foreground shadow-xs dark:border-white/15'
-            : 'border-transparent font-medium text-foreground/80 hover:text-foreground',
+            ? 'font-semibold text-foreground'
+            : 'font-medium text-foreground/80 hover:text-foreground',
         )}
       >
         <LfsProject className={active ? undefined : 'opacity-80'} />
@@ -355,11 +348,10 @@ function ProjectRow({ index, name, store, active, chats, open, live, openChat, n
           <span className="max-w-full shrink-0 truncate">{name}</span>
           {store && <span className="min-w-0 truncate text-[11px] font-normal text-muted-foreground">{store}</span>}
         </span>
-        {/* + takes the place of the live dot and the count while the row is hovered */}
-        {(live || has) && (
-          <span className="flex shrink-0 items-center gap-3 transition-opacity group-has-[:focus-visible]/row:opacity-0 group-hover/row:opacity-0">
-            {live && <span aria-hidden="true" className="pulse-ring size-1.5 shrink-0 rounded-full bg-primary text-primary" />}
-            {has && <span className="text-[11px] font-normal text-muted-foreground tabular-nums">{chats.length}</span>}
+        {/* + takes the count's place while the row is hovered. */}
+        {has && (
+          <span className="shrink-0 text-[11px] font-normal text-muted-foreground tabular-nums transition-opacity group-has-[:focus-visible]/row:opacity-0 group-hover/row:opacity-0">
+            {chats.length}
           </span>
         )}
       </SidebarMenuButton>
@@ -389,8 +381,8 @@ function ProjectRow({ index, name, store, active, chats, open, live, openChat, n
       </div>
       {has && (
         <Collapse open={open} appear={false}>
-          <ul aria-label={t('{name}’s sessions', { name })} className="ml-[21px] flex flex-col gap-0.5 border-l border-foreground/[0.07] py-1 pl-2">
-            {shown.map((chat, i) => <ChatRow key={chat.id} index={i} chat={chat} active={openChat === chat.id} now={now} onOpen={() => onOpenChat(chat.id)} />)}
+          <ul aria-label={t('{name}’s sessions', { name })} className="flex flex-col gap-0.5 py-1">
+            {shown.map((chat, i) => <ChatRow key={chat.id} index={i} chat={chat} active={openChat === chat.id} onOpen={() => onOpenChat(chat.id)} onDelete={onDeleteChat} />)}
             {chats.length > SHOWN && <ShowAll all={all} count={chats.length} onToggle={() => setAll(!all)} />}
           </ul>
         </Collapse>
@@ -400,7 +392,7 @@ function ProjectRow({ index, name, store, active, chats, open, live, openChat, n
 }
 
 /** The projects with their chats, and the local chats. */
-function ProjectTree({ selected, projects, onSelect, onNewProject, onDeleteProject, onOpenChat, onNewChat }: Omit<AppSidebarProps, 'settingsOpen' | 'onOpenSettings' | 'onNewSession'>) {
+function ProjectTree({ selected, projects, onSelect, onNewProject, onDeleteProject, onDeleteChat, onOpenChat, onNewChat }: Omit<AppSidebarProps, 'settingsOpen' | 'onOpenSettings' | 'onNewSession'>) {
   const { t } = useI18n()
   const items = useMemo(() => projects.data ?? [], [projects.data])
   // a new or removed conversation shows on the next page change too
@@ -430,7 +422,6 @@ function ProjectTree({ selected, projects, onSelect, onNewProject, onDeleteProje
     }
   }, [chats, items, filter])
   const working = (chats ?? []).filter(chatLive).length
-  const now = useNow(working > 0, 5000)
 
   // open: the projects with the newest sessions, plus whichever is selected or playing; a toggle wins after that
   const [toggled, setToggled] = useState<Map<string, boolean>>(() => new Map())
@@ -482,12 +473,12 @@ function ProjectTree({ selected, projects, onSelect, onNewProject, onDeleteProje
                   open={open}
                   selected={selected}
                   openChat={openChat}
-                  now={now}
                   onToggle={() => toggle(row.key, open)}
                   onSelect={onSelect}
                   onOpenChat={onOpenChat}
                   onNewChat={() => onNewChat(row.key)}
                   onDelete={() => onDeleteProject(row.project)}
+                  onDeleteChat={onDeleteChat}
                 />
               )
             })}
@@ -498,7 +489,7 @@ function ProjectTree({ selected, projects, onSelect, onNewProject, onDeleteProje
             <button type="button" onClick={onNewProject} className="mt-2 inline-flex items-center gap-1.5 rounded-md py-1 font-medium text-primary underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"><Plus className="size-3" />{t('Create project')}</button>
           </div>
         )}
-        <LocalChats entries={local} openChat={openChat} now={now} onOpenChat={onOpenChat} onNewChat={() => onNewChat('')} />
+        <LocalChats entries={local} openChat={openChat} onOpenChat={onOpenChat} onDeleteChat={onDeleteChat} onNewChat={() => onNewChat('')} />
       </div>
     </SidebarGroup>
   )
@@ -514,16 +505,16 @@ interface ProjectGroupProps {
   selected: Selection
   /** The conversation open on the Chat page. */
   openChat?: string
-  now: number
   onToggle: () => void
   onSelect: (selection: Selection) => void
   onOpenChat: (session: string) => void
   onNewChat: () => void
   onDelete: () => void
+  onDeleteChat: AppSidebarProps['onDeleteChat']
 }
 
 /** A project: its row (opens its page; the chevron folds it; + starts a chat; × deletes it), and under it its sessions. */
-function ProjectGroup({ index, project, projectKey: key, entries, open, selected, openChat, now, onToggle, onSelect, onOpenChat, onNewChat, onDelete }: ProjectGroupProps) {
+function ProjectGroup({ index, project, projectKey: key, entries, open, selected, openChat, onToggle, onSelect, onOpenChat, onNewChat, onDelete, onDeleteChat }: ProjectGroupProps) {
   const { t } = useI18n()
   const [all, setAll] = useState(false)
   // a project in a shared Store also names its Store, faint after its name
@@ -540,7 +531,7 @@ function ProjectGroup({ index, project, projectKey: key, entries, open, selected
         title={store ? t('{name} in Store {store}', { name: project.name, store }) : project.name}
         onClick={() => onSelect({ kind: 'project', id: key })}
         className={cn('h-10 gap-2.5 border pr-16 pl-8 text-[13px] [&_svg]:size-4', active
-          ? 'glass-liquid border-white/80 font-medium text-foreground shadow-xs dark:border-white/15 [&_svg]:text-primary'
+          ? 'glass-liquid border-white/80 font-medium text-foreground shadow-xs dark:border-(--glass-border) [&_svg]:text-(--icon-accent)'
           : 'border-transparent text-foreground/80 hover:text-foreground [&_svg]:text-muted-foreground')}
       >
         <Icon />
@@ -580,9 +571,9 @@ function ProjectGroup({ index, project, projectKey: key, entries, open, selected
       </SidebarMenuAction>
 
       <Collapse open={open} appear={false}>
-        <ul className="ml-[22px] flex flex-col gap-0.5 border-l border-foreground/[0.07] py-1 pl-2">
+        <ul className="ml-0.5 flex flex-col gap-0.5 py-1">
           {!entries.length && <li className="px-2 py-1 text-xs text-muted-foreground">{t('No sessions yet')}</li>}
-          {shown.map((entry, i) => <ChatRow key={entryKey(entry)} index={i} chat={entry.chat} active={openChat === entry.chat.id} now={now} onOpen={() => onOpenChat(entry.chat.id)} />)}
+          {shown.map((entry, i) => <ChatRow key={entryKey(entry)} index={i} chat={entry.chat} active={openChat === entry.chat.id} onOpen={() => onOpenChat(entry.chat.id)} onDelete={onDeleteChat} />)}
           {entries.length > SHOWN && <ShowAll all={all} count={entries.length} onToggle={() => setAll(!all)} />}
         </ul>
       </Collapse>
@@ -591,7 +582,7 @@ function ProjectGroup({ index, project, projectKey: key, entries, open, selected
 }
 
 /** Chats on a local folder, not a LayerFS project: a small group after the projects. */
-function LocalChats({ entries, openChat, now, onOpenChat, onNewChat }: { entries: Entry[]; openChat?: string; now: number; onOpenChat: (session: string) => void; onNewChat: () => void }) {
+function LocalChats({ entries, openChat, onOpenChat, onNewChat, onDeleteChat }: { entries: Entry[]; openChat?: string; onOpenChat: (session: string) => void; onNewChat: () => void; onDeleteChat: AppSidebarProps['onDeleteChat'] }) {
   const { t } = useI18n()
   const [all, setAll] = useState(false)
   const shown = all ? entries : entries.slice(0, SHOWN)
@@ -608,37 +599,28 @@ function LocalChats({ entries, openChat, now, onOpenChat, onNewChat }: { entries
       </div>
       <ul className="mt-0.5 flex flex-col gap-0.5 px-1">
         {!entries.length && <li className="px-3 py-1 text-xs text-muted-foreground">{t('No local chats')}</li>}
-        {shown.map((entry, i) => <ChatRow key={entryKey(entry)} index={i} chat={entry.chat} active={openChat === entry.chat.id} now={now} onOpen={() => onOpenChat(entry.chat.id)} />)}
+        {shown.map((entry, i) => <ChatRow key={entryKey(entry)} index={i} chat={entry.chat} active={openChat === entry.chat.id} onOpen={() => onOpenChat(entry.chat.id)} onDelete={onDeleteChat} />)}
         {entries.length > SHOWN && <ShowAll all={all} count={entries.length} onToggle={() => setAll(!all)} />}
       </ul>
     </section>
   )
 }
 
-const ROW = 'side-in flex w-full min-w-0 items-start gap-2.5 rounded-xl border px-2.5 py-1.5 text-left outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring'
-const rowTone = (active: boolean) =>
-  active ? 'glass-liquid border-white/80 shadow-xs dark:border-white/15' : 'border-transparent hover:bg-foreground/[0.04]'
+const ROW = 'sidebar-chat-open block w-full min-w-0 text-left outline-none focus-visible:ring-2 focus-visible:ring-ring'
 
-/** A chat conversation: its title, a state dot, its model and how long ago it was active. */
-function ChatRow({ index, chat, active, now, onOpen }: { index: number; chat: AgentSessionSummary; active: boolean; now: number; onOpen: () => void }) {
+/** A single-line chat title, with a separate delete button on the right. */
+function ChatRow({ index, chat, active, onOpen, onDelete }: { index: number; chat: AgentSessionSummary; active: boolean; onOpen: () => void; onDelete: AppSidebarProps['onDeleteChat'] }) {
   const { t } = useI18n()
-  const live = chatLive(chat)
-  const state = chat.state === 'error' ? t('error') : live ? t('working') : t('idle')
   return (
-    <li>
-      <button type="button" onClick={onOpen} aria-current={active ? 'page' : undefined} className={cn(ROW, rowTone(active))} style={revealStyle(index)} title={chat.title}>
-        <span className="mt-[5px] flex">
-          <StateDot tone={chat.state === 'error' ? 'danger' : live ? 'info' : 'neutral'} live={live} label={state} />
+    <li className="sidebar-chat-row side-in" data-active={active} style={revealStyle(index)}>
+      <button type="button" onClick={onOpen} aria-current={active ? 'page' : undefined} className={ROW} title={chat.title}>
+        <span className="sidebar-chat-title flex h-6 items-center gap-2">
+          <MessageSquare aria-hidden="true" className="size-[18px] shrink-0 text-muted-foreground" />
+          <span className={cn('truncate text-[15px] font-normal leading-6', active ? 'text-foreground' : 'text-foreground/90')}>{chat.title || t('New session')}</span>
         </span>
-        <span className="min-w-0 flex-1">
-          <span className="flex items-center gap-1.5">
-            <MessageSquare aria-hidden="true" className="size-3 shrink-0 text-muted-foreground" />
-            <span className={cn('truncate text-[12.5px]', active ? 'font-medium text-foreground' : 'text-foreground/85')}>{chat.title || t('New session')}</span>
-          </span>
-          <span className="block truncate text-[11px] text-muted-foreground">
-            {[chat.modelId, live ? t('working') : ago(chat.updated, now)].filter(Boolean).join(' · ')}
-          </span>
-        </span>
+      </button>
+      <button type="button" className="sidebar-chat-delete" aria-haspopup="dialog" aria-label={t('Delete conversation {name}', { name: chat.title || t('New session') })} title={t('Delete conversation')} onClick={(event) => onDelete(chat, event.currentTarget)}>
+        <X aria-hidden="true" />
       </button>
     </li>
   )
@@ -661,7 +643,7 @@ function FilterMenu({ filter, working, onChange }: { filter: Filter; working: nu
   const { t } = useI18n()
   const item = (f: Filter, text: string) => (
     <DropdownMenuItem onSelect={() => onChange(f)} className="rounded-xl">
-      <Check aria-hidden="true" className={cn('size-3.5', f === filter ? 'text-primary' : 'invisible')} />
+      <Check aria-hidden="true" className={cn('size-3.5', f === filter ? 'text-(--icon-accent)' : 'invisible')} />
       <span className="min-w-0 flex-1 truncate">{t(text)}</span>
       {f === 'running' && <span className="text-[11px] text-muted-foreground tabular-nums">{working}</span>}
     </DropdownMenuItem>

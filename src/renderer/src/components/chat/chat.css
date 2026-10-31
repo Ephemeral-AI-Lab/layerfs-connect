@@ -3,7 +3,7 @@
 .chat-glass-card {
   --hl-comment: var(--muted-foreground);
   --chat-tint-opacity: 0.065;
-  --chat-glass-base: linear-gradient(145deg, rgb(255 255 255 / 0.90), rgb(255 255 255 / 0.72) 55%, rgb(255 255 255 / 0.84));
+  --chat-glass-base: var(--glass-card-bg);
   background-image:
     radial-gradient(ellipse at 0% 0%, hsla(var(--cursor-hue, 215), 70%, 78%, var(--chat-tint-opacity)), transparent 68%),
     var(--chat-glass-base);
@@ -24,6 +24,31 @@
 
 .chat-message-body { overflow-wrap: anywhere; }
 
+/* One shared edge for the transcript, navigation and composer. */
+.chat-content-gutter { padding-inline: 24px; }
+@container workspace (min-width: 56rem) {
+  .chat-content-gutter { padding-inline: 32px; }
+}
+@container workspace (max-width: 32rem) {
+  .chat-content-gutter { padding-inline: 16px; }
+}
+
+/* Fade the transcript into the canvas, leaving the composer outside the mask.
+   End spacing keeps the final message and its actions above the fade. */
+.chat-conversation-scroll {
+  --chat-bottom-fade: 40px;
+  --chat-scroll-mask: linear-gradient(to bottom,
+    #000 0,
+    #000 calc(100% - var(--chat-bottom-fade)),
+    rgb(0 0 0 / 80%) calc(100% - 28px),
+    rgb(0 0 0 / 30%) calc(100% - 12px),
+    transparent 100%);
+  padding-bottom: calc(var(--chat-bottom-fade) + 16px);
+  scroll-padding-bottom: calc(var(--chat-bottom-fade) + 16px);
+  -webkit-mask-image: var(--chat-scroll-mask);
+  mask-image: var(--chat-scroll-mask);
+}
+
 .chat-approval-log .chat-approval-card {
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
@@ -31,10 +56,207 @@
 }
 
 .dark .chat-glass-card {
-  --chat-glass-base: linear-gradient(145deg, rgb(28 32 46 / 0.82), rgb(19 22 32 / 0.68) 55%, rgb(24 28 40 / 0.76));
-  --chat-tint-opacity: 0.035;
+  --chat-tint-opacity: 0;
 }
-.dark .chat-user-message { --chat-tint-opacity: 0.08; }
+.dark .chat-user-message { --chat-glass-base: linear-gradient(var(--secondary), var(--secondary)); }
+.dark .chat-composer-surface:focus-within {
+  border-color: color-mix(in oklab, var(--primary) 32%, var(--glass-border));
+  box-shadow: var(--glass-shadow), 0 0 0 2px color-mix(in oklab, var(--primary) 10%, transparent);
+}
+
+/* Workspace context sits above the input; only writing controls sit inside. */
+.chat-composer-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+  margin-bottom: 6px;
+  padding: 0 4px;
+}
+.chat-workspace-menus {
+  display: flex;
+  flex: 1 1 220px;
+  min-width: 0;
+  align-items: center;
+  gap: 2px;
+}
+.chat-composer-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+}
+.chat-composer { container-type: inline-size; }
+.chat-composer-toolbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 12px;
+  padding: 2px 4px;
+  font-size: 12px;
+}
+.chat-composer-tools,
+.chat-model-selectors,
+.chat-composer-send {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 6px;
+}
+.chat-model-selectors { flex-wrap: wrap; gap: 2px 6px; }
+.chat-composer-tools { align-items: flex-start; }
+.chat-composer-more,
+.chat-workspace-trigger,
+.chat-model-trigger,
+.chat-thinking-trigger {
+  display: inline-flex;
+  min-width: 0;
+  height: 32px;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 8px;
+  border-radius: 10px;
+  color: var(--muted-foreground);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 20px;
+  outline: none;
+  transition: background var(--dur-fast), color var(--dur-fast);
+}
+.chat-composer-more { width: 32px; flex: none; padding: 0; }
+.chat-workspace-trigger { max-width: 230px; }
+.chat-model-trigger { max-width: 260px; color: var(--foreground); }
+.chat-thinking-trigger { flex: none; font-weight: 400; }
+.chat-composer-more:hover,
+.chat-workspace-trigger:hover,
+.chat-model-trigger:hover,
+.chat-thinking-trigger:hover,
+.chat-workspace-trigger[data-state='open'],
+.chat-model-trigger[data-state='open'],
+.chat-thinking-trigger[data-state='open'] {
+  background: color-mix(in oklab, var(--foreground) 4%, transparent);
+  color: var(--foreground);
+}
+.chat-composer-more:focus-visible,
+.chat-workspace-trigger:focus-visible,
+.chat-model-trigger:focus-visible,
+.chat-thinking-trigger:focus-visible { box-shadow: 0 0 0 2px var(--ring); }
+.chat-workspace-trigger:disabled,
+.chat-model-trigger:disabled,
+.chat-thinking-trigger:disabled { opacity: 0.5; }
+
+/* A compact utility menu, with keyboard choices shown as keys rather than pills. */
+.chat-choice-menu {
+  width: 232px;
+  max-width: calc(100vw - 32px);
+  padding: 6px;
+  border-radius: 16px;
+  box-shadow: var(--glass-shadow), 0 8px 28px -8px rgb(25 35 65 / 18%);
+}
+.dark .chat-choice-menu { box-shadow: var(--glass-panel-shadow); }
+.chat-choice-menu [data-slot='dropdown-menu-item'],
+.chat-choice-menu [data-slot='dropdown-menu-radio-item'] {
+  min-height: 32px;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  font-size: 12px;
+  line-height: 20px;
+}
+.chat-choice-menu [data-slot='dropdown-menu-radio-item'] { padding-right: 30px; }
+.chat-choice-menu [data-slot='dropdown-menu-radio-item'][data-state='checked'] {
+  background: color-mix(in oklab, var(--primary) 4%, transparent);
+}
+.chat-choice-menu [data-highlighted] {
+  background: color-mix(in oklab, var(--foreground) 5%, transparent);
+  color: var(--foreground);
+}
+.chat-choice-menu [data-slot='dropdown-menu-radio-item-indicator'] { color: var(--icon-accent); }
+.chat-choice-menu [data-slot='dropdown-menu-radio-item-indicator'] svg { width: 13px; height: 13px; }
+.chat-choice-menu [data-slot='dropdown-menu-label'] {
+  padding: 5px 8px 4px;
+  font-size: 11px;
+  font-weight: 400;
+}
+.chat-choice-menu [data-slot='dropdown-menu-separator'] { margin: 5px 2px; }
+.chat-thinking-menu { width: 184px; }
+.chat-actions-menu {
+  display: flex;
+  width: 240px;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px;
+  border-radius: 20px;
+}
+.chat-actions-menu [data-slot='dropdown-menu-item'] {
+  flex-shrink: 0;
+  min-height: 36px;
+  gap: 10px;
+  padding: 7px 12px;
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  background: var(--glass-card-bg);
+  box-shadow: var(--highlight);
+  color: var(--foreground);
+  font-size: 13px;
+  line-height: 20px;
+  cursor: pointer;
+  transition: background-color var(--dur-fast), border-color var(--dur-fast);
+}
+.chat-actions-menu [data-slot='dropdown-menu-item'] svg {
+  width: 15px;
+  height: 15px;
+  color: var(--muted-foreground);
+}
+.chat-actions-menu [data-slot='dropdown-menu-item'][data-highlighted] {
+  background: var(--accent);
+  border-color: color-mix(in srgb, var(--primary) 24%, var(--glass-border));
+  color: var(--accent-foreground);
+}
+.chat-actions-menu .chat-actions-archive { margin-top: 4px; }
+.chat-actions-hint {
+  padding: 4px 8px;
+  color: var(--muted-foreground);
+  font-size: 11px;
+  line-height: 18px;
+}
+.chat-shortcut-keys { display: inline-flex; align-items: center; gap: 4px; }
+.chat-choice-menu [data-slot='dropdown-menu-radio-item'] .chat-shortcut-keys { flex: 1; }
+.chat-shortcut-keys kbd {
+  display: inline-flex;
+  min-width: 22px;
+  height: 22px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 5px;
+  border: 1px solid var(--glass-border);
+  border-radius: 5px;
+  background: var(--glass-field-bg);
+  color: var(--muted-foreground);
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 500;
+  box-shadow: 0 1px 0 color-mix(in oklab, var(--foreground) 6%, transparent);
+}
+.chat-composer-options-hint {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 5px;
+  padding: 7px 8px 2px;
+  border-top: 1px solid var(--glass-border);
+  font-size: 11px;
+  color: var(--muted-foreground);
+}
+
+@container (max-width: 440px) {
+  .chat-composer-toolbar { gap: 8px; }
+  .chat-model-selectors { flex: 1; }
+  .chat-model-trigger { max-width: 100%; }
+  .chat-thinking-trigger { flex-basis: 100%; justify-content: flex-start; }
+}
 
 @media (prefers-reduced-motion: reduce) {
   .chat-glass-card.spotlight::after { transition: none; }

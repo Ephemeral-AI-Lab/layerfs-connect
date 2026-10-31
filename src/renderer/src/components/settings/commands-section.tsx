@@ -18,7 +18,6 @@ export function CommandsSection() {
   const caps = useCapabilities()
   const { data } = caps
   return <div className="st-section" data-testid="commands-section">
-    <h2 className="st-title">{t('Commands')}</h2>
     <p className="st-intro">{t('Type / in a chat’s message box to run one.')}</p>
     <CapabilityStatus caps={caps} switches={false} />
     {data?.extensions.map((extension) => {

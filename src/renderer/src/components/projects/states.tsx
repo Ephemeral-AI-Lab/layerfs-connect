@@ -1,5 +1,5 @@
 import { t, useI18n } from '@/i18n'
-import { RotateCw, Unplug } from 'lucide-react'
+import { LoaderCircle, RotateCw, Unplug } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { HostError } from '@/host/client'
@@ -22,41 +22,23 @@ export function explain(error: Error, what = 'it'): { title: string; detail: str
   return { title: t('Could not read {what}', { what }), detail: error.message }
 }
 
-/** Something being read: three shimmering lines over the label, which stays the status's text. */
+/** A compact loading indicator, shown only while a read is pending. */
 export function Loading({ label, className }: { label: string; className?: string }) {
   useI18n()
   return (
-    <div role="status" className={cn('flex flex-col items-center justify-center gap-4 py-14', className)}>
-      <div aria-hidden="true" className="flex w-full max-w-xs flex-col items-center gap-2 animate-in fade-in duration-500">
-        <span className="shimmer h-2 w-full rounded-full" />
-        <span className="shimmer h-2 w-4/5 rounded-full [animation-delay:120ms]" />
-        <span className="shimmer h-2 w-3/5 rounded-full [animation-delay:240ms]" />
-      </div>
-      <span className="flex items-center gap-2 text-sm text-muted-foreground">
-        <span aria-hidden="true" className="pulse-ring size-1.5 rounded-full bg-primary text-primary" />
-        {label}…
-      </span>
+    <div role="status" className={cn('flex items-center justify-center gap-2 py-10 text-xs text-muted-foreground', className)}>
+      <LoaderCircle aria-hidden="true" className="size-3.5 animate-spin motion-reduce:animate-none" />
+      <span>{label}</span>
     </div>
   )
 }
 
-/** The icon of an Empty or LoadError: a lit tile, with a soft light behind it. */
-function StateIcon({ icon: Icon, tone = 'quiet', still }: { icon: React.ComponentType<{ className?: string }>; tone?: 'quiet' | 'danger'; still?: boolean }) {
+/** Empty and error states use one still, neutral icon. */
+function StateIcon({ icon: Icon, tone = 'quiet' }: { icon: React.ComponentType<{ className?: string }>; tone?: 'quiet' | 'danger' }) {
   useI18n()
   return (
-    <span className={cn('relative mb-1 flex', !still && 'drift')}>
-      <span
-        aria-hidden="true"
-        className={cn('absolute -inset-3 rounded-full opacity-60 blur-xl', tone === 'danger' ? 'bg-destructive/15' : 'bg-brand opacity-25 dark:opacity-30')}
-      />
-      <span
-        className={cn(
-          'surface relative flex size-11 items-center justify-center rounded-xl',
-          tone === 'danger' ? 'text-destructive' : 'text-muted-foreground',
-        )}
-      >
-        <Icon aria-hidden="true" className="size-5" />
-      </span>
+    <span className={cn('mb-1 flex size-9 items-center justify-center rounded-xl bg-muted/60', tone === 'danger' ? 'text-destructive' : 'text-muted-foreground')}>
+      <Icon aria-hidden="true" className="size-4" />
     </span>
   )
 }
@@ -76,11 +58,11 @@ export function LoadError({ error, what, onRetry, className }: LoadErrorProps) {
     <div
       role="alert"
       className={cn(
-        'reveal flex flex-col items-center gap-2 rounded-xl border border-dashed border-destructive/25 bg-destructive/[0.03] px-6 py-12 text-center',
+        'flex flex-col items-center gap-2 rounded-xl border border-destructive/20 bg-destructive/[0.03] px-6 py-8 text-center',
         className,
       )}
     >
-      <StateIcon icon={Unplug} tone="danger" still />
+      <StateIcon icon={Unplug} tone="danger" />
       <p className="text-sm font-medium">{title}</p>
       <p className="max-w-lg text-xs break-words text-muted-foreground">{detail}</p>
       {onRetry && (
@@ -99,11 +81,11 @@ interface EmptyProps {
   className?: string
 }
 
-/** Nothing here yet: a gently drifting icon, a title, a line of help and an action. */
+/** A short empty state with an optional next action. */
 export function Empty({ icon, title, children, action, className }: EmptyProps) {
   useI18n()
   return (
-    <div className={cn('reveal flex flex-col items-center gap-2 rounded-xl border border-dashed bg-card/40 px-6 py-14 text-center', className)}>
+    <div className={cn('flex flex-col items-center gap-2 rounded-xl border bg-card/40 px-6 py-10 text-center', className)}>
       <StateIcon icon={icon} />
       <p className="text-sm font-medium">{title}</p>
       {children && <p className="max-w-sm text-xs text-pretty text-muted-foreground">{children}</p>}

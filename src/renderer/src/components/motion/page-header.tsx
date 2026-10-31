@@ -14,7 +14,6 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { t } from '@/i18n'
 import { cn } from '@/lib/utils'
 
-const isMac = typeof window !== 'undefined' && window.connect?.platform === 'darwin'
 
 interface PageHeaderProps {
   /** A row above the title: <BackLink>, a breadcrumb. With no title it is the header's one row, beside the actions. */
@@ -39,13 +38,15 @@ interface PageHeaderProps {
   children?: ReactNode
   /** 'lg' for top-level pages (Projects, Storage, Compute), 'md' for a project or session. */
   size?: 'lg' | 'md'
+  /** Turn off entrance effects on data-heavy project pages. */
+  motion?: boolean
   sticky?: boolean
   /** The inner width, to line up with the page body: 'max-w-6xl', … Full width when absent. */
   width?: string
   className?: string
 }
 
-export function PageHeader({ eyebrow, title, badges, description, icon, back, live, actions, tabs, children, size = 'lg', sticky, width, className }: PageHeaderProps) {
+export function PageHeader({ eyebrow, title, badges, description, icon, back, live, actions, tabs, children, size = 'lg', motion = true, sticky, width, className }: PageHeaderProps) {
   const sentinel = useRef<HTMLDivElement>(null)
   const header = useRef<HTMLElement>(null)
   useEffect(() => {
@@ -65,7 +66,6 @@ export function PageHeader({ eyebrow, title, badges, description, icon, back, li
         className={cn(
           'page-header @container/page-header relative z-20 shrink-0 app-drag',
           sticky && 'sticky top-0 -mt-px',
-          !isMac && 'pr-36',
           className
         )}
       >
@@ -77,16 +77,16 @@ export function PageHeader({ eyebrow, title, badges, description, icon, back, li
             </div>
           ) : (
             <>
-              {eyebrow && <div className="reveal flex min-w-0 items-center">{eyebrow}</div>}
+              {eyebrow && <div className={cn('flex min-w-0 items-center', motion && 'reveal')}>{eyebrow}</div>}
               <div className={cn('flex min-w-0 flex-wrap gap-x-5 gap-y-4', icon || back ? 'items-center' : 'items-end')}>
                 {(icon || back) && (
                   <div className="flex shrink-0 items-center gap-1">
                     {back && <BackButton {...back} />}
-                    {icon && <div className="reveal-scale shrink-0">{icon}</div>}
+                    {icon && <div className={cn('shrink-0', motion && 'reveal-scale')}>{icon}</div>}
                   </div>
                 )}
                 <div className="min-w-0 flex-1">
-                  <div className="reveal flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1.5">
+                  <div className={cn('flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1.5', motion && 'reveal')}>
                     {title && (
                       <h1 className={cn('truncate font-semibold tracking-[-0.022em]', size === 'lg' ? 'text-[26px] leading-9' : icon ? 'text-[22px] leading-8' : 'text-xl leading-7')}>{title}</h1>
                     )}
@@ -94,7 +94,7 @@ export function PageHeader({ eyebrow, title, badges, description, icon, back, li
                   </div>
                   {description && (
                     <p
-                      className={cn('reveal text-muted-foreground', size === 'lg' ? 'mt-1.5 max-w-2xl text-sm leading-relaxed text-pretty' : 'mt-0.5 truncate text-xs tabular-nums')}
+                      className={cn('text-muted-foreground', motion && 'reveal', size === 'lg' ? 'mt-1.5 max-w-2xl text-sm leading-relaxed text-pretty' : 'mt-0.5 truncate text-xs tabular-nums')}
                       style={{ '--i': 1 } as CSSProperties}
                     >
                       {description}
@@ -102,7 +102,7 @@ export function PageHeader({ eyebrow, title, badges, description, icon, back, li
                   )}
                 </div>
                 {actions && (
-                  <div className="reveal flex max-w-full flex-wrap items-center gap-2 @max-[46rem]/page-header:w-full" style={{ '--i': 2 } as CSSProperties}>
+                  <div className={cn('flex max-w-full flex-wrap items-center gap-2 @max-[46rem]/page-header:w-full', motion && 'reveal')} style={{ '--i': 2 } as CSSProperties}>
                     {actions}
                   </div>
                 )}

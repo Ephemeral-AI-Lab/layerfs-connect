@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { AgentSessionSummary } from '@shared/agent-api'
 
-import { agentHost } from '@/host/agent-client'
+import { agentHost, isChatRemoved, onChatRemoved } from '@/host/agent-client'
 import { onHostEvent } from '@/host/client'
 
 /** A chat is working: a turn runs, or its child agents do. */
@@ -20,16 +20,19 @@ export function useChatSessions(tick?: unknown) {
   useEffect(() => {
     let live = true
     agentHost.sessions().then(
-      (all) => { if (live) { setSessions(all); setError(undefined) } },
+      (all) => { if (live) { setSessions(all.filter((session) => !isChatRemoved(session.id))); setError(undefined) } },
       (e: Error) => { if (live) { setSessions((s) => s ?? []); setError(e) } },
     )
     return () => { live = false }
   }, [tick])
+  useEffect(() => onChatRemoved((id) => {
+    setSessions((all) => all?.filter((session) => session.id !== id))
+  }), [])
   useEffect(() => onHostEvent((event) => {
-    if (event.type !== 'chat') return
+    if (event.type !== 'chat' || isChatRemoved(event.session.id)) return
     const { messages: _m, queued: _q, tools: _t, children: _c, approvals: _a, ...summary } = event.session
     setSessions((all) => {
-      if (!all) return all
+      if (!all || isChatRemoved(summary.id)) return all
       const i = all.findIndex((s) => s.id === summary.id)
       if (i >= 0 && all[i].updated > summary.updated) return all
       return i < 0 ? [summary, ...all] : all.map((s, j) => (j === i ? summary : s))

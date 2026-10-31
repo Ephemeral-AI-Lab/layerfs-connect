@@ -1,205 +1,39 @@
-/* Live tab: the diagram's own surfaces and motion, drawn as a flow map:
-   round agents, Branch pills and Workspace boxes joined by soft lanes in each
-   agent's colour. Colours that belong to an agent come in as currentColor
-   (a text-* class on the element), so one rule serves every agent. Lanes
-   carrying calls flow; a working agent's ring turns; where a call lands
-   glows once (.live-flash, restyled here from styles.css). */
-
-/* ---------- the stage ---------- */
-
-/* The diagram's field: a faint dot grid, and one soft light behind the
-   project in the single cursor hue the rest of the app follows. */
-.live-field {
-  position: relative;
-  isolation: isolate;
-}
-.live-field::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  background-image: radial-gradient(circle at 1px 1px, var(--grid-dot) 1px, transparent 0);
-  background-size: 20px 20px;
-  mask-image: radial-gradient(44rem 24rem at 50% 50%, #000, transparent 78%);
-}
-.live-light {
-  position: absolute;
-  inset: -5rem -4.5rem;
-  z-index: -1;
-  pointer-events: none;
-  border-radius: 999px;
-  background: radial-gradient(closest-side, hsla(var(--cursor-hue, 215), 70%, 68%, 0.16), transparent);
-  opacity: 0.55;
-  transition: opacity var(--dur-xslow) var(--ease-out-soft);
-}
-[data-live] > .live-light {
-  opacity: 1;
-}
-.dark .live-light {
-  background: radial-gradient(closest-side, hsla(var(--cursor-hue, 215), 70%, 60%, 0.14), transparent);
-}
-
-/* ---------- connectors (live-flow.ts) ---------- */
-
-.live-tree {
-  stroke: color-mix(in oklab, var(--foreground) 14%, transparent);
-}
-.live-ghost {
-  stroke: color-mix(in oklab, var(--foreground) 14%, transparent);
-  stroke-dasharray: 2 6;
-  stroke-linecap: round;
-}
-/* A lane carrying calls: coloured dashes flowing from the agent to the target,
-   over its soft line. At rest the dashes are hidden. */
-.live-lane-dash {
-  display: none;
-}
-.live-lane-dash[data-flow] {
-  display: inline;
-  stroke-dasharray: 3 7;
-  stroke-linecap: round;
-  animation: live-lane-flow 0.8s linear infinite;
-}
-@keyframes live-lane-flow {
-  to {
-    stroke-dashoffset: -20;
-  }
-}
-.live-dot-halo {
-  opacity: 0.22;
-}
-.live-dot-tail {
-  opacity: 0.35;
-}
-
-/* ---------- nodes ---------- */
-
-/* A busy card's edge, in its agent's colour: a still ring that fades in and out. */
-.live-ring {
-  position: absolute;
-  inset: -1px;
-  border-radius: inherit;
-  pointer-events: none;
-  opacity: 0;
-  box-shadow: 0 0 0 1px color-mix(in oklab, currentColor 35%, transparent), 0 0 0 4px color-mix(in oklab, currentColor 8%, transparent);
-  transition: opacity var(--dur-slow) var(--ease-out-soft);
-}
-[data-busy] > .live-ring {
-  opacity: 1;
-}
-
-/* The agent's colour as a bar down its card's left edge: full while it works. */
-.live-accent {
-  position: absolute;
-  top: 10px;
-  bottom: 10px;
-  left: -1px;
-  width: 3px;
-  border-radius: 0 3px 3px 0;
-  background: currentColor;
-  opacity: 0.3;
-  transform: scaleY(0.6);
-  transition:
-    opacity var(--dur-base) var(--ease-out-soft),
-    transform var(--dur-slow) var(--ease-out-expo);
-}
-[data-busy] > .live-accent {
-  opacity: 1;
-  transform: scaleY(1);
-}
-
-/* The project's mark: rings once, in the caller's colour, as a call reaches it. */
-.live-core {
-  position: relative;
-  isolation: isolate;
-}
-.live-core::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  border-radius: inherit;
-  pointer-events: none;
-  border: 1.5px solid var(--flash, var(--primary));
-  opacity: 0;
-}
-.live-core.live-flash {
-  /* the shared flash would fill the tile; only the ring answers here */
-  animation: none;
-}
-.live-core.live-flash::after {
-  animation: live-core-ping 0.9s var(--ease-out-soft);
-}
-@keyframes live-core-ping {
-  from {
-    opacity: 0.8;
-    transform: scale(0.9);
-  }
-  to {
-    opacity: 0;
-    transform: scale(1.45);
-  }
-}
-
-/* An agent at work: a dashed ring turns around its avatar. */
-.live-spin {
-  position: absolute;
-  inset: -4px;
-  border-radius: 999px;
-  border: 1.5px dashed currentColor;
-  pointer-events: none;
-  animation: live-spin 2.4s linear infinite;
-}
-@keyframes live-spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-/* Where a call lands glows once: a ring and a soft halo in --flash (the
-   agent's colour on arrival, green or red as the call ends), fading out. */
-.live-panel .live-flash {
-  animation: live-glow 1s ease-out;
-}
-@keyframes live-glow {
-  from {
-    box-shadow:
-      0 0 0 1.5px var(--flash),
-      0 0 0 6px color-mix(in oklab, var(--flash) 22%, transparent);
-  }
-  to {
-    box-shadow:
-      0 0 0 1.5px transparent,
-      0 0 0 12px transparent;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .live-spin,
-  .live-lane-dash[data-flow],
-  .live-core.live-flash::after {
-    animation: none;
-  }
-}
-
-/* ---------- cost ---------- */
-
-/* Live's cards sit on a plain dot grid, under lanes and dots that move every
-   frame: a backdrop blur there shows nothing but is recomputed on each frame
-   for every card. They keep the glass look with a solid fill instead. */
-.live-panel,
-.live-panel .glass-liquid {
-  -webkit-backdrop-filter: none;
-  backdrop-filter: none;
-}
-.live-panel .glass-liquid {
-  background: linear-gradient(145deg, rgb(255 255 255) 0%, rgb(250 251 253) 100%);
-}
-.dark .live-panel .glass-liquid {
-  background: linear-gradient(145deg, rgb(30 34 48) 0%, rgb(22 25 36) 100%);
-}
-/* The overlay is its own layer, so its redraws do not repaint the cards. */
-.live-overlay {
-  will-change: transform;
+/* Live activity uses the same quiet glass surfaces as the rest of the project.
+   Only changing data communicates progress; there are no decorative loops. */
+.live-panel { container-type: inline-size; min-width: 0; }
+.live-sections { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: 24px; padding: 20px; }
+.live-section { display: flex; min-width: 0; flex-direction: column; gap: 10px; }
+.live-section-heading { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+.live-section > h3, .live-section-heading { min-height: 24px; margin-bottom: 2px; }
+.live-empty { display: flex; min-height: 180px; align-items: center; justify-content: center; flex-direction: column; gap: 8px; padding: 32px 20px; text-align: center; }
+.live-empty-row { padding: 12px 4px; font-size: 12px; color: var(--muted-foreground); }
+.live-session, .live-sandbox { min-width: 0; border: 1px solid var(--glass-border); border-radius: 12px; background: var(--glass-field-bg); }
+.live-session-heading { display: flex; min-width: 0; align-items: center; gap: 2px; padding: 6px; }
+.live-session-toggle { display: flex; min-width: 0; flex: 1; align-items: center; gap: 8px; min-height: 32px; padding: 4px 6px; border-radius: 8px; text-align: left; }
+.live-open { display: flex; width: 30px; height: 30px; flex: none; align-items: center; justify-content: center; border-radius: 8px; color: var(--muted-foreground); }
+.live-session-toggle:hover, .live-open:hover, .live-sandbox-heading:hover { background: color-mix(in srgb, var(--foreground) 3%, transparent); }
+.live-agents { padding: 0 12px 8px; }
+.live-agent { min-width: 0; padding: 8px 0; }
+.live-agent + .live-agent { border-top: 1px solid color-mix(in srgb, var(--foreground) 5%, transparent); }
+.live-agent-heading { display: flex; min-width: 0; align-items: center; gap: 8px; }
+.live-agent-name { min-width: 0; overflow: hidden; border-radius: 4px; font-size: 12px; font-weight: 500; text-overflow: ellipsis; white-space: nowrap; }
+.live-agent-name:hover { color: var(--primary); }
+.live-agent-fold { display: flex; flex: none; align-items: center; gap: 3px; margin-left: auto; padding: 2px 4px; border-radius: 4px; color: var(--muted-foreground); font-size: 11px; }
+.live-agent-activity { display: flex; min-width: 0; flex-direction: column; gap: 4px; margin-top: 5px; padding-left: 16px; color: var(--muted-foreground); font-size: 12px; }
+.live-call { display: flex; min-width: 0; align-items: baseline; gap: 8px; color: var(--muted-foreground); font-size: 11px; line-height: 18px; }
+.live-run-error { margin: 0 12px 10px; overflow-wrap: anywhere; font-size: 12px; line-height: 1.6; color: var(--destructive); }
+.live-sandbox-heading { display: flex; min-width: 0; align-items: center; gap: 8px; min-height: 44px; padding: 8px 12px; border-radius: 12px; cursor: pointer; list-style: none; }
+.live-sandbox-heading::-webkit-details-marker { display: none; }
+.live-sandbox[open] > summary .live-disclosure { transform: rotate(90deg); }
+.live-workspaces { padding: 0 12px 8px; }
+.live-workspace { min-width: 0; padding: 8px 0; border-top: 1px solid color-mix(in srgb, var(--foreground) 6%, transparent); }
+.live-more { width: fit-content; padding: 4px 8px; border-radius: 6px; color: var(--muted-foreground); font-size: 12px; }
+.live-error { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 12px; padding: 12px 20px; font-size: 12px; color: var(--destructive); }
+.live-error button { border-radius: 4px; text-decoration: underline; text-underline-offset: 3px; }
+.live-error details { flex-basis: 100%; }
+.live-error summary { width: fit-content; cursor: pointer; }
+.live-error details p { margin-top: 6px; overflow-wrap: anywhere; }
+.live-panel :is(button, summary):focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+@container (max-width: 680px) {
+  .live-sections { grid-template-columns: minmax(0, 1fr); gap: 20px; padding: 16px; }
 }

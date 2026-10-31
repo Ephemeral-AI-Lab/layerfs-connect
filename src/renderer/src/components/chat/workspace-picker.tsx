@@ -1,5 +1,5 @@
 // Where a chat works, as two small menus: its working folder, and its LayerFS
-// project. Each is a chip that opens a short list: the
+// project. Each opens a short list from the composer's workspace row: the
 // projects with New and Refresh, or the recent folders with Choose folder….
 // A started chat's menus only say where it works and how to change it.
 import { useI18n } from '@/i18n'
@@ -26,8 +26,6 @@ interface WorkspaceMenusProps {
   projects: ProjectSummary[]
   projectsLoading: boolean
   projectError: string
-  /** Plain text chips (a new chat's row above the composer) rather than pills (inside it). */
-  bare?: boolean
   /** The project menu's open state, so the /workspace command can open it. */
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -43,7 +41,7 @@ interface WorkspaceMenusProps {
 const lastPart = (path: string) => path.split(/[\\/]/).filter(Boolean).at(-1) || path
 
 export function WorkspaceMenus({
-  cwd, project, workspace, locked, disabled, sessions, projects, projectsLoading, projectError, bare, open, onOpenChange,
+  cwd, project, workspace, locked, disabled, sessions, projects, projectsLoading, projectError, open, onOpenChange,
   onDirectory, onProject, onRefresh, onNewProject, onOpenProject, onError,
 }: WorkspaceMenusProps) {
   const { t, locale } = useI18n()
@@ -76,9 +74,9 @@ export function WorkspaceMenus({
   const fixed = <p className="px-2 pt-1 pb-1.5 text-[11px] leading-relaxed text-muted-foreground">{t("Start a new chat to change where it works.")}</p>
 
   return (
-    <div className="flex min-w-0 items-center gap-1">
+    <div className="chat-workspace-menus">
       <DropdownMenu>
-        <Chip bare={bare} disabled={disabled} label={t("Working folder")} title={cwd || undefined} icon={browsing ? <LoaderCircle className="size-3.5 shrink-0 animate-spin" /> : <FolderOpen className="size-3.5 shrink-0 opacity-75" />}>
+        <Chip disabled={disabled} label={t("Working folder")} title={cwd || undefined} icon={browsing ? <LoaderCircle className="size-3.5 shrink-0 animate-spin" /> : <FolderOpen className="size-3.5 shrink-0 opacity-75" />}>
           {cwd ? lastPart(cwd) : t("Choose folder")}
         </Chip>
         <DropdownMenuContent align="start" collisionPadding={16} className="w-80 max-w-[calc(100vw-2rem)]">
@@ -107,7 +105,7 @@ export function WorkspaceMenus({
       </DropdownMenu>
 
       {(project || !locked) && <DropdownMenu open={open} onOpenChange={onOpenChange}>
-        <Chip bare={bare} disabled={disabled} label={t("LayerFS project")} title={project ? projectName : t("No project: the chat works in a local folder")} icon={<LfsProject className={cn('size-3.5 shrink-0', project ? 'text-primary/80' : 'opacity-60')} />} faint={!project}>
+        <Chip disabled={disabled} label={t("LayerFS project")} title={project ? projectName : t("No project: the chat works in a local folder")} icon={<LfsProject className={cn('size-3.5 shrink-0', project ? 'text-primary/80' : 'opacity-60')} />}>
           {projectName}
         </Chip>
         <DropdownMenuContent align="start" collisionPadding={16} className="w-72 max-w-[calc(100vw-2rem)]">
@@ -160,19 +158,15 @@ export function WorkspaceMenus({
   )
 }
 
-/** A menu's trigger: an icon, a name and a chevron; plain text above the composer, a pill inside it. */
-function Chip({ bare, disabled, label, title, icon, faint, children }: { bare?: boolean; disabled: boolean; label: string; title?: string; icon: ReactNode; faint?: boolean; children: ReactNode }) {
+/** A quiet workspace label above the input; the full path stays in its menu. */
+function Chip({ disabled, label, title, icon, children }: { disabled: boolean; label: string; title?: string; icon: ReactNode; children: string }) {
   return (
     <DropdownMenuTrigger
       type="button"
       disabled={disabled}
-      aria-label={label}
+      aria-label={`${label}: ${children}`}
       title={title}
-      className={cn(
-        'group/chip flex h-7 min-w-0 items-center gap-1.5 overflow-hidden rounded-full px-2.5 font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50 data-[state=open]:bg-foreground/[0.06] data-[state=open]:text-foreground',
-        bare ? 'max-w-64 text-[13px] text-foreground/80 hover:bg-foreground/[0.05] hover:text-foreground' : 'max-w-44 bg-foreground/[0.04] text-xs text-muted-foreground hover:bg-foreground/[0.07] hover:text-foreground',
-        faint && bare && 'text-muted-foreground',
-      )}
+      className="chat-workspace-trigger group/chip"
     >
       {icon}
       <span className="min-w-0 truncate">{children}</span>
@@ -190,7 +184,7 @@ function Row({ checked, icon, name, store, hint }: { checked: boolean; icon: Rea
         <span className="min-w-0 truncate font-medium">{name}</span>
         {(store || hint) && <span className="min-w-0 truncate text-[10.5px] text-muted-foreground">{store ?? hint}</span>}
       </span>
-      <Check className={cn('size-3.5 shrink-0 text-primary', !checked && 'invisible')} />
+      <Check className={cn('size-3.5 shrink-0 text-(--icon-accent)', !checked && 'invisible')} />
     </span>
   )
 }
