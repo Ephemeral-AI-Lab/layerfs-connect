@@ -7,29 +7,23 @@
 // root:<toolCallId> (child-extension.js), for the script's `expect` checks.
 // The script's last reply runs the final checks and lands the folder on main;
 // a chat stopped or failed before that has its Sandboxes closed.
-import { chmodSync, existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, readdirSync, readFileSync, statSync } from 'node:fs'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { API, hostStatus, isHostHome, layerfsEnv, notePostgresql, openRuntime, projectRef, storeOf, withProjectEnv } from '../config.js'
+import { layerfsEnv, projectRef } from '../config.js'
+import { layerfs } from '../layerfs.js'
 import { compileScenario } from '../../tools/lib/scenario.mjs'
 import { chatReady } from './scenario-plan.js'
 
 const SCENARIOS = fileURLToPath(new URL('../../scenarios/', import.meta.url))
-const RESOLVE = fileURLToPath(new URL('../resolve-layerfs.js', import.meta.url))
-const CLI = join(API, 'cli', 'src', 'layerfs.js')
-const q = (s) => `'${String(s).replaceAll("'", "'\\''")}'`
-
-/** The Sandbox platforms (layerfs#529), and the one a scenario chat's Sandboxes are made on unless it names another. */
-export const PLATFORMS = ['docker', 'mac', 'linux', 'apple-container', 'microsandbox', 'lima', 'firecracker', 'ssh']
-export const DEFAULT_PLATFORM = 'docker'
 const refuse = (status, message) => Object.assign(new Error(message), { status })
 
 export class AgentScenarios {
-  /** @param {{ spec: object, dir?: string, status?: () => Promise<object> }} o config.js's spec, the scenarios folder, and runtime.status() (a parameter for tests) */
-  constructor({ spec, dir = SCENARIOS, status = null }) {
+  /** @param {{ spec: object, dir?: string, machines?: () => Promise<object> }} o config.js's spec, the scenarios folder, and machine.list (a parameter for tests) */
+  constructor({ spec, dir = SCENARIOS, machines = null }) {
     this.spec = spec
     this.dir = dir
-    this.status = status ?? (async () => (isHostHome(this.spec) ? hostStatus(this.spec) : (await openRuntime(this.spec)).status()))
+    this.machines = machines ?? (() => layerfs(this.spec).machine.list())
     /** id -> { mtime, entry } */
     this.cache = new Map()
     /** chat id -> its final verdict, once asked */
@@ -77,37 +71,21 @@ export class AgentScenarios {
   }
 
   /**
-   * `platform` checked before a chat starts, so a wrong one is refused at
-   * once: one of the eight names, allowed and ready on this home
-   * (runtime.status().platforms). A LayerFS from before layerfs#529 has no
-   * platform choice: it makes docker Sandboxes on a local home and the
-   * provider's on a VM home, so only that platform is accepted there.
-   * Status that cannot be read lets it pass: LayerFS refuses it later.
+   * `machine` checked before a chat starts, so a wrong one is refused at
+   * once: a machine of this home (machine.list). Null: the project's Store's
+   * machine. Sandboxes follow the Store, so a chat on another machine moves
+   * the project's Store there first (setup).
    */
-  async checkPlatform(platform = DEFAULT_PLATFORM) {
-    if (!PLATFORMS.includes(platform)) throw refuse(400, `No platform named ${platform}. Platforms: ${PLATFORMS.join(', ')}.`)
-    let status
-    try {
-      status = await this.status()
-    } catch {
-      return platform
-    }
-    if (!Array.isArray(status?.platforms)) {
-      const placement = status?.placement ?? 'local'
-      const only = placement.startsWith('vm:') ? placement.slice(3) : 'docker'
-      if (platform === only) return platform
-      throw refuse(409, `This LayerFS makes every Sandbox on ${only}. Choosing another platform needs LayerFS with Sandbox platforms (layerfs#529).`)
-    }
-    const allowed = status.platforms.filter((p) => p.allowed).map((p) => p.id)
-    const entry = status.platforms.find((p) => p.id === platform)
-    if (!entry?.allowed) throw refuse(409, `${platform} is not available on this home, which allows ${allowed.join(' and ') || 'no platform'}.${allowed.length ? ` Use -platform ${allowed[0]}.` : ''}`)
-    if (!entry.ready) throw refuse(409, `${platform} is not ready on this home: it needs ${entry.missing.join(', ') || 'setting up'}.`)
-    return platform
+  async checkMachine(machine = null) {
+    if (machine === null || machine === undefined) return null
+    const listed = (await this.machines()).machines ?? []
+    if (!listed.some((m) => m.name === machine)) throw refuse(400, `No machine named ${machine}. Machines: ${listed.map((m) => m.name).join(', ')}.`)
+    return machine
   }
 
   /** The chat's scenario state as the record keeps it, before its folder is set up. */
-  initial(entry, project, dir, platform = DEFAULT_PLATFORM) {
-    return { id: entry.id, title: entry.title, project, platform, dir, folder: null, scopeDir: null, volume: null, image: null, state: 'preparing', phase: 'Setting up its folder', checks: [], error: null, swept: false }
+  initial(entry, project, dir, machine = null) {
+    return { id: entry.id, title: entry.title, project, machine, dir, folder: null, scopeDir: null, state: 'preparing', phase: 'Setting up its folder', checks: [], error: null, swept: false }
   }
 
   /** Sets up the chat's folder on the project (folder.js), and the `layerfs` command its bash finds. */
@@ -115,44 +93,27 @@ export class AgentScenarios {
     const s = record.scenario
     const entry = this.get(s.id)
     if (!entry) throw new Error(`No scenario named ${s.id} plays in a chat.`)
-    const [{ projectRecord, setupFolder }, { writeSeed }] = await Promise.all([import('../runs/folder.js'), import('../seed.js')])
-    const bin = join(s.dir, 'bin')
-    for (const dir of [join(s.dir, 'work'), bin]) mkdirSync(dir, { recursive: true })
-    writeFileSync(join(bin, 'layerfs'), `#!/bin/sh\nexec node --import ${q(RESOLVE)} ${q(CLI)} "$@"\n`)
-    chmodSync(join(bin, 'layerfs'), 0o755)
+    const [{ placeRun, setupFolder }, { writeSeed }, { writeShims }] = await Promise.all([import('../runs/folder.js'), import('../seed.js'), import('../runs/shim.js')])
+    mkdirSync(join(s.dir, 'work'), { recursive: true })
+    writeShims(this.spec, s.dir)
     let fixture = entry.compiled.fixture
     if (entry.compiled.seed) fixture = writeSeed(entry.compiled.seed, join(s.dir, 'seed'))
     if (!fixture) throw new Error(`${entry.title} names no fixture.`)
-    const project = await projectRecord(this.spec, s.project)
-    // a PostgreSQL Store's project has no volume: its calls need the connection's URL (layerfs#506 d)
-    if (project.kind === 'postgresql' && !(await notePostgresql(this.spec, { name: project.name, store: storeOf(project), shared: true }))) {
-      throw new Error(`${project.name} is in the PostgreSQL Store ${storeOf(project)}, whose connection this host does not hold`)
-    }
-    s.volume = project.volume ?? null
-    s.image = project.image ?? null
+    if (s.machine) await placeRun(this.spec, s.project, s.machine, onPhase)
     s.scopeDir = join(s.dir, 'scope')
-    const { run } = await setupFolder(this.spec, { scenarioId: s.id, fixture, project, scopeDir: s.scopeDir, phase: onPhase, platform: s.platform ?? null })
+    const { run } = await setupFolder(this.spec, { scenarioId: s.id, fixture, project: s.project, scopeDir: s.scopeDir, phase: onPhase, machine: s.machine ?? null })
     s.folder = run
   }
 
-  /**
-   * A project of a PostgreSQL Store has no volume: its connection's URL is
-   * noted in this process (config.js notePostgresql) before its calls, also
-   * after the host restarts.
-   */
-  async noteStore(s) {
-    if (!s.volume) await notePostgresql(this.spec, s.project)
-  }
-
-  /** The bash environment overrides of the chat's calls: its project, its scope, and the `layerfs` shim. */
+  /** The bash environment overrides of the chat's calls: the home, its project key, its scope, and the `layerfs` shim. */
   async env(record) {
     const s = record.scenario
     if (!s.scopeDir) throw Object.assign(new Error('The scenario is still setting up its folder.'), { status: 409 })
-    await this.noteStore(s)
     return {
-      ...layerfsEnv(this.spec, { ...projectRef(s.project), volume: s.volume, image: s.image }),
+      ...layerfsEnv(this.spec),
+      LAYERFS_CONNECT_PROJECT: projectRef(s.project).key,
       PATH: `${join(s.dir, 'bin')}:${process.env.PATH ?? ''}`,
-      NODE_OPTIONS: [process.env.NODE_OPTIONS, `--import=${RESOLVE}`].filter(Boolean).join(' '),
+      NODE_PATH: join(s.dir, 'node_modules'),
       [this.scopeEnv]: s.scopeDir,
     }
   }
@@ -200,8 +161,7 @@ export class AgentScenarios {
       try {
         const { landOnMain } = await import('../runs/folder.js')
         const { Scope } = await import('../runs/scope.js')
-        await this.noteStore(s)
-        const { ok, detail } = await landOnMain(this.spec, { project: { ...projectRef(s.project), volume: s.volume, image: s.image }, scope: Scope.open(s.scopeDir) })
+        const { ok, detail } = await landOnMain(this.spec, { project: s.project, scope: Scope.open(s.scopeDir) })
         checks.push({ name: 'main.landed', ok, detail })
       } catch (error) {
         checks.push({ name: 'main.landed', ok: false, detail: `${error.code ? `${error.code}: ` : ''}${error.message}` })
@@ -219,17 +179,10 @@ export class AgentScenarios {
     let mod
     try { mod = await import('../checks/index.js') } catch { return [] }
     if (!mod?.finalChecks) return []
-    if (!isHostHome(this.spec)) await openRuntime(this.spec)
-    const { LayerFS } = await import('@layerfs/agent')
-    const { Scope } = await import('../runs/scope.js')
-    const project = { ...projectRef(s.project), volume: s.volume, image: s.image }
-    await this.noteStore(s)
-    const client = await withProjectEnv(this.spec, project, () => LayerFS.open(project.name))
-    try {
-      return await mod.finalChecks({ scenario: entry.scenario, scenarioDir: entry.folder, project: project.name, client, scope: Scope.open(s.scopeDir) })
-    } finally {
-      await client.close()
-    }
+    const [{ Scope }, { projectHandle }] = await Promise.all([import('../runs/scope.js'), import('../runs/folder.js')])
+    const scope = Scope.open(s.scopeDir)
+    const client = await projectHandle(this.spec, s.project, scope.machine)
+    return mod.finalChecks({ scenario: entry.scenario, scenarioDir: entry.folder, project: client.project, client, scope })
   }
 
   /** A chat stopped or failed before its scenario passed: its scripts' Sandboxes are closed, once. */
@@ -240,7 +193,7 @@ export class AgentScenarios {
     if (s.state === 'passed' || s.swept || !s.scopeDir) return
     s.swept = true
     const { closeRunSandboxes } = await import('../runs/run.js')
-    await closeRunSandboxes(this.spec, { id: record.id, project: s.project, volume: s.volume, image: s.image, scopeDir: s.scopeDir })
+    await closeRunSandboxes(this.spec, { id: record.id, project: s.project, scopeDir: s.scopeDir })
       .catch((error) => console.error(`[scenarios] ${record.id}: closing Sandboxes: ${error.message}`))
   }
 

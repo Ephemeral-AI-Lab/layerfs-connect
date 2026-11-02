@@ -19,7 +19,7 @@
 import { mkdirSync, renameSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { layerfsEnv, projectRef } from '../config.js'
-import { layerfs, pages } from '../layerfs.js'
+import { layerfs, workspacesOf } from '../layerfs.js'
 import { Agent } from './agent.js'
 import { Job } from './jobs.js'
 import { callCodes, inOrder } from '../../tools/lib/expect.mjs'
@@ -589,7 +589,7 @@ export async function closeRunSandboxes(spec, { id, project, scopeDir = null }) 
   const lfs = layerfs(spec)
   for (const sandbox of mine) {
     try {
-      const workspaces = await bounded(pages((p) => lfs.sandbox.get(sandbox, p)), CLEANUP_CALL_MS, `Sandbox ${sandbox}`)
+      const workspaces = await bounded(workspacesOf(lfs, sandbox), CLEANUP_CALL_MS, `Sandbox ${sandbox}`)
       for (const w of workspaces) if (w.mounted !== false && w.directory) await bounded(lfs.workspace.unmount(`${sandbox}:${w.directory}`, { discard: true }), CLEANUP_CALL_MS, `unmount ${w.directory}`)
       await bounded(lfs.sandbox.close(sandbox), CLEANUP_CALL_MS, `close ${sandbox}`)
     } catch (e) {

@@ -3,6 +3,7 @@ import { CircleAlert, FolderOpen, GitBranch, GitCommitVertical, LoaderCircle } f
 import type { AgentWorkspace } from '@shared/agent-api'
 import { projectLabel } from '@shared/host-api'
 
+import { GapLine } from '@/components/gap-line'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
@@ -52,6 +53,7 @@ export function WorkspaceStatus({ project, workspace, started, onOpenProject }: 
           </div>
         ) : !started && <p className="mt-1 text-muted-foreground">{t("Changes save automatically to this session’s branch. Main stays unchanged.")}</p>}
         {workspace?.error && <p role="alert" className="mt-1.5 break-words text-destructive">{workspace.error}</p>}
+        {workspace && <GapLine what="Live output, Stop and background commands in this Workspace" className="mt-1.5 text-[10.5px]" />}
       </div>
     </section>
   )

@@ -22,7 +22,7 @@ import { randomUUID } from 'node:crypto'
 import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync } from 'node:fs'
 import { isAbsolute, join } from 'node:path'
 import { keyOf, projectRef } from './config.js'
-import { layerfs, linkedVersion, pages, PAGE } from './layerfs.js'
+import { layerfs, linkedVersion, pages, PAGE, workspacesOf } from './layerfs.js'
 
 export { keyOf }
 
@@ -302,7 +302,7 @@ export class Projects {
     return Promise.all(
       listed.map(async (s) => {
         try {
-          return sandboxInfo(s, await pages((p) => this.lfs.sandbox.get(s.name, p)))
+          return sandboxInfo(s, await workspacesOf(this.lfs, s.name))
         } catch (error) {
           if (error?.code === 'NoSuchSandbox' || error?.code === 'NotFound') return { ...sandboxInfo(s, []), state: 'gone' }
           return { ...sandboxInfo(s), reach: 'unreachable', detail: `${error?.code ?? 'Failed'}: ${error?.message ?? error}` }

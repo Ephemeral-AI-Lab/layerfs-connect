@@ -75,12 +75,14 @@ function enqueueMessage(active, entry) {
 }
 
 export class AgentManager extends EventEmitter {
-  static async create({ state, defaultCwd = process.cwd(), projectEnvironment = async () => ({}), projectWorkspaces = null, scenarios = null }) {
+  static async create({ state, defaultCwd = process.cwd(), projectEnvironment = async () => ({}), shellEnv = () => ({}), projectWorkspaces = null, scenarios = null }) {
     const agentDir = join(state, 'pi')
     mkdirSync(agentDir, { recursive: true, mode: 0o700 })
     process.env.PI_CODING_AGENT_DIR = agentDir
     const models = await AgentModels.create(agentDir)
     const manager = new AgentManager({ state, agentDir, defaultCwd, models, projectEnvironment, projectWorkspaces, scenarios })
+    // a project chat's shells: LAYERFS_HOME, the trace settings, the project key and the native CLI (main.js)
+    manager.shellEnv = shellEnv
     manager.permissions = await new ApprovalService(manager).start()
     if (scenarios) {
       registerScenarioProvider(models.runtime, {
@@ -438,17 +440,18 @@ export class AgentManager extends EventEmitter {
     const entry = this.scenarios.get(input.scenario)
     if (!entry) throw fail(404, `No scenario named ${input.scenario} plays in a chat.`)
     if (!input.project) throw fail(400, 'Name the LayerFS project to play the scenario on.')
-    if (input.platform !== undefined && typeof input.platform !== 'string') throw fail(400, 'platform must be a platform name')
+    const machineName = input.machine ?? input.platform
+    if (machineName !== undefined && machineName !== null && typeof machineName !== 'string') throw fail(400, 'machine must be a machine name')
     this.checkProjectAvailable(input.project)
     await this.projectEnvironment(input.project)
-    // the platform its Sandboxes are made on: docker unless named, refused here when this home cannot make it
-    const platform = await this.scenarios.checkPlatform(input.platform ?? undefined)
+    // the machine its Sandboxes run on: the project's Store's unless named (its Store then moves there), refused here when this home has no such machine
+    const machine = await this.scenarios.checkMachine(machineName ?? null)
     const id = randomUUID()
     const dir = join(this.dir, id, 'scenario')
     mkdirSync(join(dir, 'work'), { recursive: true })
     await this.createRecord(id, { cwd: join(dir, 'work'), title: entry.title, provider: SCENARIO_PROVIDER, modelId: entry.id, thinkingLevel: 'off', permissionMode: 'full' }, { publish: false })
     const record = this.record(id)
-    record.scenario = this.scenarios.initial(entry, input.project, dir, platform)
+    record.scenario = this.scenarios.initial(entry, input.project, dir, machine)
     // the chat works from the start, as any chat does once sent a message: Stop stops its setup too
     record.state = 'running'
     this.beginExecution(id)
@@ -559,7 +562,7 @@ export class AgentManager extends EventEmitter {
       const extensions = await createConnectExtensions({
         cwd: controlCwd, agentDir: this.agentDir, runDir, workspace: mounted(record), allowNestedSubagents: leadsAllowed(this.setup.get()), setup: this.setup.get(),
         // a scenario chat's bash plays in its scenario's folder (scenarios.js)
-        env: record.scenario && this.scenarios ? await this.scenarios.env(record) : {},
+        env: record.scenario && this.scenarios ? await this.scenarios.env(record) : record.project ? this.shellEnv(record.project) : {},
         sdk: { prompt: this.sdks.prompts() },
         instructions: record.limits.instructions,
         defaultBashTimeoutSeconds: record.limits.bashTimeoutSeconds,

@@ -1,8 +1,14 @@
+// A mounted chat's LayerFS Workspace on 2.0: its own Branch, a Sandbox named
+// after the chat on the project's Store's machine (a PostgreSQL project's on
+// native), and one Workspace (`ws` handle `<sandbox>:<path>`). Bash runs in
+// the foreground with workspace.exec: its output arrives when the command
+// ends, and it cannot be stopped mid-way. Background start, list and cancel
+// and live output come with a later LayerFS (§9 Q2); a command's timeout is
+// the shell's `timeout` where the machine has it.
 import { randomUUID } from 'node:crypto'
-import { setTimeout as pause } from 'node:timers/promises'
+import { workspacesOf } from '../layerfs.js'
 import { INSTRUCTION_FILES, MAX_INSTRUCTION_BYTES } from './context.js'
 
-const CHUNK = 64 * 1024
 const quote = (value) => `'${String(value).replaceAll("'", "'\\''")}'`
 const fail = (message) => Object.assign(new Error(message), { status: 409 })
 
@@ -13,16 +19,22 @@ const fail = (message) => Object.assign(new Error(message), { status: 409 })
  */
 export const mounted = (record) => !!record.project && record.runs !== 'folder'
 
-/** Pi stays on the host; a mounted chat's bash calls run in its LayerFS mount. */
+/** A chat's Sandbox name: unique in the home (1–63 of a-z 0-9 _ . -). */
+const sandboxName = (id) => `chat.${String(id).toLowerCase().replace(/[^a-z0-9_.-]/g, '-')}`.slice(0, 63)
+
+/** Pi stays on the host; a mounted chat's bash calls run in its LayerFS Workspace. */
 export class AgentWorkspaces {
   constructor({ projects }) {
     this.projects = projects
-    this.clients = new Map()
     this.queues = new Map()
   }
 
+  get lfs() {
+    return this.projects.lfs
+  }
+
   initial(id) {
-    return { branch: `chat-${id}`, state: 'pending', sandbox: null, path: null, head: null, commitCount: 0, lastSaved: null, error: null }
+    return { branch: `chat-${id}`, state: 'pending', sandbox: null, handle: null, path: null, head: null, commitCount: 0, lastSaved: null, error: null }
   }
 
   async change(record, values, onChange) {
@@ -51,59 +63,44 @@ export class AgentWorkspaces {
     return this.serial(record, () => this.checked(record, onChange, () => this.open(record, onChange)))
   }
 
-  async client(record) {
-    let client = this.clients.get(record.id)
-    if (!client) {
-      client = await this.projects.open(record.project)
-      this.clients.set(record.id, client)
-    }
-    return client
-  }
-
   async open(record, onChange) {
     const ws = record.workspace
-    const client = await this.client(record)
-    const { layerfs } = client
+    const lfs = this.lfs
+    // a LayerFS 1.1.0 chat (a bare project key, numbered Sandboxes) is read-only here
+    const project = await this.projects.record(record.project)
+    const key = project.project
     await this.change(record, { state: 'preparing', error: null }, onChange)
     if (!ws.branchReady) {
-      let found = false
-      for (let page = 0; page !== null;) {
-        const result = await layerfs.project.list_branches(1000, page)
-        found ||= result.items.some((branch) => branch.name === ws.branch)
-        if (found || !result.hasMore) break
-        page = result.nextPagePos ?? (result.items.length ? page + result.items.length : null)
+      try {
+        await lfs.branch.get(key, ws.branch)
+      } catch (error) {
+        if (error.code !== 'NoSuchBranch' && error.code !== 'NotFound') throw error
+        const from = ws.fromRef ?? 'main'
+        // a checkpoint names a Commit or a Layer: fork from it, on main as the carrier Branch
+        await (/^[0-9a-f]{40,}$/.test(from) ? lfs.branch.fork(key, ws.branch, 'main', from) : lfs.branch.fork(key, ws.branch, from))
       }
-      if (!found) await layerfs.branch.fork(ws.branch, ws.fromRef ?? 'main')
       await this.change(record, { branchReady: true }, onChange)
     }
     if (!ws.sandbox) {
-      const { sandbox } = await layerfs.sandbox.create()
-      await this.change(record, { sandbox }, onChange)
+      const name = sandboxName(record.id)
+      const machine = project.kind === 'postgresql' ? 'native' : project.machine
+      await lfs.sandbox.create(key, name, machine)
+      await this.change(record, { sandbox: name }, onChange)
     }
-    let mounts = (await layerfs.sandbox.list_workspaces(ws.sandbox)).items
-    let mount = mounts.find((item) => ws.path ? item.path === ws.path : item.branch === ws.branch)
-    if (ws.path && (!mount || mount.branch !== ws.branch || (ws.workspaceId && mount.workspace !== ws.workspaceId))) {
-      throw fail('This conversation’s LayerFS workspace is no longer available. Its saved branch history is still intact.')
+    if (ws.path) {
+      const mount = (await workspacesOf(lfs, ws.sandbox)).find((w) => w.directory === ws.path)
+      if (!mount || mount.branch !== ws.branch) throw fail('This conversation’s LayerFS workspace is no longer available. Its saved branch history is still intact.')
+    } else {
+      const made = await lfs.workspace.mount(ws.sandbox, ws.branch)
+      await this.change(record, { handle: made.ws, path: made.path ?? made.ws.slice(ws.sandbox.length + 1), head: made.base ?? ws.head, baseLayer: made.base_layer ?? ws.baseLayer }, onChange)
     }
-    if (!mount) {
-      const mounted = await layerfs.workspace.mount(ws.sandbox, ws.branch)
-      await this.change(record, { path: mounted.path }, onChange)
-      mounts = (await layerfs.sandbox.list_workspaces(ws.sandbox)).items
-      mount = mounts.find((item) => item.path === mounted.path)
-    }
-    if (!mount || mount.branch !== ws.branch) throw fail('LayerFS did not report this conversation’s mounted workspace.')
-    await this.change(record, { path: mount.path, workspaceId: mount.workspace, head: mount.base ?? ws.head }, onChange)
-    if (ws.process) {
-      await this.stop(record, client, onChange)
-      await this.save(record, client, 'Save interrupted command changes', onChange)
-    }
-    await this.change(record, { state: 'ready', error: null }, onChange)
-    return client
+    await this.change(record, { handle: ws.handle ?? `${ws.sandbox}:${ws.path}`, state: 'ready', error: null }, onChange)
+    return lfs
   }
 
-  async control(client, ws, command) {
-    const result = await client.layerfs.workspace.exec(ws, command)
-    if (result.exitCode !== 0) throw new Error(result.stderr || result.stdout || `Workspace control command exited ${result.exitCode}.`)
+  async control(ws, command) {
+    const result = await this.lfs.workspace.exec(ws.handle, command)
+    if (result.exit_code !== 0) throw new Error(result.stderr || result.stdout || `Workspace control command exited ${result.exit_code}.`)
     return result.stdout
   }
 
@@ -111,8 +108,8 @@ export class AgentWorkspaces {
   context(record, onChange) {
     record.workspace ??= this.initial(record.id)
     return this.serial(record, async () => {
-      const client = await this.open(record, onChange)
-      const output = await this.control(client, record.workspace,
+      await this.open(record, onChange)
+      const output = await this.control(record.workspace,
         `for file in ${INSTRUCTION_FILES.map(quote).join(' ')}; do if [ -f "$file" ]; then if [ "$(wc -c < "$file")" -gt ${MAX_INSTRUCTION_BYTES} ]; then printf 'Project instructions exceed 1 MiB: %s\\n' "$file" >&2; exit 1; fi; printf '%s\\n' "$file"; base64 < "$file" | tr -d '\\n'; break; fi; done`)
       if (!output) return []
       const separator = output.indexOf('\n')
@@ -120,46 +117,26 @@ export class AgentWorkspaces {
     })
   }
 
-  async stop(record, client, onChange) {
-    const process = record.workspace.process
-    if (!process) return
-    if (!process.id) {
-      const owned = []
-      for (let page = 0; page !== null;) {
-        const result = await client.backend.daemon.process.list(1000, page)
-        owned.push(...result.items.filter((item) => item.path === record.workspace.path && item.command.includes(process.directory)))
-        if (!result.hasMore) break
-        page = result.nextPagePos ?? (result.items.length ? page + result.items.length : null)
-      }
-      if (owned.length !== 1) throw fail('The workspace command’s start could not be confirmed. Its workspace has been retained.')
-      process.id = owned[0].id
-      await onChange?.()
-    }
-    const result = await client.backend.daemon.process.cancel(process.id)
-    if (result.status !== 'stopped') throw fail('The workspace command has not stopped yet. Its changes remain in the workspace; try Stop again.')
-    await this.change(record, { process: null }, onChange)
-  }
-
-  async save(record, client, message, onChange) {
+  async save(record, message, onChange) {
     await this.change(record, { state: 'saving' }, onChange)
-    const result = await client.layerfs.workspace.commit(record.workspace, message)
+    const result = await this.lfs.workspace.commit(record.workspace.handle, { message })
     if (result.kind !== 'Committed' && result.kind !== 'UpToDate') throw new Error(`Unexpected LayerFS commit result: ${result.kind}`)
     await this.change(record, {
-      head: result.head ?? null,
+      head: result.head ?? record.workspace.head ?? null,
       ...(result.kind === 'Committed' ? { commitCount: record.workspace.commitCount + 1, lastSaved: Date.now() } : {}),
       state: 'ready', error: null,
     }, onChange)
   }
 
-  /** A turn boundary names immutable files, including the initial Layer before any Commit. */
+  /** A turn boundary names immutable files: the Workspace's base Commit, or its base Layer before any Commit. */
   checkpoint(record, onChange) {
     record.workspace ??= this.initial(record.id)
     return this.serial(record, () => this.checked(record, onChange, async () => {
-      const client = await this.open(record, onChange)
-      await this.save(record, client, 'Save conversation checkpoint', onChange)
-      const status = await client.backend.daemon.workspace.status(record.workspace)
+      await this.open(record, onChange)
+      await this.save(record, 'Save conversation checkpoint', onChange)
+      const status = await this.lfs.workspace.status(record.workspace.handle)
       const head = status.base ?? null
-      const baseLayer = status.baseLayer
+      const baseLayer = status.base_layer
       if (!baseLayer) throw fail('LayerFS did not report the workspace’s immutable base Layer.')
       await this.change(record, { head, baseLayer }, onChange)
       return { project: record.project, branch: record.workspace.branch, ref: head ?? baseLayer, head, baseLayer }
@@ -199,70 +176,36 @@ export class AgentWorkspaces {
     }))
   }
 
-  /** One bounded output page; the actual command never receives host environment or credentials. */
-  async read(client, ws, run, onData) {
-    const directory = quote(run.directory)
-    const text = await this.control(client, ws,
-      `set -o pipefail; dd if=${directory}/output bs=${CHUNK} skip=${run.offset} count=${CHUNK} iflag=skip_bytes,count_bytes status=none | base64 | tr -d '\\n' || exit; printf '\\n'; if [ -f ${directory}/exit ]; then cat ${directory}/exit; fi`)
-    const [encoded, status] = text.split('\n')
-    const bytes = Buffer.from(encoded, 'base64')
-    if (bytes.length) {
-      await onData?.(bytes)
-      run.offset += bytes.length
-    }
-    return { bytes: bytes.length, exitCode: status === undefined || status === '' ? null : Number(status) }
-  }
-
   exec(record, input, options = {}) {
     record.workspace ??= this.initial(record.id)
     return this.serial(record, () => this.checked(record, options.onChange, () => this.run(record, input, options)))
   }
 
+  /**
+   * One foreground bash command: workspace.exec, its output passed on when it
+   * ends (inline up to 1 MiB a stream, through the sinks above that), then a
+   * Commit. An abort before it starts stops it; one after cannot (a call is
+   * not cancelled; §9 Q2), so the command finishes and is saved.
+   */
   async run(record, { command, agent, toolCallId, timeout }, { signal, onData, onChange }) {
     signal?.throwIfAborted()
-    const client = await this.open(record, onChange)
+    await this.open(record, onChange)
     signal?.throwIfAborted()
     const ws = record.workspace
-    const run = { id: null, directory: `/tmp/connect-command-${randomUUID()}`, offset: 0 }
-    const directory = quote(run.directory)
-    await this.control(client, ws, `mkdir -m 700 -- ${directory} && : > ${directory}/output`)
-    // The first hold prevents the command running before its process identity is saved.
-    // The second keeps that identity alive for SDK cancellation, including any descendants.
-    const wrapper = `while [ ! -f ${directory}/go ]; do sleep 0.05; done\nbash -c ${quote(command)} > ${directory}/output 2>&1\nstatus=$?\nprintf '%s\\n' "$status" > ${directory}/exit\nwhile :; do sleep 3600; done`
-    await this.change(record, { process: run, state: 'running', error: null }, onChange)
-    const started = await client.backend.daemon.process.start(ws, wrapper)
-    run.id = started.process
-    await this.change(record, { process: run, state: 'running', error: null }, onChange)
-    const timed = new AbortController()
-    const timer = timeout > 0 ? setTimeout(() => timed.abort(new Error(`Command timed out after ${timeout} seconds.`)), timeout * 1000) : null
-    const abort = signal ? AbortSignal.any([signal, timed.signal]) : timed.signal
-    let error = null
-    let exitCode = null
-    try {
-      abort.throwIfAborted()
-      await this.control(client, ws, `touch -- ${directory}/go`)
-      while (exitCode === null) {
-        abort.throwIfAborted()
-        const output = await this.read(client, ws, run, onData)
-        exitCode = output.exitCode
-        if (exitCode === null && output.bytes < CHUNK) await pause(120, undefined, { signal: abort })
-      }
-    } catch (cause) {
-      error = abort.aborted ? abort.reason : cause
-    } finally {
-      clearTimeout(timer)
+    await this.change(record, { state: 'running', error: null }, onChange)
+    const wrapped = timeout > 0 ? `if command -v timeout >/dev/null 2>&1; then timeout ${Math.ceil(timeout)} bash -c ${quote(command)}; else bash -c ${quote(command)}; fi 2>&1` : `bash -c ${quote(command)} 2>&1`
+    let streamed = false
+    const sink = (bytes) => {
+      streamed = true
+      void onData?.(Buffer.from(bytes))
     }
-    // A cancelled HTTP request is not evidence that the Sandbox process stopped.
-    // Keep the persisted process when this refuses or returns "stopping".
-    await this.stop(record, client, onChange)
-    if (!error) {
-      try { while ((await this.read(client, ws, run, onData)).bytes === CHUNK) {} } catch (cause) {
-        error = abort.aborted ? abort.reason : cause
-      }
+    const result = await this.lfs.workspace.exec(ws.handle, wrapped, { stdout: sink, stderr: sink })
+    if (!streamed) {
+      const text = `${result.stdout ?? ''}${result.stderr ?? ''}`
+      if (text) await onData?.(Buffer.from(text))
     }
-    await this.save(record, client, `Bash ${agent || 'root'} ${toolCallId || ''}${exitCode === null ? ' (interrupted)' : ` (exit ${exitCode})`}`, onChange)
-    await this.control(client, ws, `rm -rf -- ${directory}`)
-    if (error) throw error
+    const exitCode = typeof result.exit_code === 'number' ? result.exit_code : null
+    await this.save(record, `Bash ${agent || 'root'} ${toolCallId || ''}${exitCode === null ? ' (no exit code)' : ` (exit ${exitCode})`}`, onChange)
     return { exitCode }
   }
 
@@ -274,26 +217,17 @@ export class AgentWorkspaces {
   async close(record, onChange) {
     const ws = record.workspace
     if (!ws || ws.state === 'closed') return
-    if (!ws.sandbox) {
-      await this.clients.get(record.id)?.layerfs.close()
-      this.clients.delete(record.id)
-      await this.change(record, { state: 'closed', error: null }, onChange)
-      return
+    if (ws.sandbox && ws.handle) {
+      await this.save(record, 'Save conversation workspace', onChange)
+      await this.lfs.workspace.unmount(ws.handle)
+      await this.change(record, { handle: null, path: null }, onChange)
     }
-    const client = ws.path ? await this.open(record, onChange) : await this.client(record)
-    if (ws.path) {
-      await this.stop(record, client, onChange)
-      await this.save(record, client, 'Save conversation workspace', onChange)
-      await client.layerfs.workspace.unmount(ws)
-      await this.change(record, { path: null, workspaceId: null }, onChange)
+    if (ws.sandbox) {
+      try { await this.lfs.sandbox.close(ws.sandbox) } catch (error) {
+        if (error.code !== 'NoSuchSandbox' && error.code !== 'NotFound') throw error
+      }
+      await this.change(record, { sandbox: null }, onChange)
     }
-    try { await client.layerfs.sandbox.close(ws.sandbox) } catch (error) {
-      // An empty Sandbox may have completed its idle shutdown since unmount.
-      if (ws.path || ws.process || error.code !== 'NoSuchSandbox') throw error
-    }
-    await this.change(record, { sandbox: null }, onChange)
-    await client.layerfs.close()
-    this.clients.delete(record.id)
     await this.change(record, { state: 'closed', error: null }, onChange)
   }
 }

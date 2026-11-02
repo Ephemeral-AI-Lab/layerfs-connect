@@ -12,7 +12,8 @@
 // (tools/connect-run.mjs); it is removed at exit.
 import { readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { APP, resolveSpec } from './config.js'
+import { dirname } from 'node:path'
+import { APP, layerfsEnv, resolveSpec } from './config.js'
 import { recordNativeDaemon } from './layerfs.js'
 import { AgentManager } from './agents/index.js'
 import { Projects } from './projects.js'
@@ -86,7 +87,9 @@ async function main() {
       log(`[host] scenario chats are off: ${error?.message ?? error}`)
       return null
     })
-  const agents = await AgentManager.create({ state: spec.state, projectEnvironment: (key) => projects.recordOf(key), projectWorkspaces: new AgentWorkspaces({ projects }), scenarios })
+  // agents' shells get the home, the trace settings and the project key only (§8 step 8), and the native CLI on PATH
+  const shellEnv = (key) => ({ ...layerfsEnv(spec), LAYERFS_CONNECT_PROJECT: key, ...(spec.cli ? { PATH: `${dirname(spec.cli)}:${process.env.PATH ?? ''}` } : {}) })
+  const agents = await AgentManager.create({ state: spec.state, projectEnvironment: (key) => projects.recordOf(key), shellEnv, projectWorkspaces: new AgentWorkspaces({ projects }), scenarios })
   const token = newToken()
   // Compute's "Move to…" starts a job in Storage's table, so its progress shows there
   const machines = new Machines({ spec, move: (store, machine) => storage.move(store, machine) })

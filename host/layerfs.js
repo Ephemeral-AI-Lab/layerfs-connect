@@ -33,6 +33,17 @@ export async function pages(read, most = Infinity) {
   return all
 }
 
+/** A Sandbox's Workspaces: every page of sandbox.get (its pages hold `workspaces`, not `items`). */
+export async function workspacesOf(lfs, sandbox) {
+  const all = []
+  for (let pos = 0; pos !== null; ) {
+    const page = await lfs.sandbox.get(sandbox, { page_size: PAGE, page_pos: pos })
+    all.push(...(page.workspaces ?? []))
+    pos = page.next_page_pos ?? null
+  }
+  return all
+}
+
 /** The linked `layerfs` package's version, or null. */
 export function linkedVersion() {
   try {
