@@ -6,7 +6,11 @@ import { t as tr, useI18n } from '@/i18n'
 // Commit, and what each Commit added, by kind. Sandboxes: the Sandboxes open
 // on it, as tiles.
 import type { ProjectState, SandboxInfo, StoreStats } from '@shared/host-api'
-import type { CSSProperties } from 'react'
+import { type CSSProperties, useState } from 'react'
+import { LoaderCircle, Plus } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { host } from '@/host/client'
 
 import { CountUp, spotlight } from '@/components/motion'
 import { SandboxTiles } from '@/components/projects/sandbox-tiles'
@@ -237,7 +241,59 @@ export function ProjectStorageContent({ state, store }: { state: ProjectState; s
   return <StoreCard s={state} store={store} />
 }
 
-function SandboxesCard({ sandboxes, reading, unavailable, onBrowseFiles }: { sandboxes: SandboxInfo[]; reading: boolean; unavailable: boolean; onBrowseFiles?: (branch: string) => void }) {
+/**
+ * New Sandbox: a name unique in the home, prefilled, and an image. A sqlite
+ * project's Sandboxes run on its Store's machine (shown, fixed); a
+ * PostgreSQL project chooses native or docker.
+ */
+function NewSandbox({ project, state, taken, onMade }: { project: string; state: ProjectState; taken: string[]; onMade: () => void }) {
+  const { t } = useI18n()
+  const p = state.project
+  const suggest = () => {
+    const stem = `${p.name}`.replace(/[^a-z0-9_.-]/g, '-').slice(0, 50)
+    for (let n = 1; ; n++) if (!taken.includes(`${stem}-${n}`)) return `${stem}-${n}`
+  }
+  const [open, setOpen] = useState(false)
+  const [name, setName] = useState('')
+  const [image, setImage] = useState('')
+  const [machine, setMachine] = useState('native')
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const postgresql = p.kind === 'postgresql'
+  const make = async () => {
+    setBusy(true)
+    setError(null)
+    try {
+      await host.createSandbox(project, { name: name.trim(), ...(image.trim() ? { image: image.trim() } : {}), ...(postgresql ? { machine } : {}) })
+      setOpen(false)
+      onMade()
+    } catch (e) {
+      setError((e as Error).message)
+    } finally {
+      setBusy(false)
+    }
+  }
+  if (!open) return <Button size="sm" variant="outline" className="h-7 rounded-xl px-2.5 text-xs" onClick={() => { setName(suggest()); setImage(''); setError(null); setOpen(true) }}><Plus className="size-3.5" />{t('New Sandbox')}</Button>
+  return <form className="flex w-full flex-wrap items-end gap-2 border-t border-border/70 px-5 py-3" onSubmit={(e) => { e.preventDefault(); void make() }}>
+    <label className="flex min-w-40 flex-1 flex-col gap-1 text-[11px] text-muted-foreground">{t('Name')}
+      <Input value={name} onChange={(e) => setName(e.target.value)} className="h-8 rounded-xl font-mono text-xs" autoFocus spellCheck={false} /></label>
+    <label className="flex min-w-48 flex-1 flex-col gap-1 text-[11px] text-muted-foreground">{t('Image')}
+      <Input value={image} onChange={(e) => setImage(e.target.value)} placeholder={t('the machine’s image')} className="h-8 rounded-xl font-mono text-xs" spellCheck={false} /></label>
+    <label className="flex flex-col gap-1 text-[11px] text-muted-foreground">{t('Machine')}
+      {postgresql ? (
+        <select value={machine} onChange={(e) => setMachine(e.target.value)} className="h-8 rounded-xl border bg-background px-2 text-xs">
+          <option value="native">native</option>
+          <option value="docker">docker</option>
+        </select>
+      ) : <span className="flex h-8 items-center rounded-xl bg-muted/40 px-2.5 font-mono text-xs" title={t('A sqlite project’s Sandboxes run on its Store’s machine')}>{p.machine ?? '?'}</span>}
+    </label>
+    <Button type="submit" size="sm" className="h-8 rounded-xl" disabled={busy || !name.trim()}>{busy && <LoaderCircle className="size-3.5 animate-spin" />}{t('Create')}</Button>
+    <Button type="button" size="sm" variant="ghost" className="h-8 rounded-xl" onClick={() => setOpen(false)} disabled={busy}>{t('Cancel')}</Button>
+    {error && <p role="alert" className="w-full text-xs text-destructive">{error}</p>}
+  </form>
+}
+
+function SandboxesCard({ sandboxes, reading, unavailable, onBrowseFiles, onChanged, create }: { sandboxes: SandboxInfo[]; reading: boolean; unavailable: boolean; onBrowseFiles?: (branch: string) => void; onChanged?: () => void; create?: React.ReactNode }) {
   const { t } = useI18n()
   const open = sandboxes.filter((sandbox) => sandbox.state !== 'gone')
   const mounted = open.reduce((count, sandbox) => count + sandbox.workspaces.length, 0)
@@ -245,11 +301,15 @@ function SandboxesCard({ sandboxes, reading, unavailable, onBrowseFiles }: { san
   return <section className="glass-liquid overflow-hidden rounded-2xl">
     <header className="flex flex-wrap items-center justify-between gap-3 px-5 py-4">
       <h3 className="text-sm font-semibold">{t('Sandboxes')}</h3>
-      {open.length > 0 && <p className="text-xs text-muted-foreground tabular-nums">
-        {mountsKnown ? t('{sandboxes} active · {workspaces} mounted', { sandboxes: open.length, workspaces: mounted }) : t('{count} active sandboxes', { count: open.length })}
-      </p>}
+      <span className="flex items-center gap-3">
+        {open.length > 0 && <p className="text-xs text-muted-foreground tabular-nums">
+          {mountsKnown ? t('{sandboxes} recorded · {workspaces} mounted', { sandboxes: open.length, workspaces: mounted }) : t('{count} recorded Sandboxes', { count: open.length })}
+        </p>}
+        {create}
+      </span>
     </header>
-    <SandboxTiles sandboxes={sandboxes} reading={reading} unavailable={unavailable} onBrowseFiles={onBrowseFiles} />
+    <GapLine what="A Sandbox’s live state (running, exited) beside its record" className="px-5 pb-3" />
+    <SandboxTiles sandboxes={sandboxes} reading={reading} unavailable={unavailable} onBrowseFiles={onBrowseFiles} onChanged={onChanged} />
   </section>
 }
 
@@ -262,6 +322,7 @@ export function ProjectSandboxesContent({ project, state, tick, onBrowseFiles }:
       <p className="min-w-0 flex-1 break-words text-destructive">{q.error.message}</p>
       <button type="button" onClick={q.reload} disabled={q.loading} className="shrink-0 rounded-lg px-2 py-1.5 font-medium outline-none hover:bg-destructive/5 focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50">{t('Retry')}</button>
     </div>}
-    <SandboxesCard sandboxes={q.data ?? state.sandboxes} reading={q.loading && !q.data} unavailable={!!q.error && !q.data} onBrowseFiles={onBrowseFiles} />
+    <SandboxesCard sandboxes={q.data ?? state.sandboxes} reading={q.loading && !q.data} unavailable={!!q.error && !q.data} onBrowseFiles={onBrowseFiles} onChanged={q.reload}
+      create={<NewSandbox project={project} state={state} taken={(q.data ?? state.sandboxes).map((s) => s.name)} onMade={q.reload} />} />
   </div>
 }
