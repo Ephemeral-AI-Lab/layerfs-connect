@@ -1,16 +1,16 @@
-// New project: a LayerFS project made by Init (POST /api/projects), empty or
-// a copy of a folder. With layerfs#506 a Store holds many projects: the
-// dialog puts it into a local SQLite Store the user picks, or a new one made
-// first. A LayerFS build without Stores (storage().stores.available false, or
-// no Storage view) makes one new Store per project, as before.
+// New project (LayerFS 2.0): Init (POST /api/projects) of a folder or an
+// empty source into an existing Store: a sqlite Store on native, or a
+// PostgreSQL Store (project.init goes nowhere else and never makes a Store),
+// or a new sqlite Store made first on native. Init's progress comes from the
+// host's job table. Once the project is there, the Store can be moved to
+// another machine: the whole Store moves, every project in it.
 import { t, useI18n, getLocale } from '@/i18n'
-import { Database, FilePlus2, FolderOpen, FolderPlus, LoaderCircle, RefreshCw } from 'lucide-react'
+import { Database, FilePlus2, FolderOpen, FolderPlus, LoaderCircle, MoveRight, RefreshCw } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
-import type { ProjectInitJob, ProjectSummary, RemoteInfo, StoreInfo } from '@shared/host-api'
+import type { ProjectInitJob, ProjectSummary, StoreRow } from '@shared/host-api'
 
-import { localStores, useStorageView } from '@/components/projects/store-facts'
-import { StoreIcon, storeProviders } from '@/components/storage/identity/store-icon'
-import { SyncPill } from '@/components/storage/sync/sync-pill'
+import { initStores, useStorageView } from '@/components/projects/store-facts'
+import { StoreIcon } from '@/components/storage/identity/store-icon'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
@@ -25,11 +25,10 @@ interface NewProjectDialogProps {
   onOpenChange: (open: boolean) => void
   onCreated: (project: ProjectSummary) => void
   initialFolder?: string
+  /** The Store to choose first (Storage's "Add project"). */
+  initialStore?: string
 }
 
-const PROJECT_NAME = /^[a-z0-9](?:[a-z0-9_.-]{0,61}[a-z0-9])?$/
-/** Store names (host/storage.js): lowercase letters, digits and hyphens, at most 32. */
-const STORE_NAME = /^[a-z0-9][a-z0-9-]{0,31}$/
 /** The Select value for "make a new Store". */
 const NEW_STORE = '__new__'
 /** The Store a project last went into, so the next one defaults to it. */
@@ -45,15 +44,18 @@ function lastStore(): string | null {
 function rememberStore(name: string) {
   try { localStorage.setItem(LAST_STORE, name) } catch { /* a remembered default only */ }
 }
-const STEPS: Record<ProjectInitJob['step'], string> = {
+/** project.init's steps (its on_progress), then the job's end. */
+const STEPS: Record<string, string> = {
   scan: 'Reading source files…',
-  volume: 'Preparing project storage…',
-  import: 'Initializing project…',
+  files: 'Saving files…',
+  tree: 'Building the tree…',
+  publish: 'Publishing main…',
+  seal: 'Finishing…',
   done: 'Project ready',
   failed: 'Project could not be created',
 }
 
-export function NewProjectDialog({ open, onOpenChange, onCreated, initialFolder = '' }: NewProjectDialogProps) {
+export function NewProjectDialog({ open, onOpenChange, onCreated, initialFolder = '', initialStore }: NewProjectDialogProps) {
   useI18n()
   const [name, setName] = useState('')
   const [source, setSource] = useState<'empty' | 'folder'>('empty')
@@ -67,8 +69,12 @@ export function NewProjectDialog({ open, onOpenChange, onCreated, initialFolder 
   const submitting = useRef(false)
   const chooser = useRef(false)
   const storage = useStorageView()
-  /** Local SQLite Stores; null when the LayerFS build has none (one new Store per project), undefined while read. */
-  const stores = storage === undefined ? undefined : localStores(storage)
+  /** The Stores Init can go into (sqlite on native, PostgreSQL); undefined while read, null without a view. */
+  const stores = storage === undefined ? undefined : initStores(storage)
+  /** The project made, while the optional "Move Store to…" step shows. */
+  const [made, setMade] = useState<ProjectSummary | null>(null)
+  const [moveTo, setMoveTo] = useState('')
+  const [moving, setMoving] = useState(false)
   const [store, setStore] = useState('')
   const [newStore, setNewStore] = useState('')
   const [storeNamed, setStoreNamed] = useState(false)
@@ -81,9 +87,7 @@ export function NewProjectDialog({ open, onOpenChange, onCreated, initialFolder 
     ? null
     : !newStore.trim()
       ? 'Name the new Store.'
-      : !STORE_NAME.test(newStore.trim())
-        ? 'Store names use 1–32 lowercase letters, numbers and hyphens, starting with a letter or number.'
-        : stores.some((item) => item.name === newStore.trim())
+      : stores.some((item) => item.name === newStore.trim())
           ? 'A Store has this name; choose it in the list instead.'
           : null
 
@@ -95,9 +99,11 @@ export function NewProjectDialog({ open, onOpenChange, onCreated, initialFolder 
     setJob(null)
     setError('')
     setPollError('')
-    setStore('')
+    setStore(initialStore ?? '')
     setNewStore('')
     setStoreNamed(false)
+    setMade(null)
+    setMoveTo('')
   }, [open])
 
   // the Store to offer first: the one the last project went into, else the first, else a new one
@@ -111,8 +117,10 @@ export function NewProjectDialog({ open, onOpenChange, onCreated, initialFolder 
   function receive(next: ProjectInitJob) {
     setJob(next)
     if (next.step === 'done' && next.project) {
-      callbacks.current.onOpenChange(false)
       callbacks.current.onCreated(next.project)
+      // a sqlite Store can move on to another machine now; with none but native, there is nowhere to go
+      if (next.project.kind === 'sqlite' && (storage?.machines.length ?? 0) > 1) setMade(next.project)
+      else callbacks.current.onOpenChange(false)
     }
   }
 
@@ -160,8 +168,8 @@ export function NewProjectDialog({ open, onOpenChange, onCreated, initialFolder 
   async function create() {
     if (submitting.current || busy || browsing) return
     const projectName = name.trim()
-    if (!PROJECT_NAME.test(projectName)) {
-      setError('Use 1–63 lowercase letters, numbers, dots, hyphens or underscores. Start and end with a letter or number.')
+    if (!projectName) {
+      setError('Name the project.')
       return
     }
     if (source === 'folder' && !folder.trim()) {
@@ -176,17 +184,13 @@ export function NewProjectDialog({ open, onOpenChange, onCreated, initialFolder 
     setPollError('')
     setJob(null)
     try {
-      // stores === null: a LayerFS build without Stores, where Init makes the project's own
-      let into: string | undefined
-      if (stores) {
-        into = making ? newStore.trim() : store
-        if (making) {
-          await host.createStore(into)
-          setStore(into)
-        }
-        rememberStore(into)
+      const into = making ? newStore.trim() : store
+      if (making) {
+        await host.createStore(into)
+        setStore(into)
       }
-      receive(await host.createProject({ name: projectName, ...(source === 'folder' ? { source: folder.trim() } : {}), ...(into ? { store: into } : {}) }))
+      rememberStore(into)
+      receive(await host.createProject({ name: projectName, store: into, ...(source === 'folder' ? { source: folder.trim() } : {}) }))
     } catch (cause) {
       setError(cause instanceof HostError && cause.status === 404 && cause.code === 'not-found'
         ? 'Connect’s local service needs a restart to enable project creation. Quit and reopen Connect, then try again.'
@@ -200,7 +204,20 @@ export function NewProjectDialog({ open, onOpenChange, onCreated, initialFolder 
   const making = !!stores && store === NEW_STORE
   const chosen = stores?.find((item) => item.name === store)
   const failure = error || (job?.step === 'failed' ? job.error?.message || 'Project initialization failed.' : '')
-  const counts = job?.imported ?? job?.totals ?? job?.scanned
+  const counts = job?.progress
+  const moveStore = async () => {
+    if (!made || !moveTo) return
+    setMoving(true)
+    setError('')
+    try {
+      await host.moveStore(made.store, moveTo)
+      onOpenChange(false)
+    } catch (cause) {
+      setError((cause as Error).message)
+    } finally {
+      setMoving(false)
+    }
+  }
 
   return (
     <Dialog open={open} onOpenChange={(next) => { if (next || canClose) onOpenChange(next) }}>
@@ -252,7 +269,6 @@ export function NewProjectDialog({ open, onOpenChange, onCreated, initialFolder 
               {stores !== null && (
                 <StoreField
                   stores={stores}
-                  remotes={storage?.remotes.list ?? []}
                   value={store}
                   chosen={chosen}
                   newStore={newStore}
@@ -264,8 +280,23 @@ export function NewProjectDialog({ open, onOpenChange, onCreated, initialFolder 
             </fieldset>
             {busy && (
               <div role="status" className="mt-4 rounded-xl border border-primary/10 bg-primary/[0.04] px-3.5 py-3">
-                <p className="flex items-center gap-2 text-xs font-medium"><LoaderCircle className="size-3.5 animate-spin text-primary" />{posting && !job ? t("Starting project…") : job ? t(STEPS[job.step]) : t("Creating project…")}</p>
+                <p className="flex items-center gap-2 text-xs font-medium"><LoaderCircle className="size-3.5 animate-spin text-primary" />{posting && !job ? t("Starting project…") : job ? t(STEPS[job.step] ?? job.step) : t("Creating project…")}</p>
                 {counts && <p className="mt-1.5 pl-5.5 text-[11px] text-muted-foreground tabular-nums">{t("{count} files · {size}", {count: counts.files, size: bytes(counts.bytes)})}</p>}
+              </div>
+            )}
+            {made && (
+              <div className="mt-4 space-y-2.5 rounded-2xl border border-foreground/[0.08] bg-background/40 px-3.5 py-3">
+                <p className="text-xs font-medium">{t("{project} is ready on native.", { project: made.key })}</p>
+                <p className="text-[11px] leading-relaxed text-muted-foreground">{t("Move its Store to another machine? The whole Store moves, every project in it, and their Sandboxes then run there.")}</p>
+                <div className="flex gap-2">
+                  <Select value={moveTo || undefined} onValueChange={setMoveTo}>
+                    <SelectTrigger type="button" className="h-9 flex-1 rounded-xl text-xs"><SelectValue placeholder={t("Keep it on native")} /></SelectTrigger>
+                    <SelectContent>
+                      {(storage?.machines ?? []).filter((m) => m.name !== 'native').map((m) => <SelectItem key={m.name} value={m.name}>{m.name} ({m.platform})</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                  <Button type="button" size="sm" className="h-9 rounded-xl" disabled={!moveTo || moving} onClick={() => void moveStore()}>{moving ? <LoaderCircle className="size-3.5 animate-spin" /> : <MoveRight className="size-3.5" />}{t("Move Store")}</Button>
+                </div>
               </div>
             )}
             {failure && <p role="alert" className="mt-4 break-words rounded-xl bg-destructive/[0.06] px-3.5 py-3 text-xs leading-relaxed text-destructive">{t(failure)}</p>}
@@ -280,13 +311,13 @@ export function NewProjectDialog({ open, onOpenChange, onCreated, initialFolder 
           <div className="flex shrink-0 flex-wrap items-center gap-3 border-t border-foreground/[0.06] bg-background/25 px-6 py-4">
             <span className="mr-auto flex min-w-0 items-center gap-1.5 text-[11px] text-muted-foreground">
               <Database className="size-3.5 shrink-0" />
-              <span className="truncate">{making ? t("New Store {store}", { store: newStore.trim() || '…' }) : chosen ? t("Store {store}", { store: chosen.name }) : t("Local SQLite")}</span>
+              <span className="truncate">{making ? t("New Store {store}", { store: newStore.trim() || '…' }) : chosen ? t("Store {store}", { store: chosen.name }) : t("Choose a Store")}</span>
             </span>
-            <Button type="button" variant="ghost" size="sm" disabled={!canClose} onClick={() => onOpenChange(false)}>{pendingJob ? t("Close") : t("Cancel")}</Button>
-            {pollError ? (
+            <Button type="button" variant="ghost" size="sm" disabled={!canClose || moving} onClick={() => onOpenChange(false)}>{pendingJob || made ? t("Close") : t("Cancel")}</Button>
+            {made ? null : pollError ? (
               <Button type="button" size="sm" className="rounded-xl px-3.5" onClick={() => { setPollError(''); setPollAttempt((value) => value + 1) }}><RefreshCw className="size-3.5" />{t("Check status")}</Button>
             ) : (
-              <Button type="submit" size="sm" className="rounded-xl px-3.5" disabled={busy || browsing || !name.trim() || stores === undefined}>{busy && <LoaderCircle className="size-3.5 animate-spin" />}{busy ? t("Creating…") : t("Create project")}</Button>
+              <Button type="submit" size="sm" className="rounded-xl px-3.5" disabled={busy || browsing || !name.trim() || !stores || (!making && !store)}>{busy && <LoaderCircle className="size-3.5 animate-spin" />}{busy ? t("Creating…") : t("Create project")}</Button>
             )}
           </div>
         </form>
@@ -296,18 +327,17 @@ export function NewProjectDialog({ open, onOpenChange, onCreated, initialFolder 
 }
 
 interface StoreFieldProps {
-  stores: StoreInfo[] | undefined
-  remotes: RemoteInfo[]
+  stores: StoreRow[] | undefined
   value: string
-  chosen: StoreInfo | undefined
+  chosen: StoreRow | undefined
   newStore: string
   problem: string | null
   onChange: (value: string) => void
   onNewStore: (value: string) => void
 }
 
-/** Where the project goes: a local SQLite Store (its mark, projects, size and sync state), or a new one named here. */
-function StoreField({ stores, remotes, value, chosen, newStore, problem, onChange, onNewStore }: StoreFieldProps) {
+/** Where the project goes: a sqlite Store on native or a PostgreSQL Store (its mark, projects and size), or a new sqlite Store named here. */
+function StoreField({ stores, value, chosen, newStore, problem, onChange, onNewStore }: StoreFieldProps) {
   useI18n()
   const making = value === NEW_STORE
   const pending = value && !making && !chosen ? value : null
@@ -325,7 +355,7 @@ function StoreField({ stores, remotes, value, chosen, newStore, problem, onChang
                   <span className="flex min-w-0 items-center gap-2"><FolderPlus className="size-3.5 shrink-0 text-(--icon-accent)" /><span className="truncate">{t("New SQLite Store")}</span></span>
                 ) : (
                   <span className="flex min-w-0 items-center gap-2">
-                    <StoreIcon family="sqlite" providers={chosen ? storeProviders(chosen, remotes) : []} size="sm" className="[&>span]:size-6" />
+                    <StoreIcon family={chosen?.kind ?? 'sqlite'} size="sm" className="[&>span]:size-6" />
                     <span className="truncate">{value}</span>
                   </span>
                 )}
@@ -337,14 +367,13 @@ function StoreField({ stores, remotes, value, chosen, newStore, problem, onChang
           <SelectGroup className="p-1.5">
             {stores?.map((item) => (
               <SelectItem key={item.name} value={item.name} textValue={item.name} className="rounded-xl py-2 pr-8 pl-2.5 data-[state=checked]:bg-primary/[0.07] [&>span:last-child]:min-w-0 [&>span:last-child]:flex-1">
-                <StoreIcon family="sqlite" providers={storeProviders(item, remotes)} size="sm" />
+                <StoreIcon family={item.kind} size="sm" />
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-xs font-medium">{item.name}</span>
                   <span className="mt-0.5 block truncate text-[10.5px] text-muted-foreground tabular-nums">
-                    {t(item.projects.length === 1 ? "{count} project" : "{count} projects", { count: item.projects.length })} · {item.size ? bytes(item.size.bytes) : t("size unknown")}
+                    {t(item.projects.length === 1 ? "{count} project" : "{count} projects", { count: item.projects.length })} · {item.kind === 'postgresql' ? 'PostgreSQL' : item.size ? bytes(item.size.bytes) : t("size unknown")}
                   </span>
                 </span>
-                <SyncPill state={item.sync.state} copy={item.link} compact className="shrink-0" />
               </SelectItem>
             ))}
             {pending && (
@@ -362,14 +391,14 @@ function StoreField({ stores, remotes, value, chosen, newStore, problem, onChang
         <>
           <Input aria-label={t("New Store name")} value={newStore} maxLength={32} autoComplete="off" spellCheck={false} placeholder={t("my-store")} aria-invalid={!!problem} className="h-9 rounded-xl text-xs md:text-xs" onChange={(event) => onNewStore(event.target.value)} />
           <p className={cn('text-[11px] leading-relaxed', problem ? 'text-destructive' : 'text-muted-foreground')}>
-            {problem ? t(problem) : t("A new SQLite Store in its own Docker volume; more projects can join it later.")}
+            {problem ? t(problem) : t("A new sqlite Store on native; more projects can join it later, and it can move to any machine.")}
           </p>
         </>
       ) : chosen ? (
         <p className="text-[11px] leading-relaxed text-muted-foreground">
-          {chosen.link
-            ? t("It shares {store}’s file and its link: pushes to {remote} / {file} carry every project in it.", { store: chosen.name, remote: chosen.link.remote, file: chosen.link.file })
-            : t("It shares {store}’s file: a push or pull moves every project in it.", { store: chosen.name })}
+          {chosen.kind === 'postgresql'
+            ? t("It goes into the database {store}; its Sandboxes run on native or docker.", { store: chosen.name })
+            : t("It shares {store}’s file: a move or backup carries every project in it.", { store: chosen.name })}
         </p>
       ) : null}
     </div>
