@@ -49,7 +49,7 @@ import { EventEmitter } from 'node:events'
 import { existsSync, readFileSync, renameSync, statSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { performance } from 'node:perf_hooks'
-import { VOLUMES } from './config.js'
+const VOLUMES = '/var/lib/docker/volumes'
 import { Checks, JobSampler, timeOf } from './storage-checks.js'
 import { linkInfo, storeSync } from './storage-sync.js'
 

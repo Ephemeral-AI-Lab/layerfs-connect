@@ -77,7 +77,7 @@ export function NewDialog({ open, onOpenChange, tab, onTab, reload, reveal }: Ne
     close()
     s.open(route)
   }
-  const free = s.status?.disk.volumes ?? null
+  const free = null
   const taken = new Set(s.view.stores.list.map((x) => x.name))
   const created = useCallback(
     (name: string) => {

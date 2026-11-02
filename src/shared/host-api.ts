@@ -5,43 +5,26 @@
 
 // ---------- Deployment and status ----------
 
+/** GET /api/status: Connect on its one LayerFS 2.0 home. There is no worker to start: machines start on the first call that needs them. */
 export interface HostStatus {
   platform: 'linux' | 'macos' | 'windows'
-  /** Where this home's Stores and Sandboxes live: `local`, or `vm:<provider>` (one Linux VM per project). Absent from a host built against an older LayerFS. */
-  placement?: string
-  /** Settings LayerFS still needs before Init and Workspaces work (image, daemon, bundle, host). */
-  missing: string[]
-  /** `not-used` on a `vm:` placement: that home's Stores and Sandboxes are inside each project's VM. */
-  docker: { level: 'ok' | 'down' | 'not-used' | string; version?: string | null; error?: string | null; detail?: string | null }
-  worker: { name: string; state: string; build?: string | null; error?: string | null; answering?: boolean; expected?: string | null } | null
-  disk: { home: number | null; volumes: number | null }
+  /** The linked `layerfs` package's version. */
+  layerfs: string | null
   settings: {
     state: string
+    /** The LayerFS home (LAYERFS_HOME). */
     home: string
-    image: string | null
-    bundle: string | null
-    containerPrefix: string
-    docker: string
+    /** The native `layerfs` binary agents' shells run, when found. */
+    cli: string | null
   }
-  /** LayerFS's sweep of stopped Sandboxes at open, as it reports it. */
-  sweep?: unknown
-  /** runtime.status().platforms (layerfs#529): every Sandbox platform and whether this home allows it and is ready for it. Absent from a host built against an older LayerFS. */
-  platforms?: PlatformInfo[]
+  /** macOS: whether the native machine has its daemon recorded (null elsewhere). */
+  daemon: { recorded: boolean; why: string | null } | null
+  machines: { name: string; platform: string; state: string | null }[]
+  stores: number
 }
 
-/** What a Sandbox runs on (layerfs#529): `sandbox.create({ platform })`. `linux` is Linux namespaces on a Linux host; there is no `windows` (a Windows Sandbox is `docker` through WSL2). */
+/** A Sandbox's platform as sandbox.create records it (`mac` for a native macOS Sandbox). */
 export type SandboxPlatform = 'docker' | 'mac' | 'linux' | 'apple-container' | 'microsandbox' | 'lima' | 'firecracker' | 'ssh'
-
-/** One entry of runtime.status().platforms. */
-export interface PlatformInfo {
-  id: SandboxPlatform
-  /** This home can make Sandboxes on it (a VM home allows its provider only). */
-  allowed: boolean
-  /** Allowed and nothing missing. */
-  ready: boolean
-  /** What it still needs: the names `missing` uses, `tool:<cli>` or `host:<need>`. Empty when not allowed. */
-  missing: string[]
-}
 
 /** How a Sandbox runs: a Docker container, a host process (native), or Linux namespaces in a machine's VM. */
 export type SandboxRuntime = 'docker' | 'native' | 'namespaces'

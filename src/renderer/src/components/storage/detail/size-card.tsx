@@ -27,7 +27,7 @@ const LABEL = 'text-[10.5px] font-semibold tracking-wider text-muted-foreground/
 export function SizeCard({ store, index }: { store: StoreInfo; index?: number }) {
   useI18n()
   const s = useStorage()
-  const free = s.status?.disk.volumes ?? null
+  const free = null
   const { need, short } = pushRoom(store, free)
   const staging = s.transfers.runningFor(store.name)
   const at = need !== null && free !== null && free > 0 ? Math.min(1, need / free) : null

@@ -26,22 +26,15 @@ const STATUS = {
   NoSuchBranch: 404,
   NoSuchCommit: 404,
   NoSuchSandbox: 404,
-  NoSuchProcess: 404,
+  NoSuchStore: 404,
+  NotFound: 404,
   Busy: 409,
   Conflict: 409,
   Exists: 409,
-  NameTaken: 409,
-  MountsActive: 409,
-  NotComparable: 409,
-  // layerfs#509: one link per Store
-  Linked: 409,
-  NotLinked: 409,
+  HeadMoved: 409,
+  Dirty: 409,
+  ReadOnly: 409,
   InUse: 409,
-  NoSuchStore: 404,
-  NotFound: 404,
-  NoSuchRemote: 404,
-  // a remote's failures (pull, load, files)
-  NoSuchFile: 404,
   Denied: 403,
   Unavailable: 502,
   Unsupported: 501,
@@ -155,39 +148,36 @@ export function createHandler(deps) {
       if (id && sub === 'stores' && method === 'POST') return machines.moveStore(body?.store, id)
     }
     if (group === 'status' && !id && method === 'GET') return projects.status()
-    if (group === 'worker' && id === 'start' && !sub && method === 'POST') return projects.startWorker()
+    // `id` is a project key, `<store>/<project>`, sent as one encoded segment
     if (group === 'projects') {
       if (!id) {
         if (method === 'GET') return projects.list()
         if (method === 'POST') return projects.create(body)
         return undefined
       }
-      // layerfs#506: ?store= names the Store when the project's name is in several;
-      // without it the calls are made exactly as before Stores held several projects
-      const store = query.get('store') || null
-      const at = (...args) => (store ? [...args, store] : args)
-      if (!sub && method === 'GET') return projects.state(...at(id))
+      if (!sub && method === 'GET') return projects.state(id)
       if (!sub && method === 'DELETE') {
         const manager = agents()
-        if (!manager) return projects.remove(...at(id))
-        // agents' sessions name their project by key (`store/name` in a shared Store)
-        const found = store ? await projects.record(id, store) : null
-        const key = found?.shared ? `${store}/${id}` : id
-        return manager.removeProject(key, () => projects.remove(...at(id)))
+        return manager ? manager.removeProject(id, () => projects.remove(id)) : projects.remove(id)
       }
-      // a new Sandbox (layerfs#529): { platform } names its platform; left out, the home's default
-      if (sub === 'sandboxes' && method === 'POST') return projects.createSandbox(...at(id, body?.platform ?? null))
+      // a new Sandbox: { name, image?, machine? (PostgreSQL projects only) }
+      if (sub === 'sandboxes' && method === 'POST') return projects.createSandbox(id, body ?? {})
+      // closes every Sandbox of the project: { force? }
+      if (sub === 'close-sandboxes' && method === 'POST') return projects.closeSandboxes(id, { force: body?.force === true })
       if (method !== 'GET') return undefined
       const branch = query.get('branch') ?? 'main'
-      if (sub === 'commits') return projects.commits(...at(id, branch, query.get('limit')))
+      if (sub === 'commits') return projects.commits(id, branch, query.get('limit'))
       // several Branches' Commits in one call: ?branch=a&branch=b
-      if (sub === 'branch-commits') return projects.branchCommits(id, query.getAll('branch'), store)
-      // the Sandboxes with their mounted Workspaces: the one read that asks Sandbox daemons
-      if (sub === 'sandboxes') return projects.sandboxes(...at(id))
-      if (sub === 'fs') return projects.listDir(...at(id, branch, query.get('path') ?? '/'))
-      if (sub === 'file') return projects.file(...at(id, branch, query.get('path')))
+      if (sub === 'branch-commits') return projects.branchCommits(id, query.getAll('branch'))
+      // the Sandboxes with their Workspaces (sandbox.get each)
+      if (sub === 'sandboxes') return projects.sandboxes(id)
+      if (sub === 'fs') return projects.listDir(id, branch, query.get('path') ?? '/')
+      if (sub === 'file') return projects.file(id, branch, query.get('path'))
       return undefined
     }
+    // sandbox.close(name, { force }): ?force=1
+    if (group === 'sandboxes' && id && !sub && method === 'DELETE') return projects.closeSandbox(id, { force: query.get('force') === '1' })
+    if (group === 'project-inits' && !id && method === 'GET') return projects.initJobs()
     if (group === 'project-inits' && id && !sub && method === 'GET') return projects.init(id)
     if (group === 'demos') {
       if (!id && method === 'GET') return engine().demos()

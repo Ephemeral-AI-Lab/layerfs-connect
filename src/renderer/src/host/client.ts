@@ -24,7 +24,6 @@ import type {
   SyncJob,
   SynchronousCommit,
 } from '@shared/host-api'
-import { projectRef } from '@shared/host-api'
 
 export class HostError extends Error {
   constructor(
@@ -92,14 +91,8 @@ const q = (params: Record<string, string | number | undefined>) => {
   return s ? `?${s}` : ''
 }
 const enc = encodeURIComponent
-/**
- * A project key's route and Store (layerfs#506): `store/name` (ProjectSummary.key
- * of a project in a shared Store) sends `?store=`; a bare name sends none.
- */
-const at = (project: string) => {
-  const { name, store } = projectRef(project)
-  return { path: `/api/projects/${enc(name)}`, store: store ?? undefined }
-}
+/** A project key's route: `<store>/<project>` as one encoded segment. */
+const at = (project: string) => ({ path: `/api/projects/${enc(project)}`, store: undefined })
 
 /** Fires when the LayerFS projects change from this app: an Init ended, a project or Store was removed, a sync job ended. */
 const projectsEvents = new EventTarget()
@@ -114,7 +107,6 @@ const projectsChanged = <T>(value: T): T => {
 
 export const host = {
   status: () => call<HostStatus>('GET', '/api/status'),
-  startWorker: () => call<HostStatus>('POST', '/api/worker/start'),
   /** Compute's machines (layerfs#533); `available: false` on a LayerFS with none. */
   machines: () => call<MachinesView>('GET', '/api/machines'),
   /** A VM, or (platform `ssh`) an ssh host. */

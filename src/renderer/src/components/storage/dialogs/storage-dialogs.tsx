@@ -95,7 +95,7 @@ export function StorageDialogs({ dialog: d, setDialog, started, reveal, reload }
           view={view}
           remote={d.remote}
           file={d.file}
-          free={s.status?.disk.volumes ?? null}
+          free={null}
           onDone={reveal}
           onOpenStore={(store) => {
             setDialog(null)

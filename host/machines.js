@@ -6,46 +6,17 @@
 // start on the first call that needs them and stop after 10 idle minutes, so
 // there are no start or stop calls.
 //
-// Connect links the 2.0 package (`layerfs`, with `client({ home })` and the
-// machine family) when it is built against it. Linked to an older LayerFS
-// (@layerfs/runtime 1.x), there is none: the view says so, with no sample
-// data, and every action is refused Unsupported.
-//
 // The view (MachinesView, src/shared/host-api.ts) is machine.list() as 2.0
 // answers it, with store.list(), sandbox.list() and each VM's
-// machine.status(), so the page needs one read.
-import { readFileSync } from 'node:fs'
-import { createRequire } from 'node:module'
+// machine.status(), so the page needs one read. Every call goes through the
+// host's one client (layerfs.js).
+import { table } from 'layerfs'
+import { layerfs, linkedVersion, pages } from './layerfs.js'
 
 const BUILT_IN = new Set(['native', 'docker'])
 const SSH = 'ssh'
 
 const refuse = (code, message) => Object.assign(new Error(message), { code })
-
-/** The linked LayerFS's version (@layerfs/runtime 1.x, or `layerfs` 2.x), or null. */
-export function linkedVersion() {
-  const require = createRequire(import.meta.url)
-  for (const name of ['layerfs/package.json', '@layerfs/runtime/package.json']) {
-    try {
-      return JSON.parse(readFileSync(require.resolve(name), 'utf8')).version ?? null
-    } catch {
-      /* not linked under this name */
-    }
-  }
-  return null
-}
-
-/** The 2.0 package when it is linked and has machines, else null. */
-export async function loadLayerfs2() {
-  try {
-    const mod = await import('layerfs')
-    const client = mod.client ?? mod.default?.client
-    const table = mod.table ?? mod.default?.table ?? []
-    return typeof client === 'function' ? { client, table } : null
-  } catch {
-    return null
-  }
-}
 
 const list = (value) => (Array.isArray(value) ? value : Array.isArray(value?.items) ? value.items : [])
 const text = (value) => (typeof value === 'string' && value ? value : null)
@@ -96,16 +67,18 @@ export const statusOf = (s) => ({ name: String(s.name), state: text(s.state), fr
  * The machines view and its calls.
  * @param {object} options
  * @param {object} options.spec config.js's resolved spec (its `home`)
- * @param {() => Promise<{ client: Function, table?: object[] } | null>} [options.load] the 2.0 package and its call table (tests pass a stand-in)
+ * @param {object} [options.client] a LayerFS client (tests pass a stand-in)
+ * @param {object[]} [options.calls] the call table (tests pass a stand-in)
  * @param {() => string | null} [options.version] the linked LayerFS's version
+ * @param {(store: string, machine: string) => Promise<object>} [options.move] starts a Store move in the host's job table (storage.js)
  */
 export class Machines {
-  constructor({ spec, load = loadLayerfs2, version = linkedVersion }) {
+  constructor({ spec, client = null, calls = table, version = linkedVersion, move = null }) {
     this.spec = spec
-    this.load = load
+    this.lfs = client ?? layerfs(spec)
+    this.table = calls
     this.version = version
-    this.lfs = null
-    this.table = []
+    this.move = move
   }
 
   /** Whether the linked call `family.call` takes option `name`. */
@@ -113,31 +86,18 @@ export class Machines {
     return this.table.some((c) => c.family === family && c.call === call && (c.options ?? []).some((o) => o.name === name))
   }
 
-  /** A 2.0 client of this home, or null on an older LayerFS. */
-  async client() {
-    if (this.lfs) return this.lfs
-    const mod = await this.load()
-    if (!mod) return null
-    this.table = Array.isArray(mod.table) ? mod.table : []
-    this.lfs = mod.client({ home: this.spec.home })
-    return this.lfs
-  }
-
   async need() {
-    const lfs = await this.client()
-    if (!lfs?.machine) throw refuse('Unsupported', `machines need Connect on LayerFS 2.0; this Connect links LayerFS ${this.version() ?? 'of an unknown version'}`)
-    return lfs
+    return this.lfs
   }
 
   /** MachinesView. */
   async view() {
-    const lfs = await this.client()
-    if (!lfs?.machine?.list) return { available: false, layerfs: this.version(), reason: 'This LayerFS has no machines: they come with LayerFS 2.0.' }
+    const lfs = this.lfs
     const listed = await lfs.machine.list()
     const machines = list(listed.machines).map(machineOf)
     const [stores, sandboxes, statuses] = await Promise.all([
       lfs.store.list().then((r) => list(r).map(storeOf).filter(Boolean), () => []),
-      lfs.sandbox.list().then((r) => list(r).map(sandboxOf), () => []),
+      pages((p) => lfs.sandbox.list(p)).then((r) => r.map(sandboxOf), () => []),
       // a stopped VM answers without being started; docker's gives its VM's free disk, native has none to give
       Promise.all(machines.filter((m) => m.platform !== 'native').map((m) => lfs.machine.status(m.name).then(statusOf, (e) => ({ name: m.name, state: 'down', freeDisk: null, toolVersion: null, down: e?.message ?? String(e) })))),
     ])
@@ -179,11 +139,10 @@ export class Machines {
     return lfs.machine.update(name, pick(body ?? {}, ['cpus', 'memory', 'image', 'docker', 'wsl']))
   }
 
-  /** Moves a sqlite Store to `machine`. */
+  /** Moves a sqlite Store to `machine`: a job in the host's table when it has one (its progress shows on Storage). */
   async moveStore(store, machine) {
-    const lfs = await this.need()
     if (!store || !machine) throw refuse('InvalidInput', 'a move needs a Store and a machine')
-    return lfs.store.move(store, machine)
+    return this.move ? this.move(store, machine) : this.lfs.store.move(store, machine)
   }
 }
 

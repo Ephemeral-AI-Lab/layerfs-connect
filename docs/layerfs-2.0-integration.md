@@ -142,6 +142,9 @@ filed as a LayerFS question (§9). A live check on this Mac passes, covering:
       from `LAYERFS_DAEMON` (`home/import_env.rs`, read back by `family/deploy.rs::daemon`). Connect
       records it once on a fresh home by running the CLI's `import-env` with only `LAYERFS_HOME` and
       `LAYERFS_DAEMON` set.
+    - *Corrected:* `target/debug/layerfs-daemon` is dated 10:08, not 12:59. No source under `core/`
+      or the daemon-side engine crates changed after 10:08 (only docs), so it matches
+      `0b8ae8af5f`'s source. It runs native Sandboxes on a fresh home (checked 2026-11-02).
   - All three outputs (addon, CLI, daemon) are from `e9c0e793d3` and match `0b8ae8af5f`'s source.
     Don't remove or move the 2.0 worktree; if it changes commit, stop and ask.
 - **Finding the CLI binary.** Connect needs a dev setting for the CLI binary's path: the 1.1.0 `API`
@@ -150,7 +153,14 @@ filed as a LayerFS question (§9). A live check on this Mac passes, covering:
 ## 6. Home and migration
 
 - **What Connect keeps:** `LAYERFS_CONNECT_STATE` (`<state>`: runs, `host.json`, agent state), and
-  `<state>/home` as the LayerFS home, passed to `client({ home })` and to agents as `LAYERFS_HOME`.
+  `<state>/home-2` as the LayerFS home, passed to `client({ home })` and to agents as `LAYERFS_HOME`.
+  - *Owner, 2026-11-02:* the default `<state>` stays `~/.layerfs-connect`, whose `home` is the 1.1.0
+    home. The 2.0 home is the new folder `<state>/home-2`; `<state>/home` is left as it is. The host
+    refuses a non-empty home folder that has no 2.0 `layerfs.json`, so no 1.1.0 home is handed to
+    2.0 (whose first call would convert it).
+  - Dev settings, from the environment only: `LAYERFS_CONNECT_CLI` (the native `layerfs`; default:
+    the linked package's checkout's `target/debug/layerfs`) and `LAYERFS_CONNECT_DAEMON` (default:
+    beside the CLI).
 - **What Connect drops:**
   - every other `settings.json` key and its `LAYERFS_CONNECT_*` mirror;
   - `deploymentEnv`, `layerfsEnv`, `withProjectEnv`;

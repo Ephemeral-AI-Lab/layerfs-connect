@@ -44,18 +44,6 @@ importers:
       '@fontsource-variable/inter':
         specifier: 5.3.0
         version: 5.3.0
-      '@layerfs/agent':
-        specifier: link:../layerfs/.claude/worktrees/connect-main/api/agent
-        version: link:../layerfs/.claude/worktrees/connect-main/api/agent
-      '@layerfs/backend':
-        specifier: link:../layerfs/.claude/worktrees/connect-main/api/backend
-        version: link:../layerfs/.claude/worktrees/connect-main/api/backend
-      '@layerfs/cli':
-        specifier: link:../layerfs/.claude/worktrees/connect-main/api/cli
-        version: link:../layerfs/.claude/worktrees/connect-main/api/cli
-      '@layerfs/runtime':
-        specifier: link:../layerfs/.claude/worktrees/connect-main/api/runtime
-        version: link:../layerfs/.claude/worktrees/connect-main/api/runtime
       '@lezer/highlight':
         specifier: 1.2.5
         version: 1.2.5
@@ -68,6 +56,9 @@ importers:
       entities:
         specifier: 9.0.0
         version: 9.0.0
+      layerfs:
+        specifier: link:../layerfs-issue533-v2/api/node
+        version: link:../layerfs-issue533-v2/api/node
       lucide-react:
         specifier: 1.61.0
         version: 1.61.0(@types/react@19.3.0)(react@19.3.1)
@@ -1583,11 +1574,6 @@ packages:
 
   ajv-formats@3.0.1:
     resolution: {integrity: sha512-8iUql50EUR+uUcdRQ3HDqa6EVyo3docL8g5WJ3FNcWmu62IbkGUue/pEyLBW8VGKKucTPgqeks4fIU1DA4yowQ==}
-    peerDependencies:
-      ajv: ^8.0.0
-    peerDependenciesMeta:
-      ajv:
-        optional: true
 
   ajv@8.20.0:
     resolution: {integrity: sha512-Thbli+OlOj+iMPYFBVBfJ3OmCAnaSyNn4M1vz9T6Gka5Jt9ba/HIR56joy65tY6kx/FCF5VXNB819Y7/GUrBGA==}

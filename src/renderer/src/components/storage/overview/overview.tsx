@@ -10,7 +10,6 @@ import { Empty, LoadError } from '@/components/projects/states'
 import { count, type NewTab, useStorage } from '@/components/storage/actions'
 import { Mark } from '@/components/storage/icons'
 import { LOW_DISK } from '@/components/storage/meters'
-import { Notice } from '@/components/storage/notice'
 import { attentionOf, StoreCard } from '@/components/storage/overview/store-card'
 import { totalText } from '@/components/storage/size'
 import { isFailed, isRunning } from '@/components/storage/transfers/phases'
@@ -42,7 +41,7 @@ interface OverviewProps {
 export function Overview({ error, onRetry, trayHidden, setTrayHidden, loadedProjects }: OverviewProps) {
   useI18n()
   const s = useStorage()
-  const { view, status, transfers } = s
+  const { view, transfers } = s
   const [query, setQuery] = useState('')
 
   const all = view.stores.list
@@ -60,9 +59,6 @@ export function Overview({ error, onRetry, trayHidden, setTrayHidden, loadedProj
     .filter((x): x is Row => x !== null)
     .sort((a, b) => rank(a.store) - rank(b.store) || a.store.name.localeCompare(b.store.name))
 
-  const lowDisk = !!status && [status.disk.home, status.disk.volumes].some((n) => n !== null && n < LOW_DISK)
-  const worker = status?.worker
-  const workerDown = !!worker && worker.state !== 'starting' && (worker.state !== 'running' || !!worker.error)
   const nothing = view.stores.available && !all.length
   const reading = !view.stores.available && !loadedProjects
 
@@ -77,25 +73,6 @@ export function Overview({ error, onRetry, trayHidden, setTrayHidden, loadedProj
     <>
       {!error && !nothing && <FactsLine query={query} onQuery={setQuery} showSearch={all.length >= SEARCH_FROM || !!query} />}
       {!trayHidden && trayJobs.length > 0 && <TransferTray transfers={{ ...transfers, shown: trayJobs }} onHide={hideTray} actionsFor={s.refusalActions} />}
-      {workerDown && (
-        <Notice
-          tone="warning"
-          icon={TriangleAlert}
-          title={t('The LayerFS box is down')}
-          actions={
-            <Button size="sm" variant="outline" className="rounded-xl" onClick={() => s.open({ view: 'machine' })}>
-              {t('This machine')}
-            </Button>
-          }
-        >
-          {t('SQLite Stores can’t be read or moved until it runs.')}
-        </Notice>
-      )}
-      {lowDisk && (
-        <Notice tone="warning" icon={TriangleAlert} title={t('Disk space is low')}>
-          {t('Init and Commits write into the Store volumes, and a push stages a file beside its Store; a full disk fails them.')}
-        </Notice>
-      )}
       <BuildLine />
       {error ? (
         <LoadError error={error} what={t('the storage')} onRetry={onRetry} />
@@ -146,8 +123,7 @@ function FactsLine({ query, onQuery, showSearch }: { query: string; onQuery: (q:
   const all = s.view.stores.list
   const known = all.filter((x) => x.size)
   const total = known.reduce((n, x) => n + x.size!.bytes, 0)
-  const st = s.status
-  const free = st ? [st.disk.home, st.disk.volumes].filter((n): n is number => n !== null) : []
+  const free: number[] = []
   const low = free.length > 0 && Math.min(...free) < LOW_DISK
   const link = 'rounded-md outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring'
   const dot = (
@@ -164,7 +140,7 @@ function FactsLine({ query, onQuery, showSearch }: { query: string; onQuery: (q:
         {dot}
         <button type="button" onClick={() => s.open({ view: 'machine' })} className={cn(link, 'inline-flex items-center gap-1.5', low && 'font-medium text-warning')}>
           <HardDrive aria-hidden="true" className="size-3.5" />
-          {st?.docker.level !== 'ok' && st ? t('Docker is not answering') : free.length ? t('{size} free on this machine', { size: bytes(Math.min(...free)) }) : t('This machine')}
+          {free.length ? t('{size} free on this machine', { size: bytes(Math.min(...free)) }) : t('This machine')}
         </button>
         <ConnectionsMenu dot={dot} link={link} />
       </p>

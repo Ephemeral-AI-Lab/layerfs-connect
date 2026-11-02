@@ -1,22 +1,22 @@
 // The Connect host's entry (README.md, "Process protocol"):
-//   node --import ./host/resolve-layerfs.js host/main.js [--state <dir>] [--port <n>]
-// It resolves Connect's settings, opens the LayerFS runtime, starts the
-// home's worker in the background when it can and it is not running (a
-// failed start is reported in status, the host keeps serving), loads the
-// demo engine (runs/) and serves HTTP on 127.0.0.1. Once it listens it
-// prints one line on stdout, {"ready":true,"url","token"}, or
-// {"ready":false,"error"} and exits 1. Logs go to stderr. It exits when
-// stdin closes or on SIGTERM, closing the runtime first; it never stops the
-// worker. While it serves, <state>/host.json (owner-only) holds the same
-// url and token and its pid, so tools on this machine can drive the running
-// app's host (tools/connect-run.mjs); it is removed at exit.
+//   node host/main.js [--state <dir>] [--port <n>]
+// It resolves Connect's state and its LayerFS 2.0 home, makes the one
+// LayerFS client (layerfs.js), records the macOS native daemon on the home
+// once, loads the demo engine (runs/) and serves HTTP on 127.0.0.1. There
+// is no runtime to open and no worker to start: machines start on the first
+// call that needs them. Once it listens it prints one line on stdout,
+// {"ready":true,"url","token"}, or {"ready":false,"error"} and exits 1. Logs
+// go to stderr. It exits when stdin closes or on SIGTERM. While it serves,
+// <state>/host.json (owner-only) holds the same url and token and its pid,
+// so tools on this machine can drive the running app's host
+// (tools/connect-run.mjs); it is removed at exit.
 import { readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { APP, openRuntime, resolveSpec } from './config.js'
+import { APP, resolveSpec } from './config.js'
+import { recordNativeDaemon } from './layerfs.js'
 import { AgentManager } from './agents/index.js'
 import { Projects } from './projects.js'
 import { AgentWorkspaces } from './agents/workspaces.js'
-import { AgentScenarios } from './agents/scenarios.js'
 import { createHostServer, listen, newToken } from './server.js'
 import { Machines } from './machines.js'
 import { Storage } from './storage.js'
@@ -70,22 +70,22 @@ function liveOwner(file) {
 async function main() {
   const args = parseArgs(process.argv.slice(2))
   const spec = args.state ? resolveSpec(args.state) : resolveSpec()
-  const runtime = await openRuntime(spec)
+  // §5: the native machine's daemon, once per home (a value already recorded is kept)
+  const daemon = await recordNativeDaemon(spec)
+  if (!daemon.recorded && !daemon.kept && daemon.why !== 'not macOS') log(`[host] the native daemon is not recorded: ${daemon.why}`)
   const engine = { runs: null, error: 'loading' }
-  const projects = new Projects({ spec, runs: () => engine.runs, log })
+  const projects = new Projects({ spec, runs: () => engine.runs, daemon, log })
   const storage = new Storage({ spec, projects, log })
-  // a PostgreSQL Store's projects are read with their connection's URL, which only storage.js holds
-  projects.postgresql = (store) => storage.urlForStore(store)
-  // and so are runs' clients and agents' bash calls (config.js notePostgresql)
-  spec.postgresqlUrl = (store) => storage.urlForStore(store)
-  // the project list shows each project's Store sync state and copy providers from the Storage view
+  // the project list shows each project's Store state from the Storage view
   projects.storeJoin = () => storage.projectJoin()
-  // a session's project is a project key: its name, or `store/name` in a shared Store (layerfs#506)
+  // a session's project is a project key, `<store>/<project>`
   // a scenario chat plays its script on the scenario engine's folder and scope (agents/scenarios.js)
-  const scenarios = await new AgentScenarios({ spec }).ready().catch((error) => {
-    log(`[host] scenario chats are off: ${error?.message ?? error}`)
-    return null
-  })
+  const scenarios = await import('./agents/scenarios.js')
+    .then(({ AgentScenarios }) => new AgentScenarios({ spec }).ready())
+    .catch((error) => {
+      log(`[host] scenario chats are off: ${error?.message ?? error}`)
+      return null
+    })
   const agents = await AgentManager.create({ state: spec.state, projectEnvironment: (key) => projects.recordOf(key), projectWorkspaces: new AgentWorkspaces({ projects }), scenarios })
   const token = newToken()
   const machines = new Machines({ spec })
@@ -112,7 +112,6 @@ async function main() {
         .then(() => engine.runs?.close?.())
         .catch((error) => log(`[host] closing the engine: ${error?.message ?? error}`))
       await projects.close()
-      await runtime.close().catch((error) => log(`[host] closing the runtime: ${error?.message ?? error}`))
       if (owned) rmSync(endpoint, { force: true })
       process.exit(clean ? 0 : 1)
     })()
@@ -125,7 +124,6 @@ async function main() {
   process.stdin.resume()
 
   Object.assign(engine, await loadRuns(spec, projects))
-  void projects.ensureWorker()
   const url = await listen(server, args.port)
   // a second host (another app window on the same state) leaves the first one's file alone
   if (!liveOwner(endpoint)) {
@@ -133,7 +131,7 @@ async function main() {
     owned = true
   }
   process.stdout.write(`${JSON.stringify({ ready: true, url, token })}\n`)
-  log(`[host] listening on ${url} (state ${spec.state}, ${spec.worker ? 'worker' : 'in-process'} Store calls)`)
+  log(`[host] listening on ${url} (state ${spec.state}, LayerFS home ${spec.home})`)
 }
 
 main().catch((error) => {

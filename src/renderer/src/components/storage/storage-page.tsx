@@ -255,7 +255,7 @@ export function StoragePage({ catalog, initialId, initialRoute, onRoute, onOpenP
             onOpenProject(p ? projectKey(p) : store === name ? name : `${store}/${name}`)
           }
         : undefined,
-      sizeReason: status.data && status.data.docker.level !== 'ok' ? 'Docker is not answering' : null,
+      sizeReason: null,
     }
   }, [view, status.data, transfers, open, started, check, userChecking, flash, onOpenProject, projects])
 
