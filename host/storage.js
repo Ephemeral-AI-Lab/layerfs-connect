@@ -117,17 +117,23 @@ export class Storage extends EventEmitter {
     this.emit('event', { type: 'storage' })
   }
 
-  /** The bucket names this host connected (names only). */
-  knownBuckets() {
+  /** The buckets this host connected: [{ name, provider }] (no secret). */
+  bucketRecords() {
     try {
-      return existsSync(this.bucketsFile) ? JSON.parse(readFileSync(this.bucketsFile, 'utf8')).filter((n) => typeof n === 'string') : []
+      const raw = existsSync(this.bucketsFile) ? JSON.parse(readFileSync(this.bucketsFile, 'utf8')) : []
+      return raw.map((b) => (typeof b === 'string' ? { name: b, provider: null } : b)).filter((b) => typeof b?.name === 'string')
     } catch {
       return []
     }
   }
 
-  saveBuckets(names) {
-    writeFileSync(`${this.bucketsFile}.tmp`, JSON.stringify([...new Set(names)].sort()), { mode: 0o600 })
+  knownBuckets() {
+    return this.bucketRecords().map((b) => b.name)
+  }
+
+  saveBuckets(records) {
+    const byName = new Map(records.map((b) => (typeof b === 'string' ? [b, { name: b, provider: null }] : [b.name, b])))
+    writeFileSync(`${this.bucketsFile}.tmp`, JSON.stringify([...byName.values()].sort((a, b) => a.name.localeCompare(b.name))), { mode: 0o600 })
     renameSync(`${this.bucketsFile}.tmp`, this.bucketsFile)
   }
 
@@ -141,7 +147,7 @@ export class Storage extends EventEmitter {
     const names = new Set([...this.knownBuckets(), ...stores.flatMap((s) => s.links.map((l) => l.bucket))])
     const buckets = [...names].sort().map((name) => {
       const listing = this.listings.get(name)
-      return { name, listed: listing?.at ?? null, files: listing?.items ?? null, error: listing?.error ?? null, stores: stores.filter((s) => s.links.some((l) => l.bucket === name)).map((s) => s.name) }
+      return { name, provider: this.bucketRecords().find((b) => b.name === name)?.provider ?? null, listed: listing?.at ?? null, files: listing?.items ?? null, error: listing?.error ?? null, stores: stores.filter((s) => s.links.some((l) => l.bucket === name)).map((s) => s.name) }
     })
     const view = {
       machines: (machines.machines ?? []).map((m) => ({ name: m.name, platform: m.platform, state: m.state ?? null })),
@@ -233,7 +239,7 @@ export class Storage extends EventEmitter {
       if (written) rmSync(written, { force: true })
       throw error
     }
-    this.saveBuckets([...this.knownBuckets(), name])
+    this.saveBuckets([...this.bucketRecords(), { name, provider: input.provider ?? (url.startsWith('r2://') ? 'r2' : 'minio') }])
     this.changed()
     return this.view()
   }
@@ -243,7 +249,7 @@ export class Storage extends EventEmitter {
     const done = await this.lfs.backup.disconnect(name)
     // the key file Connect wrote for it, if any
     rmSync(this.keyFile(name), { force: true })
-    this.saveBuckets(this.knownBuckets().filter((n) => n !== name))
+    this.saveBuckets(this.bucketRecords().filter((b) => b.name !== name))
     this.listings.delete(name)
     this.changed()
     return { unlinked: done.unlinked ?? [], view: await this.view() }

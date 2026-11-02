@@ -17,6 +17,7 @@ import { StoreIcon } from '@/components/storage/identity/store-icon'
 import { Bar } from '@/components/storage/meters'
 import { Notice } from '@/components/storage/notice'
 import { Card } from '@/components/storage/overview/row-parts'
+import { NewDialog } from '@/components/storage/new-dialog'
 import { type StorageDialog, StorageDialogs } from '@/components/storage/storage-dialogs'
 import { Button } from '@/components/ui/button'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
@@ -66,6 +67,7 @@ export function StoragePage({ catalog, onOpenProject, onAddProject }: StoragePag
   const [removing, setRemoving] = useState<StoreRow | null>(null)
   const [dropping, setDropping] = useState<{ kind: 'postgresql' | 'bucket'; name: string } | null>(null)
   const [listing, setListing] = useState<string | null>(null)
+  const [newOpen, setNewOpen] = useState<null | 'empty' | 'add' | 'postgresql'>(null)
   useEffect(() => onProjectsChanged(reload), [])
   useEffect(
     () =>
@@ -104,9 +106,9 @@ export function StoragePage({ catalog, onOpenProject, onAddProject }: StoragePag
         title={t('Storage')}
         actions={
           <div className="flex items-center gap-2">
-            <Button size="sm" className="rounded-full px-3.5" onClick={() => setDialog({ kind: 'new-store' })}>
+            <Button size="sm" className="rounded-full px-3.5" onClick={() => setNewOpen('empty')}>
               <Plus />
-              {t('New Store')}
+              {t('New')}
             </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -117,10 +119,10 @@ export function StoragePage({ catalog, onOpenProject, onAddProject }: StoragePag
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem onSelect={() => setDialog({ kind: 'postgresql' })}>
+                <DropdownMenuItem onSelect={() => setNewOpen('postgresql')}>
                   <Database /> {t('A PostgreSQL Store')}
                 </DropdownMenuItem>
-                <DropdownMenuItem onSelect={() => setDialog({ kind: 'bucket' })}>
+                <DropdownMenuItem onSelect={() => setNewOpen('add')}>
                   <Archive /> {t('A bucket for backups')}
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -236,6 +238,7 @@ export function StoragePage({ catalog, onOpenProject, onAddProject }: StoragePag
         )}
       </div>
 
+      <NewDialog open={newOpen !== null} initial={newOpen ?? 'empty'} onOpenChange={(o) => !o && setNewOpen(null)} view={view} onChanged={done} />
       <StorageDialogs dialog={dialog} view={view} onClose={() => setDialog(null)} done={done} />
       <ConfirmByName
         open={!!removing}

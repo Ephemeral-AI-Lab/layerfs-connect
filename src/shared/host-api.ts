@@ -239,6 +239,8 @@ export interface BackupFile {
 
 export interface BucketRow {
   name: string
+  /** minio or r2, when this host connected it. */
+  provider: string | null
   /** When this host last listed it (backup.list); null before the first. */
   listed: number | null
   files: BackupFile[] | null

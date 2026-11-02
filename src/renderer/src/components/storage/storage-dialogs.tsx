@@ -79,7 +79,7 @@ function FormSheet({ open, onClose, icon, mark, title, description, action, vali
   )
 }
 
-function TextField({ label, value, onChange, hint, placeholder, autoFocus, mono }: { label: string; value: string; onChange: (v: string) => void; hint?: string; placeholder?: string; autoFocus?: boolean; mono?: boolean }) {
+export function TextField({ label, value, onChange, hint, placeholder, autoFocus, mono }: { label: string; value: string; onChange: (v: string) => void; hint?: string; placeholder?: string; autoFocus?: boolean; mono?: boolean }) {
   const id = useId()
   return (
     <Field id={id} label={label} hint={hint}>
@@ -88,7 +88,7 @@ function TextField({ label, value, onChange, hint, placeholder, autoFocus, mono 
   )
 }
 
-function Choice({ label, value, onChange, options, hint }: { label: string; value: string; onChange: (v: string) => void; options: { value: string; label: string }[]; hint?: string }) {
+export function Choice({ label, value, onChange, options, hint }: { label: string; value: string; onChange: (v: string) => void; options: { value: string; label: string }[]; hint?: string }) {
   const id = useId()
   return (
     <Field id={id} label={label} hint={hint}>
@@ -170,7 +170,7 @@ export function StorageDialogs({ dialog, view, onClose, done }: { dialog: Storag
 }
 
 /** A provider's mark on a lit tile. */
-function ProviderTile({ entry, size = 'md' }: { entry: ProviderEntry; size?: 'sm' | 'md' | 'lg' }) {
+export function ProviderTile({ entry, size = 'md' }: { entry: ProviderEntry; size?: 'sm' | 'md' | 'lg' }) {
   const mark = entry.mark
   return <Tile size={size}>{isBrandMark(mark) ? <Mark icon={mark} /> : (() => { const Icon = mark; return <Icon aria-hidden="true" className="text-muted-foreground" /> })()}</Tile>
 }
@@ -236,7 +236,7 @@ function BucketSheet({ onClose, done }: { onClose: () => void; done: () => void 
   )
 }
 
-function SecretField({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+export function SecretField({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
   const id = useId()
   return (
     <Field id={id} label={label}>
