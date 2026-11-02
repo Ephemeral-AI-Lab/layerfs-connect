@@ -178,8 +178,12 @@ export const host = {
   moveStore: (store: string, machine: string) => call<StorageJob>('POST', `/api/stores/${enc(store)}/move`, { machine }),
   /** Backs a sqlite Store up to `bucket` (as `file`, default its name): a job. */
   backupStore: (store: string, bucket: string, file?: string) => call<StorageJob>('POST', `/api/stores/${enc(store)}/backup`, { bucket, ...(file ? { file } : {}) }),
-  /** An r2 or MinIO bucket: `key` is a reference (env:LAYERFS_… or file:/path). */
-  connectBucket: (input: { name: string; url: string; key: string; region?: string }) => call<StorageView>('POST', '/api/buckets', input),
+  /**
+   * An r2 or MinIO bucket: its URL whole or by its parts, and either a key
+   * reference (env:LAYERFS_… or file:/path) or the two keys, which the host
+   * writes to an owner-only file and passes to LayerFS by reference.
+   */
+  connectBucket: (input: { name: string; url?: string; provider?: 'minio' | 'r2'; endpoint?: string; account?: string; jurisdiction?: string; bucket?: string; prefix?: string; key?: string; accessKey?: string; secretKey?: string; region?: string }) => call<StorageView>('POST', '/api/buckets', input),
   /** Drops the bucket and every Store's link to it: answers which Stores lost theirs. */
   disconnectBucket: (name: string) => call<{ unlinked: string[]; view: StorageView }>('DELETE', `/api/buckets/${enc(name)}`),
   /** backup.list(bucket): its files with their states, now. */

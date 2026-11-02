@@ -156,14 +156,7 @@ export function StorageDialogs({ dialog, view, onClose, done }: { dialog: Storag
         </FormSheet>
       )
     case 'bucket':
-      return (
-        <FormSheet open={open} onClose={close} icon={Unplug} title={t('Connect a bucket')} description={t('An r2 or MinIO bucket for backups. One listing proves the bucket answers with this key.')} action={t('Connect')} valid={!!a && !!b && !!c} submit={() => after(host.connectBucket({ name: a, url: b, key: c, region: d || undefined }))}>
-          <TextField label={t('Name')} value={a} onChange={setA} placeholder="backups" autoFocus mono />
-          <TextField label={t('URL')} value={b} onChange={setB} placeholder="http://127.0.0.1:9000/bucket/prefix" mono hint={t('MinIO: http(s)://<host>/<bucket>/<prefix>. R2: r2://<account>/<bucket>/<prefix>.')} />
-          <TextField label={t('Key')} value={c} onChange={setC} placeholder="file:/Users/me/.config/layerfs/backups.key" mono hint={t('A file with lines access_key=… and secret_key=…, readable by you only, or env:LAYERFS_BUCKET_<NAME> (its _ACCESS_KEY and _SECRET_KEY set before Connect starts).')} />
-          <TextField label={t('Region')} value={d} onChange={setD} placeholder="us-east-1" mono />
-        </FormSheet>
-      )
+      return <BucketSheet onClose={close} done={done} />
     case 'restore':
       return (
         <FormSheet open={open} onClose={close} icon={HardDriveDownload} title={t('Restore {file}', { file: dialog.file })} description={t('Installs the copy as a new Store on native, with its projects. The Store the copy came from is not changed.')} action={t('Restore')} valid={!!b} submit={() => after(host.restoreBackup(dialog.bucket, b, dialog.file))}>
@@ -171,4 +164,76 @@ export function StorageDialogs({ dialog, view, onClose, done }: { dialog: Storag
         </FormSheet>
       )
   }
+}
+
+/** The keys: the two values (written by the host to an owner-only file, passed by reference), or a reference already made. */
+function BucketSheet({ onClose, done }: { onClose: () => void; done: () => void }) {
+  useI18n()
+  const [provider, setProvider] = useState<'minio' | 'r2'>('minio')
+  const [f, setF] = useState({ name: '', endpoint: '', account: '', jurisdiction: '', bucket: '', prefix: '', accessKey: '', secretKey: '', key: '', region: '' })
+  const [byRef, setByRef] = useState(false)
+  const set = (k: keyof typeof f) => (v: string) => setF((x) => ({ ...x, [k]: v }))
+  const where = provider === 'minio' ? !!f.endpoint : !!f.account
+  const keys = byRef ? !!f.key : !!f.accessKey && !!f.secretKey
+  const submit = () =>
+    host
+      .connectBucket({
+        name: f.name.trim(),
+        provider,
+        bucket: f.bucket.trim(),
+        prefix: f.prefix.trim() || undefined,
+        ...(provider === 'minio' ? { endpoint: f.endpoint.trim(), region: f.region.trim() || undefined } : { account: f.account.trim(), jurisdiction: f.jurisdiction || undefined }),
+        ...(byRef ? { key: f.key.trim() } : { accessKey: f.accessKey, secretKey: f.secretKey }),
+      })
+      .then(done)
+  const tab = (id: 'minio' | 'r2', label: string) => (
+    <button type="button" onClick={() => setProvider(id)} className={`flex-1 rounded-xl px-3 py-2 text-xs font-medium transition-colors ${provider === id ? 'bg-primary/10 text-primary ring-1 ring-primary/25' : 'text-muted-foreground hover:bg-foreground/[0.04]'}`}>
+      {label}
+    </button>
+  )
+  return (
+    <FormSheet open onClose={onClose} icon={Unplug} title={t('Connect a bucket')} description={t('A MinIO or Cloudflare R2 bucket for Store backups. One listing proves the bucket answers with these keys.')} action={t('Connect')} valid={!!f.name && !!f.bucket && where && keys} submit={submit}>
+      <div className="flex gap-1.5 rounded-2xl bg-foreground/[0.03] p-1">
+        {tab('minio', 'MinIO')}
+        {tab('r2', 'Cloudflare R2')}
+      </div>
+      <TextField label={t('Name')} value={f.name} onChange={set('name')} placeholder="backups" autoFocus mono />
+      {provider === 'minio' ? (
+        <TextField label={t('Endpoint')} value={f.endpoint} onChange={set('endpoint')} placeholder="http://127.0.0.1:9000" mono hint={t('The URL holds no keys: they go below.')} />
+      ) : (
+        <>
+          <TextField label={t('Account ID')} value={f.account} onChange={set('account')} placeholder="0123456789abcdef0123456789abcdef" mono hint={t('32 hex digits, on the R2 overview page.')} />
+          <Choice label={t('Jurisdiction')} value={f.jurisdiction || 'none'} onChange={(v) => set('jurisdiction')(v === 'none' ? '' : v)} options={[{ value: 'none', label: t('Default') }, { value: 'eu', label: 'EU' }, { value: 'fedramp', label: 'FedRAMP' }]} />
+        </>
+      )}
+      <div className="grid grid-cols-2 gap-3">
+        <TextField label={t('Bucket')} value={f.bucket} onChange={set('bucket')} placeholder="layerfs" mono />
+        <TextField label={t('Prefix')} value={f.prefix} onChange={set('prefix')} placeholder={t('optional')} mono />
+      </div>
+      {byRef ? (
+        <TextField label={t('Key reference')} value={f.key} onChange={set('key')} placeholder="file:/Users/me/.config/layerfs/backups.key" mono hint={t('A file with lines access_key=… and secret_key=…, readable by you only, or env:LAYERFS_BUCKET_<NAME>.')} />
+      ) : (
+        <div className="grid grid-cols-2 gap-3">
+          <SecretField label={t('Access key ID')} value={f.accessKey} onChange={set('accessKey')} />
+          <SecretField label={t('Secret access key')} value={f.secretKey} onChange={set('secretKey')} />
+        </div>
+      )}
+      <p className="-mt-2 text-[11.5px] text-muted-foreground">
+        {byRef ? t('LayerFS reads the keys where the reference points.') : t('Connect saves the keys in a file only you can read and gives LayerFS its reference, never the keys.')}{' '}
+        <button type="button" className="text-primary underline-offset-2 hover:underline" onClick={() => setByRef((x) => !x)}>
+          {byRef ? t('Enter the keys instead') : t('Use a reference instead')}
+        </button>
+      </p>
+      {provider === 'minio' && <TextField label={t('Region')} value={f.region} onChange={set('region')} placeholder="us-east-1" mono />}
+    </FormSheet>
+  )
+}
+
+function SecretField({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+  const id = useId()
+  return (
+    <Field id={id} label={label}>
+      <Input id={id} type="password" value={value} onChange={(e) => onChange(e.target.value)} autoComplete="off" spellCheck={false} className="rounded-xl font-mono text-[13px]" />
+    </Field>
+  )
 }

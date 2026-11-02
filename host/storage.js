@@ -26,7 +26,7 @@
 // job } as a job moves, { type: 'storage' } when the view changed.
 import { randomUUID } from 'node:crypto'
 import { EventEmitter } from 'node:events'
-import { existsSync, readFileSync, renameSync, writeFileSync } from 'node:fs'
+import { chmodSync, existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { layerfs } from './layerfs.js'
 
@@ -56,6 +56,21 @@ function checkUrl(value, what, { user = true } = {}) {
     throw refuse(400, 'InvalidInput', `${what} is not a URL`)
   }
   if (url.password || (user && url.username)) throw refuse(400, 'InvalidInput', `${what} must not hold a ${user ? 'user or ' : ''}password: give the secret as a reference`)
+}
+
+/** A bucket URL from its parts: MinIO `<endpoint>/<bucket>/<prefix>`, R2 `r2://<account>/<bucket>/<prefix>[?jurisdiction=…]`. */
+export function bucketUrl({ provider, endpoint, account, jurisdiction, bucket, prefix } = {}) {
+  const path = [bucket, ...(prefix ? [String(prefix).replace(/^\/+|\/+$/g, '')] : [])].filter(Boolean).join('/')
+  if (!bucket) throw refuse(400, 'InvalidInput', 'Name the bucket')
+  if (provider === 'r2') {
+    if (!/^[0-9a-f]{32}$/.test(account ?? '')) throw refuse(400, 'InvalidInput', 'A Cloudflare account id is 32 lowercase hex digits')
+    return `r2://${account}/${path}${jurisdiction ? `?jurisdiction=${jurisdiction}` : ''}`
+  }
+  if (provider === 'minio') {
+    if (!/^https?:\/\//.test(endpoint ?? '')) throw refuse(400, 'InvalidInput', 'A MinIO endpoint is http(s)://host:port')
+    return `${String(endpoint).replace(/\/+$/, '')}/${path}`
+  }
+  throw refuse(400, 'InvalidInput', 'Choose MinIO or Cloudflare R2')
 }
 
 /** A store.list item and its store.status -> StoreRow. */
@@ -179,13 +194,45 @@ export class Storage extends EventEmitter {
 
   // ---------- buckets ----------
 
-  /** An r2 or MinIO bucket: { name, url, key (a reference), region? }. */
-  async connectBucket({ name, url, key, region } = {}) {
+  /** The owner-only key file Connect writes for bucket `name` (spec §4: LayerFS gets its file: reference). */
+  keyFile(name) {
+    return join(this.spec.state, 'secrets', `bucket-${String(name).replace(/[^a-z0-9_.-]/gi, '-')}.key`)
+  }
+
+  /**
+   * An r2 or MinIO bucket. The URL is given whole ({ url }) or built from its
+   * parts: MinIO { provider: 'minio', endpoint, bucket, prefix? }, R2
+   * { provider: 'r2', account, jurisdiction?, bucket, prefix? }. The key is
+   * a reference ({ key: env:LAYERFS_… or file:/abs }) or the two keys
+   * ({ accessKey, secretKey }), which Connect writes to an owner-only file
+   * under <state>/secrets and passes as that file's reference: the keys
+   * never go into the URL, storage records or the home.
+   */
+  async connectBucket(input = {}) {
+    const { name, region } = input
     checkName(name, 'A bucket')
+    const url = input.url ?? bucketUrl(input)
     if (typeof url !== 'string' || !/^(https?:\/\/|r2:\/\/)/.test(url)) throw refuse(400, 'InvalidInput', 'A bucket URL is http(s)://<host>/<bucket>/<prefix> (MinIO) or r2://<account>/<bucket>/<prefix>')
     if (!url.startsWith('r2://')) checkUrl(url, 'The bucket URL')
+    let key = input.key
+    let written = null
+    if (input.accessKey !== undefined || input.secretKey !== undefined) {
+      const [access, secret] = [input.accessKey, input.secretKey].map((v) => (typeof v === 'string' ? v.trim() : ''))
+      if (!access || !secret || /\s/.test(access + secret)) throw refuse(400, 'InvalidInput', 'Give both the access key and the secret key (no spaces)')
+      written = this.keyFile(name)
+      mkdirSync(join(this.spec.state, 'secrets'), { recursive: true, mode: 0o700 })
+      chmodSync(join(this.spec.state, 'secrets'), 0o700)
+      writeFileSync(written, `access_key=${access}\nsecret_key=${secret}\n`, { mode: 0o600 })
+      chmodSync(written, 0o600)
+      key = `file:${written}`
+    }
     checkReference(key, 'The key')
-    await this.lfs.backup.connect(name, url, { key, ...(region ? { region } : {}) })
+    try {
+      await this.lfs.backup.connect(name, url, { key, ...(region ? { region } : {}) })
+    } catch (error) {
+      if (written) rmSync(written, { force: true })
+      throw error
+    }
     this.saveBuckets([...this.knownBuckets(), name])
     this.changed()
     return this.view()
@@ -194,6 +241,8 @@ export class Storage extends EventEmitter {
   /** Drops the bucket; LayerFS drops every Store's link to it too. Answers which Stores lost theirs. */
   async disconnectBucket(name) {
     const done = await this.lfs.backup.disconnect(name)
+    // the key file Connect wrote for it, if any
+    rmSync(this.keyFile(name), { force: true })
     this.saveBuckets(this.knownBuckets().filter((n) => n !== name))
     this.listings.delete(name)
     this.changed()

@@ -4,7 +4,7 @@
 // scenario converter and config.js's project keys.
 //   node --test host/test/layerfs2.test.js
 import assert from 'node:assert/strict'
-import { mkdtempSync, rmSync } from 'node:fs'
+import { mkdtempSync, readFileSync, rmSync, statSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import test from 'node:test'
@@ -136,4 +136,22 @@ test('the converter writes 2.0 commands and marks what cannot play', () => {
   assert.deepEqual(v.agents.root[0].expect, ['file.edit:Committed'])
   assert.deepEqual(toV2(v), v)
   assert.match(v2Blocked({ agents: { root: [{ bash: { command: 'x', run_in_background: true } }] } }), /background/)
+})
+
+test('storage: MinIO and R2 by their parts; keys go to an owner-only file, LayerFS gets its reference', async () => {
+  const lfs = fake()
+  const s = spec()
+  const st = new Storage({ spec: s, client: lfs, log: () => {} })
+  await st.connectBucket({ name: 'm', provider: 'minio', endpoint: 'http://127.0.0.1:9000/', bucket: 'lfc', prefix: '/live/', accessKey: 'AK', secretKey: 'SK' })
+  const [, name, url, opts] = lfs.calls.find((c) => c[0] === 'backup.connect')
+  assert.deepEqual([name, url], ['m', 'http://127.0.0.1:9000/lfc/live'])
+  assert.match(opts.key, /^file:\//)
+  const file = opts.key.slice(5)
+  assert.equal(readFileSync(file, 'utf8'), 'access_key=AK\nsecret_key=SK\n')
+  assert.equal(statSync(file).mode & 0o777, 0o600)
+  assert.ok(!JSON.stringify(lfs.calls).includes('SK'))
+  await st.connectBucket({ name: 'r', provider: 'r2', account: 'a'.repeat(32), jurisdiction: 'eu', bucket: 'b', key: 'env:LAYERFS_BUCKET_R' })
+  assert.equal(lfs.calls.filter((c) => c[0] === 'backup.connect')[1][2], `r2://${'a'.repeat(32)}/b?jurisdiction=eu`)
+  await assert.rejects(st.connectBucket({ name: 'x', provider: 'r2', account: 'nope', bucket: 'b', key: 'env:LAYERFS_X' }), /32 lowercase hex/)
+  rmSync(s.state, { recursive: true, force: true })
 })
