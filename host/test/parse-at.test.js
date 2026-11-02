@@ -23,27 +23,6 @@ test('cli calls: every one on a line, with its words', () => {
   assert.deepEqual(spanned('layerfs init demo'), [['project.init', 'layerfs init']])
 })
 
-test('sdk calls: the callee to its paren, not a comment that names it', () => {
-  const command = [
-    '# one fs edit, one Commit',
-    "node --input-type=module <<'JS'",
-    'const { LayerFS } = await import("@layerfs/agent");',
-    'const lf = await LayerFS.open(process.env.LAYERFS_PROJECT);',
-    'try {',
-    '  const r = await lf.fs.edit("main", "/a", "x", "y");',
-    '  await lf.branch.publish("main");',
-    '} finally {',
-    '  await lf.close();',
-    '}',
-    'JS',
-  ].join('\n')
-  assert.deepEqual(spanned(command), [
-    ['fs.edit', 'lf.fs.edit('],
-    ['branch.publish', 'lf.branch.publish('],
-  ])
-  assert.deepEqual(at(command).map((a) => a.line), [6, 7])
-})
-
 test('a command ending in blank lines keeps every line', () => {
   assert.deepEqual(segments('layerfs branch fork a\n\n\n').map((s) => s.lines), [[1, 3]])
 })

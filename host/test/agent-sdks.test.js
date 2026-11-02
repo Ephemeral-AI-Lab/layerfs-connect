@@ -134,19 +134,19 @@ test('the main agent, workers and leads each append their own SDK section', asyn
   assert.equal(await prompt({}, LEAD_MARK), LEAD_MARK, 'a kind with no SDKs gets nothing')
 })
 
-test('the shipped LayerFS section lists all 32 calls', () => {
+test('the shipped LayerFS section lists all 57 calls', () => {
   const sdk = new SdkSettings('/nonexistent/sdks.json').view().sdks.find((entry) => entry.id === 'layerfs')
   if (!sdk?.found) return
   const text = sdkPrompt(sdk)
-  assert.equal(text.split('\n').filter((line) => line.startsWith('  - ')).length, 32)
-  assert.match(text, /branch\.fork: `fork\(name, fromRef = "main"\)`/)
+  assert.equal(text.split('\n').filter((line) => line.startsWith('  - ')).length, 57)
+  assert.match(text, /branch\.fork: `layerfs\.branch\.fork\(project, name, from_branch, from_commit\?\)`/)
 })
 
-test('the shipped defaults list the LayerFS SDK and its 32 calls', async () => {
+test('the shipped defaults list the LayerFS SDK and its 57 calls', async () => {
   const { sdks: [layerfs] } = JSON.parse(await readFile(new URL('../agents/sdks.default.json', import.meta.url), 'utf8'))
   assert.equal(layerfs.id, 'layerfs')
-  assert.equal(layerfs.calls.length, 32)
-  assert.equal(new Set(layerfs.calls.map((call) => call.name)).size, 32)
+  assert.equal(layerfs.calls.length, 57)
+  assert.equal(new Set(layerfs.calls.map((call) => call.name)).size, 57)
   const groups = Object.groupBy(layerfs.calls, (call) => call.name.split('.')[0])
-  assert.deepEqual(Object.fromEntries(Object.entries(groups).map(([group, calls]) => [group, calls.length])), { client: 3, project: 2, branch: 6, fs: 14, workspace: 4, sandbox: 3 })
+  assert.deepEqual(Object.fromEntries(Object.entries(groups).map(([group, calls]) => [group, calls.length])), { project: 4, branch: 6, commit: 3, file: 14, sandbox: 4, workspace: 5, machine: 8, store: 8, backup: 5 })
 })

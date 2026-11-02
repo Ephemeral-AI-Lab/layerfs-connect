@@ -1,163 +1,29 @@
-# LayerFS: Storage
+# Storage (LayerFS 2.0)
 
-Every Store as one card with its projects: SQLite Stores, each linked to at most one file in a MinIO or R2 bucket or local only, and PostgreSQL Stores that live in a database. One line of facts above the cards opens this machine and the connections. Opening a Store, a bucket, a connection or the machine shows its page.
-Opens from: Storage in the sidebar's RESOURCES group, or a `#storage…` hash.
-Source: `src/renderer/src/components/storage/storage-page.tsx` (main file; others named in Regions). Design: [storage-links.md](storage-links.md) (links; layerfs#509), [storage-redesign.md](storage-redesign.md) (progress, size, identity, states). Visual language: [frontend-polish-prompt.md](../frontend-polish-prompt.md) (Macaron liquid glass: `glass-liquid` `rounded-2xl` cards, `rounded-xl` controls, the single-hue `--cursor-hue` spotlight, restrained motion).
+> **Status:** Current, 2026-11-02. Source: `src/renderer/src/components/storage/storage-page.tsx`,
+> `storage-dialogs.tsx`, `host/storage.js`. Spec: [the 2.0 integration spec](../layerfs-2.0-integration.md)
+> step 5.
 
-## Skeleton
+One page, read from `GET /api/storage` again on the host's `storage` events.
 
-```text
-+-[1] PageHeader ------------------------------------------------------------------------------+
-| Storage                                                                           [ + New ]  |
-+----------------------------------------------------------------------------------------------+
-  [2] 16 Stores · 1.9 GB · (disk) 77.9 GB free on this machine · 2 buckets · 2 databases   [ / ]
-+-[4] TransferTray (only a failed job, or an import still copying) ----------------------------+
-| (!) mirror <- r2 / mirror   Pull failed: The Store file is open; close its Sandboxes first.  |
-+----------------------------------------------------------------------------------------------+
-+-[3] StoreCard (amber ring) ---+ +-[3] StoreCard -------------+ +-[3] StoreCard -------------+
-| [r2] services            ...  | | [r2] r2-examples       ... | | [sq] connect-test-13321 ...|
-|      r2 / services · 156 MB   | |      r2 / r2-examples · 213| |      This machine · 238 MB |
-| [] api-service                | | [] landing-page            | |                            |
-|                               | | [] etl-jobs                | |                            |
-|-------------------------------| |----------------------------| |----------------------------|
-| ↑ Changes to push     [Push]  | | ✓ In sync                  | | Not published   (Publish…) |
-+-------------------------------+ +----------------------------+ +----------------------------+
-```
+- **Stores by machine.** One card per machine that holds sqlite Stores (native first, then docker,
+  then VMs). Each Store row shows its projects (each opens the project), its size (file plus WAL,
+  from `store.status`), its state (idle, in use, moving, down) and one backup chip per bucket it is
+  linked to (the state from that bucket's last listing). Its menu: **Move to…** (idle only; the
+  whole Store moves, every project in it), **Back up to…** (a bucket, an optional file name),
+  **Add project** (native only: Init goes nowhere else) and **Remove…** (type the name).
+- **PostgreSQL Stores.** Connected databases; they never move. **Connect…** takes a name, a URL
+  without a password and a password *reference*; **Disconnect…** forgets the Store in this home.
+- **Buckets and backups.** **Connect…** takes a name, a URL (MinIO `http(s)://host/bucket/prefix`,
+  R2 `r2://account/bucket/prefix`) and a key *reference*. Each bucket card has **List files**
+  (`backup.list(bucket)`, one call per bucket, which contacts it) and a table of files with their
+  state: current, store changed, bucket changed, both changed, unknown, not linked, missing.
+  **Restore…** installs a copy as a new Store on native. **Disconnect…** warns that every Store's
+  link to the bucket goes too.
+- **Jobs.** The moves, backups and restores this host started, with their phase and done/total
+  where the call gives it. A failure names its phase; an `Unknown` one says both copies were kept.
 
-Opening a SQLite Store (`#storage/store/work`):
+Secrets are never typed: a reference is `file:/absolute/path` (owner-only; for a bucket, lines
+`access_key=…` and `secret_key=…`) or `env:LAYERFS_<NAME>`. A URL with a password is refused.
 
-```text
-( < Storage ) > SQLite > work
-+-[6] DetailHeader ----------------------------------------------------------------------------+
-| [m] STORE · SQLITE                                                                           |
-|     work  ( ↓ Remote newer )                                       [Push] [Pull]  ...        |
-|     2 projects · 412 MB on this machine · volume lfc-store-work · created 2 d ago            |
-+----------------------------------------------------------------------------------------------+
-| JobCard: ↑ work -> minio-lab / work   Stepper  [=========-------]  12 MB/s · about 47 s left |
-| Link        [m] minio-lab / work   MinIO                               [Push] [Pull] ...     |
-|             localhost:9000/stores/lfc/work/store.sqlite [copy]                               |
-|             ( ↓ Remote newer )  reason                                                       |
-|             THIS MACHINE  Unchanged since your push 3 h ago  -->  MINIO-LAB / WORK  Changed  |
-|             Linked 2 d ago · Last push 3 h ago · 412 MB · Checked 1 min ago                  |
-|             Sent to r2-team / work-copy · 2 min ago                              [Load…]     |
-| Projects 2  (shop) (api)                                                   [ Add project ]   |
-| Size        412 MB on this machine        Free in the Docker volumes 111 GB  [==|========]   |
-| In PostgreSQL  [pg] work-pg · pg · 512 MB · imported 2 d ago  ↗                              |
-| Facts       Volume lfc-store-work · Created …                                  [ Remove… ]   |
-+----------------------------------------------------------------------------------------------+
-```
-
-## Regions
-
-Every card is `glass-liquid` with the `spotlight` (its glow follows the one `--cursor-hue`), `rounded-2xl`, and enters with the `reveal` stagger (`--i`). Controls are `rounded-xl`; chips are `rounded-full`. Every string goes through `t()` (`@/i18n`); Chinese is in `src/renderer/src/i18n/storage.ts`.
-
-1. **Page header** (`PageHeader` in `StoragePage`): "Storage" and one **New** button, which opens the New dialog (below) on the SQLite tab. The header's live line runs while a transfer runs. When the build has none of Stores, buckets or PostgreSQL, New is disabled with the build's reason in a tooltip (`Unavailable`).
-2. **Facts line** (`FactsLine` in `overview/overview.tsx`): `N Stores · size · 77.9 GB free on this machine · N buckets · N databases`, and search on the right.
-   - The free space (the lower of the home disk and the Docker volumes) opens the machine page; it turns warning-coloured when low, and reads "Docker is not answering" when Docker is down.
-   - "N buckets" and "N databases" open the New dialog on the SQLite or PostgreSQL tab, where those connections are listed and added ("Add a bucket" / "Add a database" when there are none). An amber dot marks one that isn't answering. Each is hidden while the build lacks it.
-   - Search shows from six Stores up: it matches Store and project names (`/` focuses it, Esc clears it). A card found by a project lists that project first, highlighted.
-3. **Store cards** (`StoreCard`, `overview/store-card.tsx`): a grid of glass cards, at least 17.5 rem wide (one column in a narrow window). Order: Stores that need you (`attentionOf`), Stores with a running job, shared Stores, then projects' own pre-#506 Stores; by name within each.
-   - **Head:** the Store icon (`StoreIcon`: SQLite when local only, MinIO or Cloudflare when linked there, PostgreSQL for a PostgreSQL Store), the name (opens the Store page), and the `…` menu (`StoreMenu` in `overview/sqlite-store-row.tsx`: Push, Pull, Check now, Send a copy…, Unlink… or Publish… and Send a copy…, Import into PostgreSQL…, Open, Remove…; `PostgresqlStoreMenu`: Open, Remove…).
-   - **Where:** `connection / file` in mono with the provider mark (opens the bucket page), "This machine", or the PostgreSQL connection (opens its page); then the size (`SizeText`).
-   - **Projects:** up to three, each opens the project (`openProject`); "N more" opens the Store page. An empty Store says "No projects yet" with Add project. A project's own Store (one project with the Store's name) lists nothing, and its name opens the project.
-   - **Footer:** the state in its tone (`SYNC` in `sync/sync-state.ts`, with the link's tooltip from `copyTip`), "Not published" for a local-only Store, "Live in the database" or "↳ from <SQLite Store>" for PostgreSQL. At most one button, only when the state asks: Push (changes to push, file missing), Pull (remote newer), Resolve… (both changed: opens the Store page). Publish… on a local-only Store wakes on hover and focus. While a job runs, the footer is the job (compact `TransferRow`); when it ends, the card flashes once.
-   - **Needs you:** a warning ring for changes to push, remote newer, file missing, unreachable, or a PostgreSQL connection that isn't answering; a danger ring for both changed or a failed job ("Last transfer failed").
-4. **Warnings and failed transfers**, each only while true: the transfer tray (`TransferTray`) with failed jobs (`RefusalCard` and its actions: Pull first…, Overwrite…, Pull again, Check now, This machine) and imports still copying into a new PostgreSQL Store; Hide dismisses the failed ones. Then "The LayerFS box is down" and "Disk space is low" Notices, and one quiet line naming the parts this LayerFS build lacks (`BuildLine`, the build's reasons in its tooltip).
-5. **Breadcrumb** (`Breadcrumb`, `detail/breadcrumb.tsx`): a glass "‹ Storage" pill, then family and name. Alt+←, the mouse back button and the browser back return to the cards, which restore their scroll position.
-6. **Store page, SQLite** (`SqliteStoreDetail`, `detail/sqlite-store-detail.tsx`): header (`DetailHeader` in `detail/parts.tsx`) with the pill or the running job, Push and Pull or Publish…, and the `StoreMenu`.
-    - A running or last job as a `JobCard`.
-    - Link (`LinkCard`, `detail/link-card.tsx`): linked, the connection and file, the copyable object path, Push, Pull and a menu (Send a copy…, Unlink…), the pill with its reason, a two-sided panel when the sides differ (`TwoSides`), and when it was linked, last pushed or pulled and checked; Check now on the section head. Local only: "Not linked to any remote file" and Publish…. Without buckets in the build: "Local only" and the build's reason. After a Send, a line names the new file with Load….
-    - Projects (chips that open the project by its key, `projectKey`) and Add project (disabled with the reason when the build has no shared Stores).
-    - Size (`SizeCard`, `detail/size-card.tsx`): the Store's size, the free space in the Docker volumes and a push's share of it; a Notice when a push would leave little room.
-    - In PostgreSQL: the Stores imported from it, as small glass cards.
-    - Facts, with Remove….
-7. **Store page, PostgreSQL** (`PostgresqlStoreDetail`): connection with health, schema, `synchronous_commit`, size, created, where it was imported from, projects, a dashed "Nothing to sync" card, and Remove….
-8. **Connection page** (`ConnectionDetail`): health, version, latency, the URL with the password hidden, its Stores (schema, projects, size, from, created), `synchronous_commit` with what it means, Import a SQLite Store…, Check now and Forget….
-9. **Bucket page** (`BucketDetail`, `detail/bucket-detail.tsx`): provider, endpoint, bucket and prefix, health, keys; files in the bucket (`FilesHere`, from the last listing plus linked files it doesn't name) with "Linked to X" and Open, or "Not loaded" and Load…; Settings with Remove… (refused while a Store links to it).
-10. **Machine page** (`MachineDetail`, `detail/machine-detail.tsx`): the worker chip, the home path, the disk gauges (`DiskGauge`), the LayerFS box (`WorkerSection`, `machine/worker.tsx`), the volume prefix, Store volumes and Docker.
-
-### Dialogs (`dialogs/`, one owner: `StorageDialogs` in `dialogs/storage-dialogs.tsx`)
-
-All dialogs share the branch's sheet (`SHEET`, `SheetHeader`, `SheetFooter`, `Field`, `FormError`, `BackLink` in `dialogs/fields.tsx`): `rounded-3xl`, a title with its icon on a tinted tile, `h-8 rounded-xl` buttons.
-
-- **New** (`NewDialog` in `new-dialog.tsx`): one wide dialog of fixed size (up to 50 rem by 40 rem), two panes, so moving around in it never resizes it. Nothing in it opens another dialog.
-  - **Left pane:** the title, SQLite / PostgreSQL tabs (`Segmented`) with one line on what that kind of Store is, then that kind's list. The chosen line sits on a raised pill; long names truncate.
-    - **SQLite**: Empty Store, From a bucket file; Buckets (provider mark, name, health dot), sorted by provider then name; "+ Add bucket connection".
-    - **PostgreSQL**: Copy a SQLite Store in; Databases (name, health dot); "+ Add database connection".
-    - A way that can't be used yet stays listed, dimmed, with why on hover (Add a bucket first, Add a database first, the build's reason).
-  - **Right pane:** the chosen line, in place. Empty Store is `NewStoreForm`; From a bucket file lists every bucket's files (Load… one that isn't loaded, which opens `LoadForm` with "‹ Files" back; a loaded one opens its Store); a bucket shows where it points (the full location, wrapping), health, keys and its files, with "Open the bucket page"; a database shows host and database, health, `synchronous_commit` and its Stores; Add bucket connection is a provider choice (MinIO, Cloudflare R2: each provider the build can add) above that provider's `ConnectionForm` (two columns, the first check's answer in place); Add database connection is the PostgreSQL `ConnectionForm`; Copy a SQLite Store in is `ImportForm`.
-  - Each tab opens on its first way that can be used (Empty Store; Copy a SQLite Store in), else on adding what it needs. While a form is sending, the dialog can't close and the list can't change.
-  - Below 40 rem wide the panes stack: the list, then the chosen item over it with "‹ New".
-  - The forms (`NewStoreForm`, `LoadForm`, `ImportForm`, `ConnectionForm`) also sit in their own dialogs (`NewStoreDialog`, `LoadDialog`, `ImportDialog`, `AddLocationDialog`) for the pages and menus that open them directly.
-- **Add connection** (`AddLocationDialog`): binds no Store.
-  - Step 1 is a picker of provider tiles from the registry in `identity/providers.ts`; arrow keys move between them. Filtered by family; a search box appears with more than 8 providers.
-  - MinIO, Cloudflare R2 and PostgreSQL are live when the build has them; Amazon S3, Google Cloud Storage, Google Drive and Folder are dashed "Coming" tiles.
-  - Step 2 is the provider's form (`ConnectionForm`: `ProviderForm` or `PostgresqlForm` with `synchronous_commit`, in `provider-forms.tsx`).
-  - A bucket form that matches an existing connection's provider, endpoint (or account), bucket and prefix shows a warning naming it (`sameBucket`): both would list and change the same files. It doesn't block the add.
-  - After adding, the dialog runs one check: "Reachable. N Store files, M not loaded" or "Added, but not reachable", with Keep it or Remove it.
-- **Publish** and **Send a copy** (`UploadDialog` in `publish-dialog.tsx`; `SendDialog` in `send-dialog.tsx`): a connection (with health) and a file name; a file that exists is refused under the field. The job runs in the dialog; "Run in background" leaves it to the tray.
-- **Load** (`LoadDialog`): the new Store's name, the file's size and modified time, and room in the Docker volumes; a linked file is refused before the call ("Already linked as X", Open).
-- **Pull** (`PullDialog`): only when the pull would discard local changes; you type the Store's name. Otherwise Pull runs at once.
-- **Push conflict** (`PushConflictDialog`): before a push when the linked file is newer, diverged or missing: Pull first, or Overwrite (`force`).
-- **Unlink** and **Remove** (`ConfirmByName`, which asks for the typed name where data is lost).
-- **Import into PostgreSQL** (`ImportDialog`), **Add project** (`AddProjectDialog`: `host.createProject({ name, source?, store })`, then `host.projectInit`), **New Store** (`NewStoreDialog`).
-
-## Sync states
-
-`sync/sync-state.ts` holds one entry per state: a label, a tone, an icon, and what it means. A pill always shows an icon and words; colour is never the only signal. A Store's state is its one link's (storage-links §4).
-
-| State | Pill | Means |
-|---|---|---|
-| in_sync | ✓ In sync | The Store matches its linked file |
-| ahead | ↑ Changes to push | The Store changed since the last push or pull; the file didn't |
-| behind | ↓ Remote newer | The file changed since the last push or pull |
-| diverged | Both changed | Both sides changed |
-| missing | File missing | The linked file was deleted |
-| unreachable | Unreachable (dashed) | The last check failed; the tooltip gives the last known state |
-| transferring | Transferring (turning icon) | A publish, push, pull or load runs on the Store |
-| checking | Checking… (turning icon) | The first check is running |
-| unknown | Sync unknown (dashed) | Not known; the reason names the unknown side |
-| local_only | Local only | No link |
-| live | Live | A PostgreSQL Store |
-
-## Data and refresh
-
-- `view.ts`: `normalizeView` turns any host's `/api/storage` answer into a complete `StorageView` (missing sync → `unknown` with a reason, missing sizes → "size unknown", missing totals and supports derived). A 404 means a host from before layerfs#506.
-- When `stores.available` is false (or the route is missing), the page builds a fallback view from the project catalog (`/api/projects`): one Store per project, keeping the host's reasons for remotes and PostgreSQL.
-- Polling: the view reloads every 15 s while visible and focused, at once on a `storage` host event (`useStorageEvents`), and on `onProjectsChanged`. Links are checked when the last check is over 2 minutes old, then every 5 minutes.
-- Transfers (`transfers/use-transfers.ts`): a module-level store seeded from the view and fed by `sync` host events; it polls `host.syncJob(id)` once a second while the event stream is closed (`hostEventsOpen`) or a job has been quiet for 3 s. A job that ends reloads the view and the catalog and flashes its Store.
-- Routes: `#storage`, `#storage/store/<name>`, `#storage/location/<bucket>`, `#storage/connection/<name>`, `#storage/machine` (`routeHash`, `parseRoute` in `actions.ts`). Leaving the page clears the hash.
-
-## States
-
-- **Loading**: a shimmering facts line and six card placeholders (`OverviewSkeleton`).
-- **Error**: `LoadError` with Retry.
-- **No Stores**: a glass empty card with the SQLite mark, New Store and, with a bucket, Load….
-- **Build without Stores, buckets or PostgreSQL**: the build line, one card per project's own Store (the fallback view), and only the New items the build has.
-- **LayerFS box down**: a warning Notice with This machine. SQLite sizes read "size unknown" with the reason.
-- **Low disk**: a warning Notice and a warning-coloured free space in the facts line; the Size card and the machine gauges turn warning-coloured.
-- **No match**: "No Stores match." with Clear.
-
-## Narrow windows
-
-The cards fill as many columns as fit at 17.5 rem or wider (`repeat(auto-fill, minmax(17.5rem, 1fr))`), down to one. The facts line wraps, and search takes the full width below it on small screens.
-
-## Elsewhere
-
-- Projects use `StoreIcon`, `storeProviders` (`identity/store-icon.tsx`) and `SyncPill` (`sync/sync-pill.tsx`); keep their names and props stable.
-- `compute/docker-card.tsx` imports `workerChip` from `storage/local-detail.tsx`, which re-exports `machine/worker.tsx`.
-- `chips.tsx`, `icons.tsx`, `meters.tsx`, `notice.tsx` and `unavailable.tsx` are shared with Projects, Compute and Runs.
-
-## Files
-
-`storage/`:
-
-- `storage-page.tsx`, `actions.ts`, `view.ts`, `size.tsx`, `local-detail.tsx` (re-export);
-- `chips.tsx`, `icons.tsx`, `meters.tsx`, `notice.tsx`, `unavailable.tsx` and `storage.css`;
-- `identity/`: `providers.ts`, `store-icon.tsx`;
-- `sync/`: `sync-state.ts`, `sync-pill.tsx`, `health-dot.tsx`;
-- `transfers/`: `phases.ts`, `use-transfers.ts`, `transfer-row.tsx`, `job-card.tsx`, `transfer-tray.tsx`, `refusal.tsx`;
-- `overview/`: `overview.tsx` (facts line, connections menu, search, build line), `store-card.tsx`, `row-parts.tsx` (`Card`, `MoreButton`), `sqlite-store-row.tsx` (`StoreMenu`, `ContextAction`), `postgresql-store-row.tsx` (`FromLink`, `PostgresqlStoreMenu`);
-- `detail/`: `breadcrumb.tsx`, `parts.tsx`, `sqlite-store-detail.tsx`, `postgresql-store-detail.tsx`, `link-card.tsx`, `size-card.tsx`, `bucket-detail.tsx`, `connection-detail.tsx`, `machine-detail.tsx`;
-- `machine/`: `worker.tsx`;
-- `dialogs/`: `storage-dialogs.tsx`, `new-dialog.tsx`, `fields.tsx`, `confirm-by-name.tsx`, `add-location-dialog.tsx`, `provider-forms.tsx`, `publish-dialog.tsx`, `send-dialog.tsx`, `load-dialog.tsx`, `pull-dialog.tsx`, `push-conflict-dialog.tsx`, `import-dialog.tsx`, `add-project-dialog.tsx`, `new-store-dialog.tsx`.
+Hidden behind one line (§9): Store totals (dedupe, compression, what Init stored).

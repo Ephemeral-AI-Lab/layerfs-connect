@@ -47,15 +47,15 @@ function checkName(value, what) {
   if (typeof value !== 'string' || !value) throw refuse(400, 'InvalidInput', `${what} needs a name`)
 }
 
-/** A URL with no user or password in it. */
-function checkUrl(value, what) {
+/** A URL with no password in it (and, for a bucket, no user either). */
+function checkUrl(value, what, { user = true } = {}) {
   let url
   try {
     url = new URL(value)
   } catch {
     throw refuse(400, 'InvalidInput', `${what} is not a URL`)
   }
-  if (url.password || url.username) throw refuse(400, 'InvalidInput', `${what} must not hold a user or password: give the secret as a reference`)
+  if (url.password || (user && url.username)) throw refuse(400, 'InvalidInput', `${what} must not hold a ${user ? 'user or ' : ''}password: give the secret as a reference`)
 }
 
 /** A store.list item and its store.status -> StoreRow. */
@@ -164,7 +164,7 @@ export class Storage extends EventEmitter {
   /** A PostgreSQL database as a Store: { name, url (no password), password (a reference), synchronousCommit? }. */
   async connectPostgresql({ name, url, password, synchronousCommit } = {}) {
     checkName(name, 'A PostgreSQL Store')
-    checkUrl(url, 'The database URL')
+    checkUrl(url, 'The database URL', { user: false })
     checkReference(password, 'The password')
     await this.lfs.store.connect(name, url, { password, ...(synchronousCommit ? { synchronous_commit: synchronousCommit } : {}) })
     this.changed()

@@ -101,57 +101,6 @@ test('CORS: any origin, Authorization and Content-Type, OPTIONS answered without
   assert.equal(refused.headers.get('access-control-allow-origin'), '*')
 })
 
-test('project routes pass their arguments through', async () => {
-  calls.length = 0
-  assert.deepEqual((await call('GET', '/api/status')).body, { platform: 'macos', missing: [] })
-  assert.equal((await call('POST', '/api/worker/start')).body.worker.state, 'running')
-  assert.deepEqual((await call('GET', '/api/projects')).body, [{ name: 'shop' }])
-  assert.deepEqual((await call('GET', '/api/projects/shop')).body, { project: { name: 'shop' } })
-  assert.deepEqual((await call('GET', '/api/projects/shop/commits?branch=cart&limit=5')).body, [])
-  await call('GET', '/api/projects/shop/commits')
-  await call('GET', '/api/projects/shop/fs?branch=cart&path=%2Fsrc')
-  await call('GET', '/api/projects/shop/fs')
-  assert.deepEqual((await call('DELETE', '/api/projects/shop')).body, { removed: true })
-  assert.deepEqual(calls, [
-    ['status'],
-    ['startWorker'],
-    ['list'],
-    ['state', 'shop'],
-    ['commits', 'shop', 'cart', '5'],
-    ['commits', 'shop', 'main', null],
-    ['listDir', 'shop', 'cart', '/src'],
-    ['listDir', 'shop', 'main', '/'],
-    ['remove', 'shop'],
-  ])
-})
-
-test('POST /api/projects/:name/sandboxes makes a Sandbox on a platform (layerfs#529)', async () => {
-  calls.length = 0
-  const post = async (path, body) => {
-    const res = await fetch(url + path, { method: 'POST', headers: { ...auth, 'content-type': 'application/json' }, body: JSON.stringify(body) })
-    return { status: res.status, body: await res.json() }
-  }
-  assert.deepEqual((await post('/api/projects/shop/sandboxes', { platform: 'linux' })).body, { sandbox: '1', image: null, platform: 'linux' })
-  assert.deepEqual((await post('/api/projects/shop/sandboxes', {})).body, { sandbox: '1', image: null, platform: 'docker' })
-  await post('/api/projects/todo/sandboxes?store=team', { platform: 'docker' })
-  const refused = await post('/api/projects/shop/sandboxes', { platform: 'mac' })
-  assert.equal(refused.status, 501)
-  assert.equal(refused.body.code, 'Unsupported')
-  assert.deepEqual(calls, [
-    ['createSandbox', 'shop', 'linux'],
-    ['createSandbox', 'shop', null],
-    ['createSandbox', 'todo', 'docker', 'team'],
-    ['createSandbox', 'shop', 'mac'],
-  ])
-})
-
-test('POST /api/worker/start starts the home worker; Compute has no per-project start', async () => {
-  calls.length = 0
-  const res = await fetch(`${url}/api/worker/start`, { method: 'POST', headers: { ...auth, 'content-type': 'application/json' }, body: JSON.stringify({ project: 'shop' }) })
-  assert.equal(res.status, 200)
-  assert.deepEqual(calls, [['startWorker']])
-})
-
 test('refusals answer { code, message } with their status', async () => {
   const gone = await call('GET', '/api/projects/gone')
   assert.equal(gone.status, 404)

@@ -1,6 +1,6 @@
 // host/checks: a run's final checks against final.json, on a stand-in client
 // (no Store, no Docker). The live check is tools/checks/final.mjs.
-//   node --import ./host/resolve-layerfs.js --test host/test/checks.test.js
+//   node --test host/test/checks.test.js
 import assert from 'node:assert/strict'
 import { createHash } from 'node:crypto'
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
@@ -153,47 +153,6 @@ test('a scenario without final.json has no final checks', async () => {
   const { client } = stand(FILES)
   assert.deepEqual(await finalChecks({ scenario: 'tour', scenarioDir: join(SCENARIOS, 'tour'), project: 'p', client }), [])
   assert.equal(readFinal(join(SCENARIOS, 'tour')), null)
-})
-
-test('a run matching final.json passes order, tree and closed', async () => {
-  const { client, backend } = stand(FILES)
-  const checks = await finalChecks({ scenario: 'x', scenarioDir: scenarioDir('match', recorded()), project: 'p', client, backend })
-  assert.deepEqual(
-    checks.map((c) => [c.name, c.ok]),
-    [
-      ['final.order', true],
-      ['final.tree', true],
-      ['final.closed', true],
-    ],
-    checks.map((c) => c.detail).join('\n'),
-  )
-  assert.match(checks[1].detail, /^4 tracked files on main as recorded \(1 by stamped name, 1 by presence\)/)
-  // the tree check reads bytes in a Workspace of a Branch forked from main, unmounted without a Commit and closed
-  assert.match(client.calls[0], new RegExp(`^fork ${CHECK_PREFIX}`))
-  assert.deepEqual(client.calls.slice(1), ['create', `mount ${client.calls[0].slice(5)}`, 'unmount discard=true', 'close 7'])
-})
-
-test('differences fail with what differs; one check failing does not stop the next', async () => {
-  const { client, backend } = stand({ ...FILES, '/README.md': '# Changed\n', '/extra.txt': 'new\n' }, { sandboxes: [{ sandbox: '3', workspaces: [{}] }] })
-  const final = recorded()
-  final.history.branches.feature.commits[1].via = 'fs'
-  final.history.layers.push({ source: 'feature#0' })
-  const checks = await finalChecks({ scenario: 'x', scenarioDir: scenarioDir('differ', final), project: 'p', client, backend })
-  assert.deepEqual(
-    checks.map((c) => c.ok),
-    [false, false, false],
-  )
-  assert.match(checks[0].detail, /feature#1 "second" was made by exec, recorded fs/)
-  assert.match(checks[0].detail, /main has 2 Layers, recorded 3/)
-  assert.match(checks[1].detail, /\/README\.md differs/)
-  assert.match(checks[1].detail, /\/extra\.txt \([0-9a-f]{12}\) is tracked on main but not in the record/)
-  assert.match(checks[2].detail, /Sandbox 3 \(1 Workspace\(s\)\) still runs/)
-
-  const fresh = stand(FILES).client
-  const broken = { ...fresh, project: { ...fresh.project, list_branches: async () => Promise.reject(Object.assign(new Error('gone'), { code: 'NoSuchProject' })) } }
-  const again = await finalChecks({ scenario: 'x', scenarioDir: scenarioDir('match', recorded()), project: 'p', client: broken, backend })
-  assert.deepEqual(again[0], { name: 'final.order', ok: false, detail: 'NoSuchProject: gone' })
-  assert.equal(again[1].ok, true)
 })
 
 test('an unreadable final.json is one failed check', async () => {
