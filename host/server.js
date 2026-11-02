@@ -38,6 +38,7 @@ const STATUS = {
   NotLinked: 409,
   InUse: 409,
   NoSuchStore: 404,
+  NotFound: 404,
   NoSuchRemote: 404,
   // a remote's failures (pull, load, files)
   NoSuchFile: 404,
@@ -85,11 +86,12 @@ export function errorAnswer(error) {
  * @param {() => object | null} [deps.agents] the interactive Pi AgentManager
  * @param {() => string | null} [deps.runsError] why the RunManager is missing
  * @param {object} [deps.storage] storage.js's Storage: Stores, remotes, publish/push/pull/send/load/unlink, PostgreSQL (absent: those routes 404)
+ * @param {object} [deps.machines] machines.js's Machines: Compute's machines (absent: those routes 404)
  * @param {number} [deps.heartbeatMs]
  * @param {(line: string) => void} [deps.log]
  */
 export function createHandler(deps) {
-  const { token, projects, storage = null, runs = () => null, agents = () => null, runsError = () => null, heartbeatMs = HEARTBEAT_MS, log = (line) => process.stderr.write(`${line}\n`) } = deps
+  const { token, projects, storage = null, machines = null, runs = () => null, agents = () => null, runsError = () => null, heartbeatMs = HEARTBEAT_MS, log = (line) => process.stderr.write(`${line}\n`) } = deps
   const streams = new Set()
 
   /** The RunManager, or a 503 naming why it is not there. */
@@ -143,6 +145,15 @@ export function createHandler(deps) {
       }
       if (group === 'sync-jobs' && id && !sub && method === 'GET') return storage.syncJob(id)
     }
+    // layerfs#533: Compute's machines; machines start on the first call that needs them, so there is no start or stop
+    if (machines && group === 'machines') {
+      if (!id && !sub && method === 'GET') return machines.view()
+      if (!id && !sub && method === 'POST') return body?.platform === 'ssh' ? machines.connect(body) : machines.create(body)
+      if (id && !sub && method === 'DELETE') return machines.remove(id)
+      if (id && sub === 'update' && method === 'POST') return machines.update(id, body)
+      // moves a sqlite Store here: { store }
+      if (id && sub === 'stores' && method === 'POST') return machines.moveStore(body?.store, id)
+    }
     if (group === 'status' && !id && method === 'GET') return projects.status()
     if (group === 'worker' && id === 'start' && !sub && method === 'POST') return projects.startWorker()
     if (group === 'projects') {
@@ -164,6 +175,8 @@ export function createHandler(deps) {
         const key = found?.shared ? `${store}/${id}` : id
         return manager.removeProject(key, () => projects.remove(...at(id)))
       }
+      // a new Sandbox (layerfs#529): { platform } names its platform; left out, the home's default
+      if (sub === 'sandboxes' && method === 'POST') return projects.createSandbox(...at(id, body?.platform ?? null))
       if (method !== 'GET') return undefined
       const branch = query.get('branch') ?? 'main'
       if (sub === 'commits') return projects.commits(...at(id, branch, query.get('limit')))

@@ -20,7 +20,7 @@ import { chmodSync, mkdirSync, renameSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { setTimeout as pause } from 'node:timers/promises'
 import { fileURLToPath } from 'node:url'
-import { API, layerfsEnv, notePostgresql, openRuntime, projectRef, withProjectEnv } from '../config.js'
+import { API, isHostHome, layerfsEnv, notePostgresql, openRuntime, projectRef, withProjectEnv } from '../config.js'
 import { Agent } from './agent.js'
 import { Job } from './jobs.js'
 import { callCodes, inOrder } from '../../tools/lib/expect.mjs'
@@ -602,8 +602,8 @@ export const sandboxContainer = (prefix, project, sandbox) => `${prefix}${projec
  * and removed as a stopped leftover. Each run once; a refusal is logged.
  */
 export async function closeRunSandboxes(spec, { id, project: key, volume, image, scopeDir = null }) {
-  // a PostgreSQL Store's project has no volume (layerfs#506 d)
-  if (!volume && !(await notePostgresql(spec, key))) return
+  // a PostgreSQL Store's project has no volume (layerfs#506 d), nor has a host home's
+  if (!volume && !isHostHome(spec) && !(await notePostgresql(spec, key))) return
   let mine = null
   if (scopeDir) {
     try {
@@ -614,7 +614,8 @@ export async function closeRunSandboxes(spec, { id, project: key, volume, image,
     if (!mine.size) return
   }
   const ours = (sandbox) => !mine || mine.has(String(sandbox))
-  const runtime = await openRuntime(spec)
+  // a host home opens no runtime: its stuck Sandboxes are host daemons, not containers to stop
+  const runtime = isHostHome(spec) ? null : await openRuntime(spec)
   const { LayerFS } = await import('@layerfs/agent')
   // `key` is the run's project key: `store/name` in a shared Store (layerfs#506)
   const project = { ...projectRef(key), volume, image }
@@ -647,7 +648,7 @@ export async function closeRunSandboxes(spec, { id, project: key, volume, image,
   } finally {
     await lf.close().catch(() => {})
   }
-  if (stuck.length) {
+  if (stuck.length && runtime) {
     // LayerFS names a Sandbox's container <prefix>[<store>.]<project>-<n>
     const containers = stuck.map((sandbox) => sandboxContainer(spec.prefix, project, sandbox))
     try {

@@ -34,7 +34,6 @@ const [startPage, ...startRest] = window.location.hash.slice(1).split('/')
 const startId = startRest.join('/') || undefined
 const START_PAGES: NavId[] = ['chat', 'projects', 'storage', 'compute']
 const PAGE_LABELS: Record<NavId, string> = { chat: 'Chat', projects: 'Projects', storage: 'Storage', compute: 'Compute' }
-const startPlatform = ['linux', 'win32', 'darwin'].find((p) => p === startId) ?? window.connect.platform
 const [startProjectPart, startTab, ...startBranchParts] = startPage === 'projects' ? startRest : []
 const startProject = startProjectPart ? decodeURIComponent(startProjectPart) : undefined
 const startBranch = startBranchParts.join('/') || undefined
@@ -200,7 +199,7 @@ export function App() {
                 initialBranch={tab.location?.branch}
               />
             )}
-            {page === 'compute' && <ComputePage key={tab.id} platform={startPlatform} />}
+            {page === 'compute' && <ComputePage key={tab.id} />}
             </TabErrorBoundary>
           </main>
         </div>

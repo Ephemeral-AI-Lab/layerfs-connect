@@ -1,16 +1,18 @@
 import { t, useI18n } from '@/i18n'
-// Sandboxes by project, as table rows. A running Sandbox's row carries a
+// Sandboxes by project, as table rows (a project's own, without its heading). Each row names its platform
+// (layerfs#529) with a badge after its name, Docker's too. A running Sandbox's row carries a
 // breathing brand edge and its capacity bar glows; rows rise in, staggered,
 // and open with an animated height to the Workspaces mounted in them.
 import { ChevronRight } from 'lucide-react'
 import { useState } from 'react'
 
+import { PlatformBadge } from '@/components/compute/target-parts'
 import { LayerfsMark } from '@/components/layerfs-mark'
 import { LfsBranch, LfsWorkspace } from '@/components/lfs-icons'
 import { Collapse, revealStyle } from '@/components/motion'
 import { Chip, type Tone } from '@/components/storage/chips'
 import { Bar } from '@/components/storage/meters'
-import { shortDigest } from '@/data/format'
+import { type Os, platformOfSandbox } from '@/data/compute'
 import { cn } from '@/lib/utils'
 import { projectLabel, type SandboxInfo } from '@shared/host-api'
 
@@ -19,7 +21,7 @@ export const SANDBOX_CAPACITY = 16
 
 // Sandbox rows and their Workspace rows share one column grid, so the
 // Workspace details line up under the Sandbox they belong to.
-const ROW = 'grid grid-cols-[1.25rem_minmax(0,1.6fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.2fr)] items-center gap-x-3'
+const ROW = 'grid grid-cols-[1.25rem_minmax(0,1.8fr)_minmax(0,1fr)_minmax(0,1.2fr)] items-center gap-x-3'
 
 /** A Sandbox container's state as a chip: running is live, gone is quiet. */
 export function sandboxTone(state: string): { tone: Tone; live?: boolean; label: string } {
@@ -43,8 +45,8 @@ function Capacity({ used, live, wait }: { used: number; live: boolean; wait: num
   useI18n()
   const share = used / SANDBOX_CAPACITY
   return (
-    <span className="flex min-w-0 flex-wrap items-center gap-2 text-xs text-muted-foreground tabular-nums">
-      <Bar share={used > 0 ? Math.max(share, 0.06) : 0} tone={share >= 0.75 ? 'warning' : 'brand'} live={live && used > 0} wait={wait} className="w-16 min-w-6" />
+    <span className="flex min-w-0 items-center gap-2 text-xs text-muted-foreground tabular-nums">
+      <Bar share={used > 0 ? Math.max(share, 0.06) : 0} tone={share >= 0.75 ? 'warning' : 'brand'} live={live && used > 0} wait={wait} className="hidden w-16 min-w-6 @min-[26rem]/sandboxes:block" />
       <span className="shrink-0 whitespace-nowrap">
         <span className="text-foreground">{used}</span> / {SANDBOX_CAPACITY}
       </span>
@@ -62,11 +64,18 @@ interface SandboxListProps {
   groups: SandboxGroup[]
   /** Label each project's group; off when the list is one project's. */
   showProject?: boolean
+  /** The column titles; off inside a table that has its own. */
+  header?: boolean
+  /** Their states cannot be read now (a worker that does not answer): states show as unknown, rows dimmed. */
+  unknown?: boolean
+  /** The host's system, which names a native Sandbox's platform when an older host leaves it out. */
+  os?: Os
 }
 
 /** Sandboxes by project; each opens to the Workspaces mounted in it. */
-export function SandboxList({ groups, showProject = true }: SandboxListProps) {
+export function SandboxList({ groups, showProject = true, header = true, unknown = false, os = 'darwin' }: SandboxListProps) {
   useI18n()
+  const grid = ROW
   // Sandboxes with a Workspace mounted start open.
   const [open, setOpen] = useState<Set<string>>(
     () => new Set(groups.flatMap((g) => g.sandboxes.filter((s) => s.workspaces.length > 0).map((s) => `${g.project}/${s.id}`))),
@@ -81,13 +90,12 @@ export function SandboxList({ groups, showProject = true }: SandboxListProps) {
 
   let n = 0
   return (
-    <div role="table" aria-label={t("Sandboxes and their Workspaces")}>
-      <div role="row" className={cn(ROW, 'px-5 pt-2 pb-1.5 text-[11px] font-medium tracking-wide text-faint uppercase')}>
+    <div role="table" aria-label={t("Sandboxes and their Workspaces")} className="@container/sandboxes">
+      <div role="row" className={cn(grid, 'px-5 pt-2 pb-1.5 text-[11px] font-medium tracking-wide text-faint uppercase', !header && 'sr-only')}>
         <span />
         <span role="columnheader">{t("Sandbox")}</span>
         <span role="columnheader">{t("State")}</span>
         <span role="columnheader">{t("Workspaces")}</span>
-        <span role="columnheader">{t("Image")}</span>
       </div>
       {groups.map((g) => (
         <div key={g.project} role="rowgroup" className="border-t">
@@ -101,18 +109,18 @@ export function SandboxList({ groups, showProject = true }: SandboxListProps) {
           {g.sandboxes.map((s, i) => {
             const key = `${g.project}/${s.id}`
             const expanded = open.has(key)
-            const state = sandboxTone(s.state)
-            const running = s.state === 'running'
+            const state = unknown ? { tone: 'neutral' as const, live: false, label: 'Unknown' } : sandboxTone(s.state)
+            const running = !unknown && s.state === 'running'
             const at = n++
             return (
               <div
                 key={key}
-                className={cn('reveal transition-colors duration-(--dur-base)', expanded && 'bg-muted/30', running && 'sc-live-row')}
+                className={cn('reveal transition-colors duration-(--dur-base)', expanded && 'bg-muted/30', running && 'sc-live-row', unknown && 'opacity-60')}
                 style={revealStyle(at)}
               >
                 <div
                   role="row"
-                  className={cn(ROW, 'py-2.5 pr-5 pl-5 transition-colors duration-(--dur-fast) hover:bg-foreground/[0.025]', (showProject ? i > 0 : true) && 'border-t')}
+                  className={cn(grid, 'py-2.5 pr-5 pl-5 transition-colors duration-(--dur-fast) hover:bg-foreground/[0.025]', (showProject || !header ? i > 0 : true) && 'border-t')}
                 >
                   <button
                     type="button"
@@ -124,11 +132,11 @@ export function SandboxList({ groups, showProject = true }: SandboxListProps) {
                   >
                     <ChevronRight className="chevron size-4" />
                   </button>
-                  <span className="min-w-0">
-                    <span className="block truncate text-[13px]" title={s.name}>
+                  <span className="flex min-w-0 items-center gap-2">
+                    <span className="min-w-0 truncate font-mono text-xs" title={s.name}>
                       {s.name}
                     </span>
-                    <span className="block text-xs text-faint">{t("Sandbox ")}{s.id}</span>
+                    <PlatformBadge id={platformOfSandbox(s, os)} labelClassName="hidden @min-[24rem]/sandboxes:inline" />
                   </span>
                   <span>
                     <Chip tone={state.tone} live={state.live}>
@@ -136,19 +144,16 @@ export function SandboxList({ groups, showProject = true }: SandboxListProps) {
                     </Chip>
                   </span>
                   <Capacity used={s.workspaces.length} live={running} wait={250 + Math.min(at, 10) * 60} />
-                  <span className="truncate font-mono text-xs text-muted-foreground" title={s.image ?? undefined}>
-                    {shortDigest(s.image)}
-                  </span>
                 </div>
                 <Collapse open={expanded} appear={false}>
                   {s.workspaces.map((ws) => (
-                    <div key={ws.ws} role="row" className={cn(ROW, 'border-t border-dashed py-2 pr-5 pl-5')}>
+                    <div key={ws.ws} role="row" className={cn(grid, 'border-t border-dashed py-2 pr-5 pl-5')}>
                       <span />
                       <span className="flex min-w-0 items-center gap-2 pl-5">
                         <LfsWorkspace className={cn('size-3.5 shrink-0', running ? 'text-primary' : 'text-muted-foreground')} />
                         <span className="truncate font-mono text-xs">{ws.path}</span>
                       </span>
-                      <span className="col-span-3 flex min-w-0 items-center gap-2 text-[13px]">
+                      <span className={cn('col-span-2', 'flex min-w-0 items-center gap-2 text-[13px]')}>
                         <span aria-hidden="true" data-live={running} className="sc-wire w-8 shrink-0" />
                         <span className="flex min-w-0 items-center gap-1 rounded-md bg-card px-1.5 py-0.5 text-xs font-medium shadow-elev-1 ring-1 ring-foreground/10">
                           <LfsBranch className="size-3 shrink-0 text-muted-foreground" />

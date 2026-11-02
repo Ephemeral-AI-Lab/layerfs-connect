@@ -15,7 +15,7 @@
 import { execFileSync } from 'node:child_process'
 import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { keyOf, openRuntime, withProjectEnv } from '../config.js'
+import { hostProjects, isHostHome, keyOf, openRuntime, withProjectEnv } from '../config.js'
 import { lwwFor, Scope } from './scope.js'
 
 /** Base64 per printf argument: well under Linux's 128 KiB for one argument. */
@@ -25,16 +25,16 @@ const refuse = (code, message) => Object.assign(new Error(message), { code })
 
 /** The project's record (volume, image), or a refusal when there is none. */
 export async function projectRecord(spec, key) {
-  const runtime = await openRuntime(spec)
-  // `key` is the project key: `store/name` in a shared Store (layerfs#506)
-  const found = (await runtime.project.list()).find((p) => keyOf(p) === key)
+  // `key` is the project key: `store/name` in a shared Store (layerfs#506); a host home keeps no runtime records
+  const records = isHostHome(spec) ? hostProjects(spec) : await (await openRuntime(spec)).project.list()
+  const found = records.find((p) => keyOf(p) === key)
   if (!found) throw refuse('NotFound', `no LayerFS project named ${key}`)
   return found
 }
 
 /** A client of `project` (the host's own: no scope). */
 export async function openProject(spec, project) {
-  await openRuntime(spec)
+  if (!isHostHome(spec)) await openRuntime(spec)
   const { LayerFS } = await import('@layerfs/agent')
   // a project of a shared Store also carries its Store (layerfs#506)
   return withProjectEnv(spec, { name: project.name, store: project.store ?? null, shared: !!project.shared, volume: project.volume, image: project.image }, () => LayerFS.open(project.name))
@@ -53,8 +53,9 @@ async function branches(lf) {
 /** The fixture folder as a gzipped tar, base64: owners left out, macOS metadata too. */
 function packed(folder) {
   const env = { ...process.env, COPYFILE_DISABLE: '1' }
-  const args = process.platform === 'darwin' ? ['--no-mac-metadata', '--no-xattrs'] : []
-  return execFileSync('tar', ['-czf', '-', ...args, '--uid', '0', '--gid', '0', '-C', folder, '.'], { env, maxBuffer: 1 << 30 }).toString('base64')
+  // bsdtar (macOS) names the owner with --uid/--gid, GNU tar (Linux) with --owner/--group
+  const args = process.platform === 'darwin' ? ['--no-mac-metadata', '--no-xattrs', '--uid', '0', '--gid', '0'] : ['--owner=0', '--group=0', '--numeric-owner']
+  return execFileSync('tar', ['-czf', '-', ...args, '-C', folder, '.'], { env, maxBuffer: 1 << 30 }).toString('base64')
 }
 
 /**
@@ -65,9 +66,10 @@ function packed(folder) {
  * @param {object} o.project     the project's record (name, volume, image)
  * @param {string} o.scopeDir    where the run's scope state goes
  * @param {(phase: string) => void} [o.phase]
+ * @param {string | null} [o.platform] the platform the run's Sandboxes are made on (layerfs#529); null: the home's default
  * @returns {Promise<{ run: string, scope: Scope }>}
  */
-export async function setupFolder(spec, { scenarioId, fixture, project, scopeDir, phase = () => {} }) {
+export async function setupFolder(spec, { scenarioId, fixture, project, scopeDir, phase = () => {}, platform = null }) {
   const lf = await openProject(spec, project)
   try {
     const stem = scenarioId.replaceAll('-', '_')
@@ -87,11 +89,15 @@ export async function setupFolder(spec, { scenarioId, fixture, project, scopeDir
     phase(`Setting up /${run}`)
     const tar = packed(fixture)
     const lww = existsSync(join(fixture, '.lww')) ? Buffer.from(lwwFor(run, readFileSync(join(fixture, '.lww'), 'utf8'))).toString('base64') : null
-    const lines = ['set -e', `mkdir -p ${run}`, ': > /tmp/lfc-fixture.b64']
-    for (let i = 0; i < tar.length; i += CHUNK) lines.push(`printf '%s' '${tar.slice(i, i + CHUNK)}' >> /tmp/lfc-fixture.b64`)
-    lines.push(`base64 -d /tmp/lfc-fixture.b64 | tar -xzf - -C ${run} --no-same-owner`, 'rm -f /tmp/lfc-fixture.b64')
+    // portable to a `mac` Sandbox, which runs on macOS: its own temporary file (/tmp is the Mac's,
+    // shared by every Sandbox), base64 reading stdin (macOS takes no file argument), and a folder
+    // left empty fails (a pipeline's exit is tar's alone)
+    const lines = ['set -e', `mkdir -p ${run}`, 'b64=$(mktemp)']
+    for (let i = 0; i < tar.length; i += CHUNK) lines.push(`printf '%s' '${tar.slice(i, i + CHUNK)}' >> "$b64"`)
+    lines.push(`base64 -d < "$b64" | tar -xzf - -C ${run} --no-same-owner`, 'rm -f "$b64"', `[ -n "$(ls -A ${run})" ] || { echo "the fixture did not unpack into ${run}" >&2; exit 1; }`)
     if (lww) lines.push(`printf '%s' '${lww}' | base64 -d > .lww`)
-    const { sandbox } = await lf.sandbox.create()
+    // an SDK from before layerfs#529 ignores `platform` (scenarios.js checks it first)
+    const { sandbox } = await lf.sandbox.create(platform ? { platform } : undefined)
     let ws = null
     try {
       ws = await lf.workspace.mount(sandbox, `${run}.main`)
@@ -105,7 +111,7 @@ export async function setupFolder(spec, { scenarioId, fixture, project, scopeDir
       if (ws) await lf.workspace.unmount(ws, true).catch(() => {})
       await lf.sandbox.close(sandbox).catch(() => {})
     }
-    return { run, scope: Scope.create(scopeDir, { run, project: project.name, trunk: `${run}.main` }) }
+    return { run, scope: Scope.create(scopeDir, { run, project: project.name, trunk: `${run}.main`, platform }) }
   } finally {
     await lf.close()
   }

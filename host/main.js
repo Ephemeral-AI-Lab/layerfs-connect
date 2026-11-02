@@ -18,6 +18,7 @@ import { Projects } from './projects.js'
 import { AgentWorkspaces } from './agents/workspaces.js'
 import { AgentScenarios } from './agents/scenarios.js'
 import { createHostServer, listen, newToken } from './server.js'
+import { Machines } from './machines.js'
 import { Storage } from './storage.js'
 
 /** How long shutdown may take before the process exits anyway. */
@@ -87,7 +88,8 @@ async function main() {
   })
   const agents = await AgentManager.create({ state: spec.state, projectEnvironment: (key) => projects.recordOf(key), projectWorkspaces: new AgentWorkspaces({ projects }), scenarios })
   const token = newToken()
-  const server = createHostServer({ token, projects, storage, agents: () => agents, runs: () => engine.runs, runsError: () => engine.error, log })
+  const machines = new Machines({ spec })
+  const server = createHostServer({ token, projects, storage, machines, agents: () => agents, runs: () => engine.runs, runsError: () => engine.error, log })
 
   const endpoint = join(spec.state, 'host.json')
   let owned = false

@@ -95,27 +95,32 @@ export const inRunFolder = (run, command) => (typeof command === 'string' ? `cd 
 export class Scope {
   /** The scope in `dir`, as the engine made it. */
   static open(dir) {
-    const { run, project } = JSON.parse(readFileSync(join(dir, 'scope.json'), 'utf8'))
-    return new Scope(dir, run, project)
+    const { run, project, platform = null } = JSON.parse(readFileSync(join(dir, 'scope.json'), 'utf8'))
+    return new Scope(dir, run, project, platform)
   }
 
-  /** Makes a scope's folder: the run's name, its project and its first trunk. */
-  static create(dir, { run, project, trunk }) {
+  /**
+   * Makes a scope's folder: the run's name, its project, its first trunk and
+   * the platform its Sandboxes are made on when a call names none
+   * (scope-platform.js; null: the home's default).
+   */
+  static create(dir, { run, project, trunk, platform = null }) {
     rmSync(dir, { recursive: true, force: true })
     mkdirSync(join(dir, 'trunks'), { recursive: true })
     mkdirSync(join(dir, 'sandboxes'), { recursive: true })
     mkdirSync(join(dir, 'mounts'), { recursive: true })
     mkdirSync(join(dir, 'ffs'), { recursive: true })
-    writeFileSync(join(dir, 'scope.json'), JSON.stringify({ run, project }))
-    const scope = new Scope(dir, run, project)
+    writeFileSync(join(dir, 'scope.json'), JSON.stringify({ run, project, ...(platform ? { platform } : {}) }))
+    const scope = new Scope(dir, run, project, platform)
     scope.setTrunk(0, trunk)
     return scope
   }
 
-  constructor(dir, run, project) {
+  constructor(dir, run, project, platform = null) {
     this.dir = dir
     this.run = run
     this.project = project
+    this.platform = platform
   }
 
   // ---------- state ----------

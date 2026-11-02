@@ -1,6 +1,7 @@
 // The host's real LayerFS reads (README.md, "HTTP API"), mapped into the
 // types of src/shared/host-api.ts, with project creation and removal.
 //   status        runtime.status(), plus the worker start this host made
+//                 (Compute's machines are machines.js's)
 //   list          runtime.project.list(), each marked with the run that made it
 //   create/init   runtime.project.start_init()/get_init(), importing an empty
 //                 source or the selected folder, with the runtime's progress;
@@ -37,7 +38,7 @@ import { dirname, isAbsolute, join } from 'node:path'
 import { setTimeout as pause } from 'node:timers/promises'
 import { LayerFS } from '@layerfs/agent'
 import { LayerFSBackend } from '@layerfs/backend'
-import { keyOf, projectRef, storeOf, VOLUMES, missing as missingSettings, openRuntime, withProjectEnv } from './config.js'
+import { isVm, keyOf, projectRef, storeOf, sshHost, VOLUMES, missing as missingSettings, openRuntime, withProjectEnv } from './config.js'
 
 export { keyOf }
 
@@ -144,6 +145,8 @@ export class Projects {
     /** The worker start in progress, and the last one's failure. */
     this.starting = null
     this.startError = null
+    /** VM placement: the projects whose VM this host is starting. */
+    this.startingVms = new Set()
     this.initializing = new Set()
     this.creations = new Map()
     this.emptySources = join(spec.state, 'project-sources')
@@ -155,9 +158,15 @@ export class Projects {
 
   // ---------- status and the worker ----------
 
+  /** `local`, or the home's `vm:<provider>`. */
+  placement() {
+    return this.spec.placement ?? 'local'
+  }
+
   /** HostStatus. */
   async status() {
-    const s = await (await this.runtime()).status()
+    const runtime = await this.runtime()
+    const s = await runtime.status()
     let worker = null
     if (s.worker) {
       const w = s.worker
@@ -165,23 +174,43 @@ export class Projects {
       if (!error && w.state === 'running' && w.answering === false) error = 'the worker runs but does not answer'
       if (!error && w.expected && w.build && w.build !== w.expected) error = `the worker runs ${w.build}; the settings name ${w.expected}`
       if (!error && w.state !== 'running' && this.startError) error = this.startError
-      worker = { name: w.name, state: this.starting && w.state !== 'running' ? 'starting' : w.state, build: w.build ?? null, error }
+      worker = {
+        name: w.name,
+        state: this.starting && w.state !== 'running' ? 'starting' : w.state,
+        build: w.build ?? null,
+        error,
+        ...(typeof w.answering === 'boolean' ? { answering: w.answering } : {}),
+        ...('expected' in w ? { expected: w.expected ?? null } : {}),
+      }
     }
-    const docker = { level: s.docker?.level ?? 'down', version: s.docker?.version ?? null, error: s.docker?.error ?? null }
+    const docker = { level: s.docker?.level ?? 'down', version: s.docker?.version ?? null, error: s.docker?.error ?? null, ...(s.docker?.detail ? { detail: s.docker.detail } : {}) }
     const { spec } = this
     return {
       platform: s.platform,
+      placement: s.placement ?? this.placement(),
       missing: s.missing ?? missingSettings(spec),
       docker,
       worker,
       disk: { home: s.disk?.home ?? null, volumes: s.disk?.volumes ?? null },
       settings: { state: spec.state, home: spec.home, image: spec.image, bundle: spec.bundle, containerPrefix: spec.prefix, docker: spec.docker },
+      ...(s.sweep !== undefined ? { sweep: s.sweep } : {}),
+      // layerfs#529: every Sandbox platform, allowed and ready on this home or not
+      ...(Array.isArray(s.platforms) ? { platforms: s.platforms } : {}),
     }
   }
 
-  /** Starts the home's worker (one start at a time), then answers HostStatus. */
-  async startWorker() {
+  /**
+   * Starts the home's worker (one start at a time), then answers HostStatus.
+   * On a VM home there is one worker per project, in its VM: `project`'s, or
+   * every project's that does not answer, one after another.
+   */
+  async startWorker(project = undefined) {
     const runtime = await this.runtime()
+    if (isVm(this.spec)) {
+      if (project !== undefined) checkName(project)
+      await this.startVms(runtime, project === undefined ? null : [project])
+      return this.status()
+    }
     this.starting ??= runtime.worker.start().then(
       () => {
         this.startError = null
@@ -197,9 +226,48 @@ export class Projects {
     return this.status()
   }
 
-  /** At startup: starts the worker when this platform has one, its settings are complete and it is not running, or runs another build. Never throws. */
+  /**
+   * VM placement: starts each named project's VM and worker
+   * (runtime.worker.start(project)), or, with none named, every project's
+   * whose worker does not answer. One at a time; every one is tried, and the
+   * first failure is thrown after.
+   */
+  async startVms(runtime, names = null) {
+    if (!names) {
+      const vm = await runtime.vm.status()
+      names = (vm?.vms ?? []).filter((one) => !one.worker?.answering).map((one) => one.project)
+    }
+    let failed = null
+    for (const name of names) {
+      if (this.startingVms.has(name)) continue
+      this.startingVms.add(name)
+      this.log(`[host] starting the VM of ${name}`)
+      try {
+        await runtime.worker.start(name)
+        this.startError = null
+      } catch (error) {
+        this.startError = `${name}: ${error?.message ?? error}`
+        this.log(`[host] the VM of ${name} did not start: ${error?.message ?? error}`)
+        failed ??= error
+      } finally {
+        this.startingVms.delete(name)
+      }
+    }
+    if (failed) throw failed
+  }
+
+  /** At startup: starts the worker when this platform has one, its settings are complete and it is not running, or runs another build. On a VM home, every project's VM whose worker does not answer. Never throws. */
   async ensureWorker() {
-    if (!this.spec.worker || missingSettings(this.spec).length) return
+    if (missingSettings(this.spec).length) return
+    if (isVm(this.spec)) {
+      try {
+        await this.startVms(await this.runtime())
+      } catch {
+        // logged per project by startVms; status() reports it
+      }
+      return
+    }
+    if (!this.spec.worker) return
     try {
       const { worker } = await (await this.runtime()).status()
       // a running worker of another build (the bundle setting changed) cannot
@@ -424,7 +492,7 @@ export class Projects {
       project: this.summary(record, this.madeBy()),
       branches,
       layers,
-      sandboxes: sandboxInfos(record, listed, containers),
+      sandboxes: sandboxInfos(record, listed, containers, null, this.placement()),
       last: newest ? commitInfo(newest) : null,
       commits: byId.size,
       store: file,
@@ -438,8 +506,21 @@ export class Projects {
     const runtime = await this.runtime()
     const [listed, containers] = await Promise.all([this.listSandboxes(record), this.containers(runtime)])
     const mine = containersOf(record, containers)
-    const reads = await Promise.all(listed.map((s) => this.sandboxRead(record, String(s.id), mine.get(String(s.id)))))
-    return sandboxInfos(record, listed, containers, reads)
+    const reads = await Promise.all(listed.map((s) => this.sandboxRead(record, String(s.id), holder(s, mine, containers))))
+    return sandboxInfos(record, listed, containers, reads, this.placement())
+  }
+
+  /**
+   * sandbox.create (layerfs#529): a new Sandbox in the project on `platform`,
+   * or on the home's default when null. LayerFS refuses a platform the home
+   * does not allow (Unsupported) or does not know (InvalidInput) before it
+   * makes anything. Answers { sandbox, image, platform }.
+   */
+  async createSandbox(name, platform = null, store = null) {
+    if (platform !== null && typeof platform !== 'string') throw refuse(400, 'invalid-input', 'platform must be a platform name')
+    const record = await this.record(name, store)
+    const made = await this.use(record, ({ layerfs }) => layerfs.sandbox.create(platform === null ? undefined : { platform }))
+    return { sandbox: String(made.sandbox), image: made.image ?? null, platform: made.platform ?? null }
   }
 
   /** The project's Sandbox records (project.list_sandboxes, one page), or none (logged) when the Store cannot answer. */
@@ -453,9 +534,15 @@ export class Projects {
     }
   }
 
-  /** runtime.sandbox.list(), or none (logged) when Docker cannot answer. */
+  /**
+   * runtime.sandbox.list(), or none (logged) when Docker cannot answer; null
+   * on a VM home, whose Sandboxes are not host containers (the runtime
+   * refuses the call Unsupported there).
+   */
   containers(runtime) {
+    if (runtime.platform?.hostSandboxes === false) return Promise.resolve(null)
     return runtime.sandbox.list().catch((error) => {
+      if (error?.code === 'Unsupported') return null
       this.log(`[host] sandbox.list: ${error?.message ?? error}`)
       return []
     })
@@ -513,7 +600,8 @@ export class Projects {
    * (no volume, a platform whose worker is not a container here). One stat.
    */
   async storeBytes(volume) {
-    if (!volume) return null
+    // on a VM home the Store is on the project's VM disk, which no stat here sees
+    if (!volume || isVm(this.spec)) return null
     const files = [storeFile(volume), `${storeFile(volume)}-wal`]
     if (!this.spec.worker) {
       let n = null
@@ -846,7 +934,7 @@ function storeStats(t, st, branches, byId) {
 /** The project's Sandbox containers by Sandbox number. */
 function containersOf(record, containers) {
   const store = record.shared ? record.store : null
-  return new Map(containers.filter((c) => c.project === record.name && (c.store ?? null) === store && c.sandbox != null).map((c) => [String(c.sandbox), c]))
+  return new Map((containers ?? []).filter((c) => c.project === record.name && (c.store ?? null) === store && c.sandbox != null).map((c) => [String(c.sandbox), c]))
 }
 
 /**
@@ -855,8 +943,9 @@ function containersOf(record, containers) {
  * per record) each also has its mounted Workspaces, or `reach` when its daemon
  * did not answer; without, the Workspaces are not read.
  */
-function sandboxInfos(record, listed, containers, reads = null) {
+function sandboxInfos(record, listed, containers, reads = null, placement = 'local') {
   const mine = containersOf(record, containers)
+  const tag = (image, platform) => sandboxTag(placement, image, platform)
   const seen = new Set()
   const workspace = (id) => (w) => {
     const path = w.path ?? w.directory
@@ -866,15 +955,44 @@ function sandboxInfos(record, listed, containers, reads = null) {
   const out = listed.map((s, i) => {
     const id = String(s.id)
     seen.add(id)
-    const c = mine.get(id)
+    const c = holder(s, mine, containers)
     const read = reads?.[i]
-    const info = { id, name: s.name ?? c?.name ?? id, state: read?.gone || !c ? 'gone' : c.state, image: s.image ?? c?.image ?? null, workspaces: [] }
+    const image = s.image ?? c?.image ?? null
+    const info = { id, name: s.name ?? c?.name ?? id, state: read?.gone || !c ? 'gone' : c.state, image, ...tag(image, s.platform), workspaces: [] }
     if (read?.workspaces) info.workspaces = read.workspaces.filter((w) => w.mounted !== false && (w.path ?? w.directory)).map(workspace(id))
     if (read?.reach) Object.assign(info, { reach: read.reach, detail: read.detail })
     return info
   })
-  for (const [id, c] of mine) if (!seen.has(id)) out.push({ id, name: c.name, state: c.state, image: c.image ?? null, workspaces: [] })
+  for (const [id, c] of mine) if (!seen.has(id)) out.push({ id, name: c.name, state: c.state, image: c.image ?? null, ...tag(c.image ?? null), workspaces: [] })
   return out
+}
+
+/**
+ * What holds a listed Sandbox: its container, or, for a Sandbox that is no
+ * container (a native one, whose image reads `local`, or any on a VM home,
+ * where `containers` is null), the record itself: project.list_sandboxes
+ * lists running Sandboxes only.
+ */
+function holder(s, mine, containers) {
+  const c = mine.get(String(s.id))
+  if (c) return c
+  if (containers === null || s.image === 'local') return { name: s.name, state: 'running', running: true, image: s.image ?? null }
+  return undefined
+}
+
+/**
+ * SandboxInfo's `provider`, `runtime` and `platform`: the provider is the
+ * home's placement (`docker` for local); a VM home's Sandboxes are Linux
+ * namespaces in the project's VM, a local one's are containers, or native host
+ * daemons when the record's image is `local`. With layerfs#529 the record
+ * names its platform: a local `mac` Sandbox is native, a local `linux` one
+ * namespaces (or native: the host cannot tell, and either runs on this
+ * Linux host). An older LayerFS names none, and `platform` is left out.
+ */
+export function sandboxTag(placement, image, platform = undefined) {
+  const vm = typeof placement === 'string' && placement.startsWith('vm:')
+  const runtime = vm ? 'namespaces' : platform === 'mac' || image === 'local' ? 'native' : platform === 'linux' ? 'namespaces' : 'docker'
+  return { provider: vm ? placement : 'docker', runtime, ...(typeof platform === 'string' ? { platform } : {}) }
 }
 
 /** How long the Store's history read may take before the page is told so. */

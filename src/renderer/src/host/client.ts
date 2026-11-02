@@ -3,8 +3,11 @@ import type {
   FsEntry,
   CommitInfo,
   HostStatus,
+  MachinesView,
+  NewMachine,
   ProjectState,
   SandboxInfo,
+  SandboxPlatform,
   ProjectSummary,
   NewProjectInput,
   ProjectInitJob,
@@ -112,6 +115,16 @@ const projectsChanged = <T>(value: T): T => {
 export const host = {
   status: () => call<HostStatus>('GET', '/api/status'),
   startWorker: () => call<HostStatus>('POST', '/api/worker/start'),
+  /** Compute's machines (layerfs#533); `available: false` on a LayerFS with none. */
+  machines: () => call<MachinesView>('GET', '/api/machines'),
+  /** A VM, or (platform `ssh`) an ssh host. */
+  createMachine: (input: NewMachine) => call<unknown>('POST', '/api/machines', input),
+  /** Removes a VM or disconnects an ssh host; refused InUse while it holds Stores or running Sandboxes. */
+  removeMachine: (name: string) => call<unknown>('DELETE', `/api/machines/${enc(name)}`),
+  /** A built-in's { image, docker, wsl }, or a VM's { cpus, memory }. */
+  updateMachine: (name: string, changes: { image?: string; docker?: string; wsl?: string; cpus?: number; memory?: number }) => call<unknown>('POST', `/api/machines/${enc(name)}/update`, changes),
+  /** Moves a sqlite Store to `machine`. */
+  moveStore: (store: string, machine: string) => call<unknown>('POST', `/api/machines/${enc(machine)}/stores`, { store }),
   projects: () => call<ProjectSummary[]>('GET', '/api/projects'),
   /** A new project: Init from `input.source` (absolute) or empty; into the existing Store `input.store` when given, else a new Store (layerfs#506). */
   createProject: (input: NewProjectInput) => call<ProjectInitJob>('POST', '/api/projects', input),
@@ -121,6 +134,9 @@ export const host = {
   project: (project: string) => call<ProjectState>('GET', `${at(project).path}${q({ store: at(project).store })}`),
   /** The project's Sandboxes with their mounted Workspaces: the one project read that asks Sandbox daemons. */
   projectSandboxes: (project: string) => call<SandboxInfo[]>('GET', `${at(project).path}/sandboxes${q({ store: at(project).store })}`),
+  /** A new Sandbox on `platform` (layerfs#529 sandbox.create({ platform })); left out, the home's default. */
+  createSandbox: (project: string, platform?: SandboxPlatform) =>
+    call<{ sandbox: string; image: string | null; platform: SandboxPlatform | null }>('POST', `${at(project).path}/sandboxes${q({ store: at(project).store })}`, platform ? { platform } : {}),
   commits: (project: string, branch: string, limit = 200) =>
     call<CommitInfo[]>('GET', `${at(project).path}/commits${q({ branch, limit, store: at(project).store })}`),
   /** Several Branches' Commits in one call (a Branch gone meanwhile is left out; main's are []). */

@@ -185,6 +185,12 @@ test('deleting a provider removes its models and credentials, preserves others, 
 })
 
 test('deleting a built-in provider clears its saved connection and hides it from configured providers', async (t) => {
+  // a key in this process's environment would still count as OpenAI's after the delete
+  const envKey = process.env.OPENAI_API_KEY
+  delete process.env.OPENAI_API_KEY
+  t.after(() => {
+    if (envKey !== undefined) process.env.OPENAI_API_KEY = envKey
+  })
   const { dir, baseUrl } = await fixture(t)
   const models = await AgentModels.create(dir)
   const manager = { models, modelsSnapshot: () => models.snapshot() }

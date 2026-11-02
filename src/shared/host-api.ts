@@ -7,10 +7,13 @@
 
 export interface HostStatus {
   platform: 'linux' | 'macos' | 'windows'
-  /** Settings LayerFS still needs before Init and Workspaces work (image, daemon, bundle). */
+  /** Where this home's Stores and Sandboxes live: `local`, or `vm:<provider>` (one Linux VM per project). Absent from a host built against an older LayerFS. */
+  placement?: string
+  /** Settings LayerFS still needs before Init and Workspaces work (image, daemon, bundle, host). */
   missing: string[]
-  docker: { level: 'ok' | 'down' | string; version?: string | null; error?: string | null }
-  worker: { name: string; state: string; build?: string | null; error?: string | null } | null
+  /** `not-used` on a `vm:` placement: that home's Stores and Sandboxes are inside each project's VM. */
+  docker: { level: 'ok' | 'down' | 'not-used' | string; version?: string | null; error?: string | null; detail?: string | null }
+  worker: { name: string; state: string; build?: string | null; error?: string | null; answering?: boolean; expected?: string | null } | null
   disk: { home: number | null; volumes: number | null }
   settings: {
     state: string
@@ -20,7 +23,128 @@ export interface HostStatus {
     containerPrefix: string
     docker: string
   }
+  /** LayerFS's sweep of stopped Sandboxes at open, as it reports it. */
+  sweep?: unknown
+  /** runtime.status().platforms (layerfs#529): every Sandbox platform and whether this home allows it and is ready for it. Absent from a host built against an older LayerFS. */
+  platforms?: PlatformInfo[]
 }
+
+/** What a Sandbox runs on (layerfs#529): `sandbox.create({ platform })`. `linux` is Linux namespaces on a Linux host; there is no `windows` (a Windows Sandbox is `docker` through WSL2). */
+export type SandboxPlatform = 'docker' | 'mac' | 'linux' | 'apple-container' | 'microsandbox' | 'lima' | 'firecracker' | 'ssh'
+
+/** One entry of runtime.status().platforms. */
+export interface PlatformInfo {
+  id: SandboxPlatform
+  /** This home can make Sandboxes on it (a VM home allows its provider only). */
+  allowed: boolean
+  /** Allowed and nothing missing. */
+  ready: boolean
+  /** What it still needs: the names `missing` uses, `tool:<cli>` or `host:<need>`. Empty when not allowed. */
+  missing: string[]
+}
+
+/** How a Sandbox runs: a Docker container, a host process (native), or Linux namespaces in a machine's VM. */
+export type SandboxRuntime = 'docker' | 'native' | 'namespaces'
+
+// ---------- Compute: machines (LayerFS 2.0, layerfs#533) ----------
+
+/**
+ * A machine's kind. `native` and `docker` are built in; the VM kinds are
+ * created; `ssh` hosts are connected.
+ */
+export type MachinePlatform = 'native' | 'docker' | 'apple-container' | 'microsandbox' | 'lima' | 'firecracker' | 'ssh'
+
+/** One entry of machine.list().machines (2.0's machine/calls.rs). */
+export interface MachineInfo {
+  name: string
+  platform: MachinePlatform | string
+  backend: 'native' | 'docker' | 'namespaces' | string
+  /** `ready`/`running` (answering), `stopped` (starts on use), `starting`, `creating`, `failed`, `down`. */
+  state: string
+  cpus: number | null
+  /** Bytes. */
+  memory: number | null
+  /** Bytes: the VM's data disk. */
+  disk: number | null
+  /** Names of the sqlite Stores it holds. */
+  stores: string[]
+  /** Names of its Sandboxes. */
+  sandboxes: string[]
+  /** Its Sandbox image (a digest, or an archive path). */
+  image?: string
+  /** firecracker: the nested lima machine it runs in. */
+  host?: string
+  /** lima: made able to host Firecracker machines. */
+  nested?: boolean
+  /** docker: the Docker socket. */
+  docker?: string
+  /** docker on Windows: the WSL distribution. */
+  wsl?: string
+  error?: string
+  ssh?: { host: string; user: string; port: number; identity: string | null; root: string | null }
+}
+
+/** One entry of machine.list().can_create. */
+export interface MachineCreatable {
+  platform: MachinePlatform | string
+  ready: boolean
+  /** `tool:<cli>`, `host:<need>`, `bundle:<folder>`. */
+  missing: string[]
+  /** The tool's version, when found. */
+  version: string | null
+}
+
+/** A sqlite Store on a machine (store.list()). */
+export interface MachineStore {
+  name: string
+  machine: string
+  projects: number
+  /** Bytes, when LayerFS reports it. */
+  size: number | null
+}
+
+/** A Sandbox on a machine (sandbox.list()). */
+export interface MachineSandbox {
+  name: string
+  machine: string | null
+  project: string | null
+  workspaces: number
+}
+
+/** machine.status(name) for a VM or ssh machine (built-ins are not asked). */
+export interface MachineLive {
+  name: string
+  state: string | null
+  freeDisk: number | null
+  toolVersion: string | null
+  /** Why it is down (2.0's `down_reason`). */
+  down: string | null
+}
+
+/** GET /api/machines. */
+export type MachinesView =
+  | {
+      available: true
+      /** The linked LayerFS's version. */
+      layerfs: string | null
+      machines: MachineInfo[]
+      canCreate: MachineCreatable[]
+      stores: MachineStore[]
+      sandboxes: MachineSandbox[]
+      /** By machine name. */
+      status: Record<string, MachineLive>
+    }
+  | {
+      /** Connect links a LayerFS with no machines (1.x): nothing to show, nothing to do. */
+      available: false
+      layerfs: string | null
+      reason: string
+    }
+
+/** POST /api/machines: a VM (`platform` a VM kind) or an ssh host (`platform: 'ssh'`). */
+export type NewMachine =
+  | { platform: Exclude<MachinePlatform, 'native' | 'docker' | 'ssh'>; name: string; cpus?: number; memory?: number; disk?: number; image?: string; os_image?: string; host?: string; nested?: boolean }
+  | { platform: 'ssh'; name: string; host: string; user?: string; port?: number; identity?: string; root?: string }
 
 // ---------- Projects (real LayerFS reads) ----------
 
@@ -407,6 +531,12 @@ export interface SandboxInfo {
   name: string
   state: string
   image: string | null
+  /** How it runs; a host built against an older LayerFS leaves it out, which means Docker. */
+  runtime?: SandboxRuntime
+  /** The place it runs on (`docker` or a `vm:<provider>` placement); left out means `docker`. */
+  provider?: string
+  /** Its platform (layerfs#529); a host built against an older LayerFS leaves it out (see data/compute.ts platformOfSandbox). */
+  platform?: SandboxPlatform
   /** Its mounted Workspaces: read only by GET /api/projects/<key>/sandboxes (the project read leaves them empty). */
   workspaces: { ws: string; branch: string; path: string }[]
   /** Its daemon did not answer that read in time (busy) or refused it (unreachable); its Workspaces are then unknown. */

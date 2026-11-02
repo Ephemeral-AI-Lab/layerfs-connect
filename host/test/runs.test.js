@@ -4,7 +4,7 @@
 // $LAYERFS_TRACE_STEP, so the expect checks read real files. Init is skipped.
 // Run: node --import ./host/resolve-layerfs.js --test host/test/runs.test.js
 import assert from 'node:assert/strict'
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { after, test } from 'node:test'
@@ -348,17 +348,21 @@ test('removal waits for the startup sweep before removing its record', async () 
   assert.equal(existsSync(join(f.spec.runs, 'sweeping')), false)
 })
 
-test('a filesystem removal failure retains the record and emits no success event', async () => {
+test('a filesystem removal failure retains the record and emits no success event', async (t) => {
+  // a run folder the removal cannot empty (read-only, so its run.json cannot be unlinked);
+  // a file in place of the runs folder no longer fails: Node 24's rmSync with force ignores ENOTDIR
+  if (process.getuid?.() === 0) return t.skip('root removes read-only folders')
   const f = historyFixture([{ id: 'retry' }])
-  const savedRuns = f.spec.runs
-  const blocker = join(f.spec.state, 'not-a-directory')
-  writeFileSync(blocker, 'block deletion')
-  f.spec.runs = blocker
-  await assert.rejects(f.manager.remove('retry'), { code: 'ENOTDIR' })
+  const folder = join(f.spec.runs, 'retry')
+  chmodSync(folder, 0o500)
+  try {
+    await assert.rejects(f.manager.remove('retry'), (error) => ['EACCES', 'EPERM', 'ENOTEMPTY'].includes(error.code))
+  } finally {
+    chmodSync(folder, 0o700)
+  }
   assert.equal(f.manager.run('retry').id, 'retry')
   assert.deepEqual(f.events, [])
-  assert.equal(existsSync(join(savedRuns, 'retry', 'run.json')), true)
-  f.spec.runs = savedRuns
+  assert.equal(existsSync(join(folder, 'run.json')), true)
   await f.manager.remove('retry')
   await f.manager.close()
 })

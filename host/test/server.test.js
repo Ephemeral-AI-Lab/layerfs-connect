@@ -29,6 +29,10 @@ const projects = {
     throw refusal('Binary', 'Binary: not text')
   }),
   remove: record('remove', { removed: true }),
+  createSandbox: record('createSandbox', (name, platform) => {
+    if (platform === 'mac') throw refusal('Unsupported', 'platform mac is not available on this macOS local (worker) home, which allows docker')
+    return { sandbox: '1', image: null, platform: platform ?? 'docker' }
+  }),
 }
 
 class FakeRuns extends EventEmitter {
@@ -119,6 +123,33 @@ test('project routes pass their arguments through', async () => {
     ['listDir', 'shop', 'main', '/'],
     ['remove', 'shop'],
   ])
+})
+
+test('POST /api/projects/:name/sandboxes makes a Sandbox on a platform (layerfs#529)', async () => {
+  calls.length = 0
+  const post = async (path, body) => {
+    const res = await fetch(url + path, { method: 'POST', headers: { ...auth, 'content-type': 'application/json' }, body: JSON.stringify(body) })
+    return { status: res.status, body: await res.json() }
+  }
+  assert.deepEqual((await post('/api/projects/shop/sandboxes', { platform: 'linux' })).body, { sandbox: '1', image: null, platform: 'linux' })
+  assert.deepEqual((await post('/api/projects/shop/sandboxes', {})).body, { sandbox: '1', image: null, platform: 'docker' })
+  await post('/api/projects/todo/sandboxes?store=team', { platform: 'docker' })
+  const refused = await post('/api/projects/shop/sandboxes', { platform: 'mac' })
+  assert.equal(refused.status, 501)
+  assert.equal(refused.body.code, 'Unsupported')
+  assert.deepEqual(calls, [
+    ['createSandbox', 'shop', 'linux'],
+    ['createSandbox', 'shop', null],
+    ['createSandbox', 'todo', 'docker', 'team'],
+    ['createSandbox', 'shop', 'mac'],
+  ])
+})
+
+test('POST /api/worker/start starts the home worker; Compute has no per-project start', async () => {
+  calls.length = 0
+  const res = await fetch(`${url}/api/worker/start`, { method: 'POST', headers: { ...auth, 'content-type': 'application/json' }, body: JSON.stringify({ project: 'shop' }) })
+  assert.equal(res.status, 200)
+  assert.deepEqual(calls, [['startWorker']])
 })
 
 test('refusals answer { code, message } with their status', async () => {

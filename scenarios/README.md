@@ -309,6 +309,7 @@ What `tools/port-scenarios.mjs` changed, with counts over all ten:
 | `DSH_LAYERFS_CLI` (the layerfs command's path) | none: `layerfs` is on PATH | not in a scenario; the port refuses it |
 | `DSH_SOURCE` (dsh's client build) | none | not ported |
 | fixture `../../demo-workspace` | `../../fixtures/demo-workspace` | 7 scenarios |
+| a script's `sed -i "<expr>" <file>`, `\|` alternation (GNU only) | `sed [-E] -i.bak "<expr>" <file> && rm <file>.bak`, a plain `\|` under `-E`, so a `mac` Sandbox's BSD sed reads it too (`tools/lib/portable-sed.mjs`) | 4 steps (tour 1, merge 3) |
 | "the configured Host runtime image" | "the configured runtime image" | the replays' CONVERSION.md (convert.mjs writes it) |
 | "the Host's own Branch poll (`packages/host/src/storage.js`)" | "the recording host's own Branch poll" | CONVERSION.md |
 | loader rule: an SDK step uses `DSH_LAYERFS_(SDK\|BACKEND)` | uses `@layerfs/(agent\|backend)` | the form check |

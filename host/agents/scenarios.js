@@ -10,7 +10,7 @@
 import { chmodSync, existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { API, layerfsEnv, notePostgresql, openRuntime, projectRef, storeOf, withProjectEnv } from '../config.js'
+import { API, hostStatus, isHostHome, layerfsEnv, notePostgresql, openRuntime, projectRef, storeOf, withProjectEnv } from '../config.js'
 import { compileScenario } from '../../tools/lib/scenario.mjs'
 import { chatReady } from './scenario-plan.js'
 
@@ -19,11 +19,17 @@ const RESOLVE = fileURLToPath(new URL('../resolve-layerfs.js', import.meta.url))
 const CLI = join(API, 'cli', 'src', 'layerfs.js')
 const q = (s) => `'${String(s).replaceAll("'", "'\\''")}'`
 
+/** The Sandbox platforms (layerfs#529), and the one a scenario chat's Sandboxes are made on unless it names another. */
+export const PLATFORMS = ['docker', 'mac', 'linux', 'apple-container', 'microsandbox', 'lima', 'firecracker', 'ssh']
+export const DEFAULT_PLATFORM = 'docker'
+const refuse = (status, message) => Object.assign(new Error(message), { status })
+
 export class AgentScenarios {
-  /** @param {{ spec: object, dir?: string }} o config.js's spec, and the scenarios folder */
-  constructor({ spec, dir = SCENARIOS }) {
+  /** @param {{ spec: object, dir?: string, status?: () => Promise<object> }} o config.js's spec, the scenarios folder, and runtime.status() (a parameter for tests) */
+  constructor({ spec, dir = SCENARIOS, status = null }) {
     this.spec = spec
     this.dir = dir
+    this.status = status ?? (async () => (isHostHome(this.spec) ? hostStatus(this.spec) : (await openRuntime(this.spec)).status()))
     /** id -> { mtime, entry } */
     this.cache = new Map()
     /** chat id -> its final verdict, once asked */
@@ -70,9 +76,38 @@ export class AgentScenarios {
     return this.playable().find((s) => s.id === id) ?? null
   }
 
+  /**
+   * `platform` checked before a chat starts, so a wrong one is refused at
+   * once: one of the eight names, allowed and ready on this home
+   * (runtime.status().platforms). A LayerFS from before layerfs#529 has no
+   * platform choice: it makes docker Sandboxes on a local home and the
+   * provider's on a VM home, so only that platform is accepted there.
+   * Status that cannot be read lets it pass: LayerFS refuses it later.
+   */
+  async checkPlatform(platform = DEFAULT_PLATFORM) {
+    if (!PLATFORMS.includes(platform)) throw refuse(400, `No platform named ${platform}. Platforms: ${PLATFORMS.join(', ')}.`)
+    let status
+    try {
+      status = await this.status()
+    } catch {
+      return platform
+    }
+    if (!Array.isArray(status?.platforms)) {
+      const placement = status?.placement ?? 'local'
+      const only = placement.startsWith('vm:') ? placement.slice(3) : 'docker'
+      if (platform === only) return platform
+      throw refuse(409, `This LayerFS makes every Sandbox on ${only}. Choosing another platform needs LayerFS with Sandbox platforms (layerfs#529).`)
+    }
+    const allowed = status.platforms.filter((p) => p.allowed).map((p) => p.id)
+    const entry = status.platforms.find((p) => p.id === platform)
+    if (!entry?.allowed) throw refuse(409, `${platform} is not available on this home, which allows ${allowed.join(' and ') || 'no platform'}.${allowed.length ? ` Use -platform ${allowed[0]}.` : ''}`)
+    if (!entry.ready) throw refuse(409, `${platform} is not ready on this home: it needs ${entry.missing.join(', ') || 'setting up'}.`)
+    return platform
+  }
+
   /** The chat's scenario state as the record keeps it, before its folder is set up. */
-  initial(entry, project, dir) {
-    return { id: entry.id, title: entry.title, project, dir, folder: null, scopeDir: null, volume: null, image: null, state: 'preparing', phase: 'Setting up its folder', checks: [], error: null, swept: false }
+  initial(entry, project, dir, platform = DEFAULT_PLATFORM) {
+    return { id: entry.id, title: entry.title, project, platform, dir, folder: null, scopeDir: null, volume: null, image: null, state: 'preparing', phase: 'Setting up its folder', checks: [], error: null, swept: false }
   }
 
   /** Sets up the chat's folder on the project (folder.js), and the `layerfs` command its bash finds. */
@@ -96,7 +131,7 @@ export class AgentScenarios {
     s.volume = project.volume ?? null
     s.image = project.image ?? null
     s.scopeDir = join(s.dir, 'scope')
-    const { run } = await setupFolder(this.spec, { scenarioId: s.id, fixture, project, scopeDir: s.scopeDir, phase: onPhase })
+    const { run } = await setupFolder(this.spec, { scenarioId: s.id, fixture, project, scopeDir: s.scopeDir, phase: onPhase, platform: s.platform ?? null })
     s.folder = run
   }
 
@@ -184,7 +219,7 @@ export class AgentScenarios {
     let mod
     try { mod = await import('../checks/index.js') } catch { return [] }
     if (!mod?.finalChecks) return []
-    await openRuntime(this.spec)
+    if (!isHostHome(this.spec)) await openRuntime(this.spec)
     const { LayerFS } = await import('@layerfs/agent')
     const { Scope } = await import('../runs/scope.js')
     const project = { ...projectRef(s.project), volume: s.volume, image: s.image }

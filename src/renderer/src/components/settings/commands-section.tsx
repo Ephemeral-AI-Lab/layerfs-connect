@@ -9,7 +9,7 @@ const CONNECT_COMMANDS: { name: string; description: string }[] = [
   { name: 'workspace', description: 'Working directory, project and recent folders' },
   { name: 'compact', description: 'Summarize earlier turns to free context' },
   { name: 'stop', description: 'Stop the current turn' },
-  { name: 'scenario <name>', description: 'A new chat plays a scenario’s script here, in a folder of its own' },
+  { name: 'scenario <name> [-platform <name>]', description: 'A new chat plays a scenario’s script here, in a folder of its own. Add -platform <name> for its Sandboxes (docker by default)' },
 ]
 
 /** Settings → Commands: the slash commands a chat's message box runs, grouped by the extension that brings them. */

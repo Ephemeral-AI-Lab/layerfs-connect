@@ -206,7 +206,19 @@ A scenario run's agents' bash calls (`runs/`) get the same import and shim,
 plus `LAYERFS_CONNECT_SCOPE` (the run's scope folder): with it set,
 `resolve-layerfs.js` loads the SDK's `client.js` through
 `runs/scope-client.js`, which puts each call in the run's scope first (see
-"Where a run plays").
+"Where a run plays"). With a LayerFS that has Sandbox platforms (layerfs#529)
+it also loads the SDK's `platform.js` through `runs/scope-platform.js`: a
+`sandbox.create` that names no platform is made on the run's platform (the
+scope's `platform`), and one a script names is kept.
+
+A scenario chat (`/scenario <name> [-platform <name>]` in a chat on a LayerFS
+project) makes its Sandboxes on `docker` unless it names another platform.
+`agents/scenarios.js` `checkPlatform` refuses the platform before the chat
+starts: 400 for a name that is not one of the eight, 409 when this home does
+not allow it (naming the ones it does) or it is not ready (naming what it
+needs). A LayerFS from before layerfs#529 has no choice, so only the platform
+its home makes is accepted: `docker` on a local home, the provider on a VM
+home. The chat's folder setup and every Sandbox its scripts make use it.
 
 ## Deployment ([`config.js`](config.js))
 
@@ -215,13 +227,64 @@ plus `LAYERFS_CONNECT_SCOPE` (the run's scope folder): with it set,
 - `settings.json`: `image` (runtime image digest), `bundle` (sealed Linux
   LayerFS build; macOS/Windows run the worker from it), `daemon`, `docker`,
   `containerPrefix` (default `lfc-`). Each also from `LAYERFS_CONNECT_<NAME>`.
+- `placement` (`LAYERFS_CONNECT_PLACEMENT`): where the home's Stores and
+  Sandboxes live (layerfs#526). `local` (the default, as before: this
+  machine's Docker, through the worker on macOS and Windows), or
+  `vm:apple-container`, `vm:microsandbox` or `vm:ssh`: one Linux VM per
+  project, holding its Store on its own disk, its Sandboxes Linux namespaces
+  inside it. Connect always passes its own placement, so LayerFS's
+  `LAYERFS_PLACEMENT` does not move Connect's home. A VM home needs `bundle`
+  and no `image`; the daemon is the guest's.
+- `vm` (a VM placement's VM, one setting for the home): `{ image, cpus,
+  memory, storeSize }`, each also from `LAYERFS_CONNECT_VM_IMAGE`, `_VM_CPUS`,
+  `_VM_MEMORY`, `_VM_STORE_SIZE`; what is left out is LayerFS's
+  (`LAYERFS_VM_*`, else `node:22-trixie-slim`, 2, `2G`, `20G`).
+- `ssh` (`vm:ssh`'s host): `{ host, user, port, identityFile, storePath,
+  knownHostsFile, strictHostKeyChecking }`, each but the last also from
+  `LAYERFS_CONNECT_SSH_HOST`, `_SSH_USER`, `_SSH_PORT`, `_SSH_IDENTITY`,
+  `_SSH_STORE`, `_SSH_KNOWN_HOSTS`; what is left out is LayerFS's
+  (`LAYERFS_SSH_*`, else `root`, 22, the agent's keys, `/layerfs/store`).
+  Key login only. Without a host, status lists `host` as missing.
+
+  ```json
+  { "placement": "vm:ssh", "bundle": "/path/to/build-linux-…",
+    "ssh": { "host": "ec2-…amazonaws.com", "user": "ubuntu", "identityFile": "~/.ssh/deploy" } }
+  ```
+
+- `sandbox` (`LAYERFS_CONNECT_SANDBOX`): `native` or `namespaces` makes a
+  host home (layerfs#529's `mac` and `linux` platforms). Its Stores are files
+  under `<state>/stores/<project>/store.sqlite`, its Sandboxes daemons on this
+  machine, and there is no runtime or worker: the SDK runs alone with the
+  bundle's addon (`LAYERFS_NATIVE`). `native` runs each Sandbox as plain
+  processes in its Workspace (macOS: Workspaces are loopback NFS mounts, so
+  the terminal or app needs Network Volumes access in Privacy & Security);
+  `namespaces` needs Linux, root, `/dev/fuse` and cgroup v2. `localDir`
+  (`LAYERFS_CONNECT_LOCAL_DIR`, default `<state>/local`) holds each
+  Sandbox's folder; `imageArchive` (`LAYERFS_CONNECT_IMAGE_ARCHIVE`, needed
+  for `namespaces`) is an uncompressed docker-archive of the Sandbox image
+  (the namespaces backend refuses gzip layers). `bundle` is the sealed build
+  for this machine's OS. A `vm:` placement wins over `sandbox`.
+
+  ```json
+  { "sandbox": "namespaces", "bundle": "/path/to/build-linux-…", "imageArchive": "/path/to/image.tar" }
+  ```
+
+  The placement is the home's: changing it does not move existing projects
+  (their Stores stay where they were made), so a new placement wants a new
+  state folder (`LAYERFS_CONNECT_STATE`) or a home with no projects.
 - On macOS the runtime runs the home's worker container `<prefix>worker`
   (`lfc-worker`); every Store call goes there. Connect never touches another
-  home's containers (dsh's are `layerfs-…`).
+  home's containers (dsh's are `layerfs-…`). On a VM home each project has
+  its own worker in its own VM (`<prefix><project>-vm`); at startup the host
+  starts every project's VM whose worker does not answer, one at a time.
 - `deploymentEnv(spec, project)` / `layerfsEnv` give host-side replay calls
   its `LAYERFS_*` settings: PROJECT, HOME, DOCKER, IMAGE, DAEMON, VOLUME,
   STORE_PATH, STORE, CONTAINER_PREFIX, WORKER_ENDPOINT (a PostgreSQL Store's
-  project: STORE_POSTGRESQL and no VOLUME). The run adds LAYERFS_TRACE,
+  project: STORE_POSTGRESQL and no VOLUME). On a VM home they are the
+  runtime platform's own (`SANDBOX=native`, `SANDBOX_BACKEND=namespaces`,
+  the guest HOME, STORE_PATH, DAEMON and LOCAL_DIR, the bundle's IMAGE and
+  IMAGE_ARCHIVE, and that project's WORKER_ENDPOINT
+  `<home>/worker/<project>.json`), with PROJECT and STORE. The run adds LAYERFS_TRACE,
   LAYERFS_TRACE_STEP, LAYERFS_TRACE_START=1 and LAYERFS_CONNECT_SCOPE.
 
 ## Layout
@@ -241,6 +304,7 @@ host/
     workspace-bash.js  root/child bash bridge to the host's managed workspace execution
     history.js         immutable turn checkpoints and Pi session copies without replaying old work
   config.js            deployment (above)
+  machines.js          Compute's machines (LayerFS 2.0): the view and its calls (below)
   resolve-layerfs.js   @layerfs/* resolution (above)
   seed.js              writes a seed.json fixture out as a folder
   checks/              final checks of a finished run (final.json …)
@@ -282,12 +346,18 @@ errors are `{ code, message }` with a 4xx/5xx status. CORS allows any origin
 
 | Route | Answer |
 | --- | --- |
-| `GET /api/status` | `HostStatus` |
-| `POST /api/worker/start` | `HostStatus` once the worker answers |
+| `GET /api/status` | `HostStatus`, with `placement`, the runtime's `sweep` and `platforms` (LayerFS's `runtime.status().platforms`, layerfs#529; absent on an older LayerFS) |
+| `POST /api/worker/start` | `HostStatus` once the worker answers. On a VM home it starts every project's VM whose worker does not answer |
+| `GET /api/machines` | `MachinesView` (see "Compute"); `{ available: false, layerfs, reason }` on a LayerFS with no machines |
+| `POST /api/machines` | a VM `{ name, platform, cpus?, memory?, disk?, image?, os_image?, host?, nested? }`, or an ssh host `{ name, platform: 'ssh', host, user?, port?, identity?, root? }` |
+| `DELETE /api/machines/:name` | removes a VM or disconnects an ssh host; `InUse` (409) while it holds Stores or running Sandboxes |
+| `POST /api/machines/:name/update` | a built-in's `{ image, docker, wsl }` or a VM's `{ cpus, memory }` |
+| `POST /api/machines/:name/stores` | `{ store }`: moves that sqlite Store to this machine |
 | `GET /api/projects` | `ProjectSummary[]` |
 | `POST /api/projects` | `{ name, source?, store? }` starts a real Init and returns `ProjectInitJob`; omit `source` for an empty project, or provide an existing absolute folder to import. With `store` the project goes into that existing Store (layerfs#506), else into a new SQLite Store of its own. Existing names return 409 without changing the existing project. |
 | `GET /api/project-inits/:id` | `ProjectInitJob`: the runtime's `scan`, `volume`, `import`, `done` or `failed` step, live counts, terminal error, and `ProjectSummary` on success. Unknown or expired jobs return 404. Polling never restarts a job. |
 | `GET /api/projects/:name` | `ProjectState` from the Store alone (branches, layers, Sandboxes from their records and containers with no Workspaces, last Commit, Commit count, Store file and size, Store totals and each Commit's added bytes); asks no Sandbox daemon |
+| `POST /api/projects/:name/sandboxes` | `{ platform? }` → `{ sandbox, image, platform }`: `sandbox.create({ platform })` (layerfs#529); left out, the home's default. A platform the home does not allow is refused `Unsupported` (501), an unknown one `InvalidInput` (400), before anything is made |
 | `GET /api/projects/:name/sandboxes` | `SandboxInfo[]` with each running Sandbox's mounted Workspaces (`sandbox.list_workspaces`, each Sandbox on its own with a 4 s limit); one that did not answer has `reach: 'busy'` (left alone 10 s), one that refused `reach: 'unreachable'`, both with `detail` |
 | `GET /api/projects/:name/commits?branch=&limit=` | `CommitInfo[]`, newest first |
 | `GET /api/projects/:name/branch-commits?branch=a&branch=b` | `{ [branch]: CommitInfo[] }`: several Branches' Commits in one call; main's are `[]`, a Branch gone meanwhile is left out |
@@ -317,6 +387,35 @@ project by key. A PostgreSQL Store's project is read with its connection's
 URL, which `storage.js` gives `projects.js`; `config.js` `notePostgresql`
 keeps it in this process only, and `deploymentEnv` gives such a project's
 clients `LAYERFS_STORE_POSTGRESQL` and no volume.
+
+### Compute ([`machines.js`](machines.js))
+
+LayerFS 2.0 (layerfs#533) gives a home a set of machines: `native` and
+`docker` built in, VMs it creates (`apple-container`, `microsandbox`, `lima`,
+`firecracker`) and ssh hosts it connects. A machine holds sqlite Stores; a
+project's Sandboxes run on its Store's machine. Machines start on the first
+call that needs them and stop after 10 idle minutes: there is no start or stop.
+
+`GET /api/machines` is one read: `machine.list()` (`machines`, `canCreate`),
+`store.list()` (the Stores on a machine), `sandbox.list()` and
+`machine.status(name)` for every machine but native (`{ state, freeDisk,
+toolVersion, down }`; a stopped VM answers without being started). The actions
+call `machine.create`, `machine.connect`, `machine.remove` or
+`machine.disconnect` (by the machine's platform), `machine.update` and
+`store.move`, passing only the options each takes. An OS image is sent only
+when the linked `machine.create` lists `os_image`.
+
+The 2.0 package is `layerfs` (`client({ home })`). Connect links LayerFS 1.1.0
+today, which has none: the view is `{ available: false, layerfs: '1.1.0',
+reason }` and every action is refused `Unsupported` (501). The page is built on
+`src/renderer/src/data/compute-sim.ts`, in the same shape.
+
+Each `SandboxInfo` carries `provider` (the placement's provider id),
+`runtime` (`namespaces` on a VM home; locally `native` when the record's
+image is `local` or its platform is `mac`, `namespaces` for a local `linux`
+one, else `docker`) and, when LayerFS names it (layerfs#529), `platform`. A VM home's Sandboxes are no host
+containers (`runtime.sandbox.list` is refused there), so their records,
+which list running Sandboxes only, are read as running.
 
 ### Storage (layerfs#506, #509; `docs/ui/storage-links.md`, `docs/ui/storage-redesign.md`)
 
@@ -369,7 +468,7 @@ Interactive routes accept JSON request bodies:
 | `POST /api/agent/models/discover` | `{ provider, baseUrl?, api?, apiKey?, headers? }`; reads models without saving, returns `{ models: [{ id, name, reasoning?, contextWindow?, maxTokens? }], source: "remote" \| "catalog" }` |
 | `POST /api/agent/models/sync` | Same input; discovers and persists all returned models plus provider connection settings in one operation, preserving current selection and existing overrides; returns the discovery result plus `catalog: AgentModels`. Empty/failed discovery keeps saved configuration intact. |
 | `GET /api/agent/sessions` | `AgentSessionSummary[]`, newest first |
-| `POST /api/agent/sessions` | `{ cwd?, project?, title?, provider?, modelId?, thinkingLevel?, permissionMode?, limits? }`; returns a new `AgentSessionDetail`. Project sessions reserve their own branch identity; opening for the first message prepares the managed workspace. Local-only sessions use `cwd`. |
+| `POST /api/agent/sessions` | `{ cwd?, project?, title?, provider?, modelId?, thinkingLevel?, permissionMode?, limits? }`, or `{ scenario, project, platform? }` for a scenario chat (`platform` docker by default; refused 400/409 as above); returns a new `AgentSessionDetail`. Project sessions reserve their own branch identity; opening for the first message prepares the managed workspace. Local-only sessions use `cwd`. |
 | `GET /api/agent/sessions/:id` | `AgentSessionDetail` with messages, queued inputs, tools, children, workspace, permissions, limits, execution/recovery state, recorded usage and archive metadata |
 | `POST /api/agent/sessions/:id/message` | `{ text, attachments?, mode?, provider?, modelId?, thinkingLevel? }`; starts or queues input and returns the snapshot |
 | `POST /api/agent/sessions/:id/continue` | `{ provider?, modelId?, thinkingLevel? }`; resumes an idle conversation through Pi while retaining completed results |

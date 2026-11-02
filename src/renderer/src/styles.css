@@ -971,6 +971,12 @@
     background: var(--background);
     box-shadow: none;
   }
+  /* A header nothing shows through once stuck (Compute): the page's own surface, opaque, keeping the hairline. */
+  .page-header.page-header-solid[data-stuck] {
+    background: var(--background);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
 }
 
 /* Phase 2: hero headers, the live line, the sidebar tree, the Trace sketch. */

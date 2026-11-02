@@ -1,136 +1,246 @@
 import { t, useI18n } from '@/i18n'
-import { ChevronDown, RotateCw, Settings2 } from 'lucide-react'
-import { useEffect, useRef } from 'react'
+// Compute (docs/ui/layerfs-compute.md): the machines this Connect's LayerFS
+// home runs on. A header with New machine and Refresh, one line of facts, a
+// notice per machine that is down, the Machines table (native and docker
+// first), Add a machine, and a footnote on when machines start and stop.
+// Machines come with LayerFS 2.0; linked to an older LayerFS the page says so
+// and shows nothing else. Dev builds can draw it on a simulated host
+// (data/compute-sim.ts).
+import { ChevronDown, FlaskConical, Plus, RotateCw, Server, TriangleAlert } from 'lucide-react'
+import { type CSSProperties, useMemo, useState } from 'react'
 
-import { CloudCards } from '@/components/compute/cloud-cards'
-import { DockerCard } from '@/components/compute/docker-card'
-import { NativeCard } from '@/components/compute/native-card'
-import type { SandboxGroup } from '@/components/compute/sandbox-list'
+import { AddMachine } from '@/components/compute/add-machine'
+import { MachinesTable } from '@/components/compute/machines-table'
+import { KindLabel, SectionTitle } from '@/components/compute/target-parts'
 import { PageHeader } from '@/components/motion/page-header'
-import { LoadError, Loading } from '@/components/projects/states'
+import { Empty, LoadError, Loading } from '@/components/projects/states'
+import { Chip } from '@/components/storage/chips'
+import { Notice } from '@/components/storage/notice'
 import { Button } from '@/components/ui/button'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { downReason, factsOf, isVmKind, kindLabel, machineOrder, machineState, type Os, readyKinds } from '@/data/compute'
+import { isSimId, type MachineAction, SIM_IDS, simulate, SIMULATIONS, type SimId } from '@/data/compute-sim'
 import { host } from '@/host/client'
-import { useHostEvents, useHostQuery } from '@/host/use-host'
-import { projectKey, projectLabel, type HostStatus } from '@shared/host-api'
+import { useHostQuery } from '@/host/use-host'
+import { cn } from '@/lib/utils'
+import type { MachinesView } from '@shared/host-api'
 
-const OS: Record<HostStatus['platform'], string> = { macos: 'darwin', linux: 'linux', windows: 'win32' }
+const SIM_KEY = 'connect.compute.simulate'
+const LIVE = 'live'
+const readSim = (): SimId | null => {
+  try {
+    const v = localStorage.getItem(SIM_KEY)
+    return isSimId(v) ? v : null
+  } catch {
+    return null
+  }
+}
 
-function Setting({ label, value, mono = true }: { label: string; value: string | null; mono?: boolean }) {
+/** Dev builds only: draw the page on a simulated host. */
+function SimulationPicker({ value, onChange }: { value: SimId | null; onChange: (v: SimId | null) => void }) {
   useI18n()
   return (
-    <>
-      <dt className="text-muted-foreground">{label}</dt>
-      <dd className={mono ? 'min-w-0 truncate font-mono text-[13px]' : 'min-w-0 truncate'} title={value ?? undefined}>
-        {value ?? <span className="font-sans text-warning">{t("not set")}</span>}
-      </dd>
-    </>
+    <Select value={value ?? LIVE} onValueChange={(v) => onChange(isSimId(v) ? v : null)}>
+      <SelectTrigger size="sm" aria-label={t('Simulate a host')} className="h-8 rounded-full px-3 text-xs">
+        <FlaskConical aria-hidden="true" className="size-3.5 text-muted-foreground" />
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent align="end">
+        <SelectItem value={LIVE}>{t('Live host')}</SelectItem>
+        {SIM_IDS.map((id) => (
+          <SelectItem key={id} value={id}>
+            {t(SIMULATIONS[id].label)}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
   )
 }
 
 interface ComputePageProps {
-  /** Dev aid: draw the Native card for another OS (linux, win32, darwin). */
-  platform?: string
+  /** Draw a simulated host instead of asking this one (the harness). */
+  simulate?: SimId
 }
 
-export function ComputePage({ platform }: ComputePageProps) {
-  useI18n()
-  const status = useHostQuery(() => host.status(), [])
-  // Every project's Sandboxes with their Workspaces: one Sandboxes read per project (each
-  // Sandbox asked on its own, a busy one marked busy), none of which starts a Sandbox.
-  const sandboxes = useHostQuery(async () => {
-    const projects = await host.projects()
-    const states = await Promise.all(
-      // by key: a project in a shared Store is `store/name` (layerfs#506)
-      projects.filter((p) => p.initialized).map((p) => projectKey(p)).map((key) => host.projectSandboxes(key).then((s) => ({ name: key, s }), () => ({ name: key, s: null }))),
-    )
-    const groups: SandboxGroup[] = states.flatMap(({ name, s }) => (s && s.length > 0 ? [{ project: name, sandboxes: s }] : []))
-    return { groups, failed: states.filter((x) => !x.s).map((x) => projectLabel(x.name)) }
-  }, [], 'compute:sandboxes')
-  // A run that starts or ends opens or closes Sandboxes; its progress events come often, so reread at most every 3 s.
-  const rereadAt = useRef(0)
-  const reread = useRef<ReturnType<typeof setTimeout>>(undefined)
-  useEffect(() => () => clearTimeout(reread.current), [])
-  useHostEvents((e) => {
-    if (e.type !== 'run' || reread.current) return
-    reread.current = setTimeout(() => {
-      reread.current = undefined
-      rereadAt.current = Date.now()
-      sandboxes.reload()
-    }, Math.max(0, rereadAt.current + 3000 - Date.now()))
-  })
+/** This computer's OS, from the preload; the host's status is not read for it. */
+const osOfWindow = (): Os => {
+  const p = (window as unknown as { connect?: { platform?: string } }).connect?.platform
+  return p === 'win32' || p === 'linux' ? p : 'darwin'
+}
 
-  const s = status.data
-  const os = platform ?? (s ? OS[s.platform] : window.connect.platform)
+export function ComputePage({ simulate: given }: ComputePageProps) {
+  useI18n()
+  const [picked, setPicked] = useState<SimId | null>(() => (import.meta.env.DEV ? readSim() : null))
+  const sim = given ?? picked
+  const pick = (v: SimId | null) => {
+    setPicked(v)
+    setSimView(null)
+    try {
+      if (v) localStorage.setItem(SIM_KEY, v)
+      else localStorage.removeItem(SIM_KEY)
+    } catch {
+      /* the choice just isn't remembered */
+    }
+  }
+
+  const live = useHostQuery(() => (sim ? Promise.resolve(null) : host.machines()), [sim])
+  // a simulated host's actions change a copy in memory
+  const [simView, setSimView] = useState<MachinesView | null>(null)
+  const simulated = sim ? SIMULATIONS[sim] : null
+  const view: MachinesView | null | undefined = simulated ? (simView ?? simulated.view) : live.data
+  const os: Os = simulated?.os ?? osOfWindow()
+
+  const [open, setOpen] = useState<string | null>(null)
+  const [adding, setAdding] = useState<string | null>(null)
+  const showMachine = (name: string) => {
+    setOpen(name)
+    requestAnimationFrame(() => document.getElementById(`machine-${name}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
+  }
+  const startAdding = (platform: string) => {
+    setAdding(platform)
+    requestAnimationFrame(() => document.getElementById(`add-${platform}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
+  }
+
+  const act = async (action: MachineAction) => {
+    if (simulated) {
+      setSimView((v) => simulate(v ?? simulated.view, action))
+      return
+    }
+    if (action.kind === 'create') await host.createMachine(action.input)
+    else if (action.kind === 'remove') await host.removeMachine(action.name)
+    else if (action.kind === 'move') await host.moveStore(action.store, action.machine)
+    else await host.updateMachine(action.name, action.changes)
+    live.reload()
+  }
+  const refresh = () => (simulated ? setSimView(null) : live.reload())
+
+  const available = view?.available ? view : null
+  const facts = useMemo(() => (available ? factsOf(available) : null), [available])
+  const down = available ? machineOrder(available.machines).filter((m) => machineState(m, available.status[m.name]).key === 'down') : []
+  const ready = available ? readyKinds(available.canCreate) : []
 
   return (
     <div className="h-svh min-w-0 overflow-y-auto">
       <PageHeader
         sticky
+        className="page-header-solid"
         width="max-w-5xl"
-        title={t("Compute")}
-        description={t("Local container runtimes and sandbox execution providers.")}
+        title={t('Compute')}
         actions={
-          <Button
-            variant="outline"
-            size="sm"
-            className="rounded-full px-3.5"
-            onClick={() => {
-              status.reload()
-              sandboxes.reload()
-            }}
-          >
-            <RotateCw />{t("Refresh")}</Button>
+          <div className="flex items-center gap-2">
+            {import.meta.env.DEV && !given && <SimulationPicker value={picked} onChange={pick} />}
+            {available && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button size="sm" className="rounded-full px-3.5" disabled={ready.length === 0}>
+                    <Plus />
+                    {t('New machine')}
+                    <ChevronDown className="size-3.5 opacity-70" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="min-w-56">
+                  <DropdownMenuLabel className="text-xs">{t('Ready on this computer')}</DropdownMenuLabel>
+                  {ready.map((c) => (
+                    <DropdownMenuItem key={c.platform} onSelect={() => startAdding(c.platform)}>
+                      <KindLabel platform={c.platform} os={os} hideName />
+                      <span>{t(c.platform === 'ssh' ? 'Connect an SSH host' : '{kind} VM', { kind: t(kindLabel(c.platform)) })}</span>
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+            <Button variant="outline" size="sm" className="rounded-full px-3.5" onClick={refresh}>
+              <RotateCw />
+              {t('Refresh')}
+            </Button>
+          </div>
         }
       />
-      <div className="mx-auto flex min-w-0 max-w-5xl flex-col gap-8 px-6 pt-2 pb-10 @min-[56rem]/workspace:px-8">
-        {!s ? (
-          status.error ? (
-            <LoadError error={status.error} what={t("the compute status")} onRetry={status.reload} />
+      <div className="mx-auto flex min-w-0 max-w-5xl flex-col gap-4 px-4 pt-2 pb-12 @min-[30rem]/workspace:px-6 @min-[56rem]/workspace:px-8">
+        {simulated && (
+          <p className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+            <Chip tone="warning" icon={FlaskConical}>
+              {t('Simulated')}
+            </Chip>
+            {t('{label}: sample data, not this machine.', { label: t(simulated.label) })}
+          </p>
+        )}
+        {!view ? (
+          live.error ? (
+            <LoadError error={live.error} what={t('the machines')} onRetry={live.reload} />
           ) : (
-            <Loading label={t("Asking Docker and the worker")} />
+            <Loading label={t('Reading the machines')} />
           )
+        ) : !available ? (
+          <Empty icon={Server} title={t('Machines come with LayerFS 2.0')} className="glass-liquid rounded-2xl border-solid">
+            {t('This Connect links LayerFS {version}, which has no machines. Projects still run where this home keeps them; this page fills in once Connect links LayerFS 2.0.', { version: view.layerfs ?? '1.x' })}
+          </Empty>
         ) : (
           <>
-            <section className="flex min-w-0 flex-col gap-3">
-              <div>
-                <h2 className="text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">{t("This machine")}</h2>
-                <p className="text-xs text-faint">
-                  {s.platform === 'macos' ? t("macOS") : s.platform === 'windows' ? t("Windows") : t("Linux")} · {window.connect.arch}
-                </p>
-              </div>
-              <DockerCard status={s} groups={sandboxes.data?.groups} failed={sandboxes.data?.failed ?? []} />
-              {sandboxes.error && <LoadError error={sandboxes.error} what={t("the Sandboxes")} onRetry={sandboxes.reload} />}
-              <NativeCard platform={os} arch={window.connect.arch} />
+            <p className="reveal flex min-h-9 flex-wrap items-center gap-y-1 text-[13px] text-muted-foreground tabular-nums" style={{ '--i': 0 } as CSSProperties}>
+              {[
+                <span>{t('{n} ready', { n: facts!.ready })}</span>,
+                <span className={cn(facts!.running > 0 && 'text-foreground')}>{t('{n} running', { n: facts!.running })}</span>,
+                <span>{t('{n} idle', { n: facts!.idle })}</span>,
+                facts!.starting > 0 && <span>{t('{n} starting', { n: facts!.starting })}</span>,
+                <span>{t(facts!.sandboxes === 1 ? '1 Sandbox' : '{n} Sandboxes', { n: facts!.sandboxes })}</span>,
+                facts!.down > 0 && (
+                  <span className="inline-flex items-center gap-1.5 font-medium text-destructive">
+                    <span aria-hidden="true" className="size-1.5 rounded-full bg-destructive" />
+                    {t(facts!.down === 1 ? '1 needs you' : '{n} need you', { n: facts!.down })}
+                  </span>
+                ),
+              ]
+                .filter(Boolean)
+                .map((part, i) => (
+                  // each part carries its dot, so a wrapped line starts with one instead of ending on one
+                  <span key={i} className="inline-flex items-center whitespace-nowrap">
+                    {i > 0 && <Dot />}
+                    {part}
+                  </span>
+                ))}
+            </p>
+
+            {down.map((m) => (
+              <Notice
+                key={m.name}
+                tone="danger"
+                icon={TriangleAlert}
+                title={t('{machine} is down', { machine: m.name })}
+                actions={
+                  <Button size="sm" variant="outline" className="rounded-xl" onClick={() => showMachine(m.name)}>
+                    {t('Show')}
+                  </Button>
+                }
+              >
+                <span className="block break-words">{downReason(m, available.status[m.name]) ?? t('It does not answer.')}</span>
+                {m.stores.length > 0 && <span className="block text-muted-foreground">{t(m.stores.length === 1 ? 'Its Store can’t be used until it answers.' : 'Its {n} Stores can’t be used until it answers.', { n: m.stores.length })}</span>}
+              </Notice>
+            ))}
+
+            <section className="flex flex-col gap-2.5 pt-2" aria-labelledby="machines-title">
+              <SectionTitle id="machines-title" aside={String(available.machines.length)}>
+                {t('Machines')}
+              </SectionTitle>
+              <MachinesTable key={sim ?? 'live'} view={available} os={os} open={open} onOpen={setOpen} act={act} />
             </section>
 
-            <section className="flex min-w-0 flex-col gap-3">
-              <div>
-                <h2 className="text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">{t("Cloud sandboxes")}</h2>
-                <p className="text-xs text-muted-foreground font-medium">{t("Remote execution providers")}</p>
-              </div>
-              <CloudCards />
+            <section className="flex flex-col gap-2.5 pt-4" aria-labelledby="add-title">
+              <SectionTitle id="add-title">{t('Add a machine')}</SectionTitle>
+              <AddMachine canCreate={available.canCreate.filter((c) => isVmKind(c.platform) || c.platform === 'ssh')} machines={available.machines} os={os} open={adding} onOpen={setAdding} act={act} onMade={showMachine} layerfs={available.layerfs} />
             </section>
 
-            <details className="surface reveal group/settings min-w-0 rounded-2xl">
-              <summary className="flex cursor-pointer list-none items-center gap-1.5 rounded-2xl px-5 py-4 text-[11px] font-semibold tracking-wide text-muted-foreground uppercase outline-none focus-visible:ring-2 focus-visible:ring-ring">
-                <Settings2 aria-hidden="true" className="size-3.5" />{t("Settings")}<ChevronDown aria-hidden="true" className="ml-auto size-3.5 transition-transform group-open/settings:rotate-180" />
-              </summary>
-              <div className="border-t px-5 py-4">
-                <p className="break-words text-xs text-faint">{t("Read only here. Edit ")}<span className="font-mono">{s.settings.state}{t("/settings.json")}</span>{t("and restart Connect.")}</p>
-                <dl className="mt-4 grid grid-cols-1 gap-x-4 gap-y-2.5 text-sm @min-[36rem]/workspace:grid-cols-[9rem_minmax(0,1fr)]">
-                  <Setting label={t("Settings file")} value={`${s.settings.state}/settings.json`} />
-                  <Setting label={t("LayerFS home")} value={s.settings.home} />
-                  <Setting label={t("Sandbox image")} value={s.settings.image} />
-                  <Setting label={t("LayerFS bundle")} value={s.settings.bundle} />
-                  <Setting label={t("Docker socket")} value={s.settings.docker} />
-                  <Setting label={t("Name prefix")} value={s.settings.containerPrefix} />
-                  {s.missing.length > 0 && <Setting label={t("Still missing")} value={s.missing.join(', ')} mono={false} />}
-                </dl>
-              </div>
-            </details>
+            <p className="px-1 pt-2 text-xs text-faint">{t('Machines start on the first call that needs them and stop after 10 idle minutes.')}</p>
           </>
         )}
       </div>
     </div>
   )
 }
+
+const Dot = () => (
+  <span aria-hidden="true" className="px-2 text-faint">
+    ·
+  </span>
+)

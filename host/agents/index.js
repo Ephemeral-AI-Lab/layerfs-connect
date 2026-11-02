@@ -438,14 +438,17 @@ export class AgentManager extends EventEmitter {
     const entry = this.scenarios.get(input.scenario)
     if (!entry) throw fail(404, `No scenario named ${input.scenario} plays in a chat.`)
     if (!input.project) throw fail(400, 'Name the LayerFS project to play the scenario on.')
+    if (input.platform !== undefined && typeof input.platform !== 'string') throw fail(400, 'platform must be a platform name')
     this.checkProjectAvailable(input.project)
     await this.projectEnvironment(input.project)
+    // the platform its Sandboxes are made on: docker unless named, refused here when this home cannot make it
+    const platform = await this.scenarios.checkPlatform(input.platform ?? undefined)
     const id = randomUUID()
     const dir = join(this.dir, id, 'scenario')
     mkdirSync(join(dir, 'work'), { recursive: true })
     await this.createRecord(id, { cwd: join(dir, 'work'), title: entry.title, provider: SCENARIO_PROVIDER, modelId: entry.id, thinkingLevel: 'off', permissionMode: 'full' }, { publish: false })
     const record = this.record(id)
-    record.scenario = this.scenarios.initial(entry, input.project, dir)
+    record.scenario = this.scenarios.initial(entry, input.project, dir, platform)
     // the chat works from the start, as any chat does once sent a message: Stop stops its setup too
     record.state = 'running'
     this.beginExecution(id)
