@@ -31,7 +31,6 @@ const SIDEBAR_STORE = 'connect.sidebar'
 // "#projects/<key>[/<tab>][/<branch>]", where a key in a shared Store is
 // written encoded ("team%2Fapp" for team/app). It opens in a tab on top of the restored ones.
 const [startPage, ...startRest] = window.location.hash.slice(1).split('/')
-const startId = startRest.join('/') || undefined
 const START_PAGES: NavId[] = ['chat', 'projects', 'storage', 'compute']
 const PAGE_LABELS: Record<NavId, string> = { chat: 'Chat', projects: 'Projects', storage: 'Storage', compute: 'Compute' }
 const [startProjectPart, startTab, ...startBranchParts] = startPage === 'projects' ? startRest : []
@@ -54,6 +53,8 @@ export function App() {
   const tab = tabs.active
   const selected = tab.selected
   const [newProjectOpen, setNewProjectOpen] = useState(false)
+  /** The Store New project opens on (Storage's "Add project"). */
+  const [newProjectStore, setNewProjectStore] = useState<string | undefined>()
   const [deleteTarget, setDeleteTarget] = useState<ProjectSummary | null>(null)
   const [deleteChatTarget, setDeleteChatTarget] = useState<DeleteChatTarget | null>(null)
   const [settingsOpen, setSettingsOpen] = useState(false)
@@ -180,10 +181,8 @@ export function App() {
             {page === 'storage' && <StoragePage
               key={tab.id}
               catalog={projects}
-              initialId={startId}
-              initialRoute={selected.kind === 'nav' ? selected.view : undefined}
-              onRoute={(view) => tabs.update(tab.id, (s) => s.kind === 'nav' && s.id === 'storage' && s.view !== view ? { ...s, view } : s)}
               onOpenProject={openStorageProject}
+              onAddProject={(store) => { setNewProjectStore(store); setNewProjectOpen(true) }}
             />}
             {page === 'projects' && <ProjectsHome key={tab.id} projects={projects} onOpenProject={openProject} onNewProject={() => setNewProjectOpen(true)} onOpenChat={openChat} />}
             {selected.kind === 'project' && (
@@ -204,7 +203,7 @@ export function App() {
           </main>
         </div>
       </SidebarProvider>
-      <NewProjectDialog open={newProjectOpen} onOpenChange={setNewProjectOpen} onCreated={(project) => { projects.add(project); openProject(projectKey(project)) }} />
+      <NewProjectDialog open={newProjectOpen} initialStore={newProjectStore} onOpenChange={(open) => { setNewProjectOpen(open); if (!open) setNewProjectStore(undefined) }} onCreated={(project) => { projects.add(project); openProject(projectKey(project)) }} />
       {deleteChatTarget && <DeleteChatDialog target={deleteChatTarget} onClose={() => setDeleteChatTarget(null)} onDelete={async (id) => { await agentHost.remove(id) }} />}
       {deleteTarget && <DeleteProjectDialog project={deleteTarget} onClose={() => setDeleteTarget(null)} onDelete={async (key) => {
         await projects.remove(key)

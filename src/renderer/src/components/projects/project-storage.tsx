@@ -14,6 +14,7 @@ import { useProjectSandboxes } from '@/components/projects/use-sandboxes'
 import type { StoreFacts } from '@/components/projects/store-facts'
 import { CommitBars, CommitKinds, CountBytes, DiskFlow, GrowthChart, SavedRing, times, useLanded } from '@/components/projects/store-visuals'
 import { plural } from '@/data/format'
+import { GapLine } from '@/components/gap-line'
 import { StoreIcon } from '@/components/storage/identity/store-icon'
 import { bytes, when } from '@/data/format'
 import { cn } from '@/lib/utils'
@@ -182,30 +183,30 @@ function StoreCard({ s, store }: { s: ProjectState; store: StoreFacts }) {
   return (
     <section onPointerMove={spotlight} className="glass-liquid spotlight reveal rounded-2xl shadow-xs overflow-hidden">
       <header className="flex items-start gap-4 px-6 py-6">
-        <StoreIcon family={store.family} providers={store.providers} size="md" />
+        <StoreIcon family={store.family} size="md" />
         <div className="min-w-0 flex-1 basis-56">
           <div className="flex flex-wrap items-center gap-2">
             <h3 className="min-w-0 text-sm font-semibold [overflow-wrap:anywhere]">
               {store.name ? <>{tr("{family} Store", { family })} <span className="font-mono">{store.name}</span></> : tr("Project Store")}
             </h3>
             {!postgresql && store.name && (
-              <span className="max-w-full truncate rounded-full bg-foreground/[0.05] px-2 py-0.5 font-mono text-[11px] text-muted-foreground ring-1 ring-foreground/[0.05] ring-inset" title={store.link?.object}>
-                {store.link ? `${store.link.remote} / ${store.link.file}` : tr("local only")}
+              <span className="max-w-full truncate rounded-full bg-foreground/[0.05] px-2 py-0.5 font-mono text-[11px] text-muted-foreground ring-1 ring-foreground/[0.05] ring-inset">
+                {tr("on {machine}", { machine: store.machine ?? '?' })}
               </span>
             )}
           </div>
           <p className="mt-1 text-xs text-muted-foreground font-medium text-pretty">
             {postgresql
-              ? tr("Every Commit, Branch and Layer of {project} lives in a schema of {connection}; each Commit goes straight there.", { project: s.project.name, connection: store.connection ?? tr("its database") })
+              ? tr("Every Commit, Branch and Layer of {project} lives in the PostgreSQL Store {store}; each Commit goes straight there.", { project: s.project.name, store: store.name })
               : store.name
-                ? tr("Every Commit, Branch and Layer of {project} lives in this Store’s one SQLite file, in its Docker volume.", { project: s.project.name })
+                ? tr("Every Commit, Branch and Layer of {project} lives in this Store’s one SQLite file, on {machine}.", { project: s.project.name, machine: store.machine ?? '?' })
                 : tr("Copy-on-Write project history and storage usage")}
           </p>
           {store.shared && (
             <p className="mt-1 text-xs text-muted-foreground">
               {store.others.length > 0
-                ? tr(store.others.length === 1 ? "Shared with 1 other project: a push or pull moves it too." : "Shared with {count} other projects: a push or pull moves them too.", { count: store.others.length })
-                : tr("Shared with other projects: a push or pull moves them too.")}
+                ? tr(store.others.length === 1 ? "Shared with 1 other project: a move or backup carries it too." : "Shared with {count} other projects: a move or backup carries them too.", { count: store.others.length })
+                : tr("Shared with other projects: a move or backup carries them too.")}
             </p>
           )}
         </div>
@@ -213,25 +214,16 @@ function StoreCard({ s, store }: { s: ProjectState; store: StoreFacts }) {
       {s.storage ? (
         <StoreStatsBody s={s} t={s.storage} />
       ) : (
-        <p className="px-6 py-5 text-sm text-muted-foreground">{tr("The Store’s totals are not readable right now. File size: ")}<span className="tabular-nums">{bytes(s.store.bytes)}</span>
-        </p>
+        <div className="space-y-1.5 px-6 py-5 text-sm text-muted-foreground">
+          <p>{tr("Store file with its WAL: ")}<span className="tabular-nums">{bytes(s.store.bytes)}</span></p>
+          <GapLine what="Store totals (dedupe, compression, what each Commit stored)" />
+        </div>
       )}
       <dl className="grid grid-cols-2 gap-4 border-t bg-muted/25 px-6 py-4 sm:grid-cols-4">
         <Fact label={tr("Created")}>{when(s.project.created)}</Fact>
         <div className="col-span-1 sm:col-span-3">
-          {store.family === 'postgresql' ? (
-            <Fact label={tr("Connection")} mono>
-              {store.connection ?? '—'}
-            </Fact>
-          ) : (
-            <Fact label={tr("Volume")} mono>
-              {s.project.volume ?? '—'}
-            </Fact>
-          )}
-        </div>
-        <div className="col-span-2 sm:col-span-4">
-          <Fact label={tr("Store file")} mono>
-            <span title={s.store.path ?? undefined}>{s.store.path ?? '—'}</span>
+          <Fact label={tr(store.family === 'postgresql' ? "Store" : "Machine")} mono>
+            {store.family === 'postgresql' ? store.name : (store.machine ?? '—')}
           </Fact>
         </div>
       </dl>

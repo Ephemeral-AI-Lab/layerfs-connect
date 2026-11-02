@@ -131,52 +131,43 @@ export type NewMachine =
 
 // ---------- Projects (real LayerFS reads) ----------
 
-/** A project key (ProjectSummary.key) as its name and Store: `store/name`, or a bare name. */
+/** A project key (ProjectSummary.key, `<store>/<project>`) as its name and Store; a bare name (a LayerFS 1.1.0 record) has no Store. */
 export function projectRef(key: string): { name: string; store: string | null } {
   const at = key.indexOf('/')
   return at < 0 ? { name: key, store: null } : { name: key.slice(at + 1), store: key.slice(0, at) }
 }
 
-/** How the app shows a project key: `name · store` in a shared Store. */
+/** How the app shows a project key: `name · store`. */
 export function projectLabel(key: string): string {
   const { name, store } = projectRef(key)
   return store ? `${name} · ${store}` : name
 }
 
-/** The key the app calls a project by (ProjectSummary.key), falling back to its name on an older host. */
-export const projectKey = (project: Pick<ProjectSummary, 'name' | 'key'>): string => project.key ?? project.name
+/** The key the app calls a project by (ProjectSummary.key). */
+export const projectKey = (project: Pick<ProjectSummary, 'key'>): string => project.key
 
 export interface ProjectSummary {
   name: string
-  volume: string | null
-  source: string | null
+  /** `<store>/<project>`: what every call names it by. */
+  key: string
+  store: string
+  kind: StoreFamily | null
+  /** The machine its Store is on (sqlite), where its Sandboxes run. */
+  machine: string | null
   created: number | null
-  initialized: boolean
   /** The demo whose run made this project, when a run made it. */
   demo?: string | null
   run?: string | null
-  /** The Store that holds the project (layerfs#506); null with a LayerFS build from before Stores held several projects. */
-  store?: string | null
-  /** The Store's kind (layerfs#506). */
-  kind?: StoreFamily | null
-  /** In a Store with other projects: its name may also be in other Stores. */
-  shared?: boolean
-  /** What the app calls the project by: `store/name` in a shared Store, else its name (projectRef reads it back). */
-  key?: string
-  /** The Store's aggregate sync state (storage-redesign §4.5), from the host's cached storage view; absent when the host has no Storage view. */
-  storeSync?: StoreSyncState | null
-  /** The provider of the Store's link, for its StoreIcon badge (layerfs#509: at most one). */
-  storeProviders?: RemoteProvider[]
-  /** A PostgreSQL Store's connection. */
-  connection?: string | null
+  /** Its Store's state from the host's Storage view (idle, in_use, moving, down). */
+  storeState?: string | null
 }
 
 export interface NewProjectInput {
   name: string
+  /** The existing Store it goes into (2.0 never makes a Store at Init): a sqlite Store on native, or a PostgreSQL Store. */
+  store: string
   /** Omit to create an empty project; otherwise import this absolute directory. */
   source?: string
-  /** Init into this existing Store (layerfs#506); omit for a new Store of the project's own. */
-  store?: string
 }
 
 export interface ProjectInitCounts {
@@ -185,16 +176,17 @@ export interface ProjectInitCounts {
   bytes: number
 }
 
+/** One Init this host started (2.0 keeps no job registry; Connect keeps its own, fed by on_progress). */
 export interface ProjectInitJob {
   id: string
+  /** The project key. */
   name: string
   source: string | null
   started: number
   ended: number | null
-  step: 'scan' | 'volume' | 'import' | 'done' | 'failed'
-  scanned: ProjectInitCounts | null
-  totals: ProjectInitCounts | null
-  imported: (ProjectInitCounts & { step: string }) | null
+  /** project.init's step (scan, files, tree, publish, seal), then done or failed. */
+  step: string
+  progress: ProjectInitCounts | null
   project: ProjectSummary | null
   error: { code: string; message: string } | null
 }
@@ -202,274 +194,85 @@ export interface ProjectInitJob {
 /** main-additions' name for a project's Init job. */
 export type InitJob = ProjectInitJob
 
-// ---------- Storage: Stores, links, remotes and PostgreSQL (layerfs#506, #509; docs/ui/storage-links.md §5) ----------
-//
-// Producer notes: H = the Connect host makes it; E<n> = it needs LayerFS
-// (storage-redesign §8.3). A LayerFS build without an E field leaves it null,
-// and the renderer degrades (§10.4): "size unknown", "Sync unknown", an
-// indeterminate bar. Never assume one is present.
+// ---------- Storage on LayerFS 2.0 (docs/layerfs-2.0-integration.md step 5) ----------
 
 export type StoreFamily = 'sqlite' | 'postgresql'
-export type RemoteProvider = 'minio' | 'r2' | 's3' | 'gcs' | 'google-drive' | 'folder'
 
-/** A link's sync state (storage-links §4). */
-export type SyncState = 'in_sync' | 'ahead' | 'behind' | 'diverged' | 'missing' | 'checking' | 'unreachable' | 'unknown' | 'transferring'
-/** A Store's state: its link's, or one of the two Store-only states. */
-export type StoreSyncState = SyncState | 'local_only' | 'live'
+/** A bucket file's state against a Store (backup.list). */
+export type BackupState = 'current' | 'store_changed' | 'bucket_changed' | 'both_changed' | 'unknown' | 'unlinked' | 'missing'
 
-export interface Health {
-  state: 'ok' | 'unreachable' | 'denied' | 'checking' | 'unknown'
-  /** When the last check ended; null before the first. */
-  at: number | null
-  /** The failure's message, readable as is. */
-  message: string | null
-}
-
-/** One push or pull of a whole Store file. */
-export interface TransferInfo {
-  direction: 'push' | 'pull'
-  at: number | null
-  bytes: number | null
-  sha256: string | null
-  /** The Store's history heads digest at that transfer (§4.1). */
-  heads: string | null // E2
-}
-
-/** The last look at a linked file in its bucket: one HEAD. */
-export interface CopyCheck {
-  at: number // H (when the host ran it)
-  present: boolean // E3
-  bytes: number | null // E3
-  sha256: string | null // E3 (layerfs-sha256 metadata)
-  heads: string | null // E3 + E2 (layerfs-heads metadata)
-  modified: number | null // E3 (Last-Modified)
-  error: { code: string; message: string } | null // E3
-}
-
-/** A SQLite Store's link: the one remote file it pushes to and pulls from (layerfs#509). */
-export interface StoreLink {
-  /** The connection's name. */
-  remote: string
-  provider: RemoteProvider | null // H (joined from remote.list)
-  /** The remote file's name: the object <prefix>/<file>/store.sqlite. */
+/** A Store's link to a bucket: the file its backups go to, and the last transfer. */
+export interface StoreBackupLink {
+  bucket: string
   file: string
-  /** The full object path, for display: <location>/<file>/store.sqlite. */
-  object: string // H
-  /** When the link was made. */
-  linked: number | null
-  /** Its last push or pull: what both sides are compared with. */
-  last: TransferInfo | null
-  /** The last successful check, and the last check if it failed. */
-  check: CopyCheck | null // H←E3
-  failedCheck: CopyCheck | null // H←E3
-  local: 'same' | 'changed' | 'unknown' // H←E2
-  remoteSide: 'same' | 'changed' | 'missing' | 'unknown' // H←E3
-  sync: SyncState // H (§4)
-  /** The state before the last failed check, shown dashed. */
-  lastKnown: SyncState | null // H
-  reason: string | null // H
+  last: { op: string; at: number | null; bytes: number | null } | null
 }
 
-export interface StoreSize {
-  /** SQLite: store.sqlite + its WAL. PostgreSQL: the schema's tables, indexes and TOAST. */
-  bytes: number
-  file: number | null // SQLite only
-  wal: number | null // SQLite only
-  at: number
-}
-
-/** A Store: many projects in one SQLite file (its own Docker volume) or one PostgreSQL schema. */
-export interface StoreInfo {
+/** One Store: store.list with its store.status. */
+export interface StoreRow {
   name: string
   kind: StoreFamily
-  /** A SQLite Store's Docker volume. */
-  volume: string | null
-  /** A PostgreSQL Store's connection name, and its schema. */
-  connection: string | null
-  schema: string | null
-  synchronousCommit: SynchronousCommit | null // H
-  /** SQLite: the remote file the Store is linked to, or null (local only). PostgreSQL: always null. */
-  link: StoreLink | null
+  /** A sqlite Store's machine; null for PostgreSQL. */
+  machine: string | null
   projects: string[]
-  created: number | null // H
-  /** A project's own pre-#506 Store. */
-  legacy: boolean // H
-  /** SQLite: E1, else the host's stat; PostgreSQL: E5. */
-  size: StoreSize | null
-  /** @deprecated size?.bytes; kept one release for project-card.tsx. */
-  bytes: number | null
-  /** The Store file is open now (its -shm exists): a pull would be refused. */
-  open: boolean | null
-  sync: {
-    state: StoreSyncState // H (§4)
-  }
-  /** PostgreSQL: the SQLite Store it was imported from. */
-  importedFrom: { store: string; at: number | null; bytes: number | null } | null // E6, else H
-  /** SQLite: PostgreSQL Stores imported from this one. */
-  imports: string[] // H←E6
-  /** The running job on this Store, if any. */
-  job: string | null // H
+  created: number | null
+  /** The sqlite file and its WAL, where it lives; null when unknown or PostgreSQL. */
+  size: { bytes: number; file: number; wal: number } | null
+  /** idle, in_use, moving, down (its machine is not running: store.status starts none). */
+  state: string
+  holders: number
+  down: string | null
+  links: StoreBackupLink[]
+  /** The job of this host running on it. */
+  job: string | null
 }
 
-/** A remote LayerFS knows; its keys stay in Connect. */
-export interface RemoteInfo {
-  name: string
-  provider: RemoteProvider
-  /** The endpoint as entered. */
-  endpoint: string
-  /** The address the LayerFS box uses (host.docker.internal for this machine's loopback on macOS and Windows). */
-  reachAs: string
-  /** R2: the Cloudflare account id; null for MinIO. */
-  account?: string | null
-  /** R2: '' (none), 'eu' or 'fedramp'; null for MinIO. */
-  jurisdiction?: string | null
-  bucket: string
-  prefix: string
-  /** Connect holds this remote's keys. */
-  hasSecret: boolean
-  /** host/bucket/prefix, for display. */
-  location: string // H
-  /** Local Stores linked to a file here. */
-  stores: string[] // H
-  /** The files in the bucket (from the last listing), each linked or not loaded; null before a listing or without E9. */
-  files: RemoteFile[] | null // E9
-  /** The sum of known file sizes (listed), else of the linked files'. */
-  bytes: number | null // H
-  /** The latest check or listing against this remote. */
-  health: Health // H←E3
-}
-
-/** A SQLite Store file in a connection's bucket (layerfs#509). */
-export interface RemoteFile {
+/** A file in a bucket, as backup.list answers it: one row per Store linked to it (or one with no Store). */
+export interface BackupFile {
   file: string
+  store: string | null
+  state: BackupState
   bytes: number | null
   modified: number | null
-  /** The Store of this machine linked to it, or null: not loaded. */
-  linkedBy: string | null
+  reason: string | null
 }
 
-export type SynchronousCommit = 'off' | 'local' | 'remote_write' | 'on' | 'remote_apply'
-
-/** A named PostgreSQL connection Connect keeps; its URL (with the password) stays in Connect. */
-export interface PostgresqlConnection {
+export interface BucketRow {
   name: string
-  /** The URL with its password hidden. */
-  url: string
-  synchronousCommit: SynchronousCommit
-  /** Stores in this database. */
+  /** When this host last listed it (backup.list); null before the first. */
+  listed: number | null
+  files: BackupFile[] | null
+  error: { code: string; message: string } | null
+  /** Stores linked to it. */
   stores: string[]
-  host: string | null // H (host:port, parsed from the URL)
-  database: string | null // H (parsed from the URL)
-  health: Health & {
-    serverVersion: string | null // E7
-    latencyMs: number | null // H (timed around E7)
-  }
-  bytes: number | null // H←E5 (sum of its Stores)
 }
 
-export type SyncPhase = 'check' | 'snapshot' | 'hash' | 'upload' | 'download' | 'verify' | 'install' | 'copy' | 'record'
-
-/** A publish, push, pull, send, load or PostgreSQL import in progress or just ended. */
-export interface SyncJob {
+/** A move, backup or restore this host started, fed by its call's on_progress. */
+export interface StorageJob {
   id: string
-  kind: 'publish' | 'push' | 'pull' | 'send' | 'load' | 'import'
-  /** The Store it moves (for a load, the new Store; for an import, the source). */
+  kind: 'move' | 'backup' | 'restore'
   store: string
-  /** The connection's name, or connection/schema for an import. */
+  /** The machine (move) or bucket (backup, restore). */
   target: string
-  /** The remote file it moves (layerfs#509); null for an import. */
-  file: string | null // H
-  /** A load's remote file; an import's new PostgreSQL Store. */
-  from: string | null // H
-  provider: RemoteProvider | 'postgresql' | null // H
-  force: boolean // H
-  step: 'running' | 'done' | 'failed'
-  phase: SyncPhase | null // E4
-  /** Within the current phase, updated while running. */
-  bytes: number | null // E4
-  total: number | null // E4
-  pieces: { done: number; of: number } | null // E4 (optional)
-  /** Bytes per second in the current phase (§5.2). */
-  rate: number | null // H
-  /** Seconds left in the current phase (§5.2). */
-  eta: number | null // H
-  cancellable: boolean // H (always false in v1)
-  error: { code: string; message: string } | null // H (the runtime's code)
-  result: { bytes: number | null; sha256: string | null } | null // H
+  file: string | null
   started: number
   ended: number | null
+  phase: string | null
+  done: number | null
+  total: number | null
+  /** A refusal names its phase; `Unknown` means both copies were kept. */
+  error: { code: string; message: string; phase: string | null } | null
+  result: unknown
 }
 
-export interface ProviderInfo {
-  id: RemoteProvider
-  /** This LayerFS build can add it. */
-  available: boolean // E8, else H
-  reason: string | null // H
-}
-
-/** What the linked LayerFS build reports, for graceful fallbacks (§10). */
-export interface StorageSupports {
-  size: boolean // E1
-  heads: boolean // E2
-  check: boolean // E3
-  progress: boolean // E4
-  postgresqlStatus: boolean // E5/E7
-  listCopies: boolean // E9 (connection file listings)
-}
-
-export interface StorageTotals {
-  sqlite: { stores: number; bytes: number; unknown: number }
-  postgresql: { stores: number; connections: number; bytes: number; unknown: number }
-  /** SQLite Stores with a link, and their linked files' known sizes. */
-  linked: { stores: number; bytes: number; unknown: number }
-  sync: Partial<Record<StoreSyncState, number>>
-}
-
-/** Each part's `available` is false while the linked LayerFS build lacks it, and `reason` says why. */
+/** GET /api/storage. */
 export interface StorageView {
-  stores: { available: boolean; reason: string | null; list: StoreInfo[] }
-  remotes: { available: boolean; reason: string | null; list: RemoteInfo[] }
-  postgresql: { available: boolean; reason: string | null; connections: PostgresqlConnection[] }
-  jobs: SyncJob[]
-  providers: ProviderInfo[] // H / E8
-  totals: StorageTotals // H
-  supports: StorageSupports // H
-  /** The newest finished check, for "Checked 2 min ago". */
-  checkedAt: number | null // H
-  /** Checks running now. */
-  checking: number // H
+  machines: { name: string; platform: string; state: string | null }[]
+  stores: StoreRow[]
+  buckets: BucketRow[]
+  jobs: StorageJob[]
+  at: number
 }
-
-/** POST /api/storage/check: what to check; empty means everything. */
-export interface StorageCheck {
-  store?: string
-  remote?: string
-  connection?: string
-}
-
-export interface NewMinioRemote {
-  name: string
-  provider: 'minio'
-  endpoint: string
-  bucket: string
-  prefix?: string
-  accessKey: string
-  secretKey: string
-}
-
-/** A Cloudflare R2 bucket: LayerFS reaches it at https://<account>[.<jurisdiction>].r2.cloudflarestorage.com. */
-export interface NewR2Remote {
-  name: string
-  provider: 'r2'
-  account: string
-  jurisdiction?: '' | 'eu' | 'fedramp'
-  bucket: string
-  prefix?: string
-  accessKey: string
-  secretKey: string
-}
-
-export type NewRemote = NewMinioRemote | NewR2Remote
 
 export interface BranchInfo {
   name: string
@@ -509,22 +312,35 @@ export interface FsEntry {
   mode?: number | null
 }
 
+/** A Sandbox record as sandbox.create, sandbox.list and sandbox.get answer it. */
+export interface SandboxRecord {
+  name: string
+  project: string
+  machine: string
+  state: string
+  created: number | null
+  platform?: SandboxPlatform | string
+  runtime?: SandboxRuntime | string
+  image?: string | null
+}
+
+/** A Sandbox of a project: its record, and its Workspaces when read (GET /api/projects/<key>/sandboxes). */
 export interface SandboxInfo {
+  /** Its name (unique in the home): what every call names it by. */
   id: string
   name: string
+  /** The recorded state (2.0 gives no live state yet: §9 Q5). */
   state: string
   image: string | null
-  /** How it runs; a host built against an older LayerFS leaves it out, which means Docker. */
-  runtime?: SandboxRuntime
-  /** The place it runs on (`docker` or a `vm:<provider>` placement); left out means `docker`. */
-  provider?: string
-  /** Its platform (layerfs#529); a host built against an older LayerFS leaves it out (see data/compute.ts platformOfSandbox). */
-  platform?: SandboxPlatform
-  /** Its mounted Workspaces: read only by GET /api/projects/<key>/sandboxes (the project read leaves them empty). */
-  workspaces: { ws: string; branch: string; path: string }[]
-  /** Its daemon did not answer that read in time (busy) or refused it (unreachable); its Workspaces are then unknown. */
+  machine: string | null
+  runtime?: SandboxRuntime | string | null
+  platform?: SandboxPlatform | string
+  /** Its Workspaces: `ws` is the handle every Workspace call takes (`<sandbox>:<path>`). */
+  workspaces: { ws: string; branch: string; path: string; activity?: string | null }[]
+  /** The project read lists records only: its Workspaces were not read. */
+  unread?: boolean
+  /** sandbox.get refused: its Workspaces are unknown. */
   reach?: 'busy' | 'unreachable'
-  /** What the daemon said, when it refused. */
   detail?: string
 }
 
@@ -977,7 +793,7 @@ export type RunEvent =
 export type HostEvent = RunEvent
   | { type: 'chat'; session: import('./agent-api').AgentSessionDetail }
   | { type: 'chat-navigate'; fromId: string; sessionId: string }
-  /** Each new sample of a running sync job, and its end. */
-  | { type: 'sync'; job: SyncJob }
-  /** The storage view changed (a check ended, a job ended): read /api/storage again. */
+  /** A storage job moved on, or ended. */
+  | { type: 'storage-job'; job: StorageJob }
+  /** The storage view changed (a listing ended, a job ended): read /api/storage again. */
   | { type: 'storage' }

@@ -930,9 +930,8 @@ export function ChatHome({ projects, initialProject, initialSession, startNew, o
           projects.add(created)
           const key = projectKey(created)
           setProject(key)
-          drafts.open(newDraftKey(key, created.source || cwd))
+          drafts.open(newDraftKey(key, cwd))
           localStorage.setItem(LAST_PROJECT, key)
-          if (created.source) changeDirectory(created.source)
         }}
       />
       {sessionSettings && <SessionSettingsDialog key={`${sessionSettings.session?.id ?? drafts.key()}:${sessionSettings.mode}`} target={sessionSettings} onClose={() => setSessionSettings(null)} onSave={async (value) => {

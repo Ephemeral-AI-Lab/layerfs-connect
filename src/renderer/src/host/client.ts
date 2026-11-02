@@ -7,7 +7,7 @@ import type {
   NewMachine,
   ProjectState,
   SandboxInfo,
-  SandboxPlatform,
+  SandboxRecord,
   ProjectSummary,
   NewProjectInput,
   ProjectInitJob,
@@ -17,12 +17,9 @@ import type {
   RunSummary,
   TracePage,
   HostEvent,
-  NewRemote,
-  RemoteFile,
-  StorageCheck,
+  BackupFile,
+  StorageJob,
   StorageView,
-  SyncJob,
-  SynchronousCommit,
 } from '@shared/host-api'
 
 export class HostError extends Error {
@@ -92,7 +89,7 @@ const q = (params: Record<string, string | number | undefined>) => {
 }
 const enc = encodeURIComponent
 /** A project key's route: `<store>/<project>` as one encoded segment. */
-const at = (project: string) => ({ path: `/api/projects/${enc(project)}`, store: undefined })
+const at = (project: string) => `/api/projects/${enc(project)}`
 
 /** Fires when the LayerFS projects change from this app: an Init ended, a project or Store was removed, a sync job ended. */
 const projectsEvents = new EventTarget()
@@ -115,37 +112,38 @@ export const host = {
   removeMachine: (name: string) => call<unknown>('DELETE', `/api/machines/${enc(name)}`),
   /** A built-in's { image, docker, wsl }, or a VM's { cpus, memory }. */
   updateMachine: (name: string, changes: { image?: string; docker?: string; wsl?: string; cpus?: number; memory?: number }) => call<unknown>('POST', `/api/machines/${enc(name)}/update`, changes),
-  /** Moves a sqlite Store to `machine`. */
-  moveStore: (store: string, machine: string) => call<unknown>('POST', `/api/machines/${enc(machine)}/stores`, { store }),
   projects: () => call<ProjectSummary[]>('GET', '/api/projects'),
   /** A new project: Init from `input.source` (absolute) or empty; into the existing Store `input.store` when given, else a new Store (layerfs#506). */
   createProject: (input: NewProjectInput) => call<ProjectInitJob>('POST', '/api/projects', input),
   projectInit: (id: string) =>
     call<ProjectInitJob>('GET', `/api/project-inits/${enc(id)}`).then((job) => (job.ended ? projectsChanged(job) : job)),
   // `project` below is a project key (ProjectSummary.key, else its name): `store/name` sends ?store= (layerfs#506)
-  project: (project: string) => call<ProjectState>('GET', `${at(project).path}${q({ store: at(project).store })}`),
+  project: (project: string) => call<ProjectState>('GET', `${at(project)}`),
   /** The project's Sandboxes with their mounted Workspaces: the one project read that asks Sandbox daemons. */
-  projectSandboxes: (project: string) => call<SandboxInfo[]>('GET', `${at(project).path}/sandboxes${q({ store: at(project).store })}`),
+  projectSandboxes: (project: string) => call<SandboxInfo[]>('GET', `${at(project)}/sandboxes`),
   /** A new Sandbox on `platform` (layerfs#529 sandbox.create({ platform })); left out, the home's default. */
-  createSandbox: (project: string, platform?: SandboxPlatform) =>
-    call<{ sandbox: string; image: string | null; platform: SandboxPlatform | null }>('POST', `${at(project).path}/sandboxes${q({ store: at(project).store })}`, platform ? { platform } : {}),
+  createSandbox: (project: string, input: { name: string; image?: string; machine?: string }) => call<SandboxRecord>('POST', `${at(project)}/sandboxes`, input),
+  /** sandbox.close; `force` closes it with Workspaces whose state LayerFS cannot learn (listed in `unknown`). */
+  closeSandbox: (name: string, force = false) => call<{ kind: string; closed: string; unknown: string[] }>('DELETE', `/api/sandboxes/${enc(name)}${q({ force: force ? '1' : undefined })}`),
+  /** Closes every Sandbox of the project (Delete's "Close N Sandboxes and delete"). */
+  closeSandboxes: (project: string, force = false) => call<{ kind: string; closed: string; unknown: string[] }[]>('POST', `${at(project)}/close-sandboxes`, force ? { force: true } : {}),
   commits: (project: string, branch: string, limit = 200) =>
-    call<CommitInfo[]>('GET', `${at(project).path}/commits${q({ branch, limit, store: at(project).store })}`),
+    call<CommitInfo[]>('GET', `${at(project)}/commits${q({ branch, limit })}`),
   /** Several Branches' Commits in one call (a Branch gone meanwhile is left out; main's are []). */
   branchCommits: (project: string, branches: string[]) =>
     call<Record<string, CommitInfo[]>>(
       'GET',
-      `${at(project).path}/branch-commits?${new URLSearchParams([...branches.map((b) => ['branch', b]), ...(at(project).store ? [['store', at(project).store!]] : [])]).toString()}`,
+      `${at(project)}/branch-commits?${new URLSearchParams(branches.map((b) => ['branch', b])).toString()}`,
     ),
   list: (project: string, branch: string, path: string) =>
-    call<FsEntry[]>('GET', `${at(project).path}/fs${q({ branch, path, store: at(project).store })}`),
+    call<FsEntry[]>('GET', `${at(project)}/fs${q({ branch, path })}`),
   file: (project: string, branch: string, path: string) =>
     call<{ path: string; size: number; binary: boolean; text: string | null }>(
       'GET',
-      `${at(project).path}/file${q({ branch, path, store: at(project).store })}`,
+      `${at(project)}/file${q({ branch, path })}`,
     ),
   removeProject: (project: string) =>
-    call<{ removed: true }>('DELETE', `${at(project).path}${q({ store: at(project).store })}`).then(projectsChanged),
+    call<{ removed: true }>('DELETE', `${at(project)}`).then(projectsChanged),
 
   // ---------- scenarios and their runs (host/runs) ----------
 
@@ -165,47 +163,32 @@ export const host = {
   /** Deletes a finished run's saved record and traces; its project stays. 409 while it plays. */
   removeRun: (id: string) => call<{ id: string }>('DELETE', `/api/runs/${enc(id)}`),
 
-  // ---------- Storage (layerfs#506, #509) ----------
+  // ---------- Storage (LayerFS 2.0) ----------
 
-  /** Stores, remotes, PostgreSQL connections and running jobs. */
+  /** Stores by machine, PostgreSQL Stores, buckets and this host's jobs. */
   storage: () => call<StorageView>('GET', '/api/storage'),
-  /** A new, empty local SQLite Store. */
+  /** A new, empty sqlite Store on native. */
   createStore: (name: string) => call<StorageView>('POST', '/api/stores', { name }).then(projectsChanged),
-  /** Deletes a Store and every project in it; `confirm` is the Store's name. */
-  removeStore: (name: string, confirm: string) =>
-    call<StorageView>('DELETE', `/api/stores/${enc(name)}${q({ confirm })}`).then(projectsChanged),
-  /** Runs link checks (one HEAD per linked Store), connection listings and PostgreSQL status reads, then answers the view; an empty body checks everything. */
-  checkStorage: (body: StorageCheck = {}) => call<StorageView>('POST', '/api/storage/check', body),
-  /** Uploads an unlinked Store to a new file `file` (default its name) on `remote`, and links it (layerfs#509). */
-  publish: (store: string, remote: string, file?: string) =>
-    call<SyncJob>('POST', `/api/stores/${enc(store)}/publish`, { remote, ...(file ? { file } : {}) }),
-  /** Uploads the whole Store (all of its projects) to its link; `force` replaces a file that changed since the last push or pull. */
-  push: (store: string, options: { force?: boolean } = {}) =>
-    call<SyncJob>('POST', `/api/stores/${enc(store)}/push`, options.force ? { force: true } : {}),
-  /** Replaces the whole Store with its linked file; `confirm` is the Store's name. */
-  pull: (store: string, confirm: string) => call<SyncJob>('POST', `/api/stores/${enc(store)}/pull`, { confirm }),
-  /** Uploads a copy of the Store to a new, unlinked file on `remote`; the Store's link does not change. */
-  send: (store: string, remote: string, file: string) => call<SyncJob>('POST', `/api/stores/${enc(store)}/send`, { remote, file }),
-  /** Drops the Store's link; the file stays, loadable. `confirm` is the Store's name. */
-  unlink: (store: string, confirm: string) =>
-    call<StorageView>('POST', `/api/stores/${enc(store)}/unlink`, { confirm }).then(projectsChanged),
-  /** Copies a SQLite Store into a schema of `connection`, as the new Store `name` (default `<store>-pg`). */
-  importPostgresql: (store: string, connection: string, name?: string) =>
-    call<SyncJob>('POST', `/api/stores/${enc(store)}/import-postgresql`, { connection, ...(name ? { name } : {}) }),
-  /** A MinIO or Cloudflare R2 bucket; its keys stay in Connect. */
-  addRemote: (remote: NewRemote) => call<StorageView>('POST', '/api/remotes', remote),
-  removeRemote: (name: string) => call<StorageView>('DELETE', `/api/remotes/${enc(name)}`),
-  /** The files in a connection's bucket now, each with the Store linked to it. */
-  remoteFiles: (remote: string) => call<RemoteFile[]>('GET', `/api/remotes/${enc(remote)}/files`),
-  /** A new local Store `store` (default the file's name) from `file` in `remote`, linked to it. */
-  load: (remote: string, file: string, store?: string) =>
-    call<SyncJob>('POST', `/api/remotes/${enc(remote)}/load`, { file, ...(store ? { store } : {}) }),
-  /** A named PostgreSQL connection; its URL stays in Connect. */
-  addPostgresql: (connection: { name: string; url: string; synchronousCommit: SynchronousCommit }) =>
-    call<StorageView>('POST', '/api/postgresql', connection),
-  removePostgresql: (name: string) => call<StorageView>('DELETE', `/api/postgresql/${enc(name)}`),
-  /** A sync job's last sample (also pushed as `sync` events while it runs). */
-  syncJob: (id: string) => call<SyncJob>('GET', `/api/sync-jobs/${enc(id)}`).then((job) => (job.ended ? projectsChanged(job) : job)),
+  /** Removes a Store and every project in it; `confirm` is the Store's name. */
+  removeStore: (name: string, confirm: string) => call<StorageView>('DELETE', `/api/stores/${enc(name)}${q({ confirm })}`).then(projectsChanged),
+  /** A PostgreSQL database as a Store: the URL holds no password; `password` is a reference (env:LAYERFS_… or file:/path). */
+  connectPostgresql: (input: { name: string; url: string; password: string; synchronousCommit?: string }) => call<StorageView>('POST', '/api/stores/postgresql', input).then(projectsChanged),
+  disconnectStore: (name: string) => call<StorageView>('POST', `/api/stores/${enc(name)}/disconnect`).then(projectsChanged),
+  /** Moves an idle sqlite Store to `machine`: a job. */
+  moveStore: (store: string, machine: string) => call<StorageJob>('POST', `/api/stores/${enc(store)}/move`, { machine }),
+  /** Backs a sqlite Store up to `bucket` (as `file`, default its name): a job. */
+  backupStore: (store: string, bucket: string, file?: string) => call<StorageJob>('POST', `/api/stores/${enc(store)}/backup`, { bucket, ...(file ? { file } : {}) }),
+  /** An r2 or MinIO bucket: `key` is a reference (env:LAYERFS_… or file:/path). */
+  connectBucket: (input: { name: string; url: string; key: string; region?: string }) => call<StorageView>('POST', '/api/buckets', input),
+  /** Drops the bucket and every Store's link to it: answers which Stores lost theirs. */
+  disconnectBucket: (name: string) => call<{ unlinked: string[]; view: StorageView }>('DELETE', `/api/buckets/${enc(name)}`),
+  /** backup.list(bucket): its files with their states, now. */
+  listBucket: (name: string) => call<{ at: number; items: BackupFile[] | null; error: { code: string; message: string } | null }>('GET', `/api/buckets/${enc(name)}/files`),
+  /** Every bucket listed again (one call each); `bucket` alone when given. */
+  checkStorage: (bucket?: string) => call<StorageView>('POST', '/api/storage/check', bucket ? { bucket } : {}),
+  /** Restores `file` (default `store`) of `bucket` as the new Store `store`, on native: a job. */
+  restoreBackup: (bucket: string, store: string, file?: string) => call<StorageJob>('POST', `/api/buckets/${enc(bucket)}/restore`, { store, ...(file ? { file } : {}) }),
+  storageJob: (id: string) => call<StorageJob>('GET', `/api/storage-jobs/${enc(id)}`).then((job) => (job.ended ? projectsChanged(job) : job)),
 }
 
 // One event stream for every listener: a browser keeps at most six connections

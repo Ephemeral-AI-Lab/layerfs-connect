@@ -134,7 +134,7 @@ export function ProjectView({ project, initialTab, initialBranch, onBack, backLa
       onRetry={() => setSessionsRead((n) => n + 1)}
       onOpenChat={onOpenChat}
       onNewChat={onNewChat}
-      canChat={!!s?.project.initialized}
+      canChat={!!s}
     />
   ) : !s ? (
     state.error ? <LoadError error={state.error} what={label} onRetry={refresh} /> : <Loading label={t("Reading {value1}", {value1: label})} />
@@ -187,7 +187,7 @@ export function ProjectView({ project, initialTab, initialBranch, onBack, backLa
               </TooltipTrigger>
               <TooltipContent side="bottom">{t("Refresh")}</TooltipContent>
             </Tooltip>
-            <Button size="sm" className="rounded-xl" disabled={!s?.project.initialized} onClick={onNewChat}>
+            <Button size="sm" className="rounded-xl" disabled={!s} onClick={onNewChat}>
               <MessageSquarePlus className="size-3.5" />{t("New chat")}</Button>
           </>
         }

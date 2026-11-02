@@ -49,16 +49,16 @@ export function useHostQuery<T>(load: () => Promise<T>, deps: unknown[], key?: s
   return { data, error, loading, reload }
 }
 
-/** Calls `listener` for every RunEvent while mounted (chat events and Storage's `sync` and `storage` events go to onHostEvent's listeners only). */
+/** Calls `listener` for every RunEvent while mounted (chat events and Storage's `storage-job` and `storage` events go to onHostEvent's listeners only). */
 export function useHostEvents(listener: (event: RunEvent) => void) {
   const current = useRef(listener)
   current.current = listener
-  useEffect(() => onHostEvent((e) => { if (e.type !== 'chat' && e.type !== 'chat-navigate' && e.type !== 'sync' && e.type !== 'storage') current.current(e) }), [])
+  useEffect(() => onHostEvent((e) => { if (e.type !== 'chat' && e.type !== 'chat-navigate' && e.type !== 'storage-job' && e.type !== 'storage') current.current(e) }), [])
 }
 
-/** Calls `listener` for Storage's events while mounted: each `sync` job sample and each `storage` view change. */
-export function useStorageEvents(listener: (event: Extract<HostEvent, { type: 'sync' | 'storage' }>) => void) {
+/** Calls `listener` for Storage's events while mounted: each job sample and each `storage` view change. */
+export function useStorageEvents(listener: (event: Extract<HostEvent, { type: 'storage-job' | 'storage' }>) => void) {
   const current = useRef(listener)
   current.current = listener
-  useEffect(() => onHostEvent((e) => { if (e.type === 'sync' || e.type === 'storage') current.current(e) }), [])
+  useEffect(() => onHostEvent((e) => { if (e.type === 'storage-job' || e.type === 'storage') current.current(e) }), [])
 }

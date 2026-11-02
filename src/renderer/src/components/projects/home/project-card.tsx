@@ -37,13 +37,13 @@ export function ProjectCard({ project, index, onOpen }: ProjectCardProps) {
         </span>
         <ArrowUpRight aria-hidden="true" className="home-arrow size-4 shrink-0 text-(--icon-accent)" />
       </span>
-      <span className="flex w-full min-w-0 items-center gap-2 text-xs text-muted-foreground" title={project.source ?? undefined}>
+      <span className="flex w-full min-w-0 items-center gap-2 text-xs text-muted-foreground" title={project.key}>
         <FolderOpen aria-hidden="true" className="size-3.5 shrink-0" />
-        <span className="truncate">{project.source || t('Empty workspace')}</span>
+        <span className="truncate font-mono">{project.key}</span>
       </span>
       <StoreLine facts={facts} />
       <span className="mt-auto flex w-full flex-wrap items-center justify-between gap-2 border-t border-foreground/[0.06] pt-3">
-        <Chip tone={project.initialized ? 'success' : 'neutral'}>{project.initialized ? t("Ready") : t("Not initialized")}</Chip>
+        <Chip tone={facts.state === 'down' ? 'danger' : facts.state === 'moving' ? 'warning' : 'success'}>{facts.state === 'down' ? t('Store down') : facts.state === 'moving' ? t('Store moving') : t('Ready')}</Chip>
         {project.created !== null && (
           <span className="text-[11px] text-muted-foreground tabular-nums" title={when(project.created)}>{t("Created ")}{ago(project.created)}
           </span>

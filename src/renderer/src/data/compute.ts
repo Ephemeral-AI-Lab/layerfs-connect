@@ -279,8 +279,6 @@ const isPlatform = (v: unknown): v is SandboxPlatform => typeof v === 'string' &
  */
 export function platformOfSandbox(s: SandboxInfo, os: Os): SandboxPlatform {
   if (isPlatform(s.platform)) return s.platform
-  const provider = s.provider ?? 'docker'
-  if (provider.startsWith('vm:')) return isPlatform(provider.slice(3)) ? (provider.slice(3) as SandboxPlatform) : 'linux'
   if (s.runtime === 'native') return os === 'darwin' ? 'mac' : 'linux'
   return s.runtime === 'namespaces' ? 'linux' : 'docker'
 }

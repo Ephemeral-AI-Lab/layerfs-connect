@@ -553,7 +553,6 @@ function ProjectGroup({ index, project, projectKey: key, entries, open, selected
       <SidebarMenuAction
         type="button"
         onClick={onNewChat}
-        disabled={!project.initialized}
         aria-label={t('New chat on {name}', { name: project.name })}
         title={t('New chat on this project')}
         className="top-2 right-8 size-6 rounded-lg text-muted-foreground opacity-0 transition-opacity group-hover/project:opacity-100 focus-visible:opacity-100 peer-data-[size=default]/menu-button:top-2 [&>svg]:size-3.5"

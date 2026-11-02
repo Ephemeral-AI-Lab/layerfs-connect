@@ -37,7 +37,7 @@ export function ProjectsHome({ projects, onOpenProject, onNewProject, onOpenChat
 
   const q = query.trim().toLowerCase()
   const all = projects.data ?? []
-  const shown = all.filter((project) => !q || `${project.name} ${project.store ?? ''} ${project.source ?? ''}`.toLowerCase().includes(q))
+  const shown = all.filter((project) => !q || `${project.name} ${project.store} ${project.machine ?? ''}`.toLowerCase().includes(q))
   useLayoutEffect(flip.play, [q, flip.play])
 
   return (
