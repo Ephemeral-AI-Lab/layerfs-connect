@@ -4,7 +4,9 @@
 import { Archive, Database, HardDriveDownload, LoaderCircle, type LucideIcon, MoveRight, Plus, Unplug } from 'lucide-react'
 import { useEffect, useId, useState } from 'react'
 
-import { BTN, Field, FormError, message, SHEET, SheetFooter, SheetHeader } from '@/components/storage/dialogs/fields'
+import { BackLink, BTN, Field, FormError, message, SHEET, SheetFooter, SheetHeader } from '@/components/storage/dialogs/fields'
+import { Mark, Tile } from '@/components/storage/icons'
+import { type FieldValues, isBrandMark, type ProviderEntry, PROVIDERS } from '@/components/storage/identity/providers'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
@@ -25,7 +27,7 @@ export type StorageDialog =
 const REFERENCE_HINT = 'A reference, never the secret: file:/absolute/path (readable by you only) or env:LAYERFS_<NAME>.'
 
 /** A form in a sheet: its fields, one submit that may be refused (shown under the form). */
-function FormSheet({ open, onClose, icon, title, description, action, valid, submit, children }: { open: boolean; onClose: () => void; icon: LucideIcon; title: string; description?: React.ReactNode; action: string; valid: boolean; submit: () => Promise<unknown>; children: React.ReactNode }) {
+function FormSheet({ open, onClose, icon, mark, title, description, action, valid, submit, left, hint, children }: { open: boolean; onClose: () => void; icon: LucideIcon; mark?: React.ReactNode; title: string; description?: React.ReactNode; action: string; valid: boolean; submit: () => Promise<unknown>; left?: React.ReactNode; hint?: string; children: React.ReactNode }) {
   useI18n()
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string>()
@@ -49,7 +51,7 @@ function FormSheet({ open, onClose, icon, title, description, action, valid, sub
   return (
     <Dialog open={open} onOpenChange={(next) => (!next && !busy ? onClose() : undefined)}>
       <DialogContent className={`${SHEET} sm:max-w-[480px]`}>
-        <SheetHeader icon={icon} title={title}>
+        <SheetHeader icon={icon} mark={mark} title={title}>
           {description}
         </SheetHeader>
         <form
@@ -61,7 +63,8 @@ function FormSheet({ open, onClose, icon, title, description, action, valid, sub
         >
           {children}
           <FormError error={error} />
-          <SheetFooter>
+          {hint && <p className="text-[11.5px] text-muted-foreground">{hint}</p>}
+          <SheetFooter left={left}>
             <Button type="button" variant="outline" size="sm" className={BTN} onClick={onClose} disabled={busy}>
               {t('Cancel')}
             </Button>
@@ -166,65 +169,69 @@ export function StorageDialogs({ dialog, view, onClose, done }: { dialog: Storag
   }
 }
 
-/** The keys: the two values (written by the host to an owner-only file, passed by reference), or a reference already made. */
+/** A provider's mark on a lit tile. */
+function ProviderTile({ entry, size = 'md' }: { entry: ProviderEntry; size?: 'sm' | 'md' | 'lg' }) {
+  const mark = entry.mark
+  return <Tile size={size}>{isBrandMark(mark) ? <Mark icon={mark} /> : (() => { const Icon = mark; return <Icon aria-hidden="true" className="text-muted-foreground" /> })()}</Tile>
+}
+
+/**
+ * Connect a bucket, as the 1.1.0 Storage page had it: pick MinIO or
+ * Cloudflare R2 from the provider tiles, then fill its form. The keys are
+ * written by the host to an owner-only file, passed to LayerFS by reference.
+ */
 function BucketSheet({ onClose, done }: { onClose: () => void; done: () => void }) {
   useI18n()
-  const [provider, setProvider] = useState<'minio' | 'r2'>('minio')
-  const [f, setF] = useState({ name: '', endpoint: '', account: '', jurisdiction: '', bucket: '', prefix: '', accessKey: '', secretKey: '', key: '', region: '' })
-  const [byRef, setByRef] = useState(false)
-  const set = (k: keyof typeof f) => (v: string) => setF((x) => ({ ...x, [k]: v }))
-  const where = provider === 'minio' ? !!f.endpoint : !!f.account
-  const keys = byRef ? !!f.key : !!f.accessKey && !!f.secretKey
-  const submit = () =>
-    host
-      .connectBucket({
-        name: f.name.trim(),
-        provider,
-        bucket: f.bucket.trim(),
-        prefix: f.prefix.trim() || undefined,
-        ...(provider === 'minio' ? { endpoint: f.endpoint.trim(), region: f.region.trim() || undefined } : { account: f.account.trim(), jurisdiction: f.jurisdiction || undefined }),
-        ...(byRef ? { key: f.key.trim() } : { accessKey: f.accessKey, secretKey: f.secretKey }),
-      })
-      .then(done)
-  const tab = (id: 'minio' | 'r2', label: string) => (
-    <button type="button" onClick={() => setProvider(id)} className={`flex-1 rounded-xl px-3 py-2 text-xs font-medium transition-colors ${provider === id ? 'bg-primary/10 text-primary ring-1 ring-primary/25' : 'text-muted-foreground hover:bg-foreground/[0.04]'}`}>
-      {label}
-    </button>
-  )
+  const [entry, setEntry] = useState<ProviderEntry | null>(null)
+  const [values, setValues] = useState<FieldValues>({})
+  const pick = (e: ProviderEntry) => {
+    setEntry(e)
+    setValues(Object.fromEntries(e.fields.map((f) => [f.key, f.default ?? ''])))
+  }
+  if (!entry) {
+    return (
+      <Dialog open onOpenChange={(next) => !next && onClose()}>
+        <DialogContent className={`${SHEET} sm:max-w-[520px]`}>
+          <SheetHeader icon={Unplug} title={t('Connect a bucket')}>
+            {t('Where Store backups go. LayerFS 2.0 backs up to MinIO and Cloudflare R2.')}
+          </SheetHeader>
+          <div className="grid grid-cols-2 gap-2.5">
+            {PROVIDERS.map((e) => {
+              const ready = !!e.request
+              return (
+                <button key={e.id} type="button" disabled={!ready} onClick={() => pick(e)} className="flex min-w-0 items-center gap-3 rounded-2xl border border-foreground/[0.08] bg-background/40 px-3.5 py-3 text-left transition-colors hover:border-primary/30 hover:bg-primary/[0.04] disabled:cursor-default disabled:opacity-50 disabled:hover:border-foreground/[0.08] disabled:hover:bg-background/40">
+                  <ProviderTile entry={e} />
+                  <span className="min-w-0">
+                    <span className="block truncate text-[13px] font-semibold">{e.label}</span>
+                    <span className="block truncate text-[11px] text-muted-foreground">{ready ? t(e.about) : t('comes with a later LayerFS')}</span>
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+        </DialogContent>
+      </Dialog>
+    )
+  }
+  const problems = Object.fromEntries(entry.fields.map((f) => [f.key, values[f.key] ? (f.validate?.(values[f.key]) ?? null) : null]))
+  const missing = entry.fields.filter((f) => f.needed && !values[f.key]?.trim()).map((f) => t(f.needed!))
+  const valid = !missing.length && Object.values(problems).every((p) => !p)
   return (
-    <FormSheet open onClose={onClose} icon={Unplug} title={t('Connect a bucket')} description={t('A MinIO or Cloudflare R2 bucket for Store backups. One listing proves the bucket answers with these keys.')} action={t('Connect')} valid={!!f.name && !!f.bucket && where && keys} submit={submit}>
-      <div className="flex gap-1.5 rounded-2xl bg-foreground/[0.03] p-1">
-        {tab('minio', 'MinIO')}
-        {tab('r2', 'Cloudflare R2')}
-      </div>
-      <TextField label={t('Name')} value={f.name} onChange={set('name')} placeholder="backups" autoFocus mono />
-      {provider === 'minio' ? (
-        <TextField label={t('Endpoint')} value={f.endpoint} onChange={set('endpoint')} placeholder="http://127.0.0.1:9000" mono hint={t('The URL holds no keys: they go below.')} />
-      ) : (
-        <>
-          <TextField label={t('Account ID')} value={f.account} onChange={set('account')} placeholder="0123456789abcdef0123456789abcdef" mono hint={t('32 hex digits, on the R2 overview page.')} />
-          <Choice label={t('Jurisdiction')} value={f.jurisdiction || 'none'} onChange={(v) => set('jurisdiction')(v === 'none' ? '' : v)} options={[{ value: 'none', label: t('Default') }, { value: 'eu', label: 'EU' }, { value: 'fedramp', label: 'FedRAMP' }]} />
-        </>
-      )}
-      <div className="grid grid-cols-2 gap-3">
-        <TextField label={t('Bucket')} value={f.bucket} onChange={set('bucket')} placeholder="layerfs" mono />
-        <TextField label={t('Prefix')} value={f.prefix} onChange={set('prefix')} placeholder={t('optional')} mono />
-      </div>
-      {byRef ? (
-        <TextField label={t('Key reference')} value={f.key} onChange={set('key')} placeholder="file:/Users/me/.config/layerfs/backups.key" mono hint={t('A file with lines access_key=… and secret_key=…, readable by you only, or env:LAYERFS_BUCKET_<NAME>.')} />
-      ) : (
-        <div className="grid grid-cols-2 gap-3">
-          <SecretField label={t('Access key ID')} value={f.accessKey} onChange={set('accessKey')} />
-          <SecretField label={t('Secret access key')} value={f.secretKey} onChange={set('secretKey')} />
+    <FormSheet open onClose={onClose} mark={<ProviderTile entry={entry} size="sm" />} icon={Unplug} title={t('Connect {provider}', { provider: entry.label })} description={t(entry.about)} action={t('Connect')} valid={valid} submit={() => host.connectBucket(entry.request!(values)).then(done)} left={<BackLink onBack={() => setEntry(null)} label={t('Providers')} />} hint={missing.length ? t('Still needed: {list}', { list: missing.join(', ') }) : undefined}>
+      {entry.fields.map((f) => (
+        <div key={f.key} className="flex flex-col gap-1.5">
+          {f.kind === 'select' ? (
+            <Choice label={t(f.label)} value={values[f.key] || '__none'} onChange={(v) => setValues((x) => ({ ...x, [f.key]: v === '__none' ? '' : v }))} options={(f.options ?? []).map((o) => ({ value: o.value || '__none', label: t(o.label) }))} />
+          ) : f.kind === 'secret' ? (
+            <SecretField label={t(f.label)} value={values[f.key] ?? ''} onChange={(v) => setValues((x) => ({ ...x, [f.key]: v }))} />
+          ) : (
+            <TextField label={t(f.label)} value={values[f.key] ?? ''} onChange={(v) => setValues((x) => ({ ...x, [f.key]: v }))} placeholder={f.placeholder ? t(f.placeholder) : undefined} mono={f.mono} autoFocus={f.key === 'name'} hint={problems[f.key] ? t(problems[f.key]!) : undefined} />
+          )}
+          {entry.notes.filter((n) => n.after === f.key).map((n, k) => (
+            <p key={k} className={`text-[11.5px] leading-relaxed text-muted-foreground ${n.mono ? 'font-mono' : ''}`}>{n.text(values)}</p>
+          ))}
         </div>
-      )}
-      <p className="-mt-2 text-[11.5px] text-muted-foreground">
-        {byRef ? t('LayerFS reads the keys where the reference points.') : t('Connect saves the keys in a file only you can read and gives LayerFS its reference, never the keys.')}{' '}
-        <button type="button" className="text-primary underline-offset-2 hover:underline" onClick={() => setByRef((x) => !x)}>
-          {byRef ? t('Enter the keys instead') : t('Use a reference instead')}
-        </button>
-      </p>
-      {provider === 'minio' && <TextField label={t('Region')} value={f.region} onChange={set('region')} placeholder="us-east-1" mono />}
+      ))}
     </FormSheet>
   )
 }
