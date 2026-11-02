@@ -61,7 +61,8 @@ export type MachineTone = 'success' | 'neutral' | 'warning' | 'danger'
 /** A machine's state as a pill: answering is success, stopped is idle (it starts on use), down or failed is danger. */
 export function machineState(m: MachineInfo, live?: MachineLive): { tone: MachineTone; label: string; key: 'ready' | 'running' | 'idle' | 'starting' | 'creating' | 'down' } {
   const state = (live?.state ?? m.state ?? '').toLowerCase()
-  if (m.error || state === 'down' || state === 'failed' || live?.down) return { tone: 'danger', label: state === 'failed' ? 'Failed' : 'Down', key: 'down' }
+  // 2.0's machine.status gives a reason for a plain `stopped` too ("the machine is stopped"): that machine starts on use, it is not down
+  if (m.error || state === 'down' || state === 'failed' || (live?.down && state !== 'stopped')) return { tone: 'danger', label: state === 'failed' ? 'Failed' : 'Down', key: 'down' }
   if (state === 'running') return { tone: 'success', label: 'Running', key: 'running' }
   if (state === 'ready') return { tone: 'success', label: 'Ready', key: 'ready' }
   if (state === 'starting') return { tone: 'warning', label: 'Starting', key: 'starting' }
@@ -70,7 +71,7 @@ export function machineState(m: MachineInfo, live?: MachineLive): { tone: Machin
 }
 
 /** Why a machine is down, in LayerFS's words: its status's reason, else its record's error. */
-export const downReason = (m: MachineInfo, live?: MachineLive) => live?.down ?? m.error ?? null
+export const downReason = (m: MachineInfo, live?: MachineLive) => (live?.state?.toLowerCase() === 'stopped' ? null : live?.down) ?? m.error ?? null
 
 /** Binary sizes as LayerFS gives them (8 GiB, 40 GiB). */
 export function gib(n: number | null | undefined): string {
