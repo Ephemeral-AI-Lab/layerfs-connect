@@ -5,59 +5,25 @@
 // "L3" is main's fourth Layer (L0 is Init's), "orders#2" the third Commit on
 // orders. A recorded run's history is in its scenario's final.json; a run's
 // must equal it (the order check). Ported from dsh-layerfs tools/checks/history.mjs.
-
-async function pages(read) {
-  const items = []
-  for (let pos = 0; ; ) {
-    const page = await read(1000, pos)
-    items.push(...page.items)
-    if (!page.hasMore) return items
-    pos += page.items.length
-  }
-}
+// `lf` is a project handle `{ lfs, project }`: the host's LayerFS 2.0 client
+// and the project's key.
+import { pages } from '../layerfs.js'
 
 /** The prefix of the Branch the final-tree check forks from main to read its bytes (tree.js); not part of a run. */
 export const CHECK_PREFIX = 'final-tree-check-'
 
-/**
- * Reads the history of the project `lf` names.
- * @param {object} lf LayerFS client (@layerfs/agent)
- * @param {object} backend its LayerFSBackend (@layerfs/backend), for the Layers
- * @returns {Promise<{ branches: Record<string, { forkedFrom: string | null, commits: object[] }>, layers: object[], ids: Map<string, string>, items: Map<string, object> }>}
- */
-export async function historyOf(lf, backend) {
-  const snap = await backend.store.project.get_history()
-  if (snap.moreLayers) throw new Error('more Layers than one History read lists')
-  // main's Layers from Init's, each the parent of the next
-  const byParent = new Map(snap.layers.map((l) => [l.parent ?? null, l]))
-  const layers = []
-  for (let l = byParent.get(null); l; l = byParent.get(l.id)) layers.push(l)
-  if (layers.length !== snap.layers.length) throw new Error("main's Layers are not one line")
-  const ids = new Map(layers.map((l, i) => [l.id, `L${i}`]))
+/** Every Branch of the project. */
+export const branchesOf = (lf) => pages((p) => lf.lfs.branch.list(lf.project, p))
+/** Every Commit commit.list gives for `branch`, newest first. */
+export const commitsOf = (lf, branch) => pages((p) => lf.lfs.commit.list(lf.project, branch, p))
 
-  const branches = (await pages((size, pos) => lf.project.list_branches(size, pos))).filter(
-    (b) => b.name !== 'main' && !b.name.startsWith(CHECK_PREFIX),
-  )
-  const chains = {}
-  for (const b of branches) {
-    // a Branch made by a merge lists its first input's Commits too, up to the
-    // one it was forked from; those belong to that input
-    const listed = await pages((size, pos) => lf.branch.list_commits(b.name, size, pos))
-    const cut = listed.findIndex((c) => c.id === b.forkedFrom)
-    const newest = cut < 0 ? listed : listed.slice(0, cut)
-    chains[b.name] = { branch: b, commits: newest.reverse() }
-    chains[b.name].commits.forEach((c, i) => ids.set(c.id, `${b.name}#${i}`))
-  }
-  const name = (id) => (id == null ? null : (ids.get(id) ?? `unknown:${id}`))
-  const out = { branches: {}, layers: layers.map((l, i) => (i === 0 ? { source: null } : { source: name(l.sourceCommit) })) }
-  for (const [branch, { branch: b, commits }] of Object.entries(chains).sort(([x], [y]) => (x < y ? -1 : 1))) {
-    out.branches[branch] = {
-      forkedFrom: name(b.forkedFrom ?? b.base),
-      commits: commits.map((c) => ({ id: c.id, message: c.message, via: c.via, merged: name(c.secondParent) })),
-    }
-  }
-  const items = new Map(Object.values(chains).flatMap(({ commits }) => commits.map((c) => [c.id, c])))
-  return { ...out, ids, items }
+/**
+ * The whole project's history needs main's Layers, which 2.0 cannot list
+ * (docs/layerfs-2.0-integration.md §9 Q3): a run is checked in its scope
+ * (scopedHistoryOf), where its trunks stand for main's Layers.
+ */
+export async function historyOf() {
+  throw Object.assign(new Error("main's Layers have no LayerFS 2.0 read yet (§9 Q3): only a scoped run's history can be checked"), { code: 'Unsupported' })
 }
 
 /**
@@ -145,7 +111,7 @@ export async function scopedHistoryOf(lf, scope) {
   const prefix = `${scope.run}.`
   const trunks = scope.trunks()
   const trunkNames = new Set(trunks.map((t) => t.branch))
-  const all = await pages((size, pos) => lf.project.list_branches(size, pos))
+  const all = await branchesOf(lf)
   const byName = new Map(all.map((b) => [b.name, b]))
   const ids = new Map()
   const t0 = byName.get(`${scope.run}.main`)
@@ -156,12 +122,12 @@ export async function scopedHistoryOf(lf, scope) {
   for (const b of all) {
     if (!b.name.startsWith(prefix) || trunkNames.has(b.name) || [`${prefix}land`, `${prefix}landed`].includes(b.name)) continue
     // a Branch forked from a trunk reaches the trunk's whole graph, merges' second parents too: walk first parents from the head to the fork
-    const listed = await pages((size, pos) => lf.branch.list_commits(b.name, size, pos))
+    const listed = await commitsOf(lf, b.name)
     const byId = new Map(listed.map((c) => [c.id, c]))
     const newest = []
     // a merge with main that fast-forwarded onto the trunk starts there, as it started on main's Layer (scope.js, ffs/)
     const start = ffs.get(b.name)
-    for (let c = byId.get(b.head); c && c.id !== b.forkedFrom && c.id !== start; c = byId.get(c.parent)) newest.push(c)
+    for (let c = byId.get(b.head); c && c.id !== b.forked_from && c.id !== start; c = byId.get(c.parent)) newest.push(c)
     const name = b.name.slice(prefix.length)
     chains[name] = { branch: b, commits: newest.reverse() }
     chains[name].commits.forEach((c, i) => ids.set(c.id, `${name}#${i}`))
@@ -170,13 +136,13 @@ export async function scopedHistoryOf(lf, scope) {
   const layers = [{ source: null }]
   for (const t of trunks.filter((t) => t.k > 0)) {
     const b = byName.get(t.branch)
-    layers.push({ source: b ? name(b.forkedFrom) : `missing:${t.branch}` })
+    layers.push({ source: b ? name(b.forked_from ?? b.head) : `missing:${t.branch}` })
   }
   const out = { branches: {}, layers }
   for (const [branch, { branch: b, commits }] of Object.entries(chains).sort(([x], [y]) => (x < y ? -1 : 1))) {
     out.branches[branch] = {
-      forkedFrom: name(b.forkedFrom ?? b.base),
-      commits: commits.map((c) => ({ id: c.id, message: c.message, via: c.via, merged: name(c.secondParent) })),
+      forkedFrom: name(b.forked_from ?? b.base),
+      commits: commits.map((c) => ({ id: c.id, message: c.message, via: c.via, merged: name(c.second_parent) })),
     }
   }
   const items = new Map(Object.values(chains).flatMap(({ commits }) => commits.map((c) => [c.id, c])))

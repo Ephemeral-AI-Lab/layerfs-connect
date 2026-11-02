@@ -11,7 +11,6 @@
 // trunks and Sandboxes only: other runs may be playing in the project.
 import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { LayerFSBackend } from '@layerfs/backend'
 import { finalTreeFailures, openSandboxes, orderFailures } from './final.js'
 
 /** How many failure messages a check's detail lists before it counts the rest. */
@@ -35,12 +34,12 @@ export function readFinal(scenarioDir) {
 
 /**
  * The final checks of a run of `scenario`, on its project.
- * @param {{ scenario?: object | string, scenarioDir: string, project: string, client: object, backend?: object }} run
- *   client: an open @layerfs/agent client on `project` (the engine opens and closes it);
- *   backend: its LayerFSBackend, made from client when not given (tests pass a stand-in)
+ * @param {{ scenario?: object | string, scenarioDir: string, project: string, client: object, scope?: object }} run
+ *   client: the project handle { lfs, project, machine }: the host's LayerFS
+ *   2.0 client, the project's key and the machine its Sandboxes run on
  * @returns {Promise<{ name: string, ok: boolean, detail: string }[]>}
  */
-export async function finalChecks({ scenarioDir, project, client, backend, scope = null }) {
+export async function finalChecks({ scenarioDir, project, client, scope = null }) {
   let final
   try {
     final = readFinal(scenarioDir)
@@ -57,7 +56,7 @@ export async function finalChecks({ scenarioDir, project, client, backend, scope
     }
   }
   await attempt('final.order', async () => {
-    const order = await orderFailures(final, client, backend ?? LayerFSBackend.of(client), scope)
+    const order = await orderFailures(final, client, scope)
     return result(
       'final.order',
       order.failures,

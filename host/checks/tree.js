@@ -9,41 +9,46 @@
 // by sha256sum in a Workspace. main cannot be mounted, so the check forks a
 // Branch from it (CHECK_PREFIX, which the order check leaves out), mounts it,
 // and unmounts it without a Commit. Ported from dsh-layerfs tools/checks/tree.mjs.
+// `lf` is a project handle `{ lfs, project, machine }`; a ref is a Branch
+// name or a saved id (a Commit or a Layer), which file calls take as their
+// `commit` with any Branch.
 import { execFileSync } from 'node:child_process'
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
+import { pages } from '../layerfs.js'
 import { CHECK_PREFIX } from './history.js'
 
-/** Every entry of `dir` in `ref`, page by page. */
-export async function listAll(lf, ref, dir) {
-  const items = []
-  for (let pos = 0; ; ) {
-    const page = await lf.fs.list(ref, dir, 1000, pos)
-    items.push(...page.items)
-    if (!page.hasMore) return items
-    pos += page.items.length
-  }
+/** A saved id: hex, as LayerFS prints them. */
+const ID = /^[0-9a-f]{40,}$/
+/** A ref as file calls' (branch, commit). */
+export const refArgs = (ref) => (ID.test(ref) ? ['main', ref] : [ref, undefined])
+
+/** Every entry of `dir` in `ref`. */
+export function listAll(lf, ref, dir) {
+  const [branch, commit] = refArgs(ref)
+  return pages((p) => lf.lfs.file.list(lf.project, branch, dir, commit, p))
 }
 
 /** A file's whole text in `ref`, window by window: { text, size } or { problem }. */
 export async function readAll(lf, ref, path) {
+  const [branch, commit] = refArgs(ref)
   let text = ''
   let line = 1
   let size = 0
   for (;;) {
     let r
     try {
-      r = await lf.fs.read(ref, path, line)
+      r = await lf.lfs.file.read(lf.project, branch, path, commit, { start_line: line })
     } catch (error) {
       if (error.code === 'Binary') return { problem: 'binary' }
       throw error
     }
-    if (r.lineTruncated) return { problem: 'a line longer than one reply' }
+    if (r.line_truncated) return { problem: 'a line longer than one reply' }
     text += r.text
     size = r.size
-    if (r.nextLine == null) break
-    line = r.nextLine
+    if (r.next_line == null) break
+    line = r.next_line
   }
   if (Buffer.byteLength(text) !== size) return { problem: `read ${Buffer.byteLength(text)} of ${size} bytes` }
   return { text, size }
@@ -92,9 +97,9 @@ export async function trackedTree(lf, ref, root = '/') {
 /**
  * A Commit's tracked changes from its parent (a Branch's first Commit: from
  * its base Layer): entries added, removed or of another type, and files whose
- * content differs (fs.diff_files, which compares binary files too), in
- * diff_commits' order. Ignored folders are never walked.
- * @param {{ id: string, parent?: string, base?: string }} commit as list_commits lists it
+ * content differs (file.diff, which compares binary files too), in
+ * commit.diff's order. Ignored folders are never walked.
+ * @param {{ id: string, parent?: string, base?: string }} commit as commit.list lists it
  * @param {(ref: string) => Promise<Map<string, string>>} treeOf trackedTree, perhaps cached
  */
 export async function trackedChanges(lf, commit, treeOf = (ref) => trackedTree(lf, ref), root = '/') {
@@ -106,7 +111,7 @@ export async function trackedChanges(lf, commit, treeOf = (ref) => trackedTree(l
     const was = a.get(path)
     if (!was) out.push({ path, kind: 'Added', type })
     else if (was !== type) out.push({ path, kind: 'Removed', type: was }, { path, kind: 'Added', type })
-    else if (type === 'file' && !(await lf.fs.diff_files(before, at(path), commit.id, at(path))).contentEqual) out.push({ path, kind: 'Modified', type })
+    else if (type === 'file' && !(await lf.lfs.file.diff(lf.project, 'main', at(path), 'main', at(path), { left_commit: before, right_commit: commit.id })).content_equal) out.push({ path, kind: 'Modified', type })
     else if (type === 'symlink') throw new Error(`${path}: a symlink in the tracked tree is not compared yet`)
   }
   for (const [path, type] of a) if (!b.has(path)) out.push({ path, kind: 'Removed', type })
@@ -122,31 +127,33 @@ const quote = (text) => `'${text.replaceAll("'", "'\\''")}'`
 
 /**
  * The SHA-256 of each of `paths` on `branch`, from its bytes, in a Sandbox
- * and Workspace of its own, unmounted without a Commit and closed after.
+ * and Workspace of its own (on the project's machine), unmounted without a
+ * Commit and closed after. `shasum -a 256` runs on macOS and Linux alike.
  * @returns {Promise<Record<string, string>>}
  */
 export async function byteHashes(lf, branch, paths) {
   const hashes = {}
   if (!paths.length) return hashes
-  const { sandbox } = await lf.sandbox.create()
+  const sandbox = `${CHECK_PREFIX}${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`
+  await lf.lfs.sandbox.create(lf.project, sandbox, lf.machine)
   let ws
   try {
-    ws = await lf.workspace.mount(sandbox, branch)
+    ws = (await lf.lfs.workspace.mount(sandbox, branch)).ws
     for (let i = 0; i < paths.length; i += 200) {
       const chunk = paths.slice(i, i + 200)
-      const r = await lf.workspace.exec(ws, `timeout 100 sha256sum -- ${chunk.map((p) => quote(`.${p}`)).join(' ')}`)
-      if (r.exitCode !== 0) throw new Error(`sha256sum exited ${r.exitCode}: ${String(r.stderr ?? '').slice(0, 400)}`)
+      const r = await lf.lfs.workspace.exec(ws, `shasum -a 256 -- ${chunk.map((p) => quote(`.${p}`)).join(' ')}`)
+      if (r.exit_code !== 0) throw new Error(`shasum exited ${r.exit_code}: ${String(r.stderr ?? '').slice(0, 400)}`)
       const lines = String(r.stdout).split('\n').filter(Boolean)
       if (lines.length !== chunk.length) throw new Error(`sha256sum listed ${lines.length} of ${chunk.length} files`)
       lines.forEach((line, k) => {
         const [, sha, name] = /^([0-9a-f]{64}) [ *](.*)$/.exec(line) ?? []
-        if (name !== `.${chunk[k]}`) throw new Error(`sha256sum answered ${line} for ${chunk[k]}`)
+        if (name !== `.${chunk[k]}`) throw new Error(`shasum answered ${line} for ${chunk[k]}`)
         hashes[chunk[k]] = sha
       })
     }
   } finally {
-    if (ws) await lf.workspace.unmount(ws, true)
-    await lf.sandbox.close(sandbox)
+    if (ws) await lf.lfs.workspace.unmount(ws, { discard: true })
+    await lf.lfs.sandbox.close(sandbox)
   }
   return hashes
 }
@@ -164,7 +171,7 @@ export async function trackedHashes(lf, { ref = 'main', root = '/' } = {}) {
   const regular = [...tree].filter(([, type]) => type === 'file').map(([path]) => path)
   if (regular.length) {
     const branch = `${CHECK_PREFIX}${root === '/' ? '' : `${root.slice(1)}-`}${Date.now().toString(36)}`
-    await lf.branch.fork(branch, ref)
+    await lf.lfs.branch.fork(lf.project, branch, ...refArgs(ref))
     const hashes = await byteHashes(lf, branch, regular.map(at))
     for (const path of regular) files[path] = hashes[at(path)]
   }

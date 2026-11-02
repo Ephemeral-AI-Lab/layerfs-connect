@@ -291,6 +291,11 @@ filed as a LayerFS question (§9). A live check on this Mac passes, covering:
    per-command timeout. This blocks chat bash and the tour, sandbox and agents scenarios.
 3. **History reads.** A Layer list (main's Layers, ids, sources), and a Layer→Commit or comparable
    diff for a Branch's first Commit. Does `branch.fork` accept a Layer id as `from_commit`?
+   - *Answered by a check (2026-11-02):* yes. `branch.fork(p, name, "main", <layer>)` works, and the
+     file calls take a Layer id as their `commit` (`file.list/read/diff`). `commit.diff` refuses a
+     Layer ("diff_commits takes two saved Commits"), so a first Commit's changed paths stay hidden.
+     The whole-project order check (`checks/history.js historyOf`) needs the Layer list and is
+     refused `Unsupported`; scoped runs are checked through their trunks.
 4. **Store totals.** logical, canonical, stored, metadata, dedupe, compression and Init stats for the
    Storage tab.
 5. **Live Sandbox state** (running, exited, dead) in `sandbox.list` and `sandbox.get`, not the
