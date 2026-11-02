@@ -1,9 +1,8 @@
 import { useI18n, localeTag } from '@/i18n'
 import { Brain, Check, ChevronDown, ChevronRight, Copy, FileText, GitFork, LoaderCircle, Square, Terminal, TriangleAlert } from 'lucide-react'
-import { memo, useMemo, useRef, useState } from 'react'
+import { memo, useEffect, useMemo, useRef, useState } from 'react'
 import type { ChatMessage, ChildRun } from '@shared/agent-api'
 
-import { ConnectMark } from '@/components/connect-mark'
 import { MessageActions, type ConversationAction } from '@/components/chat/conversation-actions'
 import { AttachmentList } from '@/components/chat/attachments'
 import { ToolOutputDialog } from '@/components/chat/tool-output'
@@ -29,7 +28,7 @@ function HighlightedLines({ lines }: { lines: Token[][] }) {
   )
 }
 
-function ToolMessage({ message, sessionId }: { message: ChatMessage; sessionId?: string }) {
+function ToolMessage({ message, sessionId, onInspect }: { message: ChatMessage; sessionId?: string; onInspect?: () => void }) {
   const { t } = useI18n()
   const [open, setOpen] = useState(message.status === 'error')
   const [outputFocus, setOutputFocus] = useState<HTMLElement | null>(null)
@@ -54,7 +53,7 @@ function ToolMessage({ message, sessionId }: { message: ChatMessage; sessionId?:
     <div
       onPointerMove={spotlight}
       className={cn(
-        'chat-tool chat-glass-card glass-liquid spotlight overflow-hidden rounded-2xl transition-colors sm:ml-11',
+        'chat-tool chat-glass-card glass-liquid spotlight overflow-hidden rounded-2xl transition-colors',
         failed && 'border-destructive/30',
       )}
     >
@@ -116,7 +115,7 @@ function ToolMessage({ message, sessionId }: { message: ChatMessage; sessionId?:
           ) : (
             running && <p className="px-4 py-2.5 text-xs text-muted-foreground">{t("Running…")}</p>
           )}
-          {sessionId && message.outputArtifact && <Button variant="outline" size="sm" className="rounded-xl" onClick={(event) => setOutputFocus(event.currentTarget)}><FileText className="size-3.5" />{t("View full output")}<span className="text-[10px] text-muted-foreground">{t("{count} bytes", { count: message.outputArtifact.bytes.toLocaleString(localeTag()) })}</span></Button>}
+          {sessionId && message.outputArtifact && <Button variant="outline" size="sm" className="rounded-xl" onClick={(event) => { onInspect?.(); setOutputFocus(event.currentTarget) }}><FileText className="size-3.5" />{t("View full output")}<span className="text-[10px] text-muted-foreground">{t("{count} bytes", { count: message.outputArtifact.bytes.toLocaleString(localeTag()) })}</span></Button>}
         </div>
       )}
       {outputFocus && sessionId && message.outputArtifact && <ToolOutputDialog sessionId={sessionId} artifactId={message.outputArtifact.id} returnFocus={outputFocus} onClose={() => setOutputFocus(null)} />}
@@ -124,18 +123,19 @@ function ToolMessage({ message, sessionId }: { message: ChatMessage; sessionId?:
   )
 }
 
-export const AgentMessage = memo(function AgentMessage({ message, sessionId, disabled = false, running = false, onAction, author = 'Connect' }: {
+export const AgentMessage = memo(function AgentMessage({ message, sessionId, disabled = false, running = false, onAction, collapseThinking = false, onInspect }: {
   message: ChatMessage
-  /** Who replies: Connect, or a subagent's name in its own conversation. */
-  author?: string
   sessionId?: string
   disabled?: boolean
   running?: boolean
+  collapseThinking?: boolean
+  onInspect?: () => void
   onAction?: (action: Exclude<ConversationAction, 'duplicate'>, message: ChatMessage, returnFocus: HTMLElement | null) => void
 }) {
   const { t } = useI18n()
   const [copied, setCopied] = useState(false)
   const [thinkingOpen, setThinkingOpen] = useState(message.status === 'running')
+  useEffect(() => { if (collapseThinking) setThinkingOpen(false) }, [collapseThinking])
 
   if (message.role === 'user') {
     return (
@@ -149,16 +149,12 @@ export const AgentMessage = memo(function AgentMessage({ message, sessionId, dis
       </div>
     )
   }
-  if (message.role === 'tool') return <ToolMessage message={message} sessionId={sessionId} />
+  if (message.role === 'tool') return <ToolMessage message={message} sessionId={sessionId} onInspect={onInspect} />
   if (!message.text && !message.thinking && message.status !== 'running') return null
 
   return (
-    <div className="group/message flex items-start gap-3 py-1">
-      <div className="glass-liquid mt-1 flex size-8 shrink-0 items-center justify-center rounded-xl">
-        <ConnectMark className="size-4.5" />
-      </div>
-      <div onPointerMove={spotlight} className="chat-assistant-message chat-glass-card glass-liquid spotlight min-w-0 flex-1 space-y-3 rounded-2xl px-4 py-4 sm:px-5">
-        <div className="flex items-center gap-2 text-xs font-semibold text-foreground">{author}{message.status === 'running' && <span className="size-1.5 rounded-full bg-primary motion-safe:animate-pulse" aria-label={t("Responding")} />}</div>
+    <div className="group/message min-w-0 py-1">
+      <div aria-busy={message.status === 'running'} onPointerMove={spotlight} className="chat-assistant-message chat-glass-card glass-liquid spotlight w-full min-w-0 space-y-3 rounded-2xl px-4 py-3.5 sm:px-5">
         {message.thinking && (
           <div className="chat-inset overflow-hidden rounded-xl border border-foreground/[0.06] text-xs text-muted-foreground">
             <button
@@ -173,7 +169,7 @@ export const AgentMessage = memo(function AgentMessage({ message, sessionId, dis
             </button>
             {thinkingOpen && (
               <div className="max-h-72 overflow-auto border-t border-foreground/[0.05] px-3.5 py-3 whitespace-pre-wrap leading-relaxed text-muted-foreground">
-                {message.thinking}
+                <Markdown text={message.thinking} />
               </div>
             )}
           </div>
@@ -181,7 +177,7 @@ export const AgentMessage = memo(function AgentMessage({ message, sessionId, dis
         {message.text ? <Markdown text={message.text} className="chat-message-body text-[14px] leading-[1.8] text-foreground" /> : message.status === 'running' && !message.thinking ? <ThinkingLine /> : null}
         {message.status === 'error' && <p role="alert" className="text-xs text-destructive">{t("The response ended with an error.")}</p>}
         {message.text && message.status !== 'running' && (
-          <div className="flex flex-wrap items-center gap-2 border-t border-foreground/[0.05] pt-2 text-[11px] text-muted-foreground">
+          <div className="flex flex-wrap items-center gap-2 pt-1 text-[11px] text-muted-foreground">
             <Button
               variant="ghost"
               size="icon-xs"
@@ -198,7 +194,7 @@ export const AgentMessage = memo(function AgentMessage({ message, sessionId, dis
               {copied ? <Check className="size-3 text-success" /> : <Copy className="size-3" />}
             </Button>
             {message.usage && (
-              <span className="font-mono tabular-nums">
+              <span className="tabular-nums">
                 {t("{input} in · {output} out", { input: message.usage.input.toLocaleString(localeTag()), output: message.usage.output.toLocaleString(localeTag()) })}
                 {message.usage.cost > 0 ? ` · $${message.usage.cost.toFixed(4)}` : ''}
               </span>
@@ -226,12 +222,12 @@ export function ChildRuns({ children, onStop }: { children: ChildRun[]; onStop?:
     <section
       aria-label={t("Subagents")}
       onPointerMove={spotlight}
-      className="chat-glass-card glass-liquid spotlight space-y-3 rounded-2xl p-4 sm:ml-11"
+      className="chat-glass-card glass-liquid spotlight space-y-3 rounded-2xl p-4"
     >
       <div className="flex items-center gap-2 px-1 text-xs font-medium text-foreground">
         <GitFork className="size-3.5" />
         <span>{t("Subagents")}</span>
-        <span className="rounded-full bg-foreground/[0.05] px-1.5 py-0.5 font-mono text-[10.5px] text-muted-foreground tabular-nums">
+        <span className="rounded-full bg-foreground/[0.05] px-1.5 py-0.5 text-[10.5px] text-muted-foreground tabular-nums">
           {children.length}
         </span>
       </div>

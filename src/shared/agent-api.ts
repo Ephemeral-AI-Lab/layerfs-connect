@@ -7,6 +7,7 @@ export interface AgentModel {
   contextWindow: number
   maxTokens?: number
   thinkingLevels?: string[]
+  /** Input types explicitly reported by the provider API; missing means unknown. */
   input?: string[]
 }
 
@@ -49,6 +50,7 @@ export interface ProviderModel {
   contextWindow?: number
   maxTokens?: number
   reasoning?: boolean
+  /** API-reported input types; unknown capabilities allow images. */
   input?: ('text' | 'image')[]
 }
 
@@ -118,6 +120,7 @@ export interface DiscoveredModel {
   reasoning?: boolean
   contextWindow?: number
   maxTokens?: number
+  input?: ('text' | 'image')[]
 }
 
 export interface ModelDiscoveryResult {
@@ -290,6 +293,10 @@ export interface AgentScenario {
   title: string
   /** The project key it plays on. */
   project: string
+  /** The machine its Sandboxes run on: `/scenario <name> -machine <name>`; null: the project's Store's. */
+  machine?: string | null
+  /** 1.1.0 chats: the platform their Sandboxes were made on. */
+  platform?: string
   /** `<scenario>_<n>`; null until set up. */
   folder: string | null
   /** preparing: its folder is being set up; playing; passed: its final checks passed and it landed on main. */
@@ -362,6 +369,8 @@ export interface AgentSessionDetail extends AgentSessionSummary {
 export interface NewAgentSession {
   /** A scenario chat: the scenario to play on `project` (its own model; the rest is ignored). */
   scenario?: string
+  /** A scenario chat: the machine its Sandboxes run on (its project's Store moves there); the Store's own when left out. */
+  machine?: string
   /** Missing fields come from Settings → Runs. */
   limits?: Partial<AgentLimits>
   cwd?: string

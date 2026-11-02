@@ -2,7 +2,7 @@
 // at most HEAVY_AT_ONCE heavy launches play at once, the rest are queued and
 // start, in order, as one ends; light ones always play. Stand-in runs, no
 // LayerFS.
-//   node --import ./host/resolve-layerfs.js --test host/test/heavy-queue.test.js
+//   node --test host/test/heavy-queue.test.js
 import assert from 'node:assert/strict'
 import { mkdirSync, mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'

@@ -75,7 +75,7 @@ export function ConfirmByName({ open, onOpenChange, title, body, icon = Trash2, 
               <label htmlFor={id} className="text-xs font-semibold text-foreground/90">
                 {prompt ?? t('Type {name} to confirm', { name })}
               </label>
-              <Input id={id} value={typed} onChange={(e) => setTyped(e.target.value)} autoComplete="off" spellCheck={false} disabled={busy} className="rounded-xl font-mono text-[13px]" autoFocus />
+              <Input id={id} value={typed} onChange={(e) => setTyped(e.target.value)} autoComplete="off" spellCheck={false} disabled={busy} className="rounded-xl text-[13px]" autoFocus />
             </div>
           )}
           <FormError error={error} />

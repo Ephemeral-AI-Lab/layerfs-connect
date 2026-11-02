@@ -1,0 +1,52 @@
+.view-nav {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 8px;
+  overflow-x: auto;
+  margin-inline: -4px;
+  padding: 6px 4px 10px;
+}
+.view-button {
+  display: inline-flex;
+  flex: 0 0 auto;
+  min-height: 36px;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px 18px;
+  border-radius: 999px;
+  color: var(--muted-foreground);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 20px;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color var(--dur-fast), border-color var(--dur-fast), color var(--dur-fast);
+}
+.view-button:hover {
+  background-color: var(--accent);
+  border-color: color-mix(in srgb, var(--primary) 20%, var(--glass-border));
+  color: var(--foreground);
+}
+.view-button[aria-current='page'] {
+  background:
+    linear-gradient(145deg, color-mix(in srgb, var(--accent) 64%, transparent), color-mix(in srgb, var(--accent) 86%, transparent)),
+    var(--glass-card-bg);
+  border-color: color-mix(in srgb, var(--primary) 26%, var(--glass-border));
+  color: var(--accent-foreground);
+}
+.view-button:active {
+  background-color: var(--accent);
+}
+.dark .view-button[aria-current='page'] {
+  background: linear-gradient(160deg, rgb(91 91 91 / 60%), rgb(54 54 54 / 74%));
+  border-color: rgb(255 255 255 / 22%);
+  box-shadow: var(--glass-shadow);
+}
+.view-button:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.view-button-quiet { font-size: 12px; }

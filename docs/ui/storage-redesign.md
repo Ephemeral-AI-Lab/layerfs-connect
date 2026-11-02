@@ -1,5 +1,9 @@
 # LayerFS: Storage redesign (spec)
 
+> **Status:** History (retired 2026-11-02). This described Connect's Storage on LayerFS 1.1.0
+> (links, push/pull, remotes). LayerFS 2.0 replaced that model: see
+> [layerfs-storage.md](layerfs-storage.md) and [the 2.0 integration spec](../layerfs-2.0-integration.md).
+
 > **Status:** Proposal, 2026-10-30. Nothing here is built yet. Once it is,
 > this file replaces [layerfs-storage.md](layerfs-storage.md) and takes its
 > name. The current page, its data (`host/storage.js`) and LayerFS #506

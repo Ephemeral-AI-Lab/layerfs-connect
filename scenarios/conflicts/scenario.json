@@ -18,7 +18,7 @@
     "phase": "Workspace conflict",
     "bash": {
      "description": "Fork feature",
-     "command": "layerfs branch fork feature"
+     "command": "layerfs branch fork \"$LAYERFS_CONNECT_PROJECT\" feature main"
     },
     "expect": [
      "branch.fork:Forked"
@@ -27,10 +27,10 @@
    {
     "bash": {
      "description": "sb1: open a Workspace on feature and change the heading",
-     "command": "layerfs sandbox create | tee sandbox.json\nlayerfs workspace mount \"$(jq -r .sandbox sandbox.json)\" feature | tee mount.json\nlayerfs workspace exec \"$(jq -r .ws mount.json)\" \"sed -i 's/Hello world/Hello from the Workspace/' app/page.tsx\" --stream"
+     "command": "layerfs sandbox create \"$LAYERFS_CONNECT_PROJECT\" sb1 \"$LAYERFS_CONNECT_MACHINE\" | tee sandbox.json\nlayerfs workspace mount \"$(jq -r .name sandbox.json)\" feature | tee mount.json\nlayerfs workspace exec \"$(jq -r .ws mount.json)\" \"sed -i 's/Hello world/Hello from the Workspace/' app/page.tsx\" --stream"
     },
     "expect": [
-     "sandbox.create:ok",
+     "sandbox.create:running",
      "workspace.mount:Mounted",
      "workspace.exec:exit:0"
     ],
@@ -39,10 +39,10 @@
    {
     "bash": {
      "description": "fs on feature: edit app/page.tsx \"Hello world\" \"Hello from fs\"",
-     "command": "layerfs fs edit feature /app/page.tsx --old 'Hello world' --new 'Hello from fs' -m \"edit /app/page.tsx\""
+     "command": "layerfs file edit \"$LAYERFS_CONNECT_PROJECT\" feature /app/page.tsx --old 'Hello world' --new 'Hello from fs' -m \"edit /app/page.tsx\""
     },
     "expect": [
-     "fs.edit:Committed"
+     "file.edit:Committed"
     ]
    },
    {
@@ -88,7 +88,7 @@
     "phase": "Branch conflict",
     "bash": {
      "description": "Fork header",
-     "command": "layerfs branch fork header"
+     "command": "layerfs branch fork \"$LAYERFS_CONNECT_PROJECT\" header main"
     },
     "expect": [
      "branch.fork:Forked"
@@ -97,16 +97,16 @@
    {
     "bash": {
      "description": "fs on header: edit app/page.tsx \"Hello world\" \"Hello from header\"",
-     "command": "layerfs fs edit header /app/page.tsx --old 'Hello world' --new 'Hello from header' -m \"edit /app/page.tsx\""
+     "command": "layerfs file edit \"$LAYERFS_CONNECT_PROJECT\" header /app/page.tsx --old 'Hello world' --new 'Hello from header' -m \"edit /app/page.tsx\""
     },
     "expect": [
-     "fs.edit:Committed"
+     "file.edit:Committed"
     ]
    },
    {
     "bash": {
      "description": "Merge feature and header as release",
-     "command": "layerfs branch merge feature header release"
+     "command": "layerfs branch merge \"$LAYERFS_CONNECT_PROJECT\" release feature header"
     },
     "expect": [
      "branch.merge:Conflict"
@@ -116,16 +116,16 @@
    {
     "bash": {
      "description": "fs on header: edit app/page.tsx \"Hello from header\" \"Hello from the Workspace\"",
-     "command": "layerfs fs edit header /app/page.tsx --old 'Hello from header' --new 'Hello from the Workspace' -m \"edit /app/page.tsx\""
+     "command": "layerfs file edit \"$LAYERFS_CONNECT_PROJECT\" header /app/page.tsx --old 'Hello from header' --new 'Hello from the Workspace' -m \"edit /app/page.tsx\""
     },
     "expect": [
-     "fs.edit:Committed"
+     "file.edit:Committed"
     ]
    },
    {
     "bash": {
      "description": "Merge feature and header as release",
-     "command": "layerfs branch merge feature header release"
+     "command": "layerfs branch merge \"$LAYERFS_CONNECT_PROJECT\" release feature header"
     },
     "expect": [
      "branch.merge:Merged"
@@ -135,7 +135,7 @@
     "phase": "Publish",
     "bash": {
      "description": "Publish release",
-     "command": "layerfs branch publish release"
+     "command": "layerfs branch publish \"$LAYERFS_CONNECT_PROJECT\" release"
     },
     "expect": [
      "branch.publish:Added"
@@ -145,5 +145,6 @@
     "reply": "Both conflicts are resolved and release is on main."
    }
   ]
- }
+ },
+ "layerfs": 2
 }

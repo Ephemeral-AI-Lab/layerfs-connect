@@ -9,7 +9,7 @@ const CONNECT_COMMANDS: { name: string; description: string }[] = [
   { name: 'workspace', description: 'Working directory, project and recent folders' },
   { name: 'compact', description: 'Summarize earlier turns to free context' },
   { name: 'stop', description: 'Stop the current turn' },
-  { name: 'scenario <name>', description: 'A new chat plays a scenario’s script here, in a folder of its own' },
+  { name: 'scenario <name> [-platform <name>]', description: 'A new chat plays a scenario’s script here, in a folder of its own. Add -platform <name> for its Sandboxes (docker by default)' },
 ]
 
 /** Settings → Commands: the slash commands a chat's message box runs, grouped by the extension that brings them. */
@@ -18,7 +18,6 @@ export function CommandsSection() {
   const caps = useCapabilities()
   const { data } = caps
   return <div className="st-section" data-testid="commands-section">
-    <h2 className="st-title">{t('Commands')}</h2>
     <p className="st-intro">{t('Type / in a chat’s message box to run one.')}</p>
     <CapabilityStatus caps={caps} switches={false} />
     {data?.extensions.map((extension) => {

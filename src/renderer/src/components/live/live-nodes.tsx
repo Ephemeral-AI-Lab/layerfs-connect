@@ -4,17 +4,17 @@
 // engine (live-flow.ts) can draw lanes to it and ring it when a call lands.
 import type { AgentRun, BranchInfo, ProjectState, RunLive, RunningCall } from '@shared/host-api'
 import { projectRef } from '@shared/host-api'
-import { ChevronRight, SquareArrowOutUpRight } from 'lucide-react'
+import { Check, ChevronRight, SquareArrowOutUpRight, X } from 'lucide-react'
 import { useMemo } from 'react'
 
 import { LayerfsMark } from '@/components/layerfs-mark'
 import { LfsAgent, LfsBranch, LfsSandbox, LfsWorkspace } from '@/components/lfs-icons'
-import { CountUp, revealStyle } from '@/components/motion'
-import { type StoreFacts, StoreLine } from '@/components/projects/store-facts'
+import type { StoreFacts } from '@/components/projects/store-facts'
+import { bytes } from '@/data/format'
 import { branchRun, isTrunk } from '@/components/live/live-data'
 import { colorVar } from '@/components/live/live-flow'
 import { type Group, type GroupLayout, type HubRows, type SandboxView, type TreeNode, type WsView, shownCommand } from '@/components/live/live-model'
-import { AgentDot, RunDot, Spinner } from '@/components/live/run-badges'
+import { RunDot, Spinner } from '@/components/live/run-badges'
 import { type AgentColor, activity, ago, duration, isLive } from '@/components/live/run-format'
 import { Chip } from '@/components/storage/chips'
 import { useI18n } from '@/i18n'
@@ -25,8 +25,8 @@ const INDENT = 24
 /** Levels drawn indented; deeper ones line up with the last. */
 const MAX_INDENT = 4
 
-/** A card on the flow map: a plain, light surface (no glass), so the lanes and glows carry the motion. */
-const CARD = 'relative min-w-0 rounded-xl border border-foreground/[0.08] bg-card shadow-[0_1px_2px_rgb(0_0_0/0.04)]'
+/** Flow cards share the live diagram's theme-aware surface. */
+const CARD = 'live-node relative min-w-0 rounded-xl'
 const FOCUS = 'outline-none focus-visible:ring-2 focus-visible:ring-ring'
 
 /** "1 agent" / "3 agents", through the dictionary. */
@@ -36,10 +36,9 @@ export function count(t: (s: string, v?: Record<string, string | number>) => str
 
 export function ZoneLabel({ label, count: n }: { label: string; count?: number }) {
   return (
-    <div className="flex items-center gap-2 px-1 text-[11px] font-semibold tracking-[0.08em] text-muted-foreground uppercase">
+    <div className="flex h-5 items-center gap-2 px-1 text-xs font-medium text-muted-foreground">
       <span>{label}</span>
       {n !== undefined && <span className="rounded-full bg-foreground/[0.05] px-1.5 text-[10px] leading-4 tracking-normal tabular-nums">{n}</span>}
-      <span aria-hidden="true" className="h-px flex-1 bg-linear-to-r from-border to-transparent" />
     </div>
   )
 }
@@ -48,7 +47,7 @@ export function ZoneLabel({ label, count: n }: { label: string; count?: number }
 export function IdleAgents({ note }: { note: string }) {
   const { t } = useI18n()
   return (
-    <div data-anchor="ghost-agents" className="reveal rounded-2xl border border-dashed border-foreground/15 bg-card/50 p-4">
+    <div data-anchor="ghost-agents" className="live-node rounded-2xl border-dashed p-4">
       <div className="flex items-center gap-3">
         <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-foreground/[0.04] text-muted-foreground ring-1 ring-foreground/[0.06] ring-inset">
           <LfsAgent className="size-5" />
@@ -58,21 +57,6 @@ export function IdleAgents({ note }: { note: string }) {
           <p className="truncate text-xs text-muted-foreground">{note}</p>
         </div>
       </div>
-      <div aria-hidden="true" className="mt-4 flex flex-col gap-1.5">
-        {[
-          [0, '58%'],
-          [1, '44%'],
-          [1, '36%'],
-        ].map(([depth, width], i) => (
-          <div key={i} style={{ marginLeft: Number(depth) * 20 }} className="flex items-center gap-2 rounded-xl border border-dashed border-foreground/10 px-2.5 py-2">
-            <span className="size-4 shrink-0 rounded-md bg-foreground/[0.06]" />
-            <span className="h-1.5 rounded-full bg-foreground/[0.06]" style={{ width }} />
-          </div>
-        ))}
-      </div>
-      <p className="mt-3.5 text-xs leading-relaxed text-muted-foreground">
-        {t('A scenario chat, or a project chat with a LayerFS mount, shows here while it works. Its agents form a tree, and every call they make travels to the project.')}
-      </p>
     </div>
   )
 }
@@ -80,27 +64,26 @@ export function IdleAgents({ note }: { note: string }) {
 export function IdleSandboxes() {
   const { t } = useI18n()
   return (
-    <div data-anchor="ghost-sandboxes" className="reveal flex items-start gap-3 rounded-2xl border border-dashed border-foreground/15 bg-card/50 p-4">
+    <div data-anchor="ghost-sandboxes" className="live-node flex items-center gap-3 rounded-2xl border-dashed p-4">
       <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-foreground/[0.04] text-muted-foreground ring-1 ring-foreground/[0.06] ring-inset">
         <LfsSandbox className="size-5" />
       </span>
       <div className="min-w-0">
         <p className="text-sm font-medium">{t('No Sandbox open')}</p>
-        <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">{t('One opens when an agent creates it to mount a Workspace.')}</p>
       </div>
     </div>
   )
 }
 
-/** An agent as on the flow map: a solid round mark in its colour; a dashed ring turns round it while it works. */
+/** A tinted avatar retains the agent's colour without overpowering the name. */
 function Avatar({ name, color, small, working }: { name: string; color: AgentColor; small?: boolean; working?: boolean }) {
   if (small)
     return (
       <span
         title={name}
         className={cn(
-          'flex size-[18px] shrink-0 items-center justify-center rounded-full text-[10px] font-semibold text-white uppercase transition-opacity duration-(--dur-base)',
-          color.dot,
+          'flex size-[18px] shrink-0 items-center justify-center rounded-full text-[10px] font-medium uppercase transition-opacity duration-(--dur-base)',
+          color.soft, color.text,
           !working && 'opacity-40',
         )}
       >
@@ -108,7 +91,7 @@ function Avatar({ name, color, small, working }: { name: string; color: AgentCol
       </span>
     )
   return (
-    <span className={cn('relative flex size-8 shrink-0 items-center justify-center rounded-full text-[13px] font-semibold text-white uppercase', color.dot)}>
+    <span className={cn('relative flex size-8 shrink-0 items-center justify-center rounded-full text-[13px] font-medium uppercase', color.soft, color.text)}>
       {name.slice(0, 1)}
       {working && <span aria-hidden="true" className={cn('live-spin', color.text)} />}
     </span>
@@ -116,11 +99,11 @@ function Avatar({ name, color, small, working }: { name: string; color: AgentCol
 }
 
 /** A row of small avatars, the busy ones lit. */
-function Avatars({ agents, colorOf, max = 6 }: { agents: AgentRun[]; colorOf: (name: string) => AgentColor; max?: number }) {
+function Avatars({ agents, colorOf, working, max = 6 }: { agents: AgentRun[]; colorOf: (name: string) => AgentColor; working: ReadonlySet<string>; max?: number }) {
   return (
     <span className="flex shrink-0 items-center gap-0.5">
       {agents.slice(0, max).map((a) => (
-        <Avatar key={a.name} name={a.name} color={colorOf(a.name)} small working={a.state === 'running'} />
+        <Avatar key={a.name} name={a.name} color={colorOf(a.name)} small working={working.has(a.name)} />
       ))}
       {agents.length > max && <span className="ml-0.5 text-[11px] text-muted-foreground tabular-nums">+{agents.length - max}</span>}
     </span>
@@ -136,7 +119,8 @@ function Progress({ run }: { run: Group['session']['run'] }) {
         {t('waiting its turn')}
       </span>
     )
-  if (!isLive(run.state)) return <span className="shrink-0 text-muted-foreground">{t(run.state === 'stopped' ? 'stopped' : 'ended')}</span>
+  if (!isLive(run.state)) return <span className={cn('shrink-0', run.state === 'failed' ? 'text-destructive' : 'text-muted-foreground')}>{t(run.state === 'failed' ? 'Failed' : run.state === 'stopped' ? 'Stopped' : 'Ended')}</span>
+  if (run.of === 0) return null
   const ratio = run.of > 0 ? Math.min(1, run.done / run.of) : 0
   return (
     <span className="flex shrink-0 items-center gap-1.5" title={t('{done} of {of} steps', { done: run.done, of: run.of })}>
@@ -169,16 +153,17 @@ export function SessionGroup({ layout, dense, now, onOpen, onFold }: SessionProp
     for (const c of live.running) map.set(c.agent, [...(map.get(c.agent) ?? []), c])
     return map
   }, [live.running])
-  const working = nodes.filter((n) => n.agent.state === 'running').length
+  const calling = useMemo(() => new Set(live.running.map((call) => call.agent)), [live.running])
+  const working = calling.size
   const fold = () => onFold(`s:${run.id}`, !folded)
-  const agentsLine = t('{agents} · {n} working', { agents: count(t, nodes.length, '{n} agent', '{n} agents'), n: working })
+  const agentsLine = t('{agents} · {n} calling', { agents: count(t, nodes.length, '{n} agent', '{n} agents'), n: working })
 
   const head = (
     <>
       <ChevronRight aria-hidden="true" className="chevron size-3.5 shrink-0 text-muted-foreground" />
       <RunDot state={run.state} />
-      <span className="min-w-0 truncate font-mono text-[13px] font-medium text-foreground" title={run.demo}>
-        /{group.name}
+      <span className={cn('min-w-0 flex-1 truncate text-[13px] font-medium text-foreground', run.folder && 'font-mono')} title={group.name}>
+        {run.folder ? '/' : ''}{group.name}
       </span>
     </>
   )
@@ -192,9 +177,9 @@ export function SessionGroup({ layout, dense, now, onOpen, onFold }: SessionProp
         onClick={fold}
         aria-expanded={false}
         title={`${run.demo} · ${agentsLine}`}
-        className={cn(CARD, FOCUS, 'reveal flex items-center gap-2 px-2.5 py-1.5 text-left text-xs text-muted-foreground', !isLive(run.state) && 'opacity-75 hover:opacity-100')}
+        className={cn(CARD, FOCUS, 'flex items-center gap-2 px-2.5 py-1.5 text-left text-xs text-muted-foreground', !isLive(run.state) && 'opacity-75 hover:opacity-100')}
       >
-        <span aria-hidden="true" className="live-ring text-primary" />
+        <span aria-hidden="true" className="live-ring text-(--icon-accent)" />
         {head}
         <span className="min-w-0 flex-1" />
         <Progress run={run} />
@@ -209,23 +194,22 @@ export function SessionGroup({ layout, dense, now, onOpen, onFold }: SessionProp
         data-busy={working > 0 || undefined}
         onClick={fold}
         aria-expanded={false}
-        className={cn(CARD, FOCUS, 'reveal flex flex-col gap-2 px-3 py-2.5 text-left text-xs text-muted-foreground')}
+        className={cn(CARD, FOCUS, 'flex flex-col gap-2 px-3 py-2.5 text-left text-xs text-muted-foreground')}
       >
-        <span aria-hidden="true" className="live-ring text-primary" />
+        <span aria-hidden="true" className="live-ring text-(--icon-accent)" />
         <span className="flex min-w-0 items-center gap-2">
           {head}
-          <span className="min-w-0 flex-1 truncate">{run.demo}</span>
           <Progress run={run} />
         </span>
         <span className="flex min-w-0 items-center gap-2 pl-5.5">
           <span className="min-w-0 flex-1 truncate tabular-nums">{agentsLine}</span>
-          <Avatars agents={nodes.map((n) => n.agent)} colorOf={group.colorOf} />
+          <Avatars agents={nodes.map((n) => n.agent)} colorOf={group.colorOf} working={calling} />
         </span>
       </button>
     )
 
   return (
-    <div className="reveal flex flex-col gap-1 rounded-2xl p-1.5 ring-1 ring-foreground/[0.06] ring-inset">
+    <div data-anchor={`session-${run.id}`} className="flex flex-col gap-1 rounded-2xl p-1.5 ring-1 ring-foreground/[0.06] ring-inset">
       <div className="flex min-w-0 items-center gap-1">
         <button
           type="button"
@@ -234,9 +218,6 @@ export function SessionGroup({ layout, dense, now, onOpen, onFold }: SessionProp
           className={cn(FOCUS, 'flex min-w-0 flex-1 items-center gap-2 rounded-xl px-1.5 py-1 text-left text-xs text-muted-foreground transition-colors duration-(--dur-fast) hover:bg-foreground/[0.04] hover:text-foreground')}
         >
           {head}
-          {/* the counts give way first, then the run's name */}
-          <span className="min-w-0 shrink-[8] truncate tabular-nums">{agentsLine}</span>
-          <span className="min-w-0 flex-1" />
           <Progress run={run} />
         </button>
         <button
@@ -249,16 +230,17 @@ export function SessionGroup({ layout, dense, now, onOpen, onFold }: SessionProp
           <SquareArrowOutUpRight className="size-3.5" />
         </button>
       </div>
+      {run.error && <p role="alert" className="px-2 py-1 text-xs leading-relaxed break-words text-destructive">{run.error}</p>}
       {nodes
         .filter((n) => n.visible)
-        .map((n, i) => (
+        .map((n) => (
           <AgentNode
             key={n.key}
-            index={i}
             group={group}
             node={n}
             calls={runningOf.get(n.agent.name) ?? []}
             last={live.last[n.agent.name]}
+            calling={calling}
             now={now}
             onOpen={() => onOpen(n.agent.name)}
             onFold={() => onFold(`a:${run.demo}:${n.agent.name}`, !n.folded)}
@@ -274,31 +256,51 @@ function callTarget(c: { branch?: string | null; path?: string | null; sandbox?:
   return c.branch ?? c.path ?? null
 }
 
+/** Short actions for the diagram; the exact API method remains in the tooltip. */
+const CALL_LABEL: Record<string, string> = {
+  'workspace.exec': 'Run command',
+  'workspace.mount': 'Mount workspace',
+  'workspace.unmount': 'Unmount workspace',
+  'workspace.commit': 'Save changes',
+  'workspace.status': 'Check workspace',
+  'fs.read': 'Read file',
+  'fs.write': 'Write file',
+  'fs.edit': 'Edit file',
+  'fs.list': 'List files',
+  'branch.fork': 'Create branch',
+  'branch.merge': 'Merge branch',
+  'branch.commit': 'Save changes',
+  'branch.publish': 'Publish branch',
+  'sandbox.create': 'Create sandbox',
+  'sandbox.close': 'Close sandbox',
+}
+
 interface AgentProps {
-  /** Its place among the session's cards, for the entrance stagger. */
-  index: number
   group: Group
   node: TreeNode
   calls: RunningCall[]
   last: RunLive['last'][string] | undefined
+  calling: ReadonlySet<string>
   now: number
   onOpen: () => void
   onFold: () => void
 }
 
-function AgentNode({ index, group, node, calls, last, now, onOpen, onFold }: AgentProps) {
+function AgentNode({ group, node, calls, last, calling, now, onOpen, onFold }: AgentProps) {
   const { t } = useI18n()
   const { agent, depth, folded, below, hasKids } = node
   const call = calls[0]
-  const active = agent.state === 'running'
-  const busyBelow = below.filter((a) => a.state === 'running').length
+  const active = calls.length > 0
+  const busyBelow = below.filter((a) => calling.has(a.name)).length
   const color = group.colorOf(agent.name)
+  const failed = !active && !agent.thinking && (agent.state === 'failed' || last?.ok === false)
+  const status = active ? 'Calling' : agent.thinking ? 'Thinking' : failed ? 'Call failed' : agent.state === 'stopped' ? 'Stopped' : agent.state === 'done' ? 'Done' : 'Between calls'
   return (
     <div
       data-anchor={`agent-${node.key}`}
-      data-busy={active || undefined}
-      style={revealStyle(index, { marginLeft: Math.min(depth, MAX_INDENT) * INDENT })}
-      className="reveal relative min-w-0 rounded-xl transition-colors duration-(--dur-base) hover:bg-foreground/[0.035] data-[busy]:bg-foreground/[0.025]"
+      data-busy={active || (folded && busyBelow > 0) || undefined}
+      style={{ marginLeft: Math.min(depth, MAX_INDENT) * INDENT }}
+      className="relative min-w-0 rounded-xl transition-colors duration-(--dur-base) hover:bg-foreground/[0.035] data-[busy]:bg-foreground/[0.025]"
     >
       <button
         type="button"
@@ -308,34 +310,40 @@ function AgentNode({ index, group, node, calls, last, now, onOpen, onFold }: Age
       >
         <span className="flex min-w-0 items-center gap-2.5">
           <Avatar name={agent.name} color={color} working={active} />
-          <span className="min-w-0 flex-1 truncate text-sm font-semibold">{agent.name}</span>
-          {hasKids && <span aria-hidden="true" className="w-10 shrink-0" />}
-          <AgentDot state={agent.state} />
+          <span className="min-w-0 flex-1 truncate text-sm font-medium">{agent.name}</span>
+          <span className={cn('shrink-0 text-[10px] font-normal', active ? color.text : failed ? 'text-destructive' : 'text-muted-foreground')}>{t(status)}</span>
+          {hasKids && <span aria-hidden="true" className="w-7 shrink-0" />}
         </span>
         <span className="flex h-4 min-w-0 items-center gap-1.5 pl-10.5 text-xs text-muted-foreground">
           {call ? (
             <>
               <Spinner className={cn('size-3', color.text)} />
-              <span className="shrink-0 font-mono text-[11px] text-foreground">{call.method}</span>
-              <span className="min-w-0 truncate font-mono text-[11px]">{callTarget(call)}</span>
+              <span className="shrink-0 text-[11px] text-foreground" title={call.method}>{t(CALL_LABEL[call.method] ?? call.method)}</span>
+              <span className="min-w-0 truncate font-mono text-[11px]" title={callTarget(call) ?? undefined}>{callTarget(call)}</span>
               <span className="ml-auto shrink-0 tabular-nums">{duration(now - call.start)}</span>
             </>
-          ) : agent.thinking || agent.state === 'running' || agent.state === 'idle' || !last ? (
-            <span className="truncate tabular-nums">{activity(agent, undefined, now)}</span>
+          ) : agent.thinking || !last ? (
+            <span className="truncate tabular-nums">{agent.thinking ? activity(agent, undefined, now) : t('No call yet')}</span>
           ) : (
             <>
-              <span className={cn('shrink-0 font-mono text-[11px]', last.ok ? 'text-foreground/85' : 'text-destructive')}>{last.method}</span>
-              <span className="truncate tabular-nums">
-                {last.ok ? '' : `${last.code ?? t('failed')} · `}
-                {ago(last.at, now)}
-              </span>
+              {last.ok ? <Check aria-label={t('Succeeded')} className="size-3 shrink-0 text-success" /> : <X aria-label={t('Failed')} className="size-3 shrink-0 text-destructive" />}
+              <span className={cn('min-w-0 truncate text-[11px]', !last.ok && 'text-destructive')} title={`${last.method}${last.code ? ` · ${last.code}` : ''}`}>{t(CALL_LABEL[last.method] ?? last.method)}</span>
+              <span className="ml-auto shrink-0 tabular-nums">{ago(last.at, now)}</span>
             </>
           )}
         </span>
+        {calls.slice(1).map((running) => (
+          <span key={running.id} className="flex min-w-0 items-center gap-1.5 pl-10.5 text-xs text-muted-foreground">
+            <Spinner className={cn('size-3', color.text)} />
+            <span className="shrink-0 text-[11px] text-foreground" title={running.method}>{t(CALL_LABEL[running.method] ?? running.method)}</span>
+            <span className="min-w-0 truncate font-mono text-[11px]" title={callTarget(running) ?? undefined}>{callTarget(running)}</span>
+            <span className="ml-auto shrink-0 tabular-nums">{duration(now - running.start)}</span>
+          </span>
+        ))}
         {folded && below.length > 0 && (
           <span className="flex min-w-0 items-center gap-1.5 pl-10.5 text-[11px] text-muted-foreground">
-            <Avatars agents={below} colorOf={group.colorOf} />
-            <span className="truncate tabular-nums">{t('{agents} · {n} working', { agents: count(t, below.length, '{n} subagent', '{n} subagents'), n: busyBelow })}</span>
+            <Avatars agents={below} colorOf={group.colorOf} working={calling} />
+            <span className="truncate tabular-nums">{t('{agents} · {n} calling', { agents: count(t, below.length, '{n} subagent', '{n} subagents'), n: busyBelow })}</span>
           </span>
         )}
       </button>
@@ -345,7 +353,7 @@ function AgentNode({ index, group, node, calls, last, now, onOpen, onFold }: Age
           onClick={onFold}
           aria-expanded={!folded}
           aria-label={t(folded ? "Show {agent}'s subagents" : "Fold {agent}'s subagents", { agent: agent.name })}
-          className={cn(FOCUS, 'absolute top-[13px] right-7 z-[2] flex h-5 items-center gap-0.5 rounded-full bg-card/80 pr-1 pl-1.5 text-[11px] text-muted-foreground tabular-nums ring-1 ring-foreground/10 transition-colors duration-(--dur-fast) hover:text-foreground')}
+          className={cn(FOCUS, 'absolute top-[13px] right-3 z-[2] flex h-5 items-center gap-0.5 rounded-md px-1 text-[11px] text-muted-foreground tabular-nums transition-colors duration-(--dur-fast) hover:bg-foreground/5 hover:text-foreground')}
         >
           {below.length}
           <ChevronRight aria-hidden="true" className="chevron size-3" />
@@ -359,7 +367,7 @@ function AgentNode({ index, group, node, calls, last, now, onOpen, onFold }: Age
 export function BranchName({ name, folders, className }: { name: string; folders: readonly string[]; className?: string }) {
   const at = branchRun(name, folders)
   return (
-    <span title={name} className={cn('min-w-0 truncate font-mono', className)}>
+    <span title={name} className={cn('min-w-0 truncate', className)}>
       {at ? (
         <>
           <span className="text-muted-foreground">{at.folder}.</span>
@@ -381,13 +389,13 @@ function BranchRow({ branch, label, trunk, owner }: { branch: BranchInfo; label:
       title={trunk ? t('{name}: this run’s trunk, standing for main', { name: branch.name }) : branch.name}
       style={owner ? ({ '--pill': colorVar(owner) } as React.CSSProperties) : undefined}
       className={cn(
-        'flex min-w-0 items-center gap-2 rounded-full border bg-card py-1 pr-1 pl-2.5 text-xs transition-colors duration-(--dur-fast)',
-        owner ? 'border-[color-mix(in_oklab,var(--pill)_55%,transparent)] shadow-[0_0_0_3px_color-mix(in_oklab,var(--pill)_10%,transparent)]' : 'border-foreground/[0.09] hover:border-foreground/20',
+        'flex min-w-0 items-center gap-2 rounded-lg border bg-card/70 py-1.5 pr-1.5 pl-2.5 text-xs transition-colors duration-(--dur-fast)',
+        owner ? 'border-[color-mix(in_oklab,var(--pill)_30%,transparent)]' : 'border-foreground/[0.06] hover:border-foreground/15',
       )}
     >
       <LfsBranch className={cn('size-3.5 shrink-0', owner ?? (trunk ? 'text-primary' : 'text-muted-foreground'))} />
-      <span className={cn('min-w-0 flex-1 truncate font-mono', branch.name === 'main' || trunk || owner ? 'font-medium' : 'text-foreground/85')}>{label}</span>
-      <CountUp value={branch.commits} ms={600} className="min-w-5 shrink-0 rounded-full bg-foreground/[0.05] px-1.5 text-center text-[10.5px] leading-[18px] text-muted-foreground" />
+      <span className={cn('min-w-0 flex-1 truncate', branch.name === 'main' || trunk || owner ? 'font-medium' : 'text-foreground/85')}>{label}</span>
+      <span className="min-w-5 shrink-0 rounded-full bg-foreground/[0.05] px-1.5 text-center text-[10.5px] leading-[18px] text-muted-foreground tabular-nums">{branch.commits}</span>
     </li>
   )
 }
@@ -409,34 +417,36 @@ export function HubNode({ project, state, store, rows, owners, live, busy }: Hub
   const layers = state?.layers.length ?? 0
   return (
     <div className="relative" data-live={live || undefined} data-busy={busy || undefined}>
-      <div aria-hidden="true" className="live-light" />
-      <div data-anchor="hub" className={cn('glass-liquid relative flex flex-col items-center rounded-2xl px-3 pt-5 pb-3 text-center shadow-xs', live && 'live-border')}>
-        <span data-anchor="hub-core" className="live-core flex size-14 items-center justify-center rounded-2xl bg-card shadow-xs ring-1 ring-foreground/[0.07]">
-          <LayerfsMark className="size-9" />
-        </span>
-        <span className="mt-3 max-w-full truncate text-base font-semibold tracking-tight" title={project}>
-          {projectRef(project).name}
-        </span>
-        <span className="text-[11px] text-muted-foreground">{t('LayerFS project')}</span>
-        {store && <StoreLine facts={store} className="mt-3 text-left" />}
+      <div data-anchor="hub" className="live-node relative flex flex-col rounded-2xl p-4">
+        <div className="flex min-w-0 items-center gap-3">
+          <span data-anchor="hub-core" className="live-core flex size-10 shrink-0 items-center justify-center rounded-xl bg-card ring-1 ring-foreground/[0.07]">
+            <LayerfsMark className="size-7" />
+          </span>
+          <div className="min-w-0">
+            <p className="truncate text-sm font-medium" title={project}>{projectRef(project).name}</p>
+            {store && <p className="mt-0.5 text-[11px] text-muted-foreground">
+              {store.family === 'postgresql' ? 'PostgreSQL' : 'SQLite'}{store.size !== null && ` · ${bytes(store.size)}`}
+            </p>}
+          </div>
+        </div>
         {state ? (
-          <dl className="mt-2 grid w-full grid-cols-3 divide-x divide-foreground/[0.06] rounded-xl bg-foreground/[0.03] py-1.5 ring-1 ring-foreground/[0.05] ring-inset">
+          <dl className="mt-4 grid w-full grid-cols-3 gap-2 border-b border-foreground/[0.06] pb-3">
             <div className="flex flex-col-reverse items-center">
               <dt className="text-[10px] text-muted-foreground">{t('main')}</dt>
-              <dd className="text-sm font-semibold tabular-nums">
-                L<CountUp value={Math.max(0, layers - 1)} ms={600} />
+              <dd className="text-sm font-medium tabular-nums">
+                L{Math.max(0, layers - 1)}
               </dd>
             </div>
             <div className="flex flex-col-reverse items-center">
               <dt className="text-[10px] text-muted-foreground">{t(state.branches.length === 1 ? 'Branch' : 'Branches')}</dt>
-              <dd className="text-sm font-semibold">
-                <CountUp value={state.branches.length} ms={600} />
+              <dd className="text-sm font-medium tabular-nums">
+                {state.branches.length}
               </dd>
             </div>
             <div className="flex flex-col-reverse items-center">
               <dt className="text-[10px] text-muted-foreground">{t(state.commits === 1 ? 'Commit' : 'Commits')}</dt>
-              <dd className="text-sm font-semibold">
-                <CountUp value={state.commits} ms={600} />
+              <dd className="text-sm font-medium tabular-nums">
+                {state.commits}
               </dd>
             </div>
           </dl>
@@ -444,13 +454,13 @@ export function HubNode({ project, state, store, rows, owners, live, busy }: Hub
           <span className="mt-3 flex h-[42px] w-full items-center justify-center rounded-xl border border-dashed text-xs text-muted-foreground">{t('Reading…')}</span>
         )}
         {(rows.main || rows.runs.length > 0) && (
-          <ul data-anchor="hub-rows" aria-label={t('Open Branches')} className="mt-2.5 flex max-h-72 w-full flex-col gap-1 overflow-y-auto px-1 py-1 text-left">
+          <ul data-anchor="hub-rows" aria-label={t('Open Branches')} className="mt-3 flex max-h-56 w-full flex-col gap-1.5 overflow-y-auto text-left">
             {rows.main && <BranchRow branch={rows.main} label="main" owner={owners.get(rows.main.name)} />}
             {rows.runs.map(({ group, rows: list }) => (
               <li key={group.session.run.id} className="mt-1.5 flex flex-col gap-1">
                 <span className="flex items-center gap-1.5 px-2 pb-0.5 text-[10.5px] font-medium text-muted-foreground">
                   <RunDot state={group.session.run.state} className="scale-75" />
-                  <span className="truncate font-mono">/{group.name}</span>
+                  <span className="truncate">{group.session.run.folder ? '/' : ''}{group.name}</span>
                 </span>
                 <ul className="flex flex-col gap-1">
                   {list.map((r) => (
@@ -480,14 +490,14 @@ interface SandboxProps {
 }
 
 /** An open Sandbox: who made it, and each Workspace mounted in it, with the exec running there. */
-export function SandboxNode({ index, sandbox, groups, folders, now }: SandboxProps) {
+export function SandboxNode({ sandbox, groups, folders, now }: SandboxProps) {
   const { t } = useI18n()
   const groupOf = (rid: string) => groups.find((g) => g.session.run.id === rid)
+  const calls = groups.flatMap((group) => group.session.live.running).filter((call) => call.sandbox === sandbox.id)
   const execOf = (w: WsView) => {
-    if (!w.mount) return undefined
     for (const g of groups)
       for (const c of g.session.live.running)
-        if (c.method === 'workspace.exec' && c.sandbox === w.sandbox && c.path === w.path) return { call: c, group: g }
+        if ((c.method === 'workspace.exec' || c.command) && c.sandbox === w.sandbox && c.path === w.path) return { call: c, group: g }
     return undefined
   }
   const execs = sandbox.workspaces.map(execOf)
@@ -496,25 +506,24 @@ export function SandboxNode({ index, sandbox, groups, folders, now }: SandboxPro
   return (
     <div
       data-anchor={`sandbox-${sandbox.id}`}
-      data-busy={first ? true : undefined}
-      style={revealStyle(index)}
-      className={cn(CARD, 'reveal-scale bg-muted/60')}
+      data-busy={calls.length > 0 || undefined}
+      className={CARD}
     >
-      <span aria-hidden="true" className={cn('live-ring', first ? first.group.colorOf(first.call.agent).text : 'text-primary')} />
+      <span aria-hidden="true" className={cn('live-ring', first ? first.group.colorOf(first.call.agent).text : 'text-(--icon-accent)')} />
       <div className="relative z-[2] flex min-w-0 items-center gap-2.5 px-3 py-2.5">
         <span className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-card text-muted-foreground ring-1 ring-foreground/[0.08] ring-inset">
           <LfsSandbox className="size-4" />
         </span>
         <span className="flex min-w-0 flex-1 flex-col">
           <span className="flex min-w-0 items-baseline gap-2">
-            <span className="shrink-0 text-sm font-semibold">{t('Sandbox {id}', { id: sandbox.id })}</span>
-            {sandbox.name && <span className="min-w-0 truncate font-mono text-[11px] text-muted-foreground">{sandbox.name}</span>}
+            <span className="shrink-0 text-sm font-medium">{t('Sandbox {id}', { id: sandbox.id })}</span>
+            {sandbox.name && <span className="min-w-0 truncate text-[11px] text-muted-foreground">{sandbox.name}</span>}
           </span>
           <span className="truncate text-[11px] text-muted-foreground">
             {sandbox.madeBy ? (
               <>
                 {t('made by {agent}', { agent: sandbox.madeBy.agent })}
-                {maker ? ` · /${maker.name}` : ''}
+                {maker ? ` · ${maker.session.run.folder ? '/' : ''}${maker.name}` : ''}
               </>
             ) : (
               t(sandbox.state)
@@ -526,7 +535,7 @@ export function SandboxNode({ index, sandbox, groups, folders, now }: SandboxPro
       {sandbox.workspaces.length === 0 ? (
         <div className="relative z-[2] flex items-center gap-2 border-t border-foreground/[0.06] px-3 py-2 text-xs text-muted-foreground italic">
           <LfsWorkspace className="size-3.5" />
-          {t('Nothing mounted. The next call mounts a new Workspace.')}
+          {t('No mounted workspaces')}
         </div>
       ) : (
         sandbox.workspaces.map((w, i) => {
@@ -590,12 +599,18 @@ export function SandboxNode({ index, sandbox, groups, folders, now }: SandboxPro
           )
         })
       )}
+      {calls.filter((call) => !sandbox.workspaces.some((workspace) => workspace.path === call.path)).map((call) => (
+        <div key={call.id} className="relative z-[2] flex min-w-0 items-center gap-2 border-t border-foreground/[0.06] px-3 py-2 text-xs text-muted-foreground">
+          <span className="min-w-0 flex-1 truncate font-mono" title={callTarget(call) ?? undefined}>{call.method}</span>
+          <span className="shrink-0 tabular-nums">{duration(now - call.start)}</span>
+        </div>
+      ))}
     </div>
   )
 }
 
 /** A quiet Sandbox when there are many: one line, its Workspaces' anchors on it, so calls still reach it; a click shows its card. */
-export function SandboxLine({ index, sandbox, groups, onOpen }: { index: number; sandbox: SandboxView; groups: Group[]; onOpen: () => void }) {
+export function SandboxLine({ sandbox, groups, onOpen }: { index: number; sandbox: SandboxView; groups: Group[]; onOpen: () => void }) {
   const { t } = useI18n()
   const maker = sandbox.madeBy && groups.find((g) => g.session.run.id === sandbox.madeBy?.run)
   const n = sandbox.workspaces.length
@@ -604,16 +619,15 @@ export function SandboxLine({ index, sandbox, groups, onOpen }: { index: number;
       type="button"
       data-anchor={`sandbox-${sandbox.id}`}
       onClick={onOpen}
-      style={revealStyle(index)}
       title={sandbox.name ?? undefined}
-      className={cn(CARD, FOCUS, 'reveal flex items-center gap-2 px-2.5 py-1.5 text-left text-xs text-muted-foreground')}
+      className={cn(CARD, FOCUS, 'flex items-center gap-2 px-2.5 py-1.5 text-left text-xs text-muted-foreground')}
     >
       {sandbox.workspaces.map((w) => (
         <span key={w.key} data-anchor={`ws-${w.key}`} aria-hidden="true" className="pointer-events-none absolute inset-0" />
       ))}
       <LfsSandbox className="size-3.5 shrink-0" />
       <span className="shrink-0 font-medium text-foreground">{t('Sandbox {id}', { id: sandbox.id })}</span>
-      <span className="min-w-0 flex-1 truncate font-mono">{maker ? `/${maker.name}` : t(sandbox.state)}</span>
+      <span className={cn('min-w-0 flex-1 truncate', maker?.session.run.folder && 'font-mono')}>{maker ? `${maker.session.run.folder ? '/' : ''}${maker.name}` : t(sandbox.state)}</span>
       <span className="shrink-0 tabular-nums">{n ? count(t, n, '{n} Workspace', '{n} Workspaces') : t('no Workspace')}</span>
     </button>
   )

@@ -28,7 +28,7 @@ export function normalizePrompt(input, model) {
     const attachment = { id: typeof file.id === 'string' && file.id ? file.id : randomUUID(), name: file.name, mimeType, data: file.data, size: bytes.length }
     attachments.push(attachment)
     if (image) {
-      if (!model?.input?.includes('image')) throw bad('The selected model does not support image input. Choose a vision model or remove the image.')
+      if (model?.input?.length && !model.input.includes('image')) throw bad('The selected model does not support image input. Choose a vision model or remove the image.')
       images.push({ type: 'image', mimeType, data: file.data })
     } else {
       let content

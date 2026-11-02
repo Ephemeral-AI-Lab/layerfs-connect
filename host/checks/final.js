@@ -15,12 +15,13 @@
 // Branches and trunks, its Sandboxes. With `scope`, each check looks at those
 // only: the history is the run's (scopedHistoryOf, the record translated to
 // match), the tree is its folder on its last trunk, the Sandboxes its own.
+import { pages } from '../layerfs.js'
 import { compareHistory, historyOf, scopedHistoryOf, translateRecorded } from './history.js'
 import { trackedChanges, trackedHashes, trackedTree } from './tree.js'
 
 /** The order check: the run's history against final.json's recorded one, as failure messages. */
-export async function orderFailures(final, lf, backend, scope = null) {
-  const run = scope ? await scopedHistoryOf(lf, scope) : await historyOf(lf, backend)
+export async function orderFailures(final, lf, scope = null) {
+  const run = scope ? await scopedHistoryOf(lf, scope) : await historyOf(lf)
   const failures = compareHistory(scope ? translateRecorded(final.history) : final.history, run)
   // a run's Commit where the record has UpToDate must change no tracked file
   const byRef = new Map([...run.ids].map(([id, ref]) => [ref, id]))
@@ -97,14 +98,9 @@ export async function finalTreeFailures(final, lf, scope = null) {
   return compareTree(final, run.files)
 }
 
-/** The closed check: the project's running Sandboxes, `<n> (<workspaces> Workspace(s))` each. */
+/** The closed check: the project's Sandbox records (the run's, with a scope), by name. */
 export async function openSandboxes(lf, scope = null) {
-  const open = []
   const mine = scope ? new Set(scope.sandboxes().values()) : null
-  for (let pos = 0; ; ) {
-    const page = await lf.project.list_sandboxes(1000, pos)
-    for (const s of page.items) if (!mine || mine.has(String(s.sandbox))) open.push(`Sandbox ${s.sandbox} (${(s.workspaces ?? []).length} Workspace(s))`)
-    if (!page.hasMore) return open
-    pos += page.items.length
-  }
+  const listed = await pages((p) => lf.lfs.sandbox.list(lf.project, p))
+  return listed.filter((s) => !mine || mine.has(String(s.name))).map((s) => `Sandbox ${s.name}`)
 }

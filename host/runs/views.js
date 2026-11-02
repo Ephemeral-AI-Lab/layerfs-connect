@@ -34,6 +34,8 @@ export function demoViews({ id, scenario, raw }) {
       steps: agents.reduce((n, a) => n + a.steps, 0),
       kinds,
       fixture: scenario.seed ?? scenario.fixture ?? '',
+      // why it cannot play on LayerFS 2.0 yet (tools/lib/layerfs2.mjs), or null
+      blocked: scenario.blocked ?? null,
     },
     script,
   }

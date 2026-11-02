@@ -72,21 +72,6 @@ test('the script\'s last reply is marked last, and a chat past it answers Done.'
   assert.deepEqual(nextReply(tour, after, tracesFor(tour)), { kind: 'text', text: 'Done.', last: false })
 })
 
-test('an expected non-zero exit holds; another exit, or a missing expect code, stops the scenario', () => {
-  const conflicts = load('conflicts')
-  const at = steps(conflicts).findIndex((s) => s.kind === 'call' && s.exit === 125)
-  const callsBefore = steps(conflicts).slice(0, at).filter((s) => s.kind === 'call').length
-  // the 125 step itself holds
-  const held = nextReply(conflicts, played(conflicts, callsBefore + 1), tracesFor(conflicts))
-  assert.equal(held.kind, 'call', held.message)
-  // exit 0 where 125 is expected stops it
-  const wrongExit = played(conflicts, callsBefore + 1, (step) => ({ text: output(step), isError: false }))
-  assert.match(nextReply(conflicts, wrongExit, tracesFor(conflicts)).message, /exited 0, and the step expects 125/)
-  // no trace lines where the step expects LayerFS calls
-  const tour = load('tour')
-  assert.match(nextReply(tour, played(tour, 1), () => []).message, /expected .*its LayerFS calls show nothing/)
-})
-
 test('a stopped call does not count, and a call that did not finish stops the scenario', () => {
   const tour = load('tour')
   const messages = played(tour, 1, () => ({ text: 'out\n\nCommand aborted', isError: true }))

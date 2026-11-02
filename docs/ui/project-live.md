@@ -1,63 +1,53 @@
-# Project: Live (top of Sessions)
+# Project: Live
 
-The project's working sessions as one live diagram: agents on the left, the LayerFS project in the middle, Sandboxes and their Workspaces on the right, and every LayerFS call drawn as it travels. Sessions are scenario runs; several can play on one project at once, each in a folder of its own. Opens from: the top of a project page's Sessions tab, while a run plays or ended in the last 5 minutes (Sessions is the default tab once the project has runs).
-Source: `src/renderer/src/components/runs/live-tab.tsx` (main file; others named in Regions). Look: the app's liquid glass without its backdrop blur (`glass-liquid` with a solid fill inside `.live-panel`, since lanes move behind the cards every frame; `rounded-2xl` cards, `rounded-xl` controls, the `--cursor-hue` spotlight), restrained motion; every string goes through `t()` (Chinese in `i18n/live.ts`).
+The project's working sessions as one live diagram: agents on the left, the LayerFS project in the middle, Sandboxes and their Workspaces on the right, and every LayerFS call drawn as it travels. It appears in the project's Live tab and includes running chats plus those that ended in the last 5 minutes. The first 12 sessions are shown, with an option to reveal the rest.
+Source: `src/renderer/src/components/live/live-tab.tsx`. Nodes retain the shared glass edges with more opaque surfaces for legibility and efficient animation. Dark surfaces stay neutral black and gray; agent and brand colors are preserved. Only call traffic moves: no perpetual avatar rotation or breathing glow. Hovering or keyboard-focusing a node emphasizes its routes and dims unrelated routes. Every string goes through `t()` (Chinese in `i18n/live.ts`).
 
 ## Skeleton
 
 ```text
-+-[1] Tab row -------------------------------------------------------------------------------------+
-| History   Storage   Sandboxes   |   Sessions 13                                                     |
-|                                     ========                                                     |
-+--------------------------------------------------------------------------------------------------+
-+-[2] Live card -----------------------------------------------------------------------------------+
-| * Live   2 runs playing · 1 ended recently · 3 calls in flight                                   |
-|--------------------------------------------------------------------------------------------------|
-| [3] AGENTS 5 ----------------------                            SANDBOXES 4 --------------------- |
-| +-[4] SessionGroup ---------------+                            +-[7] SandboxNode --------------+ |
-| | v * /crew_2  3 agents - 2 work  |   +-[6] HubNode -------+   | [S] Sandbox 1  crew_2-sbx      | |
-| |           [====  ] 12/40  [->]  |   |      (/\)          |   |     made by builder · /crew_2  | |
-| | +-[5] AgentNode --------------+ |   |    playground      |   |                     1 mounted  | |
-| | | [c] crew               2 > *| |- -|  LayerFS project   |- -|-------------------------------| |
-| | |     ~ branch.fork main 0.4s | |   | [db] store-a  Local| - | W /work [crew_2.build] * build | |
-| | +-----------------------------+ |   | +-----+-----+----+ |   |   ~ (exec) npm test      1.2 s | |
-| |   +- AgentNode ---------------+ |---| |main |Brs  |Cmts| |   +-------------------------------+ |
-| |   | [b] builder             * | |   | | L9  | 134 | 183| |   +-[8] SandboxLine --------------+ |
-| |   |     ~ workspace.exec 1.2 s| |   | +-----+-----+----+ |   | Sandbox 2  /tour_1 1 Workspace| |
-| |   +---------------------------+ |   | b main           0 |   +-------------------------------+ |
-| +---------------------------------+   | * /crew_2          |                                     |
-| +- SessionGroup (folded) ---------+   | b main           2 |                                     |
-| | > * /tour_1  tour      ended    |   | b lead           4 |                                     |
-| |     1 agent · 0 working  [t]    |   | +12 other open Branches                                  |
-| +---------------------------------+   +--------------------+                                     |
-+--------------------------------------------------------------------------------------------------+
+Live · 2 chats working · 3 calls in flight
+
+Agents 5                     LayerFS                      Sandboxes 2
+┌ Session ───────────┐       ┌ Project ────────────┐       ┌ Sandbox ─────────────┐
+│ root               │       │ Mark · name         │       │ name · creator       │
+│ ├ builder          │──────▶│ SQLite · size       │──────▶│ workspace · branch   │
+│ └ reviewer         │       │ layer / branches /  │       │ command · elapsed    │
+│ call · elapsed     │       │ commits             │       └──────────────────────┘
+└────────────────────┘       │ main                │       ┌ Quiet sandbox ──────┐
+                             │ session branches    │       └──────────────────────┘
+                             └─────────────────────┘
 ```
 
 ## Regions
 
-1. **Tab row** (`ProjectView`, `projects/project-view.tsx`): Sessions opens by default when the project has runs; the Live card sits above its session list. The project page reads this project's runs (`useRuns`) and hands them to Live, newest first.
-2. **Live card** (`LiveTab`, `runs/live-tab.tsx`): one `glass-liquid` card. Its header has a dot (pulsing while a run plays), "Live", then "2 runs playing · 1 ended recently · 3 calls in flight".
-3. **ZoneLabel** (`ZoneLabel`, `runs/live-nodes.tsx`): the "Agents" and "Sandboxes" headings, with a count once there is something to count.
-4. **SessionGroup** (`SessionGroup`, `runs/live-nodes.tsx`): one group per run shown, labelled by the run's folder (`/crew_2`, its scenario on hover). Open, its header shows a chevron, the run's state dot, the folder, "3 agents · 2 working", progress (a bar and "12/40", "waiting its turn" while queued, "ended" or "stopped" once over) and an open button (↗) that opens the run. Folded, it is one card: the folder, the scenario, progress, "2 agents · 1 working" and small avatars, the busy ones lit. Past three runs a folded one is a single line.
-5. **AgentNode** (`AgentNode`, `runs/live-nodes.tsx`): one card per active agent, indented by depth, with an accent bar in its colour (full while it works) and a still ring in that colour while busy. It shows avatar, name and state dot. Under them is the call in flight (spinner, method, target, time); with none, its activity, or its last call ("fs.write · 3 min ago", red with its code when it failed). A parent has a fold toggle ("2 >"); folded, it shows its subagents' avatars and "2 subagents · 1 working". A click opens the agent in its run (`onOpenRun(run, agent)`).
-6. **HubNode** (`HubNode`, `runs/live-nodes.tsx`): the project. It shows the LayerFS mark (it rings in the caller's colour as calls land), the project's name and "LayerFS project". Then its Store as `StoreLine` (`projects/store-facts.tsx`: `StoreIcon`, name, where it syncs, size, `SyncPill`), from the shared Storage view. Then main's Layer ("L9"), the Branch count and the Commit count. Last come the open Branches: main first, then each run's under its folder (named inside the run: `main`, `main.1`, `lead`; a run's trunk `<folder>.main(.k)` is marked as standing for main), with Commit counts, then "+N other open Branches" for Branches of no run shown. Calls pass through these rows. A soft light in the cursor hue sits behind the card. Its border is lit while a run plays.
-7. **SandboxNode** (`SandboxNode`, `runs/live-nodes.tsx`): an open Sandbox. It shows "Sandbox 1", its name, "made by builder · /crew_2" and "1 mounted". Each Workspace row has its path, its Branch (the run folder dimmed: `crew_2.`build) and the mounting agent. Under them is the running `workspace exec` (an `exec` chip, the command, its time), else "idle · last <command> <exit>" or "idle · mounted 3 min ago", plus "· N Commits". It reads "Nothing mounted. The next call mounts a new Workspace." when empty.
-8. **SandboxLine** (`SandboxLine`, `runs/live-nodes.tsx`): past four Sandboxes, one not running a command is one line: "Sandbox 2", its run or state, "1 Workspace". A click opens its card.
+1. **Tab row** (`ProjectView`, `projects/project-view.tsx`): Live has its own tab, alongside Sessions, Files, Storage, Sandboxes and History. The project page passes its working chat runs to Live.
+2. **Live card** (`LiveTab`, `live/live-tab.tsx`): one `glass-liquid` card. Its header has a steady state dot, "Live", and a short summary of working chats, recently ended chats and calls in flight.
+3. **ZoneLabel** (`ZoneLabel`, `live/live-nodes.tsx`): three top-aligned headings, "Agents", "LayerFS" and "Sandboxes". Agent and Sandbox counts appear when nonzero. No decorative divider lines.
+4. **SessionGroup** (`SessionGroup`, `live/live-nodes.tsx`): one group per chat or scenario, labelled by its title or folder. Its header has a fold toggle, state and open button. Progress appears only when the run has a known step total; ended, failed and stopped states remain distinct. Folded groups show a compact agent summary. Past three runs a folded group is a single line. Only actual scenario folders receive a slash prefix and monospace type.
+5. **AgentNode** (`AgentNode`, `live/live-nodes.tsx`): one row per agent, indented by depth. A steady ring and short Calling label reflect actual in-flight calls; agents between calls show the most recent result instead of an inferred Working state. Known API methods use short translated action names, with exact methods and full targets on hover. A check or cross identifies success or failure without relying on color. Failed results persist until new work replaces them. The parent fold toggle shows the child count; folded summaries count agents with actual calls. Clicking an agent opens its chat.
+6. **HubNode** (`HubNode`, `live/live-nodes.tsx`): a compact project card. A small LayerFS mark sits beside its name and storage type / size, followed by static main Layer, Branch and Commit counts. Open Branches show main first, then session groups with Commit counts, then a count of other open Branches. Shared Branches appear once. Calls pass through their branch row; short feedback replaces the former large glow and breathing border. The branch list scrolls independently when long.
+7. **SandboxNode** (`SandboxNode`, `live/live-nodes.tsx`): an open Sandbox. It shows "Sandbox 1", its name, "made by builder · /crew_2" and "1 mounted". Each Workspace row has its path, its Branch (the run folder dimmed: `crew_2.`build) and the mounting agent. Under them is the running `workspace exec` (an `exec` chip, the command, its time), else "idle · last <command> <exit>" or "idle · mounted 3 min ago", plus "· N Commits". It reads "No mounted workspaces" when empty.
+8. **SandboxLine** (`SandboxLine`, `live/live-nodes.tsx`): past four Sandboxes, one not running a command is one line: "Sandbox 2", its run or state, "1 Workspace". A click opens its card.
 
-## The diagram (`FlowEngine`, `runs/live-flow.ts`; `runs/live.css`)
+## The diagram (`FlowEngine`, `live/live-flow.ts`; `live/live.css`)
 
-One SVG over the cards, on its own layer, positioned from their `data-anchor`s: reread at most every 100 ms while anything moves, and at once after a change. A frame writes only what changed, and dots travel their lane's own path. A call sends a dot from its agent (or the folded card standing in for it), in the agent's colour, along a curved lane. The lane passes through the Branch row the call touched and on to the Workspace or Sandbox for workspace and sandbox calls. The dot comes back green, or red when the call failed. A lane carrying calls is dashed in the agent's colour and flows. A mounted Workspace keeps a thin solid lane at rest. Tree guides join subagents to their parent. Faint dotted lines join the idle placeholders to the project. Under reduced motion nothing travels; lanes still light and cards still ring.
+One SVG above the cards, positioned from `data-anchor`s. Lines stay thin and still; running calls retain a brighter route without a perpetual animation. Each new call sends a single small chevron in the agent's color. Results return along the same route with the arrow reversed, green for success and red for failure. Concurrent calls on one route share a packet; opposite directions wait rather than collide. Only the completed call's destination receives a brief border response. A small header legend explains request / success / failure.
 
-## Data (`runs/live-data.ts`, `runs/live-model.ts`)
+Mounted routes remain faintly visible. Hover or keyboard focus highlights the selected node's connections and dims unrelated ones. Folding redirects routes to the visible ancestor. When nothing moves the engine stops scheduling frames. Reduced motion preserves status labels and still connections without traveling arrows or feedback flashes. All SVG layers and listeners are removed when the graph closes.
 
-- **Runs shown**: those playing or queued, and those that ended in the last 5 minutes, at most 12, playing ones first. Each is read once with `host.run(id)` (not again when the list changes) and kept current from the host's events (`run`, `agent`, `step`, `call`, `live`), applied once per frame. Live keeps only the summary, the calls and `RunDetail.live`.
+Routes use rounded elbows in the gaps between columns. They dock at the project's outside edge at the matching Branch row's height; no line runs across card text. Each gutter has one stable shared rail; new calls do not spread the wiring into a fan. Shared agent/Branch and Branch/Workspace legs are drawn once, including routes folded to the same visible ancestor. Resting links use neutral thin strokes; active or focused links retain agent colors and paint above quiet shared rails. Decorative endpoint dots are removed. Agent tree guides share a single trunk per parent. Narrow views keep at least 56px between columns and scroll horizontally instead of squeezing the wiring into cards.
+
+## Data (`live/live-data.ts`, `live/live-model.ts`)
+
+- **Runs shown**: those playing or queued, and those that ended in the last 5 minutes, the first 12 initially, playing ones first; more are available on demand. Each chat's live trace is read with `agentHost.live(id)` initially and every second while it works and the window is visible. Live keeps the run summary, trace calls and live mounts / sandboxes.
 - **Project**: `host.project(key)`, reread every 2 s while a run plays (not while the window is hidden) and once more when a run's state changes; reads of one address go one at a time.
 - **Sandboxes**: the project's open ones, joined with those the runs made and the Workspaces their playing runs hold mounted.
-- **Runs and Branches**: a run's files are under `/<folder>/` and its Branches are `<folder>.<name>`.
+- **Runs and Branches**: scenario folders retain prefix-based ownership (`<folder>.<name>`). Ordinary chats associate Branches from actual mounts and in-flight or recorded calls. Shared Branches have one anchor, reused by every calling session.
 
 ## States
 
-- **Idle** (no run shown): `IdleAgents` shows "No agent working", "The last run, /tour_1, ended 3 h ago" (or "No run has played on this project yet"), a dashed sketch of a tree and "A scenario run starts a session. Its agents show here as a tree, and every call they make travels to the project." `IdleSandboxes` shows "No Sandbox open" and "One opens when an agent creates it to mount a Workspace." Faint lines join both to the project; the zone counts are hidden.
+- **Idle** (no run shown): short Agent and Sandbox placeholders remain connected to the project. Agent status may include the last chat's end time. No fake loading skeletons or explanatory paragraphs are shown.
 - **Hub before the project is read**: a dashed box reading "Reading…".
 - **Folds**: playing runs start open (the newest two), the others folded. Subagents from the third level start folded. What the user folds or opens is kept per project (`localStorage` `connect.live.folds:<project>`; runs by id, agents by scenario and name).
 - **Many runs** (more than 3): a folded run is a single line.

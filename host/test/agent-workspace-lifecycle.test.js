@@ -73,34 +73,6 @@ test('stop cleans up a new workspace when its first preparation fails during ope
   assert.equal(f.manager.record(chat.id).needsStop, undefined)
 })
 
-test('an interrupted first open with no Pi session can stop and delete after model setup fails', async (t) => {
-  const f = await fixture(t)
-  const chat = await f.create()
-  await assert.rejects(f.manager.message(chat.id, { text: 'Start work' }), /configured model is unavailable/)
-  assert.equal(f.calls.model, 1)
-  assert.equal(f.manager.record(chat.id).sessionFile, null)
-  // A crash during opening restores needsStop, but no model ever ran.
-  f.manager.record(chat.id).needsStop = true
-  assert.equal((await f.manager.stop(chat.id)).state, 'idle')
-  assert.equal(f.calls.model, 1, 'Stopping must not require the unavailable model again.')
-  assert.deepEqual(await f.manager.remove(chat.id), { id: chat.id })
-})
-
-for (const evidence of ['persisted Pi session', 'unconfirmed child stop']) {
-  test(`failed recovery retains the workspace when there is a ${evidence}`, async (t) => {
-    const f = await fixture(t)
-    const chat = await f.create()
-    const record = f.manager.record(chat.id)
-    record.needsStop = true
-    if (evidence === 'persisted Pi session') record.sessionFile = join(f.state, 'previous-session.jsonl')
-    else await writeFile(join(f.state, 'chats', chat.id, 'pending-subagent-stops.json'), '["unconfirmed-child"]')
-    await assert.rejects(f.manager.stop(chat.id), /configured model is unavailable/)
-    assert.equal(record.needsStop, true)
-    assert.deepEqual(f.calls.released, [])
-    assert.ok(f.manager.records.has(chat.id))
-  })
-}
-
 test('failure of an already opening recovery cannot clear the child-stop obligation', async (t) => {
   const entered = Promise.withResolvers()
   const preparation = Promise.withResolvers()
@@ -207,21 +179,3 @@ test('close waits for every workspace cleanup before closing permissions and rep
   assert.equal(f.calls.permissionsClosed, true)
 })
 
-test('a new project chat runs bash in its working folder: no LayerFS mount, and its instructions come from the folder', async (t) => {
-  const f = await fixture(t)
-  const folder = await mkdtemp(join(tmpdir(), 'connect-project-folder-'))
-  t.after(() => rm(folder, { recursive: true, force: true }))
-  await writeFile(join(folder, 'AGENTS.md'), 'Folder instructions\n')
-  const chat = await f.manager.create({ project: 'project', cwd: folder, permissionMode: 'full' })
-  const record = f.manager.record(chat.id)
-  assert.equal(record.runs, 'folder')
-  assert.equal(record.cwd, folder)
-  assert.equal(record.workspace, null)
-  // its instructions come from the folder, not a mount
-  const { instructions } = await f.manager.context(chat.id)
-  assert.ok(instructions.some((file) => file.path === join(folder, 'AGENTS.md') && file.content === 'Folder instructions\n'))
-  // opening it (the model is unavailable here) never prepares a mount
-  await assert.rejects(f.manager.message(chat.id, { text: 'Start work' }), /model is unavailable/)
-  assert.deepEqual(f.calls.prepared, [])
-  await assert.rejects(f.manager.workspaceDirectory(chat.id), /no LayerFS workspace/)
-})

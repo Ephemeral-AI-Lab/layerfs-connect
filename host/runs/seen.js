@@ -6,7 +6,8 @@
 // placeholders ({{sandbox}}, {{ws}}, {{commit:<ref>}}) are filled from it.
 import { PLACEHOLDER } from '../../tools/lib/scenario.mjs'
 
-const SANDBOX = /"sandbox"\s*:\s*"([^"]+)"/g
+// 2.0: a Sandbox goes by its name: a record's "name" (before its "project"), or a ws handle's prefix
+const SANDBOX = /"name"\s*:\s*"([^"]+)"\s*,\s*"project"/g
 const WS = /"ws"\s*:\s*"([^"]+)"/g
 
 export class Seen {
@@ -20,7 +21,10 @@ export class Seen {
   /** A tool result's line or text. */
   look(text) {
     for (const m of text.matchAll(SANDBOX)) this.sandbox = m[1]
-    for (const m of text.matchAll(WS)) this.ws = m[1]
+    for (const m of text.matchAll(WS)) {
+      this.ws = m[1]
+      this.sandbox = m[1].slice(0, m[1].indexOf(':'))
+    }
   }
 
   /** A message the agent received: its prompt, a parent's message, a child's reply. */
@@ -54,8 +58,11 @@ export class Capture {
   }
 
   line(line) {
-    if (line.includes('"sandbox"')) for (const m of line.matchAll(SANDBOX)) this.sandbox = m[1]
-    if (line.includes('"ws"')) for (const m of line.matchAll(WS)) this.ws = m[1]
+    if (line.includes('"project"')) for (const m of line.matchAll(SANDBOX)) this.sandbox = m[1]
+    if (line.includes('"ws"')) for (const m of line.matchAll(WS)) {
+      this.ws = m[1]
+      this.sandbox = m[1].slice(0, m[1].indexOf(':'))
+    }
     const t = line.trim()
     if (!t.startsWith('{') || !t.includes('"head"')) return
     let value

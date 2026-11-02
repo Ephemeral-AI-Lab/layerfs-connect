@@ -77,12 +77,18 @@ export function CustomProviderCard({ taken, onCreated, onClose, onBusyChange }: 
     </div>
     <div className="st-field">
       <span className="st-label">{t('Base URL')}</span>
-      <input className="st-input" type="text" spellCheck={false} value={baseUrl} placeholder={api === 'anthropic-messages' ? 'https://gateway.example' : 'https://gateway.example/v1'} aria-label={t('Base URL')} aria-invalid={urlInvalid} disabled={busy} onChange={(event) => setBaseUrl(event.target.value)} />
+      <input className="st-input" type="text" spellCheck={false} value={baseUrl} placeholder={api === 'anthropic-messages' ? 'https://gateway.example' : 'https://gateway.example/v1'} aria-label={t('Base URL')} aria-invalid={urlInvalid} disabled={busy} onChange={(event) => {
+        setBaseUrl(event.target.value)
+        setModels((current) => current.map((model) => ({ ...model, input: undefined })))
+      }} />
     </div>
     {urlInvalid && <p className="st-error">{t('Enter a valid HTTP or HTTPS URL.')}</p>}
     <div className="st-field">
       <span className="st-label">{t('API protocol')}</span>
-      <select className="st-input" value={api} aria-label={t('API protocol')} disabled={busy} onChange={(event) => setApi(event.target.value)}>
+      <select className="st-input" value={api} aria-label={t('API protocol')} disabled={busy} onChange={(event) => {
+        setApi(event.target.value)
+        setModels((current) => current.map((model) => ({ ...model, input: undefined })))
+      }}>
         {PROTOCOLS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
       </select>
     </div>
@@ -91,6 +97,7 @@ export function CustomProviderCard({ taken, onCreated, onClose, onBusyChange }: 
       <ApiKeyInput value={key} onChange={setKey} placeholder={t('Enter your API key')} aria-label={t('API key')} disabled={busy} />
     </div>
     <ModelListEditor
+      key={`${baseUrl.trim()}:${api}`}
       models={models}
       onChange={setModels}
       disabled={busy}

@@ -1,5 +1,9 @@
 # Storage: one link per Store (design and implementation spec)
 
+> **Status:** History (retired 2026-11-02). This described Connect's Storage on LayerFS 1.1.0
+> (links, push/pull, remotes). LayerFS 2.0 replaced that model: see
+> [layerfs-storage.md](layerfs-storage.md) and [the 2.0 integration spec](../layerfs-2.0-integration.md).
+
 > **Status:** Owner-approved direction (2026-10-30), not built. It
 > supersedes the **copies** parts of [storage-redesign.md](storage-redesign.md):
 > §1 Concept (copies), §2.2 copy locations, §3.4 Copy location page, §3.7 Add

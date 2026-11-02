@@ -1,70 +1,18 @@
-# New project dialog
+# New project (LayerFS 2.0)
 
-Makes a LayerFS project by Init, empty or as a copy of a folder, in a Store the user picks, then
-opens it. Opens from: New project on the Projects page, the + beside Projects in the sidebar, and
-the + in Chat's workspace picker.
-Source: `src/renderer/src/components/projects/new-project-dialog.tsx` (every region is in this file).
+> **Status:** Current, 2026-11-02. Source: `src/renderer/src/components/projects/new-project-dialog.tsx`,
+> `host/projects.js` (`create`, `init`). Spec step 6.
 
-## Skeleton
+- **Name** and **Start with** (an empty project or a copy of a folder).
+- **Store:** a sqlite Store on native or a PostgreSQL Store (project.init goes nowhere else and
+  never makes a Store), or **New SQLite Store…**, made first on native with `store.create`.
+  Storage's **Add project** opens the dialog on its Store.
+- **Init** runs on the host (`POST /api/projects`), which keeps its own job table fed by
+  `on_progress`: scan, files, tree, publish, seal, with file and byte counts.
+- When the project is there and the home has other machines, an optional **Move Store to…**
+  step moves the Store; it warns that the whole Store moves, every project in it.
 
-Drawn with "Import folder" and an existing Store chosen.
-
-```text
-+--------------------------------------------------------------+
-| +-[1] DialogHeader ----------------------------------------+ |
-| | [+] New project                                        x | |
-| |     A LayerFS workspace with its own history.            | |
-| +----------------------------------------------------------+ |
-| +-[2] Project name ----------------------------------------+ |
-| | [ my-project                                           ] | |
-| | Lowercase letters, numbers, dots, hyphens and underscores.| |
-| +----------------------------------------------------------+ |
-| +-[3] Start with ------------------------------------------+ |
-| | +- Empty project ------+  +- Import folder ------------+ | |
-| | | A clean workspace    |  | Copy existing files        | | |
-| | +----------------------+  +----------------------------+ | |
-| +----------------------------------------------------------+ |
-| +-[4] Source folder ---------------------------------------+ |
-| | [ /Users/you/my-app                        ] [ Browse ]  | |
-| +----------------------------------------------------------+ |
-| +-[5] StoreField ------------------------------------------+ |
-| | Store                                                    | |
-| | [ [R2] team                                          v ] | |
-| | It shares team's file and its link: pushes to r2-main /  | |
-| | team carry every project in it.                          | |
-| +----------------------------------------------------------+ |
-| +-[6] Footer ----------------------------------------------+ |
-| | (db) Store team                [ Cancel ] [ Create ]     | |
-| +----------------------------------------------------------+ |
-+--------------------------------------------------------------+
-```
-
-## Regions
-
-1. **Header**: "New project" and "A LayerFS workspace with its own history."
-2. **Project name**: lowercase letters, numbers, `.`, `-` and `_`, 1–63 long.
-3. **Start with**: Empty project or Import folder.
-4. **Source folder** (Import folder only): the path and Browse (the system folder picker).
-5. **Store** (`StoreField`): a Select of the local SQLite Stores from `host.storage()`, each with
-   its `StoreIcon`, its project count and size, and its `SyncPill`; then "New SQLite Store…". The
-   first choice is the Store the last project went into (`connect.newProject.store`), else the
-   first Store, else a new one. A new Store takes a name (filled from the project name until
-   typed; 1–32 lowercase letters, numbers and hyphens, not taken) and a note that more projects
-   can join it later. An existing Store's note says the project shares its file and its link.
-6. **Footer**: where the project goes ("Store team", "New Store team", or "Local SQLite"), Cancel,
-   and Create project.
-
-Create makes the new Store first (`host.createStore`) when one is asked for, then calls
-`host.createProject({ name, source?, store })` and follows `host.projectInit(id)` until it ends.
-The created project opens by its key.
-
-## States
-
-- **No Stores in this LayerFS build** (`storage().stores.available` false, or no Storage view):
-  the Store field is not shown and the footer reads "Local SQLite"; Create sends no `store`, so
-  Init makes the project's own Store as before.
-- **Reading Stores**: the Store field shows "Reading Stores…" and Create waits for it.
-- **Creating**: a status row shows the Init step and, once counted, "N files · size"; controls
-  are disabled and the dialog cannot close.
-- **Failed**: the error shows in red; a Store made for this project stays, chosen, for a retry.
-- **Status lost**: "Could not update creation status" with Check status.
+Delete (the project's menu) lists the project's Sandboxes and offers **Close N Sandboxes and
+delete** (`project.remove` is refused `InUse` while any Sandbox record exists). After a refusal,
+**Force close and delete** closes them with `force` and lists Workspaces of unknown state. A
+PostgreSQL project cannot be removed by 2.0 (`Unsupported`): the dialog says so.

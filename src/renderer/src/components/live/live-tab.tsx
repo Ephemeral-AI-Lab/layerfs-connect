@@ -2,15 +2,14 @@
 // a tree per run (subagents under their parent); the LayerFS project in the
 // middle, with its Store and its open Branches by run; the Sandboxes on the
 // right, with the Workspaces mounted in them. Every LayerFS call is drawn
-// (live-flow.ts): a dot leaves the agent in its colour along a dashed lane,
+// (live-flow.ts): a direction marker leaves the agent along a still lane,
 // reaches the Branch row it touched (and the Workspace or Sandbox, for
 // workspace and sandbox calls), and comes back green, or red when it failed.
 //
-// Sessions are scenario runs, several of which can play on one project at
-// once, each in its own folder: Live shows the playing ones and those that
-// ended in the last five minutes. Their calls come from their trace lines
-// (live-data.ts keeps them current from the host's events); the project's
-// state is reread every two seconds while one plays.
+// Sessions include project chats and scenarios. Live shows the working ones
+// and those that ended in the last five minutes. Their trace calls refresh
+// every second while working and visible (live-data.ts); the project state
+// refreshes every two seconds.
 //
 // Folding: playing runs start open (the newest two), the others folded to one
 // card; subagents from the third level start folded under their parent. What
@@ -26,6 +25,7 @@ import './live.css'
 
 import type { ProjectState, RunSummary } from '@shared/host-api'
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { ArrowLeft, ArrowRight, X } from 'lucide-react'
 
 import { type StoreFacts, storeFacts, useStorageView } from '@/components/projects/store-facts'
 import { useProjectSandboxes } from '@/components/projects/use-sandboxes'
@@ -52,7 +52,7 @@ import { cn } from '@/lib/utils'
 
 /** A finished call older than this is history, not drawn. */
 const FRESH_MS = 5000
-/** Sessions drawn at most; the newest playing ones first. */
+/** Sessions drawn initially; the newest working ones first. */
 const MAX_SESSIONS = 12
 /** More sessions than this: the folded ones are one line each. */
 const DENSE_SESSIONS = 3
@@ -110,16 +110,19 @@ export function LiveTab({ project, runs, onOpenRun }: LiveTabProps) {
   const anyLive = runs?.some((r) => isLive(r.state)) ?? false
   // ticks slowly once nothing plays, so ended sessions leave on time
   const now = useNow(true, anyLive ? 1000 : 10_000)
-  const shown = useMemo(
+  const recent = useMemo(
     () =>
       (runs ?? [])
         .filter((r) => activeRun(r, now))
-        .sort((a, b) => Number(isLive(b.state)) - Number(isLive(a.state)) || b.started - a.started)
-        .slice(0, MAX_SESSIONS),
+        .sort((a, b) => Number(isLive(b.state)) - Number(isLive(a.state)) || b.started - a.started),
     [runs, now],
   )
+  const [showAll, setShowAll] = useState(false)
+  useEffect(() => setShowAll(false), [project])
+  const shown = useMemo(() => showAll ? recent : recent.slice(0, MAX_SESSIONS), [recent, showAll])
   const sessions = useLiveSessions(shown)
-  const state = useLiveProject(project, anyLive, sessions.map((s) => `${s.run.id}:${s.run.state}`).join(','))
+  const changed = sessions.map((s) => `${s.run.id}:${s.run.state}`).join(',')
+  const state = useLiveProject(project, anyLive, changed)
   const storage = useStorageView()
   const store = useMemo(() => (state ? storeFacts(state.project, storage) : undefined), [state, storage])
 
@@ -128,7 +131,7 @@ export function LiveTab({ project, runs, onOpenRun }: LiveTabProps) {
     [sessions],
   )
   // the Sandboxes' Workspaces come from their own read, which never holds the project read
-  const sandboxRead = useProjectSandboxes(project, anyLive ? 4000 : null)
+  const sandboxRead = useProjectSandboxes(project, anyLive ? 4000 : null, changed)
   const withWorkspaces = useMemo(() => (state && sandboxRead.data ? { ...state, sandboxes: sandboxRead.data } : state), [state, sandboxRead.data])
   const sandboxes = useMemo(() => sandboxViews(withWorkspaces, groups), [withWorkspaces, groups])
   const folds = useFolds(project)
@@ -146,10 +149,10 @@ export function LiveTab({ project, runs, onOpenRun }: LiveTabProps) {
     <section aria-label={t('Live')} className="glass-liquid live-panel flex min-w-0 flex-col overflow-hidden rounded-2xl shadow-xs">
       <header className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-foreground/[0.06] px-5 py-3.5">
         <h2 className="flex items-center gap-2 text-sm font-semibold">
-          <span aria-hidden="true" className={cn('size-1.5 rounded-full', playing ? 'pulse-ring bg-primary text-primary' : 'bg-idle')} />
+          <span aria-hidden="true" className={cn('size-1.5 rounded-full', playing ? 'bg-(--icon-accent)' : 'bg-idle')} />
           {t('Live')}
         </h2>
-        <p className="min-w-0 flex-1 truncate text-xs text-muted-foreground tabular-nums">
+        <p className="min-w-0 flex-1 basis-48 text-xs text-muted-foreground tabular-nums">
           {[
             playing ? count(t, playing, '{n} chat working', '{n} chats working') : t('No chat working'),
             groups.length > playing ? t('{n} ended recently', { n: groups.length - playing }) : null,
@@ -158,9 +161,21 @@ export function LiveTab({ project, runs, onOpenRun }: LiveTabProps) {
             .filter(Boolean)
             .join(' · ')}
         </p>
+        <div aria-label={t('Call flow')} className="ml-auto flex shrink-0 items-center gap-3 text-[11px] text-muted-foreground">
+          <span className="flex items-center gap-1" title={t('Agent to project or workspace')}><ArrowRight aria-hidden="true" className="size-3 text-(--icon-accent)" />{t('Request')}</span>
+          <span className="flex items-center gap-1" title={t('Successful return')}><ArrowLeft aria-hidden="true" className="size-3 text-success" />{t('Succeeded')}</span>
+          <span className="flex items-center gap-1" title={t('Failed return')}><X aria-hidden="true" className="size-3 text-destructive" />{t('Failed')}</span>
+        </div>
       </header>
 
+      {sandboxRead.error && <div role="alert" className="live-error">
+        <span>{t('Could not load sandboxes.')}</span>
+        <button type="button" onClick={sandboxRead.reload}>{t('Retry')}</button>
+        <details><summary>{t('Details')}</summary><p>{sandboxRead.error.message}</p></details>
+      </div>}
+
       <FlowGraph
+        key={project}
         project={project}
         state={state}
         store={store}
@@ -173,7 +188,9 @@ export function LiveTab({ project, runs, onOpenRun }: LiveTabProps) {
         idleNote={idleNote}
         onOpen={onOpenRun}
       />
-
+      {recent.length > MAX_SESSIONS && <button type="button" className="live-more mx-5 mb-4 self-start" onClick={() => setShowAll(!showAll)}>
+        {showAll ? t('Show fewer') : t('+{n} more', { n: recent.length - MAX_SESSIONS })}
+      </button>}
     </section>
   )
 }
@@ -279,6 +296,10 @@ function FlowGraph({ project, state, store, groups, sandboxes, folds, now, live,
     const ghosts: [string, string][] = []
     if (noAgents) ghosts.push(['ghost-agents', 'hub'])
     if (noSandboxes) ghosts.push(['hub', 'ghost-sandboxes'])
+    const active = groups.flatMap((group) => group.session.live.running.flatMap((call) => {
+      const route = routeOf(group, call, rows.names, workspaces)
+      return route ? [route] : []
+    }))
     return {
       origin: (key) => {
         const { l, name } = split(key)
@@ -286,13 +307,14 @@ function FlowGraph({ project, state, store, groups, sandboxes, folds, now, live,
       },
       color: (key) => {
         const { l, name } = split(key)
-        return l ? l.group.colorOf(name).text : 'text-primary'
+        return l ? l.group.colorOf(name).text : 'text-(--icon-accent)'
       },
       mounts,
+      active,
       tree,
       ghosts,
     }
-  }, [layouts, sandboxes, rows, bound, noAgents, noSandboxes, compact])
+  }, [layouts, sandboxes, rows, bound, noAgents, noSandboxes, compact, groups, workspaces])
   useLayoutEffect(() => engine.current?.setScene(scene))
 
   useTraffic(engine, groups, rows.names, workspaces)
@@ -305,9 +327,9 @@ function FlowGraph({ project, state, store, groups, sandboxes, folds, now, live,
     <div className="overflow-x-auto">
       <div
         ref={box}
-        className="live-field relative grid min-h-[26rem] min-w-[760px] grid-cols-[minmax(14rem,19rem)_minmax(2.5rem,1fr)_minmax(13rem,16rem)_minmax(2.5rem,1fr)_minmax(16rem,25rem)] items-center px-5 py-8"
+        className="live-field relative grid min-h-[22rem] min-w-[880px] grid-cols-[minmax(16rem,22rem)_minmax(3.5rem,1fr)_minmax(13rem,16rem)_minmax(3.5rem,1fr)_minmax(16rem,25rem)] items-start px-5 py-6"
       >
-        {/* over the cards, so a lane reaches into the project card to its Branch row; lanes only cross the gaps */}
+        {/* Connections dock at card edges; each Branch keeps its own row-aligned entry. */}
         <svg ref={svg} aria-hidden="true" className="live-overlay pointer-events-none absolute inset-0 z-20 size-full overflow-visible" />
 
         <div className="relative z-10 flex min-w-0 flex-col gap-3">
@@ -325,7 +347,8 @@ function FlowGraph({ project, state, store, groups, sandboxes, folds, now, live,
           ))}
         </div>
         <span />
-        <div className="relative z-10">
+        <div className="relative z-10 flex min-w-0 flex-col gap-3">
+          <ZoneLabel label="LayerFS" />
           <HubNode project={project} state={state} store={store} rows={rows} owners={owners} live={live} busy={busy} />
         </div>
         <span />
@@ -386,6 +409,8 @@ function useTraffic(engine: React.RefObject<FlowEngine | null>, groups: Group[],
         out.current.set(key, route ? e.send(route) : Promise.resolve())
       }
       for (const c of g.session.calls) {
+        // The trace includes start records; only a recorded result completes a call.
+        if (c.ok === null) continue
         const id = `${c.agent}:${c.id}`
         if (done.has(id)) continue
         done.add(id)

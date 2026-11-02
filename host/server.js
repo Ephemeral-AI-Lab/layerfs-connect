@@ -26,21 +26,15 @@ const STATUS = {
   NoSuchBranch: 404,
   NoSuchCommit: 404,
   NoSuchSandbox: 404,
-  NoSuchProcess: 404,
+  NoSuchStore: 404,
+  NotFound: 404,
   Busy: 409,
   Conflict: 409,
   Exists: 409,
-  NameTaken: 409,
-  MountsActive: 409,
-  NotComparable: 409,
-  // layerfs#509: one link per Store
-  Linked: 409,
-  NotLinked: 409,
+  HeadMoved: 409,
+  Dirty: 409,
+  ReadOnly: 409,
   InUse: 409,
-  NoSuchStore: 404,
-  NoSuchRemote: 404,
-  // a remote's failures (pull, load, files)
-  NoSuchFile: 404,
   Denied: 403,
   Unavailable: 502,
   Unsupported: 501,
@@ -85,11 +79,12 @@ export function errorAnswer(error) {
  * @param {() => object | null} [deps.agents] the interactive Pi AgentManager
  * @param {() => string | null} [deps.runsError] why the RunManager is missing
  * @param {object} [deps.storage] storage.js's Storage: Stores, remotes, publish/push/pull/send/load/unlink, PostgreSQL (absent: those routes 404)
+ * @param {object} [deps.machines] machines.js's Machines: Compute's machines (absent: those routes 404)
  * @param {number} [deps.heartbeatMs]
  * @param {(line: string) => void} [deps.log]
  */
 export function createHandler(deps) {
-  const { token, projects, storage = null, runs = () => null, agents = () => null, runsError = () => null, heartbeatMs = HEARTBEAT_MS, log = (line) => process.stderr.write(`${line}\n`) } = deps
+  const { token, projects, storage = null, machines = null, runs = () => null, agents = () => null, runsError = () => null, heartbeatMs = HEARTBEAT_MS, log = (line) => process.stderr.write(`${line}\n`) } = deps
   const streams = new Set()
 
   /** The RunManager, or a 503 naming why it is not there. */
@@ -112,69 +107,74 @@ export function createHandler(deps) {
       return agentRoute(manager, method, parts.slice(2), body, query)
     }
     if (api !== 'api' || rest.length) return undefined
-    // layerfs#506: Stores (each holding many projects), remotes and PostgreSQL connections
+    // Stores, buckets and the moves, backups and restores this host started (storage.js)
     if (storage) {
       if (group === 'storage' && !id && method === 'GET') return storage.view()
-      // re-reads the linked files' remote state, the connections' files and status: { store?, remote?, connection? }, empty for all
+      // lists the buckets' files again (backup.list, one call per bucket): { bucket? }, empty for all
       if (group === 'storage' && id === 'check' && !sub && method === 'POST') return storage.check(body ?? {})
       if (group === 'stores') {
         if (!id && method === 'POST') return storage.createStore(body ?? {})
+        // a PostgreSQL database: { name, url, password (a reference), synchronousCommit? }
+        if (id === 'postgresql' && !sub && method === 'POST') return storage.connectPostgresql(body ?? {})
         if (id && !sub && method === 'DELETE') return storage.removeStore(id, { confirm: query.get('confirm') })
-        // layerfs#509: one link per Store
-        if (id && method === 'POST' && sub === 'publish') return storage.publish(id, body ?? {})
-        if (id && method === 'POST' && sub === 'push') return storage.push(id, body ?? {})
-        if (id && method === 'POST' && sub === 'pull') return storage.pull(id, body ?? {})
-        if (id && method === 'POST' && sub === 'send') return storage.send(id, body ?? {})
-        if (id && method === 'POST' && sub === 'unlink') return storage.unlink(id, body ?? {})
-        if (id && method === 'POST' && sub === 'import-postgresql') return storage.importPostgresql(id, body ?? {})
+        if (id && sub === 'disconnect' && method === 'POST') return storage.disconnectStore(id)
+        // { machine }
+        if (id && sub === 'move' && method === 'POST') return storage.move(id, body?.machine)
+        // { bucket, file? }
+        if (id && sub === 'backup' && method === 'POST') return storage.backup(id, body ?? {})
         return undefined
       }
-      if (group === 'remotes') {
-        if (!id && method === 'POST') return storage.addRemote(body ?? {})
-        if (id && !sub && method === 'DELETE') return storage.removeRemote(id)
-        if (id && sub === 'files' && method === 'GET') return storage.files(id)
-        if (id && sub === 'load' && method === 'POST') return storage.load(id, body ?? {})
+      if (group === 'buckets') {
+        // { name, url, key (a reference), region? }
+        if (!id && method === 'POST') return storage.connectBucket(body ?? {})
+        if (id && !sub && method === 'DELETE') return storage.disconnectBucket(id)
+        if (id && sub === 'files' && method === 'GET') return storage.listBucket(id)
+        // { store (the new Store's name), file? }: installs on native
+        if (id && sub === 'restore' && method === 'POST') return storage.restore({ ...(body ?? {}), bucket: id })
         return undefined
       }
-      if (group === 'postgresql') {
-        if (!id && method === 'POST') return storage.addPostgresql(body ?? {})
-        if (id && !sub && method === 'DELETE') return storage.removePostgresql(id)
-        return undefined
-      }
-      if (group === 'sync-jobs' && id && !sub && method === 'GET') return storage.syncJob(id)
+      if (group === 'storage-jobs' && id && !sub && method === 'GET') return storage.job(id)
+    }
+    // layerfs#533: Compute's machines; machines start on the first call that needs them, so there is no start or stop
+    if (machines && group === 'machines') {
+      if (!id && !sub && method === 'GET') return machines.view()
+      if (!id && !sub && method === 'POST') return body?.platform === 'ssh' ? machines.connect(body) : machines.create(body)
+      if (id && !sub && method === 'DELETE') return machines.remove(id)
+      if (id && sub === 'update' && method === 'POST') return machines.update(id, body)
+      // moves a sqlite Store here: { store }
+      if (id && sub === 'stores' && method === 'POST') return machines.moveStore(body?.store, id)
     }
     if (group === 'status' && !id && method === 'GET') return projects.status()
-    if (group === 'worker' && id === 'start' && !sub && method === 'POST') return projects.startWorker()
+    // `id` is a project key, `<store>/<project>`, sent as one encoded segment
     if (group === 'projects') {
       if (!id) {
         if (method === 'GET') return projects.list()
         if (method === 'POST') return projects.create(body)
         return undefined
       }
-      // layerfs#506: ?store= names the Store when the project's name is in several;
-      // without it the calls are made exactly as before Stores held several projects
-      const store = query.get('store') || null
-      const at = (...args) => (store ? [...args, store] : args)
-      if (!sub && method === 'GET') return projects.state(...at(id))
+      if (!sub && method === 'GET') return projects.state(id)
       if (!sub && method === 'DELETE') {
         const manager = agents()
-        if (!manager) return projects.remove(...at(id))
-        // agents' sessions name their project by key (`store/name` in a shared Store)
-        const found = store ? await projects.record(id, store) : null
-        const key = found?.shared ? `${store}/${id}` : id
-        return manager.removeProject(key, () => projects.remove(...at(id)))
+        return manager ? manager.removeProject(id, () => projects.remove(id)) : projects.remove(id)
       }
+      // a new Sandbox: { name, image?, machine? (PostgreSQL projects only) }
+      if (sub === 'sandboxes' && method === 'POST') return projects.createSandbox(id, body ?? {})
+      // closes every Sandbox of the project: { force? }
+      if (sub === 'close-sandboxes' && method === 'POST') return projects.closeSandboxes(id, { force: body?.force === true })
       if (method !== 'GET') return undefined
       const branch = query.get('branch') ?? 'main'
-      if (sub === 'commits') return projects.commits(...at(id, branch, query.get('limit')))
+      if (sub === 'commits') return projects.commits(id, branch, query.get('limit'))
       // several Branches' Commits in one call: ?branch=a&branch=b
-      if (sub === 'branch-commits') return projects.branchCommits(id, query.getAll('branch'), store)
-      // the Sandboxes with their mounted Workspaces: the one read that asks Sandbox daemons
-      if (sub === 'sandboxes') return projects.sandboxes(...at(id))
-      if (sub === 'fs') return projects.listDir(...at(id, branch, query.get('path') ?? '/'))
-      if (sub === 'file') return projects.file(...at(id, branch, query.get('path')))
+      if (sub === 'branch-commits') return projects.branchCommits(id, query.getAll('branch'))
+      // the Sandboxes with their Workspaces (sandbox.get each)
+      if (sub === 'sandboxes') return projects.sandboxes(id)
+      if (sub === 'fs') return projects.listDir(id, branch, query.get('path') ?? '/')
+      if (sub === 'file') return projects.file(id, branch, query.get('path'))
       return undefined
     }
+    // sandbox.close(name, { force }): ?force=1
+    if (group === 'sandboxes' && id && !sub && method === 'DELETE') return projects.closeSandbox(id, { force: query.get('force') === '1' })
+    if (group === 'project-inits' && !id && method === 'GET') return projects.initJobs()
     if (group === 'project-inits' && id && !sub && method === 'GET') return projects.init(id)
     if (group === 'demos') {
       if (!id && method === 'GET') return engine().demos()
@@ -182,7 +182,7 @@ export function createHandler(deps) {
       // every scenario at once, each in its own folder of the project: { project }
       if (id === 'all' && sub === 'runs' && method === 'POST') return engine().startAll({ project: body?.project ?? null })
       // one scenario in a folder of its own on a project that is there: { project } (a project key)
-      if (id && sub === 'runs' && method === 'POST') return engine().start(id, { project: body?.project ?? null })
+      if (id && sub === 'runs' && method === 'POST') return engine().start(id, { project: body?.project ?? null, machine: body?.machine ?? null })
       return undefined
     }
     if (group === 'runs') {

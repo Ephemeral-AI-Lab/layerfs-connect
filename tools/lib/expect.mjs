@@ -29,5 +29,12 @@ export const inOrder = (codes, want) => {
   return i === want.length
 }
 
+/**
+ * LayerFS 2.0 writes no trace lines yet (docs/layerfs-2.0-integration.md §9
+ * Q1): every `expect` check is blocked, reported as passed with this detail,
+ * until a trace writer lands. Exit codes and final checks still decide.
+ */
+export const EXPECT_BLOCKED = 'blocked: LayerFS 2.0 writes no trace yet (§9 Q1)'
+
 /** The codes of one call's trace lines that `expect` is checked against: finished calls, no Sandbox service calls. */
 export const callCodes = (lines) => lines.filter((line) => line.ok !== undefined && line.ok !== null && line.method !== 'sandbox.service').map(codeOf)

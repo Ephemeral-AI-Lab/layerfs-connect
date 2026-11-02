@@ -23,7 +23,9 @@ import { existsSync, readdirSync, readFileSync, renameSync, rmSync, statSync, wr
 import { basename, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { compileScenario } from '../../tools/lib/scenario.mjs'
-import { keyOf, missing, notePostgresql, openRuntime, storeOf } from '../config.js'
+import { projectRef } from '../config.js'
+import { layerfs } from '../layerfs.js'
+import { placeRun } from './folder.js'
 import { closeRunSandboxes, Launch, Run } from './run.js'
 import { scopedScenario } from './scope.js'
 import { piLog, trajectory, writeNotes } from './trajectory.js'
@@ -178,10 +180,8 @@ export class RunManager extends EventEmitter {
   async sweep() {
     for (const record of this.records.values()) {
       if (record.kind === 'live' || record.state === 'passed' || ACTIVE.has(record.state) || record.swept !== false || hostAlive(record.host)) continue
-      // a PostgreSQL Store's project has no volume (layerfs#506 d)
-      if (!record.volume && !(await notePostgresql(this.spec, record.project).catch(() => false))) continue
-      // an older record (before scopes): its project was reset by a newer replay, so nothing of it is left to close
-      if (!record.scopeDir && this.newestOf(record.project)?.id !== record.id) continue
+      // a LayerFS 1.1.0 record (a bare project key) is read-only: its Sandboxes were never on this home
+      if (!String(record.project ?? '').includes('/') || !record.scopeDir) continue
       try {
         await closeRunSandboxes(this.spec, record)
       } catch (e) {
@@ -199,25 +199,17 @@ export class RunManager extends EventEmitter {
     return new Set([...this.live.values()].filter((r) => ACTIVE.has(r.state) && r.kind !== 'live').map((r) => r.launch ?? r.id)).size + this.starting
   }
 
-  /** The newest run recorded on LayerFS project `name`. */
-  newestOf(name) {
-    let newest = null
-    for (const r of this.allRuns()) if (r.project === name && (!newest || r.started > newest.started)) newest = r
-    return newest
-  }
-
   /**
    * Starts scenario `id` on LayerFS project `project`, which must be there:
    * the run sets up /<scenario>_<n>/ on a trunk Branch of its own and plays
    * there (run.js), whatever else plays on the project.
    */
-  async start(id, { project = null } = {}) {
+  async start(id, { project = null, machine = null } = {}) {
     const c = this.load().find((x) => x.demo.id === id)
     if (!c) throw refuse('NotFound', 404, `no scenario named ${id}`)
+    if (c.demo.scenario.blocked) throw refuse('Unsupported', 409, `${id} comes with a later LayerFS: it ${c.demo.scenario.blocked}`)
     if (project === null) throw refuse('InvalidInput', 400, 'name the project to play the scenario on')
-    checkProject(project)
-    const gaps = missing(this.spec)
-    if (gaps.length) throw refuse('NotConfigured', 409, `LayerFS is not configured: set ${gaps.join(' and ')} in Settings`)
+    project = checkProject(project)
     if (this.playing() >= MAX_PLAYING) throw refuse('Busy', 409, `${MAX_PLAYING} scenarios are playing; stop one or wait for one to end`)
     this.starting++
     let runs
@@ -225,8 +217,9 @@ export class RunManager extends EventEmitter {
       if (c.demo.scenario.seed && !(await optional('../seed.js'))) throw refuse('NotReady', 409, `${id} is a seed demo, and host/seed.js is not there yet`)
       // the startup sweep may still be closing an interrupted run's Sandboxes
       await this.sweeping
-      const runtime = await openRuntime(this.spec)
-      await playable(this.spec, await runtime.project.list(), project)
+      await playable(this.spec, project)
+      // Sandboxes follow the Store: a run on another machine moves the project's Store there first
+      if (machine) await placeRun(this.spec, project, await checkMachine(this.spec, machine))
       runs = this.makeRuns(c.demo, project)
       for (const run of runs) this.live.set(run.id, run)
     } finally {
@@ -239,18 +232,15 @@ export class RunManager extends EventEmitter {
   /** Every scenario on `project` at once, each in its own folder: their first runs' summaries. */
   async startAll({ project = null } = {}) {
     if (project === null) throw refuse('InvalidInput', 400, 'name the project to play the scenarios on')
-    checkProject(project)
-    const gaps = missing(this.spec)
-    if (gaps.length) throw refuse('NotConfigured', 409, `LayerFS is not configured: set ${gaps.join(' and ')} in Settings`)
-    const all = this.load()
+    project = checkProject(project)
+    const all = this.load().filter((c) => !c.demo.scenario.blocked)
     if (this.playing() + all.length > MAX_PLAYING) throw refuse('Busy', 409, `${this.playing()} scenarios are playing; all ${all.length} more would pass ${MAX_PLAYING}`)
     this.starting += all.length
     const launched = []
     try {
       if (all.some((c) => c.demo.scenario.seed) && !(await optional('../seed.js'))) throw refuse('NotReady', 409, 'host/seed.js is not there yet')
       await this.sweeping
-      const runtime = await openRuntime(this.spec)
-      await playable(this.spec, await runtime.project.list(), project)
+      await playable(this.spec, project)
       for (const c of all) {
         const runs = this.makeRuns(c.demo, project)
         for (const run of runs) this.live.set(run.id, run)
@@ -428,29 +418,25 @@ const pick = (r) => ({ ...Object.fromEntries(SUMMARY.map((k) => [k, r[k] ?? null
  */
 const started = (a) => a.state !== 'waiting' && !(a.parent && a.state === 'stopped' && !a.done)
 
-/** A LayerFS project name, as the runtime takes it. */
-/** A run's id names its folder: a shared Store's project key `store/name` becomes `store.name`. */
+/** A run's id names its folder: the project key `store/name` becomes `store.name`. */
 const runName = (key) => key.replace('/', '.')
 
-/**
- * The project `key` names, when scenarios can play on it: refused when it
- * is not there. A project of a PostgreSQL Store plays too (layerfs#506 d):
- * its connection's URL is noted for its runs' calls and Sandboxes.
- */
-async function playable(spec, list, key) {
-  const found = list.find((p) => keyOf(p) === key)
-  if (!found) throw refuse('NotFound', 404, `no LayerFS project named ${key}`)
-  if (found.kind === 'postgresql' && !(await notePostgresql(spec, { name: found.name, store: storeOf(found), shared: true }))) {
-    throw refuse('Unsupported', 409, `${found.name} is in the PostgreSQL Store ${storeOf(found)}, whose connection this host does not hold`)
-  }
-  return found
+/** The project `key` names (project.get), when scenarios can play on it: refused when it is not there. */
+const playable = (spec, key) => layerfs(spec).project.get(key)
+
+/** `machine`, when this home has it (machine.list): `-machine <name>`. */
+async function checkMachine(spec, machine) {
+  const names = ((await layerfs(spec).machine.list()).machines ?? []).map((m) => m.name)
+  if (!names.includes(machine)) throw refuse('InvalidInput', 400, `no machine named ${machine}; this home has ${names.join(', ')}`)
+  return machine
 }
 
-/** A project key: a LayerFS project name, or `store/name` for a project of a shared Store (layerfs#506). */
+/** A project key `<store>/<project>`; a bare name is refused. */
 function checkProject(key) {
-  const NAME = /^[a-z0-9](?:[a-z0-9_.-]{0,61}[a-z0-9])?$/
-  if (typeof key !== 'string' || !key.split('/').every((part) => NAME.test(part)) || key.split('/').length > 2) {
-    throw refuse('InvalidInput', 400, 'the project is a LayerFS project name (lowercase letters, digits, dots, dashes and underscores), or store/name')
+  try {
+    return projectRef(key).key
+  } catch (error) {
+    throw refuse('InvalidInput', 400, error.message)
   }
 }
 

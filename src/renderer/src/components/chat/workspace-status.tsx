@@ -3,6 +3,7 @@ import { CircleAlert, FolderOpen, GitBranch, GitCommitVertical, LoaderCircle } f
 import type { AgentWorkspace } from '@shared/agent-api'
 import { projectLabel } from '@shared/host-api'
 
+import { GapLine } from '@/components/gap-line'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
@@ -30,11 +31,11 @@ export function WorkspaceStatus({ project, workspace, started, onOpenProject }: 
   const busy = workspace && ['pending', 'preparing', 'running', 'saving'].includes(workspace.state)
   const saved = workspace?.state === 'ready' && workspace.lastSaved !== null
   return (
-    <section aria-label={t("LayerFS workspace")} className="mx-auto w-full max-w-4xl shrink-0 px-6 pb-2">
+    <section aria-label={t("LayerFS workspace")} className="chat-content-gutter w-full shrink-0 pb-2">
       <div className="min-w-0 rounded-xl border border-foreground/[0.06] bg-foreground/[0.025] px-3 py-2 text-[11px]">
         <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1.5">
           <div className="flex min-w-0 flex-1 basis-40 items-center gap-1.5 text-foreground/80">
-            <GitBranch className="size-3.5 shrink-0 text-primary" />
+            <GitBranch className="size-3.5 shrink-0 text-(--icon-accent)" />
             <span className="truncate" title={workspace?.branch ? `${projectLabel(project)} · ${workspace.branch}` : projectLabel(project)}>{workspace?.branch ?? projectLabel(project)}</span>
           </div>
           <span role="status" className={cn('flex shrink-0 items-center gap-1.5 text-muted-foreground', workspace?.state === 'error' && 'text-destructive')}>
@@ -52,6 +53,7 @@ export function WorkspaceStatus({ project, workspace, started, onOpenProject }: 
           </div>
         ) : !started && <p className="mt-1 text-muted-foreground">{t("Changes save automatically to this session’s branch. Main stays unchanged.")}</p>}
         {workspace?.error && <p role="alert" className="mt-1.5 break-words text-destructive">{workspace.error}</p>}
+        {workspace && <GapLine what="Live output, Stop and background commands in this Workspace" className="mt-1.5 text-[10.5px]" />}
       </div>
     </section>
   )

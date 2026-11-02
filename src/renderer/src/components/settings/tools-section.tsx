@@ -12,7 +12,6 @@ export function ToolsSection() {
   const caps = useCapabilities()
   const { data, pending } = caps
   return <div className="st-section" data-testid="tools-section">
-    <h2 className="st-title">{t('Tools')}</h2>
     <p className="st-intro">{t('What the agents can call. A switch here applies to all agents; one agent’s switches are in Agents.')}</p>
     <CapabilityStatus caps={caps} />
     {data?.extensions.map((extension) => {

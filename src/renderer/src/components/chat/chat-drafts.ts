@@ -5,6 +5,7 @@ type Draft = { text: string; attachments: AgentAttachment[]; limits?: AgentLimit
 const prefix = 'connect.agent.draft.'
 const cache = new Map<string, Draft>()
 const versions = new Map<string, number>()
+const discarded = new Set<string>()
 const blank = (): Draft => ({ text: '', attachments: [] })
 export const sessionDraftKey = (id: string) => `session:${id}`
 export const newDraftKey = (project: string, cwd: string) => `new:${JSON.stringify(project ? ['project', project] : ['folder', cwd])}`
@@ -36,7 +37,19 @@ async function writeSaved(key: string, value: Draft) {
     transaction.onabort = () => reject(transaction.error)
   })
 }
+
+/** Delete every part of a removed chat's draft, including saves still in flight. */
+export async function discardSessionDraft(id: string): Promise<void> {
+  const key = sessionDraftKey(id)
+  discarded.add(key)
+  versions.set(key, (versions.get(key) ?? 0) + 1)
+  cache.delete(key)
+  try { localStorage.removeItem(prefix + key) } catch { /* IndexedDB is cleared independently. */ }
+  try { await writeSaved(key, blank()) } catch { /* A local storage failure cannot undo the host's deletion. */ }
+}
+
 function quickRead(key: string): Draft {
+  if (discarded.has(key)) return blank()
   if (cache.has(key)) return cache.get(key)!
   try {
     const saved = JSON.parse(localStorage.getItem(prefix + key) ?? 'null')
@@ -54,7 +67,7 @@ export function useChatDraft(initialKey: string) {
   const mounted = useRef(true)
 
   function persist(snapshot = { ...current.current }) {
-    if (!snapshot.dirty) return
+    if (!snapshot.dirty || discarded.has(snapshot.key)) return
     const version = (versions.get(snapshot.key) ?? 0) + 1
     versions.set(snapshot.key, version)
     try {
@@ -78,7 +91,7 @@ export function useChatDraft(initialKey: string) {
     const { key, generation } = current.current
     if (current.current.loaded) return
     void readSaved(key).then((saved) => {
-      if (!mounted.current || current.current.key !== key || current.current.generation !== generation) return
+      if (!mounted.current || discarded.has(key) || current.current.key !== key || current.current.generation !== generation) return
       const state = current.current
       state.value = { text: state.textTouched ? state.value.text : saved.text || state.value.text, attachments: state.attachmentsTouched ? state.value.attachments : saved.attachments, limits: state.settingsTouched ? state.value.limits : saved.limits ?? state.value.limits }
       state.loaded = true
@@ -89,6 +102,7 @@ export function useChatDraft(initialKey: string) {
     }).catch(() => { if (mounted.current && current.current.key === key) { setReady(true); setStorageError('Saved attachments could not be loaded. Your typed draft is still available.') } })
   }
   function change(value: Draft, field: 'text' | 'attachments' | 'limits') {
+    if (discarded.has(current.current.key)) return
     current.current.value = value
     current.current.dirty = true
     if (field === 'text') current.current.textTouched = true
@@ -110,6 +124,7 @@ export function useChatDraft(initialKey: string) {
     else hydrate()
   }
   function clear(key: string, sent?: Draft) {
+    if (discarded.has(key)) return
     const value = current.current.key === key ? current.current.value : cache.get(key)
     if (sent && value && (value.text !== sent.text || value.attachments.length !== sent.attachments.length || value.attachments.some((item, index) => item.id !== sent.attachments[index].id || item.data !== sent.attachments[index].data))) return
     const cleared = { ...blank(), limits: value?.limits }

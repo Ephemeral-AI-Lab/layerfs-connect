@@ -40,7 +40,7 @@ export function SubscriptionShortcuts({ providers, disabled, onSignIn }: {
         onClick={() => onSignIn(p.id)}
         className="inline-flex h-8 min-w-0 items-center gap-1.5 rounded-full border border-foreground/[0.07] bg-background/50 px-3 text-[11px] font-medium text-foreground/85 outline-none backdrop-blur-xs transition-colors hover:border-primary/25 hover:bg-primary/[0.06] hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
       >
-        <LogIn className="size-3.5 shrink-0 text-primary" />
+        <LogIn className="size-3.5 shrink-0 text-(--icon-accent)" />
         <span className="truncate">{t(p.signIn!.label)}</span>
       </button>)}
     </div>
@@ -185,7 +185,7 @@ export function ModelSignIn({ provider: p, autoStart, onAutoStarted, onSignedIn,
 
   return <div className="space-y-3 rounded-2xl border border-primary/15 bg-primary/[0.035] px-3.5 py-3">
     <div className="flex flex-wrap items-center gap-3">
-      <span className="flex size-7 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+      <span className="flex size-7 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-(--icon-accent)">
         <LogIn className="size-3.5" />
       </span>
       <span className="min-w-0 flex-1">

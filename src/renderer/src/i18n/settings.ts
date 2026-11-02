@@ -159,7 +159,7 @@ export const settingsZh: Record<string, string> = {
   "Could not copy. Select the message text and copy it manually.": "复制失败，请选中消息文本后手动复制。",
   "Revert before this message?": "回滚到此消息之前？",
   "Copy before this message?": "复制此消息之前的对话？",
-  "Duplicate chat?": "复制对话？",
+  "Duplicate chat?": "创建对话副本？",
   "Restore & send": "恢复并发送",
   "Revert conversation": "回滚对话",
   "Create copy": "创建副本",

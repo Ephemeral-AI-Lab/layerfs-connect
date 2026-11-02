@@ -1,5 +1,16 @@
 // Chinese for the Projects screens: English source text -> zh-CN.
 export const projectsZh: Record<string, string> = {
+  // project history
+  'Search branches or commits': '搜索分支或提交',
+  'Open branches': '未结束',
+  'Finished branches': '已结束',
+  'Timeline': '时间线',
+  '{count} entries': '{count} 条记录',
+  'Locate selected branch': '定位当前分支',
+  'Return to latest': '返回最新',
+  'No file changes': '没有文件变更',
+  'Select a commit to view details': '选择提交查看详情',
+  'is not available in this history.': '暂未找到该历史记录。',
   // sidebar and Projects page
   '{name} in Store {store}': '{name}，位于存储 {store}',
   '”. Search by name, Store or source folder.': '”的项目。可按名称、存储或源文件夹搜索。',

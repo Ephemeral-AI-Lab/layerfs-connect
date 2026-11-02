@@ -52,6 +52,24 @@ export function sameTarget(a: Selection, b: Selection): boolean {
   return true
 }
 
+/** Removes a deleted chat from open tabs, navigation history and recently closed targets. */
+export function withoutSession<T extends TabTarget & { back?: TabPlace[]; forward?: TabPlace[] }>(targets: T[], sessionId: string): T[] {
+  const matches = (target: Pick<TabTarget, 'selected' | 'chat'>) => target.selected.kind === 'nav'
+    && target.selected.id === 'chat'
+    && (target.selected.session || target.chat?.session) === sessionId
+  const history = (items?: TabPlace[]) => {
+    if (!items?.some(matches)) return items
+    const kept = items.filter((place) => !matches(place))
+    return kept.length ? kept : undefined
+  }
+  return targets.filter((target) => !matches(target)).map((target) => {
+    const back = history(target.back)
+    const forward = history(target.forward)
+    const chat = target.chat?.session === sessionId ? { ...target.chat, session: undefined } : target.chat
+    return back === target.back && forward === target.forward && chat === target.chat ? target : { ...target, chat, back, forward }
+  })
+}
+
 function validSelection(value: unknown): value is Selection {
   if (!value || typeof value !== 'object') return false
   const s = value as Record<string, unknown>
@@ -135,6 +153,8 @@ export interface TabsApi {
   close: (id: string, instead?: TabTarget) => void
   /** Closes every tab that matches; opens `fallback` when none is left. */
   closeWhere: (match: (tab: Tab) => boolean) => void
+  /** Forgets a deleted conversation, including Back, Forward and recently closed tabs. */
+  forgetSession: (sessionId: string) => void
   /** Brings back the most recently closed tab. */
   reopen: () => void
   move: (id: string, toIndex: number) => void
@@ -218,6 +238,16 @@ export function useTabs(fallback: () => TabTarget, start?: TabTarget): TabsApi {
     const ids = new Set(current.current.tabs.filter(match).map((t) => t.id))
     if (ids.size) setState((s) => remove(s, ids))
   }, [remove])
+  const forgetSession = useCallback((sessionId: string) => {
+    closed.current = withoutSession(closed.current, sessionId)
+    setState((s) => {
+      const tabs = withoutSession(s.tabs, sessionId)
+      const kept = new Set(tabs.map((tab) => tab.id))
+      const ids = new Set(s.tabs.filter((tab) => !kept.has(tab.id)).map((tab) => tab.id))
+      const next = remove(s, ids)
+      return tabs.length ? { ...next, tabs } : next
+    })
+  }, [remove])
   const reopen = useCallback(() => {
     const target = closed.current.pop()
     if (target) setState((s) => openIn(s, target, true))
@@ -238,5 +268,5 @@ export function useTabs(fallback: () => TabTarget, start?: TabTarget): TabsApi {
   }), [])
 
   const active = useMemo(() => state.tabs.find((t) => t.id === state.active) ?? state.tabs[0], [state])
-  return { tabs: state.tabs, active, open, openHere, go: goTo, activate, activateIndex, cycle, close, closeWhere, reopen, move, update }
+  return { tabs: state.tabs, active, open, openHere, go: goTo, activate, activateIndex, cycle, close, closeWhere, forgetSession, reopen, move, update }
 }

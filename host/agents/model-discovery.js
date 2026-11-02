@@ -4,6 +4,19 @@ const supportedApis = new Set(['openai-completions', 'openai-responses', 'anthro
 const positiveInteger = (...values) => values.find((value) => Number.isSafeInteger(value) && value > 0)
 const nonempty = (...values) => values.find((value) => typeof value === 'string' && value.trim())?.trim()
 
+/** Only the endpoint can declare image support; missing or empty metadata is unknown. */
+function modelInput(model) {
+  const modalities = [model.architecture?.input_modalities, model.input_modalities, model.input]
+    .find((value) => Array.isArray(value) && value.length && value.every((type) => typeof type === 'string'))
+  if (modalities) {
+    const input = modalities.filter((type) => type === 'text' || type === 'image')
+    if (input.length) return [...new Set(input)]
+  }
+  const images = [model.capabilities?.image_input?.supported, model.capabilities?.vision?.supported, model.capabilities?.vision]
+    .find((value) => typeof value === 'boolean')
+  if (images !== undefined) return images ? ['text', 'image'] : ['text']
+}
+
 function parseBaseUrl(value) {
   let url
   try { url = new URL(value) } catch { throw new Error('Enter a valid API URL to fetch models.') }
@@ -22,10 +35,12 @@ function modelDetails(model, api) {
   const id = google ? rawId.replace(/^models\//, '') : rawId
   if (!id) return
   const reasoning = model.capabilities?.thinking?.supported ?? model.reasoning ?? model.thinking
+  const input = modelInput(model)
   return {
     id,
     name: nonempty(model.display_name, model.displayName, !google && model.name) ?? id,
     ...(typeof reasoning === 'boolean' ? { reasoning } : {}),
+    ...(input ? { input } : {}),
     ...Object.fromEntries(Object.entries({
       contextWindow: positiveInteger(model.max_input_tokens, model.inputTokenLimit, model.context_window, model.context_length),
       maxTokens: positiveInteger(model.max_tokens, model.outputTokenLimit, model.max_output_tokens, model.top_provider?.max_completion_tokens),

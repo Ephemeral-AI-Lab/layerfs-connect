@@ -41,6 +41,24 @@ the move to format v3; each replay's own CONVERSION.md lists what its
 conversion kept and dropped. Do not edit a replay folder by hand: rerun
 `convert.mjs`.
 
+## On LayerFS 2.0
+
+The scenarios are written for LayerFS 2.0's `layerfs` command
+(`tools/lib/layerfs2.mjs` rewrote them, and `tools/port-scenarios.mjs` and
+`tools/replay/convert.mjs` apply it): every call names its project first
+(`"$LAYERFS_CONNECT_PROJECT"`), `fs` is `file`, `branch list_commits` is
+`commit list`, and `sandbox create` names its Sandbox (`sb<k>`) on
+`"$LAYERFS_CONNECT_MACHINE"`. The run's scope makes names unique in the home.
+
+- **Play:** checkpoints, conflicts, crew, parallel, shop, teams.
+- **Blocked** (`"blocked"` in scenario.json, refused at start with that line):
+  agents, sandbox and tour need background processes (§9 Q2); depot and merge
+  use the 1.1.0 JS SDK and are not rewritten yet.
+- `expect` checks are blocked while LayerFS 2.0 writes no trace (§9 Q1): each
+  reports "blocked" and passes; exit codes and final checks still decide.
+- `/scenario <name> -machine <machine>` runs a chat's Sandboxes on another
+  machine; the project's Store moves there first.
+
 ## A folder
 
 ```
@@ -309,6 +327,7 @@ What `tools/port-scenarios.mjs` changed, with counts over all ten:
 | `DSH_LAYERFS_CLI` (the layerfs command's path) | none: `layerfs` is on PATH | not in a scenario; the port refuses it |
 | `DSH_SOURCE` (dsh's client build) | none | not ported |
 | fixture `../../demo-workspace` | `../../fixtures/demo-workspace` | 7 scenarios |
+| a script's `sed -i "<expr>" <file>`, `\|` alternation (GNU only) | `sed [-E] -i.bak "<expr>" <file> && rm <file>.bak`, a plain `\|` under `-E`, so a `mac` Sandbox's BSD sed reads it too (`tools/lib/portable-sed.mjs`) | 4 steps (tour 1, merge 3) |
 | "the configured Host runtime image" | "the configured runtime image" | the replays' CONVERSION.md (convert.mjs writes it) |
 | "the Host's own Branch poll (`packages/host/src/storage.js`)" | "the recording host's own Branch poll" | CONVERSION.md |
 | loader rule: an SDK step uses `DSH_LAYERFS_(SDK\|BACKEND)` | uses `@layerfs/(agent\|backend)` | the form check |

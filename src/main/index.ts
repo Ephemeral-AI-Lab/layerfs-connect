@@ -37,9 +37,12 @@ function startHost(): Promise<HostAddress> {
       if ('error' in address) console.error(`[host] ${address.error}`)
       resolve(address)
     }
-    // stdin stays piped: the host exits when it closes (this process died)
-    const child = spawn(node, ['--import', join(dir, 'resolve-layerfs.js'), join(dir, 'main.js')], {
+    // stdin stays piped: the host exits when it closes (this process died).
+    // Every LayerFS call runs once on the libuv threadpool and long execs hold a
+    // thread each, so the host gets more than the default 4.
+    const child = spawn(node, [join(dir, 'main.js')], {
       stdio: ['pipe', 'pipe', 'pipe'],
+      env: { ...process.env, UV_THREADPOOL_SIZE: process.env.UV_THREADPOOL_SIZE || '16' },
     })
     hostProcess = child
     const timer = setTimeout(() => done({ error: `The Connect host did not start within ${READY_MS / 1000} s.` }), READY_MS)

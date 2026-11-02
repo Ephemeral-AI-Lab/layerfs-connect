@@ -1,6 +1,6 @@
 // A chat's Trace (agents/trace.js): Pi's log and the chat's trace lines read
 // as a run's Trace rows (runs/trajectory.js).
-//   node --import ./host/resolve-layerfs.js --test host/test/chat-trace.test.js
+//   node --test host/test/chat-trace.test.js
 import assert from 'node:assert/strict'
 import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'

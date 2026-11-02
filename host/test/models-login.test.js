@@ -3,7 +3,7 @@
 // stand-in for pi's runtime whose login() plays the openai-codex flow
 // (choose a method; the browser way shows a URL and also takes a pasted
 // redirect URL; the device way shows a code and waits). No network, no browser.
-//   node --import ./host/resolve-layerfs.js --test host/test/models-login.test.js
+//   node --test host/test/models-login.test.js
 import assert from 'node:assert/strict'
 import { mkdtempSync, readFileSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'

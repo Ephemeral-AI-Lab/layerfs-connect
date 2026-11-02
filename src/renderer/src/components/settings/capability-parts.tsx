@@ -44,9 +44,10 @@ export function ExtensionGroup({ extension, count, children }: { extension: Agen
  * One extension, tool or hook: its name and tags, what it is, facts, and a
  * switch. A locked switch shows why it cannot be used.
  */
-export function CapabilityRow({ id, name, mono, tags, description, children, enabled, locked, disabled, busy, onChange }: {
+export function CapabilityRow({ id, name, identifier, mono, tags, description, children, enabled, locked, disabled, busy, onChange }: {
   id: string
   name: string
+  identifier?: string
   mono?: boolean
   tags?: ReactNode
   description?: ReactNode
@@ -62,7 +63,10 @@ export function CapabilityRow({ id, name, mono, tags, description, children, ena
   return <li className="st-row st-row-dense" data-item={id} data-enabled={enabled}>
     <div className="st-row-head">
       <span className="st-row-identity">
-        {mono ? <code className="st-row-name st-mono">{name}</code> : <span className="st-row-name">{name}</span>}
+        <span className="st-row-heading">
+          {mono ? <code className="st-row-name st-mono">{name}</code> : <span className="st-row-name">{name}</span>}
+          {identifier && <code className="st-row-identifier">{identifier}</code>}
+        </span>
         {tags}
       </span>
       <span className="st-row-actions">

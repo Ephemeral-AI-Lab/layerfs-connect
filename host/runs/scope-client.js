@@ -1,29 +1,38 @@
-// @layerfs/agent's client.js as a scenario run's scripts load it
-// (resolve-layerfs.js points the SDK's imports of client.js here when
-// LAYERFS_CONNECT_SCOPE is set): the same module, with each call first put in
-// the run's scope (scope.js), then traced and sent as usual. Everything else
-// is the real module's.
-import * as real from 'layerfs-connect:real-client'
+// The `layerfs` package as a scenario run's scripts load it: the real
+// package, with every call put through the run's scope (scope.js) when
+// LAYERFS_CONNECT_SCOPE names one. A run's folder holds
+// node_modules/layerfs, which re-exports this module (shim.js). The call
+// table names each positional, so the scope sees named arguments and the
+// real call gets its positionals back in the table's order.
+import * as real from 'layerfs'
 import { Scope, SCOPE_ENV } from './scope.js'
 
-export * from 'layerfs-connect:real-client'
+const scopeDir = process.env[SCOPE_ENV]
+const scope = scopeDir ? Scope.open(scopeDir) : null
 
-const scope = Scope.open(process.env[SCOPE_ENV])
-
-export function invoke(op, args, options, transport) {
-  return scope.call(op, args, (o, a) => real.invoke(o, a, options, transport))
+/** `client`'s families with each call scoped. */
+function scoped(client) {
+  if (!scope) return client
+  const out = { ...client }
+  for (const spec of real.table) {
+    out[spec.family] = out[spec.family] === client[spec.family] ? { ...client[spec.family] } : out[spec.family]
+    out[spec.family][spec.call] = async (...given) => {
+      const options = given.length > spec.args.length || (given.length && typeof given.at(-1) === 'object' && given.at(-1) !== null && !Array.isArray(given.at(-1)) && spec.args[given.length - 1]?.kind !== 'json') ? given.pop() : {}
+      const named = Object.fromEntries(spec.args.map((a, i) => [a.name, given[i]]).filter(([, v]) => v !== undefined))
+      return scope.call(`${spec.family}.${spec.call}`, named, (op, args) => {
+        const [family, call] = op.split('.')
+        const target = real.table.find((t) => t.family === family && t.call === call)
+        return client[family][call](...target.args.map((a) => args[a.name]), options)
+      })
+    }
+  }
+  return Object.freeze(out)
 }
 
-export function invokeBackend(op, args, options, transport) {
-  return scope.call(op, args, (o, a) => real.invokeBackend(o, a, options, transport))
-}
-
-export function invokeClient(client, op, args) {
-  real.live(client)
-  return invoke(op, { ...real.projectArgs(client), ...real.storeArgs(client), ...args }, client.options, real.transportOf(client))
-}
-
-export function invokeClientBackend(client, op, args) {
-  real.live(client)
-  return invokeBackend(op, { ...real.projectArgs(client), ...real.storeArgs(client), ...args }, client.options, real.transportOf(client))
-}
+export const table = real.table
+export const families = real.families
+export const LayerFSError = real.LayerFSError
+export const client = (options) => scoped(real.client(options))
+const fallback = scoped(real.default)
+export const { project, branch, commit, file, sandbox, workspace, machine, store, backup } = fallback
+export default { ...fallback, client, table, families, LayerFSError }

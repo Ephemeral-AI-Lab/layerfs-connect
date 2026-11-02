@@ -3,7 +3,7 @@
 // run passed (for a scenario of several sessions: every session's run). It
 // plays on project <key> (a name, or store/name in a shared Store), which must
 // be there, in a folder /<demo>_<n>/ of its own (runs/folder.js).
-//   node --import ./host/resolve-layerfs.js host/run-demo.js <demo> --project <key> [--state <dir>] [--scenarios <dir>]
+//   node host/run-demo.js <demo> --project <key> [--state <dir>] [--scenarios <dir>]
 import { resolveSpec } from './config.js'
 import { RunManager } from './runs/index.js'
 

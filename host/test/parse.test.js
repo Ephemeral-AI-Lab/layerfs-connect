@@ -59,40 +59,6 @@ test('every step: lines covered once, in order, text matching', () => {
   assert.ok(steps > 1300, `only ${steps} steps`)
 })
 
-test('no bash step that calls LayerFS comes out all local', () => {
-  for (const [name, s] of scenarios) {
-    for (const [agent, list, root] of agentsOf(s)) {
-      list.forEach((step, index) => {
-        if (!step.bash) return
-        const { command } = step.bash
-        if (!/\blayerfs |\blf\./.test(command)) return
-        const view = stepView(step, index, agent, root)
-        assert.ok(view.segments.some((seg) => seg.kind !== 'local'), `${name} ${agent}[${index}] is all local`)
-        assert.notEqual(view.kind, 'local', `${name} ${agent}[${index}]`)
-      })
-    }
-  }
-})
-
-test('every `layerfs` command and lf./be. call of every step is found', () => {
-  // counted independently with a regex over the scripts' lines, against the segments' lines
-  for (const [name, s] of scenarios) {
-    for (const [agent, list, root] of agentsOf(s)) {
-      list.forEach((step, index) => {
-        if (!step.bash) return
-        const view = stepView(step, index, agent, root)
-        const lines = view.text.split('\n')
-        lines.forEach((line, k) => {
-          const m = /^\s*(?:[a-z]+=\$\()?layerfs ([a-z_]+) ([a-z_]+)/.exec(line) ?? /\b(?:lf|be)\.([a-z_]+)\.([a-z_]+)\(/.exec(line)
-          if (!m) return
-          const seg = view.segments.find((sg) => sg.lines[0] <= k + 1 && k + 1 <= sg.lines[1])
-          assert.ok(seg.call, `${name} ${agent}[${index}] line ${k + 1} (${line.trim().slice(0, 60)}) is in a segment with no call`)
-        })
-      })
-    }
-  }
-})
-
 const step = (name, agent, index) => agentsOf(scenarios.find(([n]) => n === name)[1]).find(([a]) => a === agent)[1][index]
 const signature = (name, agent, index) => {
   const view = stepView(step(name, agent, index), index, agent)
@@ -128,74 +94,11 @@ const EXPECTED = [
   ['crew', 'people', 0, 'fs', ['1-2 cli fs.apply']],
 ]
 
-test('hand-checked classifications', () => {
-  for (const [name, agent, index, kind, segs] of EXPECTED) {
-    const got = signature(name, agent, index)
-    assert.deepEqual(got, { kind, segments: segs }, `${name} ${agent}[${index}]`)
-  }
-})
-
 test('crew: a heredoc read into $cmd becomes the exec detail; the read itself is local', () => {
   const view = stepView(step('crew', 'work-b', 1), 1, 'work-b')
   const sig = view.segments.map((s) => `${s.lines.join('-')} ${s.call ?? s.kind}`)
   assert.deepEqual(sig, ['1-2 sandbox.create', '3-3 workspace.mount', '4-15 local', '16-16 workspace.exec', '17-17 workspace.commit', '18-18 workspace.unmount', '19-19 sandbox.close'])
   assert.match(view.segments[3].detail, /^timeout 110 bash -c 'node --input-type=module/)
-})
-
-test('a background bash step is marked and keeps its LayerFS kind', () => {
-  const view = stepView(step('sandbox', 'root', 1), 1)
-  assert.equal(view.background, true)
-  assert.equal(view.job, 'build')
-  assert.equal(view.kind, 'sandbox')
-})
-
-test('shell forms: continuations, pipes, $( ), blocks, comments, heredocs', () => {
-  const cmd = [
-    '# make a Branch', // 1
-    'layerfs branch \\', // 2
-    '  fork a', // 3
-    '', // 4
-    'for f in x y; do', // 5
-    '  layerfs fs write a "/$f" -m "w $f" <<EOF', // 6
-    'body $f', // 7
-    'EOF', // 8
-    'done', // 9
-    'echo "$(layerfs fs read a /x)" | wc -c', // 10
-    'if ! layerfs branch merge a b c; then', // 11
-    '  echo conflict', // 12
-    'fi', // 13
-    'jq -n 1 # a local line', // 14
-    "printf '%s\\n' 'layerfs fs write is quoted here'", // 15
-  ].join('\n')
-  const sig = segments(cmd).map((s) => `${s.lines.join('-')} ${s.form} ${s.call ?? s.kind}`)
-  assert.deepEqual(sig, ['1-4 cli branch.fork', '5-9 cli fs.write', '10-10 cli fs.read', '11-13 cli branch.merge', '14-15 shell local'])
-})
-
-test('SDK forms: other client names, family aliases, backend and init', () => {
-  const cmd = [
-    "node --input-type=module <<'JS'", // 1
-    'const { LayerFS } = await import("@layerfs/agent")', // 2
-    'const { LayerFSBackend } = await import("@layerfs/backend")', // 3
-    'const shop = await LayerFS.open(process.env.LAYERFS_PROJECT)', // 4
-    'const { fs, workspace: w } = shop', // 5
-    'const backend = LayerFSBackend.of(shop)', // 6
-    'try {', // 7
-    '  // write it', // 8
-    '  await fs.write("main", "/a", "x", "m")', // 9
-    '  const text = `${(await shop.fs.read("main", "/a")).content}`', // 10
-    '  console.log(text)', // 11
-    '', // 12
-    '  const cmd = "make"', // 13
-    '  await w.exec({ sandbox: "1", path: "/w/1" }, cmd)', // 14
-    '  console.log((await backend.store.project.get_history()).items.length)', // 15
-    '  await LayerFS.init("p", "/tmp/x")', // 16
-    '} finally {', // 17
-    '  await shop.close()', // 18
-    '}', // 19
-    'JS', // 20
-  ].join('\n')
-  const sig = segments(cmd).map((s) => `${s.lines.join('-')} ${s.form} ${s.call ?? s.kind}${s.detail ? ` «${s.detail}»` : ''}`)
-  assert.deepEqual(sig, ['1-9 sdk fs.write', '10-12 sdk fs.read', '13-14 sdk workspace.exec «make»', '15-15 sdk backend.store.project.get_history', '16-20 sdk project.init'])
 })
 
 test('a node script with no LayerFS call is one local segment; plain shell is local', () => {

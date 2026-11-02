@@ -5,8 +5,8 @@
 // again every second while it works. The project's state (Branches, Layers,
 // open Sandboxes) is reread while one works.
 import type { AgentSessionSummary } from '@shared/agent-api'
-import type { AgentRun, ProjectState, RunLive, RunState, RunSummary, TraceCall } from '@shared/host-api'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import type { AgentRun, ProjectState, RunLive, RunningCall, RunState, RunSummary, TraceCall } from '@shared/host-api'
+import { useEffect, useMemo, useState } from 'react'
 
 import { isProject } from '@/components/projects/store-facts'
 import { isLive } from '@/components/live/run-format'
@@ -90,10 +90,10 @@ export function projectRuns(chats: readonly AgentSessionSummary[] | undefined, p
     .sort((a, b) => b.started - a.started)
 }
 
-/** Its agents: root, then each agent its calls name (a subagent), under root. */
-function withAgents(run: RunSummary, calls: readonly TraceCall[]): RunSummary {
+/** Its agents: root, then each agent named by completed or in-flight calls. */
+export function withAgents(run: RunSummary, calls: readonly TraceCall[], running: readonly RunningCall[]): RunSummary {
   const root = run.agents[0]
-  const names = [...new Set(calls.map((call) => call.agent))].filter((name) => name !== root.name)
+  const names = [...new Set([...calls, ...running].map((call) => call.agent))].filter((name) => name !== root.name)
   if (!names.length) return run
   const child: AgentRun['state'] = isLive(run.state) ? 'running' : 'done'
   return { ...run, agents: [root, ...names.map((name) => ({ name, parent: root.name, state: child, done: 0, of: 0 }))] }
@@ -102,23 +102,24 @@ function withAgents(run: RunSummary, calls: readonly TraceCall[]): RunSummary {
 /** The runs `runs` (Live's shown ones), each with its calls and what it holds in LayerFS, kept current. */
 export function useLiveSessions(runs: readonly RunSummary[]): LiveSession[] {
   const [read, setRead] = useState<ReadonlyMap<string, { calls: TraceCall[]; live: RunLive }>>(() => new Map())
-  const reading = useRef(new Set<string>())
   const idsKey = runs.map((run) => `${run.id}:${isLive(run.state) ? 1 : 0}`).join(',')
 
   useEffect(() => {
     let alive = true
+    // A new run state needs its own final read, even while the previous effect's read finishes.
+    const reading = new Set<string>()
     const wanted = idsKey ? idsKey.split(',').map((item) => item.split(':')) : []
     setRead((m) => {
       const keep = new Map([...m].filter(([id]) => wanted.some(([w]) => w === id)))
       return keep.size === m.size ? m : keep
     })
     const load = (id: string) => {
-      if (reading.current.has(id)) return
-      reading.current.add(id)
+      if (reading.has(id)) return
+      reading.add(id)
       agentHost.live(id).then(
         (answer) => { if (alive) setRead((m) => new Map(m).set(id, answer)) },
         () => {}, // unreadable now: the next tick asks again
-      ).finally(() => reading.current.delete(id))
+      ).finally(() => reading.delete(id))
     }
     for (const [id] of wanted) load(id)
     const working = wanted.filter(([, on]) => on === '1').map(([id]) => id)
@@ -129,7 +130,9 @@ export function useLiveSessions(runs: readonly RunSummary[]): LiveSession[] {
 
   return useMemo(() => runs.map((run) => {
     const got = read.get(run.id)
-    return { run: withAgents(run, got?.calls ?? []), calls: got?.calls ?? [], live: got?.live ?? EMPTY_LIVE }
+    const calls = got?.calls ?? []
+    const live = got?.live ?? EMPTY_LIVE
+    return { run: withAgents(run, calls, live.running), calls, live }
   }), [runs, read])
 }
 

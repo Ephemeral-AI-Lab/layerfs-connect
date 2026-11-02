@@ -16,7 +16,6 @@ export function AgentsSection() {
   const titles = Object.fromEntries((data?.extensions ?? []).map((extension) => [extension.id, extension.title]))
   const waiting = !!data?.busy.length || !!pending
   return <div className="st-section" data-testid="agents-section">
-    <h2 className="st-title">{t('Agents')}</h2>
     <p className="st-intro">{t('Who does the work in a chat, and what each one gets. Switches here apply to one agent; Tools and Hooks switch them for all agents.')}</p>
     <CapabilityStatus caps={caps} />
     {data && <ul className="st-rows">

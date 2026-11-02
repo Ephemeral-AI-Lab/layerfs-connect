@@ -78,7 +78,8 @@ function statements(tokens) {
 
 /** The names LayerFS clients, backends and families go by in this script. */
 function aliases(tokens) {
-  const lf = new Set(['lf'])
+  // `import layerfs from "layerfs"` and `lf`; a client from layerfs.client(…) or client(…)
+  const lf = new Set(['lf', 'layerfs'])
   const be = new Set()
   const families = new Map()
   const v = (k) => tokens[k]?.v
@@ -87,6 +88,7 @@ function aliases(tokens) {
     let j = k + 2
     if (v(j) === 'await') j++
     if (v(j) === 'LayerFS' && v(j + 1) === '.' && (v(j + 2) === 'open' || v(j + 2) === 'init')) lf.add(v(k))
+    if ((v(j) === 'client' && v(j + 1) === '(') || (lf.has(v(j)) && v(j + 1) === '.' && v(j + 2) === 'client')) lf.add(v(k))
     if (v(j) === 'LayerFSBackend' && v(j + 1) === '.' && v(j + 2) === 'of') be.add(v(k))
   }
   for (let k = 0; k < tokens.length; k++) {

@@ -1,12 +1,12 @@
 import { useI18n } from '@/i18n'
-import { Archive, ArchiveRestore, CircleHelp, Copy, Download, LoaderCircle, MoreHorizontal, Pencil, Play, ShieldQuestion, WifiOff, X } from 'lucide-react'
+import { Archive, ArchiveRestore, CircleHelp, Clipboard, CopyPlus, FileJson, FileText, LoaderCircle, MoreHorizontal, Pencil, Play, ShieldQuestion, WifiOff, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import type { AgentModels, AgentSessionDetail, AgentSessionSummary, ChatScenario, ModelSelection } from '@shared/agent-api'
 import { projectKey, projectLabel, projectRef } from '@shared/host-api'
 
 import { ConnectMark } from '@/components/connect-mark'
 import { LfsProject } from '@/components/lfs-icons'
-import { AgentMessage } from '@/components/chat/agent-messages'
+import { ConversationMessages } from '@/components/chat/conversation-messages'
 import { ChildConversationView, SubagentsMenu, SubagentsSummary } from '@/components/chat/subagents'
 import { attachmentPayload, hydrateMessageAttachments } from '@/components/chat/attachments'
 import { newDraftKey, sessionDraftKey, useChatDraft } from '@/components/chat/chat-drafts'
@@ -27,11 +27,14 @@ import { ProjectView, type EmbeddedProjectView } from '@/components/projects/pro
 import { Tab, TabBar } from '@/components/motion/tabs'
 import { ThinkingLine } from '@/components/chat/markdown'
 import { Button } from '@/components/ui/button'
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
-import { agentHost } from '@/host/agent-client'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import { agentHost, isChatRemoved, onChatRemoved } from '@/host/agent-client'
 import { onHostConnection, onHostEvent, type HostConnection } from '@/host/client'
 import type { ProjectCatalog } from '@/host/use-projects'
-import { cn } from '@/lib/utils'
+import { cn, sortByLabelLength } from '@/lib/utils'
+import { imageInputSupport } from '@/lib/model-input'
+import { canCollapseLatestTask } from '@/lib/conversation-tasks'
+import { parseScenarioCommand } from '@/lib/scenario-command'
 import './chat.css'
 
 const LAST_SESSION = 'connect.agent.last-session'
@@ -41,9 +44,9 @@ const LAST_PROJECT = 'connect.agent.project'
 const SCENARIO_PROVIDER = 'scenario'
 const byUpdated = (a: AgentSessionSummary, b: AgentSessionSummary) => b.updated - a.updated
 const mergeHistory = (current: AgentSessionSummary[], incoming: AgentSessionSummary[], deleted: ReadonlySet<string>) => {
-  const all = new Map(current.filter((session) => !deleted.has(session.id)).map((session) => [session.id, session]))
+  const all = new Map(current.filter((session) => !deleted.has(session.id) && !isChatRemoved(session.id)).map((session) => [session.id, session]))
   for (const session of incoming) {
-    if (deleted.has(session.id)) continue
+    if (deleted.has(session.id) || isChatRemoved(session.id)) continue
     if (!all.has(session.id) || all.get(session.id)!.updated <= session.updated) all.set(session.id, session)
   }
   return [...all.values()].sort(byUpdated)
@@ -65,13 +68,13 @@ interface ChatHomeProps {
   onActiveSession?: (id: string | null) => void
 }
 
-/** The chat page's views: the conversation, the agent's Trace, and its project's Files, History and Sandboxes. */
+/** The chat page's views: the conversation, the agent's Trace, and its project's Files, Sandboxes and History. */
 type ChatView = 'chat' | 'trace' | EmbeddedProjectView
-const CHAT_VIEWS = ['chat', 'trace', 'files', 'history', 'sandboxes'] as const
+const CHAT_VIEWS = ['chat', 'trace', 'files', 'sandboxes', 'history'] as const
 const PROJECT_VIEWS: { id: EmbeddedProjectView; label: string }[] = [
   { id: 'files', label: 'Files' },
-  { id: 'history', label: 'History' },
   { id: 'sandboxes', label: 'Sandboxes' },
+  { id: 'history', label: 'History' },
 ]
 
 export function ChatHome({ projects, initialProject, initialSession, startNew, onOpenProject: openProjectPage, initialView, onView, onActiveSession }: ChatHomeProps) {
@@ -128,6 +131,8 @@ export function ChatHome({ projects, initialProject, initialSession, startNew, o
     pending: { fromId: string; view: number; targetId: string } | null
   }>({ sequence: 0, links: new Map(), pending: null })
   const deletedIds = useRef(new Set<string>())
+  const resetAfterRemoval = useRef(newSession)
+  resetAfterRemoval.current = newSession
   const scroller = useRef<HTMLDivElement>(null)
   const approvalsAnchor = useRef<HTMLDivElement>(null)
   const followBottom = useRef(true)
@@ -136,7 +141,7 @@ export function ChatHome({ projects, initialProject, initialSession, startNew, o
   const openChild = (childView && session?.children.find((child) => child.id === childView)) || null
 
   function update(detail: AgentSessionDetail) {
-    if (deletedIds.current.has(detail.id)) return
+    if (deletedIds.current.has(detail.id) || isChatRemoved(detail.id)) return
     const { messages: _messages, queued: _queued, tools: _tools, children: _children, approvals: _approvals, ...summary } = detail
     setSessions((all) => mergeHistory(all, [summary], deletedIds.current))
     if (activeId.current === detail.id) {
@@ -145,7 +150,7 @@ export function ChatHome({ projects, initialProject, initialSession, startNew, o
   }
 
   function activate(detail: AgentSessionDetail, useSessionModel = true, catalog = modelCatalog.current) {
-    if (deletedIds.current.has(detail.id)) return
+    if (deletedIds.current.has(detail.id) || isChatRemoved(detail.id)) return
     activeId.current = detail.id
     localStorage.setItem(LAST_SESSION, detail.id)
     if (!detail.project) setCwd(detail.cwd)
@@ -161,7 +166,7 @@ export function ChatHome({ projects, initialProject, initialSession, startNew, o
   function activateReplacement(detail: AgentSessionDetail, fromId: string, view: number) {
     update(detail)
     // HTTP and SSE can race; only the first result still on the source may navigate.
-    if (detail.id === fromId || deletedIds.current.has(detail.id) || activeId.current !== fromId || navigation.current !== view) return
+    if (detail.id === fromId || deletedIds.current.has(detail.id) || isChatRemoved(detail.id) || activeId.current !== fromId || navigation.current !== view) return
     nativeNavigation.current.pending = null
     navigation.current += 1
     skipRestore.current = true
@@ -214,7 +219,7 @@ export function ChatHome({ projects, initialProject, initialSession, startNew, o
       setCwd((value) => value || catalog.defaultCwd)
       setSessions((all) => mergeHistory(all, history, deletedIds.current))
       const last = activeId.current ?? initialSession ?? (skipRestore.current ? null : localStorage.getItem(LAST_SESSION))
-      if (last && history.some((s) => s.id === last && !s.archived)) {
+      if (last && !isChatRemoved(last) && history.some((s) => s.id === last && !s.archived)) {
         const detail = await agentHost.session(last)
         if (view === navigation.current) activate(detail, !catalog.selected, catalog)
       } else drafts.open(newDraftKey(project, cwd || catalog.defaultCwd))
@@ -227,21 +232,27 @@ export function ChatHome({ projects, initialProject, initialSession, startNew, o
 
   function refreshSession(id: string) {
     void agentHost.session(id).then(update, (e: Error) => {
-      if (!deletedIds.current.has(id) && activeId.current === id) setError(e.message)
+      if (!deletedIds.current.has(id) && !isChatRemoved(id) && activeId.current === id) setError(e.message)
     })
   }
 
   useEffect(() => {
-    if (initialSession) localStorage.setItem(LAST_SESSION, initialSession)
+    if (initialSession && !isChatRemoved(initialSession)) localStorage.setItem(LAST_SESSION, initialSession)
     else if (initialProject !== undefined) {
       localStorage.removeItem(LAST_SESSION)
       localStorage.setItem(LAST_PROJECT, initialProject)
     }
     void load()
+    const removalOff = onChatRemoved((id) => {
+      deletedIds.current.add(id)
+      setSessions((all) => all.filter((item) => item.id !== id))
+      drafts.clear(sessionDraftKey(id))
+      if (activeId.current === id) resetAfterRemoval.current()
+    })
     const connectionOff = onHostConnection(setConnection)
     const unsubscribe = onHostEvent((event) => {
       if (event.type === 'chat') update(event.session)
-      if (event.type === 'chat-navigate') navigateNative(event.fromId, event.sessionId)
+      if (event.type === 'chat-navigate' && !isChatRemoved(event.fromId) && !isChatRemoved(event.sessionId)) navigateNative(event.fromId, event.sessionId)
     }, () => {
       // Events are live, so read the current snapshot after a reconnect.
       const id = activeId.current
@@ -251,6 +262,7 @@ export function ChatHome({ projects, initialProject, initialSession, startNew, o
       navigation.current += 1
       activeId.current = null
       unsubscribe()
+      removalOff()
       connectionOff()
     }
   }, [])
@@ -311,6 +323,7 @@ export function ChatHome({ projects, initialProject, initialSession, startNew, o
   }
 
   async function openSession(id: string) {
+    if (isChatRemoved(id)) return
     setConversationAction(null)
     const view = ++navigation.current
     activeId.current = id
@@ -332,11 +345,12 @@ export function ChatHome({ projects, initialProject, initialSession, startNew, o
     const prompt = text.trim()
     if ((!prompt && !attachments.length) || !drafts.ready || pending || sendInFlight.current || conversationInFlight.current) return
     // `/scenario …` never goes to the model; without a LayerFS project it only explains
-    const scenario = /^\/scenario(?:\s+(\S+))?\s*$/.exec(prompt)
+    const scenario = parseScenarioCommand(prompt)
     if (scenario) {
       if (!(session ? session.project ?? session.scenario?.project : project)) setNotice(t("/scenario plays on a LayerFS project. Choose a project in Workspace, then try again."))
-      else if (scenario[1]) { setInput(''); void playScenario(scenario[1]) }
-      else setInput('/scenario ')
+      else if (!scenario.ok) setError(t(scenario.error, scenario.params))
+      else if (scenario.name) { setInput(''); void playScenario(scenario.name, scenario.machine) }
+      else setInput(prompt.endsWith(' ') ? prompt : `${prompt} `)
       return
     }
     // a scenario chat answers with its own script, whatever the composer's model is
@@ -346,8 +360,8 @@ export function ChatHome({ projects, initialProject, initialSession, startNew, o
       settings.open('models')
       return
     }
-    const chosenModel = scripted ? undefined : models?.models.find((item) => item.provider === selection?.provider && item.id === selection?.modelId)
-    if (attachments.some((item) => item.mimeType.startsWith('image/')) && !chosenModel?.input?.includes('image')) { setError("Choose a model that supports images, or remove the image attachments."); return }
+    const chosenModel = scripted ? undefined : currentModelMeta
+    if (attachments.some((item) => item.mimeType.startsWith('image/')) && imageInputSupport(chosenModel?.input) === false) { setError("Choose a model that supports images, or remove the image attachments."); return }
     const sentDraft = drafts.snapshot()
     const sentKey = drafts.key()
     sendInFlight.current = true
@@ -492,7 +506,6 @@ export function ChatHome({ projects, initialProject, initialSession, startNew, o
 
   const messages = session?.messages ?? []
   const visibleError = error || session?.error
-  const totalCost = session?.usage?.cost ?? messages.reduce((sum, message) => sum + (message.usage?.cost ?? 0), 0)
   const scenario = session?.scenario ?? null
   const ownModel = running || !!scenario
   const activeProvider = ownModel ? session?.provider : selection?.provider
@@ -540,14 +553,15 @@ export function ChatHome({ projects, initialProject, initialSession, startNew, o
   // `/scenario <name>` opens a new chat whose model is the scenario's script, on the chat's
   // LayerFS project, in a folder of its own; it is stopped like any chat, with Stop.
   // `/scenario all` starts one such chat per scenario, all at once, and opens the first.
-  async function playScenario(name: string) {
+  // `-machine <name>` picks the machine its Sandboxes run on (the project's Store moves there); the Store's own by default.
+  async function playScenario(name: string, machine: string | null = null) {
     const target = activeProject
     if (!target) return
     setError('')
     setNotice('')
-    if (name.toLowerCase() === 'all') return playAllScenarios(target)
+    if (name.toLowerCase() === 'all') return playAllScenarios(target, machine)
     try {
-      const detail = await agentHost.create({ scenario: name, project: target })
+      const detail = await agentHost.create({ scenario: name, project: target, ...(machine ? { machine } : {}) })
       navigation.current += 1
       setConversationAction(null)
       setLoading(false)
@@ -556,10 +570,10 @@ export function ChatHome({ projects, initialProject, initialSession, startNew, o
       setError(t("Could not start the scenario: {message}", { message: (e as Error).message }))
     }
   }
-  async function playAllScenarios(target: string) {
+  async function playAllScenarios(target: string, machine: string | null) {
     const ids = playable.map((item) => item.id)
     if (!ids.length) return setNotice(t("No scenario plays in a chat yet."))
-    const started = await Promise.allSettled(ids.map((id) => agentHost.create({ scenario: id, project: target })))
+    const started = await Promise.allSettled(ids.map((id) => agentHost.create({ scenario: id, project: target, ...(machine ? { machine } : {}) })))
     const first = started.find((result) => result.status === 'fulfilled')
     const failed = started.flatMap((result, i) => result.status === 'rejected' ? [`${ids[i]}: ${(result.reason as Error).message}`] : [])
     if (first) {
@@ -581,7 +595,7 @@ export function ChatHome({ projects, initialProject, initialSession, startNew, o
     ? {
         id: 'scenario',
         label: t("Play scenario"),
-        description: t("A new chat plays a scenario’s script here, in a folder of its own"),
+        description: t("A new chat plays a scenario’s script here, in a folder of its own. Add -machine <name> to run its Sandboxes on another machine (the project’s Store moves there)"),
         onSelect: () => {},
         options: [
           ...(playable.length > 1 ? [{ id: 'all', label: t("All scenarios"), description: t("{count} at once, each in a chat and folder of its own", { count: playable.length }) }] : []),
@@ -609,11 +623,15 @@ export function ChatHome({ projects, initialProject, initialSession, startNew, o
   const onOpenProject = openProjectPage && ((project: string, branch?: string) => openProjectPage(project, branch, session?.title ?? t("New chat")))
   const projectView = view === 'files' || view === 'history' || view === 'sandboxes'
   const shown: ChatView = (projectView && !activeProject) || (view === 'trace' && !session) ? 'chat' : view
-  // a new chat before its first message: no header, the title and the composer in the middle of the page
-  const fresh = !session && !loading && messages.length === 0 && shown === 'chat'
-  const workspaceMenus = (bare: boolean) => (
+  const viewButtons = sortByLabelLength<{ id: ChatView; label: string }>([
+    { id: 'chat' as const, label: 'Chat' },
+    ...(session ? [{ id: 'trace' as const, label: 'Trace' }] : []),
+    ...(activeProject ? PROJECT_VIEWS : []),
+  ].map((item) => ({ ...item, label: t(item.label) })))
+  // Leave the welcome layout as soon as submission starts, before the session is created.
+  const fresh = !session && !loading && !pending && messages.length === 0 && shown === 'chat'
+  const workspaceMenus = () => (
     <WorkspaceMenus
-      bare={bare}
       cwd={session?.cwd ?? cwd}
       project={activeProject}
       workspace={session?.workspace ?? null}
@@ -637,8 +655,8 @@ export function ChatHome({ projects, initialProject, initialSession, startNew, o
   return (
     <div className="relative flex h-svh min-h-0 flex-col overflow-hidden">
       {/* the chat's name and project, then its views */}
-      <header className={cn('mx-auto w-full max-w-7xl shrink-0 px-6 pt-1.5 @min-[56rem]/workspace:px-8', fresh && 'hidden')}>
-        <div className="flex h-10 min-w-0 items-center gap-2">
+      <header className={cn('chat-content-gutter w-full shrink-0 pt-1.5', fresh && 'hidden')}>
+        <div className="flex min-h-10 min-w-0 flex-wrap items-center gap-x-2 gap-y-1.5 py-1.5">
           {/* the project, then this chat: a breadcrumb */}
           {activeProject && onOpenProject && (
             <>
@@ -647,7 +665,7 @@ export function ChatHome({ projects, initialProject, initialSession, startNew, o
                 data-open-project
                 onClick={() => onOpenProject(activeProject)}
                 title={t("Open {name}", { name: projectLabel(activeProject) })}
-                className="-ml-1.5 inline-flex h-7 max-w-56 shrink-0 items-center gap-1.5 rounded-lg px-1.5 text-[15px] font-medium text-muted-foreground outline-none transition-colors hover:bg-foreground/[0.05] hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
+                className="-ml-1.5 inline-flex h-7 min-w-0 max-w-[28%] items-center gap-1.5 rounded-lg px-1.5 text-[15px] font-medium text-muted-foreground outline-none transition-colors hover:bg-foreground/[0.05] hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
               >
                 <LfsProject className="size-4 shrink-0 text-primary/80" />
                 <span className="min-w-0 truncate">{projectRef(activeProject).name}</span>
@@ -656,14 +674,14 @@ export function ChatHome({ projects, initialProject, initialSession, startNew, o
             </>
           )}
           {openChild
-            ? <button type="button" onClick={() => setChildView(null)} className="min-w-0 truncate rounded-md text-[15px] font-medium tracking-tight text-muted-foreground outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring">{session?.title ?? t("New chat")}</button>
-            : <h1 className="min-w-0 truncate text-[15px] font-semibold tracking-tight text-foreground">{session?.title ?? t("New chat")}</h1>}
-          {openChild && <><span aria-hidden="true" className="shrink-0 text-[15px] text-faint">›</span><h1 className="min-w-0 shrink-0 truncate text-[15px] font-semibold tracking-tight text-foreground">{openChild.agent}</h1></>}
+            ? <button type="button" onClick={() => setChildView(null)} className="min-w-0 max-w-[28%] truncate rounded-md text-[15px] font-medium tracking-tight text-muted-foreground outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring">{session?.title ?? t("New chat")}</button>
+            : <h1 className="min-w-0 flex-1 truncate text-[15px] font-semibold tracking-tight text-foreground">{session?.title ?? t("New chat")}</h1>}
+          {openChild && <><span aria-hidden="true" className="shrink-0 text-[15px] text-faint">›</span><h1 className="min-w-0 flex-1 truncate text-[15px] font-semibold tracking-tight text-foreground">{openChild.agent}</h1></>}
           {session && <SubagentsMenu children={session.children} open={subagentsOpen} onOpenChange={setSubagentsOpen} current={childView} onOpen={(id) => { setChildView(id); setView('chat') }} />}
-          {connection !== 'connected' && <span role="status" title={connection === 'reconnecting' ? t("Connection lost. Reconnecting to the host…") : t("Connecting to the host…")} className="inline-flex shrink-0 items-center gap-1 text-[10px] text-muted-foreground"><WifiOff className="size-3" /><span>{connection === 'reconnecting' ? t("Reconnecting") : t("Connecting")}</span></span>}
+          {connection !== 'connected' && <span role="status" title={connection === 'reconnecting' ? t("Connection lost. Reconnecting to the host…") : t("Connecting to the host…")} className="order-2 inline-flex max-w-full items-center gap-1 text-[11px] text-muted-foreground @min-[42rem]/workspace:order-none"><WifiOff className="size-3 shrink-0" /><span>{connection === 'reconnecting' ? t("Reconnecting") : t("Connecting")}</span></span>}
           {running && connection === 'connected' && (
-            <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-0.5 text-[11px] font-medium whitespace-nowrap text-primary">
-              <LoaderCircle className="size-3 animate-spin" />
+            <span className="order-2 inline-flex max-w-full items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-1 text-[11px] leading-4 font-medium text-primary @min-[42rem]/workspace:order-none">
+              <LoaderCircle className="size-3 shrink-0 animate-spin" />
               {pendingApprovals ? t("Waiting for approval {count}", { count: pendingApprovals }) : reviewingApprovals ? t("Reviewing {count}", { count: reviewingApprovals }) : session?.execution?.phase === 'retrying' ? t("Retrying {count}", { count: session?.execution?.retryAttempt ?? 0 }) : session?.execution?.phase === 'children' ? t("Subagents working") : session?.execution?.phase === 'tool' ? t("Running tool") : session?.execution?.phase === 'stopping' ? t("Stopping") : t("Working")}
             </span>
           )}
@@ -673,34 +691,42 @@ export function ChatHome({ projects, initialProject, initialSession, startNew, o
               <DropdownMenuTrigger asChild>
                 <Button ref={conversationTrigger} data-conversation-actions variant="ghost" size="icon-sm" aria-label={t("Conversation actions")} title={t("Conversation actions")} disabled={pending || loading} className="shrink-0 rounded-xl text-muted-foreground"><MoreHorizontal className="size-4" /></Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="chat-popover w-56">
-                {session && <DropdownMenuItem className="text-xs" onSelect={() => setSessionSettings({ mode: 'rename', session, returnFocus: conversationTrigger.current })}><Pencil className="size-3.5" />{t("Rename chat")}</DropdownMenuItem>}
-                {session && <><DropdownMenuSeparator />
-                <DropdownMenuItem disabled={running || !messages.length} className="text-xs" onSelect={() => setConversationAction({ action: 'duplicate', session, returnFocus: conversationTrigger.current })}><Copy className="size-3.5" />{t("Duplicate chat")}</DropdownMenuItem>
-                {running && <p className="px-2 py-2 text-[11px] leading-relaxed text-muted-foreground">{t("Stop the agent before copying or archiving.")}</p>}
-                <DropdownMenuItem className="text-xs" onSelect={() => void exportSession(session, 'copy')}><Copy className="size-3.5" />{t("Copy conversation")}</DropdownMenuItem>
-                <DropdownMenuItem className="text-xs" onSelect={() => void exportSession(session, 'md')}><Download className="size-3.5" />{t("Export Markdown")}</DropdownMenuItem>
-                <DropdownMenuItem className="text-xs" onSelect={() => void exportSession(session, 'json')}><Download className="size-3.5" />{t("Export JSON")}</DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem className="text-xs" disabled={running} onSelect={() => void archiveSession(session)}>{session.archived ? <ArchiveRestore className="size-3.5" /> : <Archive className="size-3.5" />}{session.archived ? t("Restore chat") : t("Archive chat")}</DropdownMenuItem></>}
+              <DropdownMenuContent align="end" sideOffset={8} collisionPadding={16} className="chat-choice-menu chat-actions-menu">
+                <DropdownMenuItem onSelect={() => setSessionSettings({ mode: 'rename', session, returnFocus: conversationTrigger.current })}>
+                  <Pencil />{t("Rename chat")}
+                </DropdownMenuItem>
+                <DropdownMenuItem disabled={running || !messages.length} onSelect={() => setConversationAction({ action: 'duplicate', session, returnFocus: conversationTrigger.current })}>
+                  <CopyPlus />{t("Duplicate chat")}
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => void exportSession(session, 'copy')}>
+                  <Clipboard />{t("Copy to clipboard")}
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => void exportSession(session, 'md')}>
+                  <FileText />{t("Export Markdown")}
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => void exportSession(session, 'json')}>
+                  <FileJson />{t("Export JSON")}
+                </DropdownMenuItem>
+                <DropdownMenuItem className="chat-actions-archive" disabled={running} onSelect={() => void archiveSession(session)}>
+                  {session.archived ? <ArchiveRestore /> : <Archive />}{session.archived ? t("Restore chat") : t("Archive chat")}
+                </DropdownMenuItem>
+                {running && <p className="chat-actions-hint">{t("Stop the agent before duplicating or archiving.")}</p>}
               </DropdownMenuContent>
             </DropdownMenu>
           )}
           </div>
         </div>
-        <TabBar aria-label={t("Chat views")} className="gap-6">
-          <Tab active={shown === 'chat'} onClick={() => setView('chat')}><span data-chat-view="chat">{t("Chat")}</span></Tab>
-          {session && <Tab active={shown === 'trace'} onClick={() => setView('trace')}><span data-chat-view="trace">{t("Trace")}</span></Tab>}
-          {activeProject && (
-            <>
-              <span aria-hidden="true" className="mb-3 h-4 w-px shrink-0 self-end bg-border" />
-              {PROJECT_VIEWS.map((v, i) => (
-                <Tab key={v.id} active={shown === v.id} onClick={() => setView(v.id)} title={i === 0 ? projectLabel(activeProject) : undefined}>
-                  <span data-chat-view={v.id}>{t(v.label)}</span>
-                </Tab>
-              ))}
-            </>
-          )}
+        <TabBar aria-label={t("Chat views")}>
+          {viewButtons.map(({ id, label }) => (
+            <Tab
+              key={id}
+              active={shown === id}
+              title={id === 'files' && activeProject ? projectLabel(activeProject) : undefined}
+              onClick={() => setView(id)}
+            >
+              <span data-chat-view={id}>{label}</span>
+            </Tab>
+          ))}
         </TabBar>
       </header>
 
@@ -742,27 +768,33 @@ export function ChatHome({ projects, initialProject, initialSession, startNew, o
           const el = scroller.current
           if (el) followBottom.current = el.scrollHeight - el.scrollTop - el.clientHeight < 90
         }}
-        className={cn('min-h-0 flex-1 overflow-y-auto px-6 pt-3', fresh ? 'flex flex-col pb-7' : 'pb-8', openChild && 'hidden')}
+        className={cn('min-h-0 flex-1 overflow-y-auto pt-3', fresh ? 'flex flex-col px-6 pb-7' : 'chat-content-gutter chat-conversation-scroll', openChild && 'hidden')}
       >
-        <div className={cn('mx-auto flex w-full max-w-3xl flex-col gap-5', fresh && 'mt-auto')}>
+        <div className={cn('flex w-full min-w-0 flex-col gap-5', fresh && 'mx-auto mt-auto max-w-3xl')}>
           {loading ? (
             <div role="status" className="flex items-center justify-center gap-2 py-24 text-sm text-muted-foreground">
               <LoaderCircle className="size-4 animate-spin text-primary" />  {t("Loading…")}
             </div>
-          ) : messages.length === 0 ? (
+          ) : fresh ? (
             <h2 className="flex items-center justify-center gap-3 text-center text-[26px] font-semibold tracking-[-0.025em] text-foreground">
               <ConnectMark className="size-9 shrink-0" />
               {t("What would you like to build?")}
             </h2>
-          ) : (
-            messages.map((message) => <AgentMessage key={message.id} sessionId={session?.id} message={message} disabled={pending || loading} running={running} onAction={(action, target, returnFocus) => { if (session) setConversationAction({ action, session, message: target, returnFocus }) }} />)
-          )}
+          ) : messages.length > 0 ? (
+            <ConversationMessages
+              key={session?.id}
+              sessionId={session?.id}
+              messages={messages}
+              latestTaskComplete={!!session && canCollapseLatestTask(session)}
+              disabled={pending || loading}
+              running={running}
+              onProcessToggle={() => { followBottom.current = false }}
+              onAction={(action, target, returnFocus) => { if (session) setConversationAction({ action, session, message: target, returnFocus }) }}
+            />
+          ) : null}
 
           {running && waitingApprovals === 0 && messages.at(-1)?.status !== 'running' && (
-            <div className="flex items-center gap-3.5">
-              <div className="glass-liquid flex size-8 shrink-0 items-center justify-center rounded-xl">
-                <ConnectMark className="size-4.5" />
-              </div>
+            <div className="flex min-h-8 items-center py-1">
               <ThinkingLine />
             </div>
           )}
@@ -820,8 +852,28 @@ export function ChatHome({ projects, initialProject, initialSession, startNew, o
         onBack={() => setChildView(null)}
         onStop={async (runId) => update(await agentHost.stopChild(session.id, runId))}
       />}
-      <div className={cn('shrink-0 px-6 pt-1 pb-5', openChild && 'hidden')}>
-        <div className="mx-auto w-full max-w-3xl">
+      <div className={cn('shrink-0 pt-1 pb-5', fresh ? 'px-6' : 'chat-content-gutter', openChild && 'hidden')}>
+        <div className={cn('w-full', fresh && 'mx-auto max-w-3xl')}>
+          <div className="chat-composer-meta">
+            {workspaceMenus()}
+            <div className="chat-composer-status">
+              {waitingApprovals > 0 && (
+                <button
+                  type="button"
+                  onClick={() => approvalsAnchor.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })}
+                  className="inline-flex h-8 items-center gap-1 rounded-lg bg-warning/15 px-2 text-[11px] font-semibold text-warning"
+                  aria-label={t("{pending} pending approvals, {reviewing} under review", { pending: pendingApprovals, reviewing: reviewingApprovals })}
+                >
+                  <ShieldQuestion className="size-3" />
+                  {pendingApprovals ? t("Pending approval {count}", { count: pendingApprovals }) : t("Reviewing {count}", { count: reviewingApprovals })}
+                </button>
+              )}
+              {session && <ContextMeter usage={session.contextUsage} recorded={session.usage} execution={session.execution} />}
+              {pending && <LoaderCircle className="size-3 shrink-0 animate-spin text-primary" />}
+              {fresh && connection !== 'connected' && <span role="status" className="inline-flex shrink-0 items-center gap-1 text-[11px] text-muted-foreground"><WifiOff className="size-3" />{connection === 'reconnecting' ? t("Reconnecting") : t("Connecting")}</span>}
+            </div>
+          </div>
+          {drafts.storageError && <p role="alert" className="mb-2 text-xs text-destructive">{t(drafts.storageError)}</p>}
           {session && (
             <QueuedMessages
               key={session.id}
@@ -831,20 +883,13 @@ export function ChatHome({ projects, initialProject, initialSession, startNew, o
               onRemove={(id) => changeQueuedMessage(id, 'removeQueued')}
             />
           )}
-          {fresh && (
-            <div className="mb-2 flex min-w-0 items-center gap-1 px-1.5">
-              {workspaceMenus(true)}
-              {connection !== 'connected' && <span role="status" className="ml-auto inline-flex shrink-0 items-center gap-1 text-[11px] text-muted-foreground"><WifiOff className="size-3" />{connection === 'reconnecting' ? t("Reconnecting") : t("Connecting")}</span>}
-            </div>
-          )}
-          {drafts.storageError && <p role="alert" className="mb-2 text-xs text-destructive">{t(drafts.storageError)}</p>}
           <Composer
             key={drafts.key()}
             className="z-10"
             value={input}
             attachments={attachments}
             onAttachments={setAttachments}
-            supportsImages={!!currentModelMeta?.input?.includes('image')}
+            supportsImages={imageInputSupport(currentModelMeta?.input)}
             commands={commands}
             onChange={setInput}
             onSend={() => void send()}
@@ -853,7 +898,7 @@ export function ChatHome({ projects, initialProject, initialSession, startNew, o
             loading={running}
             placeholder={agentRunning ? t("Add a follow-up — it will run after this task…") : t("Ask the agent to work on your project… (/ for commands)")}
             sendLabel={agentRunning ? t("Queue follow-up") : t("Send message")}
-            trailing={
+            controls={
               <ModelSelector
                 open={modelMenuOpen}
                 onOpenChange={setModelMenuOpen}
@@ -869,31 +914,11 @@ export function ChatHome({ projects, initialProject, initialSession, startNew, o
                 onManage={() => settings.open('models')}
               />
             }
-            controls={
-              <div className="flex min-w-0 flex-wrap items-center gap-1.5">
-                {!fresh && workspaceMenus(false)}
-                {waitingApprovals > 0 && (
-                  <button
-                    type="button"
-                    onClick={() => approvalsAnchor.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })}
-                    className="inline-flex h-6.5 items-center gap-1 rounded-full bg-warning/15 px-2.5 text-[11px] font-semibold text-warning"
-                    aria-label={t("{pending} pending approvals, {reviewing} under review", { pending: pendingApprovals, reviewing: reviewingApprovals })}
-                  >
-                    <ShieldQuestion className="size-3" />
-                    {pendingApprovals ? t("Pending approval {count}", { count: pendingApprovals }) : t("Reviewing {count}", { count: reviewingApprovals })}
-                  </button>
-                )}
-
-                {session && <ContextMeter usage={session.contextUsage} recorded={session.usage} execution={session.execution} />}
-                {totalCost > 0 && <span title={t("Recorded agent history cost; includes copied and branched history")} className="font-mono text-[11px] text-faint tabular-nums">${totalCost.toFixed(4)}</span>}
-                {pending && <LoaderCircle className="size-3 shrink-0 animate-spin text-primary" />}
-              </div>
-            }
           />
         </div>
       </div>
       {/* below the composer: half the free height while the chat is new, so the title and composer sit in the middle */}
-      <div aria-hidden="true" className={cn('shrink-0 transition-[flex-grow] duration-(--dur-slow) ease-out-expo', fresh ? 'grow' : 'grow-0')} />
+      {fresh && <div aria-hidden="true" className="grow shrink-0" />}
 
       </div>
 
@@ -905,9 +930,8 @@ export function ChatHome({ projects, initialProject, initialSession, startNew, o
           projects.add(created)
           const key = projectKey(created)
           setProject(key)
-          drafts.open(newDraftKey(key, created.source || cwd))
+          drafts.open(newDraftKey(key, cwd))
           localStorage.setItem(LAST_PROJECT, key)
-          if (created.source) changeDirectory(created.source)
         }}
       />
       {sessionSettings && <SessionSettingsDialog key={`${sessionSettings.session?.id ?? drafts.key()}:${sessionSettings.mode}`} target={sessionSettings} onClose={() => setSessionSettings(null)} onSave={async (value) => {

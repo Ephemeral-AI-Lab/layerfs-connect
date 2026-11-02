@@ -44,7 +44,6 @@ export function SdksSection() {
   }
 
   return <div className="st-section" data-testid="sdks-section">
-    <h2 className="st-title">{t('SDKs')}</h2>
     <p className="st-intro">{t('Libraries the agents can work with. Each one that is on goes into the instructions of the agents it lists, with its calls. They are kept in sdks.json; edit it to add an SDK or change one.')}</p>
     {error ? <>
       <p className="st-error" role="alert">{t('Could not load the SDKs')}: {error}</p>
@@ -68,7 +67,7 @@ export function SdksSection() {
             {sdk.version && <span className="st-tag st-mono">{sdk.version}</span>}
             <span className={sdk.found ? 'st-tag st-tag-found' : 'st-tag st-tag-missing'}>{t(sdk.found ? 'Found' : 'Missing')}</span>
           </>}
-          description={sdk.description}
+          description={t(sdk.description)}
           enabled={sdk.enabled}
           disabled={!!pending || busy.length > 0}
           busy={pending === sdk.id}
@@ -106,7 +105,7 @@ function SdkCalls({ calls }: { calls: AgentSdkCall[] }) {
         <ul className="st-call-list">
           {list.map((call) => <li key={call.name} className="st-call" data-call={call.name}>
             <code className="st-call-sig">{call.signature}</code>
-            {call.description && <span className="st-call-desc">{call.description}</span>}
+            {call.description && <span className="st-call-desc">{t(call.description)}</span>}
           </li>)}
         </ul>
       </details>)}

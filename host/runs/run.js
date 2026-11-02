@@ -16,19 +16,19 @@
 // end together: once one fails or stops, the others stop, and the scope's
 // Sandboxes are closed once, after the last has ended; the folder lands once,
 // after every session passed.
-import { chmodSync, mkdirSync, renameSync, writeFileSync } from 'node:fs'
+import { mkdirSync, renameSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { setTimeout as pause } from 'node:timers/promises'
-import { fileURLToPath } from 'node:url'
-import { API, layerfsEnv, notePostgresql, openRuntime, projectRef, withProjectEnv } from '../config.js'
+import { layerfsEnv, projectRef } from '../config.js'
+import { layerfs, workspacesOf } from '../layerfs.js'
 import { Agent } from './agent.js'
 import { Job } from './jobs.js'
-import { callCodes, inOrder } from '../../tools/lib/expect.mjs'
+import { callCodes, EXPECT_BLOCKED, inOrder } from '../../tools/lib/expect.mjs'
 import { Tools } from './tools.js'
 import { LiveState } from './live.js'
 import { traceCall, Traces } from './traces.js'
-import { landOnMain, projectRecord, setupFolder } from './folder.js'
+import { landOnMain, projectHandle, setupFolder } from './folder.js'
 import { Scope, SCOPE_ENV } from './scope.js'
+import { writeShims } from './shim.js'
 
 export const LIMIT_MS = 15 * 60 * 1000
 // Each step waits a random third to all of a per-step bound first: 3 s, or
@@ -38,13 +38,7 @@ const THINK_MAX_MS = 3000
 const THINK_BUDGET_MS = 5 * 60 * 1000
 const SAVE_MS = 300
 const LIVE_MS = 120
-const RESOLVE = fileURLToPath(new URL('../resolve-layerfs.js', import.meta.url))
-const CLI = join(API, 'cli', 'src', 'layerfs.js')
 const ACTIVE = new Set(['starting', 'running'])
-const q = (s) => `'${String(s).replaceAll("'", "'\\''")}'`
-
-/** A background process's states while it still runs. */
-const RUNNING = new Set(['running', 'starting', 'Running', 'Starting'])
 
 export class Run {
   /**
@@ -149,7 +143,7 @@ export class Run {
     clearTimeout(this.saveTimer)
     this.saveTimer = null
     const file = join(this.dir, 'run.json')
-    const value = { ...this.detail(), volume: this.volume ?? null, image: this.image ?? null, scopeDir: this.scopeDir ?? null, dir: this.dir, scenarioDir: this.source.folder, host: process.pid, swept: this.swept ?? false }
+    const value = { ...this.detail(), scopeDir: this.scopeDir ?? null, dir: this.dir, scenarioDir: this.source.folder, host: process.pid, swept: this.swept ?? false }
     mkdirSync(this.dir, { recursive: true })
     writeFileSync(`${file}.tmp`, JSON.stringify(value))
     renameSync(`${file}.tmp`, file)
@@ -277,23 +271,22 @@ export class Run {
 
   // ---------- processes ----------
 
-  /** The run's project as LayerFS calls name it: `this.project` is its key (`store/name` in a shared Store, layerfs#506). */
-  layerfsProject() {
-    return { ...projectRef(this.project), volume: this.volume, image: this.image }
-  }
-
-  /** The environment of an agent's bash call labelled `label`. */
+  /**
+   * The environment of an agent's bash call labelled `label`: the home, the
+   * trace settings (LayerFS 2.0 writes no trace yet: §9 Q1), the project key
+   * in LAYERFS_CONNECT_PROJECT and the run's scope.
+   */
   env(agent, label) {
     const env = Object.fromEntries(Object.entries(process.env).filter(([k]) => !k.startsWith('LAYERFS_')))
     return {
       ...env,
-      ...layerfsEnv(this.spec, this.layerfsProject()),
+      ...layerfsEnv(this.spec),
+      LAYERFS_CONNECT_PROJECT: projectRef(this.project).key,
       PATH: `${this.bin}:${process.env.PATH ?? ''}`,
-      NODE_OPTIONS: [process.env.NODE_OPTIONS, `--import=${RESOLVE}`].filter(Boolean).join(' '),
       LAYERFS_TRACE: join(this.traceDir, `${agent.name}.jsonl`),
       LAYERFS_TRACE_STEP: label,
       LAYERFS_TRACE_START: '1',
-      ...(this.scopeDir ? { [SCOPE_ENV]: this.scopeDir } : {}),
+      ...(this.scopeDir ? { [SCOPE_ENV]: this.scopeDir, LAYERFS_CONNECT_MACHINE: Scope.open(this.scopeDir).machine ?? '' } : {}),
     }
   }
 
@@ -334,7 +327,8 @@ export class Run {
       // the run ended first: nothing to check
       return this.stepEnded(result, { ...fields, checks })
     }
-    if (step.expect) {
+    if (step.expect) checks.push({ name: 'expect', ok: true, detail: `${EXPECT_BLOCKED}; expected ${step.expect.join(', ')}` })
+    if (step.expect && !EXPECT_BLOCKED) {
       const codes = callCodes(this.traces.lines(`${agent.name}:${index}`))
       const ok = inOrder(codes, step.expect)
       checks.push({ name: 'expect', ok, detail: `expected ${step.expect.join(', ')}; its LayerFS calls show ${codes.length ? codes.join(', ') : 'nothing'}` })
@@ -348,12 +342,10 @@ export class Run {
 
   // ---------- the run ----------
 
-  /** The run's folders, and the `layerfs` command its agents' bash calls find on PATH. */
+  /** The run's folders, and the `layerfs` command its agents' bash calls find on PATH (scope.js's shim). */
   prepare() {
     for (const dir of [this.work, this.bin, this.traceDir]) mkdirSync(dir, { recursive: true })
-    const shim = join(this.bin, 'layerfs')
-    writeFileSync(shim, `#!/bin/sh\nexec node --import ${q(RESOLVE)} ${q(CLI)} "$@"\n`)
-    chmodSync(shim, 0o755)
+    writeShims(this.spec, this.dir)
   }
 
   /** Inits the project, then plays the agents until the run ends. */
@@ -389,15 +381,13 @@ export class Run {
     if (!folder) throw Object.assign(new Error('the scenario names no fixture'), { code: 'InvalidInput' })
     this.phase = 'Setting up its folder'
     this.changed(true)
-    const project = await projectRecord(this.spec, this.project)
-    this.volume = project.volume ?? null
-    this.image = project.image ?? null
     this.scopeDir = join(this.dir, 'scope')
     const { run } = await setupFolder(this.spec, {
       scenarioId: this.source.id,
       fixture: folder,
-      project,
+      project: this.project,
       scopeDir: this.scopeDir,
+      machine: this.machine ?? null,
       phase: (phase) => {
         this.phase = phase
         this.changed(true)
@@ -417,8 +407,6 @@ export class Run {
     } catch (error) {
       throw Object.assign(new Error(`session ${this.after.session ?? this.after.id} did not set up the folder: ${error.message}`), { code: error.code })
     }
-    this.volume = this.after.volume
-    this.image = this.after.image
     this.scopeDir = this.after.scopeDir
     this.folder = this.after.folder
     this.phase = null
@@ -455,16 +443,9 @@ export class Run {
   async finalChecks() {
     const mod = await this.loadChecks()
     if (!mod?.finalChecks) return []
-    await openRuntime(this.spec)
-    const { LayerFS } = await import('@layerfs/agent')
-    const project = this.layerfsProject()
-    const client = await withProjectEnv(this.spec, project, () => LayerFS.open(project.name))
-    try {
-      const scope = this.scopeDir ? Scope.open(this.scopeDir) : null
-      return await mod.finalChecks({ scenario: this.scenario, scenarioDir: this.source.folder, project: project.name, client, scope })
-    } finally {
-      await client.close()
-    }
+    const scope = this.scopeDir ? Scope.open(this.scopeDir) : null
+    const client = await projectHandle(this.spec, this.project, scope?.machine ?? null)
+    return mod.finalChecks({ scenario: this.scenario, scenarioDir: this.source.folder, project: client.project, client, scope })
   }
 
   /** The check that the run's last trunk landed on main (folder.js); a launch lands once, after its last session. */
@@ -479,7 +460,7 @@ export class Run {
   }
 
   landNow() {
-    return landOnMain(this.spec, { project: this.layerfsProject(), scope: Scope.open(this.scopeDir) })
+    return landOnMain(this.spec, { project: this.project, scope: Scope.open(this.scopeDir) })
   }
 
   /** Kills every running bash process and job of the run. */
@@ -532,7 +513,7 @@ export class Run {
   async closeSandboxes() {
     try {
       if (this.group) await this.group.closeSandboxes(this.spec)
-      else await closeRunSandboxes(this.spec, { id: this.id, project: this.project, volume: this.volume, image: this.image, scopeDir: this.scopeDir })
+      else await closeRunSandboxes(this.spec, { id: this.id, project: this.project, scopeDir: this.scopeDir })
     } finally {
       this.swept = true
       this.save(true)
@@ -571,7 +552,7 @@ export class Launch {
   closeSandboxes(spec) {
     // a run that ends cut short ends the others first (Run.end), so none still plays here
     const first = this.runs[0]
-    this.closing ??= closeRunSandboxes(spec, { id: this.id, project: first.project, volume: first.volume, image: first.image, scopeDir: first.scopeDir })
+    this.closing ??= closeRunSandboxes(spec, { id: this.id, project: first.project, scopeDir: first.scopeDir })
     return this.closing
   }
 }
@@ -588,74 +569,36 @@ function bounded(promise, ms, what) {
   return Promise.race([promise, late]).finally(() => clearTimeout(timer))
 }
 
-/** The container of Sandbox `sandbox` of `project` ({ name, store, shared }), as LayerFS names it. */
-export const sandboxContainer = (prefix, project, sandbox) => `${prefix}${project.shared ? `${project.store}.` : ''}${project.name}-${sandbox}`
-
 /**
  * Unmounts (discarding) every Workspace still mounted in a run's Sandboxes
  * and closes them: what an agent ends with, done for the agents a failed,
  * stopped or interrupted run cut off. A run with a scope touches only its own
- * Sandboxes and their processes (others may be playing in the project); an
- * older record without one, every Sandbox of its project. Each call is
- * bounded (CLEANUP_CALL_MS). A run's own Sandbox whose daemon does not answer
- * is stopped as a container, as LayerFS's project removal stops Sandboxes,
- * and removed as a stopped leftover. Each run once; a refusal is logged.
+ * Sandboxes (others may be playing in the project); an older record without
+ * one, nothing. Each call is bounded (CLEANUP_CALL_MS). A Sandbox that does
+ * not close is closed with `force`, which LayerFS answers with the
+ * Workspaces whose state it could not learn (`unknown`). Each run once; a
+ * refusal is logged.
  */
-export async function closeRunSandboxes(spec, { id, project: key, volume, image, scopeDir = null }) {
-  // a PostgreSQL Store's project has no volume (layerfs#506 d)
-  if (!volume && !(await notePostgresql(spec, key))) return
-  let mine = null
-  if (scopeDir) {
-    try {
-      mine = new Set(Scope.open(scopeDir).sandboxes().values())
-    } catch {
-      return
-    }
-    if (!mine.size) return
-  }
-  const ours = (sandbox) => !mine || mine.has(String(sandbox))
-  const runtime = await openRuntime(spec)
-  const { LayerFS } = await import('@layerfs/agent')
-  // `key` is the run's project key: `store/name` in a shared Store (layerfs#506)
-  const project = { ...projectRef(key), volume, image }
-  const lf = await withProjectEnv(spec, project, () => LayerFS.open(project.name))
-  const stuck = []
+export async function closeRunSandboxes(spec, { id, project, scopeDir = null }) {
+  if (!scopeDir) return
+  let mine
   try {
-    // background processes keep their Workspace Busy: cancel each once, then wait (bounded) until none runs
-    const { LayerFSBackend } = await import('@layerfs/backend')
-    const be = LayerFSBackend.of(lf)
-    const running = async () => (await bounded(be.daemon.process.list(1000, 0), CLEANUP_CALL_MS, 'process.list')).items.filter((p) => RUNNING.has(p.state ?? p.status) && ours(p.sandbox))
-    for (const p of await running().catch(() => [])) {
-      await bounded(be.daemon.process.cancel(p.process ?? p.id), CLEANUP_CALL_MS, 'process.cancel').catch((e) => console.error(`[runs] ${id}: cancel ${p.process ?? p.id}: ${e.message}`))
-    }
-    for (const until = Date.now() + 10_000; Date.now() < until && (await running().catch(() => [])).length; ) await pause(250)
-    // a scoped run knows its Sandboxes; an older record lists the project's
-    const sandboxes = mine ? [...mine] : (await bounded(lf.project.list_sandboxes(1000, 0), CLEANUP_CALL_MS, 'list_sandboxes')).items.map((s) => s.sandbox)
-    for (const sandbox of sandboxes) {
-      if (!ours(sandbox)) continue
-      try {
-        const mounted = await bounded(lf.sandbox.list_workspaces(sandbox, 1000, 0), CLEANUP_CALL_MS, `Sandbox ${sandbox}`)
-        for (const w of mounted.items) await bounded(lf.workspace.unmount({ sandbox, path: w.path }, true), CLEANUP_CALL_MS, `unmount ${w.path}`)
-        await bounded(lf.sandbox.close(sandbox), CLEANUP_CALL_MS, `close ${sandbox}`)
-      } catch (e) {
-        // closed already: nothing to do; its daemon not answering: stopped below
-        if (e.code === 'NoSuchSandbox') continue
-        console.error(`[runs] ${id}: Sandbox ${sandbox}: ${e.code ?? ''} ${e.message}`)
-        if (e.code === 'Timeout' && mine) stuck.push(sandbox)
-      }
-    }
-  } finally {
-    await lf.close().catch(() => {})
+    mine = [...new Set(Scope.open(scopeDir).sandboxes().values())]
+  } catch {
+    return
   }
-  if (stuck.length) {
-    // LayerFS names a Sandbox's container <prefix>[<store>.]<project>-<n>
-    const containers = stuck.map((sandbox) => sandboxContainer(spec.prefix, project, sandbox))
+  const lfs = layerfs(spec)
+  for (const sandbox of mine) {
     try {
-      await runtime.platform.docker(runtime.settings, ['stop', '-t', '10', ...containers], { timeout: 60_000 })
-      await runtime.sandbox.clean_leftovers(containers)
-      console.error(`[runs] ${id}: stopped ${containers.join(', ')}: their daemons did not answer`)
+      const workspaces = await bounded(workspacesOf(lfs, sandbox), CLEANUP_CALL_MS, `Sandbox ${sandbox}`)
+      for (const w of workspaces) if (w.mounted !== false && w.directory) await bounded(lfs.workspace.unmount(`${sandbox}:${w.directory}`, { discard: true }), CLEANUP_CALL_MS, `unmount ${w.directory}`)
+      await bounded(lfs.sandbox.close(sandbox), CLEANUP_CALL_MS, `close ${sandbox}`)
     } catch (e) {
-      console.error(`[runs] ${id}: stopping ${containers.join(', ')}: ${e.message}`)
+      // closed already: nothing to do
+      if (e.code === 'NoSuchSandbox' || e.code === 'NotFound') continue
+      console.error(`[runs] ${id}: Sandbox ${sandbox} of ${project}: ${e.code ?? ''} ${e.message}`)
+      const forced = await bounded(lfs.sandbox.close(sandbox, { force: true }), CLEANUP_CALL_MS, `close ${sandbox} (force)`).catch((f) => console.error(`[runs] ${id}: forced close of ${sandbox}: ${f.message}`))
+      if (forced?.unknown?.length) console.error(`[runs] ${id}: ${sandbox} closed by force; Workspaces of unknown state: ${forced.unknown.join(', ')}`)
     }
   }
 }

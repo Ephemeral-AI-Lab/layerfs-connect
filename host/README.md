@@ -2,9 +2,8 @@
 
 The host is Connect's backend: a plain Node process (system `node` ≥ 22.15,
 ESM JavaScript, no build step) that the Electron main process starts. It runs
-LayerFS through `@layerfs/runtime`, `@layerfs/agent` and `@layerfs/backend`,
-and replays scripted demo scenarios on the real LayerFS: the local SQLite
-Store and Docker Sandboxes. Interactive conversations use Pi's AgentSession
+LayerFS 2.0 through the one `layerfs` package (a client of Connect's home),
+and replays scripted demo scenarios on the real LayerFS. Interactive conversations use Pi's AgentSession
 API and the `pi-subagents` extension in `agents/`. The model's tool surface is
 bash plus delegation/supervision tools. File reads, writes and edits go
 through bash. The separate `runs/` engine keeps replaying fixed scenarios.
@@ -26,6 +25,13 @@ thinking levels and model calls. The settings UI can select a built-in model
 or save a custom base URL, API format and model limits. A test saves that
 configuration and performs one real completion request. Settings responses
 contain `hasKey`, never the key value.
+
+Image capability comes only from the provider's model-list API. Missing
+metadata is unknown and allows images; only an explicit text-only result
+blocks them. Each saved model keeps the reported modalities in `apiInput`,
+separate from Pi's effective `input` list, which includes images when unknown
+so Pi does not silently remove them. Old catalog/default input flags are not
+treated as API capability data.
 
 All state stays beneath Connect's state folder (normally
 `~/.layerfs-connect`):
@@ -182,40 +188,26 @@ under all three modes; local-folder commands retain direct host execution.
 
 ## Where LayerFS comes from
 
-Connect never installs into or edits the LayerFS repository. `package.json`
-links `@layerfs/{agent,backend,runtime,cli}` to the `api/` packages of a
-LayerFS worktree beside this repo, kept at the tip of LayerFS's
-`layerfs_v2_0_0` branch (`../layerfs/.claude/worktrees/connect-main/api/...`;
-Connect itself works on `main`, and the README's "Where LayerFS comes from"
-says how to move the worktree forward). Host-side LayerFS calls
-load [`resolve-layerfs.js`](resolve-layerfs.js) first (`node --import`), so
-`@layerfs/*` resolves from Connect's `node_modules`. Local-folder bash also
-receives `NODE_OPTIONS=--import=…` and a `layerfs` shim on PATH:
-`node --import <host>/resolve-layerfs.js <api>/cli/src/layerfs.js "$@"`. `<api>` is the
-folder those links point at (`config.js` `API`). Project bash instead executes
-inside the managed container through the host's LayerFS SDK; it does not
-receive host resolver paths, credentials or shell environment.
-A scenario run's agents' bash calls (`runs/`) get the same import and shim,
-plus `LAYERFS_CONNECT_SCOPE` (the run's scope folder): with it set,
-`resolve-layerfs.js` loads the SDK's `client.js` through
-`runs/scope-client.js`, which puts each call in the run's scope first (see
-"Where a run plays").
+Connect links the one LayerFS 2.0 package, `layerfs`
+(`link:../layerfs-issue533-v2/api/node`, LayerFS `0b8ae8af5f`); the package finds its native addon
+through the link's real path. The host makes one client, `client({ home })`
+([`layerfs.js`](layerfs.js)); every call names its project, `<store>/<project>`. Agents' shells
+run the native `layerfs` command (the linked checkout's `target/debug/layerfs`, or
+`LAYERFS_CONNECT_CLI`). See [the integration spec](../docs/layerfs-2.0-integration.md).
 
 ## Deployment ([`config.js`](config.js))
 
-- State folder `~/.layerfs-connect` (`LAYERFS_CONNECT_STATE`):
-  `settings.json`, the LayerFS home `home/` (0700), `runs/`.
-- `settings.json`: `image` (runtime image digest), `bundle` (sealed Linux
-  LayerFS build; macOS/Windows run the worker from it), `daemon`, `docker`,
-  `containerPrefix` (default `lfc-`). Each also from `LAYERFS_CONNECT_<NAME>`.
-- On macOS the runtime runs the home's worker container `<prefix>worker`
-  (`lfc-worker`); every Store call goes there. Connect never touches another
-  home's containers (dsh's are `layerfs-…`).
-- `deploymentEnv(spec, project)` / `layerfsEnv` give host-side replay calls
-  its `LAYERFS_*` settings: PROJECT, HOME, DOCKER, IMAGE, DAEMON, VOLUME,
-  STORE_PATH, STORE, CONTAINER_PREFIX, WORKER_ENDPOINT (a PostgreSQL Store's
-  project: STORE_POSTGRESQL and no VOLUME). The run adds LAYERFS_TRACE,
-  LAYERFS_TRACE_STEP, LAYERFS_TRACE_START=1 and LAYERFS_CONNECT_SCOPE.
+- `<state>`: `LAYERFS_CONNECT_STATE`, else `~/.layerfs-connect`: runs, `host.json`, agent state.
+- `<state>/home-2`: the LayerFS 2.0 home (`LAYERFS_HOME`), private. The 1.1.0 `<state>/home` is
+  left as it is; a non-empty home folder without a 2.0 `layerfs.json` is refused.
+- Every machine, Store, bucket and image is a record in the home; Connect keeps no LayerFS
+  settings of its own. Two dev settings, from the environment: `LAYERFS_CONNECT_CLI` and
+  `LAYERFS_CONNECT_DAEMON` (the macOS native daemon, recorded once on the `native` machine with
+  `layerfs import-env`, since `machine.update` takes no daemon).
+- Agents' shells get `LAYERFS_HOME`, the trace settings (`LAYERFS_TRACE*`) and the project key in
+  `LAYERFS_CONNECT_PROJECT`; scoped runs add `LAYERFS_CONNECT_SCOPE` and `LAYERFS_CONNECT_MACHINE`.
+- There is no worker to start: machines start on the first call that needs them. Electron starts
+  the host with `UV_THREADPOOL_SIZE=16` (each call holds a libuv thread).
 
 ## Layout
 
@@ -234,7 +226,8 @@ host/
     workspace-bash.js  root/child bash bridge to the host's managed workspace execution
     history.js         immutable turn checkpoints and Pi session copies without replaying old work
   config.js            deployment (above)
-  resolve-layerfs.js   @layerfs/* resolution (above)
+  machines.js          Compute's machines (LayerFS 2.0): the view and its calls (below)
+  layerfs.js           the one LayerFS client, paging, the native daemon record
   seed.js              writes a seed.json fixture out as a folder
   checks/              final checks of a finished run (final.json …)
   parse/               the call parser: splits each step into classified segments
@@ -251,7 +244,7 @@ tools/                 scenario tools (replay conversion, checks)
 
 ## Process protocol
 
-`node --import ./host/resolve-layerfs.js host/main.js [--state <dir>] [--port <n>]`
+`node host/main.js [--state <dir>] [--port <n>]`
 prints exactly one line on stdout once it listens:
 
 ```json
@@ -275,12 +268,18 @@ errors are `{ code, message }` with a 4xx/5xx status. CORS allows any origin
 
 | Route | Answer |
 | --- | --- |
-| `GET /api/status` | `HostStatus` |
-| `POST /api/worker/start` | `HostStatus` once the worker answers |
+| `GET /api/status` | `HostStatus`, with `placement`, the runtime's `sweep` and `platforms` (LayerFS's `runtime.status().platforms`, layerfs#529; absent on an older LayerFS) |
+| `POST /api/worker/start` | `HostStatus` once the worker answers. On a VM home it starts every project's VM whose worker does not answer |
+| `GET /api/machines` | `MachinesView` (see "Compute"); `{ available: false, layerfs, reason }` on a LayerFS with no machines |
+| `POST /api/machines` | a VM `{ name, platform, cpus?, memory?, disk?, image?, os_image?, host?, nested? }`, or an ssh host `{ name, platform: 'ssh', host, user?, port?, identity?, root? }` |
+| `DELETE /api/machines/:name` | removes a VM or disconnects an ssh host; `InUse` (409) while it holds Stores or running Sandboxes |
+| `POST /api/machines/:name/update` | a built-in's `{ image, docker, wsl }` or a VM's `{ cpus, memory }` |
+| `POST /api/machines/:name/stores` | `{ store }`: moves that sqlite Store to this machine |
 | `GET /api/projects` | `ProjectSummary[]` |
 | `POST /api/projects` | `{ name, source?, store? }` starts a real Init and returns `ProjectInitJob`; omit `source` for an empty project, or provide an existing absolute folder to import. With `store` the project goes into that existing Store (layerfs#506), else into a new SQLite Store of its own. Existing names return 409 without changing the existing project. |
 | `GET /api/project-inits/:id` | `ProjectInitJob`: the runtime's `scan`, `volume`, `import`, `done` or `failed` step, live counts, terminal error, and `ProjectSummary` on success. Unknown or expired jobs return 404. Polling never restarts a job. |
 | `GET /api/projects/:name` | `ProjectState` from the Store alone (branches, layers, Sandboxes from their records and containers with no Workspaces, last Commit, Commit count, Store file and size, Store totals and each Commit's added bytes); asks no Sandbox daemon |
+| `POST /api/projects/:name/sandboxes` | `{ platform? }` → `{ sandbox, image, platform }`: `sandbox.create({ platform })` (layerfs#529); left out, the home's default. A platform the home does not allow is refused `Unsupported` (501), an unknown one `InvalidInput` (400), before anything is made |
 | `GET /api/projects/:name/sandboxes` | `SandboxInfo[]` with each running Sandbox's mounted Workspaces (`sandbox.list_workspaces`, each Sandbox on its own with a 4 s limit); one that did not answer has `reach: 'busy'` (left alone 10 s), one that refused `reach: 'unreachable'`, both with `detail` |
 | `GET /api/projects/:name/commits?branch=&limit=` | `CommitInfo[]`, newest first |
 | `GET /api/projects/:name/branch-commits?branch=a&branch=b` | `{ [branch]: CommitInfo[] }`: several Branches' Commits in one call; main's are `[]`, a Branch gone meanwhile is left out |
@@ -311,97 +310,36 @@ URL, which `storage.js` gives `projects.js`; `config.js` `notePostgresql`
 keeps it in this process only, and `deploymentEnv` gives such a project's
 clients `LAYERFS_STORE_POSTGRESQL` and no volume.
 
-### Storage (layerfs#506, #509; `docs/ui/storage-links.md`, `docs/ui/storage-redesign.md`)
+### Compute ([`machines.js`](machines.js))
 
-`storage.js` serves Stores, remotes and PostgreSQL connections;
-`storage-sync.js` is the pure sync state of each Store's link and
-`storage-checks.js` keeps the remote checks and samples the jobs. A SQLite
-Store links to at most one remote file; a remote file is linked by at most
-one Store of this home. A LayerFS build without these calls (such as the one
-`package.json` links today) answers each part `available: false` with the
-reason, and the changes 501 `Unsupported`.
+- `GET /api/machines`: `machine.list()` (machines, `can_create`), `store.list()`, `sandbox.list()`
+  and each non-native machine's `machine.status()` (it starts none).
+- `POST /api/machines` creates a VM (`machine.create`) or connects an ssh host (`machine.connect`);
+  `DELETE /api/machines/<name>` removes or disconnects it (`InUse` while it holds Stores or
+  Sandboxes); `POST /api/machines/<name>/update` sets a built-in's image or a VM's size.
+- `POST /api/machines/<machine>/stores { store }`: **Move to…**, a job in Storage's table.
 
-| Route | Answer |
-| --- | --- |
-| `GET /api/storage` | `StorageView`: Stores (size, open, link with its sync state, import origin, running job), remotes (location, files, bytes, health), connections (host, database, health, bytes), jobs, providers, totals, `supports`, `checkedAt`, `checking`. Uses the cached checks; never runs a remote HEAD and opens no Store |
-| `POST /api/storage/check` | `StorageView` after checking. Body `{ store?, remote?, connection? }`, empty for everything: one HEAD per matching link (`runtime.store.check`), each remote's listing (`runtime.remote.list_stores`) and each matching connection's `runtime.postgresql.status` |
-| `POST /api/stores` | `StorageView`: a new empty SQLite Store, body `{ name }` |
-| `DELETE /api/stores/:name?confirm=` | `StorageView`: the Store and every project in it removed |
-| `POST /api/stores/:name/publish` | `SyncJob`: an unlinked Store uploaded to a new file and linked. Body `{ remote, file? }` |
-| `POST /api/stores/:name/push` | `SyncJob` through the Store's link. Body `{ force? }`; `force: true` replaces a file that changed since the last push or pull |
-| `POST /api/stores/:name/pull` | `SyncJob`: the Store replaced by its linked file. Body `{ confirm: <store> }` |
-| `POST /api/stores/:name/send` | `SyncJob`: a copy to a new, unlinked file. Body `{ remote, file }` |
-| `POST /api/stores/:name/unlink` | `StorageView`: the Store becomes local only; the file stays. Body `{ confirm: <store> }` |
-| `POST /api/stores/:name/import-postgresql` | `SyncJob`. Body `{ connection, name?, schema? }` |
-| `POST /api/remotes`, `DELETE /api/remotes/:name` | `StorageView`; the keys stay in `<state>/storage.json` (owner-only) |
-| `GET /api/remotes/:name/files` | `RemoteFile[]`: the bucket's Store files now, each with the Store linked to it |
-| `POST /api/remotes/:name/load` | `SyncJob`: a new local Store from a file, linked to it. Body `{ file, store? }` |
-| `POST /api/postgresql`, `DELETE /api/postgresql/:name` | `StorageView`; the URL stays in `storage.json` |
-| `GET /api/sync-jobs/:id` | `SyncJob`: the job's last sample |
+### Storage ([`storage.js`](storage.js); `docs/ui/layerfs-storage.md`)
 
-While a job runs the host samples it (`runtime.sync.get`) every 500 ms and
-sends `{ type: 'sync', job }` for each changed sample and its end; when a job
-ends, a check ends, or a Store, remote or connection changes, it sends
-`{ type: 'storage' }` and the renderer reads `/api/storage` again. No view or
-event carries a remote key or a PostgreSQL password.
+- `GET /api/storage`: Stores by machine (`store.list`, `store.status` each), buckets with their
+  last listing, and this host's jobs. `POST /api/storage/check { bucket? }` lists buckets again.
+- `POST /api/stores { name }`, `DELETE /api/stores/<name>?confirm=<name>`,
+  `POST /api/stores/postgresql { name, url, password, synchronousCommit? }`,
+  `POST /api/stores/<name>/disconnect`.
+- `POST /api/stores/<name>/move { machine }`, `POST /api/stores/<name>/backup { bucket, file? }`,
+  `POST /api/buckets/<bucket>/restore { store, file? }` (installs on native): jobs, answered at
+  once, followed on `storage-job` events and `GET /api/storage-jobs/<id>`.
+- `POST /api/buckets { name, url, key, region? }`, `DELETE /api/buckets/<name>`,
+  `GET /api/buckets/<name>/files` (`backup.list(bucket)`).
+- `password` and `key` are references (`env:LAYERFS_…`, `file:/abs`); a URL holding a password is
+  refused. Connect keeps no secret; `<state>/buckets.json` holds the bucket names it connected.
 
-Interactive routes accept JSON request bodies:
+### Projects and Sandboxes
 
-| Route | Input / answer |
-| --- | --- |
-| `GET /api/agent/models` | Models, provider connections (including custom headers, excluding API key values; `signIn` for a provider with a subscription sign-in, `signedIn` when its credential is one), selected model and default cwd |
-| `POST /api/agent/providers` | `{ provider, name?, baseUrl?, api?, apiKey?, headers? }`; saves one provider connection without requiring a model or changing selection, preserving its model definitions and other providers; returns the catalog |
-| `POST /api/agent/providers/:id/login` | `ModelLogin`: starts the provider's subscription sign-in (its `signIn` in the catalog; 400 for a key-only provider). A running sign-in for it is cancelled |
-| `GET /api/agent/logins/:id` | `ModelLogin`: its `state`, the `step` to show (a URL to open, a device code) and the `prompt` it waits on; readable 2 minutes after it ends |
-| `POST /api/agent/logins/:id/respond` | `{ value }`: answers the open prompt (an option's id, a pasted code or redirect URL); 409 when nothing is asked |
-| `POST /api/agent/logins/:id/cancel` | `ModelLogin`, cancelled |
-| `POST /api/agent/logins/:id/open` | `ModelLogin`; opens the step's page (a provider's own sign-in page only) in the system browser; 409 before there is one |
-| `DELETE /api/agent/providers/:id` | Removes that provider’s configuration and credentials; clears selection only when it belongs to that provider, invalidates its pending model sync, and returns the latest catalog. Conversations stay in history. |
-| `POST /api/agent/models` | `{ provider, modelId, thinkingLevel, apiKey?, baseUrl?, api?, headers?, contextWindow?, maxTokens?, reasoning? }`; saves and returns the catalog |
-| `POST /api/agent/models/test` | Same settings; saves, tests the model, returns `{ text }` |
-| `POST /api/agent/models/discover` | `{ provider, baseUrl?, api?, apiKey?, headers? }`; reads models without saving, returns `{ models: [{ id, name, reasoning?, contextWindow?, maxTokens? }], source: "remote" \| "catalog" }` |
-| `POST /api/agent/models/sync` | Same input; discovers and persists all returned models plus provider connection settings in one operation, preserving current selection and existing overrides; returns the discovery result plus `catalog: AgentModels`. Empty/failed discovery keeps saved configuration intact. |
-| `GET /api/agent/sessions` | `AgentSessionSummary[]`, newest first |
-| `POST /api/agent/sessions` | `{ cwd?, project?, title?, provider?, modelId?, thinkingLevel?, permissionMode?, limits? }`; returns a new `AgentSessionDetail`. Project sessions reserve their own branch identity; opening for the first message prepares the managed workspace. Local-only sessions use `cwd`. |
-| `GET /api/agent/sessions/:id` | `AgentSessionDetail` with messages, queued inputs, tools, children, workspace, permissions, limits, execution/recovery state, recorded usage and archive metadata |
-| `POST /api/agent/sessions/:id/message` | `{ text, attachments?, mode?, provider?, modelId?, thinkingLevel? }`; starts or queues input and returns the snapshot |
-| `POST /api/agent/sessions/:id/continue` | `{ provider?, modelId?, thinkingLevel? }`; resumes an idle conversation through Pi while retaining completed results |
-| `GET /api/agent/run-limits` | `{ limits, defaults, busy }`: the `{ bashTimeoutSeconds, maxRetries }` every chat uses, the built-in defaults, and the chats working now |
-| `POST /api/agent/run-limits` | Partial `{ bashTimeoutSeconds, maxRetries }`; saves them and gives them to every chat; `409` while a chat works |
-| `POST /api/agent/sessions/:id/limits` | Partial `{ bashTimeoutSeconds, maxRetries, instructions }`; updates an idle conversation's settings |
-| `POST /api/agent/sessions/:id/update` | `{ title?, archived? }`; rename or archive/restore without deleting Pi files or branch history |
-| `GET /api/agent/sessions/:id/output/:artifactId?offset=0` | Reads an owned output artifact in UTF-8-safe pages; returns `{ text, offset, nextOffset, bytes, done }` |
-| `POST /api/agent/sessions/:id/children/:runId/stop` | Stops a controllable background run after terminal proof; foreground children use the conversation Stop action |
-| `POST /api/agent/sessions/:id/queue/:messageId` | `{ mode: "steer" }`; promotes a pending follow-up to guidance for the current task and returns the snapshot |
-| `DELETE /api/agent/sessions/:id/queue/:messageId` | Removes one pending message from Pi's queue and returns the snapshot |
-| `POST /api/agent/sessions/:id/stop` | Stops the task and children; project sessions save, unmount and close their workspace sandbox. Returns its snapshot or a cleanup error for retry. |
-| `POST /api/agent/sessions/:id/compact` | Compacts an idle session, returns its snapshot |
-| `POST /api/agent/sessions/:id/rollback` | `{ entryId }`; restores the active context before that user entry and its LayerFS checkpoint; returns `{ session, draft, attachments? }` without sending the draft |
-| `POST /api/agent/sessions/:id/edit` | `{ entryId, text, attachments?, provider?, modelId?, thinkingLevel? }`; restores before that user entry, sends the revised input and returns the updated session |
-| `POST /api/agent/sessions/:id/fork` | `{ entryId? }`; duplicates the whole active context, or only the context before a user entry; returns `{ session, draft?, attachments? }` for a new conversation and independent LayerFS branch |
-| `POST /api/agent/sessions/:id/permissions` | `{ mode: "ask" | "auto" | "full" }`; saves the policy and returns its snapshot |
-| `POST /api/agent/sessions/:id/approvals/:requestId` | `{ decision: "approve" | "reject" }`; decides a pending/reviewing command once and returns the snapshot |
-| `DELETE /api/agent/sessions/:id` | Stops and cleans up the workspace, then removes the saved conversation; keeps LayerFS branch history and returns `{ id }` |
-
-`headers` is a provider-scoped `Record<string, string>`: omitting it preserves
-saved headers, while `{}` clears them. Custom headers override generated
-headers with the same name. Values entered through Connect are literal text;
-Pi's native command/environment syntax is escaped when saved. Chat still uses
-Pi's configured API key or sign-in; headers alone do not configure its auth.
-
-History actions use Pi's stable `entryId`, exposed on transcript messages.
-User messages also carry `canRestore`; older project messages without a saved
-LayerFS checkpoint cannot restore files. The root `message_start` extension
-records a checkpoint before each consumed user message, covering queued and
-steering input as well as normal turns. File references name an immutable
-Commit or initial Layer, never the moving `main` branch.
-
-History mutations require idle work and hold a per-conversation barrier through
-cleanup and file/session changes. Pi's append-only entries remain in the old
-session file; the new cursor is persisted in a fresh Pi session. Copied pending
-subagent notices are inert, so historical work cannot restart in a copy.
-LayerFS restores create revision branches rather than erasing earlier history.
-Local-folder sessions change only their conversation context.
+`/api/projects/<key>` takes the key `<store>/<project>` as one encoded segment: state, commits,
+branch-commits, fs, file, sandboxes (`POST { name, image?, machine? }`), close-sandboxes, DELETE.
+`DELETE /api/sandboxes/<name>?force=1` closes a Sandbox. `GET /api/project-inits[/<id>]`: this
+host's Init jobs.
 
 ## The engine (`runs/`)
 
@@ -447,24 +385,14 @@ Sandboxes.
   into `/<run>/` on it, in a Workspace (tar through `workspace.exec`, so
   modes and symlinks are kept). A fixture's `/.lww` also goes to the root,
   its rules moved under the folder, since LayerFS reads only the root's.
-- **Scope** (`runs/scope.js`, `runs/scope-client.js`). Every agent bash call
-  has `LAYERFS_CONNECT_SCOPE` set, and `resolve-layerfs.js` then loads the
-  SDK's `client.js` through `scope-client.js`, which puts each call in the
-  run's scope before the real client traces and sends it: paths under
-  `/<run>/`; `main` is the current trunk; Branch `x` is `<run>.x`; Commit
-  and Layer ids pass; `workspace.exec` and `process.start` run `cd <run>`
-  first; Sandbox numbers are the run's own, from 1, mapped to the
-  project's. `branch.publish B [commit]` becomes `branch.fork
-  <run>.main.<k>` from B (or the Commit), and the trunk moves to it only
-  when the fork worked: one trunk Branch per publish, as main has one Layer
-  per publish. Answers come back in the script's names (its Sandbox
-  numbers, Branch names, paths), so scripts run as written. A Workspace's
-  Branch that `sandbox.list_workspaces` leaves null (it names Branches only
-  among a project's first 64,
-  [Ephemeral-AI-Lab/layerfs#480](https://github.com/Ephemeral-AI-Lab/layerfs/issues/480))
-  is filled from the run's own mounts. The trace
-  records the real calls, so an expect of `branch.publish:<kind>` is read
-  as `branch.fork:Forked` (`scopedScenario`).
+- **Scope** (`runs/scope.js`, `runs/scope-client.js`, `runs/cli-shim.mjs`).
+  Every agent bash call has `LAYERFS_CONNECT_SCOPE` set. The `layerfs`
+  command (cli-shim.mjs) and the `layerfs` package in the run's
+  `node_modules` (scope-client.js) put each call's 2.0 arguments through the
+  scope: paths under `/<run>/`; `main` is the current trunk; Branch `x` is
+  `<run>.x`; ids pass; Sandbox `sb1` is `<run>.sb1` on the run's machine;
+  `workspace.exec` runs `cd <run>` first; a publish forks the next trunk.
+  `expect` checks are blocked while LayerFS 2.0 writes no trace (§9 Q1).
 - **Checks** (`checks/`). With the scope, `final.order` compares the run's
   own Branches (names without the prefix) and its trunks as main's Layers
   (`scopedHistoryOf`; the record's forks from a published Layer read as forks

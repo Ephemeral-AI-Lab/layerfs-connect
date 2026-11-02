@@ -1,110 +1,112 @@
-// An agent's or the user's words as light Markdown (paragraphs, headings,
-// lists, fenced code), the agent's words streamed in as they arrive, and the
-// line that shows while it thinks.
-import { LoaderCircle } from 'lucide-react'
-import { Fragment, useEffect, useMemo, useState } from 'react'
+// Render Markdown as React elements, including during streaming.
+import { Check, Copy, LoaderCircle } from 'lucide-react'
+import { Fragment, useEffect, useMemo, useState, type ReactNode } from 'react'
 
-import { type Lang, type Token, highlight } from '@/lib/highlight'
-import { type Inline, blocks } from '@/lib/markdown'
+import { type Lang, highlight } from '@/lib/highlight'
+import { type Token, type MarkedToken, blocks, decodeText } from '@/lib/markdown'
 import { cn } from '@/lib/utils'
 import { useI18n } from '@/i18n'
+import './markdown.css'
 
-const FENCE_LANG: Record<string, Lang> = { sh: 'bash', bash: 'bash', shell: 'bash', zsh: 'bash', js: 'js', javascript: 'js', ts: 'ts', typescript: 'ts', tsx: 'tsx', jsx: 'tsx', json: 'json', md: 'md' }
+const FENCE_LANG: Record<string, Lang> = { sh: 'bash', bash: 'bash', shell: 'bash', zsh: 'bash', js: 'js', javascript: 'js', mjs: 'js', cjs: 'js', ts: 'ts', typescript: 'ts', tsx: 'tsx', jsx: 'tsx', json: 'json', md: 'md', markdown: 'md' }
 
 /** A fenced block in a message: highlighted, no gutter. */
-function FencedCode({ text, lang }: { text: string; lang: string }) {
-  const lines = useMemo(() => highlight(text, FENCE_LANG[lang] ?? 'text'), [text, lang])
+function FencedCode({ text, lang = '' }: { text: string; lang?: string }) {
+  const { t } = useI18n()
+  const language = lang.trim().split(/\s+/)[0].toLowerCase()
+  const lines = useMemo(() => highlight(text, FENCE_LANG[language] ?? 'text'), [text, language])
+  const [copyState, setCopyState] = useState<'idle' | 'copied' | 'error'>('idle')
+  useEffect(() => {
+    if (copyState === 'idle') return
+    const timer = setTimeout(() => setCopyState('idle'), 1800)
+    return () => clearTimeout(timer)
+  }, [copyState])
+  const copyLabel = t(copyState === 'copied' ? 'Copied' : copyState === 'error' ? 'Could not copy code' : 'Copy code')
   return (
-    <div className="my-1 overflow-hidden rounded-xl border border-foreground/[0.08] bg-background/65 font-mono text-[12.5px] leading-[1.65] shadow-2xs backdrop-blur-xs">
-      <div className="overflow-x-auto">
-        <div className="w-max min-w-full py-1.5">
-          {lines.map((tokens: Token[], n) => (
-            <div key={n} className="flex pr-4">
-              <span className="whitespace-pre pl-3">
-                {tokens.map(([text, cls], k) => <span key={k} className={cls || undefined}>{text}</span>)}
-              </span>
-            </div>
-          ))}
-        </div>
+    <div className="chat-md-code">
+      <div className="chat-md-code-header">
+        <span className="min-w-0 truncate">{language || t('Code')}</span>
+        <button type="button" className="chat-md-copy" aria-label={copyLabel} title={copyLabel} onClick={() => {
+          void navigator.clipboard.writeText(text).then(() => setCopyState('copied'), () => setCopyState('error'))
+        }}>
+          {copyState === 'copied' ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
+          <span aria-live="polite">{copyLabel}</span>
+        </button>
       </div>
+      <pre tabIndex={0} aria-label={language || t('Code')}><code>{lines.map((tokens, n) => <Fragment key={n}>
+        {n > 0 && '\n'}
+        {tokens.map(([text, cls], k) => <span key={k} className={cls || undefined}>{text}</span>)}
+      </Fragment>)}</code></pre>
     </div>
   )
 }
 
-const CODE = 'rounded-md bg-foreground/[0.055] px-1.5 py-0.5 font-mono text-[0.85em] text-foreground/90'
+function linkHref(value: string) {
+  const href = decodeText(value).trim()
+  return /^(https?:\/\/|mailto:)/i.test(href) ? href : undefined
+}
 
-function Inlines({ items }: { items: Inline[] }) {
-  return items.map((x, k) => {
-    switch (x.t) {
-      case 'text':
-        return <Fragment key={k}>{x.s}</Fragment>
-      case 'code':
-        return <code key={k} className={CODE}>{x.s}</code>
-      case 'strong':
-        return <strong key={k} className="font-semibold">{x.s}</strong>
-      case 'em':
-        return <em key={k}>{x.s}</em>
-      case 'link':
-        return (
-          <a key={k} href={x.href} target="_blank" rel="noreferrer" className="text-primary underline-offset-2 hover:underline">
-            {x.s}
-          </a>
-        )
+function MarkdownImage({ href, alt, title }: { href: string; alt: string; title?: string | null }) {
+  const [failed, setFailed] = useState(false)
+  const src = decodeText(href).trim()
+  const allowed = /^https:\/\//i.test(src) || /^data:image\/(?:png|jpeg|gif|webp);base64,/i.test(src)
+  if (!allowed || failed) return <span>{decodeText(alt)}</span>
+  return <img className="chat-md-image" src={src} alt={decodeText(alt)} title={title ? decodeText(title) : undefined} loading="lazy" referrerPolicy="no-referrer" onError={() => setFailed(true)} />
+}
+
+function MarkdownTokens({ tokens, tail }: { tokens: Token[]; tail?: ReactNode }) {
+  const visible = tokens.filter((token) => token.type !== 'space' && token.type !== 'def')
+  if (!visible.length) return tail
+  return visible.map((raw, index) => {
+    const token = raw as MarkedToken
+    const end = index === visible.length - 1 ? tail : null
+    switch (token.type) {
+      case 'heading': {
+        const Heading = `h${token.depth}` as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6'
+        return <Heading key={index}><MarkdownTokens tokens={token.tokens} />{end}</Heading>
+      }
+      case 'paragraph': return <p key={index}><MarkdownTokens tokens={token.tokens} />{end}</p>
+      case 'text': return <Fragment key={index}>{token.tokens ? <MarkdownTokens tokens={token.tokens} /> : decodeText(token.text)}{end}</Fragment>
+      case 'escape': return <Fragment key={index}>{decodeText(token.text)}{end}</Fragment>
+      case 'strong': return <strong key={index}><MarkdownTokens tokens={token.tokens} />{end}</strong>
+      case 'em': return <em key={index}><MarkdownTokens tokens={token.tokens} />{end}</em>
+      case 'del': return <del key={index}><MarkdownTokens tokens={token.tokens} />{end}</del>
+      case 'codespan': return <code key={index} className="chat-md-inline-code">{token.text}{end}</code>
+      case 'br': return <Fragment key={index}><br />{end}</Fragment>
+      case 'hr': return <Fragment key={index}><hr />{end}</Fragment>
+      case 'blockquote': return <blockquote key={index}><MarkdownTokens tokens={token.tokens} tail={end} /></blockquote>
+      case 'code': return <Fragment key={index}><FencedCode text={token.text} lang={token.lang} />{end}</Fragment>
+      case 'list': {
+        const List = token.ordered ? 'ol' : 'ul'
+        return <List key={index} start={token.ordered ? Number(token.start) : undefined}>
+          {token.items.map((item, i) => <li key={i} className={item.task ? 'chat-md-task' : undefined}>
+            {item.task && <input type="checkbox" checked={!!item.checked} disabled aria-label={item.text} />}
+            <MarkdownTokens tokens={item.tokens} tail={i === token.items.length - 1 ? end : null} />
+          </li>)}
+        </List>
+      }
+      case 'table': return <div key={index} className="chat-md-table" tabIndex={0}>
+        <table>
+          <thead><tr>{token.header.map((cell, i) => <th key={i} scope="col" style={{ textAlign: token.align[i] ?? undefined }}><MarkdownTokens tokens={cell.tokens} /></th>)}</tr></thead>
+          <tbody>{token.rows.map((row, i) => <tr key={i}>{row.map((cell, j) => <td key={j} style={{ textAlign: token.align[j] ?? undefined }}><MarkdownTokens tokens={cell.tokens} /></td>)}</tr>)}</tbody>
+        </table>{end}
+      </div>
+      case 'link': {
+        const href = linkHref(token.href)
+        const label = <MarkdownTokens tokens={token.tokens} />
+        return <Fragment key={index}>{href ? <a href={href} title={token.title ? decodeText(token.title) : undefined} target="_blank" rel="noopener noreferrer">{label}</a> : label}{end}</Fragment>
+      }
+      case 'image': return <Fragment key={index}><MarkdownImage key={token.href} href={token.href} alt={token.text} title={token.title} />{end}</Fragment>
+      // HTML from a response remains text; it never becomes executable markup.
+      case 'html': return <Fragment key={index}>{token.text}{end}</Fragment>
+      default: return <Fragment key={index}>{token.raw}{end}</Fragment>
     }
   })
 }
 
-/** An agent's or the user's words: paragraphs, lists, code. `tail` ends the last paragraph (a streaming cursor). */
-export function Markdown({ text, tail, className }: { text: string; tail?: React.ReactNode; className?: string }) {
+export function Markdown({ text, tail, className }: { text: string; tail?: ReactNode; className?: string }) {
   const parts = useMemo(() => blocks(text), [text])
-  const last = parts.length - 1
-  return (
-    <div className={cn('flex flex-col gap-3', className)}>
-      {parts.map((b, k) => {
-        const end = k === last ? tail : null
-        switch (b.t) {
-          case 'h': {
-            const Tag = b.level === 1 ? 'h3' : b.level === 2 ? 'h4' : 'h5'
-            return (
-              <Tag
-                key={k}
-                className={cn(
-                  'font-semibold tracking-tight text-foreground',
-                  b.level === 1 ? 'text-[16px] leading-6' : b.level === 2 ? 'text-[15px] leading-5' : 'text-[14px] leading-5',
-                )}
-              >
-                <Inlines items={b.inl} />
-                {end}
-              </Tag>
-            )
-          }
-          case 'p':
-            return (
-              <p key={k} className="whitespace-pre-wrap">
-                <Inlines items={b.inl} />
-                {end}
-              </p>
-            )
-          case 'list': {
-            const List = b.ordered ? 'ol' : 'ul'
-            return (
-              <List key={k} className={cn('flex flex-col gap-1 pl-5 marker:text-faint', b.ordered ? 'list-decimal' : 'list-disc')}>
-                {b.items.map((item, i) => (
-                  <li key={i}>
-                    <Inlines items={item} />
-                    {i === b.items.length - 1 && end}
-                  </li>
-                ))}
-              </List>
-            )
-          }
-          case 'code':
-            return <FencedCode key={k} text={b.text} lang={b.lang} />
-        }
-      })}
-      {parts.length === 0 && tail}
-    </div>
-  )
+  return <div className={cn('chat-markdown', className)}><MarkdownTokens tokens={parts} tail={tail} /></div>
 }
 
 /** Words shown per tick and the tick: about 20 words a second, a model's pace. */

@@ -17,7 +17,6 @@ export function ExtensionsSection() {
   const { data, pending } = caps
   const [confirm, setConfirm] = useState<AgentExtensionInfo>()
   return <div className="st-section" data-testid="extensions-section">
-    <h2 className="st-title">{t('Extensions')}</h2>
     <p className="st-intro">{t('Pi extensions loaded into every chat. Each one brings tools, hooks and commands; turning one off removes all of them.')}</p>
     <CapabilityStatus caps={caps} />
     {data && <ul className="st-rows">

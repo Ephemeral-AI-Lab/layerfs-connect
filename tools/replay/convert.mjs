@@ -59,6 +59,7 @@
 // Commit after no remaining command is dropped. A bash step left with no call
 // is dropped; a turn left with no call is its agent's reply alone (a child
 // answering the lead), which keeps the coordination (send_message, reply/until).
+import { toV2 } from '../lib/layerfs2.mjs'
 import { execFileSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
@@ -763,7 +764,8 @@ function convert(name, repo, rev, outDir) {
 
   const { tags, blurb } = META[name]
   const scenario = { type: 'layerfs-scenario', version: 3, title: old.title, blurb, prompt: ROOT_PROMPTS[name], order: old.order, tags, fixture: 'seed.json', agents: scenarioAgents }
-  writeFileSync(join(folder, 'scenario.json'), `${JSON.stringify(scenario, null, 1)}\n`)
+  // LayerFS 2.0's command forms (tools/lib/layerfs2.mjs)
+  writeFileSync(join(folder, 'scenario.json'), `${JSON.stringify(toV2(scenario), null, 1)}\n`)
 
   // ---------------------------------------------------------------- summary
   const by = (op, why) => all.filter((c) => c.op === op && c.removed === why).length

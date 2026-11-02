@@ -58,6 +58,36 @@ test('discovery route fetches unsaved OpenAI-compatible models without changing 
   assert.equal(JSON.stringify(result).includes('temporary-test-key'), false)
 })
 
+test('image capabilities come only from API metadata; missing and malformed capabilities remain unknown', async (t) => {
+  const { models, baseUrl } = await fixture(t, () => ({ data: [
+    { id: 'architecture-image', architecture: { input_modalities: ['text', 'image'] } },
+    { id: 'modalities-image', input_modalities: ['text', 'image'] },
+    { id: 'input-image', input: ['text', 'image'] },
+    { id: 'image-supported', capabilities: { image_input: { supported: true } } },
+    { id: 'vision-supported', capabilities: { vision: { supported: true } } },
+    { id: 'vision-boolean', capabilities: { vision: true } },
+    { id: 'modalities-text', input_modalities: ['text'] },
+    { id: 'image-unsupported', capabilities: { image_input: { supported: false } } },
+    { id: 'vision-unsupported', capabilities: { vision: { supported: false } } },
+    { id: 'vision-false', capabilities: { vision: false } },
+    { id: 'gpt-4o-vision' },
+    { id: 'text-only-model' },
+    { id: 'malformed', input: 'image', capabilities: { vision: 'true' } },
+    { id: 'empty', input_modalities: [] },
+  ] }))
+  const result = await models.discover({ provider: 'capabilities-fixture', baseUrl, api: 'openai-completions' })
+  const byId = new Map(result.models.map((model) => [model.id, model]))
+  for (const id of ['architecture-image', 'modalities-image', 'input-image', 'image-supported', 'vision-supported', 'vision-boolean']) {
+    assert.deepEqual(byId.get(id).input, ['text', 'image'], id)
+  }
+  for (const id of ['modalities-text', 'image-unsupported', 'vision-unsupported', 'vision-false']) {
+    assert.deepEqual(byId.get(id).input, ['text'], id)
+  }
+  for (const id of ['gpt-4o-vision', 'text-only-model', 'malformed', 'empty']) {
+    assert.equal(Object.hasOwn(byId.get(id), 'input'), false, id)
+  }
+})
+
 test('saved credentials stay with their provider and endpoint; explicit keys remain temporary', async (t) => {
   const { models, dir, baseUrl, requests } = await fixture(t)
   await models.configure({ provider: 'provider-one', modelId: 'fixture-model', baseUrl: `${baseUrl}/one`, api: 'openai-completions', apiKey: 'saved-one-key' })

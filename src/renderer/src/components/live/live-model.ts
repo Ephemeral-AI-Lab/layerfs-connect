@@ -17,7 +17,7 @@ const OPEN_SESSIONS = 2
 /** One session drawn in Live. */
 export interface Group {
   session: LiveSession
-  /** Its run's name: the folder (`crew_2`). */
+  /** Its scenario folder (`crew_2`), or the ordinary chat's title. */
   name: string
   colorOf: (agent: string) => AgentColor
 }
@@ -104,22 +104,30 @@ export interface HubRows {
   names: Set<string>
 }
 
-/** Open Branches as the project card lists them: main, then each session's, by run. */
+/** Open Branches: main, then the sessions' prefixed or explicitly used Branches. Shared Branches have one row. */
 export function hubRows(state: ProjectState | undefined, groups: Group[]): HubRows {
   const open = (state?.branches ?? []).filter((b) => b.state === 'open')
   const main = open.find((b) => b.name === 'main')
   const folders = groups.map((g) => g.name)
-  const byRun = new Map<string, { branch: BranchInfo; name: string }[]>()
+  const usedBy = new Map<string, Group>()
+  for (const g of groups) {
+    for (const { branch } of [...g.session.live.mounts, ...g.session.live.running, ...g.session.calls]) {
+      if (branch && !usedBy.has(branch)) usedBy.set(branch, g)
+    }
+  }
+  const byRun = new Map<Group, { branch: BranchInfo; name: string }[]>()
   let others = 0
   for (const b of open) {
     if (b.name === 'main') continue
     const at = branchRun(b.name, folders)
-    if (!at) others++
-    else byRun.set(at.folder, [...(byRun.get(at.folder) ?? []), { branch: b, name: at.name }])
+    // Keep scenario ownership even when another session uses its Branch.
+    // Otherwise the first displayed session using it supplies the row's group.
+    const group = at ? groups.find((g) => g.name === at.folder) : usedBy.get(b.name)
+    if (!group) others++
+    else byRun.set(group, [...(byRun.get(group) ?? []), { branch: b, name: at?.name ?? b.name }])
   }
   const runs = groups.flatMap((g) => {
-    const rows = byRun.get(g.name)
-    byRun.delete(g.name) // two runs with one folder list it once
+    const rows = byRun.get(g)
     return rows ? [{ group: g, rows }] : []
   })
   const names = new Set([...(main ? ['main'] : []), ...runs.flatMap((r) => r.rows.map((x) => x.branch.name))])

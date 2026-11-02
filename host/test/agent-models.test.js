@@ -185,6 +185,12 @@ test('deleting a provider removes its models and credentials, preserves others, 
 })
 
 test('deleting a built-in provider clears its saved connection and hides it from configured providers', async (t) => {
+  // a key in this process's environment would still count as OpenAI's after the delete
+  const envKey = process.env.OPENAI_API_KEY
+  delete process.env.OPENAI_API_KEY
+  t.after(() => {
+    if (envKey !== undefined) process.env.OPENAI_API_KEY = envKey
+  })
   const { dir, baseUrl } = await fixture(t)
   const models = await AgentModels.create(dir)
   const manager = { models, modelsSnapshot: () => models.snapshot() }
@@ -215,7 +221,7 @@ test('the settings page replaces a provider model list, and a rejected save leav
 
   // dropping the selected model clears the selection
   const snapshot = await models.configureProvider({ provider: 'list-fixture', models: [{ id: 'two' }] })
-  assert.deepEqual(snapshot.providers.find((p) => p.id === 'list-fixture').savedModels, [{ id: 'two' }])
+  assert.deepEqual(snapshot.providers.find((p) => p.id === 'list-fixture').savedModels, [{ id: 'two', input: ['text', 'image'] }])
   assert.equal(snapshot.selected, null)
   assert.deepEqual(snapshot.models.filter((m) => m.provider === 'list-fixture').map((m) => m.id), ['two'])
 

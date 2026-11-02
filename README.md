@@ -248,8 +248,9 @@ scripted sessions and replay controls are no longer part of the desktop UI.
   agent until the first message is sent.
 - **Storage** shows local volumes, disk and worker status. Project rows open
   the actual project. Remote providers remain clearly marked as planned.
-- **Compute** shows Docker and sandbox status, with unavailable providers
-  disabled.
+- **Compute** lists the machines the LayerFS home runs on (native, docker,
+  VMs and ssh hosts, LayerFS 2.0), their Stores and Sandboxes, and adds or
+  removes machines. Linked to LayerFS 1.x it says machines need 2.0.
 
 Remote Push/Pull/conflict mocks and hardcoded native sandboxes have been removed. Backend scenario fixtures and command-line test
 runners remain available for development; this cleanup does not delete project
@@ -330,6 +331,13 @@ in LayerFS), named in `~/.layerfs-connect/settings.json`:
 Connect keeps its own LayerFS home (`~/.layerfs-connect/home`) and container
 prefix, so its worker (`lfc-worker`), Sandboxes and volumes never meet another
 integration's.
+
+By default the home is placed on this machine's Docker. `"placement":
+"vm:apple-container"` (or `vm:microsandbox`, `vm:ssh`) puts each project in a
+Linux VM of its own instead, sized by `"vm": { "image", "cpus", "memory",
+"storeSize" }`; `vm:ssh` names its host in `"ssh": { "host", "user", "port",
+"identityFile" }`. host/README.md ("Deployment") lists every setting and its
+`LAYERFS_CONNECT_*` name.
 
 ## Develop
 

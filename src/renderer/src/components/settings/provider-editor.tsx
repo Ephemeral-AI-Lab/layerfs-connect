@@ -137,19 +137,26 @@ export function ProviderEditor({ provider: p, builtInCount, adding, hideTitle, o
             aria-label={t('Base URL')}
             aria-invalid={Boolean(urlProblem && baseUrl.trim())}
             disabled={busy}
-            onChange={(event) => setBaseUrl(event.target.value)}
+            onChange={(event) => {
+              setBaseUrl(event.target.value)
+              setModels((current) => current.map((model) => ({ ...model, input: undefined })))
+            }}
           />
           {!declared && <span className="st-hint">{t('Leave blank to use the provider’s endpoint.')}</span>}
         </div>
         {declared && <div className="st-field">
           <span className="st-label">{t('API protocol')}</span>
-          <select className="st-input" value={api} aria-label={t('API protocol')} disabled={busy} onChange={(event) => setApi(event.target.value)}>
+          <select className="st-input" value={api} aria-label={t('API protocol')} disabled={busy} onChange={(event) => {
+            setApi(event.target.value)
+            setModels((current) => current.map((model) => ({ ...model, input: undefined })))
+          }}>
             {!PROTOCOLS.some((option) => option.value === api) && <option value={api}>{api}</option>}
             {PROTOCOLS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
           </select>
         </div>}
         <RequestHeaders rows={headerRows} disabled={busy} onChange={setHeaderRows} />
         <ModelListEditor
+          key={`${baseUrl.trim() || p.baseUrl}:${declared ? api : p.api}`}
           models={models}
           onChange={setModels}
           disabled={busy}

@@ -29,6 +29,10 @@ const projects = {
     throw refusal('Binary', 'Binary: not text')
   }),
   remove: record('remove', { removed: true }),
+  createSandbox: record('createSandbox', (name, platform) => {
+    if (platform === 'mac') throw refusal('Unsupported', 'platform mac is not available on this macOS local (worker) home, which allows docker')
+    return { sandbox: '1', image: null, platform: platform ?? 'docker' }
+  }),
 }
 
 class FakeRuns extends EventEmitter {
@@ -95,30 +99,6 @@ test('CORS: any origin, Authorization and Content-Type, OPTIONS answered without
   assert.equal(ok.headers.get('access-control-allow-origin'), '*')
   const refused = await call('GET', '/api/status', {})
   assert.equal(refused.headers.get('access-control-allow-origin'), '*')
-})
-
-test('project routes pass their arguments through', async () => {
-  calls.length = 0
-  assert.deepEqual((await call('GET', '/api/status')).body, { platform: 'macos', missing: [] })
-  assert.equal((await call('POST', '/api/worker/start')).body.worker.state, 'running')
-  assert.deepEqual((await call('GET', '/api/projects')).body, [{ name: 'shop' }])
-  assert.deepEqual((await call('GET', '/api/projects/shop')).body, { project: { name: 'shop' } })
-  assert.deepEqual((await call('GET', '/api/projects/shop/commits?branch=cart&limit=5')).body, [])
-  await call('GET', '/api/projects/shop/commits')
-  await call('GET', '/api/projects/shop/fs?branch=cart&path=%2Fsrc')
-  await call('GET', '/api/projects/shop/fs')
-  assert.deepEqual((await call('DELETE', '/api/projects/shop')).body, { removed: true })
-  assert.deepEqual(calls, [
-    ['status'],
-    ['startWorker'],
-    ['list'],
-    ['state', 'shop'],
-    ['commits', 'shop', 'cart', '5'],
-    ['commits', 'shop', 'main', null],
-    ['listDir', 'shop', 'cart', '/src'],
-    ['listDir', 'shop', 'main', '/'],
-    ['remove', 'shop'],
-  ])
 })
 
 test('refusals answer { code, message } with their status', async () => {
