@@ -9,6 +9,10 @@
 > **In the repository from 2026-11-02.** This copy is the one the port follows and updates. Where
 > it and the LayerFS source disagree, the source wins and this copy is corrected in the same commit.
 >
+> **Port status (2026-11-02):** steps 1–11 are done on `feat/connect-ui-polish`; receipts in
+> `docs/live/`. Hidden behind their line: Store totals, live Sandbox state, a first Commit's
+> changes, chat background bash/live output/Stop, `expect` checks, and the blocked scenarios.
+>
 > **LayerFS commit Connect links:** `0b8ae8af5f` (`origin/layerfs_v2_0_0`; product source as of
 > `e9c0e793d3`).
 
@@ -315,8 +319,19 @@ filed as a LayerFS question (§9). A live check on this Mac passes, covering:
 11. **A sqlite Sandbox on another machine** than its Store's (Connect's per-chat platform choice).
 12. **The scope.** Can a folder scope allow `sandbox.create` and `commit.list` for its own project, so
     scenario agents can run scoped?
+    - *Port (2026-11-02):* not used underneath. Besides refusing those calls, its namespace has one
+      `main` and no trunks (a run's publish forks `<run>.main.<k>`). Connect's translator
+      (`runs/scope.js`, `scope-client.js`, `cli-shim.mjs`) does the scoping alone.
 13. **Packaging.** Where does the macOS native daemon come from, how is the O36 image published, and
     what default image does `docker` get?
+    - *Port:* the daemon is recorded with `layerfs import-env` (`LAYERFS_DAEMON`); a `machine.update`
+      option, or `machine.get` showing the recorded daemon, would let Connect do and check it
+      through a call.
+14. **Native macOS tools.** A native macOS Sandbox runs the Mac's BSD tools (`sed -i` differs, no
+    `timeout`, no `sha256sum`). Scenarios written for Linux fail there (seen: conflicts at its
+    GNU `sed -i`). Is that the intended contract, or should native Sandboxes carry GNU tools?
+15. **A whole-project history check** needs main's Layer list (Q3): Connect's `tools/checks/final.mjs`
+    and recording `final.json` are refused `Unsupported` until then.
 
 ## 10. Owner decisions
 
