@@ -34,7 +34,7 @@ import type { ProjectCatalog } from '@/host/use-projects'
 import { cn, sortByLabelLength } from '@/lib/utils'
 import { imageInputSupport } from '@/lib/model-input'
 import { canCollapseLatestTask } from '@/lib/conversation-tasks'
-import { DEFAULT_SCENARIO_PLATFORM, parseScenarioCommand } from '@/lib/scenario-command'
+import { parseScenarioCommand } from '@/lib/scenario-command'
 import './chat.css'
 
 const LAST_SESSION = 'connect.agent.last-session'
@@ -349,7 +349,7 @@ export function ChatHome({ projects, initialProject, initialSession, startNew, o
     if (scenario) {
       if (!(session ? session.project ?? session.scenario?.project : project)) setNotice(t("/scenario plays on a LayerFS project. Choose a project in Workspace, then try again."))
       else if (!scenario.ok) setError(t(scenario.error, scenario.params))
-      else if (scenario.name) { setInput(''); void playScenario(scenario.name, scenario.platform) }
+      else if (scenario.name) { setInput(''); void playScenario(scenario.name, scenario.machine) }
       else setInput(prompt.endsWith(' ') ? prompt : `${prompt} `)
       return
     }
@@ -553,15 +553,15 @@ export function ChatHome({ projects, initialProject, initialSession, startNew, o
   // `/scenario <name>` opens a new chat whose model is the scenario's script, on the chat's
   // LayerFS project, in a folder of its own; it is stopped like any chat, with Stop.
   // `/scenario all` starts one such chat per scenario, all at once, and opens the first.
-  // `-platform <name>` picks the platform its Sandboxes are made on; docker by default.
-  async function playScenario(name: string, platform: string = DEFAULT_SCENARIO_PLATFORM) {
+  // `-machine <name>` picks the machine its Sandboxes run on (the project's Store moves there); the Store's own by default.
+  async function playScenario(name: string, machine: string | null = null) {
     const target = activeProject
     if (!target) return
     setError('')
     setNotice('')
-    if (name.toLowerCase() === 'all') return playAllScenarios(target, platform)
+    if (name.toLowerCase() === 'all') return playAllScenarios(target, machine)
     try {
-      const detail = await agentHost.create({ scenario: name, project: target, platform })
+      const detail = await agentHost.create({ scenario: name, project: target, ...(machine ? { machine } : {}) })
       navigation.current += 1
       setConversationAction(null)
       setLoading(false)
@@ -570,10 +570,10 @@ export function ChatHome({ projects, initialProject, initialSession, startNew, o
       setError(t("Could not start the scenario: {message}", { message: (e as Error).message }))
     }
   }
-  async function playAllScenarios(target: string, platform: string) {
+  async function playAllScenarios(target: string, machine: string | null) {
     const ids = playable.map((item) => item.id)
     if (!ids.length) return setNotice(t("No scenario plays in a chat yet."))
-    const started = await Promise.allSettled(ids.map((id) => agentHost.create({ scenario: id, project: target, platform })))
+    const started = await Promise.allSettled(ids.map((id) => agentHost.create({ scenario: id, project: target, ...(machine ? { machine } : {}) })))
     const first = started.find((result) => result.status === 'fulfilled')
     const failed = started.flatMap((result, i) => result.status === 'rejected' ? [`${ids[i]}: ${(result.reason as Error).message}`] : [])
     if (first) {
@@ -595,7 +595,7 @@ export function ChatHome({ projects, initialProject, initialSession, startNew, o
     ? {
         id: 'scenario',
         label: t("Play scenario"),
-        description: t("A new chat plays a scenario’s script here, in a folder of its own. Add -platform <name> for its Sandboxes (docker by default)"),
+        description: t("A new chat plays a scenario’s script here, in a folder of its own. Add -machine <name> to run its Sandboxes on another machine (the project’s Store moves there)"),
         onSelect: () => {},
         options: [
           ...(playable.length > 1 ? [{ id: 'all', label: t("All scenarios"), description: t("{count} at once, each in a chat and folder of its own", { count: playable.length }) }] : []),

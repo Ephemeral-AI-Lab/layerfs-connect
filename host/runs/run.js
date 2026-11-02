@@ -22,7 +22,7 @@ import { layerfsEnv, projectRef } from '../config.js'
 import { layerfs, workspacesOf } from '../layerfs.js'
 import { Agent } from './agent.js'
 import { Job } from './jobs.js'
-import { callCodes, inOrder } from '../../tools/lib/expect.mjs'
+import { callCodes, EXPECT_BLOCKED, inOrder } from '../../tools/lib/expect.mjs'
 import { Tools } from './tools.js'
 import { LiveState } from './live.js'
 import { traceCall, Traces } from './traces.js'
@@ -286,7 +286,7 @@ export class Run {
       LAYERFS_TRACE: join(this.traceDir, `${agent.name}.jsonl`),
       LAYERFS_TRACE_STEP: label,
       LAYERFS_TRACE_START: '1',
-      ...(this.scopeDir ? { [SCOPE_ENV]: this.scopeDir } : {}),
+      ...(this.scopeDir ? { [SCOPE_ENV]: this.scopeDir, LAYERFS_CONNECT_MACHINE: Scope.open(this.scopeDir).machine ?? '' } : {}),
     }
   }
 
@@ -327,7 +327,8 @@ export class Run {
       // the run ended first: nothing to check
       return this.stepEnded(result, { ...fields, checks })
     }
-    if (step.expect) {
+    if (step.expect) checks.push({ name: 'expect', ok: true, detail: `${EXPECT_BLOCKED}; expected ${step.expect.join(', ')}` })
+    if (step.expect && !EXPECT_BLOCKED) {
       const codes = callCodes(this.traces.lines(`${agent.name}:${index}`))
       const ok = inOrder(codes, step.expect)
       checks.push({ name: 'expect', ok, detail: `expected ${step.expect.join(', ')}; its LayerFS calls show ${codes.length ? codes.join(', ') : 'nothing'}` })

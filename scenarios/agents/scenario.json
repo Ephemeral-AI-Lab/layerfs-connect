@@ -1407,5 +1407,6 @@
     "reply": "Committed on search: my Workspace was stale, so it merged with the head."
    }
   ]
- }
+ },
+ "blocked": "needs background processes (§9 Q2)"
 }

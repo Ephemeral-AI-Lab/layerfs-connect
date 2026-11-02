@@ -39,7 +39,7 @@
     "say": "Both lanes of range 1 are done: merging and publishing.",
     "bash": {
      "description": "Range 1: merge the lanes and publish",
-     "command": "layerfs branch merge r1-a01 r1-a02 r1 -m \"range 1\"\nlayerfs branch publish r1"
+     "command": "layerfs branch merge \"$LAYERFS_CONNECT_PROJECT\" r1 r1-a01 r1-a02 -m \"range 1\"\nlayerfs branch publish \"$LAYERFS_CONNECT_PROJECT\" r1"
     },
     "expect": [
      "branch.merge:Merged",
@@ -50,10 +50,10 @@
     "say": "Checking main at the end of range 1.",
     "bash": {
      "description": "Range 1: verify the checkpoint",
-     "command": "layerfs fs glob main 'r*-a0*/change-*.ts'"
+     "command": "layerfs file glob \"$LAYERFS_CONNECT_PROJECT\" main / 'r*-a0*/change-*.ts'"
     },
     "expect": [
-     "fs.glob:ok"
+     "file.glob:ok"
     ],
     "note": "main lists the 4 files ranges 1 to 1 wrote."
    },
@@ -81,7 +81,7 @@
     "say": "Both lanes of range 2 are done: merging and publishing.",
     "bash": {
      "description": "Range 2: merge the lanes and publish",
-     "command": "layerfs branch merge r2-a01 r2-a02 r2 -m \"range 2\"\nlayerfs branch publish r2"
+     "command": "layerfs branch merge \"$LAYERFS_CONNECT_PROJECT\" r2 r2-a01 r2-a02 -m \"range 2\"\nlayerfs branch publish \"$LAYERFS_CONNECT_PROJECT\" r2"
     },
     "expect": [
      "branch.merge:Merged",
@@ -92,10 +92,10 @@
     "say": "Checking main at the end of range 2.",
     "bash": {
      "description": "Range 2: verify the checkpoint",
-     "command": "layerfs fs glob main 'r*-a0*/change-*.ts'"
+     "command": "layerfs file glob \"$LAYERFS_CONNECT_PROJECT\" main / 'r*-a0*/change-*.ts'"
     },
     "expect": [
-     "fs.glob:ok"
+     "file.glob:ok"
     ],
     "note": "main lists the 8 files ranges 1 to 2 wrote."
    },
@@ -123,7 +123,7 @@
     "say": "Both lanes of range 3 are done: merging and publishing.",
     "bash": {
      "description": "Range 3: merge the lanes and publish",
-     "command": "layerfs branch merge r3-a01 r3-a02 r3 -m \"range 3\"\nlayerfs branch publish r3"
+     "command": "layerfs branch merge \"$LAYERFS_CONNECT_PROJECT\" r3 r3-a01 r3-a02 -m \"range 3\"\nlayerfs branch publish \"$LAYERFS_CONNECT_PROJECT\" r3"
     },
     "expect": [
      "branch.merge:Merged",
@@ -134,10 +134,10 @@
     "say": "Checking main at the end of range 3.",
     "bash": {
      "description": "Range 3: verify the checkpoint",
-     "command": "layerfs fs glob main 'r*-a0*/change-*.ts'"
+     "command": "layerfs file glob \"$LAYERFS_CONNECT_PROJECT\" main / 'r*-a0*/change-*.ts'"
     },
     "expect": [
-     "fs.glob:ok"
+     "file.glob:ok"
     ],
     "note": "main lists the 12 files ranges 1 to 3 wrote."
    },
@@ -165,7 +165,7 @@
     "say": "Both lanes of range 4 are done: merging and publishing.",
     "bash": {
      "description": "Range 4: merge the lanes and publish",
-     "command": "layerfs branch merge r4-a01 r4-a02 r4 -m \"range 4\"\nlayerfs branch publish r4"
+     "command": "layerfs branch merge \"$LAYERFS_CONNECT_PROJECT\" r4 r4-a01 r4-a02 -m \"range 4\"\nlayerfs branch publish \"$LAYERFS_CONNECT_PROJECT\" r4"
     },
     "expect": [
      "branch.merge:Merged",
@@ -176,10 +176,10 @@
     "say": "Checking main at the end of range 4.",
     "bash": {
      "description": "Range 4: verify the checkpoint",
-     "command": "layerfs fs glob main 'r*-a0*/change-*.ts'"
+     "command": "layerfs file glob \"$LAYERFS_CONNECT_PROJECT\" main / 'r*-a0*/change-*.ts'"
     },
     "expect": [
-     "fs.glob:ok"
+     "file.glob:ok"
     ],
     "note": "main lists the 16 files ranges 1 to 4 wrote."
    },
@@ -192,13 +192,13 @@
     "say": "Range 1: my lane, two files.",
     "bash": {
      "description": "a01: range 1 on lane r1-a01",
-     "command": "layerfs branch fork r1-a01\nlayerfs fs mkdir r1-a01 /r1-a01 -m \"r1 a01 folder\"\nlayerfs fs write r1-a01 /r1-a01/change-1.ts -m \"r1 a01 change 1\" <<'EOF'\n// range 1, a01, change 1\nexport const r1a011 = 11;\nEOF\nlayerfs fs write r1-a01 /r1-a01/change-2.ts -m \"r1 a01 change 2\" <<'EOF'\n// range 1, a01, change 2\nexport const r1a012 = 12;\nEOF"
+     "command": "layerfs branch fork \"$LAYERFS_CONNECT_PROJECT\" r1-a01 main\nlayerfs file mkdir \"$LAYERFS_CONNECT_PROJECT\" r1-a01 /r1-a01 -m \"r1 a01 folder\"\nlayerfs file write \"$LAYERFS_CONNECT_PROJECT\" r1-a01 /r1-a01/change-1.ts -m \"r1 a01 change 1\" <<'EOF'\n// range 1, a01, change 1\nexport const r1a011 = 11;\nEOF\nlayerfs file write \"$LAYERFS_CONNECT_PROJECT\" r1-a01 /r1-a01/change-2.ts -m \"r1 a01 change 2\" <<'EOF'\n// range 1, a01, change 2\nexport const r1a012 = 12;\nEOF"
     },
     "expect": [
      "branch.fork:Forked",
-     "fs.mkdir:Committed",
-     "fs.write:Committed",
-     "fs.write:Committed"
+     "file.mkdir:Committed",
+     "file.write:Committed",
+     "file.write:Committed"
     ]
    },
    {
@@ -208,13 +208,13 @@
     "say": "Range 2: my lane, two files.",
     "bash": {
      "description": "a01: range 2 on lane r2-a01",
-     "command": "layerfs branch fork r2-a01\nlayerfs fs mkdir r2-a01 /r2-a01 -m \"r2 a01 folder\"\nlayerfs fs write r2-a01 /r2-a01/change-1.ts -m \"r2 a01 change 1\" <<'EOF'\n// range 2, a01, change 1\nexport const r2a011 = 21;\nEOF\nlayerfs fs write r2-a01 /r2-a01/change-2.ts -m \"r2 a01 change 2\" <<'EOF'\n// range 2, a01, change 2\nexport const r2a012 = 22;\nEOF"
+     "command": "layerfs branch fork \"$LAYERFS_CONNECT_PROJECT\" r2-a01 main\nlayerfs file mkdir \"$LAYERFS_CONNECT_PROJECT\" r2-a01 /r2-a01 -m \"r2 a01 folder\"\nlayerfs file write \"$LAYERFS_CONNECT_PROJECT\" r2-a01 /r2-a01/change-1.ts -m \"r2 a01 change 1\" <<'EOF'\n// range 2, a01, change 1\nexport const r2a011 = 21;\nEOF\nlayerfs file write \"$LAYERFS_CONNECT_PROJECT\" r2-a01 /r2-a01/change-2.ts -m \"r2 a01 change 2\" <<'EOF'\n// range 2, a01, change 2\nexport const r2a012 = 22;\nEOF"
     },
     "expect": [
      "branch.fork:Forked",
-     "fs.mkdir:Committed",
-     "fs.write:Committed",
-     "fs.write:Committed"
+     "file.mkdir:Committed",
+     "file.write:Committed",
+     "file.write:Committed"
     ]
    },
    {
@@ -224,13 +224,13 @@
     "say": "Range 3: my lane, two files.",
     "bash": {
      "description": "a01: range 3 on lane r3-a01",
-     "command": "layerfs branch fork r3-a01\nlayerfs fs mkdir r3-a01 /r3-a01 -m \"r3 a01 folder\"\nlayerfs fs write r3-a01 /r3-a01/change-1.ts -m \"r3 a01 change 1\" <<'EOF'\n// range 3, a01, change 1\nexport const r3a011 = 31;\nEOF\nlayerfs fs write r3-a01 /r3-a01/change-2.ts -m \"r3 a01 change 2\" <<'EOF'\n// range 3, a01, change 2\nexport const r3a012 = 32;\nEOF"
+     "command": "layerfs branch fork \"$LAYERFS_CONNECT_PROJECT\" r3-a01 main\nlayerfs file mkdir \"$LAYERFS_CONNECT_PROJECT\" r3-a01 /r3-a01 -m \"r3 a01 folder\"\nlayerfs file write \"$LAYERFS_CONNECT_PROJECT\" r3-a01 /r3-a01/change-1.ts -m \"r3 a01 change 1\" <<'EOF'\n// range 3, a01, change 1\nexport const r3a011 = 31;\nEOF\nlayerfs file write \"$LAYERFS_CONNECT_PROJECT\" r3-a01 /r3-a01/change-2.ts -m \"r3 a01 change 2\" <<'EOF'\n// range 3, a01, change 2\nexport const r3a012 = 32;\nEOF"
     },
     "expect": [
      "branch.fork:Forked",
-     "fs.mkdir:Committed",
-     "fs.write:Committed",
-     "fs.write:Committed"
+     "file.mkdir:Committed",
+     "file.write:Committed",
+     "file.write:Committed"
     ]
    },
    {
@@ -240,13 +240,13 @@
     "say": "Range 4: my lane, two files.",
     "bash": {
      "description": "a01: range 4 on lane r4-a01",
-     "command": "layerfs branch fork r4-a01\nlayerfs fs mkdir r4-a01 /r4-a01 -m \"r4 a01 folder\"\nlayerfs fs write r4-a01 /r4-a01/change-1.ts -m \"r4 a01 change 1\" <<'EOF'\n// range 4, a01, change 1\nexport const r4a011 = 41;\nEOF\nlayerfs fs write r4-a01 /r4-a01/change-2.ts -m \"r4 a01 change 2\" <<'EOF'\n// range 4, a01, change 2\nexport const r4a012 = 42;\nEOF"
+     "command": "layerfs branch fork \"$LAYERFS_CONNECT_PROJECT\" r4-a01 main\nlayerfs file mkdir \"$LAYERFS_CONNECT_PROJECT\" r4-a01 /r4-a01 -m \"r4 a01 folder\"\nlayerfs file write \"$LAYERFS_CONNECT_PROJECT\" r4-a01 /r4-a01/change-1.ts -m \"r4 a01 change 1\" <<'EOF'\n// range 4, a01, change 1\nexport const r4a011 = 41;\nEOF\nlayerfs file write \"$LAYERFS_CONNECT_PROJECT\" r4-a01 /r4-a01/change-2.ts -m \"r4 a01 change 2\" <<'EOF'\n// range 4, a01, change 2\nexport const r4a012 = 42;\nEOF"
     },
     "expect": [
      "branch.fork:Forked",
-     "fs.mkdir:Committed",
-     "fs.write:Committed",
-     "fs.write:Committed"
+     "file.mkdir:Committed",
+     "file.write:Committed",
+     "file.write:Committed"
     ]
    },
    {
@@ -258,13 +258,13 @@
     "say": "Range 1: my lane, two files.",
     "bash": {
      "description": "a02: range 1 on lane r1-a02",
-     "command": "layerfs branch fork r1-a02\nlayerfs fs mkdir r1-a02 /r1-a02 -m \"r1 a02 folder\"\nlayerfs fs write r1-a02 /r1-a02/change-1.ts -m \"r1 a02 change 1\" <<'EOF'\n// range 1, a02, change 1\nexport const r1a021 = 11;\nEOF\nlayerfs fs write r1-a02 /r1-a02/change-2.ts -m \"r1 a02 change 2\" <<'EOF'\n// range 1, a02, change 2\nexport const r1a022 = 12;\nEOF"
+     "command": "layerfs branch fork \"$LAYERFS_CONNECT_PROJECT\" r1-a02 main\nlayerfs file mkdir \"$LAYERFS_CONNECT_PROJECT\" r1-a02 /r1-a02 -m \"r1 a02 folder\"\nlayerfs file write \"$LAYERFS_CONNECT_PROJECT\" r1-a02 /r1-a02/change-1.ts -m \"r1 a02 change 1\" <<'EOF'\n// range 1, a02, change 1\nexport const r1a021 = 11;\nEOF\nlayerfs file write \"$LAYERFS_CONNECT_PROJECT\" r1-a02 /r1-a02/change-2.ts -m \"r1 a02 change 2\" <<'EOF'\n// range 1, a02, change 2\nexport const r1a022 = 12;\nEOF"
     },
     "expect": [
      "branch.fork:Forked",
-     "fs.mkdir:Committed",
-     "fs.write:Committed",
-     "fs.write:Committed"
+     "file.mkdir:Committed",
+     "file.write:Committed",
+     "file.write:Committed"
     ]
    },
    {
@@ -274,13 +274,13 @@
     "say": "Range 2: my lane, two files.",
     "bash": {
      "description": "a02: range 2 on lane r2-a02",
-     "command": "layerfs branch fork r2-a02\nlayerfs fs mkdir r2-a02 /r2-a02 -m \"r2 a02 folder\"\nlayerfs fs write r2-a02 /r2-a02/change-1.ts -m \"r2 a02 change 1\" <<'EOF'\n// range 2, a02, change 1\nexport const r2a021 = 21;\nEOF\nlayerfs fs write r2-a02 /r2-a02/change-2.ts -m \"r2 a02 change 2\" <<'EOF'\n// range 2, a02, change 2\nexport const r2a022 = 22;\nEOF"
+     "command": "layerfs branch fork \"$LAYERFS_CONNECT_PROJECT\" r2-a02 main\nlayerfs file mkdir \"$LAYERFS_CONNECT_PROJECT\" r2-a02 /r2-a02 -m \"r2 a02 folder\"\nlayerfs file write \"$LAYERFS_CONNECT_PROJECT\" r2-a02 /r2-a02/change-1.ts -m \"r2 a02 change 1\" <<'EOF'\n// range 2, a02, change 1\nexport const r2a021 = 21;\nEOF\nlayerfs file write \"$LAYERFS_CONNECT_PROJECT\" r2-a02 /r2-a02/change-2.ts -m \"r2 a02 change 2\" <<'EOF'\n// range 2, a02, change 2\nexport const r2a022 = 22;\nEOF"
     },
     "expect": [
      "branch.fork:Forked",
-     "fs.mkdir:Committed",
-     "fs.write:Committed",
-     "fs.write:Committed"
+     "file.mkdir:Committed",
+     "file.write:Committed",
+     "file.write:Committed"
     ]
    },
    {
@@ -290,13 +290,13 @@
     "say": "Range 3: my lane, two files.",
     "bash": {
      "description": "a02: range 3 on lane r3-a02",
-     "command": "layerfs branch fork r3-a02\nlayerfs fs mkdir r3-a02 /r3-a02 -m \"r3 a02 folder\"\nlayerfs fs write r3-a02 /r3-a02/change-1.ts -m \"r3 a02 change 1\" <<'EOF'\n// range 3, a02, change 1\nexport const r3a021 = 31;\nEOF\nlayerfs fs write r3-a02 /r3-a02/change-2.ts -m \"r3 a02 change 2\" <<'EOF'\n// range 3, a02, change 2\nexport const r3a022 = 32;\nEOF"
+     "command": "layerfs branch fork \"$LAYERFS_CONNECT_PROJECT\" r3-a02 main\nlayerfs file mkdir \"$LAYERFS_CONNECT_PROJECT\" r3-a02 /r3-a02 -m \"r3 a02 folder\"\nlayerfs file write \"$LAYERFS_CONNECT_PROJECT\" r3-a02 /r3-a02/change-1.ts -m \"r3 a02 change 1\" <<'EOF'\n// range 3, a02, change 1\nexport const r3a021 = 31;\nEOF\nlayerfs file write \"$LAYERFS_CONNECT_PROJECT\" r3-a02 /r3-a02/change-2.ts -m \"r3 a02 change 2\" <<'EOF'\n// range 3, a02, change 2\nexport const r3a022 = 32;\nEOF"
     },
     "expect": [
      "branch.fork:Forked",
-     "fs.mkdir:Committed",
-     "fs.write:Committed",
-     "fs.write:Committed"
+     "file.mkdir:Committed",
+     "file.write:Committed",
+     "file.write:Committed"
     ]
    },
    {
@@ -306,18 +306,19 @@
     "say": "Range 4: my lane, two files.",
     "bash": {
      "description": "a02: range 4 on lane r4-a02",
-     "command": "layerfs branch fork r4-a02\nlayerfs fs mkdir r4-a02 /r4-a02 -m \"r4 a02 folder\"\nlayerfs fs write r4-a02 /r4-a02/change-1.ts -m \"r4 a02 change 1\" <<'EOF'\n// range 4, a02, change 1\nexport const r4a021 = 41;\nEOF\nlayerfs fs write r4-a02 /r4-a02/change-2.ts -m \"r4 a02 change 2\" <<'EOF'\n// range 4, a02, change 2\nexport const r4a022 = 42;\nEOF"
+     "command": "layerfs branch fork \"$LAYERFS_CONNECT_PROJECT\" r4-a02 main\nlayerfs file mkdir \"$LAYERFS_CONNECT_PROJECT\" r4-a02 /r4-a02 -m \"r4 a02 folder\"\nlayerfs file write \"$LAYERFS_CONNECT_PROJECT\" r4-a02 /r4-a02/change-1.ts -m \"r4 a02 change 1\" <<'EOF'\n// range 4, a02, change 1\nexport const r4a021 = 41;\nEOF\nlayerfs file write \"$LAYERFS_CONNECT_PROJECT\" r4-a02 /r4-a02/change-2.ts -m \"r4 a02 change 2\" <<'EOF'\n// range 4, a02, change 2\nexport const r4a022 = 42;\nEOF"
     },
     "expect": [
      "branch.fork:Forked",
-     "fs.mkdir:Committed",
-     "fs.write:Committed",
-     "fs.write:Committed"
+     "file.mkdir:Committed",
+     "file.write:Committed",
+     "file.write:Committed"
     ]
    },
    {
     "reply": "a02: done."
    }
   ]
- }
+ },
+ "layerfs": 2
 }

@@ -503,6 +503,8 @@ export interface DemoSummary {
   /** Counts by segment kind over every step. */
   kinds: Partial<Record<SegmentKind, number>>
   fixture: string
+  /** Why it cannot play on LayerFS 2.0 yet (background processes, the 1.1.0 JS SDK), or null. */
+  blocked?: string | null
   latest: RunSummary | null
   runs: number
 }

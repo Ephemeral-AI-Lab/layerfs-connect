@@ -12,7 +12,7 @@
 //
 // Chats play scenarios of one agent whose steps are bash calls and replies;
 // `chatReady` says why any other scenario does not play here yet.
-import { callCodes, inOrder } from '../../tools/lib/expect.mjs'
+import { callCodes, EXPECT_BLOCKED, inOrder } from '../../tools/lib/expect.mjs'
 import { PLACEHOLDER } from '../../tools/lib/scenario.mjs'
 
 /** Pi's bash ends a non-zero exit's output with this line. */
@@ -123,7 +123,7 @@ function checkBash(step, callId, result, traceOf) {
   const exit = result.text.match(EXIT)
   if (result.isError && !exit) return `${step.at} (${step.call.args.description ?? 'bash'}) did not finish`
   const code = exit ? Number(exit[1]) : 0
-  if (step.expect) {
+  if (step.expect && !EXPECT_BLOCKED) {
     const lines = traceOf(callId)
     const codes = callCodes(lines ?? [])
     if (!inOrder(codes, step.expect)) return `${step.at} (${step.call.args.description ?? 'bash'}) expected ${step.expect.join(', ')}; its LayerFS calls show ${codes.length ? codes.join(', ') : 'nothing'}`

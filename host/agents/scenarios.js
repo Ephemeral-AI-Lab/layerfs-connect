@@ -44,7 +44,7 @@ export class AgentScenarios {
           const folder = join(this.dir, id)
           const raw = JSON.parse(readFileSync(file, 'utf8'))
           const compiled = compileScenario(raw, { name: id, folder, where: file })
-          cached = { mtime, entry: { id, folder, compiled, title: raw.title ?? id, blurb: raw.blurb ?? '', prompt: raw.prompt ?? null, order: raw.order ?? 0, notInChat: chatReady(compiled) } }
+          cached = { mtime, entry: { id, folder, compiled, title: raw.title ?? id, blurb: raw.blurb ?? '', prompt: raw.prompt ?? null, order: raw.order ?? 0, notInChat: compiled.blocked ? `It comes with a later LayerFS: it ${compiled.blocked}.` : chatReady(compiled) } }
         } catch (error) {
           cached = { mtime, entry: null }
           process.stderr.write(`connect: scenario ${id} does not load: ${error.message}\n`)
@@ -113,8 +113,8 @@ export class AgentScenarios {
       ...layerfsEnv(this.spec),
       LAYERFS_CONNECT_PROJECT: projectRef(s.project).key,
       PATH: `${join(s.dir, 'bin')}:${process.env.PATH ?? ''}`,
-      NODE_PATH: join(s.dir, 'node_modules'),
       [this.scopeEnv]: s.scopeDir,
+      LAYERFS_CONNECT_MACHINE: (await import('../runs/scope.js')).Scope.open(s.scopeDir).machine ?? '',
     }
   }
 

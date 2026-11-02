@@ -293,7 +293,9 @@ export interface AgentScenario {
   title: string
   /** The project key it plays on. */
   project: string
-  /** The platform its Sandboxes are made on (layerfs#529): `/scenario <name> -platform <name>`, docker by default. Absent on a chat from before. */
+  /** The machine its Sandboxes run on: `/scenario <name> -machine <name>`; null: the project's Store's. */
+  machine?: string | null
+  /** 1.1.0 chats: the platform their Sandboxes were made on. */
   platform?: string
   /** `<scenario>_<n>`; null until set up. */
   folder: string | null
@@ -367,8 +369,8 @@ export interface AgentSessionDetail extends AgentSessionSummary {
 export interface NewAgentSession {
   /** A scenario chat: the scenario to play on `project` (its own model; the rest is ignored). */
   scenario?: string
-  /** A scenario chat: the platform its Sandboxes are made on (layerfs#529); docker when left out. */
-  platform?: string
+  /** A scenario chat: the machine its Sandboxes run on (its project's Store moves there); the Store's own when left out. */
+  machine?: string
   /** Missing fields come from Settings → Runs. */
   limits?: Partial<AgentLimits>
   cwd?: string

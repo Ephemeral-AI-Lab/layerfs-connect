@@ -4,11 +4,14 @@
 //   a trunk      the Branch that stands for main: <run>.main (the fixture's
 //                Commit), then <run>.main.1, .2, … one per publish
 //   a namespace  its Branches are <run>.<name>
-//   Sandboxes    numbered 1, 2, … for the run alone, whatever numbers the
-//                project gives them
-// The scripts stay as written. Every agent's bash call loads the scope
-// (resolve-layerfs.js, when LAYERFS_CONNECT_SCOPE names this folder), and it
-// rewrites each LayerFS call before the SDK traces and sends it:
+//   Sandboxes    the script's names (sb1, …) as <run>.<name>, unique in the
+//                home, made on the run's machine (Sandboxes follow the Store)
+// The scripts stay as written. Every agent's bash call finds the scope in
+// LAYERFS_CONNECT_SCOPE: the `layerfs` command (cli-shim.mjs) and the
+// `layerfs` package (scope-client.js) rewrite each call's 2.0 arguments
+// before the native library gets it. LayerFS 2.0's own folder scope is not
+// used underneath: it refuses Sandbox and Commit calls, which scenarios make,
+// and its namespace has no trunks (§9 Q12):
 //   paths        /app/page.tsx -> /<run>/app/page.tsx (fs.* paths, fs.apply
 //                changes, a glob or grep's folder); /.lww stays at the root,
 //                since LayerFS reads only that one, with its rules moved under
@@ -49,13 +52,6 @@ export const SCOPE_ENV = 'LAYERFS_CONNECT_SCOPE'
 
 /** A Commit or Layer id: hex, as LayerFS prints them (a Branch name is never this long and plain). */
 const ID = /^[0-9a-f]{40,}$/
-/**
- * Where a Sandbox number the run does not have (never had, or closed) is
- * sent: the highest number LayerFS takes (1 to 9999), which it refuses with
- * NoSuchSandbox as it would the run's closed one. Sandboxes take the lowest
- * free number, so no project reaches it.
- */
-const UNKNOWN_SANDBOX = '9999'
 
 /** /<run> + path, once: a path already under the folder is left as it is. */
 export function inFolder(run, path) {
@@ -165,7 +161,7 @@ export class Scope {
     } catch {}
   }
 
-  /** The run's Sandboxes: Map run number -> project number. */
+  /** The run's Sandboxes: Map the script's name -> the real name (unique in the home). */
   sandboxes() {
     const out = new Map()
     for (const n of readdirSync(join(this.dir, 'sandboxes'))) {
@@ -176,42 +172,30 @@ export class Scope {
     return out
   }
 
-  /** A new Sandbox of the project's: the run's lowest free number. */
-  addSandbox(real) {
-    for (let n = 1; ; n++) {
-      try {
-        writeFileSync(join(this.dir, 'sandboxes', String(n)), String(real), { flag: 'wx' })
-        return String(n)
-      } catch (error) {
-        if (error.code !== 'EEXIST') throw error
-      }
+  /** The real name of the script's Sandbox `name`: `<run>.<name>`, recorded once; a real name passes as it is. */
+  realSandbox(name) {
+    if (typeof name !== 'string') return name
+    const known = this.sandboxes()
+    if ([...known.values()].includes(name)) return name
+    if (known.has(name)) return known.get(name)
+    const real = `${this.run}.${name}`.toLowerCase().replace(/[^a-z0-9_.-]/g, '-').slice(0, 63)
+    try {
+      writeFileSync(join(this.dir, 'sandboxes', name), real, { flag: 'wx' })
+    } catch (error) {
+      if (error.code !== 'EEXIST') throw error
     }
+    return this.sandboxes().get(name) ?? real
+  }
+
+  /** A `ws` handle `<sandbox>:<path>` with the real Sandbox name. */
+  realWs(ws) {
+    if (typeof ws !== 'string' || !ws.includes(':')) return ws
+    const at = ws.indexOf(':')
+    return `${this.realSandbox(ws.slice(0, at))}${ws.slice(at)}`
   }
 
   dropSandbox(real) {
     for (const [n, r] of this.sandboxes()) if (r === String(real)) unlinkSync(join(this.dir, 'sandboxes', n))
-  }
-
-  mountFile(sandbox, path) {
-    return join(this.dir, 'mounts', `${sandbox}@${String(path).replaceAll('/', '_')}`)
-  }
-
-  /** The Branch the run mounted at `path` of Sandbox `sandbox` (the project's number), or null. */
-  mountedBranch(sandbox, path) {
-    try {
-      return readFileSync(this.mountFile(sandbox, path), 'utf8')
-    } catch {
-      return null
-    }
-  }
-
-  realSandbox(n) {
-    return this.sandboxes().get(String(n)) ?? UNKNOWN_SANDBOX
-  }
-
-  runSandbox(real) {
-    for (const [n, r] of this.sandboxes()) if (r === String(real)) return n
-    return null
   }
 
   /** Branches made by a merge with main that fast-forwarded onto the trunk: Map name -> the trunk head they start from. */
@@ -240,29 +224,30 @@ export class Scope {
   // ---------- calls ----------
 
   /**
-   * One call of the run's: `send(op, args)` makes the real call (traced) and
-   * answers its value or throws its refusal. Calls on another project pass.
+   * One call of the run's, by its 2.0 name (`family.call`) and named
+   * arguments: `send(op, args)` makes the real call and answers its value or
+   * throws its refusal. Calls on another project pass.
    */
   async call(op, args, send) {
-    if (!args || args.project !== this.project) return send(op, args)
+    if (!args || (args.project !== undefined && args.project !== this.project)) return send(op, args)
     if (op === 'branch.publish') return this.publish(args, send)
     const sent = this.args(op, args)
     const value = await send(op, sent)
-    if (op === 'branch.merge' && (args.with === 'main' || args.with == null) && value?.fastForward && typeof value.head === 'string') {
+    if (op === 'branch.merge' && (args.a === 'main' || args.b === 'main') && value?.fast_forward && typeof value.head === 'string') {
       mkdirSync(join(this.dir, 'ffs'), { recursive: true })
       writeFileSync(join(this.dir, 'ffs', sent.name), value.head)
     }
-    return this.answer(op, sent, value)
+    if (op === 'sandbox.close') this.dropSandbox(sent.name)
+    return this.unmap(op === 'sandbox.list' && Array.isArray(value?.items) ? { ...value, items: value.items.filter((i) => [...this.sandboxes().values()].includes(i.name)) } : value)
   }
 
   /** publish B [commit] -> a fork of the next trunk from it; the trunk moves when the fork worked. */
   async publish(args, send) {
-    const { branch, commit, ...rest } = args
-    const from = commit ?? this.ref(branch)
+    const { branch, commit, project } = args
     const k = this.claimTrunk()
     let value
     try {
-      value = await send('branch.fork', { ...rest, name: this.trunkName(k), from })
+      value = await send('branch.fork', { project, name: this.trunkName(k), from_branch: this.ref(branch), ...(commit ? { from_commit: commit } : {}) })
     } catch (error) {
       this.releaseTrunk(k)
       throw error
@@ -271,72 +256,24 @@ export class Scope {
     return this.unmap(value)
   }
 
-  /** The call's arguments in the run's folder, namespace and Sandboxes. */
+  /** The call's named arguments in the run's folder, namespace and Sandboxes. */
   args(op, args) {
     const a = { ...args }
-    const path = (key) => {
-      if (key in a) a[key] = inFolder(this.run, a[key])
+    for (const key of ['branch', 'from_branch', 'to_branch', 'left_branch', 'right_branch', 'a', 'b']) if (key in a) a[key] = this.ref(a[key])
+    if (op === 'branch.fork' || op === 'branch.merge') a.name = this.name(a.name)
+    for (const key of ['path', 'from_path', 'to_path', 'left_path', 'right_path']) if (key in a) a[key] = inFolder(this.run, a[key])
+    if ((op === 'file.glob' || op === 'file.grep') && !('path' in a)) a.path = `/${this.run}`
+    if (op === 'file.apply' && Array.isArray(a.changes)) a.changes = a.changes.flatMap((c) => (c?.op === 'write' && c.path === '/.lww' ? [this.change(c), { ...c, path: `/${this.run}/.lww` }] : [this.change(c)]))
+    if ((op === 'file.write' || op === 'file.edit') && a.path === '/.lww') Object.assign(a, this.lwwBody(a))
+    if (op.startsWith('sandbox.') || op === 'workspace.mount') {
+      if (op === 'sandbox.create') a.name = this.realSandbox(a.name)
+      else if ('name' in a) a.name = this.realSandbox(a.name)
+      if ('sandbox' in a) a.sandbox = this.realSandbox(a.sandbox)
+      // Sandboxes follow the Store: a run's are made on its machine
+      if (op === 'sandbox.create' && this.machine) a.machine = this.machine
     }
-    const sandbox = () => {
-      if (typeof a.sandbox === 'string') a.sandbox = this.realSandbox(a.sandbox)
-    }
-    switch (op) {
-      case 'branch.fork':
-        a.name = this.name(a.name)
-        a.from = this.ref(a.from)
-        break
-      case 'branch.merge':
-        a.branch = this.ref(a.branch)
-        a.with = this.ref(a.with)
-        a.name = this.name(a.name)
-        break
-      case 'branch.list_commits':
-        a.branch = this.ref(a.branch)
-        break
-      case 'branch.diff_branches':
-      case 'branch.diff_commits':
-        a.from = this.ref(a.from)
-        a.to = this.ref(a.to)
-        break
-      case 'fs.diff_files':
-        a.branch = this.ref(a.branch)
-        for (const side of ['left', 'right']) if (a[side]) a[side] = { ...a[side], commit: this.ref(a[side].commit), path: inFolder(this.run, a[side].path) }
-        break
-      case 'fs.glob':
-      case 'fs.grep':
-        a.branch = this.ref(a.branch)
-        a.path = inFolder(this.run, a.path ?? '/')
-        break
-      case 'fs.cp':
-      case 'fs.mv':
-        a.branch = this.ref(a.branch)
-        path('from')
-        path('to')
-        break
-      case 'fs.apply':
-        a.branch = this.ref(a.branch)
-        // a /.lww written goes to the root, where LayerFS reads it, and as written into the folder, with the run's other files
-        if (Array.isArray(a.changes)) a.changes = a.changes.flatMap((c) => (c?.op === 'write' && c.path === '/.lww' ? [this.change(c), { ...c, path: `/${this.run}/.lww` }] : [this.change(c)]))
-        break
-      case 'workspace.mount':
-        sandbox()
-        a.branch = this.ref(a.branch)
-        break
-      case 'workspace.exec':
-      case 'backend.daemon.process.start':
-        sandbox()
-        a.command = inRunFolder(this.run, a.command)
-        break
-      default:
-        if (op.startsWith('fs.')) {
-          a.branch = this.ref(a.branch)
-          path('path')
-          if (a.path === '/.lww' && (op === 'fs.write' || op === 'fs.edit')) Object.assign(a, this.lwwBody(a))
-        } else {
-          sandbox()
-          if (op.startsWith('backend.store.') && typeof a.branch === 'string') a.branch = this.ref(a.branch)
-        }
-    }
+    if ('ws' in a) a.ws = this.realWs(a.ws)
+    if (op === 'workspace.exec') a.command = inRunFolder(this.run, a.command)
     return a
   }
 
@@ -351,30 +288,8 @@ export class Scope {
   lwwBody(a) {
     const out = {}
     if (typeof a.content === 'string') out.content = lwwFor(this.run, a.content)
-    if (typeof a.newText === 'string') out.newText = lwwFor(this.run, a.newText)
+    if (typeof a.new === 'string') out.new = lwwFor(this.run, a.new)
     return out
-  }
-
-  /** The call's value as the run sees it: its own Sandbox numbers, its own Sandboxes and processes listed. */
-  answer(op, args, value) {
-    if (!value || typeof value !== 'object') return value
-    if (op === 'sandbox.create' && typeof value.sandbox === 'string') return { ...value, sandbox: this.addSandbox(value.sandbox) }
-    if (op === 'sandbox.close') this.dropSandbox(args.sandbox)
-    if (op === 'workspace.mount' && typeof value.path === 'string') {
-      mkdirSync(join(this.dir, 'mounts'), { recursive: true })
-      writeFileSync(this.mountFile(value.sandbox ?? args.sandbox, value.path), String(args.branch))
-    }
-    if (op === 'workspace.unmount') rmSync(this.mountFile(args.sandbox, args.path), { force: true })
-    // the binding's answer: { workspaces: [{ directory, branch, … }] }, which the SDK makes into items
-    if (op === 'sandbox.list_workspaces' && Array.isArray(value.workspaces)) {
-      const named = (w) => (w.branch == null ? this.mountedBranch(args.sandbox, w.directory) : null)
-      value = { ...value, workspaces: value.workspaces.map((w) => (named(w) ? { ...w, branch: named(w) } : w)) }
-    }
-    if ((op === 'project.list_sandboxes' || op === 'backend.daemon.process.list') && Array.isArray(value.items)) {
-      const mine = new Set(this.sandboxes().values())
-      value = { ...value, items: value.items.filter((i) => mine.has(String(i.sandbox))) }
-    }
-    return this.unmap(value)
   }
 
   /** A Branch name as the run's scripts know it: <run>.x -> x, a trunk -> main. */
@@ -390,9 +305,9 @@ export class Scope {
     return path === root ? '/' : path.startsWith(`${root}/`) ? path.slice(root.length) : path
   }
 
-  /** An answer as the run's scripts know the project: its Sandbox numbers, Branch names and paths. */
+  /** An answer as the run's scripts know the project: Branch names and paths (Sandboxes keep their real names, which the scope also takes). */
   unmap(value) {
-    const numbers = new Map([...this.sandboxes()].map(([n, r]) => [r, n]))
+    const numbers = new Map()
     const walk = (v) => {
       if (Array.isArray(v)) return v.map(walk)
       if (!v || typeof v !== 'object' || Buffer.isBuffer(v) || ArrayBuffer.isView(v)) return v

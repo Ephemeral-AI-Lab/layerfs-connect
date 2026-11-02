@@ -91,7 +91,8 @@ export function compileScenario(raw, { name, folder, where = name, root = 'root'
   }
   if (!isAbsolute(folder)) folder = resolve(folder)
   if (!isObject(raw)) fail('', 'must be an object')
-  only(raw, ['type', 'version', 'title', 'blurb', 'prompt', 'order', 'tags', 'fixture', 'image', 'agents', 'sessions'], '', fail)
+  // `layerfs: 2` marks a scenario written for LayerFS 2.0; `blocked` says why one cannot play on it yet (tools/lib/layerfs2.mjs)
+  only(raw, ['type', 'version', 'title', 'blurb', 'prompt', 'order', 'tags', 'fixture', 'image', 'agents', 'sessions', 'layerfs', 'blocked'], '', fail)
   if (raw.sessions !== undefined) return compileSessions(raw, { name, folder, where, fail })
   if (raw.type !== TYPE) fail('type', `must be "${TYPE}"`)
   if (raw.version !== 3) fail('version', 'must be 3')
@@ -151,7 +152,7 @@ export function compileScenario(raw, { name, folder, where = name, root = 'root'
   const all = Object.values(agents).flat()
   const calls = [...new Set(all.flatMap((s) => s.expect ?? []).map(methodOf).filter(Boolean))].sort()
   const counts = { agents: Object.keys(agents).length, steps: all.filter((s) => s.kind === 'call').length, calls }
-  return { name, title: raw.title, blurb: raw.blurb ?? '', prompt: raw.prompt ?? null, order: raw.order ?? null, tags, form, counts, fixture, seed, image: raw.image ?? null, root, agents, prompts, parents, templates, sessions: null }
+  return { name, title: raw.title, blurb: raw.blurb ?? '', prompt: raw.prompt ?? null, order: raw.order ?? null, tags, form, counts, fixture, seed, image: raw.image ?? null, root, agents, prompts, parents, templates, sessions: null, blocked: typeof raw.blocked === 'string' ? raw.blocked : null }
 }
 
 /**

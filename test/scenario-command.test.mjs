@@ -22,22 +22,20 @@ after(async () => {
   await rm(directory, { recursive: true, force: true })
 })
 
-test('/scenario plays on docker unless -platform names another', () => {
-  assert.deepEqual(parse('/scenario tour'), { ok: true, name: 'tour', platform: 'docker' })
-  assert.deepEqual(parse('/scenario tour -platform linux'), { ok: true, name: 'tour', platform: 'linux' })
-  assert.deepEqual(parse('/scenario   tour   --platform   apple-container '), { ok: true, name: 'tour', platform: 'apple-container' })
-  assert.deepEqual(parse('/scenario -platform=mac all'), { ok: true, name: 'all', platform: 'mac' })
+test('/scenario plays on the Store\'s machine unless -machine names another', () => {
+  assert.deepEqual(parse('/scenario tour'), { ok: true, name: 'tour', machine: null })
+  assert.deepEqual(parse('/scenario tour -machine lima1'), { ok: true, name: 'tour', machine: 'lima1' })
+  assert.deepEqual(parse('/scenario   tour   --machine   docker '), { ok: true, name: 'tour', machine: 'docker' })
+  assert.deepEqual(parse('/scenario -machine=native all'), { ok: true, name: 'all', machine: 'native' })
   // no name yet: the composer completes it
-  assert.deepEqual(parse('/scenario'), { ok: true, name: null, platform: 'docker' })
-  assert.deepEqual(parse('/scenario -platform ssh'), { ok: true, name: null, platform: 'ssh' })
+  assert.deepEqual(parse('/scenario'), { ok: true, name: null, machine: null })
 })
 
 test('/scenario refuses what it cannot read', () => {
   assert.equal(parse('hello'), null)
   assert.equal(parse('/scenarios tour'), null)
-  assert.equal(parse('/scenario tour -platform windows').error, 'No platform named {platform}. Platforms: {names}.')
-  assert.equal(parse('/scenario tour -platform').error, '-platform needs a name: {names}.')
-  assert.equal(parse('/scenario tour -platform linux -platform docker').error, 'Name -platform once.')
+  assert.equal(parse('/scenario tour -machine').error, '-machine needs a machine’s name.')
+  assert.equal(parse('/scenario tour -machine a -machine b').error, 'Name -machine once.')
   assert.deepEqual(parse('/scenario tour -p linux').params, { option: '-p' })
   assert.deepEqual(parse('/scenario tour crew').params, { first: 'tour', second: 'crew' })
 })

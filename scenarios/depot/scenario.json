@@ -1576,5 +1576,6 @@
     ]
    }
   ]
- }
+ },
+ "blocked": "its scripts use the 1.1.0 JS SDK; they are not rewritten for the 2.0 package yet"
 }

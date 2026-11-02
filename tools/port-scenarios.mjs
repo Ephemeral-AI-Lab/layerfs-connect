@@ -22,6 +22,9 @@
 //                   (lib/agents-sandboxes.mjs); "tour" and "merge" run
 //                   their in-place seds in a form BSD sed reads too, for a
 //                   `mac` Sandbox (lib/portable-sed.mjs)
+//                   then LayerFS 2.0's forms (lib/layerfs2.mjs): project-first
+//                   calls, file.*, named Sandboxes; a scenario using background
+//                   processes or the 1.1.0 JS SDK is marked `blocked`
 //   CONVERSION.md   prose naming dsh's host and plugin
 // Nothing else changes: steps, expects, exits, commits, placeholders, the
 // shell and the JS stay as they are, apart from agents' Sandbox steps and tour's and merge's seds. A DSH_ name with no mapping stops the port.
@@ -31,6 +34,7 @@ import { dirname, join, relative, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { shareSandboxes } from './lib/agents-sandboxes.mjs'
 import { portableSed } from './lib/portable-sed.mjs'
+import { toV2 } from './lib/layerfs2.mjs'
 import { ROOT_PROMPTS } from './lib/prompts.mjs'
 import { NAMES as REPLAYS } from './replay/convert.mjs'
 
@@ -122,6 +126,8 @@ export function portScenario(text, counts = {}, prompt = null, id = null) {
   if (`${JSON.stringify(value, null, 1)}\n` !== text) throw new Error('not in the one-space JSON layout a round trip keeps')
   let ported = walk(value, counts)
   if (CHANGES[id]) ported = CHANGES[id](ported, counts)
+  // LayerFS 2.0's command forms, or `blocked` with the reason (tools/lib/layerfs2.mjs)
+  ported = toV2(ported)
   if (!prompt) return `${JSON.stringify(ported, null, 1)}\n`
   const out = {}
   for (const [k, v] of Object.entries(ported)) {

@@ -92,7 +92,7 @@ function SessionRow({ session, now, onOpen }: { session: AgentSessionSummary; no
   const workspace = session.workspace
   const meta = [
     !workspace?.branch && session.modelId,
-    scenario?.platform && t('Sandboxes on {platform}', { platform: scenario.platform }),
+    (scenario?.machine ?? scenario?.platform) && t('Sandboxes on {platform}', { platform: scenario?.machine ?? scenario?.platform ?? '' }),
     workspace && workspace.commitCount > 0 && (workspace.commitCount === 1 ? t('1 Commit') : t('{n} Commits', { n: workspace.commitCount })),
   ].filter(Boolean)
   return (

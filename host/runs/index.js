@@ -25,6 +25,7 @@ import { fileURLToPath } from 'node:url'
 import { compileScenario } from '../../tools/lib/scenario.mjs'
 import { projectRef } from '../config.js'
 import { layerfs } from '../layerfs.js'
+import { placeRun } from './folder.js'
 import { closeRunSandboxes, Launch, Run } from './run.js'
 import { scopedScenario } from './scope.js'
 import { piLog, trajectory, writeNotes } from './trajectory.js'
@@ -203,9 +204,10 @@ export class RunManager extends EventEmitter {
    * the run sets up /<scenario>_<n>/ on a trunk Branch of its own and plays
    * there (run.js), whatever else plays on the project.
    */
-  async start(id, { project = null } = {}) {
+  async start(id, { project = null, machine = null } = {}) {
     const c = this.load().find((x) => x.demo.id === id)
     if (!c) throw refuse('NotFound', 404, `no scenario named ${id}`)
+    if (c.demo.scenario.blocked) throw refuse('Unsupported', 409, `${id} comes with a later LayerFS: it ${c.demo.scenario.blocked}`)
     if (project === null) throw refuse('InvalidInput', 400, 'name the project to play the scenario on')
     project = checkProject(project)
     if (this.playing() >= MAX_PLAYING) throw refuse('Busy', 409, `${MAX_PLAYING} scenarios are playing; stop one or wait for one to end`)
@@ -216,6 +218,8 @@ export class RunManager extends EventEmitter {
       // the startup sweep may still be closing an interrupted run's Sandboxes
       await this.sweeping
       await playable(this.spec, project)
+      // Sandboxes follow the Store: a run on another machine moves the project's Store there first
+      if (machine) await placeRun(this.spec, project, await checkMachine(this.spec, machine))
       runs = this.makeRuns(c.demo, project)
       for (const run of runs) this.live.set(run.id, run)
     } finally {
@@ -229,7 +233,7 @@ export class RunManager extends EventEmitter {
   async startAll({ project = null } = {}) {
     if (project === null) throw refuse('InvalidInput', 400, 'name the project to play the scenarios on')
     project = checkProject(project)
-    const all = this.load()
+    const all = this.load().filter((c) => !c.demo.scenario.blocked)
     if (this.playing() + all.length > MAX_PLAYING) throw refuse('Busy', 409, `${this.playing()} scenarios are playing; all ${all.length} more would pass ${MAX_PLAYING}`)
     this.starting += all.length
     const launched = []
@@ -419,6 +423,13 @@ const runName = (key) => key.replace('/', '.')
 
 /** The project `key` names (project.get), when scenarios can play on it: refused when it is not there. */
 const playable = (spec, key) => layerfs(spec).project.get(key)
+
+/** `machine`, when this home has it (machine.list): `-machine <name>`. */
+async function checkMachine(spec, machine) {
+  const names = ((await layerfs(spec).machine.list()).machines ?? []).map((m) => m.name)
+  if (!names.includes(machine)) throw refuse('InvalidInput', 400, `no machine named ${machine}; this home has ${names.join(', ')}`)
+  return machine
+}
 
 /** A project key `<store>/<project>`; a bare name is refused. */
 function checkProject(key) {

@@ -182,7 +182,7 @@ export function createHandler(deps) {
       // every scenario at once, each in its own folder of the project: { project }
       if (id === 'all' && sub === 'runs' && method === 'POST') return engine().startAll({ project: body?.project ?? null })
       // one scenario in a folder of its own on a project that is there: { project } (a project key)
-      if (id && sub === 'runs' && method === 'POST') return engine().start(id, { project: body?.project ?? null })
+      if (id && sub === 'runs' && method === 'POST') return engine().start(id, { project: body?.project ?? null, machine: body?.machine ?? null })
       return undefined
     }
     if (group === 'runs') {

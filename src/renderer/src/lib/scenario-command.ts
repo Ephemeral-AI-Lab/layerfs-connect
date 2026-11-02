@@ -1,40 +1,36 @@
-// `/scenario [<name>] [-platform <platform>]`: the scenario to play and the
-// platform its Sandboxes are made on (layerfs#529), docker unless named.
-// `--platform` and `-platform=<name>` are read the same way.
-
-export const PLATFORM_NAMES = ['docker', 'mac', 'linux', 'apple-container', 'microsandbox', 'lima', 'firecracker', 'ssh'] as const
-export type ScenarioPlatform = (typeof PLATFORM_NAMES)[number]
-export const DEFAULT_SCENARIO_PLATFORM: ScenarioPlatform = 'docker'
+// `/scenario [<name>] [-machine <machine>]`: the scenario to play and the
+// machine its Sandboxes run on (LayerFS 2.0). Left out, the project's Store's
+// machine; named, the project's Store moves there first, since Sandboxes
+// follow the Store. The host checks the name against machine.list.
+// `--machine` and `-machine=<name>` are read the same way.
 
 export type ScenarioCommand =
-  | { ok: true; name: string | null; platform: ScenarioPlatform }
+  | { ok: true; name: string | null; machine: string | null }
   /** `error` is an English message template for t(), filled from `params`. */
   | { ok: false; error: string; params?: Record<string, string> }
 
-const FLAG = /^--?platform(?:=(.*))?$/
+const FLAG = /^--?machine(?:=(.*))?$/
 
 /** Null when `text` is not a `/scenario` command. */
 export function parseScenarioCommand(text: string): ScenarioCommand | null {
   const words = text.trim().split(/\s+/)
   if (words[0] !== '/scenario') return null
   let name: string | null = null
-  let platform: string | null = null
+  let machine: string | null = null
   for (let i = 1; i < words.length; i++) {
     const word = words[i]
     const flag = FLAG.exec(word)
     if (flag) {
-      if (platform !== null) return { ok: false, error: 'Name -platform once.' }
-      platform = flag[1] ?? words[++i] ?? ''
-      if (!platform) return { ok: false, error: '-platform needs a name: {names}.', params: { names: PLATFORM_NAMES.join(', ') } }
+      if (machine !== null) return { ok: false, error: 'Name -machine once.' }
+      machine = flag[1] ?? words[++i] ?? ''
+      if (!machine) return { ok: false, error: '-machine needs a machine’s name.' }
     } else if (word.startsWith('-')) {
-      return { ok: false, error: 'Unknown option {option}. /scenario takes -platform <name>.', params: { option: word } }
+      return { ok: false, error: 'Unknown option {option}. /scenario takes -machine <name>.', params: { option: word } }
     } else if (name === null) {
       name = word
     } else {
       return { ok: false, error: '/scenario plays one scenario (or all), not {first} and {second}.', params: { first: name, second: word } }
     }
   }
-  const chosen = platform ?? DEFAULT_SCENARIO_PLATFORM
-  if (!(PLATFORM_NAMES as readonly string[]).includes(chosen)) return { ok: false, error: 'No platform named {platform}. Platforms: {names}.', params: { platform: chosen, names: PLATFORM_NAMES.join(', ') } }
-  return { ok: true, name, platform: chosen as ScenarioPlatform }
+  return { ok: true, name, machine }
 }

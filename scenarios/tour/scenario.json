@@ -180,5 +180,6 @@
     "reply": "main has header's files only: publish overwrites, and feature-home's Layer stays in history. Merge first to keep both."
    }
   ]
- }
+ },
+ "blocked": "needs background processes (§9 Q2)"
 }

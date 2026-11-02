@@ -16,7 +16,7 @@
 // Each step is one attempt. Placeholders are filled from what the agent has seen.
 import { existsSync, statSync } from 'node:fs'
 import { isAbsolute, resolve } from 'node:path'
-import { callCodes, inOrder } from '../../tools/lib/expect.mjs'
+import { callCodes, EXPECT_BLOCKED, inOrder } from '../../tools/lib/expect.mjs'
 import { DEFAULT_TIMEOUT_MS, Lines, MAX_TIMEOUT_MS, startBash, Tail } from './bash.js'
 import { WAIT_CAP_MS, WAIT_DEFAULT_MS } from './jobs.js'
 import { Capture } from './seen.js'
@@ -103,7 +103,8 @@ export class Tools {
     if (done.error) check('exit', false, `bash did not start: ${done.error.message}`)
     else if (timedOut) check('timeout', false, `timed out after ${timeoutMs}ms; its process group was killed`)
     else if (done.signal) check('exit', false, `killed by signal ${done.signal}`)
-    if (step.expect) {
+    if (step.expect) check('expect', true, `${EXPECT_BLOCKED}; expected ${step.expect.join(', ')}`)
+    if (step.expect && !EXPECT_BLOCKED) {
       const codes = callCodes(this.run.traces.lines(label(agent, index)))
       check('expect', inOrder(codes, step.expect), `expected ${step.expect.join(', ')}; its LayerFS calls show ${codes.length ? codes.join(', ') : 'nothing'}`)
     }

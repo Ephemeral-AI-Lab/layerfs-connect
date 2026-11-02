@@ -93,5 +93,6 @@
     "reply": "docs has the guide and the changelog; site's build output was discarded on purpose. One Sandbox held both Workspaces, every teardown step was explicit, and the Sandbox was closed at the end."
    }
   ]
- }
+ },
+ "blocked": "needs background processes (§9 Q2)"
 }
