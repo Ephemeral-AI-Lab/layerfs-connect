@@ -4,7 +4,8 @@
 // that clears it). While the Store is busy or unresolved, LayerFS refuses
 // Branch, Commit and file reads too (Busy, Unresolved): the page then shows
 // what the home's records say, and the refusal in the SDK's words.
-import { CircleAlert, Clock, Power, TriangleAlert } from 'lucide-react'
+import { CircleAlert, Clock, LoaderCircle, Power, TriangleAlert } from 'lucide-react'
+import { useState } from 'react'
 
 import { Notice } from '@/components/storage/notice'
 import { Refusal } from '@/components/refusal'
@@ -13,8 +14,9 @@ import { clearingCall, opWords } from '@/data/states'
 import { t, useI18n } from '@/i18n'
 import type { ProjectState } from '@shared/host-api'
 
-export function StoreBanner({ state, onStart }: { state: ProjectState; onStart?: (machine: string) => void }) {
+export function StoreBanner({ state, onStart }: { state: ProjectState; onStart?: (machine: string) => Promise<unknown> }) {
   useI18n()
+  const [starting, setStarting] = useState(false)
   const p = state.project
   const store = p.store
   const op = p.storeOp ?? null
@@ -45,7 +47,14 @@ export function StoreBanner({ state, onStart }: { state: ProjectState; onStart?:
         tone="danger"
         icon={Power}
         title={machine ? t('Store {store} is down: {machine} is not running', { store, machine }) : t('Store {store} is down', { store })}
-        actions={machine && onStart ? <Button size="sm" variant="outline" className="rounded-xl" onClick={() => onStart(machine)}>{t('Start {machine}', { machine })}</Button> : undefined}
+        actions={
+          machine && onStart ? (
+            <Button size="sm" variant="outline" className="rounded-xl" disabled={starting} onClick={() => (setStarting(true), void onStart(machine).finally(() => setStarting(false)))}>
+              {starting && <LoaderCircle className="size-3.5 animate-spin" />}
+              {starting ? t('Starting…') : t('Start {machine}', { machine })}
+            </Button>
+          ) : undefined
+        }
       >
         {p.storeDown ?? t('Its machine does not answer.')}
         {refused}

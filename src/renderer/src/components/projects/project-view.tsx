@@ -172,7 +172,7 @@ export function ProjectView({ project, initialTab, initialBranch, onBack, backLa
       <div className="project-workspace min-h-0 flex-1 overflow-y-auto">
         <div className="mx-auto flex min-h-full w-full min-w-0 max-w-7xl flex-col gap-4 px-6 pt-4 pb-6 @min-[56rem]/workspace:px-8">
           {s && state.error && <LoadError error={state.error} what={label} onRetry={refresh} />}
-          {s && <StoreBanner state={s} onStart={(machine) => void host.startMachine(machine).then(refresh, refresh)} />}
+          {s && <StoreBanner state={s} onStart={(machine) => host.startMachine(machine).then(refresh, refresh)} />}
           {body}
         </div>
       </div>
@@ -222,7 +222,7 @@ export function ProjectView({ project, initialTab, initialBranch, onBack, backLa
       <div className="min-h-0 flex-1 overflow-y-auto">
         <div className="mx-auto flex min-h-full w-full min-w-0 max-w-7xl flex-col gap-4 px-6 pt-4 pb-6 @min-[56rem]/workspace:px-8">
           {s && state.error && <LoadError error={state.error} what={label} onRetry={refresh} />}
-          {s && <StoreBanner state={s} onStart={(machine) => void host.startMachine(machine).then(refresh, refresh)} />}
+          {s && <StoreBanner state={s} onStart={(machine) => host.startMachine(machine).then(refresh, refresh)} />}
           {body}
         </div>
       </div>
