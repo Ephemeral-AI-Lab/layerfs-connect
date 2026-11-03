@@ -105,7 +105,7 @@ test('project deletion blocks new work through the actual removal callback', asy
     () => f.manager.open(first.id),
     () => f.manager.executeWorkspace(first.id, { command: 'pwd' }, {}),
     () => f.manager.removeProject('project', async () => assert.fail('A second deletion started')),
-  ]) await assert.rejects(action(), { status: 409, code: 'Busy' })
+  ]) await assert.rejects(action(), { status: 409, code: 'ConnectBusy' })
   assert.equal((await f.create('another-project')).project, 'another-project')
   removal.resolve({ removed: true })
   assert.deepEqual(await deleting, { removed: true })
@@ -127,7 +127,7 @@ test('a conversation being created prevents deleting its project', async (t) => 
   const f = await fixture(t, { validate: async () => { entered.resolve(); await validation.promise } })
   const creating = f.create()
   await entered.promise
-  await assert.rejects(f.manager.removeProject('project', async () => assert.fail('Project deletion raced with create')), { status: 409, code: 'Busy' })
+  await assert.rejects(f.manager.removeProject('project', async () => assert.fail('Project deletion raced with create')), { status: 409, code: 'ConnectBusy' })
   validation.resolve()
   await creating
   assert.equal(f.manager.creatingProjects.size, 0)
@@ -140,7 +140,7 @@ test('pending workspace preparation blocks project deletion and is drained befor
   const chat = await f.create()
   const preparing = f.manager.prepareWorkspace(chat.id)
   await entered.promise
-  await assert.rejects(f.manager.removeProject('project', async () => assert.fail('Project deletion raced with prepare')), { status: 409, code: 'Busy' })
+  await assert.rejects(f.manager.removeProject('project', async () => assert.fail('Project deletion raced with prepare')), { status: 409, code: 'ConnectBusy' })
   const stopping = f.manager.stop(chat.id)
   await new Promise(setImmediate)
   assert.deepEqual(f.calls.released, [])

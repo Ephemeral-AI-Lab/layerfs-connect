@@ -131,10 +131,10 @@ test('removing saved history deletes only that run and stays removed after close
 test('starting and running history cannot be deleted, including records owned by another host', async () => {
   const f = historyFixture(['starting', 'running'].map((state) => ({ id: state, state, host: process.ppid })))
   for (const state of ['starting', 'running']) {
-    await assert.rejects(f.manager.remove(state), { code: 'Busy', status: 409 })
+    await assert.rejects(f.manager.remove(state), { code: 'ConnectBusy', status: 409 })
     assert.equal(existsSync(join(f.spec.runs, state, 'run.json')), true)
     f.manager.live.set(`live-${state}`, { id: `live-${state}`, state })
-    await assert.rejects(f.manager.remove(`live-${state}`), { code: 'Busy', status: 409 })
+    await assert.rejects(f.manager.remove(`live-${state}`), { code: 'ConnectBusy', status: 409 })
     f.manager.live.delete(`live-${state}`)
   }
   assert.deepEqual(f.events, [])

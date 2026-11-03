@@ -28,7 +28,14 @@ const STATUS = {
   NoSuchSandbox: 404,
   NoSuchStore: 404,
   NotFound: 404,
+  // the SDK's: an operation holds the entity (detail names it, its phase and op)
   Busy: 409,
+  // the SDK's: an operation's outcome was lost; the message names the clearing call
+  Unresolved: 409,
+  // Connect's own guards (one job per Store on this host, scenario limits)
+  ConnectBusy: 409,
+  Capacity: 507,
+  Unknown: 500,
   Conflict: 409,
   Exists: 409,
   HeadMoved: 409,
@@ -63,11 +70,24 @@ function send(res, status, value) {
   res.end(body)
 }
 
-/** The status and { code, message } an error answers. */
+/**
+ * A layout 2 home's conversion refusal (#536 F2): `InUse` whose
+ * `detail.related` names what is live with `why` (what ends it). Only that
+ * refusal carries `why`.
+ */
+export const isConversion = (code, detail) => code === 'InUse' && Array.isArray(detail?.related) && detail.related.some((r) => typeof r?.why === 'string')
+
+/**
+ * The status and body an error answers: { code, message, detail? } with the
+ * SDK's refusal as it came (its text names any status or clearing call;
+ * `detail` holds entity, phase, op and related), and `conversion: true` for
+ * a layout 2 home's conversion refusal.
+ */
 export function errorAnswer(error) {
   const code = typeof error?.code === 'string' ? error.code : 'failed'
   const status = Number.isInteger(error?.status) ? error.status : (STATUS[code] ?? 500)
-  return { status, body: { code, message: error?.message ?? String(error) } }
+  const detail = error?.detail && typeof error.detail === 'object' ? error.detail : null
+  return { status, body: { code, message: error?.message ?? String(error), ...(detail ? { detail } : {}), ...(isConversion(code, detail) ? { conversion: true } : {}) } }
 }
 
 /**

@@ -1,5 +1,6 @@
 import { t, useI18n } from '@/i18n'
 import { FolderClosed, LoaderCircle, Trash2 } from 'lucide-react'
+import { Refusal } from '@/components/refusal'
 import { useEffect, useRef, useState } from 'react'
 import { projectKey, type ProjectSummary, type SandboxInfo } from '@shared/host-api'
 
@@ -20,6 +21,7 @@ export function DeleteProjectDialog({ project, onClose, onDelete }: DeleteProjec
   const store = storeFacts(project, useStorageView())
   const [deleting, setDeleting] = useState(false)
   const [error, setError] = useState('')
+  const [refused, setRefused] = useState<unknown>(null)
   const inFlight = useRef(false)
   const cancel = useRef<HTMLButtonElement>(null)
   const returnFocus = useRef(document.activeElement as HTMLElement | null)
@@ -34,6 +36,7 @@ export function DeleteProjectDialog({ project, onClose, onDelete }: DeleteProjec
     inFlight.current = true
     setDeleting(true)
     setError('')
+    setRefused(null)
     try {
       if (close) {
         const closed = await host.closeSandboxes(projectKey(project), force)
@@ -43,6 +46,7 @@ export function DeleteProjectDialog({ project, onClose, onDelete }: DeleteProjec
       onClose()
     } catch (cause) {
       const code = cause instanceof HostError ? cause.code : ''
+      setRefused(cause)
       setError(code === 'InUse'
         ? 'A Sandbox of this project is still open. Close its Sandboxes, then delete.'
         : code === 'Unsupported' && store.family === 'postgresql'
@@ -104,7 +108,7 @@ export function DeleteProjectDialog({ project, onClose, onDelete }: DeleteProjec
           </div>
         )}
         <p className="text-xs leading-relaxed text-muted-foreground">{t("Your original source folder and saved conversations will stay in place.")}</p>
-        {error && <p role="alert" className="break-words rounded-xl bg-destructive/[0.06] px-3.5 py-3 text-xs leading-relaxed text-destructive">{t(error)}</p>}
+        {error && <div role="alert" className="break-words rounded-xl bg-destructive/[0.06] px-3.5 py-3 text-xs leading-relaxed text-destructive"><p>{t(error)}</p>{refused !== null && <Refusal error={refused} className="mt-1.5 text-muted-foreground" />}</div>}
         <div className="flex justify-end gap-2">
           <Button ref={cancel} type="button" variant="outline" size="sm" className="h-8 rounded-xl px-3.5" disabled={deleting} onClick={onClose}>{t("Cancel")}</Button>
           {open.length > 0 && error && (

@@ -203,3 +203,17 @@ test('the event stream opens without the engine (heartbeats only)', async () => 
     engine = runs
   }
 })
+
+test('a refusal answers its code, the SDK text and its detail; Unresolved is 409; a conversion refusal is flagged', async () => {
+  const { errorAnswer } = await import('../server.js')
+  const busy = Object.assign(new Error('store s1 is busy: store.push holds it'), { code: 'Busy', detail: { entity: { kind: 'store', name: 's1' }, phase: 'send', op: 'o1' } })
+  assert.deepEqual(errorAnswer(busy), { status: 409, body: { code: 'Busy', message: 'store s1 is busy: store.push holds it', detail: { entity: { kind: 'store', name: 's1' }, phase: 'send', op: 'o1' } } })
+  const unresolved = Object.assign(new Error('see `layerfs store status s1`; clear it with a new push'), { code: 'Unresolved', detail: null })
+  assert.deepEqual(errorAnswer(unresolved), { status: 409, body: { code: 'Unresolved', message: 'see `layerfs store status s1`; clear it with a new push' } })
+  const inUse = Object.assign(new Error('machine box holds Stores'), { code: 'InUse', detail: { related: [{ kind: 'store', name: 'app' }] } })
+  assert.equal(errorAnswer(inUse).body.conversion, undefined)
+  assert.deepEqual(errorAnswer(inUse).body.detail.related, [{ kind: 'store', name: 'app' }])
+  const conversion = Object.assign(new Error('/h has layout 2; this build converts it to layout 3 once nothing in it is live: sandbox a1 runs on machine native'), { code: 'InUse', detail: { related: [{ kind: 'sandbox', name: 'a1', why: 'runs on machine native; close it with the build that started it (`layerfs sandbox close a1`)' }] } })
+  assert.equal(errorAnswer(conversion).body.conversion, true)
+  assert.equal(errorAnswer(Object.assign(new Error('x'), { code: 'ConnectBusy' })).status, 409)
+})

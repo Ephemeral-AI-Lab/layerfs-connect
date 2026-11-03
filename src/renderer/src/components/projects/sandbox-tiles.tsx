@@ -5,6 +5,7 @@ import { useState } from 'react'
 
 import { LfsBranch, LfsSandbox, LfsWorkspace } from '@/components/lfs-icons'
 import { StateChip } from '@/components/state-chip'
+import { Refusal } from '@/components/refusal'
 import { clearingCall, stateLook } from '@/data/states'
 import { host } from '@/host/client'
 
@@ -12,7 +13,7 @@ import { host } from '@/host/client'
 function CloseSandbox({ name, onClosed }: { name: string; onClosed?: () => void }) {
   const { t } = useI18n()
   const [busy, setBusy] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [error, setError] = useState<unknown>(null)
   const [unknown, setUnknown] = useState<string[] | null>(null)
   const close = async (force: boolean) => {
     setBusy(true)
@@ -22,16 +23,16 @@ function CloseSandbox({ name, onClosed }: { name: string; onClosed?: () => void 
       setUnknown(done.unknown ?? [])
       onClosed?.()
     } catch (e) {
-      setError((e as Error).message)
+      setError(e)
     } finally {
       setBusy(false)
     }
   }
   return <span className="flex flex-wrap items-center justify-end gap-1.5">
-    {error && <span className="max-w-72 truncate text-[11px] text-destructive" title={error}>{error}</span>}
+    {error !== null && <Refusal error={error} compact className="max-w-96 text-[11px] text-destructive" />}
     {unknown && unknown.length > 0 && <span className="text-[11px] text-destructive" title={unknown.join('\n')}>{t('Closed by force; Workspaces of unknown state: {list}', { list: unknown.join(', ') })}</span>}
-    <button type="button" disabled={busy} onClick={() => void close(!!error)} title={error ? t('Close even with Workspaces whose state LayerFS cannot learn') : t('Close this Sandbox')} className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs text-muted-foreground outline-none hover:bg-foreground/[0.05] hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50">
-      {busy ? <LoaderCircle className="size-3.5 animate-spin" /> : <X className="size-3.5" />}{error ? t('Force close') : t('Close')}
+    <button type="button" disabled={busy} onClick={() => void close(error !== null)} title={error !== null ? t('Close even with Workspaces whose state LayerFS cannot learn') : t('Close this Sandbox')} className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs text-muted-foreground outline-none hover:bg-foreground/[0.05] hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50">
+      {busy ? <LoaderCircle className="size-3.5 animate-spin" /> : <X className="size-3.5" />}{error !== null ? t('Force close') : t('Close')}
     </button>
   </span>
 }

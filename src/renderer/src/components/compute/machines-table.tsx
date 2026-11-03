@@ -9,6 +9,7 @@ import { useState } from 'react'
 
 import { Fact, KindLabel } from '@/components/compute/target-parts'
 import { StateChip } from '@/components/state-chip'
+import { Refusal } from '@/components/refusal'
 import { Collapse, revealStyle } from '@/components/motion'
 import { Card } from '@/components/storage/overview/row-parts'
 import { Button } from '@/components/ui/button'
@@ -95,8 +96,6 @@ export function MachinesTable({ view, os, open, onOpen, act }: Props) {
   )
 }
 
-/** A refusal's words: LayerFS's message, without its code prefix. */
-const refusal = (e: unknown) => (e instanceof Error ? e.message.replace(/^[A-Za-z]+: /, '') : String(e))
 
 function MachineDetail({ m, view, os, act }: { m: MachineInfo; view: Available; os: Os; act: Props['act'] }) {
   useI18n()
@@ -108,7 +107,7 @@ function MachineDetail({ m, view, os, act }: { m: MachineInfo; view: Available; 
   const sandboxes = view.sandboxes.filter((b) => b.machine === m.name)
   const sandboxRows = m.sandboxes.map((name) => sandboxes.find((b) => b.name === name) ?? { name, machine: m.name, project: null, workspaces: 0 })
   const targets = moveTargets(view, m.name)
-  const [error, setError] = useState<string | null>(null)
+  const [error, setError] = useState<unknown>(null)
   const [pending, setPending] = useState<string | null>(null)
   const run = async (key: string, action: MachineAction) => {
     setPending(key)
@@ -116,7 +115,7 @@ function MachineDetail({ m, view, os, act }: { m: MachineInfo; view: Available; 
     try {
       await act(action)
     } catch (e) {
-      setError(refusal(e))
+      setError(e)
     } finally {
       setPending(null)
     }
@@ -229,11 +228,7 @@ function MachineDetail({ m, view, os, act }: { m: MachineInfo; view: Available; 
       </dl>
 
       {BUILT_IN.has(m.platform) ? <BuiltInActions m={m} os={os} pending={pending} run={run} /> : <RemoveAction m={m} pending={pending} run={run} />}
-      {error && (
-        <p role="alert" className="text-xs break-words text-destructive">
-          {error}
-        </p>
-      )}
+      {error !== null && <Refusal error={error} className="text-destructive" />}
     </div>
   )
 }

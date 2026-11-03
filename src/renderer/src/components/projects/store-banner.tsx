@@ -7,6 +7,7 @@
 import { CircleAlert, Clock, Power, TriangleAlert } from 'lucide-react'
 
 import { Notice } from '@/components/storage/notice'
+import { Refusal } from '@/components/refusal'
 import { Button } from '@/components/ui/button'
 import { clearingCall, opWords } from '@/data/states'
 import { t, useI18n } from '@/i18n'
@@ -18,11 +19,7 @@ export function StoreBanner({ state, onStart }: { state: ProjectState; onStart?:
   const store = p.store
   const op = p.storeOp ?? null
   const refusal = p.refusal ?? null
-  const refused = refusal && (
-    <span className="mt-1 block break-words text-muted-foreground">
-      <span className="font-semibold">{refusal.code}</span>: {refusal.message}
-    </span>
-  )
+  const refused = refusal && <Refusal error={refusal} className="mt-1 text-muted-foreground" />
   if (p.storeState === 'busy') {
     return (
       <Notice tone="warning" icon={Clock} title={t('Store {store} is busy: {op}', { store, op: opWords(op) ?? t('an operation') })}>

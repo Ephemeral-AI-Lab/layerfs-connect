@@ -305,7 +305,7 @@ export class Storage extends EventEmitter {
    * the half a move is in.
    */
   start(kind, store, target, file, run) {
-    if ([...this.jobs.values()].some((j) => j.store === store && !j.ended)) throw refuse(409, 'Busy', `a job of this host is running on ${store}`)
+    if ([...this.jobs.values()].some((j) => j.store === store && !j.ended)) throw refuse(409, 'ConnectBusy', `this Connect is already running a job on ${store}; wait for it to end`)
     const job = { id: randomUUID(), kind, store, target, file: file ?? null, started: Date.now(), ended: null, half: null, phase: null, done: null, total: null, error: null, result: null }
     this.jobs.set(job.id, job)
     while (this.jobs.size > KEEP_JOBS) {

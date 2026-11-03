@@ -972,7 +972,7 @@ export class AgentManager extends EventEmitter {
   }
 
   checkProjectAvailable(name) {
-    if (name && this.deletingProjects.has(name)) throw Object.assign(fail(409, 'This project is being deleted.'), { code: 'Busy' })
+    if (name && this.deletingProjects.has(name)) throw Object.assign(fail(409, 'This project is being deleted.'), { code: 'ConnectBusy' })
   }
 
   async prepareWorkspace(id, { history = false } = {}) {
@@ -990,7 +990,7 @@ export class AgentManager extends EventEmitter {
     this.checkProjectAvailable(name)
     const sessions = [...this.records.values()].filter((record) => record.project === name)
     if ([...this.creatingProjects.values()].includes(name) || sessions.some((record) => record.state === 'running' || needsRecovery(record) || this.workspaceExecutions.has(record.id) || this.workspacePreparations.has(record.id) || this.historyOperations.has(record.id))) {
-      throw Object.assign(fail(409, 'Stop this project’s agent tasks before deleting it.'), { code: 'Busy' })
+      throw Object.assign(fail(409, 'Stop this project’s agent tasks before deleting it.'), { code: 'ConnectBusy' })
     }
     this.deletingProjects.add(name)
     try {

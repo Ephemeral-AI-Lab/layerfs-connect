@@ -18,18 +18,39 @@ import type {
   TracePage,
   HostEvent,
   BackupFile,
+  RefusalDetail,
   StorageJob,
   StorageView,
 } from '@shared/host-api'
 
+/** A refused call: LayerFS's code, its text (naming any status or clearing call) and its detail (entity, phase, op, related). */
 export class HostError extends Error {
   constructor(
     readonly code: string,
     message: string,
     readonly status: number,
+    readonly detail: RefusalDetail | null = null,
+    /** A layout 2 home's conversion refusal: the app shows the upgrade screen. */
+    readonly conversion = false,
   ) {
     super(message)
   }
+}
+
+/** Fires with a layout 2 home's conversion refusal, from whichever call met it first. */
+const conversionEvents = new EventTarget()
+let lastConversion: HostError | null = null
+export function onConversion(listener: (refusal: HostError | null) => void): () => void {
+  const on = () => listener(lastConversion)
+  conversionEvents.addEventListener('change', on)
+  return () => conversionEvents.removeEventListener('change', on)
+}
+export const conversionNow = () => lastConversion
+/** Marks the conversion done (a check answered) or still needed. */
+export function setConversion(refusal: HostError | null) {
+  if (refusal === lastConversion) return
+  lastConversion = refusal
+  conversionEvents.dispatchEvent(new Event('change'))
 }
 
 /** The host's address, or why there is none. */
@@ -79,7 +100,11 @@ async function send<T>(method: string, path: string, body?: unknown): Promise<T>
     body: body === undefined ? undefined : JSON.stringify(body),
   })
   const value = await res.json().catch(() => ({}))
-  if (!res.ok) throw new HostError(value.code ?? 'failed', value.message ?? `${method} ${path}: ${res.status}`, res.status)
+  if (!res.ok) {
+    const error = new HostError(value.code ?? 'failed', value.message ?? `${method} ${path}: ${res.status}`, res.status, value.detail ?? null, value.conversion === true)
+    if (error.conversion) setConversion(error)
+    throw error
+  }
   return value as T
 }
 

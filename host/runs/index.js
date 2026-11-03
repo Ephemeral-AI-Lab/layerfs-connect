@@ -210,7 +210,7 @@ export class RunManager extends EventEmitter {
     if (c.demo.scenario.blocked) throw refuse('Unsupported', 409, `${id} comes with a later LayerFS: it ${c.demo.scenario.blocked}`)
     if (project === null) throw refuse('InvalidInput', 400, 'name the project to play the scenario on')
     project = checkProject(project)
-    if (this.playing() >= MAX_PLAYING) throw refuse('Busy', 409, `${MAX_PLAYING} scenarios are playing; stop one or wait for one to end`)
+    if (this.playing() >= MAX_PLAYING) throw refuse('ConnectBusy', 409, `${MAX_PLAYING} scenarios are playing; stop one or wait for one to end`)
     this.starting++
     let runs
     try {
@@ -234,7 +234,7 @@ export class RunManager extends EventEmitter {
     if (project === null) throw refuse('InvalidInput', 400, 'name the project to play the scenarios on')
     project = checkProject(project)
     const all = this.load().filter((c) => !c.demo.scenario.blocked)
-    if (this.playing() + all.length > MAX_PLAYING) throw refuse('Busy', 409, `${this.playing()} scenarios are playing; all ${all.length} more would pass ${MAX_PLAYING}`)
+    if (this.playing() + all.length > MAX_PLAYING) throw refuse('ConnectBusy', 409, `${this.playing()} scenarios are playing; all ${all.length} more would pass ${MAX_PLAYING}`)
     this.starting += all.length
     const launched = []
     try {
@@ -387,7 +387,7 @@ export class RunManager extends EventEmitter {
     const record = live ?? this.records.get(id)
     if (!record) throw refuse('NotFound', 404, `no run named ${id}`)
     if (id === '.' || id === '..' || basename(id) !== id) throw refuse('InvalidInput', 400, 'a run id must be one directory name')
-    if (ACTIVE.has(record.state)) throw refuse('Busy', 409, `run ${id} is still playing; stop it before deleting it`)
+    if (ACTIVE.has(record.state)) throw refuse('ConnectBusy', 409, `run ${id} is still playing; stop it before deleting it`)
     // Cleanup and the startup sweep both write run.json after the run ends.
     await Promise.all([this.sweeping, live?.finished])
     if (!this.live.has(id) && !this.records.has(id)) throw refuse('NotFound', 404, `no run named ${id}`)

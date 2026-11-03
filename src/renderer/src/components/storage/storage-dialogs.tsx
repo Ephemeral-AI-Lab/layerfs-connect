@@ -4,7 +4,8 @@
 import { Archive, ArrowRightLeft, Database, HardDriveDownload, HardDriveUpload, LoaderCircle, type LucideIcon, Plus, TriangleAlert, Unplug } from 'lucide-react'
 import { useEffect, useId, useState } from 'react'
 
-import { BackLink, BTN, Field, FormError, message, SHEET, SheetFooter, SheetHeader } from '@/components/storage/dialogs/fields'
+import { BackLink, BTN, Field, SHEET, SheetFooter, SheetHeader } from '@/components/storage/dialogs/fields'
+import { Refusal } from '@/components/refusal'
 import { Mark, Tile } from '@/components/storage/icons'
 import { type FieldValues, isBrandMark, type ProviderEntry, PROVIDERS } from '@/components/storage/identity/providers'
 import { Button } from '@/components/ui/button'
@@ -34,7 +35,7 @@ const REFERENCE_HINT = 'A reference, never the secret: file:/absolute/path (read
 function FormSheet({ open, onClose, icon, mark, title, description, action, valid, submit, left, hint, children }: { open: boolean; onClose: () => void; icon: LucideIcon; mark?: React.ReactNode; title: string; description?: React.ReactNode; action: string; valid: boolean; submit: () => Promise<unknown>; left?: React.ReactNode; hint?: string; children: React.ReactNode }) {
   useI18n()
   const [busy, setBusy] = useState(false)
-  const [error, setError] = useState<string>()
+  const [error, setError] = useState<unknown>()
   useEffect(() => {
     if (open) setError(undefined)
   }, [open])
@@ -46,7 +47,7 @@ function FormSheet({ open, onClose, icon, mark, title, description, action, vali
       await submit()
       onClose()
     } catch (e) {
-      setError(message(e))
+      setError(e)
     } finally {
       setBusy(false)
     }
@@ -66,7 +67,7 @@ function FormSheet({ open, onClose, icon, mark, title, description, action, vali
           }}
         >
           {children}
-          <FormError error={error} />
+          {error !== undefined && <Refusal error={error} className="rounded-xl bg-destructive/[0.06] px-3.5 py-3 text-destructive" />}
           {hint && <p className="text-[11.5px] text-muted-foreground">{hint}</p>}
           <SheetFooter left={left}>
             <Button type="button" variant="outline" size="sm" className={BTN} onClick={onClose} disabled={busy}>

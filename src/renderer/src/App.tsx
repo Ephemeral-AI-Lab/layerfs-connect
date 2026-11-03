@@ -23,6 +23,7 @@ import { TooltipProvider } from '@/components/ui/tooltip'
 import { useProjects } from '@/host/use-projects'
 import { agentHost, onChatRemoved } from '@/host/agent-client'
 import { useI18n } from '@/i18n'
+import { UpgradeScreen, useConversion } from '@/components/upgrade-screen'
 
 /** Where the sidebar's open or folded state is kept. */
 const SIDEBAR_STORE = 'connect.sidebar'
@@ -48,6 +49,7 @@ let chatNonce = Date.now()
 const home = (): TabTarget => ({ selected: { kind: 'nav', id: 'chat' }, chat: { id: ++chatNonce, fresh: true } })
 
 export function App() {
+  const conversion = useConversion()
   const { locale, t } = useI18n()
   const tabs = useTabs(home, opening())
   const tab = tabs.active
@@ -152,6 +154,9 @@ export function App() {
     }
     document.title = `${selected.kind === 'project' ? projectLabel(selected.id) : t(PAGE_LABELS[selected.id])} · LayerFS Connect`
   }, [selected, locale, t])
+
+  // a layout 2 home's one-time conversion is refused while anything in it is live: every page would fail, so the upgrade screen stands in
+  if (conversion) return <UpgradeScreen refusal={conversion} />
 
   return (
     <SettingsContext.Provider value={settings}>

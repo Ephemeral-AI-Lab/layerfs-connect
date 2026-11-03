@@ -11,6 +11,7 @@ import { type CSSProperties, useEffect, useState } from 'react'
 import { GapLine } from '@/components/gap-line'
 import { PageHeader } from '@/components/motion/page-header'
 import { Empty, LoadError, Loading } from '@/components/projects/states'
+import { Refusal } from '@/components/refusal'
 import { StateChip } from '@/components/state-chip'
 import { Chip, type Tone } from '@/components/storage/chips'
 import { ConfirmByName } from '@/components/storage/dialogs/confirm-by-name'
@@ -63,11 +64,11 @@ export function StoragePage({ catalog, onOpenProject, onAddProject }: StoragePag
   const [dropping, setDropping] = useState<{ kind: 'postgresql' | 'bucket'; name: string } | null>(null)
   const [listing, setListing] = useState<string | null>(null)
   const [newOpen, setNewOpen] = useState<null | 'empty' | 'add' | 'postgresql'>(null)
-  const [failed, setFailed] = useState<string | null>(null)
+  const [failed, setFailed] = useState<unknown>(null)
   /** A menu action that answers at once (a pull starts a job): its refusal shows on the page. */
   const act = (work: () => Promise<unknown>) => {
     setFailed(null)
-    work().then(reload, (e: unknown) => setFailed(e instanceof Error ? e.message : String(e)))
+    work().then(reload, (e: unknown) => setFailed(e))
   }
   useEffect(() => onProjectsChanged(reload), [])
   useEffect(
@@ -143,7 +144,7 @@ export function StoragePage({ catalog, onOpenProject, onAddProject }: StoragePag
             <GapLine what="Store totals (dedupe, compression, what Init stored)" />
             {failed && (
               <Notice tone="danger" icon={TriangleAlert} title={t('Refused')} actions={<Button size="sm" variant="ghost" className="h-7 rounded-xl px-2 text-xs" onClick={() => setFailed(null)}>{t('Dismiss')}</Button>}>
-                {failed}
+                <Refusal error={failed} />
               </Notice>
             )}
             {(allJobs.length > 0 || view.stores.some((s) => s.op)) && (
@@ -474,11 +475,7 @@ function JobRow({ job: j }: { job: StorageJob }) {
         )}
       </div>
       {share !== null && running && <Bar share={share} live />}
-      {j.error && (
-        <p className="text-destructive">
-          {j.error.code}: {j.error.message}
-        </p>
-      )}
+      {j.error && <Refusal error={j.error} className="text-destructive" />}
       {j.error?.note === 'pulled' && (
         <p className="flex flex-wrap items-center gap-2 text-muted-foreground">
           {t('The pull finished: {store} is on native now.', { store: j.store })}
