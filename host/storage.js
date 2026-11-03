@@ -332,7 +332,11 @@ export class Storage extends EventEmitter {
     }
     const emit = () => this.emit('event', { type: 'storage-job', job: { ...job } })
     const on_progress = (p) => {
-      if (typeof p?.phase === 'string') job.phase = p.phase
+      // a new phase changes the Store's op in store.list: the view is read again (not on every byte step)
+      if (typeof p?.phase === 'string' && p.phase !== job.phase) {
+        job.phase = p.phase
+        this.changed()
+      }
       // push and pull give bytes only while sending (#536 §10b), in 8 MiB steps
       job.done = typeof p?.done === 'number' ? p.done : null
       job.total = typeof p?.total === 'number' && p.total > 0 ? p.total : null
@@ -341,6 +345,8 @@ export class Storage extends EventEmitter {
     const step = (half) => {
       Object.assign(job, { half, phase: null, done: null, total: null })
       emit()
+      // between a move's halves the Store is on native: the view follows
+      this.changed()
     }
     run(on_progress, step)
       .then(

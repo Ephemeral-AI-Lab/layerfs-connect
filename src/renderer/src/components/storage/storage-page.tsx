@@ -28,7 +28,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { ago, bytes, when } from '@/data/format'
 import { clearingCall, opWords } from '@/data/states'
 import { host, onHostEvent, onProjectsChanged } from '@/host/client'
-import { useHostQuery } from '@/host/use-host'
+import { useHostQuery, usePoll } from '@/host/use-host'
 import type { ProjectCatalog } from '@/host/use-projects'
 import { t, useI18n } from '@/i18n'
 import type { BackupFile, BackupState, BucketRow, StorageJob, StorageView, StoreRow } from '@shared/host-api'
@@ -85,6 +85,8 @@ export function StoragePage({ catalog, onOpenProject, onAddProject, focus }: Sto
   )
   const view = storage.data
   useFocusRow(focus, !!view)
+  // store.list carries state and op: a push the CLI started shows here (§8.9)
+  usePoll(reload)
   const done = () => {
     reload()
     catalog.reload()

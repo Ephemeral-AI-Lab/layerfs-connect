@@ -62,3 +62,19 @@ export function useStorageEvents(listener: (event: Extract<HostEvent, { type: 's
   current.current = listener
   useEffect(() => onHostEvent((e) => { if (e.type === 'storage-job' || e.type === 'storage') current.current(e) }), [])
 }
+
+/** How often a page re-reads the list calls while it is shown (#537 §8.9): they carry state and op, so work started elsewhere (the CLI, another window) shows. */
+export const POLL_MS = 5000
+
+/** Calls `tick` every `ms` while mounted and the window is visible; never while hidden. */
+export function usePoll(tick: () => void, ms = POLL_MS, enabled = true) {
+  const current = useRef(tick)
+  current.current = tick
+  useEffect(() => {
+    if (!enabled) return
+    const timer = setInterval(() => {
+      if (document.visibilityState === 'visible') current.current()
+    }, ms)
+    return () => clearInterval(timer)
+  }, [ms, enabled])
+}

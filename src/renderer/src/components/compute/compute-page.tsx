@@ -25,7 +25,7 @@ import { clearingCall } from '@/data/states'
 import { addable, downReason, factsOf, kindLabel, machineOrder, machineState, type Os, readyKinds } from '@/data/compute'
 import { isSimId, type MachineAction, SIM_IDS, simulate, SIMULATIONS, type SimId } from '@/data/compute-sim'
 import { host } from '@/host/client'
-import { useHostQuery } from '@/host/use-host'
+import { useHostQuery, usePoll } from '@/host/use-host'
 import { cn } from '@/lib/utils'
 import type { MachinesView } from '@shared/host-api'
 
@@ -126,6 +126,8 @@ export function ComputePage({ simulate: given, onOpenProject, focus }: ComputePa
 
   const available = view?.available ? view : null
   useFocusRow(focus, !!available, setOpen)
+  // machine.list and sandbox.list carry state and op (§8.9); a simulated host is not read
+  usePoll(live.reload, undefined, !simulated)
   const facts = useMemo(() => (available ? factsOf(available) : null), [available])
   // failed, missing or unresolved: each gets a notice with what LayerFS says and the call that clears it
   const down = available ? machineOrder(available.machines).filter((m) => machineState(m, available.status[m.name]).key === 'needs') : []

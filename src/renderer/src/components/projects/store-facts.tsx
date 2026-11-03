@@ -12,6 +12,7 @@ import { StoreIcon } from '@/components/storage/identity/store-icon'
 import { bytes } from '@/data/format'
 import { stateLook } from '@/data/states'
 import { host, onHostEvent, onProjectsChanged } from '@/host/client'
+import { POLL_MS } from '@/host/use-host'
 import { useI18n } from '@/i18n'
 import { cn } from '@/lib/utils'
 
@@ -49,7 +50,9 @@ function subscribe(listener: () => void) {
       if (event.type === 'storage' || (event.type === 'storage-job' && event.job.ended)) load()
     })
     const offProjects = onProjectsChanged(load)
-    detach = () => { offEvents(); offProjects() }
+    // the list calls carry state and op: re-read while shown, so a project's banner follows work started elsewhere (§8.9)
+    const timer = setInterval(() => { if (document.visibilityState === 'visible') load() }, POLL_MS)
+    detach = () => { offEvents(); offProjects(); clearInterval(timer) }
     load()
   }
   return () => {

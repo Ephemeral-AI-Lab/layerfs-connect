@@ -305,3 +305,25 @@ test('Compute’s Store rows carry their projects’ names, for the links to pro
   assert.deepEqual(storeOf({ name: 'app', machine: 'lima1', projects: ['web', 'api'], state: 'idle' }).names, ['web', 'api'])
   assert.deepEqual(storeOf({ name: 'app', machine: 'lima1', projects: 2 }).names, [])
 })
+
+test('a job reads the Storage view again on each new phase and half, not on each byte step (#537 §8.9)', async () => {
+  const s = spec()
+  const st = new Storage({ spec: s, client: fake(), log: () => {} })
+  let views = 0
+  st.on('event', (e) => e.type === 'storage' && views++)
+  let finish
+  st.start('move', 's1', 'lima1', null, (on_progress, step) => {
+    step('pull')
+    on_progress({ phase: 'send', done: 1, total: 3 })
+    on_progress({ phase: 'send', done: 2, total: 3 })
+    on_progress({ phase: 'verify' })
+    step('push')
+    return new Promise((r) => (finish = r))
+  })
+  // start, half pull, send, verify, half push
+  assert.equal(views, 5)
+  finish()
+  await new Promise((r) => setTimeout(r, 5))
+  assert.equal(views, 6)
+  rmSync(s.state, { recursive: true, force: true })
+})
