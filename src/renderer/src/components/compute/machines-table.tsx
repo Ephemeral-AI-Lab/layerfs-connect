@@ -7,7 +7,8 @@ import { t, useI18n } from '@/i18n'
 import { ArrowRightLeft, ChevronRight, Lock } from 'lucide-react'
 import { useState } from 'react'
 
-import { Fact, KindLabel, StatePill } from '@/components/compute/target-parts'
+import { Fact, KindLabel } from '@/components/compute/target-parts'
+import { StateChip } from '@/components/state-chip'
 import { Collapse, revealStyle } from '@/components/motion'
 import { Card } from '@/components/storage/overview/row-parts'
 import { Button } from '@/components/ui/button'
@@ -73,7 +74,7 @@ export function MachinesTable({ view, os, open, onOpen, act }: Props) {
               </span>
               <KindLabel platform={m.platform} os={os} className="hidden @min-[46rem]/machines:inline-flex" />
               <span className="justify-self-end @min-[46rem]/machines:justify-self-start">
-                <StatePill tone={state.tone} label={state.label} />
+                <StateChip entity="machine" state={state.state} op={state.op} />
               </span>
               <span className="hidden truncate text-[13px] text-muted-foreground tabular-nums @min-[46rem]/machines:block">{t(size.text, size.values)}</span>
               <span className="hidden text-right text-[13px] tabular-nums @min-[46rem]/machines:block">{m.stores.length}</span>

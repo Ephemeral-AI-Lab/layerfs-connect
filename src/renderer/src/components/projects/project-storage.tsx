@@ -297,7 +297,7 @@ function SandboxesCard({ sandboxes, reading, unavailable, onBrowseFiles, onChang
   const { t } = useI18n()
   const open = sandboxes.filter((sandbox) => sandbox.state !== 'gone')
   const mounted = open.reduce((count, sandbox) => count + sandbox.workspaces.length, 0)
-  const mountsKnown = !reading && !unavailable && !open.some((sandbox) => sandbox.reach)
+  const mountsKnown = !reading && !unavailable && !open.some((sandbox) => sandbox.refusal)
   return <section className="glass-liquid overflow-hidden rounded-2xl">
     <header className="flex flex-wrap items-center justify-between gap-3 px-5 py-4">
       <h3 className="text-sm font-semibold">{t('Sandboxes')}</h3>

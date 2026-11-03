@@ -5,8 +5,8 @@ import { ArrowUpRight, FolderOpen } from 'lucide-react'
 import { LayerfsMark } from '@/components/layerfs-mark'
 import { revealStyle } from '@/components/motion/reveal'
 import { spotlight } from '@/components/motion/spotlight'
+import { StateChip } from '@/components/state-chip'
 import { StoreLine, storeFacts, useStorageView } from '@/components/projects/store-facts'
-import { Chip } from '@/components/storage/chips'
 import { ago, when } from '@/data/format'
 
 interface ProjectCardProps {
@@ -43,7 +43,7 @@ export function ProjectCard({ project, index, onOpen }: ProjectCardProps) {
       </span>
       <StoreLine facts={facts} />
       <span className="mt-auto flex w-full flex-wrap items-center justify-between gap-2 border-t border-foreground/[0.06] pt-3">
-        <Chip tone={facts.state === 'down' ? 'danger' : facts.state === 'moving' ? 'warning' : 'success'}>{facts.state === 'down' ? t('Store down') : facts.state === 'moving' ? t('Store moving') : t('Ready')}</Chip>
+        <StateChip entity="store" state={facts.state} op={facts.op} />
         {project.created !== null && (
           <span className="text-[11px] text-muted-foreground tabular-nums" title={when(project.created)}>{t("Created ")}{ago(project.created)}
           </span>

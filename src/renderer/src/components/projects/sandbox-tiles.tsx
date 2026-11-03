@@ -3,9 +3,9 @@ import type { SandboxInfo } from '@shared/host-api'
 import { ChevronDown, FolderTree, LoaderCircle, X } from 'lucide-react'
 import { useState } from 'react'
 
-import { sandboxTone } from '@/components/compute/sandbox-list'
 import { LfsBranch, LfsSandbox, LfsWorkspace } from '@/components/lfs-icons'
-import { Chip } from '@/components/storage/chips'
+import { StateChip } from '@/components/state-chip'
+import { clearingCall, stateLook } from '@/data/states'
 import { host } from '@/host/client'
 
 /** Closes a Sandbox; a refused close offers a forced one, which names the Workspaces of unknown state. */
@@ -38,24 +38,29 @@ function CloseSandbox({ name, onClosed }: { name: string; onClosed?: () => void 
 
 function SandboxTile({ sandbox, reading, unavailable, onBrowseFiles, onChanged }: { sandbox: SandboxInfo; reading?: boolean; unavailable?: boolean; onBrowseFiles?: (branch: string) => void; onChanged?: () => void }) {
   const { t } = useI18n()
-  const state = sandboxTone(sandbox.state)
+  const state = stateLook('sandbox', sandbox.state)
+  const refusal = sandbox.refusal
   return <article className="min-w-0 border-t border-border/70 px-5 py-4" aria-label={t('Sandbox {value1}, {value2}', { value1: sandbox.name, value2: t(state.label) })}>
     <header className="flex min-w-0 items-center gap-2.5">
       <LfsSandbox className="size-4 shrink-0 text-muted-foreground" />
       <h4 className="min-w-0 flex-1 truncate text-[13px] font-medium" title={sandbox.name}>{sandbox.name}</h4>
       {sandbox.machine && <span className="font-mono text-[11px] text-muted-foreground">{sandbox.machine}</span>}
-      <Chip tone={state.tone}>{t(state.label)}</Chip>
+      <StateChip entity="sandbox" state={sandbox.state} op={sandbox.op} />
       {sandbox.state !== 'gone' && <CloseSandbox name={sandbox.name} onClosed={onChanged} />}
     </header>
     <ul className="mt-3 space-y-1" aria-label={t('Mounted Workspaces')}>
-      {sandbox.reach ? <li className="rounded-lg bg-warning/5 px-3 py-2 text-xs text-warning" title={sandbox.detail}>
-        {t(sandbox.reach === 'busy' ? 'Workspace status timed out.' : 'Workspace status unavailable.')}
+      {sandbox.state === 'unresolved' && <li className="rounded-lg bg-destructive/5 px-3 py-2 font-mono text-[11.5px] text-destructive">
+        {t('see {status} · clear: {clear}', clearingCall('sandbox', sandbox.name, sandbox.op))}
+      </li>}
+      {refusal ? <li className="rounded-lg bg-warning/5 px-3 py-2 text-xs break-words text-warning">
+        <span className="font-semibold">{refusal.code}</span>: {refusal.message}
       </li> : sandbox.unread ? <li className="py-1 text-xs text-muted-foreground">{t('Reading its Workspaces…')}</li> : reading && !sandbox.workspaces.length && sandbox.state === 'running' ? <li className="py-1 text-xs text-muted-foreground">{t('Reading its Workspaces…')}</li>
         : unavailable ? <li className="py-1 text-xs text-muted-foreground">{t('Workspace status unavailable.')}</li>
           : !sandbox.workspaces.length ? <li className="py-1 text-xs text-muted-foreground">{t('No Workspace mounted')}</li>
           : sandbox.workspaces.map((workspace) => <li key={workspace.ws} className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-2 rounded-lg bg-muted/40 px-3 py-2 text-xs">
             <span className="flex min-w-0 flex-1 basis-40 items-center gap-2" title={workspace.path}>
               <LfsWorkspace className="size-3.5 shrink-0 text-muted-foreground" />
+              {workspace.name && <span className="shrink-0 font-semibold">{workspace.name}</span>}
               <span className="truncate font-mono">{workspace.path}</span>
             </span>
             <span className="flex min-w-0 max-w-full items-center gap-1.5 text-muted-foreground" title={workspace.branch}>
@@ -74,7 +79,8 @@ function SandboxTile({ sandbox, reading, unavailable, onBrowseFiles, onChanged }
         <dt>{t('Name')}</dt><dd className="break-all font-mono">{sandbox.name}</dd>
         {sandbox.runtime && <><dt>{t('Runtime')}</dt><dd className="font-mono">{sandbox.runtime}</dd></>}
         <dt>{t('image')}</dt><dd className="break-all font-mono">{sandbox.image || '—'}</dd>
-        {sandbox.detail && <><dt>{t('Status')}</dt><dd className="break-words">{sandbox.detail}</dd></>}
+        {sandbox.backend && <><dt>{t('Backend')}</dt><dd className="font-mono">{sandbox.backend}</dd></>}
+        {sandbox.route && <><dt>{t('Route')}</dt><dd className="font-mono">{sandbox.route}</dd></>}
       </dl>
     </details>
   </article>

@@ -194,3 +194,50 @@ test('storage: MinIO and R2 by their parts; keys go to an owner-only file, Layer
   await assert.rejects(st.connectBucket({ name: 'x', provider: 'r2', account: 'nope', bucket: 'b', key: 'env:LAYERFS_X' }), /32 lowercase hex/)
   rmSync(s.state, { recursive: true, force: true })
 })
+
+test('states come from the SDK: no machine, Store or Sandbox state is guessed (#537 U4)', async () => {
+  const lfs = fake()
+  lfs.machine.list = async () => ({ machines: [{ name: 'native', platform: 'native', backend: 'native', state: 'ready', supports: { sqlite: true, postgresql_sandbox: true, reason: null } }, { name: 'box', platform: 'lima', backend: 'namespaces', state: 'unresolved', supports: { sqlite: true, postgresql_sandbox: true, reason: null } }, { name: 'gone', platform: 'lima' }] })
+  lfs.machine.status = async (name) => ({ name, state: 'unresolved', op: { id: 'o1', name: 'machine.create', phase: 'boot', started: 5, uncertain: true } })
+  lfs.store.list = async () => ({ items: [{ name: 's1', kind: 'sqlite', machine: 'box', projects: [], state: 'busy', op: { id: 'o2', name: 'store.push', phase: 'send', started: 6, uncertain: false } }] })
+  lfs.sandbox.list = async () => ({ items: [{ name: 'a1', project: 's1/app', machine: 'box', state: 'closing', backend: 'namespaces', route: 'fuse', op: { id: 'o3', name: 'sandbox.close', phase: 'stop', started: 7, uncertain: false } }], next_page_pos: null })
+  const view = await new Machines({ spec: spec(), client: lfs, calls: [] }).view()
+  assert.deepEqual(view.machines.map((m) => m.state), ['ready', 'unresolved', 'unknown'])
+  assert.equal(view.machines[1].supports.postgresql_sandbox, true)
+  assert.equal(view.status.box.op.name, 'machine.create')
+  assert.equal(view.status.box.op.uncertain, true)
+  assert.deepEqual([view.stores[0].state, view.stores[0].op.phase], ['busy', 'send'])
+  assert.deepEqual([view.sandboxes[0].state, view.sandboxes[0].op.name, view.sandboxes[0].route], ['closing', 'sandbox.close', 'fuse'])
+  const st = await new Storage({ spec: spec(), client: lfs, log: () => {} }).view()
+  assert.deepEqual([st.stores[0].state, st.stores[0].op.name], ['busy', 'store.push'])
+})
+
+test('a busy Store: the project page gets its records, state, op and the refusal, not an error', async () => {
+  const lfs = fake()
+  const busy = Object.assign(new Error('store s1 is busy: store.push (send) holds it'), { code: 'Busy', detail: { entity: { kind: 'store', name: 's1' }, phase: 'send', op: 'o2' } })
+  lfs.branch.list = async () => { throw busy }
+  lfs.store.status = async () => ({ state: 'busy', holders: [], op: { id: 'o2', name: 'store.push', phase: 'send', started: 6, uncertain: false }, file: { exists: true, bytes: 10, wal_bytes: 0 } })
+  lfs.sandbox.list = async () => ({ items: [{ name: 'a1', project: 's1/app', machine: 'native', state: 'running' }], next_page_pos: null })
+  const p = new Projects({ spec: spec(), client: lfs, log: () => {} })
+  const st = await p.state('s1/app')
+  assert.deepEqual([st.project.storeState, st.project.storeOp.name, st.project.refusal.code, st.project.refusal.detail.phase], ['busy', 'store.push', 'Busy', 'send'])
+  assert.deepEqual(st.branches, [])
+  assert.deepEqual(st.sandboxes.map((s) => [s.name, s.state]), [['a1', 'running']])
+  // any other refusal still fails the read
+  lfs.branch.list = async () => { throw Object.assign(new Error('no such project'), { code: 'NotFound' }) }
+  await assert.rejects(p.state('s1/app'), /no such project/)
+})
+
+test('a Sandbox whose Workspaces cannot be read carries the refusal; named Workspaces keep their names', async () => {
+  const lfs = fake()
+  lfs.sandbox.list = async () => ({ items: [{ name: 'a1', project: 's1/app', machine: 'native', state: 'unresolved' }, { name: 'a2', project: 's1/app', machine: 'native', state: 'running' }], next_page_pos: null })
+  lfs.sandbox.get = async (name) => {
+    if (name === 'a1') throw Object.assign(new Error('sandbox a1 is unresolved: see `layerfs sandbox get a1`; clear it with `layerfs sandbox close a1`'), { code: 'Unresolved' })
+    return { workspaces: [{ directory: '/w/1', branch: 'chat-1', name: 'chat-1', ws: 'a2:chat-1' }], next_page_pos: null }
+  }
+  const p = new Projects({ spec: spec(), client: lfs, log: () => {} })
+  const [a1, a2] = await p.sandboxes('s1/app')
+  assert.deepEqual([a1.state, a1.refusal.code], ['unresolved', 'Unresolved'])
+  assert.match(a1.refusal.message, /sandbox close a1/)
+  assert.deepEqual(a2.workspaces, [{ ws: 'a2:chat-1', name: 'chat-1', branch: 'chat-1', path: '/w/1', activity: null }])
+})

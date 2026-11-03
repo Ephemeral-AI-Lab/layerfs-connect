@@ -19,6 +19,7 @@ import { Notice } from '@/components/storage/notice'
 import { Button } from '@/components/ui/button'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { clearingCall } from '@/data/states'
 import { downReason, factsOf, isVmKind, kindLabel, machineOrder, machineState, type Os, readyKinds } from '@/data/compute'
 import { isSimId, type MachineAction, SIM_IDS, simulate, SIMULATIONS, type SimId } from '@/data/compute-sim'
 import { host } from '@/host/client'
@@ -117,7 +118,8 @@ export function ComputePage({ simulate: given }: ComputePageProps) {
 
   const available = view?.available ? view : null
   const facts = useMemo(() => (available ? factsOf(available) : null), [available])
-  const down = available ? machineOrder(available.machines).filter((m) => machineState(m, available.status[m.name]).key === 'down') : []
+  // failed, missing or unresolved: each gets a notice with what LayerFS says and the call that clears it
+  const down = available ? machineOrder(available.machines).filter((m) => machineState(m, available.status[m.name]).key === 'needs') : []
   const ready = available ? readyKinds(available.canCreate) : []
 
   return (
@@ -180,17 +182,18 @@ export function ComputePage({ simulate: given }: ComputePageProps) {
           <>
             <p className="reveal flex min-h-9 flex-wrap items-center gap-y-1 text-[13px] text-muted-foreground tabular-nums" style={{ '--i': 0 } as CSSProperties}>
               {[
-                <span>{t('{n} ready', { n: facts!.ready })}</span>,
                 <span className={cn(facts!.running > 0 && 'text-foreground')}>{t('{n} running', { n: facts!.running })}</span>,
-                <span>{t('{n} idle', { n: facts!.idle })}</span>,
-                facts!.starting > 0 && <span>{t('{n} starting', { n: facts!.starting })}</span>,
+                <span>{t('{n} stopped', { n: facts!.stopped })}</span>,
+                facts!.busy > 0 && <span>{t('{n} creating or removing', { n: facts!.busy })}</span>,
+                facts!.unknown > 0 && <span>{t('{n} unknown', { n: facts!.unknown })}</span>,
                 <span>{t(facts!.sandboxes === 1 ? '1 Sandbox' : '{n} Sandboxes', { n: facts!.sandboxes })}</span>,
-                facts!.down > 0 && (
+                facts!.needs > 0 && (
                   <span className="inline-flex items-center gap-1.5 font-medium text-destructive">
                     <span aria-hidden="true" className="size-1.5 rounded-full bg-destructive" />
-                    {t(facts!.down === 1 ? '1 needs you' : '{n} need you', { n: facts!.down })}
+                    {t(facts!.needs === 1 ? '1 needs you' : '{n} need you', { n: facts!.needs })}
                   </span>
                 ),
+                facts!.ops > 0 && <span className="text-foreground">{t(facts!.ops === 1 ? '1 operation in flight' : '{n} operations in flight', { n: facts!.ops })}</span>,
               ]
                 .filter(Boolean)
                 .map((part, i) => (
@@ -202,22 +205,31 @@ export function ComputePage({ simulate: given }: ComputePageProps) {
                 ))}
             </p>
 
-            {down.map((m) => (
+            {down.map((m) => {
+              const st = machineState(m, available.status[m.name])
+              const calls = clearingCall('machine', m.name, st.op, m.platform)
+              return (
               <Notice
                 key={m.name}
                 tone="danger"
                 icon={TriangleAlert}
-                title={t('{machine} is down', { machine: m.name })}
+                title={st.state === 'unresolved' ? t('{machine}: unresolved {op}', { machine: m.name, op: st.op?.name ?? t('operation') }) : t('{machine} is {state}', { machine: m.name, state: t(st.label).toLowerCase() })}
                 actions={
                   <Button size="sm" variant="outline" className="rounded-xl" onClick={() => showMachine(m.name)}>
                     {t('Show')}
                   </Button>
                 }
               >
-                <span className="block break-words">{downReason(m, available.status[m.name]) ?? t('It does not answer.')}</span>
+                {downReason(m, available.status[m.name]) && <span className="block break-words">{downReason(m, available.status[m.name])}</span>}
+                {st.state === 'unresolved' && (
+                  <span className="block font-mono text-[11.5px] text-muted-foreground">
+                    {t('see {status} · clear: {clear}', { status: calls.status, clear: calls.clear })}
+                  </span>
+                )}
                 {m.stores.length > 0 && <span className="block text-muted-foreground">{t(m.stores.length === 1 ? 'Its Store can’t be used until it answers.' : 'Its {n} Stores can’t be used until it answers.', { n: m.stores.length })}</span>}
               </Notice>
-            ))}
+              )
+            })}
 
             <section className="flex flex-col gap-2.5 pt-2" aria-labelledby="machines-title">
               <SectionTitle id="machines-title" aside={String(available.machines.length)}>
@@ -231,7 +243,7 @@ export function ComputePage({ simulate: given }: ComputePageProps) {
               <AddMachine canCreate={available.canCreate.filter((c) => isVmKind(c.platform) || c.platform === 'ssh')} machines={available.machines} os={os} open={adding} onOpen={setAdding} act={act} onMade={showMachine} layerfs={available.layerfs} />
             </section>
 
-            <p className="px-1 pt-2 text-xs text-faint">{t('Machines start on the first call that needs them and stop after 10 idle minutes.')}</p>
+            <p className="px-1 pt-2 text-xs text-faint">{t('Machine power is manual: a machine runs between Start and Stop, and nothing starts or stops one by itself. Reading this page starts nothing.')}</p>
           </>
         )}
       </div>

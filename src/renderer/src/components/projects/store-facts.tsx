@@ -5,10 +5,11 @@
 // Store is made or removed. Without a view the facts fall back to the
 // project summary.
 import { useSyncExternalStore } from 'react'
-import { type ProjectSummary, type StorageView, type StoreFamily, type StoreRow } from '@shared/host-api'
+import { type ProjectSummary, type SdkOperation, type StorageView, type StoreFamily, type StoreRow } from '@shared/host-api'
 
 import { StoreIcon } from '@/components/storage/identity/store-icon'
 import { bytes } from '@/data/format'
+import { stateLook } from '@/data/states'
 import { host, onHostEvent, onProjectsChanged } from '@/host/client'
 import { useI18n } from '@/i18n'
 import { cn } from '@/lib/utils'
@@ -76,8 +77,10 @@ export interface StoreFacts {
   family: StoreFamily
   /** A sqlite Store's machine. */
   machine: string | null
-  /** idle, in_use, moving, down; null when unknown. */
+  /** The SDK's state (idle, in_use, busy, down, unresolved); null when unknown. */
   state: string | null
+  /** An operation in flight on it (a push or pull), with its phase. */
+  op: SdkOperation | null
   /** Bytes on disk (the sqlite file and WAL); null when unknown or PostgreSQL. */
   size: number | null
   /** Other projects share the Store. */
@@ -94,6 +97,7 @@ export function storeFacts(project: ProjectSummary, storage: StorageView | null 
     family: info?.kind ?? project.kind ?? 'sqlite',
     machine: info?.machine ?? project.machine ?? null,
     state: info?.state ?? project.storeState ?? null,
+    op: info?.op ?? project.storeOp ?? null,
     size: info?.size?.bytes ?? null,
     shared: others.length > 0,
     others,
@@ -112,7 +116,7 @@ const storeTitle = (facts: StoreFacts) => facts.name
 export function StoreLine({ facts, className }: { facts: StoreFacts; className?: string }) {
   const { t } = useI18n()
   const where = storeWhere(facts, t)
-  const detail = [where, facts.size !== null ? bytes(facts.size) : null].filter(Boolean).join(' · ')
+  const detail = [where, facts.size !== null ? bytes(facts.size) : null, facts.state ? t(stateLook('store', facts.state).label).toLowerCase() : null].filter(Boolean).join(' · ')
   return (
     <span className={cn('flex w-full min-w-0 items-center gap-2.5 rounded-xl bg-foreground/[0.03] px-2.5 py-2 ring-1 ring-foreground/[0.05] ring-inset', className)}>
       <StoreIcon family={facts.family} size="sm" />

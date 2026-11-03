@@ -2,19 +2,23 @@
 // calls the Compute page makes. A LayerFS 2.0 home's compute is a set of
 // machines: `native` and `docker` built in, VMs it creates (apple-container,
 // microsandbox, lima, firecracker) and ssh hosts it connects. A machine holds
-// sqlite Stores; a project's Sandboxes run on its Store's machine. Machines
-// start on the first call that needs them and stop after 10 idle minutes, so
-// there are no start or stop calls.
+// sqlite Stores; a project's Sandboxes run on its Store's machine. Power is
+// manual (#535 D11): a machine runs between machine.start and machine.stop,
+// and no call starts one on demand.
 //
-// The view (MachinesView, src/shared/host-api.ts) is machine.list() as 2.0
-// answers it, with store.list(), sandbox.list() and each VM's
-// machine.status(), so the page needs one read. Every call goes through the
-// host's one client (layerfs.js).
+// The view (MachinesView, src/shared/host-api.ts) is machine.list() as the
+// SDK answers it (each machine's `state` and `supports`, never guessed here),
+// with store.list() and sandbox.list() (their items carry `state` and `op`),
+// and machine.status() of the machines that run or hold an operation (free
+// disk, `op`): one read for the page, and none of it starts a machine.
+// Every call goes through the host's one client (layerfs.js).
 import { table } from 'layerfs'
 import { layerfs, linkedVersion, pages } from './layerfs.js'
 
 const BUILT_IN = new Set(['native', 'docker'])
 const SSH = 'ssh'
+/** States whose machine.status says something the list does not: free disk, or the op that holds it. */
+const ASK_STATUS = new Set(['running', 'creating', 'removing', 'unresolved', 'failed', 'unknown'])
 
 const refuse = (code, message) => Object.assign(new Error(message), { code })
 
@@ -28,8 +32,10 @@ export function machineOf(m) {
   return {
     name: String(m.name),
     platform: String(m.platform),
-    backend: text(m.backend) ?? (m.platform === 'docker' ? 'docker' : m.platform === 'native' ? 'native' : 'namespaces'),
-    state: text(m.state) ?? (BUILT_IN.has(m.platform) ? 'ready' : 'stopped'),
+    backend: text(m.backend),
+    // the SDK's state, as it is (#537 U4)
+    state: text(m.state) ?? 'unknown',
+    ...(m.supports && typeof m.supports === 'object' ? { supports: { sqlite: m.supports.sqlite !== false, postgresql_sandbox: m.supports.postgresql_sandbox === true, reason: text(m.supports.reason) } } : {}),
     cpus: num(m.cpus),
     memory: num(m.memory),
     disk: num(m.disk),
@@ -48,20 +54,23 @@ export function machineOf(m) {
 /** One can_create entry. */
 export const creatableOf = (c) => ({ platform: String(c.platform), ready: c.ready === true, missing: list(c.missing).map(String), version: text(c.version) })
 
+/** An SDK `op` ({ id, name, phase, started, uncertain }), or null. */
+export const opOf = (o) => (o && typeof o === 'object' && typeof o.name === 'string' ? { id: String(o.id ?? ''), name: o.name, phase: text(o.phase) ?? '', started: num(o.started), uncertain: o.uncertain === true } : null)
+
 /** One store.list() item, when it is a sqlite Store on a machine. */
 export function storeOf(s) {
   const machine = text(s.machine)
   if (!machine) return null
-  return { name: String(s.name), machine, projects: count(s.projects), size: num(s.size ?? s.bytes) }
+  return { name: String(s.name), machine, projects: count(s.projects), size: num(s.size ?? s.bytes), state: text(s.state) ?? 'unknown', op: opOf(s.op) }
 }
 
 /** One sandbox.list() item. */
 export function sandboxOf(b) {
-  return { name: String(b.name ?? b.sandbox), machine: text(b.machine), project: text(b.project), workspaces: count(b.workspaces) }
+  return { name: String(b.name ?? b.sandbox), machine: text(b.machine), project: text(b.project), workspaces: count(b.workspaces), state: text(b.state) ?? 'unknown', op: opOf(b.op), backend: text(b.backend), route: text(b.route) }
 }
 
-/** One machine.status() answer (2.0 calls the reason `down_reason`). */
-export const statusOf = (s) => ({ name: String(s.name), state: text(s.state), freeDisk: num(s.free_disk), toolVersion: text(s.tool_version), down: text(s.down_reason ?? s.why_down) })
+/** One machine.status() answer (the reason is `down_reason`). */
+export const statusOf = (s) => ({ name: String(s.name), state: text(s.state), freeDisk: num(s.free_disk), toolVersion: text(s.tool_version), down: text(s.down_reason ?? s.why_down), op: opOf(s.op) })
 
 /**
  * The machines view and its calls.
@@ -98,8 +107,8 @@ export class Machines {
     const [stores, sandboxes, statuses] = await Promise.all([
       lfs.store.list().then((r) => list(r).map(storeOf).filter(Boolean), () => []),
       pages((p) => lfs.sandbox.list(p)).then((r) => r.map(sandboxOf), () => []),
-      // a stopped VM answers without being started; docker's gives its VM's free disk, native has none to give
-      Promise.all(machines.filter((m) => m.platform !== 'native').map((m) => lfs.machine.status(m.name).then(statusOf, (e) => ({ name: m.name, state: 'down', freeDisk: null, toolVersion: null, down: e?.message ?? String(e) })))),
+      // starts nothing; asked only where it adds the free disk or the op (a stopped machine's says only that it is stopped)
+      Promise.all(machines.filter((m) => m.platform !== 'native' && ASK_STATUS.has(m.state)).map((m) => lfs.machine.status(m.name).then(statusOf, (e) => ({ name: m.name, state: null, freeDisk: null, toolVersion: null, down: e?.message ?? String(e), op: null })))),
     ])
     return { available: true, layerfs: this.version(), machines, canCreate: list(listed.can_create).map(creatableOf), stores, sandboxes, status: Object.fromEntries(statuses.map((s) => [s.name, s])) }
   }

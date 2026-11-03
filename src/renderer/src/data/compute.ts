@@ -2,14 +2,16 @@
 // layerfs#533). `native` and `docker` are built in; VMs are created
 // (apple-container, microsandbox, lima, firecracker) and ssh hosts connected.
 // A machine holds sqlite Stores, and a project's Sandboxes run on its
-// Store's machine. Machines start on the first call that needs them and stop
-// after 10 idle minutes.
+// Store's machine. Power is manual (#535 D11): a machine runs between Start
+// and Stop; nothing starts it on use or stops it when idle.
 //
 // This file turns GET /api/machines (MachinesView) into what the page shows,
 // and checks the New machine forms. It also keeps the Sandbox platform
 // helpers the Sandbox lists use (layerfs#529).
 
-import type { HostStatus, MachineCreatable, MachineInfo, MachineLive, MachinePlatform, MachinesView, SandboxInfo, SandboxPlatform } from '@shared/host-api'
+import type { HostStatus, MachineCreatable, MachineInfo, MachineLive, MachinePlatform, MachinesView, SandboxInfo, SandboxPlatform, SdkOperation } from '@shared/host-api'
+
+import { stateLook } from '@/data/states'
 
 export type Os = 'darwin' | 'linux' | 'win32'
 export const OS_OF: Record<HostStatus['platform'], Os> = { macos: 'darwin', linux: 'linux', windows: 'win32' }
@@ -56,22 +58,24 @@ export function machineOrder(machines: MachineInfo[]): MachineInfo[] {
   return [...machines].sort((a, b) => rank(a) - rank(b) || a.name.localeCompare(b.name))
 }
 
-export type MachineTone = 'success' | 'neutral' | 'warning' | 'danger'
+export type MachineTone = 'success' | 'neutral' | 'warning' | 'danger' | 'info'
 
-/** A machine's state as a pill: answering is success, stopped is idle (it starts on use), down or failed is danger. */
-export function machineState(m: MachineInfo, live?: MachineLive): { tone: MachineTone; label: string; key: 'ready' | 'running' | 'idle' | 'starting' | 'creating' | 'down' } {
-  const state = (live?.state ?? m.state ?? '').toLowerCase()
-  // 2.0's machine.status gives a reason for a plain `stopped` too ("the machine is stopped"): that machine starts on use, it is not down
-  if (m.error || state === 'down' || state === 'failed' || (live?.down && state !== 'stopped')) return { tone: 'danger', label: state === 'failed' ? 'Failed' : 'Down', key: 'down' }
-  if (state === 'running') return { tone: 'success', label: 'Running', key: 'running' }
-  if (state === 'ready') return { tone: 'success', label: 'Ready', key: 'ready' }
-  if (state === 'starting') return { tone: 'warning', label: 'Starting', key: 'starting' }
-  if (state === 'creating') return { tone: 'warning', label: 'Creating', key: 'creating' }
-  return { tone: 'neutral', label: 'Idle · starts on use', key: 'idle' }
+/** How a machine's state is counted: `needs` is failed, missing or unresolved. */
+export type MachineKey = 'running' | 'stopped' | 'busy' | 'needs' | 'unknown'
+
+/**
+ * A machine's state as the SDK gives it (machine.list), never derived here
+ * (#537 U4); the op machine.status shows overrides the word with its name.
+ */
+export function machineState(m: MachineInfo, live?: MachineLive): { tone: MachineTone; label: string; key: MachineKey; state: string; op: SdkOperation | null; live?: boolean } {
+  const state = m.state || 'unknown'
+  const look = stateLook('machine', state)
+  const key: MachineKey = look.attention ? 'needs' : state === 'running' || state === 'ready' ? 'running' : state === 'stopped' ? 'stopped' : state === 'creating' || state === 'removing' ? 'busy' : 'unknown'
+  return { tone: look.tone, label: look.label, key, state, op: live?.op ?? null, live: look.live }
 }
 
-/** Why a machine is down, in LayerFS's words: its status's reason, else its record's error. */
-export const downReason = (m: MachineInfo, live?: MachineLive) => (live?.state?.toLowerCase() === 'stopped' ? null : live?.down) ?? m.error ?? null
+/** Why a machine needs you or did not answer, in LayerFS's words (its status's reason, else its record's error); a plain stop is not a reason. */
+export const downReason = (m: MachineInfo, live?: MachineLive) => (m.state === 'stopped' ? null : (live?.down ?? m.error ?? null))
 
 /** Binary sizes as LayerFS gives them (8 GiB, 40 GiB). */
 export function gib(n: number | null | undefined): string {
@@ -92,15 +96,13 @@ export function sizeOf(m: MachineInfo, os: Os, live?: MachineLive): { text: stri
   return { text: '{cpus} CPU · {memory} · {disk}', values: { cpus: m.cpus ?? VM_DEFAULTS.cpus, memory: gib(m.memory ?? VM_DEFAULTS.memory), disk: gib(m.disk ?? VM_DEFAULTS.disk) } }
 }
 
-/** The facts line's numbers: each state counted as it is (only `running` is running). */
+/** The facts line's numbers (§6): running, stopped, creating or removing, needs you, and the operations in flight. */
 export function factsOf(view: Extract<MachinesView, { available: true }>) {
-  const n = { ready: 0, running: 0, idle: 0, starting: 0, down: 0 }
-  for (const m of view.machines) {
-    const s = machineState(m, view.status[m.name]).key
-    n[s === 'creating' ? 'starting' : s]++
-  }
-  const sandboxes = view.machines.reduce((total, m) => total + m.sandboxes.length, 0)
-  return { ...n, sandboxes }
+  const n: Record<MachineKey, number> = { running: 0, stopped: 0, busy: 0, needs: 0, unknown: 0 }
+  for (const m of view.machines) n[machineState(m, view.status[m.name]).key]++
+  const ops = [...Object.values(view.status).filter((s) => s.op), ...view.stores.filter((s) => s.op), ...view.sandboxes.filter((b) => b.op)].length
+  const sandboxes = view.sandboxes.length
+  return { ...n, ops, sandboxes }
 }
 
 /** A machine `remove`/`disconnect` refuses while it holds Stores or running Sandboxes (InUse): the reason, or null. */

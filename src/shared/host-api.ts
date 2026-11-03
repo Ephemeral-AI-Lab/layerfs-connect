@@ -239,6 +239,9 @@ export interface ProjectSummary {
   /** Its Store's SDK state. Busy and unresolved can also refuse project reads. */
   storeState?: StoreState | string | null
   storeOp?: SdkOperation | null
+  /** Why its Store is down (its machine is stopped or does not answer), from store.status. */
+  storeDown?: string | null
+  /** A Store call the project page needs was refused (Busy, Unresolved, Unavailable): its Branches were not read. */
   refusal?: SdkRefusal | null
 }
 
@@ -354,7 +357,7 @@ export interface StorageJob {
 
 /** GET /api/storage. */
 export interface StorageView {
-  machines: { name: string; platform: string; state: string | null }[]
+  machines: { name: string; platform: string; state: string | null; supports: MachineSupports | null }[]
   stores: StoreRow[]
   buckets: BucketRow[]
   jobs: StorageJob[]
@@ -434,6 +437,7 @@ export interface SandboxInfo {
   backend?: string | null
   route?: string | null
   project?: string | null
+  /** sandbox.get refused (Busy, Unresolved, Unavailable, …): its Workspaces are unknown; the SDK's words. */
   refusal?: SdkRefusal | null
   image: string | null
   machine: string | null
@@ -443,9 +447,6 @@ export interface SandboxInfo {
   workspaces: WorkspaceInfo[]
   /** The project read lists records only: its Workspaces were not read. */
   unread?: boolean
-  /** sandbox.get refused: its Workspaces are unknown. */
-  reach?: 'busy' | 'unreachable'
-  detail?: string
 }
 
 export interface ProjectState {

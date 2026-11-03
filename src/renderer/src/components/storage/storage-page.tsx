@@ -11,6 +11,7 @@ import { type CSSProperties, useEffect, useState } from 'react'
 import { GapLine } from '@/components/gap-line'
 import { PageHeader } from '@/components/motion/page-header'
 import { Empty, LoadError, Loading } from '@/components/projects/states'
+import { StateChip } from '@/components/state-chip'
 import { Chip, type Tone } from '@/components/storage/chips'
 import { ConfirmByName } from '@/components/storage/dialogs/confirm-by-name'
 import { StoreIcon } from '@/components/storage/identity/store-icon'
@@ -22,6 +23,7 @@ import { type StorageDialog, StorageDialogs } from '@/components/storage/storage
 import { Button } from '@/components/ui/button'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { ago, bytes, when } from '@/data/format'
+import { clearingCall, opWords } from '@/data/states'
 import { host, onHostEvent, onProjectsChanged } from '@/host/client'
 import { useHostQuery } from '@/host/use-host'
 import type { ProjectCatalog } from '@/host/use-projects'
@@ -29,13 +31,6 @@ import { t, useI18n } from '@/i18n'
 import type { BackupFile, BackupState, BucketRow, StorageJob, StorageView, StoreRow } from '@shared/host-api'
 
 import '@/components/storage/storage.css'
-
-const STATE: Record<string, { tone: Tone; label: string; live?: boolean }> = {
-  idle: { tone: 'success', label: 'Idle' },
-  in_use: { tone: 'info', label: 'In use', live: true },
-  moving: { tone: 'warning', label: 'Moving', live: true },
-  down: { tone: 'danger', label: 'Down' },
-}
 
 export const BACKUP: Record<BackupState, { tone: Tone; label: string; dashed?: boolean }> = {
   current: { tone: 'success', label: 'Backed up' },
@@ -151,8 +146,13 @@ export function StoragePage({ catalog, onOpenProject, onAddProject }: StoragePag
                 {failed}
               </Notice>
             )}
-            {allJobs.length > 0 && (
-              <section className="flex flex-col gap-2" aria-label={t('Jobs')}>
+            {(allJobs.length > 0 || view.stores.some((s) => s.op)) && (
+              <section className="flex flex-col gap-2" aria-label={t('Operations')}>
+                <h2 className="px-1 text-xs font-semibold tracking-wider text-muted-foreground uppercase">{t('Operations')}</h2>
+                {/* operations LayerFS records (any process's: the CLI's too) on Stores this host is not running a job on */}
+                {view.stores.filter((s) => s.op && !allJobs.some((j) => j.store === s.name && !j.ended)).map((s) => (
+                  <OpRow key={s.name} store={s} />
+                ))}
                 {allJobs.slice(0, 8).map((j) => (
                   <JobRow key={j.id} job={j} />
                 ))}
@@ -298,16 +298,13 @@ export function StoragePage({ catalog, onOpenProject, onAddProject }: StoragePag
 /** One Store: its name, projects, size, state, backup chips and menu. */
 function StoreLine({ store: s, view, menu, onOpenProject }: { store: StoreRow; view: StorageView; menu: React.ReactNode; onOpenProject?: (key: string) => void }) {
   useI18n()
-  const state = STATE[s.state] ?? { tone: 'neutral' as Tone, label: s.state }
   return (
     <li className="flex flex-wrap items-center gap-x-3 gap-y-2 px-5 py-3">
       <StoreIcon family={s.kind} />
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
           <span className="font-mono text-[13px] font-semibold">{s.name}</span>
-          <Chip tone={state.tone} live={state.live}>
-            {t(state.label)}
-          </Chip>
+          <StateChip entity="store" state={s.state} op={s.op} />
           {s.links.map((l) => {
             const listed = view.buckets.find((b) => b.name === l.bucket)?.files?.find((f) => f.file === l.file && f.store === s.name)
             const chip = BACKUP[listed?.state ?? 'unknown']
@@ -337,6 +334,9 @@ function StoreLine({ store: s, view, menu, onOpenProject }: { store: StoreRow; v
           </span>
           {s.down && <span className="text-destructive">· {s.down}</span>}
         </p>
+        {s.state === 'unresolved' && (
+          <p className="mt-1 font-mono text-[11px] text-destructive">{t('see {status} · clear: {clear}', clearingCall('store', s.name, s.op))}</p>
+        )}
       </div>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
@@ -425,6 +425,23 @@ function BucketCard({ bucket: b, index, listing, onList, onRestore, onDisconnect
       )}
       <p className="px-5 pt-1 pb-3 text-[11px] text-muted-foreground">{t('A restore always installs on native, as a new Store.')}</p>
     </Card>
+  )
+}
+
+/** An operation LayerFS records on a Store that this host did not start (or no longer tracks): a push from the CLI, an unresolved one. */
+function OpRow({ store: s }: { store: StoreRow }) {
+  useI18n()
+  const uncertain = s.state === 'unresolved'
+  return (
+    <div className="glass-liquid reveal flex flex-col gap-1 rounded-2xl px-4 py-2.5 text-xs shadow-xs" style={{ '--i': 0 } as CSSProperties}>
+      <div className="flex flex-wrap items-center gap-2">
+        <StateChip entity="store" state={s.state} />
+        <span className="font-mono">{s.name}</span>
+        <span className="text-muted-foreground">{opWords(s.op)}</span>
+        {s.op?.started && <span className="ml-auto text-muted-foreground">{t('started {when}', { when: ago(s.op.started) })}</span>}
+      </div>
+      {uncertain && <p className="font-mono text-[11px] text-destructive">{t('see {status} · clear: {clear}', clearingCall('store', s.name, s.op))}</p>}
+    </div>
   )
 }
 

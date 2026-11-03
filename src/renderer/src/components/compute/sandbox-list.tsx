@@ -13,6 +13,7 @@ import { Collapse, revealStyle } from '@/components/motion'
 import { Chip, type Tone } from '@/components/storage/chips'
 import { Bar } from '@/components/storage/meters'
 import { type Os, platformOfSandbox } from '@/data/compute'
+import { stateLook } from '@/data/states'
 import { cn } from '@/lib/utils'
 import { projectLabel, type SandboxInfo } from '@shared/host-api'
 
@@ -23,22 +24,10 @@ export const SANDBOX_CAPACITY = 16
 // Workspace details line up under the Sandbox they belong to.
 const ROW = 'grid grid-cols-[1.25rem_minmax(0,1.8fr)_minmax(0,1fr)_minmax(0,1.2fr)] items-center gap-x-3'
 
-/** A Sandbox container's state as a chip: running is live, gone is quiet. */
+/** A Sandbox's state as the SDK gives it (creating, running, closing, gone, unresolved), as a chip. */
 export function sandboxTone(state: string): { tone: Tone; live?: boolean; label: string } {
-  switch (state) {
-    case 'running':
-      return { tone: 'success', live: true, label: 'Running' }
-    case 'created':
-    case 'restarting':
-      return { tone: 'info', label: state === 'created' ? 'Starting' : 'Restarting' }
-    case 'gone':
-      return { tone: 'neutral', label: 'Gone' }
-    case 'exited':
-    case 'dead':
-      return { tone: 'warning', label: state === 'dead' ? 'Dead' : 'Exited' }
-    default:
-      return { tone: 'neutral', label: state || 'Unknown' }
-  }
+  const look = stateLook('sandbox', state)
+  return { tone: look.tone, live: look.live, label: look.label }
 }
 
 function Capacity({ used, live, wait }: { used: number; live: boolean; wait: number }) {

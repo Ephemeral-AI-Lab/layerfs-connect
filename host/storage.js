@@ -82,6 +82,7 @@ export function bucketUrl({ provider, endpoint, account, jurisdiction, bucket, p
 
 /** A store.list item and its store.status -> StoreRow. */
 export function storeRow(s, status, jobs) {
+  const op = s.op ?? status?.op ?? null
   const file = status?.file
   return {
     name: s.name,
@@ -90,7 +91,9 @@ export function storeRow(s, status, jobs) {
     projects: (s.projects ?? []).map(String),
     created: s.created ?? null,
     size: file?.exists ? { bytes: (file.bytes ?? 0) + (file.wal_bytes ?? 0), file: file.bytes ?? 0, wal: file.wal_bytes ?? 0 } : null,
-    state: status?.state ?? 'unknown',
+    // the SDK's state: store.list's item, derived as store.status derives it (#537 U4)
+    state: s.state ?? status?.state ?? 'unknown',
+    op: op && typeof op === 'object' ? { id: String(op.id ?? ''), name: String(op.name ?? ''), phase: op.phase ?? '', started: op.started ?? null, uncertain: op.uncertain === true } : null,
     holders: (status?.holders ?? []).length,
     down: status?.down_reason ?? (status ? null : 'store.status did not answer'),
     links: Object.entries(s.backups ?? {}).map(([bucket, link]) => ({ bucket, file: link.file ?? s.name, last: link.last ? { op: link.last.op, at: link.last.at ?? null, bytes: link.last.bytes ?? null } : null })),
@@ -157,7 +160,7 @@ export class Storage extends EventEmitter {
       return { name, provider: this.bucketRecords().find((b) => b.name === name)?.provider ?? null, listed: listing?.at ?? null, files: listing?.items ?? null, error: listing?.error ?? null, stores: stores.filter((s) => s.links.some((l) => l.bucket === name)).map((s) => s.name) }
     })
     const view = {
-      machines: (machines.machines ?? []).map((m) => ({ name: m.name, platform: m.platform, state: m.state ?? null })),
+      machines: (machines.machines ?? []).map((m) => ({ name: m.name, platform: m.platform, state: m.state ?? null, supports: m.supports ?? null })),
       stores,
       buckets,
       jobs,
@@ -167,10 +170,10 @@ export class Storage extends EventEmitter {
     return view
   }
 
-  /** Store name -> { state, machine } for the project list: a recent view, else a new one. */
+  /** Store name -> { state, op, machine, down } for the project list: a recent view, else a new one. */
   async projectJoin() {
     const view = this.lastView && Date.now() - this.lastView.at < JOIN_MS ? this.lastView : await this.view()
-    return new Map(view.stores.map((s) => [s.name, { state: s.state, machine: s.machine }]))
+    return new Map(view.stores.map((s) => [s.name, { state: s.state, op: s.op, machine: s.machine, down: s.down }]))
   }
 
   // ---------- Stores ----------

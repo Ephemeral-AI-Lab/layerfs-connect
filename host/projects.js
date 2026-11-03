@@ -83,19 +83,32 @@ export const commitInfo = (c, branch) => ({
   kind: c.via ?? null,
 })
 
-/** A sandbox.list/get record (and its Workspaces, when read) -> SandboxInfo. */
+/** An SDK `op` ({ id, name, phase, started, uncertain }), or null. */
+export const opOf = (o) => (o && typeof o === 'object' && typeof o.name === 'string' ? { id: String(o.id ?? ''), name: o.name, phase: o.phase ?? '', started: o.started ?? null, uncertain: o.uncertain === true } : null)
+
+/** A LayerFS refusal as the UI shows it: code, the SDK's text, and its detail (entity, phase, op, related). */
+export const refusalOf = (error) => ({ code: error?.code ?? 'Failed', message: error?.message ?? String(error), detail: error?.detail ?? null })
+
+/** Refusals a Store's operation gives every Store call: the page still renders what the home's records say. */
+export const STORE_REFUSALS = new Set(['Busy', 'Unresolved', 'Unavailable'])
+
+/** A sandbox.list/get record (and its Workspaces, when read) -> SandboxInfo. States are the SDK's (#537 U4). */
 export function sandboxInfo(s, workspaces = null) {
   return {
     id: String(s.name),
     name: String(s.name),
     state: s.state ?? 'unknown',
+    op: opOf(s.op),
+    backend: s.backend ?? null,
+    route: s.route ?? null,
+    project: s.project ?? null,
     image: s.image ?? null,
     machine: s.machine ?? null,
     runtime: s.runtime ?? null,
     ...(s.platform ? { platform: s.platform } : {}),
     workspaces: (workspaces ?? [])
       .filter((w) => w.mounted !== false && w.directory)
-      .map((w) => ({ ws: `${s.name}:${w.directory}`, branch: w.branch ?? '', path: w.directory, activity: w.activity ?? null })),
+      .map((w) => ({ ws: w.ws ?? `${s.name}:${w.name ?? w.directory}`, name: w.name ?? null, branch: w.branch ?? '', path: w.directory, activity: w.activity ?? null })),
     ...(workspaces ? {} : { unread: true }),
   }
 }
@@ -183,7 +196,7 @@ export class Projects {
       created: p.created ?? null,
       demo: by?.demo ?? null,
       run: by?.run ?? null,
-      ...(join ? { storeState: join.get(p.store)?.state ?? null } : {}),
+      ...(join ? { storeState: join.get(p.store)?.state ?? null, storeOp: join.get(p.store)?.op ?? null } : {}),
     }
   }
 
@@ -262,16 +275,36 @@ export class Projects {
 
   /**
    * ProjectState from the Store alone: its Branches, their Commits, its
-   * Sandbox records and the Store file's size. No Sandbox is asked.
+   * Sandbox records and the Store file's size. No Sandbox is asked. While its
+   * Store is busy (a push or pull), unresolved or down, Store calls are
+   * refused (Busy, Unresolved, Unavailable): the page then gets what the
+   * home's records say (project.get, sandbox.list, store.status), the
+   * Store's state and op, and the refusal in `refusal`, with no Branches.
    */
   async state(key) {
     const record = await this.record(key)
     const project = keyOf(record)
     const [listed, sandboxes, status] = await Promise.all([
-      pages((p) => this.lfs.branch.list(project, p)),
+      pages((p) => this.lfs.branch.list(project, p)).catch((error) => {
+        if (STORE_REFUSALS.has(error?.code)) return { refused: refusalOf(error) }
+        throw error
+      }),
       pages((p) => this.lfs.sandbox.list(project, p)).catch((error) => (this.log(`[host] sandbox.list of ${project}: ${error?.message ?? error}`), [])),
       this.lfs.store.status(record.store).catch(() => null),
     ])
+    const storeFacts = { storeState: status?.state ?? null, storeOp: opOf(status?.op), storeDown: status?.down_reason ?? null }
+    if (listed.refused) {
+      return {
+        project: { ...this.summary(record, this.madeBy()), ...storeFacts, refusal: listed.refused },
+        branches: [],
+        layers: [],
+        sandboxes: sandboxes.map((s) => sandboxInfo(s)),
+        last: null,
+        commits: 0,
+        store: { path: null, bytes: status?.file?.exists ? (status.file.bytes ?? 0) + (status.file.wal_bytes ?? 0) : null },
+        storage: null,
+      }
+    }
     const byId = new Map()
     await each(listed.filter((b) => b.name !== 'main'), WIDTH, async (b) => {
       for (const c of await this.ownCommits(project, b, PAGE)) byId.set(c.id, c)
@@ -282,7 +315,7 @@ export class Projects {
     for (const c of byId.values()) if (typeof c.time === 'number' && (!newest || c.time > newest.time)) newest = c
     const file = status?.file
     return {
-      project: this.summary(record, this.madeBy()),
+      project: { ...this.summary(record, this.madeBy()), ...storeFacts },
       branches,
       // 2.0 lists none of main's Layers but its newest (§9 Q3)
       layers: main?.base ? [{ id: main.base, message: '', at: null, from: null }] : [],
@@ -301,11 +334,11 @@ export class Projects {
     const listed = await pages((p) => this.lfs.sandbox.list(project, p))
     return Promise.all(
       listed.map(async (s) => {
+        // a Sandbox its machine no longer runs answers `state: "gone"` with no Workspaces; a refusal is shown as it came
         try {
           return sandboxInfo(s, await workspacesOf(this.lfs, s.name))
         } catch (error) {
-          if (error?.code === 'NoSuchSandbox' || error?.code === 'NotFound') return { ...sandboxInfo(s, []), state: 'gone' }
-          return { ...sandboxInfo(s), reach: 'unreachable', detail: `${error?.code ?? 'Failed'}: ${error?.message ?? error}` }
+          return { ...sandboxInfo(s), refusal: refusalOf(error) }
         }
       }),
     )

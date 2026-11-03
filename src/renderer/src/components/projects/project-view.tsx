@@ -11,6 +11,7 @@ import { HistoryTab, type HistoryView } from '@/components/projects/history-tab'
 import { ProjectSandboxesContent, ProjectStorageContent } from '@/components/projects/project-storage'
 import { ProjectSessionsContent } from '@/components/projects/project-sessions'
 import { LoadError, Loading } from '@/components/projects/states'
+import { StoreBanner } from '@/components/projects/store-banner'
 import { projectRuns } from '@/components/live/live-data'
 import { LiveTab } from '@/components/live/live-tab'
 import { isLive } from '@/components/live/run-format'
@@ -161,6 +162,7 @@ export function ProjectView({ project, initialTab, initialBranch, onBack, backLa
       <div className="project-workspace min-h-0 flex-1 overflow-y-auto">
         <div className="mx-auto flex min-h-full w-full min-w-0 max-w-7xl flex-col gap-4 px-6 pt-4 pb-6 @min-[56rem]/workspace:px-8">
           {s && state.error && <LoadError error={state.error} what={label} onRetry={refresh} />}
+          {s && <StoreBanner state={s} />}
           {body}
         </div>
       </div>
@@ -210,6 +212,7 @@ export function ProjectView({ project, initialTab, initialBranch, onBack, backLa
       <div className="min-h-0 flex-1 overflow-y-auto">
         <div className="mx-auto flex min-h-full w-full min-w-0 max-w-7xl flex-col gap-4 px-6 pt-4 pb-6 @min-[56rem]/workspace:px-8">
           {s && state.error && <LoadError error={state.error} what={label} onRetry={refresh} />}
+          {s && <StoreBanner state={s} />}
           {body}
         </div>
       </div>
