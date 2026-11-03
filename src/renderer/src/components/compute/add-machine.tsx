@@ -160,6 +160,8 @@ function VmMachineForm({ kind, machines, platforms, act, onDone, onCancel }: { k
     e.preventDefault()
     setTried(true)
     if (Object.keys(errors).length) return
+    // checked once: while it is made, the machine list holds its name, which is not a clash
+    setTried(false)
     setBusy(true)
     setError(null)
     const name = f.name.trim()
@@ -274,6 +276,8 @@ function SshMachineForm({ machines, platforms, act, onDone, onCancel }: { machin
     e.preventDefault()
     setTried(true)
     if (Object.keys(errors).length) return
+    // checked once: while it is made, the machine list holds its name, which is not a clash
+    setTried(false)
     setBusy(true)
     setError(null)
     const name = f.name.trim()
