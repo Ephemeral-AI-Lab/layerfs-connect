@@ -3,9 +3,77 @@
 // token; host/README.md describes each route. These types are the contract
 // between the host and the renderer: change both sides together.
 
+// ---------- SDK facts and refusals (#535/#536) ----------
+
+/** The public SDK operation view; it is not Connect's own job state. */
+export interface SdkOperation {
+  id: string
+  name: string
+  phase: string
+  started: number | null
+  uncertain: boolean
+}
+
+export interface RefusalEntity {
+  kind: string
+  name: string
+  /** Home conversion also explains why this entity is live. */
+  why?: string
+}
+
+export interface RefusalDetail {
+  entity?: RefusalEntity
+  phase?: string | null
+  op?: string
+  related?: RefusalEntity[]
+  [key: string]: unknown
+}
+
+/** Preserve the SDK's text, including any status or clearing call it names. */
+export interface SdkRefusal {
+  code: string
+  message: string
+  detail?: RefusalDetail | null
+}
+
+export type MachineState = 'creating' | 'running' | 'stopped' | 'removing' | 'failed' | 'missing' | 'unresolved'
+export type StoreState = 'idle' | 'in_use' | 'busy' | 'down' | 'unresolved'
+export type SandboxState = 'creating' | 'running' | 'closing' | 'gone' | 'unresolved'
+
+export interface MachineSupports {
+  sqlite: boolean
+  postgresql_sandbox: boolean
+  reason: string | null
+}
+
+export interface PlatformOption {
+  name: string
+  kind: 'int' | 'size' | 'text' | 'bool' | 'name'
+}
+
+/** One machine.platforms row, including readiness and supported form options. */
+export interface MachinePlatformInfo {
+  platform: MachinePlatform | string
+  how: string
+  backend: string | null
+  kernel: string | null
+  sqlite: string | null
+  postgresql: { store_calls: string; sandbox: boolean; reason: string | null }
+  ready: boolean
+  missing: string[]
+  version: string | null
+  options: PlatformOption[]
+  description: string
+}
+
+export interface PlatformsView {
+  host: string
+  platforms: MachinePlatformInfo[]
+}
+
 // ---------- Deployment and status ----------
 
-/** GET /api/status: Connect on its one LayerFS 2.0 home. There is no worker to start: machines start on the first call that needs them. */
+/** GET /api/status: Connect on its one LayerFS 2.0 home. Machine power is manual; listing status starts nothing. */
 export interface HostStatus {
   platform: 'linux' | 'macos' | 'windows'
   /** The linked `layerfs` package's version. */
@@ -42,8 +110,10 @@ export interface MachineInfo {
   name: string
   platform: MachinePlatform | string
   backend: 'native' | 'docker' | 'namespaces' | string
-  /** `ready`/`running` (answering), `stopped` (starts on use), `starting`, `creating`, `failed`, `down`. */
-  state: string
+  /** SDK-derived state; a stopped machine requires an explicit Start. */
+  state: MachineState | string
+  op?: SdkOperation | null
+  supports?: MachineSupports
   cpus: number | null
   /** Bytes. */
   memory: number | null
@@ -67,7 +137,7 @@ export interface MachineInfo {
   ssh?: { host: string; user: string; port: number; identity: string | null; root: string | null }
 }
 
-/** One entry of machine.list().can_create. */
+/** Legacy readiness shape retained until the platform forms migrate to machine.platforms. */
 export interface MachineCreatable {
   platform: MachinePlatform | string
   ready: boolean
@@ -79,6 +149,8 @@ export interface MachineCreatable {
 
 /** A sqlite Store on a machine (store.list()). */
 export interface MachineStore {
+  state?: StoreState | string
+  op?: SdkOperation | null
   name: string
   machine: string
   projects: number
@@ -88,6 +160,10 @@ export interface MachineStore {
 
 /** A Sandbox on a machine (sandbox.list()). */
 export interface MachineSandbox {
+  state?: SandboxState | string
+  op?: SdkOperation | null
+  backend?: string | null
+  route?: string | null
   name: string
   machine: string | null
   project: string | null
@@ -96,6 +172,7 @@ export interface MachineSandbox {
 
 /** machine.status(name) for a VM or ssh machine (built-ins are not asked). */
 export interface MachineLive {
+  op?: SdkOperation | null
   name: string
   state: string | null
   freeDisk: number | null
@@ -112,6 +189,7 @@ export type MachinesView =
       layerfs: string | null
       machines: MachineInfo[]
       canCreate: MachineCreatable[]
+      platforms?: MachinePlatformInfo[]
       stores: MachineStore[]
       sandboxes: MachineSandbox[]
       /** By machine name. */
@@ -127,7 +205,7 @@ export type MachinesView =
 /** POST /api/machines: a VM (`platform` a VM kind) or an ssh host (`platform: 'ssh'`). */
 export type NewMachine =
   | { platform: Exclude<MachinePlatform, 'native' | 'docker' | 'ssh'>; name: string; cpus?: number; memory?: number; disk?: number; image?: string; os_image?: string; host?: string; nested?: boolean }
-  | { platform: 'ssh'; name: string; host: string; user?: string; port?: number; identity?: string; root?: string }
+  | { platform: 'ssh'; name: string; host: string; user?: string; port?: number; identity?: string; known_hosts?: string; root?: string }
 
 // ---------- Projects (real LayerFS reads) ----------
 
@@ -158,13 +236,15 @@ export interface ProjectSummary {
   /** The demo whose run made this project, when a run made it. */
   demo?: string | null
   run?: string | null
-  /** Its Store's state from the host's Storage view (idle, in_use, moving, down). */
-  storeState?: string | null
+  /** Its Store's SDK state. Busy and unresolved can also refuse project reads. */
+  storeState?: StoreState | string | null
+  storeOp?: SdkOperation | null
+  refusal?: SdkRefusal | null
 }
 
 export interface NewProjectInput {
   name: string
-  /** The existing Store it goes into (2.0 never makes a Store at Init): a sqlite Store on native, or a PostgreSQL Store. */
+  /** An existing sqlite Store on any machine, or a PostgreSQL Store. Init reads source on the caller host. */
   store: string
   /** Omit to create an empty project; otherwise import this absolute directory. */
   source?: string
@@ -218,8 +298,10 @@ export interface StoreRow {
   created: number | null
   /** The sqlite file and its WAL, where it lives; null when unknown or PostgreSQL. */
   size: { bytes: number; file: number; wal: number } | null
-  /** idle, in_use, moving, down (its machine is not running: store.status starts none). */
-  state: string
+  /** SDK-derived state; listing a stopped machine starts nothing. */
+  state: StoreState | string
+  op?: SdkOperation | null
+  refusal?: SdkRefusal | null
   holders: number
   down: string | null
   links: StoreBackupLink[]
@@ -252,7 +334,7 @@ export interface BucketRow {
 /** A move, backup or restore this host started, fed by its call's on_progress. */
 export interface StorageJob {
   id: string
-  kind: 'move' | 'backup' | 'restore'
+  kind: 'push' | 'pull' | 'move' | 'backup' | 'restore'
   store: string
   /** The machine (move) or bucket (backup, restore). */
   target: string
@@ -262,8 +344,8 @@ export interface StorageJob {
   phase: string | null
   done: number | null
   total: number | null
-  /** A refusal names its phase; `Unknown` means both copies were kept. */
-  error: { code: string; message: string; phase: string | null } | null
+  /** Preserve refusal details; an uncertain result requires its named clearing call. */
+  error: (SdkRefusal & { phase: string | null }) | null
   result: unknown
 }
 
@@ -316,6 +398,9 @@ export interface FsEntry {
 
 /** A Sandbox record as sandbox.create, sandbox.list and sandbox.get answer it. */
 export interface SandboxRecord {
+  op?: SdkOperation | null
+  backend?: string | null
+  route?: string | null
   name: string
   project: string
   machine: string
@@ -326,19 +411,33 @@ export interface SandboxRecord {
   image?: string | null
 }
 
+/** A mounted side Branch; mounting main is refused (D14). */
+export interface WorkspaceInfo {
+  ws: string
+  name?: string | null
+  branch: string
+  path: string
+  activity?: string | null
+}
+
 /** A Sandbox of a project: its record, and its Workspaces when read (GET /api/projects/<key>/sandboxes). */
 export interface SandboxInfo {
   /** Its name (unique in the home): what every call names it by. */
   id: string
   name: string
-  /** The recorded state (2.0 gives no live state yet: §9 Q5). */
-  state: string
+  /** The SDK-derived state, including any operation in flight. */
+  state: SandboxState | string
+  op?: SdkOperation | null
+  backend?: string | null
+  route?: string | null
+  project?: string | null
+  refusal?: SdkRefusal | null
   image: string | null
   machine: string | null
   runtime?: SandboxRuntime | string | null
   platform?: SandboxPlatform | string
   /** Its Workspaces: `ws` is the handle every Workspace call takes (`<sandbox>:<path>`). */
-  workspaces: { ws: string; branch: string; path: string; activity?: string | null }[]
+  workspaces: WorkspaceInfo[]
   /** The project read lists records only: its Workspaces were not read. */
   unread?: boolean
   /** sandbox.get refused: its Workspaces are unknown. */

@@ -189,7 +189,7 @@ under all three modes; local-folder commands retain direct host execution.
 ## Where LayerFS comes from
 
 Connect links the one LayerFS 2.0 package, `layerfs`
-(`link:../layerfs-issue533-v2/api/node`, LayerFS `0b8ae8af5f`); the package finds its native addon
+(`link:../layerfs-v2-merge/api/node`, LayerFS `layerfs_v2_0_0` at `d046e7e2c1`, product as `5d13a1f62f`); the package finds its native addon
 through the link's real path. The host makes one client, `client({ home })`
 ([`layerfs.js`](layerfs.js)); every call names its project, `<store>/<project>`. Agents' shells
 run the native `layerfs` command (the linked checkout's `target/debug/layerfs`, or

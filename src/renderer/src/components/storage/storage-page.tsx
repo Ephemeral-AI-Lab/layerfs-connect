@@ -406,7 +406,7 @@ function BucketCard({ bucket: b, index, listing, onList, onRestore, onDisconnect
   )
 }
 
-const KIND = { move: 'Move', backup: 'Backup', restore: 'Restore' } as const
+const KIND = { push: 'Push', pull: 'Pull', move: 'Move', backup: 'Backup', restore: 'Restore' } as const
 
 /** A job this host started: its phase, done/total where the call gives it, and how it ended. */
 function JobRow({ job: j }: { job: StorageJob }) {

@@ -32,7 +32,7 @@
     "class-variance-authority": "0.7.1",
     "cn": "0.5.0",
     "entities": "9.0.0",
-    "layerfs": "link:../layerfs-issue533-v2/api/node",
+    "layerfs": "link:../layerfs-v2-merge/api/node",
     "lucide-react": "1.61.0",
     "marked": "18.0.11",
     "marked-cjk-friendly": "0.1.2",

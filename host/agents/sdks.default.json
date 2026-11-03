@@ -5,7 +5,7 @@
       "title": "LayerFS",
       "description": "Projects, Branches, Commits, files, Sandboxes and Workspaces through the one `layerfs` package (Node: import layerfs from \"layerfs\") or the native `layerfs` command. Every call names its project as <store>/<project>; LAYERFS_HOME is set; the project key is in LAYERFS_CONNECT_PROJECT.",
       "enabled": true,
-      "root": "../layerfs-issue533-v2/api",
+      "root": "../layerfs-v2-merge/api",
       "packages": [
         "layerfs"
       ],
@@ -156,8 +156,8 @@
         },
         {
           "name": "sandbox.create",
-          "signature": "layerfs.sandbox.create(project, name, machine, { image })",
-          "description": "start a named Sandbox of a project on a machine"
+          "signature": "layerfs.sandbox.create(project, name, machine?, { image })",
+          "description": "start a named Sandbox of a project; a sqlite project's runs on its Store's machine"
         },
         {
           "name": "sandbox.list",
@@ -176,8 +176,8 @@
         },
         {
           "name": "workspace.mount",
-          "signature": "layerfs.workspace.mount(sandbox, branch)",
-          "description": "mount a Branch in a Sandbox"
+          "signature": "layerfs.workspace.mount(sandbox, branch, { name })",
+          "description": "mount a side Branch in a Sandbox (main is refused: fork a Branch first); name gives the Workspace a handle <sandbox>:<name>"
         },
         {
           "name": "workspace.exec",
@@ -202,7 +202,12 @@
         {
           "name": "machine.list",
           "signature": "layerfs.machine.list()",
-          "description": "every machine, and the platforms that could be created here"
+          "description": "every machine with its state, supports and the Stores and Sandboxes on it; starts none"
+        },
+        {
+          "name": "machine.platforms",
+          "signature": "layerfs.machine.platforms()",
+          "description": "each platform on this host: backend, kernel route, readiness, missing tools and create options"
         },
         {
           "name": "machine.get",
@@ -213,6 +218,16 @@
           "name": "machine.status",
           "signature": "layerfs.machine.status(name)",
           "description": "a machine's live state, free disk and tool version"
+        },
+        {
+          "name": "machine.start",
+          "signature": "layerfs.machine.start(name)",
+          "description": "start a stopped machine and its worker; nothing starts one on demand"
+        },
+        {
+          "name": "machine.stop",
+          "signature": "layerfs.machine.stop(name)",
+          "description": "stop a machine; InUse while Sandboxes run on it"
         },
         {
           "name": "machine.create",
@@ -236,8 +251,8 @@
         },
         {
           "name": "machine.update",
-          "signature": "layerfs.machine.update(name, { cpus, memory, image, docker, wsl })",
-          "description": "resize a VM, or set a built-in machine's image and Docker socket"
+          "signature": "layerfs.machine.update(name, { image, docker, wsl })",
+          "description": "set a built-in machine's image, Docker socket or WSL distribution"
         },
         {
           "name": "store.list",
@@ -265,9 +280,14 @@
           "description": "attach a PostgreSQL database as a Store"
         },
         {
-          "name": "store.move",
-          "signature": "layerfs.store.move(name, machine, { on_progress })",
-          "description": "move a sqlite Store to another machine"
+          "name": "store.push",
+          "signature": "layerfs.store.push(name, machine, { on_progress })",
+          "description": "send a sqlite Store from native to a machine"
+        },
+        {
+          "name": "store.pull",
+          "signature": "layerfs.store.pull(name, { on_progress })",
+          "description": "bring a sqlite Store from its machine back to native"
         },
         {
           "name": "store.remove",
