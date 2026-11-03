@@ -261,3 +261,23 @@ test('platforms, start and stop: the SDK answers; create sends only the options 
   await m.connect({ name: 'gpu', host: 'gpu.lan', user: 'ubuntu', known_hosts: '/k', root: '/x' })
   assert.deepEqual(calls.slice(1), [['create', 'box', 'lima', { cpus: 4, nested: true }], ['connect', 'gpu', 'gpu.lan', { user: 'ubuntu', known_hosts: '/k' }]])
 })
+
+test('Workspaces: main is never mounted; a new Branch is forked from main first; a name is passed on (D14, #537 §7)', async () => {
+  const lfs = fake()
+  const calls = []
+  lfs.sandbox.get = async (name) => ({ name, project: 's1/app', workspaces: [], next_page_pos: null })
+  lfs.branch.fork = async (...a) => (calls.push(['fork', ...a]), { kind: 'Forked' })
+  lfs.workspace = { mount: async (...a) => (calls.push(['mount', ...a]), { ws: `${a[0]}:${a[2]?.name ?? '/w/1'}`, name: a[2]?.name ?? null, path: '/w/1', branch: a[1] }), unmount: async (...a) => (calls.push(['unmount', ...a]), {}) }
+  const p = new Projects({ spec: spec(), client: lfs, log: () => {} })
+  await assert.rejects(p.mount('a1', { branch: 'main' }), /Only side Branches are mounted/)
+  assert.equal((await p.mount('a1', { branch: 'task-42', fork: true, name: 'build' })).ws, 'a1:build')
+  await p.mount('a1', { branch: 'work' })
+  await p.unmount('a1:build', { discard: true })
+  assert.deepEqual(calls, [['fork', 's1/app', 'task-42', 'main'], ['mount', 'a1', 'task-42', { name: 'build' }], ['mount', 'a1', 'work', {}], ['unmount', 'a1:build', { discard: true }]])
+})
+
+test('a chat mounts its own Branch as a named Workspace', async () => {
+  const { workspaceName } = await import('../agents/workspaces.js')
+  assert.equal(workspaceName('chat-AbC_1'), 'chat-abc_1')
+  assert.equal(workspaceName('chat-' + 'x'.repeat(80)).length, 63)
+})

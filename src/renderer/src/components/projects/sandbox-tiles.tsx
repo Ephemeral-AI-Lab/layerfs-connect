@@ -1,6 +1,6 @@
 import { useI18n } from '@/i18n'
 import type { SandboxInfo } from '@shared/host-api'
-import { ChevronDown, FolderTree, LoaderCircle, X } from 'lucide-react'
+import { ChevronDown, FolderTree, LoaderCircle, Plus, X } from 'lucide-react'
 import { useState } from 'react'
 
 import { LfsBranch, LfsSandbox, LfsWorkspace } from '@/components/lfs-icons'
@@ -10,7 +10,7 @@ import { clearingCall, stateLook } from '@/data/states'
 import { host } from '@/host/client'
 
 /** Closes a Sandbox; a refused close offers a forced one, which names the Workspaces of unknown state. */
-function CloseSandbox({ name, onClosed }: { name: string; onClosed?: () => void }) {
+export function CloseSandbox({ name, onClosed }: { name: string; onClosed?: () => void }) {
   const { t } = useI18n()
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<unknown>(null)
@@ -37,7 +37,71 @@ function CloseSandbox({ name, onClosed }: { name: string; onClosed?: () => void 
   </span>
 }
 
-function SandboxTile({ sandbox, reading, unavailable, onBrowseFiles, onChanged }: { sandbox: SandboxInfo; reading?: boolean; unavailable?: boolean; onBrowseFiles?: (branch: string) => void; onChanged?: () => void }) {
+const NEW_BRANCH = '\u0000new'
+
+/**
+ * Mount Workspace (#537 §7): a side Branch of the project, or a new one
+ * forked from main first (only side Branches are mounted, owner D14), and an
+ * optional Workspace name (its handle is then `<sandbox>:<name>`).
+ */
+function MountWorkspace({ sandbox, branches, onMounted }: { sandbox: string; branches: string[]; onMounted?: () => void }) {
+  const { t } = useI18n()
+  const [open, setOpen] = useState(false)
+  const [branch, setBranch] = useState(branches[0] ?? NEW_BRANCH)
+  const [fresh, setFresh] = useState('')
+  const [name, setName] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<unknown>(null)
+  const forking = branch === NEW_BRANCH
+  const chosen = forking ? fresh.trim() : branch
+  const mount = async () => {
+    setBusy(true)
+    setError(null)
+    try {
+      await host.mountWorkspace(sandbox, { branch: chosen, ...(forking ? { fork: true } : {}), ...(name.trim() ? { name: name.trim() } : {}) })
+      setOpen(false)
+      setName('')
+      setFresh('')
+      onMounted?.()
+    } catch (e) {
+      setError(e)
+    } finally {
+      setBusy(false)
+    }
+  }
+  if (!open) {
+    return <button type="button" onClick={() => setOpen(true)} className="mt-2 inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs text-muted-foreground outline-none hover:bg-foreground/[0.05] hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring">
+      <Plus className="size-3.5" />{t('Mount Workspace')}
+    </button>
+  }
+  return <form className="mt-2 flex flex-col gap-2 rounded-lg bg-muted/40 px-3 py-2.5 text-xs" onSubmit={(e) => { e.preventDefault(); if (chosen && !busy) void mount() }}>
+    <div className="flex flex-wrap items-end gap-2">
+      <label className="flex min-w-40 flex-1 flex-col gap-1">
+        <span className="text-muted-foreground">{t('Branch')}</span>
+        <select value={branch} onChange={(e) => setBranch(e.target.value)} className="h-8 rounded-lg border border-border bg-background px-2 text-xs">
+          {branches.map((b) => <option key={b} value={b}>{b}</option>)}
+          <option value={NEW_BRANCH}>{t('New Branch from main…')}</option>
+        </select>
+      </label>
+      {forking && <label className="flex min-w-36 flex-1 flex-col gap-1">
+        <span className="text-muted-foreground">{t('New Branch name')}</span>
+        <input value={fresh} onChange={(e) => setFresh(e.target.value)} placeholder="task-42" className="h-8 rounded-lg border border-border bg-background px-2 font-mono text-xs" />
+      </label>}
+      <label className="flex min-w-32 flex-1 flex-col gap-1">
+        <span className="text-muted-foreground">{t('Workspace name (optional)')}</span>
+        <input value={name} onChange={(e) => setName(e.target.value)} placeholder={chosen || 'build'} className="h-8 rounded-lg border border-border bg-background px-2 font-mono text-xs" />
+      </label>
+      <span className="flex gap-1.5">
+        <button type="submit" disabled={!chosen || busy} className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-primary px-3 font-medium text-primary-foreground disabled:opacity-50">{busy && <LoaderCircle className="size-3.5 animate-spin" />}{t('Mount')}</button>
+        <button type="button" onClick={() => setOpen(false)} disabled={busy} className="h-8 rounded-lg px-2.5 text-muted-foreground hover:bg-foreground/[0.05]">{t('Cancel')}</button>
+      </span>
+    </div>
+    <p className="text-[11px] text-muted-foreground">{t('Only side Branches are mounted; main is the published line. A new Branch is forked from main first.')}</p>
+    {error !== null && <Refusal error={error} className="text-destructive" />}
+  </form>
+}
+
+function SandboxTile({ sandbox, branches, reading, unavailable, onBrowseFiles, onChanged }: { sandbox: SandboxInfo; branches: string[]; reading?: boolean; unavailable?: boolean; onBrowseFiles?: (branch: string) => void; onChanged?: () => void }) {
   const { t } = useI18n()
   const state = stateLook('sandbox', sandbox.state)
   const refusal = sandbox.refusal
@@ -72,6 +136,7 @@ function SandboxTile({ sandbox, reading, unavailable, onBrowseFiles, onChanged }
             </button>}
           </li>)}
     </ul>
+    {sandbox.state === 'running' && !refusal && <MountWorkspace sandbox={sandbox.name} branches={branches} onMounted={onChanged} />}
     <details className="group mt-2 text-xs text-muted-foreground">
       <summary className="inline-flex cursor-pointer list-none items-center gap-1.5 rounded-md py-1 outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
         {t('Details')}<ChevronDown className="size-3 group-open:rotate-180" />
@@ -88,12 +153,12 @@ function SandboxTile({ sandbox, reading, unavailable, onBrowseFiles, onChanged }
 }
 
 /** Quiet rows keep the mounted paths and their file actions in the same place. */
-export function SandboxTiles({ sandboxes, reading, unavailable, onBrowseFiles, onChanged }: { sandboxes: SandboxInfo[]; reading?: boolean; unavailable?: boolean; onBrowseFiles?: (branch: string) => void; onChanged?: () => void }) {
+export function SandboxTiles({ sandboxes, branches = [], reading, unavailable, onBrowseFiles, onChanged }: { sandboxes: SandboxInfo[]; branches?: string[]; reading?: boolean; unavailable?: boolean; onBrowseFiles?: (branch: string) => void; onChanged?: () => void }) {
   const { t } = useI18n()
   const open = sandboxes.filter((sandbox) => sandbox.state !== 'gone')
   const closed = sandboxes.filter((sandbox) => sandbox.state === 'gone')
   return <div className="min-w-0">
-    {open.map((sandbox) => <SandboxTile key={sandbox.id} sandbox={sandbox} reading={reading} unavailable={unavailable} onBrowseFiles={onBrowseFiles} onChanged={onChanged} />)}
+    {open.map((sandbox) => <SandboxTile key={sandbox.id} sandbox={sandbox} branches={branches} reading={reading} unavailable={unavailable} onBrowseFiles={onBrowseFiles} onChanged={onChanged} />)}
     {!open.length && <p className="border-t border-border/70 px-5 py-10 text-center text-sm text-muted-foreground">{t(reading ? 'Reading Sandboxes…' : 'No active Sandboxes')}</p>}
     {closed.length > 0 && <details className="group border-t border-border/70 px-5 py-3">
       <summary className="flex cursor-pointer list-none items-center gap-2 rounded-md py-1 text-xs text-muted-foreground outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-details-marker]:hidden">

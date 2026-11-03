@@ -19,6 +19,9 @@ const fail = (message) => Object.assign(new Error(message), { status: 409 })
  */
 export const mounted = (record) => !!record.project && record.runs !== 'folder'
 
+/** A Workspace name from a chat's Branch: 1–63 of a-z 0-9 _ . - (the Branch is `chat-<id>`). */
+export const workspaceName = (branch) => String(branch).toLowerCase().replace(/[^a-z0-9_.-]/g, '-').slice(0, 63) || 'chat'
+
 /** A chat's Sandbox name: unique in the home (1–63 of a-z 0-9 _ . -). */
 const sandboxName = (id) => `chat.${String(id).toLowerCase().replace(/[^a-z0-9_.-]/g, '-')}`.slice(0, 63)
 
@@ -91,7 +94,8 @@ export class AgentWorkspaces {
       const mount = (await workspacesOf(lfs, ws.sandbox)).find((w) => w.directory === ws.path)
       if (!mount || mount.branch !== ws.branch) throw fail('This conversation’s LayerFS workspace is no longer available. Its saved branch history is still intact.')
     } else {
-      const made = await lfs.workspace.mount(ws.sandbox, ws.branch)
+      // a named Workspace (#537 §7): its handle is <sandbox>:<name>, the chat's Branch name made a LayerFS name
+      const made = await lfs.workspace.mount(ws.sandbox, ws.branch, { name: workspaceName(ws.branch) })
       await this.change(record, { handle: made.ws, path: made.path ?? made.ws.slice(ws.sandbox.length + 1), head: made.base ?? ws.head, baseLayer: made.base_layer ?? ws.baseLayer }, onChange)
     }
     await this.change(record, { handle: ws.handle ?? `${ws.sandbox}:${ws.path}`, state: 'ready', error: null }, onChange)

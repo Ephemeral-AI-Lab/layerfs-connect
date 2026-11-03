@@ -103,6 +103,8 @@ export function App() {
     viewTransition(() => tabs.openHere({ selected: { kind: 'project', id }, location: branch ? { tab: 'history', branch } : undefined }, from))
   const openStorageProject = (id: string) =>
     viewTransition(() => tabs.openHere({ selected: { kind: 'project', id } }, t('Storage')))
+  const openComputeProject = (id: string) =>
+    viewTransition(() => tabs.openHere({ selected: { kind: 'project', id } }, t('Compute')))
   /** Return to the previous place, including an unlabelled page in tab history. */
   const cameFrom = tab.back?.at(-1)
   const backLabel = cameFrom?.label ?? (cameFrom?.selected.kind === 'project'
@@ -203,7 +205,7 @@ export function App() {
                 initialBranch={tab.location?.branch}
               />
             )}
-            {page === 'compute' && <ComputePage key={tab.id} />}
+            {page === 'compute' && <ComputePage key={tab.id} onOpenProject={openComputeProject} />}
             </TabErrorBoundary>
           </main>
         </div>

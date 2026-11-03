@@ -10,6 +10,7 @@ import { ChevronDown, FlaskConical, Plus, RotateCw, Server, TriangleAlert } from
 import { type CSSProperties, useMemo, useState } from 'react'
 
 import { AddMachine } from '@/components/compute/add-machine'
+import { SandboxesTable } from '@/components/compute/sandboxes-table'
 import { MachinesTable } from '@/components/compute/machines-table'
 import { KindLabel, SectionTitle } from '@/components/compute/target-parts'
 import { PageHeader } from '@/components/motion/page-header'
@@ -62,6 +63,8 @@ function SimulationPicker({ value, onChange }: { value: SimId | null; onChange: 
 interface ComputePageProps {
   /** Draw a simulated host instead of asking this one (the harness). */
   simulate?: SimId
+  /** Opens a project's page by its key (the Sandboxes table's project links). */
+  onOpenProject?: (key: string) => void
 }
 
 /** This computer's OS, from the preload; the host's status is not read for it. */
@@ -70,7 +73,7 @@ const osOfWindow = (): Os => {
   return p === 'win32' || p === 'linux' ? p : 'darwin'
 }
 
-export function ComputePage({ simulate: given }: ComputePageProps) {
+export function ComputePage({ simulate: given, onOpenProject }: ComputePageProps) {
   useI18n()
   const [picked, setPicked] = useState<SimId | null>(() => (import.meta.env.DEV ? readSim() : null))
   const sim = given ?? picked
@@ -238,6 +241,13 @@ export function ComputePage({ simulate: given }: ComputePageProps) {
                 {t('Machines')}
               </SectionTitle>
               <MachinesTable key={sim ?? 'live'} view={available} os={os} open={open} onOpen={setOpen} act={act} />
+            </section>
+
+            <section className="flex flex-col gap-2.5 pt-4" aria-labelledby="sandboxes-title">
+              <SectionTitle id="sandboxes-title" aside={String(available.sandboxes.length)}>
+                {t('Sandboxes')}
+              </SectionTitle>
+              <SandboxesTable sandboxes={available.sandboxes} onChanged={refresh} onShowMachine={showMachine} onOpenProject={onOpenProject} />
             </section>
 
             <section className="flex flex-col gap-2.5 pt-4" aria-labelledby="add-title">

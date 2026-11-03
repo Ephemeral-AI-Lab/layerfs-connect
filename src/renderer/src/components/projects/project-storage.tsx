@@ -293,7 +293,7 @@ function NewSandbox({ project, state, taken, onMade }: { project: string; state:
   </form>
 }
 
-function SandboxesCard({ sandboxes, reading, unavailable, onBrowseFiles, onChanged, create }: { sandboxes: SandboxInfo[]; reading: boolean; unavailable: boolean; onBrowseFiles?: (branch: string) => void; onChanged?: () => void; create?: React.ReactNode }) {
+function SandboxesCard({ sandboxes, branches, reading, unavailable, onBrowseFiles, onChanged, create }: { sandboxes: SandboxInfo[]; branches: string[]; reading: boolean; unavailable: boolean; onBrowseFiles?: (branch: string) => void; onChanged?: () => void; create?: React.ReactNode }) {
   const { t } = useI18n()
   const open = sandboxes.filter((sandbox) => sandbox.state !== 'gone')
   const mounted = open.reduce((count, sandbox) => count + sandbox.workspaces.length, 0)
@@ -308,8 +308,7 @@ function SandboxesCard({ sandboxes, reading, unavailable, onBrowseFiles, onChang
         {create}
       </span>
     </header>
-    <GapLine what="A Sandbox’s live state (running, exited) beside its record" className="px-5 pb-3" />
-    <SandboxTiles sandboxes={sandboxes} reading={reading} unavailable={unavailable} onBrowseFiles={onBrowseFiles} onChanged={onChanged} />
+    <SandboxTiles sandboxes={sandboxes} branches={branches} reading={reading} unavailable={unavailable} onBrowseFiles={onBrowseFiles} onChanged={onChanged} />
   </section>
 }
 
@@ -322,7 +321,7 @@ export function ProjectSandboxesContent({ project, state, tick, onBrowseFiles }:
       <p className="min-w-0 flex-1 break-words text-destructive">{q.error.message}</p>
       <button type="button" onClick={q.reload} disabled={q.loading} className="shrink-0 rounded-lg px-2 py-1.5 font-medium outline-none hover:bg-destructive/5 focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50">{t('Retry')}</button>
     </div>}
-    <SandboxesCard sandboxes={q.data ?? state.sandboxes} reading={q.loading && !q.data} unavailable={!!q.error && !q.data} onBrowseFiles={onBrowseFiles} onChanged={q.reload}
+    <SandboxesCard sandboxes={q.data ?? state.sandboxes} branches={state.branches.filter((b) => b.name !== 'main').map((b) => b.name)} reading={q.loading && !q.data} unavailable={!!q.error && !q.data} onBrowseFiles={onBrowseFiles} onChanged={q.reload}
       create={<NewSandbox project={project} state={state} taken={(q.data ?? state.sandboxes).map((s) => s.name)} onMade={q.reload} />} />
   </div>
 }

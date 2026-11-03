@@ -154,6 +154,12 @@ export const host = {
   createSandbox: (project: string, input: { name: string; image?: string; machine?: string }) => call<SandboxRecord>('POST', `${at(project)}/sandboxes`, input),
   /** sandbox.close; `force` closes it with Workspaces whose state LayerFS cannot learn (listed in `unknown`). */
   closeSandbox: (name: string, force = false) => call<{ kind: string; closed: string; unknown: string[] }>('DELETE', `/api/sandboxes/${enc(name)}${q({ force: force ? '1' : undefined })}`),
+  /** One Sandbox with its Workspaces (sandbox.get). */
+  sandbox: (name: string) => call<SandboxInfo>('GET', `/api/sandboxes/${enc(name)}`),
+  /** A Workspace in a Sandbox: a side Branch (D14), forked from main first when `fork`; `name` names it (<sandbox>:<name>). */
+  mountWorkspace: (sandbox: string, input: { branch: string; fork?: boolean; name?: string }) => call<{ ws: string; name: string | null; path: string; branch: string }>('POST', `/api/sandboxes/${enc(sandbox)}/workspaces`, input),
+  /** workspace.unmount; `discard` drops changes not committed. */
+  unmountWorkspace: (ws: string, discard = false) => call<unknown>('DELETE', `/api/workspaces/${enc(ws)}${q({ discard: discard ? '1' : undefined })}`),
   /** Closes every Sandbox of the project (Delete's "Close N Sandboxes and delete"). */
   closeSandboxes: (project: string, force = false) => call<{ kind: string; closed: string; unknown: string[] }[]>('POST', `${at(project)}/close-sandboxes`, force ? { force: true } : {}),
   commits: (project: string, branch: string, limit = 200) =>

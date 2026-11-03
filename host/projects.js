@@ -357,6 +357,37 @@ export class Projects {
     return this.lfs.sandbox.create(keyOf(record), name, machine, image ? { image } : {})
   }
 
+  /** One Sandbox with its Workspaces (sandbox.get): the top-level Sandboxes table's opened row. */
+  async sandbox(name) {
+    if (typeof name !== 'string' || !name) throw refuse(400, 'InvalidInput', 'Name the Sandbox.')
+    const workspaces = await workspacesOf(this.lfs, name)
+    const record = await this.lfs.sandbox.get(name, { page_size: 1, page_pos: 0 })
+    return sandboxInfo({ ...record, name }, workspaces)
+  }
+
+  /**
+   * Mounts a Workspace in Sandbox `name`: `{ branch, fork?, name? }`. Only
+   * side Branches are mounted (owner D14: mounting main is refused), so
+   * `fork: true` first forks `branch` from main. `name` names the Workspace
+   * (its handle is then `<sandbox>:<name>`). Answers workspace.mount's result.
+   */
+  async mount(sandbox, { branch, fork = false, name } = {}) {
+    if (typeof sandbox !== 'string' || !sandbox) throw refuse(400, 'InvalidInput', 'Name the Sandbox.')
+    checkBranch(branch)
+    if (branch === 'main') throw refuse(400, 'InvalidInput', 'Only side Branches are mounted: fork a Branch from main and mount that.')
+    if (fork) {
+      const { project } = await this.lfs.sandbox.get(sandbox, { page_size: 1, page_pos: 0 })
+      await this.lfs.branch.fork(project, branch, 'main')
+    }
+    return this.lfs.workspace.mount(sandbox, branch, name ? { name } : {})
+  }
+
+  /** workspace.unmount(ws, { discard }): refused while it has changes unless discarded. */
+  async unmount(ws, { discard = false } = {}) {
+    if (typeof ws !== 'string' || !ws.includes(':')) throw refuse(400, 'InvalidInput', 'A Workspace is named <sandbox>:<name or path>.')
+    return this.lfs.workspace.unmount(ws, discard ? { discard: true } : {})
+  }
+
   /** sandbox.close(name, { force }); answers its result, with the `unknown` Workspaces a forced close left. */
   async closeSandbox(name, { force = false } = {}) {
     if (typeof name !== 'string' || !name) throw refuse(400, 'InvalidInput', 'Name the Sandbox to close.')

@@ -201,6 +201,12 @@ export function createHandler(deps) {
     }
     // sandbox.close(name, { force }): ?force=1
     if (group === 'sandboxes' && id && !sub && method === 'DELETE') return projects.closeSandbox(id, { force: query.get('force') === '1' })
+    // one Sandbox with its Workspaces (sandbox.get)
+    if (group === 'sandboxes' && id && !sub && method === 'GET') return projects.sandbox(id)
+    // a Workspace in it: { branch, fork?, name? } (only side Branches are mounted, D14)
+    if (group === 'sandboxes' && id && sub === 'workspaces' && method === 'POST') return projects.mount(id, body ?? {})
+    // workspace.unmount: ?discard=1
+    if (group === 'workspaces' && id && !sub && method === 'DELETE') return projects.unmount(id, { discard: query.get('discard') === '1' })
     if (group === 'project-inits' && !id && method === 'GET') return projects.initJobs()
     if (group === 'project-inits' && id && !sub && method === 'GET') return projects.init(id)
     if (group === 'demos') {
