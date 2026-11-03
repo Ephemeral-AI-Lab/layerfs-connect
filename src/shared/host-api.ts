@@ -159,7 +159,8 @@ export interface MachineSandbox {
   name: string
   machine: string | null
   project: string | null
-  workspaces: number
+  /** Its mounted Workspaces (sandbox.get); null when that read was refused. */
+  workspaces: number | null
 }
 
 /** machine.status(name) for a VM or ssh machine (built-ins are not asked). */

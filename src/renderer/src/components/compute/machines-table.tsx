@@ -192,7 +192,8 @@ function MachineDetail({ m, view, os, act }: { m: MachineInfo; view: Available; 
                 <li key={`${b.name}-${i}`} className="truncate text-[13px] tabular-nums">
                   <span className="font-medium">{t('Sandbox {name}', { name: b.name })}</span>
                   <span className="text-muted-foreground">
-                    {b.project ? ` · ${b.project}` : ''} · {t(b.workspaces === 1 ? '1 Workspace' : '{n} Workspaces', { n: b.workspaces })}
+                    {b.project ? ` · ${b.project}` : ''}
+                    {b.workspaces != null && <> · {t(b.workspaces === 1 ? '1 Workspace' : '{n} Workspaces', { n: b.workspaces })}</>}
                   </span>
                 </li>
               ))}

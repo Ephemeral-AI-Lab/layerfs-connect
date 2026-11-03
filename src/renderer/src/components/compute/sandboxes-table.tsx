@@ -70,11 +70,11 @@ export function SandboxesTable({ sandboxes, onChanged, onOpenProject, onShowMach
                 <StateChip entity="sandbox" state={b.state} op={b.op} />
               </span>
               <span className="hidden text-right text-[13px] tabular-nums @min-[46rem]/sbx:block">
-                {b.workspaces}/{SANDBOX_CAPACITY}
+                {b.workspaces ?? '—'}/{SANDBOX_CAPACITY}
               </span>
               <ChevronRight aria-hidden="true" className={cn('size-4 text-muted-foreground transition-transform', expanded && 'rotate-90')} />
               <span className="col-span-3 truncate text-xs text-muted-foreground @min-[46rem]/sbx:hidden">
-                {[b.project, b.machine, [b.backend, b.route].filter(Boolean).join(' · '), `${b.workspaces}/${SANDBOX_CAPACITY}`].filter(Boolean).join(' · ')}
+                {[b.project, b.machine, [b.backend, b.route].filter(Boolean).join(' · '), `${b.workspaces ?? '—'}/${SANDBOX_CAPACITY}`].filter(Boolean).join(' · ')}
               </span>
             </div>
             <Collapse open={expanded} appear={false}>

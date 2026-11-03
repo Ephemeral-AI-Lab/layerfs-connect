@@ -335,3 +335,14 @@ test('a pull names the machine the Store came from (the job row reads "<store> â
   await new Promise((r) => setTimeout(r, 5))
   rmSync(s.state, { recursive: true, force: true })
 })
+
+test('Computeâ€™s Sandboxes carry their Workspace count from sandbox.get, which sandbox.list does not give', async () => {
+  const lfs = fake()
+  lfs.sandbox.list = async () => ({ items: [{ name: 'a1', project: 's1/app', machine: 'box', state: 'running' }, { name: 'a2', project: 's1/app', machine: 'box', state: 'running' }], next_page_pos: null })
+  lfs.sandbox.get = async (name) => {
+    if (name === 'a2') throw Object.assign(new Error('machine box is down'), { code: 'Unavailable' })
+    return { name, workspaces: [{ directory: '/w/1', branch: 'fix', name: 'fix', ws: 'a1:fix' }], next_page_pos: null }
+  }
+  const view = await new Machines({ spec: spec(), client: lfs, calls: [] }).view()
+  assert.deepEqual(view.sandboxes.map((b) => [b.name, b.workspaces]), [['a1', 1], ['a2', null]])
+})

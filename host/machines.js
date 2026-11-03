@@ -8,11 +8,12 @@
 //
 // The view (MachinesView, src/shared/host-api.ts) is machine.list() as the
 // SDK answers it (each machine's `state` and `supports`, never guessed here),
-// with store.list() and sandbox.list() (their items carry `state` and `op`),
+// with store.list() and sandbox.list() (their items carry `state` and `op`;
+// each Sandbox's Workspace count is its sandbox.get),
 // and machine.status() of the machines that run or hold an operation (free
 // disk, `op`): one read for the page, and none of it starts a machine.
 // Every call goes through the host's one client (layerfs.js).
-import { layerfs, linkedVersion, pages } from './layerfs.js'
+import { layerfs, linkedVersion, pages, workspacesOf } from './layerfs.js'
 
 const BUILT_IN = new Set(['native', 'docker'])
 const SSH = 'ssh'
@@ -77,7 +78,7 @@ export function storeOf(s) {
 
 /** One sandbox.list() item. */
 export function sandboxOf(b) {
-  return { name: String(b.name ?? b.sandbox), machine: text(b.machine), project: text(b.project), workspaces: count(b.workspaces), state: text(b.state) ?? 'unknown', op: opOf(b.op), backend: text(b.backend), route: text(b.route) }
+  return { name: String(b.name ?? b.sandbox), machine: text(b.machine), project: text(b.project), workspaces: b.workspaces === undefined ? null : count(b.workspaces), state: text(b.state) ?? 'unknown', op: opOf(b.op), backend: text(b.backend), route: text(b.route) }
 }
 
 /** One machine.status() answer (the reason is `down_reason`). */
@@ -111,7 +112,11 @@ export class Machines {
     const [platforms, stores, sandboxes, statuses] = await Promise.all([
       this.platforms().then((p) => p.platforms, () => []),
       lfs.store.list().then((r) => list(r).map(storeOf).filter(Boolean), () => []),
-      pages((p) => lfs.sandbox.list(p)).then((r) => r.map(sandboxOf), () => []),
+      // sandbox.list items carry no Workspaces: each one's count is its sandbox.get (a record read; null when refused)
+      pages((p) => lfs.sandbox.list(p)).then(
+        (r) => Promise.all(r.map(sandboxOf).map((b) => workspacesOf(lfs, b.name).then((w) => ({ ...b, workspaces: w.length }), () => ({ ...b, workspaces: null })))),
+        () => [],
+      ),
       // starts nothing; asked only where it adds the free disk or the op (a stopped machine's says only that it is stopped)
       Promise.all(machines.filter((m) => m.platform !== 'native' && ASK_STATUS.has(m.state)).map((m) => lfs.machine.status(m.name).then(statusOf, (e) => ({ name: m.name, state: null, freeDisk: null, toolVersion: null, down: e?.message ?? String(e), op: null })))),
     ])
