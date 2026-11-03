@@ -1,7 +1,7 @@
 // The Storage page's dialogs on LayerFS 2.0: one small form per action. A
 // secret is never typed here: buckets and PostgreSQL Stores take a reference
 // (env:LAYERFS_… or file:/absolute/path) that LayerFS resolves.
-import { Archive, ArrowRightLeft, Database, HardDriveDownload, HardDriveUpload, LoaderCircle, type LucideIcon, Plus, TriangleAlert, Unplug } from 'lucide-react'
+import { Archive, ArrowRightLeft, Database, HardDriveDownload, HardDriveUpload, LoaderCircle, type LucideIcon, Plus, Power, TriangleAlert, Unplug } from 'lucide-react'
 import { useEffect, useId, useState } from 'react'
 
 import { BackLink, BTN, Field, SHEET, SheetFooter, SheetHeader } from '@/components/storage/dialogs/fields'
@@ -182,6 +182,8 @@ function PlaceSheet({ dialog, onClose, done }: { dialog: { kind: 'push' | 'move'
   const s = dialog.store
   const machines = useHostQuery(() => host.machines(), [])
   const [target, setTarget] = useState('')
+  const [starting, setStarting] = useState(false)
+  const [startError, setStartError] = useState<unknown>(null)
   const view: Extract<MachinesView, { available: true }> | null = machines.data?.available ? machines.data : null
   const targets = (view?.machines ?? []).filter((m) => m.name !== 'native' && m.name !== s.machine && m.supports?.sqlite !== false)
   const chosen = targets.find((m) => m.name === target)
@@ -214,9 +216,15 @@ function PlaceSheet({ dialog, onClose, done }: { dialog: { kind: 'push' | 'move'
       {chosen && (
         <p className="text-[11.5px] leading-relaxed text-muted-foreground tabular-nums">
           {free !== null ? t('{free} free on {machine}; the Store is {size}.', { free: bytes(free), machine: chosen.name, size: size !== null ? bytes(size) : t('of unknown size') }) : t('{machine}’s free disk is not known until it runs.', { machine: chosen.name })}{' '}
-          {chosen.state !== 'running' && t('{machine} is {state}: start it on Compute first; nothing starts it for you.', { machine: chosen.name, state: t(chosen.state) })}
+          {chosen.state !== 'running' && t('{machine} is {state}: nothing starts it for you.', { machine: chosen.name, state: t(chosen.state) })}
         </p>
       )}
+      {chosen?.state === 'stopped' && (
+        <Button type="button" size="sm" variant="outline" className="h-7 self-start rounded-xl px-2.5 text-xs" disabled={starting} onClick={() => { setStarting(true); host.startMachine(chosen.name).then(machines.reload, (e: unknown) => setStartError(e)).finally(() => setStarting(false)) }}>
+          {starting ? <LoaderCircle className="size-3.5 animate-spin" /> : <Power className="size-3.5" />} {t('Start {machine}', { machine: chosen.name })}
+        </Button>
+      )}
+      {startError !== null && <Refusal error={startError} className="text-destructive" />}
       {(s.holders > 0 || sandboxes.length > 0) && (
         <Notice tone="warning" icon={TriangleAlert} title={t('Held now: the push is refused while these remain')}>
           {[s.holders > 0 && t(s.holders === 1 ? '1 process has it open' : '{n} processes have it open', { n: s.holders }), ...sandboxes.map((b) => t('Sandbox {name} ({project})', { name: b.name, project: b.project ?? '' }))].filter(Boolean).join(' · ')}

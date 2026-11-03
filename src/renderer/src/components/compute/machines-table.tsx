@@ -4,7 +4,7 @@ import { t, useI18n } from '@/i18n'
 // move to another machine), its Sandboxes, its facts and what can be done
 // with it: remove a VM or disconnect an ssh host (refused while it holds
 // Stores or Sandboxes), or update a built-in's settings.
-import { ArrowRightLeft, ChevronRight, Lock } from 'lucide-react'
+import { ArrowRightLeft, ChevronRight, Lock, Power } from 'lucide-react'
 import { useState } from 'react'
 
 import { Fact, KindLabel } from '@/components/compute/target-parts'
@@ -227,8 +227,30 @@ function MachineDetail({ m, view, os, act }: { m: MachineInfo; view: Available; 
         <Fact label={t('Sandboxes run as')}>{t(m.backend === 'docker' ? 'Containers' : m.backend === 'native' ? 'Processes, not isolated' : 'Linux namespaces')}</Fact>
       </dl>
 
+      {m.platform !== 'native' && <PowerAction m={m} pending={pending} run={run} />}
       {BUILT_IN.has(m.platform) ? <BuiltInActions m={m} os={os} pending={pending} run={run} /> : <RemoveAction m={m} pending={pending} run={run} />}
       {error !== null && <Refusal error={error} className="text-destructive" />}
+    </div>
+  )
+}
+
+/**
+ * Start and Stop (#535 D11): a machine runs only between them. Start waits
+ * until its worker answers; Stop is refused InUse while Sandboxes run on it,
+ * the refusal naming them.
+ */
+function PowerAction({ m, pending, run }: { m: MachineInfo; pending: string | null; run: (key: string, a: MachineAction) => Promise<void> }) {
+  useI18n()
+  const running = m.state === 'running'
+  const stopped = m.state === 'stopped'
+  if (!running && !stopped) return null
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <span className="text-xs text-muted-foreground">{t(running ? '{name} is running.' : '{name} is stopped: its Stores and Sandboxes can’t be used until it starts.', { name: m.name })}</span>
+      <Button size="sm" variant={running ? 'outline' : 'default'} className="h-7 rounded-lg px-2.5 text-xs" disabled={pending !== null} onClick={() => void run(running ? 'stop' : 'start', { kind: running ? 'stop' : 'start', name: m.name })}>
+        <Power className="size-3.5" />
+        {pending === 'start' ? t('Starting…') : pending === 'stop' ? t('Stopping…') : t(running ? 'Stop' : 'Start')}
+      </Button>
     </div>
   )
 }

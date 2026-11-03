@@ -9,7 +9,7 @@
 // and checks the New machine forms. It also keeps the Sandbox platform
 // helpers the Sandbox lists use (layerfs#529).
 
-import type { HostStatus, MachineCreatable, MachineInfo, MachineLive, MachinePlatform, MachinesView, SandboxInfo, SandboxPlatform, SdkOperation } from '@shared/host-api'
+import type { HostStatus, MachineInfo, MachinePlatformInfo, MachineLive, MachinePlatform, MachinesView, SandboxInfo, SandboxPlatform, SdkOperation } from '@shared/host-api'
 
 import { stateLook } from '@/data/states'
 
@@ -204,6 +204,8 @@ export interface VmForm {
   osImage: string
   /** firecracker: an existing nested lima machine, or `new:<name>` to create one with --nested first. */
   host: string
+  /** lima: made with --nested, so Firecracker machines can run in it. */
+  nested: boolean
 }
 export interface SshForm {
   name: string
@@ -211,12 +213,14 @@ export interface SshForm {
   host: string
   port: string
   identity: string
+  /** A known_hosts file to check the host's key against; empty: ssh's own. */
+  knownHosts: string
   root: string
 }
 export type FormErrors<F> = Partial<Record<keyof F, { text: string; values?: Record<string, string> }>>
 
-export const emptyVm = (): VmForm => ({ name: '', cpus: String(VM_DEFAULTS.cpus), memory: '4G', disk: '20G', image: '', osImage: '', host: '' })
-export const emptySsh = (): SshForm => ({ name: '', host: '', port: String(SSH_DEFAULTS.port), identity: '', root: SSH_DEFAULTS.root })
+export const emptyVm = (): VmForm => ({ name: '', cpus: String(VM_DEFAULTS.cpus), memory: '4G', disk: '20G', image: '', osImage: '', host: '', nested: false })
+export const emptySsh = (): SshForm => ({ name: '', host: '', port: String(SSH_DEFAULTS.port), identity: '', knownHosts: '', root: SSH_DEFAULTS.root })
 
 /** The nested lima machines a Firecracker machine can run in. */
 export const nestedHosts = (machines: MachineInfo[]) => machines.filter((m) => m.platform === 'lima' && m.nested)
@@ -255,8 +259,14 @@ export function sshErrors(f: SshForm, machines: MachineInfo[]): FormErrors<SshFo
   return e
 }
 
-/** The ready kinds the New machine menu offers, in can_create's order. */
-export const readyKinds = (can: MachineCreatable[]) => can.filter((c) => c.ready)
+/** The platforms a machine is created or connected on (machine.platforms), in its order: not the built-ins. */
+export const addable = (platforms: MachinePlatformInfo[]) => platforms.filter((p) => p.how === 'created' || p.how === 'connected')
+
+/** The ready ones the New machine menu offers. */
+export const readyKinds = (platforms: MachinePlatformInfo[]) => addable(platforms).filter((p) => p.ready)
+
+/** Whether `platform` declares create (or connect) option `name`. */
+export const declares = (platforms: MachinePlatformInfo[], platform: string, name: string) => !!platforms.find((p) => p.platform === platform)?.options.some((o) => o.name === name)
 
 // ---------- Sandbox platforms (layerfs#529) ----------
 

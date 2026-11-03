@@ -12,7 +12,6 @@
 // and machine.status() of the machines that run or hold an operation (free
 // disk, `op`): one read for the page, and none of it starts a machine.
 // Every call goes through the host's one client (layerfs.js).
-import { table } from 'layerfs'
 import { layerfs, linkedVersion, pages } from './layerfs.js'
 
 const BUILT_IN = new Set(['native', 'docker'])
@@ -51,8 +50,20 @@ export function machineOf(m) {
   }
 }
 
-/** One can_create entry. */
-export const creatableOf = (c) => ({ platform: String(c.platform), ready: c.ready === true, missing: list(c.missing).map(String), version: text(c.version) })
+/** One machine.platforms row, as the SDK answers it (the support table's facts, this host's readiness, the create options). */
+export const platformOf = (p) => ({
+  platform: String(p.platform),
+  how: String(p.how ?? ''),
+  backend: text(p.backend),
+  kernel: text(p.kernel),
+  sqlite: text(p.sqlite),
+  postgresql: { store_calls: String(p.postgresql?.store_calls ?? ''), sandbox: p.postgresql?.sandbox === true, reason: text(p.postgresql?.reason) },
+  ready: p.ready === true,
+  missing: list(p.missing).map(String),
+  version: text(p.version),
+  options: list(p.options).map((o) => ({ name: String(o.name), kind: String(o.kind) })),
+  description: String(p.description ?? ''),
+})
 
 /** An SDK `op` ({ id, name, phase, started, uncertain }), or null. */
 export const opOf = (o) => (o && typeof o === 'object' && typeof o.name === 'string' ? { id: String(o.id ?? ''), name: o.name, phase: text(o.phase) ?? '', started: num(o.started), uncertain: o.uncertain === true } : null)
@@ -77,22 +88,15 @@ export const statusOf = (s) => ({ name: String(s.name), state: text(s.state), fr
  * @param {object} options
  * @param {object} options.spec config.js's resolved spec (its `home`)
  * @param {object} [options.client] a LayerFS client (tests pass a stand-in)
- * @param {object[]} [options.calls] the call table (tests pass a stand-in)
  * @param {() => string | null} [options.version] the linked LayerFS's version
  * @param {(store: string, machine: string) => Promise<object>} [options.place] puts a Store on a machine as a job in the host's table (storage.js place: push, pull, or pull then push)
  */
 export class Machines {
-  constructor({ spec, client = null, calls = table, version = linkedVersion, place = null }) {
+  constructor({ spec, client = null, version = linkedVersion, place = null }) {
     this.spec = spec
     this.lfs = client ?? layerfs(spec)
-    this.table = calls
     this.version = version
     this.place = place
-  }
-
-  /** Whether the linked call `family.call` takes option `name`. */
-  takes(family, call, name) {
-    return this.table.some((c) => c.family === family && c.call === call && (c.options ?? []).some((o) => o.name === name))
   }
 
   async need() {
@@ -104,13 +108,38 @@ export class Machines {
     const lfs = this.lfs
     const listed = await lfs.machine.list()
     const machines = list(listed.machines).map(machineOf)
-    const [stores, sandboxes, statuses] = await Promise.all([
+    const [platforms, stores, sandboxes, statuses] = await Promise.all([
+      this.platforms().then((p) => p.platforms, () => []),
       lfs.store.list().then((r) => list(r).map(storeOf).filter(Boolean), () => []),
       pages((p) => lfs.sandbox.list(p)).then((r) => r.map(sandboxOf), () => []),
       // starts nothing; asked only where it adds the free disk or the op (a stopped machine's says only that it is stopped)
       Promise.all(machines.filter((m) => m.platform !== 'native' && ASK_STATUS.has(m.state)).map((m) => lfs.machine.status(m.name).then(statusOf, (e) => ({ name: m.name, state: null, freeDisk: null, toolVersion: null, down: e?.message ?? String(e), op: null })))),
     ])
-    return { available: true, layerfs: this.version(), machines, canCreate: list(listed.can_create).map(creatableOf), stores, sandboxes, status: Object.fromEntries(statuses.map((s) => [s.name, s])) }
+    return { available: true, layerfs: this.version(), machines, platforms, stores, sandboxes, status: Object.fromEntries(statuses.map((s) => [s.name, s])) }
+  }
+
+  /** machine.platforms(): each platform on this host; starts nothing (PlatformsView). */
+  async platforms() {
+    const answer = await this.lfs.machine.platforms()
+    return { host: String(answer.host ?? ''), platforms: list(answer.platforms).map(platformOf) }
+  }
+
+  /** machine.start(name): a stopped machine and its worker, waited for; native and a running one answer at once. */
+  async start(name) {
+    if (!name) throw refuse('InvalidInput', 'name the machine to start')
+    return (await this.need()).machine.start(name)
+  }
+
+  /** machine.stop(name): refused InUse while Sandboxes run on it (`detail.related` names them). */
+  async stop(name) {
+    if (!name) throw refuse('InvalidInput', 'name the machine to stop')
+    return (await this.need()).machine.stop(name)
+  }
+
+  /** The options `platform` declares for machine.create or machine.connect (machine.platforms), or null when unknown. */
+  async declared(platform) {
+    const row = (await this.platforms().catch(() => null))?.platforms.find((p) => p.platform === platform)
+    return row ? row.options.map((o) => o.name) : null
   }
 
   /** A VM: { name, platform, cpus?, memory?, disk?, image? (its Sandbox image), os_image?, host?, nested? }. */
@@ -119,10 +148,12 @@ export class Machines {
     const { name, platform, ...rest } = body ?? {}
     if (!name || !platform) throw refuse('InvalidInput', 'a machine needs a name and a platform')
     if (platform === SSH) throw refuse('InvalidInput', 'an ssh host is connected, not created')
-    const options = pick(rest, ['cpus', 'memory', 'disk', 'image', 'host', 'nested', 'os_image'])
-    // layerfs#533's first table has no os_image: say so rather than send an option it refuses
-    if (options.os_image && !this.takes('machine', 'create', 'os_image')) throw refuse('Unsupported', 'this LayerFS chooses the VM’s OS image itself: machine.create takes no os_image')
-    return lfs.machine.create(name, platform, options)
+    // the options this platform declares (machine.platforms); one it does not take is refused here, not sent
+    const declared = (await this.declared(platform)) ?? ['cpus', 'memory', 'disk', 'image', 'host', 'nested']
+    const given = pick(rest, Object.keys(rest))
+    const extra = Object.keys(given).filter((k) => !declared.includes(k))
+    if (extra.length) throw refuse('InvalidInput', `${platform} takes no ${extra.join(', ')} (its options: ${declared.join(', ') || 'none'})`)
+    return lfs.machine.create(name, platform, given)
   }
 
   /** An ssh host: { name, host, user?, port?, identity?, root? }. */
@@ -130,7 +161,8 @@ export class Machines {
     const lfs = await this.need()
     const { name, host, ...rest } = body ?? {}
     if (!name || !host) throw refuse('InvalidInput', 'an ssh machine needs a name and a host')
-    return lfs.machine.connect(name, host, pick(rest, ['user', 'port', 'identity', 'known_hosts', 'root']))
+    const declared = (await this.declared(SSH)) ?? ['user', 'port', 'identity', 'known_hosts', 'root']
+    return lfs.machine.connect(name, host, pick(rest, declared))
   }
 
   /** Removes a VM or disconnects an ssh host; LayerFS refuses InUse while it holds Stores or running Sandboxes. */

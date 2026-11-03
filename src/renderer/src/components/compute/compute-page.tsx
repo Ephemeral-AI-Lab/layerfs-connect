@@ -20,7 +20,7 @@ import { Button } from '@/components/ui/button'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { clearingCall } from '@/data/states'
-import { downReason, factsOf, isVmKind, kindLabel, machineOrder, machineState, type Os, readyKinds } from '@/data/compute'
+import { addable, downReason, factsOf, kindLabel, machineOrder, machineState, type Os, readyKinds } from '@/data/compute'
 import { isSimId, type MachineAction, SIM_IDS, simulate, SIMULATIONS, type SimId } from '@/data/compute-sim'
 import { host } from '@/host/client'
 import { useHostQuery } from '@/host/use-host'
@@ -111,6 +111,8 @@ export function ComputePage({ simulate: given }: ComputePageProps) {
     if (action.kind === 'create') await host.createMachine(action.input)
     else if (action.kind === 'remove') await host.removeMachine(action.name)
     else if (action.kind === 'move') await host.placeStore(action.store, action.machine)
+    else if (action.kind === 'start') await host.startMachine(action.name)
+    else if (action.kind === 'stop') await host.stopMachine(action.name)
     else await host.updateMachine(action.name, action.changes)
     live.reload()
   }
@@ -120,7 +122,7 @@ export function ComputePage({ simulate: given }: ComputePageProps) {
   const facts = useMemo(() => (available ? factsOf(available) : null), [available])
   // failed, missing or unresolved: each gets a notice with what LayerFS says and the call that clears it
   const down = available ? machineOrder(available.machines).filter((m) => machineState(m, available.status[m.name]).key === 'needs') : []
-  const ready = available ? readyKinds(available.canCreate) : []
+  const ready = available ? readyKinds(available.platforms) : []
 
   return (
     <div className="h-svh min-w-0 overflow-y-auto">
@@ -240,7 +242,7 @@ export function ComputePage({ simulate: given }: ComputePageProps) {
 
             <section className="flex flex-col gap-2.5 pt-4" aria-labelledby="add-title">
               <SectionTitle id="add-title">{t('Add a machine')}</SectionTitle>
-              <AddMachine canCreate={available.canCreate.filter((c) => isVmKind(c.platform) || c.platform === 'ssh')} machines={available.machines} os={os} open={adding} onOpen={setAdding} act={act} onMade={showMachine} layerfs={available.layerfs} />
+              <AddMachine platforms={addable(available.platforms)} machines={available.machines} os={os} open={adding} onOpen={setAdding} act={act} onMade={showMachine} layerfs={available.layerfs} />
             </section>
 
             <p className="px-1 pt-2 text-xs text-faint">{t('Machine power is manual: a machine runs between Start and Stop, and nothing starts or stops one by itself. Reading this page starts nothing.')}</p>

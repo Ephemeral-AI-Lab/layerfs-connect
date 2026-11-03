@@ -133,6 +133,10 @@ export const host = {
   machines: () => call<MachinesView>('GET', '/api/machines'),
   /** A VM, or (platform `ssh`) an ssh host. */
   createMachine: (input: NewMachine) => call<unknown>('POST', '/api/machines', input),
+  /** machine.start: a stopped machine and its worker (nothing else starts one, #535 D11). */
+  startMachine: (name: string) => call<unknown>('POST', `/api/machines/${enc(name)}/start`),
+  /** machine.stop: refused InUse while Sandboxes run on it (detail.related names them). */
+  stopMachine: (name: string) => call<unknown>('POST', `/api/machines/${enc(name)}/stop`),
   /** Removes a VM or disconnects an ssh host; refused InUse while it holds Stores or running Sandboxes. */
   removeMachine: (name: string) => call<unknown>('DELETE', `/api/machines/${enc(name)}`),
   /** A built-in's { image, docker, wsl }, or a VM's { cpus, memory }. */

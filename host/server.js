@@ -159,9 +159,12 @@ export function createHandler(deps) {
       }
       if (group === 'storage-jobs' && id && !sub && method === 'GET') return storage.job(id)
     }
-    // layerfs#533: Compute's machines; machines start on the first call that needs them, so there is no start or stop
+    // Compute's machines. Power is manual (#535 D11): start and stop are their own calls, and no read starts one
+    if (machines && group === 'platforms' && !id && method === 'GET') return machines.platforms()
     if (machines && group === 'machines') {
       if (!id && !sub && method === 'GET') return machines.view()
+      if (id && sub === 'start' && method === 'POST') return machines.start(id)
+      if (id && sub === 'stop' && method === 'POST') return machines.stop(id)
       if (!id && !sub && method === 'POST') return body?.platform === 'ssh' ? machines.connect(body) : machines.create(body)
       if (id && !sub && method === 'DELETE') return machines.remove(id)
       if (id && sub === 'update' && method === 'POST') return machines.update(id, body)

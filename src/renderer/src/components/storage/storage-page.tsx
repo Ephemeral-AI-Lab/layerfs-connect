@@ -5,7 +5,7 @@
 // down) and backup chips; its menu moves it, backs it up, adds a project
 // (native only) or removes it. The view is read again on the host's
 // `storage` events; jobs move on `storage-job` events.
-import { Archive, ArrowRightLeft, ChevronDown, Database, Ellipsis, FolderPlus, HardDrive, HardDriveDownload, HardDriveUpload, ListRestart, Plus, RotateCw, Trash2, TriangleAlert, Unplug } from 'lucide-react'
+import { Archive, ArrowRightLeft, ChevronDown, Database, Ellipsis, FolderPlus, HardDrive, HardDriveDownload, HardDriveUpload, ListRestart, Plus, Power, RotateCw, Trash2, TriangleAlert, Unplug } from 'lucide-react'
 import { type CSSProperties, useEffect, useState } from 'react'
 
 import { GapLine } from '@/components/gap-line'
@@ -172,7 +172,14 @@ export function StoragePage({ catalog, onOpenProject, onAddProject }: StoragePag
                   <HardDrive aria-hidden="true" className="size-4 text-(--icon-accent)" />
                   <h2 className="text-sm font-semibold">{machine.name}</h2>
                   <span className="text-xs text-muted-foreground">{machine.platform}</span>
+                  {machine.name !== 'native' && machine.state && <StateChip entity="machine" state={machine.state} />}
                   <span className="ml-auto text-xs text-muted-foreground">{t(stores.length === 1 ? '1 Store' : '{n} Stores', { n: stores.length })}</span>
+                  {/* U3: nothing starts a machine by being looked at; Start is asked for */}
+                  {machine.state === 'stopped' && (
+                    <Button size="sm" variant="outline" className="h-7 rounded-xl px-2.5 text-xs" onClick={() => act(() => host.startMachine(machine.name))}>
+                      <Power className="size-3.5" /> {t('Start')}
+                    </Button>
+                  )}
                 </header>
                 <ul className="divide-y divide-foreground/[0.05]">
                   {stores.map((s) => (

@@ -137,16 +137,6 @@ export interface MachineInfo {
   ssh?: { host: string; user: string; port: number; identity: string | null; root: string | null }
 }
 
-/** Legacy readiness shape retained until the platform forms migrate to machine.platforms. */
-export interface MachineCreatable {
-  platform: MachinePlatform | string
-  ready: boolean
-  /** `tool:<cli>`, `host:<need>`, `bundle:<folder>`. */
-  missing: string[]
-  /** The tool's version, when found. */
-  version: string | null
-}
-
 /** A sqlite Store on a machine (store.list()). */
 export interface MachineStore {
   state?: StoreState | string
@@ -188,8 +178,8 @@ export type MachinesView =
       /** The linked LayerFS's version. */
       layerfs: string | null
       machines: MachineInfo[]
-      canCreate: MachineCreatable[]
-      platforms?: MachinePlatformInfo[]
+      /** machine.platforms(): each platform on this host, its readiness and its create options. */
+      platforms: MachinePlatformInfo[]
       stores: MachineStore[]
       sandboxes: MachineSandbox[]
       /** By machine name. */

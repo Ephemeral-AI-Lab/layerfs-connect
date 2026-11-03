@@ -7,7 +7,7 @@
 // memory (simulate below), refused as LayerFS would refuse them.
 
 import { BUILT_IN, DEFAULT_SANDBOX_IMAGE, GIB, type Os } from '@/data/compute'
-import type { MachineCreatable, MachineInfo, MachineLive, MachineSandbox, MachinesView, MachineStore, NewMachine } from '@shared/host-api'
+import type { MachineInfo, MachineLive, MachinePlatformInfo, MachineSandbox, MachinesView, MachineStore, NewMachine, PlatformOption } from '@shared/host-api'
 
 export type SimId = 'mac-fresh' | 'mac-mixed' | 'mac-nested' | 'mac-busy' | 'windows' | 'older'
 export const SIM_IDS: SimId[] = ['mac-fresh', 'mac-mixed', 'mac-nested', 'mac-busy', 'windows', 'older']
@@ -55,9 +55,30 @@ const vm = (name: string, platform: MachineInfo['platform'], state: string, size
 const live = (name: string, state: string, freeGib: number | null, tool: string | null, down: string | null = null): MachineLive => ({ name, state, freeDisk: freeGib === null ? null : freeGib * GIB, toolVersion: tool, down })
 const store = (name: string, machine: string, projects: number, sizeGb: number): MachineStore => ({ name, machine, projects, size: sizeGb * 1e9 })
 const box = (name: string, machine: string, project: string, workspaces: number): MachineSandbox => ({ name, machine, project, workspaces })
-const can = (platform: string, version: string | null, missing: string[] = []): MachineCreatable => ({ platform, ready: missing.length === 0, missing, version })
+/** The create options each platform declares (as machine.platforms lists them), for sample rows. */
+const VM_OPTIONS: PlatformOption[] = [{ name: 'cpus', kind: 'int' }, { name: 'memory', kind: 'size' }, { name: 'disk', kind: 'size' }, { name: 'image', kind: 'text' }]
+const OPTIONS: Record<string, PlatformOption[]> = {
+  'apple-container': VM_OPTIONS,
+  microsandbox: VM_OPTIONS,
+  lima: [...VM_OPTIONS, { name: 'nested', kind: 'bool' }],
+  firecracker: [...VM_OPTIONS, { name: 'host', kind: 'name' }],
+  ssh: [{ name: 'user', kind: 'text' }, { name: 'port', kind: 'int' }, { name: 'identity', kind: 'text' }, { name: 'known_hosts', kind: 'text' }, { name: 'root', kind: 'text' }],
+}
+const can = (platform: string, version: string | null, missing: string[] = []): MachinePlatformInfo => ({
+  platform,
+  how: platform === 'ssh' ? 'connected' : 'created',
+  backend: 'namespaces',
+  kernel: 'fuse',
+  sqlite: 'worker',
+  postgresql: { store_calls: 'in_process', sandbox: true, reason: null },
+  ready: missing.length === 0,
+  missing,
+  version,
+  options: OPTIONS[platform] ?? [],
+  description: '',
+})
 
-const MAC_CAN = (over: Partial<Record<string, MachineCreatable>> = {}): MachineCreatable[] =>
+const MAC_CAN = (over: Partial<Record<string, MachinePlatformInfo>> = {}): MachinePlatformInfo[] =>
   [
     can('apple-container', 'container CLI version 0.6.1'),
     can('microsandbox', 'msb 0.2.6'),
@@ -66,11 +87,11 @@ const MAC_CAN = (over: Partial<Record<string, MachineCreatable>> = {}): MachineC
     can('ssh', 'OpenSSH_10.0p2'),
   ].map((c) => over[c.platform as string] ?? c)
 
-const view = (machines: MachineInfo[], canCreate: MachineCreatable[], stores: MachineStore[], sandboxes: MachineSandbox[], status: MachineLive[]): Available => ({
+const view = (machines: MachineInfo[], platforms: MachinePlatformInfo[], stores: MachineStore[], sandboxes: MachineSandbox[], status: MachineLive[]): Available => ({
   available: true,
   layerfs: LAYERFS,
   machines,
-  canCreate,
+  platforms,
   stores,
   sandboxes,
   status: Object.fromEntries(status.map((s) => [s.name, s])),
@@ -180,6 +201,8 @@ export type MachineAction =
   | { kind: 'create'; input: NewMachine }
   | { kind: 'remove'; name: string }
   | { kind: 'move'; store: string; machine: string }
+  | { kind: 'start'; name: string }
+  | { kind: 'stop'; name: string }
   | { kind: 'update'; name: string; changes: { image?: string; docker?: string; wsl?: string } }
 
 const refuse = (code: string, message: string) => Object.assign(new Error(message), { code })
@@ -199,7 +222,7 @@ export function simulate(v: MachinesView, action: MachineAction): MachinesView {
       if (i.platform === 'firecracker' && !machines.some((m) => m.name === i.host && m.platform === 'lima' && m.nested)) throw refuse('InvalidInput', `${i.host} is not a lima machine made with --nested`)
       machines.push({ name: i.name, platform: i.platform, backend: 'namespaces', state: 'stopped', cpus: i.cpus ?? 2, memory: i.memory ?? 4 * GIB, disk: i.disk ?? 20 * GIB, stores: [], sandboxes: [], image: i.image ?? IMAGE, ...(i.nested ? { nested: true } : {}), ...(i.host ? { host: i.host } : {}) })
     }
-    return { ...v, machines, status: { ...v.status, [i.name]: { name: i.name, state: 'stopped', freeDisk: i.platform === 'ssh' ? null : (i.disk ?? 20 * GIB), toolVersion: v.canCreate.find((c) => c.platform === i.platform)?.version ?? null, down: null } } }
+    return { ...v, machines, status: { ...v.status, [i.name]: { name: i.name, state: 'stopped', freeDisk: i.platform === 'ssh' ? null : (i.disk ?? 20 * GIB), toolVersion: v.platforms.find((c) => c.platform === i.platform)?.version ?? null, down: null } } }
   }
   if (action.kind === 'remove') {
     const m = find(action.name)
@@ -210,6 +233,13 @@ export function simulate(v: MachinesView, action: MachineAction): MachinesView {
     const status = { ...v.status }
     delete status[m.name]
     return { ...v, machines: machines.filter((x) => x !== m), status }
+  }
+  if (action.kind === 'start' || action.kind === 'stop') {
+    const m = find(action.name)
+    if (!m) throw refuse('NotFound', `no machine named ${action.name}`)
+    if (action.kind === 'stop' && m.sandboxes.length) throw Object.assign(refuse('InUse', `machine ${m.name} runs Sandboxes ${m.sandboxes.join(', ')}; close them first`), { detail: { related: m.sandboxes.map((name) => ({ kind: 'sandbox', name })) } })
+    if (m.platform !== 'native') m.state = action.kind === 'start' ? 'running' : 'stopped'
+    return { ...v, machines, status: { ...v.status, [m.name]: { ...(v.status[m.name] ?? { name: m.name, freeDisk: null, toolVersion: null }), state: m.state, down: action.kind === 'stop' ? 'the machine is stopped' : null } } }
   }
   if (action.kind === 'move') {
     const from = machines.find((m) => m.stores.includes(action.store))
