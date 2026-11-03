@@ -6,7 +6,7 @@
 // harness takes ?page=compute&case=<id>. The page's actions work on a copy in
 // memory (simulate below), refused as LayerFS would refuse them.
 
-import { BUILT_IN, DEFAULT_SANDBOX_IMAGE, GIB, type Os } from '@/data/compute'
+import { BUILT_IN, GIB, type Os } from '@/data/compute'
 import type { MachineInfo, MachineLive, MachinePlatformInfo, MachineSandbox, MachinesView, MachineStore, NewMachine, PlatformOption } from '@shared/host-api'
 
 export type SimId = 'mac-fresh' | 'mac-mixed' | 'mac-nested' | 'mac-busy' | 'windows' | 'older'
@@ -19,7 +19,8 @@ export interface Simulation {
   view: MachinesView
 }
 
-const IMAGE = DEFAULT_SANDBOX_IMAGE.digest
+// the sample machines' image: a made-up digest (a real machine reports the bundle's)
+const IMAGE = 'sha256:5a3b1e0c9d7f2468ace13579bdf02468ace13579bdf02468ace13579bdf0246'
 const LAYERFS = '2.0.0'
 
 type Available = Extract<MachinesView, { available: true }>

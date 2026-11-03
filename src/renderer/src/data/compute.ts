@@ -49,7 +49,6 @@ export const KIND_BLURB: Record<Exclude<MachinePlatform, 'native' | 'docker'>, s
 /** LayerFS's defaults for a new VM (2.0's machine/record.rs). */
 export const VM_DEFAULTS = { cpus: 2, memory: 4 * GIB, disk: 20 * GIB } as const
 /** The default Sandbox image (owner decision O36): LayerFS's runtime image, sealed into the bundle. */
-export const DEFAULT_SANDBOX_IMAGE = { label: 'layerfs runtime', tag: 'layerfs-352-runtime:node24-https-apt-20261024', digest: 'sha256:afa1ef9c27294f9c7298820c06483e6fb1ddafc43a7cc7d6dec8cd2e67abf38e' }
 export const SSH_DEFAULTS = { port: 22, root: '/layerfs/data', user: 'root' } as const
 
 /** Native and Docker first, then the rest by name. */

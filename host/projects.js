@@ -347,7 +347,9 @@ export class Projects {
   /**
    * A new Sandbox of the project: `{ name, machine?, image? }`. A sqlite
    * project's Sandboxes run on its Store's machine (another is Unsupported);
-   * a PostgreSQL project's on `native` or `docker`, `machine` naming which.
+   * a PostgreSQL project's on any machine whose `supports.postgresql_sandbox`
+   * is true, `machine` naming it (native when none is named); sandbox.create
+   * refuses another with the reason.
    */
   async createSandbox(key, body = {}) {
     const record = await this.record(key)

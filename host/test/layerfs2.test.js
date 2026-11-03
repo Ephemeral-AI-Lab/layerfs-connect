@@ -281,3 +281,12 @@ test('a chat mounts its own Branch as a named Workspace', async () => {
   assert.equal(workspaceName('chat-AbC_1'), 'chat-abc_1')
   assert.equal(workspaceName('chat-' + 'x'.repeat(80)).length, 63)
 })
+
+test('a PostgreSQL project’s Sandbox goes on the machine named, not only native or docker (#537 §8.6)', async () => {
+  const lfs = fake()
+  lfs.project.get = async () => ({ project: 'pg/app', store: 'pg', name: 'app', kind: 'postgresql', machine: null })
+  const p = new Projects({ spec: spec(), client: lfs, log: () => {} })
+  await p.createSandbox('pg/app', { name: 'sb', machine: 'lima1' })
+  await p.createSandbox('pg/app', { name: 'sb2' })
+  assert.deepEqual(lfs.calls.filter((c) => c[0] === 'sandbox.create').map((c) => c[3]), ['lima1', 'native'])
+})

@@ -176,7 +176,7 @@ export function NewDialog({ open, onOpenChange, view, onChanged, initial = 'empt
             </>
           ) : (
             <>
-              <p className="px-2 pb-4 text-[13px] leading-relaxed text-muted-foreground">{t('A database as a Store. It never moves; its projects’ Sandboxes run on native or docker.')}</p>
+              <p className="px-2 pb-4 text-[13px] leading-relaxed text-muted-foreground">{t('A database as a Store. It never moves; its projects’ Sandboxes run on any machine that supports PostgreSQL Sandboxes.')}</p>
               <RailItem active icon={<Database />} onClick={() => setPane({ kind: 'postgresql' })}>{t('Connect a database')}</RailItem>
             </>
           )}

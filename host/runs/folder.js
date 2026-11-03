@@ -31,8 +31,8 @@ export function projectRecord(spec, key) {
 
 /**
  * The machine a project's Sandboxes run on: a sqlite project's Store's
- * machine (another is Unsupported), or `machine` (native or docker) for a
- * PostgreSQL project.
+ * machine (another is Unsupported), or `machine` for a PostgreSQL project
+ * (any machine whose `supports.postgresql_sandbox` is true; native by default).
  */
 export const sandboxMachine = (record, machine = null) => (record.kind === 'postgresql' ? (machine ?? 'native') : record.machine)
 
@@ -86,7 +86,7 @@ function packed(folder) {
  * @param {string} o.project     the project key
  * @param {string} o.scopeDir    where the run's scope state goes
  * @param {(phase: string) => void} [o.phase]
- * @param {string | null} [o.machine] a PostgreSQL project's Sandboxes' machine (native or docker); a sqlite project's run on its Store's
+ * @param {string | null} [o.machine] a PostgreSQL project's Sandboxes' machine (any that supports them); a sqlite project's run on its Store's
  * @returns {Promise<{ run: string, scope: Scope }>}
  */
 export async function setupFolder(spec, { scenarioId, fixture, project, scopeDir, phase = () => {}, machine = null }) {

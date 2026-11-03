@@ -2,8 +2,8 @@
 // grouped by the machine that holds them, PostgreSQL Stores, buckets with
 // their backups, and the moves, backups and restores this host started.
 // Every Store row shows its projects, size, state (idle, in use, moving,
-// down) and backup chips; its menu moves it, backs it up, adds a project
-// (native only) or removes it. The view is read again on the host's
+// down) and backup chips; its menu pushes, pulls or moves it, backs it up,
+// adds a project (into a Store on any machine) or removes it. The view is read again on the host's
 // `storage` events; jobs move on `storage-job` events.
 import { Archive, ArrowRightLeft, ChevronDown, Database, Ellipsis, FolderPlus, HardDrive, HardDriveDownload, HardDriveUpload, ListRestart, Plus, Power, RotateCw, Trash2, TriangleAlert, Unplug } from 'lucide-react'
 import { type CSSProperties, useEffect, useState } from 'react'
@@ -207,9 +207,9 @@ export function StoragePage({ catalog, onOpenProject, onAddProject }: StoragePag
                           <DropdownMenuItem onSelect={() => setDialog({ kind: 'backup', store: s })} disabled={s.state === 'down' || s.state === 'busy'}>
                             <Archive /> {t('Back up to…')}
                           </DropdownMenuItem>
-                          {/* project.init goes only into a Store on native (§9 Q9) */}
-                          <DropdownMenuItem onSelect={() => onAddProject?.(s.name)} disabled={s.machine !== 'native' || !onAddProject}>
-                            <FolderPlus /> {t(s.machine === 'native' ? 'Add project' : 'Add project (native only)')}
+                          {/* project.init goes into a Store on any machine (#537 §8.6) */}
+                          <DropdownMenuItem onSelect={() => onAddProject?.(s.name)} disabled={s.state === 'down' || s.state === 'busy' || !onAddProject}>
+                            <FolderPlus /> {t('Add project')}
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem variant="destructive" onSelect={() => setRemoving(s)}>

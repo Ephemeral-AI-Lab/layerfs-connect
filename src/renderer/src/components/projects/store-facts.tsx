@@ -62,9 +62,14 @@ export function useStorageView(): StorageView | null | undefined {
   return useSyncExternalStore(subscribe, () => view)
 }
 
-/** The Stores a new project can go into: sqlite Stores on native and PostgreSQL Stores (project.init goes nowhere else), or null before the view. */
+/**
+ * The Stores a new project can go into: every Store, sqlite on any machine
+ * and PostgreSQL (#537 §8.6). project.init reads the folder on this Mac and
+ * writes through the Store's machine (a VM's worker); a Store that is down or
+ * busy refuses it in LayerFS's words. Null before the view.
+ */
 export function initStores(storage: StorageView | null | undefined): StoreRow[] | null {
-  return storage ? storage.stores.filter((store) => store.kind === 'postgresql' || store.machine === 'native') : null
+  return storage ? storage.stores : null
 }
 
 /** Whether a summary is the project with this key. */

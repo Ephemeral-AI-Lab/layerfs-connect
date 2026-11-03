@@ -17,7 +17,6 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import {
-  DEFAULT_SANDBOX_IMAGE,
   emptySsh,
   freeMachineName,
   emptyVm,
@@ -213,7 +212,7 @@ function VmMachineForm({ kind, machines, platforms, act, onDone, onCancel }: { k
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="default">
-                {t('layerfs runtime')} <span className="font-mono text-[11px] text-muted-foreground">{DEFAULT_SANDBOX_IMAGE.digest.slice(0, 19)}…</span>
+                {t('The bundle’s image')}
               </SelectItem>
               <SelectItem value={ARCHIVE}>{t('Choose an archive…')}</SelectItem>
             </SelectContent>

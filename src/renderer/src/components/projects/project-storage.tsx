@@ -15,7 +15,8 @@ import { host } from '@/host/client'
 import { CountUp, spotlight } from '@/components/motion'
 import { SandboxTiles } from '@/components/projects/sandbox-tiles'
 import { useProjectSandboxes } from '@/components/projects/use-sandboxes'
-import type { StoreFacts } from '@/components/projects/store-facts'
+import { type StoreFacts, useStorageView } from '@/components/projects/store-facts'
+import { Refusal } from '@/components/refusal'
 import { CommitBars, CommitKinds, CountBytes, DiskFlow, GrowthChart, SavedRing, times, useLanded } from '@/components/projects/store-visuals'
 import { plural } from '@/data/format'
 import { GapLine } from '@/components/gap-line'
@@ -244,7 +245,8 @@ export function ProjectStorageContent({ state, store }: { state: ProjectState; s
 /**
  * New Sandbox: a name unique in the home, prefilled, and an image. A sqlite
  * project's Sandboxes run on its Store's machine (shown, fixed); a
- * PostgreSQL project chooses native or docker.
+ * PostgreSQL project chooses any machine whose `supports.postgresql_sandbox`
+ * is true (#537 §8.6); the others are listed disabled with LayerFS's reason.
  */
 function NewSandbox({ project, state, taken, onMade }: { project: string; state: ProjectState; taken: string[]; onMade: () => void }) {
   const { t } = useI18n()
@@ -258,8 +260,11 @@ function NewSandbox({ project, state, taken, onMade }: { project: string; state:
   const [image, setImage] = useState('')
   const [machine, setMachine] = useState('native')
   const [busy, setBusy] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [error, setError] = useState<unknown>(null)
   const postgresql = p.kind === 'postgresql'
+  const machines = useStorageView()?.machines ?? []
+  const pgReason = (m: (typeof machines)[number]) => (m.supports?.postgresql_sandbox ? null : (m.supports?.reason ?? tr('This machine does not run PostgreSQL Sandboxes')))
+  const chosen = machines.find((m) => m.name === machine)
   const make = async () => {
     setBusy(true)
     setError(null)
@@ -268,7 +273,7 @@ function NewSandbox({ project, state, taken, onMade }: { project: string; state:
       setOpen(false)
       onMade()
     } catch (e) {
-      setError((e as Error).message)
+      setError(e)
     } finally {
       setBusy(false)
     }
@@ -282,14 +287,16 @@ function NewSandbox({ project, state, taken, onMade }: { project: string; state:
     <label className="flex flex-col gap-1 text-[11px] text-muted-foreground">{t('Machine')}
       {postgresql ? (
         <select value={machine} onChange={(e) => setMachine(e.target.value)} className="h-8 rounded-xl border bg-background px-2 text-xs">
-          <option value="native">native</option>
-          <option value="docker">docker</option>
+          {(machines.length ? machines : [{ name: 'native', platform: 'native', state: null, supports: null }]).map((m) => {
+            const why = machines.length ? pgReason(m) : null
+            return <option key={m.name} value={m.name} disabled={!!why} title={why ?? undefined}>{why ? `${m.name} — ${why}` : m.name}</option>
+          })}
         </select>
       ) : <span className="flex h-8 items-center rounded-xl bg-muted/40 px-2.5 font-mono text-xs" title={t('A sqlite project’s Sandboxes run on its Store’s machine')}>{p.machine ?? '?'}</span>}
     </label>
-    <Button type="submit" size="sm" className="h-8 rounded-xl" disabled={busy || !name.trim()}>{busy && <LoaderCircle className="size-3.5 animate-spin" />}{t('Create')}</Button>
+    <Button type="submit" size="sm" className="h-8 rounded-xl" disabled={busy || !name.trim() || (postgresql && !!chosen && !!pgReason(chosen))}>{busy && <LoaderCircle className="size-3.5 animate-spin" />}{t('Create')}</Button>
     <Button type="button" size="sm" variant="ghost" className="h-8 rounded-xl" onClick={() => setOpen(false)} disabled={busy}>{t('Cancel')}</Button>
-    {error && <p role="alert" className="w-full text-xs text-destructive">{error}</p>}
+    {error != null && <Refusal error={error} className="w-full text-destructive" />}
   </form>
 }
 

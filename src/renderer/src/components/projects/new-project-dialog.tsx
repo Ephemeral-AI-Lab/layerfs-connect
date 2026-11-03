@@ -1,9 +1,10 @@
 // New project (LayerFS 2.0): Init (POST /api/projects) of a folder or an
-// empty source into an existing Store: a sqlite Store on native, or a
-// PostgreSQL Store (project.init goes nowhere else and never makes a Store),
-// or a new sqlite Store made first on native. Init's progress comes from the
-// host's job table. Once the project is there, the Store can be moved to
-// another machine: the whole Store moves, every project in it.
+// empty source into an existing Store: a sqlite Store on any machine (Init
+// reads the folder on this Mac and writes through the Store's machine, a VM's
+// worker), a PostgreSQL Store, or a new sqlite Store made first on native
+// (project.init never makes a Store). Init's progress comes from the host's
+// job table. A project made on native can then have its Store pushed to
+// another machine: the whole Store goes, every project in it.
 import { t, useI18n, getLocale } from '@/i18n'
 import { Database, FilePlus2, FolderOpen, FolderPlus, HardDriveUpload, LoaderCircle, RefreshCw } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
@@ -69,7 +70,7 @@ export function NewProjectDialog({ open, onOpenChange, onCreated, initialFolder 
   const submitting = useRef(false)
   const chooser = useRef(false)
   const storage = useStorageView()
-  /** The Stores Init can go into (sqlite on native, PostgreSQL); undefined while read, null without a view. */
+  /** The Stores Init can go into (any sqlite Store, PostgreSQL); undefined while read, null without a view. */
   const stores = storage === undefined ? undefined : initStores(storage)
   /** The project made, while the optional "Move Store to…" step shows. */
   const [made, setMade] = useState<ProjectSummary | null>(null)
@@ -118,8 +119,8 @@ export function NewProjectDialog({ open, onOpenChange, onCreated, initialFolder 
     setJob(next)
     if (next.step === 'done' && next.project) {
       callbacks.current.onCreated(next.project)
-      // a sqlite Store can move on to another machine now; with none but native, there is nowhere to go
-      if (next.project.kind === 'sqlite' && (storage?.machines.length ?? 0) > 1) setMade(next.project)
+      // a sqlite Store on native can be pushed to another machine now; with none but native, there is nowhere to go
+      if (next.project.kind === 'sqlite' && next.project.machine === 'native' && (storage?.machines.length ?? 0) > 1) setMade(next.project)
       else callbacks.current.onOpenChange(false)
     }
   }
@@ -292,7 +293,7 @@ export function NewProjectDialog({ open, onOpenChange, onCreated, initialFolder 
                   <Select value={moveTo || undefined} onValueChange={setMoveTo}>
                     <SelectTrigger type="button" className="h-9 flex-1 rounded-xl text-xs"><SelectValue placeholder={t("Keep it on native")} /></SelectTrigger>
                     <SelectContent>
-                      {(storage?.machines ?? []).filter((m) => m.name !== 'native').map((m) => <SelectItem key={m.name} value={m.name}>{m.name} ({m.platform})</SelectItem>)}
+                      {(storage?.machines ?? []).filter((m) => m.name !== 'native' && m.supports?.sqlite !== false).map((m) => <SelectItem key={m.name} value={m.name}>{m.name} ({m.platform})</SelectItem>)}
                     </SelectContent>
                   </Select>
                   <Button type="button" size="sm" className="h-9 rounded-xl" disabled={!moveTo || moving} onClick={() => void moveStore()}>{moving ? <LoaderCircle className="size-3.5 animate-spin" /> : <HardDriveUpload className="size-3.5" />}{t("Push Store")}</Button>
@@ -336,7 +337,7 @@ interface StoreFieldProps {
   onNewStore: (value: string) => void
 }
 
-/** Where the project goes: a sqlite Store on native or a PostgreSQL Store (its mark, projects and size), or a new sqlite Store named here. */
+/** Where the project goes: a sqlite Store on any machine or a PostgreSQL Store (its mark, projects and size), or a new sqlite Store named here. */
 function StoreField({ stores, value, chosen, newStore, problem, onChange, onNewStore }: StoreFieldProps) {
   useI18n()
   const making = value === NEW_STORE
@@ -397,8 +398,8 @@ function StoreField({ stores, value, chosen, newStore, problem, onChange, onNewS
       ) : chosen ? (
         <p className="text-[11px] leading-relaxed text-muted-foreground">
           {chosen.kind === 'postgresql'
-            ? t("It goes into the database {store}; its Sandboxes run on native or docker.", { store: chosen.name })
-            : t("It shares {store}’s file: a move or backup carries every project in it.", { store: chosen.name })}
+            ? t("It goes into the database {store}; its Sandboxes run on any machine that supports PostgreSQL Sandboxes.", { store: chosen.name })
+            : t("It shares {store}’s file on {machine}: a push, pull or backup carries every project in it.", { store: chosen.name, machine: chosen.machine ?? '?' })}
         </p>
       ) : null}
     </div>
