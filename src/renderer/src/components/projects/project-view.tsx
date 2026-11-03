@@ -155,7 +155,11 @@ export function ProjectView({ project, initialTab, initialBranch, onBack, backLa
     }} />
   ) : (
     <div className="flex min-h-0 flex-1 flex-col">
-      {tab === 'files' ? (
+      {tab === 'files' && s.project.storeState === 'down' ? (
+        <p className="px-1 py-6 text-center text-sm text-muted-foreground">
+          {t('{machine} is stopped. Start it to browse this Store’s files.', { machine: s.project.machine ?? t('Its machine') })}
+        </p>
+      ) : tab === 'files' ? (
         <FilesTab key={`${project}:${branch ?? ''}`} project={project} branches={s.branches} tick={revision} initialBranch={branch} />
       ) : (
         <HistoryTab key={project} project={project} state={s} initialBranch={branch} initialView={initialView} />

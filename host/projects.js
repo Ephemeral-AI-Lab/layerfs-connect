@@ -276,24 +276,28 @@ export class Projects {
   /**
    * ProjectState from the Store alone: its Branches, their Commits, its
    * Sandbox records and the Store file's size. No Sandbox is asked. While its
-   * Store is busy (a push or pull), unresolved or down, Store calls are
-   * refused (Busy, Unresolved, Unavailable): the page then gets what the
+   * Store is busy (a push or pull) or unresolved, Store calls are refused
+   * (Busy, Unresolved); while it is down none is made (U3): the page then gets what the
    * home's records say (project.get, sandbox.list, store.status), the
    * Store's state and op, and the refusal in `refusal`, with no Branches.
    */
   async state(key) {
     const record = await this.record(key)
     const project = keyOf(record)
-    const [listed, sandboxes, status] = await Promise.all([
-      pages((p) => this.lfs.branch.list(project, p)).catch((error) => {
-        if (STORE_REFUSALS.has(error?.code)) return { refused: refusalOf(error) }
-        throw error
-      }),
+    // store.status first: on a stopped machine no Store call is made (U3); the banner offers Start
+    const status = await this.lfs.store.status(record.store).catch(() => null)
+    const down = status?.state === 'down'
+    const [listed, sandboxes] = await Promise.all([
+      down
+        ? { refused: null }
+        : pages((p) => this.lfs.branch.list(project, p)).catch((error) => {
+            if (STORE_REFUSALS.has(error?.code)) return { refused: refusalOf(error) }
+            throw error
+          }),
       pages((p) => this.lfs.sandbox.list(project, p)).catch((error) => (this.log(`[host] sandbox.list of ${project}: ${error?.message ?? error}`), [])),
-      this.lfs.store.status(record.store).catch(() => null),
     ])
     const storeFacts = { storeState: status?.state ?? null, storeOp: opOf(status?.op), storeDown: status?.down_reason ?? null }
-    if (listed.refused) {
+    if (!Array.isArray(listed)) {
       return {
         project: { ...this.summary(record, this.madeBy()), ...storeFacts, refusal: listed.refused },
         branches: [],

@@ -346,3 +346,14 @@ test('Compute’s Sandboxes carry their Workspace count from sandbox.get, which 
   const view = await new Machines({ spec: spec(), client: lfs, calls: [] }).view()
   assert.deepEqual(view.sandboxes.map((b) => [b.name, b.workspaces]), [['a1', 1], ['a2', null]])
 })
+
+test('a down Store: the project page makes no Store call, and gets the down reason (U3)', async () => {
+  const lfs = fake()
+  let branchCalls = 0
+  lfs.branch.list = async () => (branchCalls++, { items: [], next_page_pos: null })
+  lfs.store.status = async () => ({ state: 'down', down_reason: 'machine lima1 is not running', holders: [], op: null, file: null })
+  const st = await new Projects({ spec: spec(), client: lfs, log: () => {} }).state('s1/app')
+  assert.equal(branchCalls, 0)
+  assert.deepEqual([st.project.storeState, st.project.storeDown, st.project.refusal], ['down', 'machine lima1 is not running', null])
+  assert.deepEqual(st.branches, [])
+})

@@ -205,4 +205,6 @@ export const layerfs2Zh: Record<string, string> = {
   "{sandboxes} recorded · {workspaces} mounted": "已记录 {sandboxes} 个 · 已挂载 {workspaces} 个",
   "{store}’s actions": "{store} 的操作",
   "Unmount": "卸载",
+  "{machine} is stopped. Start it to browse this Store’s files.": "{machine} 已停止。启动它后才能浏览此存储的文件。",
+  "Its machine": "它的机器",
 }
