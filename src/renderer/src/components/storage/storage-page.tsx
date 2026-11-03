@@ -5,7 +5,7 @@
 // down) and backup chips; its menu moves it, backs it up, adds a project
 // (native only) or removes it. The view is read again on the host's
 // `storage` events; jobs move on `storage-job` events.
-import { Archive, ChevronDown, Database, Ellipsis, FolderPlus, HardDrive, HardDriveDownload, ListRestart, MoveRight, Plus, RotateCw, Trash2, TriangleAlert, Unplug } from 'lucide-react'
+import { Archive, ArrowRightLeft, ChevronDown, Database, Ellipsis, FolderPlus, HardDrive, HardDriveDownload, HardDriveUpload, ListRestart, Plus, RotateCw, Trash2, TriangleAlert, Unplug } from 'lucide-react'
 import { type CSSProperties, useEffect, useState } from 'react'
 
 import { GapLine } from '@/components/gap-line'
@@ -68,6 +68,12 @@ export function StoragePage({ catalog, onOpenProject, onAddProject }: StoragePag
   const [dropping, setDropping] = useState<{ kind: 'postgresql' | 'bucket'; name: string } | null>(null)
   const [listing, setListing] = useState<string | null>(null)
   const [newOpen, setNewOpen] = useState<null | 'empty' | 'add' | 'postgresql'>(null)
+  const [failed, setFailed] = useState<string | null>(null)
+  /** A menu action that answers at once (a pull starts a job): its refusal shows on the page. */
+  const act = (work: () => Promise<unknown>) => {
+    setFailed(null)
+    work().then(reload, (e: unknown) => setFailed(e instanceof Error ? e.message : String(e)))
+  }
   useEffect(() => onProjectsChanged(reload), [])
   useEffect(
     () =>
@@ -140,6 +146,11 @@ export function StoragePage({ catalog, onOpenProject, onAddProject }: StoragePag
         ) : (
           <>
             <GapLine what="Store totals (dedupe, compression, what Init stored)" />
+            {failed && (
+              <Notice tone="danger" icon={TriangleAlert} title={t('Refused')} actions={<Button size="sm" variant="ghost" className="h-7 rounded-xl px-2 text-xs" onClick={() => setFailed(null)}>{t('Dismiss')}</Button>}>
+                {failed}
+              </Notice>
+            )}
             {allJobs.length > 0 && (
               <section className="flex flex-col gap-2" aria-label={t('Jobs')}>
                 {allJobs.slice(0, 8).map((j) => (
@@ -150,7 +161,7 @@ export function StoragePage({ catalog, onOpenProject, onAddProject }: StoragePag
 
             {view.stores.length === 0 && (
               <Empty icon={HardDrive} title={t('No Stores yet')} className="glass-liquid rounded-2xl border-solid">
-                {t('A Store holds projects and all their history. Make one on native, add projects to it, then move it to any machine.')}
+                {t('Create a Store on native, add projects, push it to any machine.')}
               </Empty>
             )}
 
@@ -171,10 +182,21 @@ export function StoragePage({ catalog, onOpenProject, onAddProject }: StoragePag
                       onOpenProject={onOpenProject}
                       menu={
                         <>
-                          <DropdownMenuItem onSelect={() => setDialog({ kind: 'move', store: s })} disabled={s.state !== 'idle'}>
-                            <MoveRight /> {t('Move to…')}
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onSelect={() => setDialog({ kind: 'backup', store: s })} disabled={s.state === 'down' || s.state === 'moving'}>
+                          {s.machine === 'native' ? (
+                            <DropdownMenuItem onSelect={() => setDialog({ kind: 'push', store: s })} disabled={s.state !== 'idle'}>
+                              <HardDriveUpload /> {t('Push to…')}
+                            </DropdownMenuItem>
+                          ) : (
+                            <>
+                              <DropdownMenuItem onSelect={() => act(() => host.pullStore(s.name))} disabled={s.state === 'busy'}>
+                                <HardDriveDownload /> {t('Pull to native')}
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onSelect={() => setDialog({ kind: 'move', store: s })} disabled={s.state === 'busy'}>
+                                <ArrowRightLeft /> {t('Move to another machine…')}
+                              </DropdownMenuItem>
+                            </>
+                          )}
+                          <DropdownMenuItem onSelect={() => setDialog({ kind: 'backup', store: s })} disabled={s.state === 'down' || s.state === 'busy'}>
                             <Archive /> {t('Back up to…')}
                           </DropdownMenuItem>
                           {/* project.init goes only into a Store on native (§9 Q9) */}
@@ -411,6 +433,7 @@ const KIND = { push: 'Push', pull: 'Pull', move: 'Move', backup: 'Backup', resto
 /** A job this host started: its phase, done/total where the call gives it, and how it ended. */
 function JobRow({ job: j }: { job: StorageJob }) {
   useI18n()
+  const [again, setAgain] = useState<string | null>(null)
   const running = !j.ended
   const share = j.total ? Math.min(1, (j.done ?? 0) / j.total) : null
   return (
@@ -420,9 +443,12 @@ function JobRow({ job: j }: { job: StorageJob }) {
           {t(KIND[j.kind])}
         </Chip>
         <span className="font-mono">
-          {j.store} {j.kind === 'restore' ? '←' : '→'} {j.target}
+          {j.store} {j.kind === 'restore' || j.kind === 'pull' ? '←' : '→'} {j.target}
           {j.file ? `/${j.file}` : ''}
         </span>
+        {j.kind === 'move' && j.half && (
+          <span className="text-muted-foreground">{t(j.half === 'pull' ? '1 of 2: pull to native' : '2 of 2: push to {machine}', { machine: j.target })}</span>
+        )}
         <span className="text-muted-foreground">{j.error ? t('failed in {phase}', { phase: j.error.phase ?? t('an unknown phase') }) : running ? (j.phase ?? t('starting')) : t('done {when}', { when: ago(j.ended) })}</span>
         {share !== null && running && (
           <span className="ml-auto tabular-nums text-muted-foreground">
@@ -434,7 +460,15 @@ function JobRow({ job: j }: { job: StorageJob }) {
       {j.error && (
         <p className="text-destructive">
           {j.error.code}: {j.error.message}
-          {j.error.code === 'Unknown' && ` ${t('Both copies were kept; read the Store’s state again before trying again.')}`}
+        </p>
+      )}
+      {j.error?.note === 'pulled' && (
+        <p className="flex flex-wrap items-center gap-2 text-muted-foreground">
+          {t('The pull finished: {store} is on native now.', { store: j.store })}
+          <Button size="sm" variant="outline" className="h-6 rounded-lg px-2 text-[11px]" disabled={again !== null} onClick={() => { setAgain('…'); host.pushStore(j.store, j.target).then(() => setAgain(null), (e: unknown) => setAgain(e instanceof Error ? e.message : String(e))) }}>
+            <HardDriveUpload className="size-3" /> {t('Push to {machine} again', { machine: j.target })}
+          </Button>
+          {again && again !== '…' && <span className="text-destructive">{again}</span>}
         </p>
       )}
     </div>

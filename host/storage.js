@@ -1,6 +1,6 @@
 // Storage on LayerFS 2.0 (docs/layerfs-2.0-integration.md §8 step 5): the
 // home's Stores by machine, PostgreSQL Stores, buckets and their backups, and
-// the moves, backups and restores this host started.
+// the pushes, pulls, backups and restores this host started.
 //   view              StorageView: store.list, store.status per Store (it
 //                     starts no machine: a Store on a stopped one is `down`),
 //                     machine.list for the groups, the buckets and their last
@@ -14,7 +14,14 @@
 //                     reference (env:LAYERFS_… or file:/absolute/path)
 //   disconnectBucket  backup.disconnect(name): every Store's link to it goes
 //   listBucket        backup.list(bucket): one call per bucket, its seven states
-//   move              store.move(store, machine, { on_progress }) as a job
+//   push              store.push(store, machine, { on_progress }) as a job: a
+//                     sqlite Store on native to a machine
+//   pull              store.pull(store, { on_progress }) as a job: back to native
+//   move              between two machines: pull, then push, as one job with
+//                     two halves (#537 U5); a push that fails leaves the Store
+//                     on native and the job says so
+//   place             the one of push, pull or move that puts a Store on a
+//                     machine (Compute's "move a Store here", runs)
 //   backup            backup.create(store, bucket, file?, { on_progress }) as a job
 //   restore           backup.restore(store, bucket, file?, { on_progress }) as a
 //                     job: it installs a new Store on native
@@ -289,10 +296,14 @@ export class Storage extends EventEmitter {
     return { ...job }
   }
 
-  /** Starts one LayerFS call with on_progress as a job; answers the job at once. */
+  /**
+   * Starts LayerFS work with on_progress as a job; answers the job at once.
+   * `run(on_progress, step)` may make more than one call: `step(half)` marks
+   * the half a move is in.
+   */
   start(kind, store, target, file, run) {
     if ([...this.jobs.values()].some((j) => j.store === store && !j.ended)) throw refuse(409, 'Busy', `a job of this host is running on ${store}`)
-    const job = { id: randomUUID(), kind, store, target, file: file ?? null, started: Date.now(), ended: null, phase: null, done: null, total: null, error: null, result: null }
+    const job = { id: randomUUID(), kind, store, target, file: file ?? null, started: Date.now(), ended: null, half: null, phase: null, done: null, total: null, error: null, result: null }
     this.jobs.set(job.id, job)
     while (this.jobs.size > KEEP_JOBS) {
       const oldest = [...this.jobs.values()].find((j) => j.ended)
@@ -302,16 +313,21 @@ export class Storage extends EventEmitter {
     const emit = () => this.emit('event', { type: 'storage-job', job: { ...job } })
     const on_progress = (p) => {
       if (typeof p?.phase === 'string') job.phase = p.phase
+      // push and pull give bytes only while sending (#536 §10b), in 8 MiB steps
       job.done = typeof p?.done === 'number' ? p.done : null
       job.total = typeof p?.total === 'number' && p.total > 0 ? p.total : null
       emit()
     }
-    run(on_progress)
+    const step = (half) => {
+      Object.assign(job, { half, phase: null, done: null, total: null })
+      emit()
+    }
+    run(on_progress, step)
       .then(
         (result) => (job.result = result ?? null),
         (error) => {
-          // a refusal names the phase it stopped in; Unknown means both copies were kept
-          job.error = { code: error?.code ?? 'Failed', message: error?.message ?? String(error), phase: error?.detail?.phase ?? job.phase }
+          // the SDK's refusal as it came: its code and text, the phase it stopped in, and its detail (entity, op, related)
+          job.error = { code: error?.code ?? 'Failed', message: error?.message ?? String(error), phase: error?.detail?.phase ?? job.phase, detail: error?.detail ?? null, ...(error?.note ? { note: error.note } : {}) }
           this.log(`[storage] ${kind} ${store}: ${error?.code ?? ''} ${error?.message ?? error}`)
         },
       )
@@ -319,7 +335,7 @@ export class Storage extends EventEmitter {
         job.ended = Date.now()
         emit()
         // the bucket's listing changed with a backup or restore
-        if (kind !== 'move') void this.listBucket(target).catch(() => {})
+        if (kind === 'backup' || kind === 'restore') void this.listBucket(target).catch(() => {})
         this.changed()
       })
     emit()
@@ -327,11 +343,49 @@ export class Storage extends EventEmitter {
     return { ...job }
   }
 
-  /** store.move(store, machine): an idle sqlite Store to any machine. */
+  /** store.push(store, machine): a sqlite Store on native to `machine`. */
+  push(store, machine) {
+    checkName(store, 'A push')
+    checkName(machine, 'A push')
+    return this.start('push', store, machine, null, (on_progress) => this.lfs.store.push(store, machine, { on_progress }))
+  }
+
+  /** store.pull(store): a sqlite Store on a machine back to native. */
+  pull(store) {
+    checkName(store, 'A pull')
+    return this.start('pull', store, 'native', null, (on_progress) => this.lfs.store.pull(store, { on_progress }))
+  }
+
+  /**
+   * A Store on one machine to another: pull, then push, two operations (U5).
+   * When the push half fails the Store stays on native; the error's `note`
+   * says so (`pulled`).
+   */
   move(store, machine) {
     checkName(store, 'A move')
     checkName(machine, 'A move')
-    return this.start('move', store, machine, null, (on_progress) => this.lfs.store.move(store, machine, { on_progress }))
+    return this.start('move', store, machine, null, async (on_progress, step) => {
+      step('pull')
+      await this.lfs.store.pull(store, { on_progress })
+      step('push')
+      try {
+        return await this.lfs.store.push(store, machine, { on_progress })
+      } catch (error) {
+        throw Object.assign(error, { note: 'pulled' })
+      }
+    })
+  }
+
+  /** Puts sqlite Store `store` on `machine`: a push from native, a pull to native, else a move. */
+  async place(store, machine) {
+    checkName(store, 'A Store')
+    checkName(machine, 'A machine')
+    const record = await this.lfs.store.get(store)
+    if (record.kind && record.kind !== 'sqlite') throw refuse(400, 'InvalidInput', `${store} is a PostgreSQL Store: it is usable from every machine and is never pushed or pulled`)
+    if (record.machine === machine) throw refuse(400, 'InvalidInput', `${store} is on ${machine} already`)
+    if (machine === 'native') return this.pull(store)
+    if (record.machine === 'native') return this.push(store, machine)
+    return this.move(store, machine)
   }
 
   /** backup.create(store, bucket, file?). */

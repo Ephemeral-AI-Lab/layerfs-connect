@@ -70,15 +70,15 @@ export const statusOf = (s) => ({ name: String(s.name), state: text(s.state), fr
  * @param {object} [options.client] a LayerFS client (tests pass a stand-in)
  * @param {object[]} [options.calls] the call table (tests pass a stand-in)
  * @param {() => string | null} [options.version] the linked LayerFS's version
- * @param {(store: string, machine: string) => Promise<object>} [options.move] starts a Store move in the host's job table (storage.js)
+ * @param {(store: string, machine: string) => Promise<object>} [options.place] puts a Store on a machine as a job in the host's table (storage.js place: push, pull, or pull then push)
  */
 export class Machines {
-  constructor({ spec, client = null, calls = table, version = linkedVersion, move = null }) {
+  constructor({ spec, client = null, calls = table, version = linkedVersion, place = null }) {
     this.spec = spec
     this.lfs = client ?? layerfs(spec)
     this.table = calls
     this.version = version
-    this.move = move
+    this.place = place
   }
 
   /** Whether the linked call `family.call` takes option `name`. */
@@ -139,10 +139,11 @@ export class Machines {
     return lfs.machine.update(name, pick(body ?? {}, ['cpus', 'memory', 'image', 'docker', 'wsl']))
   }
 
-  /** Moves a sqlite Store to `machine`: a job in the host's table when it has one (its progress shows on Storage). */
+  /** Puts a sqlite Store on `machine`: a job in the host's table (its progress shows on Storage). */
   async moveStore(store, machine) {
-    if (!store || !machine) throw refuse('InvalidInput', 'a move needs a Store and a machine')
-    return this.move ? this.move(store, machine) : this.lfs.store.move(store, machine)
+    if (!store || !machine) throw refuse('InvalidInput', 'name the Store and the machine')
+    if (!this.place) throw refuse('Unsupported', 'this host has no Storage job table to push or pull with')
+    return this.place(store, machine)
   }
 }
 

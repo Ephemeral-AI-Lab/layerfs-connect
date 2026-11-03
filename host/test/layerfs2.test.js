@@ -33,7 +33,9 @@ function fake() {
       list: rec('store.list', { items: [{ name: 's1', kind: 'sqlite', machine: 'native', projects: ['app'], backups: { b1: { file: 's1', last: { op: 'create', at: 1, bytes: 10 } } } }] }),
       status: rec('store.status', { state: 'idle', holders: [], file: { exists: true, bytes: 100, wal_bytes: 20 } }),
       create: rec('store.create', {}),
-      move: rec('store.move', (store, machine, o) => (o.on_progress({ phase: 'send', done: 5, total: 10 }), { store, to: machine })),
+      get: rec('store.get', (name) => ({ name, kind: 'sqlite', machine: name === 'far' ? 'lima1' : 'native' })),
+      push: rec('store.push', (store, machine, o) => (o.on_progress({ phase: 'send', done: 5, total: 10 }), { store, machine })),
+      pull: rec('store.pull', (store, o) => (o.on_progress({ phase: 'send', done: 3, total: 4 }), { store, machine: 'native' })),
       connect: rec('store.connect', {}),
     },
     backup: { connect: rec('backup.connect', {}), list: rec('backup.list', { items: [{ bucket: 'b1', file: 's1', store: 's1', state: 'store_changed', bytes: 10 }] }) },
@@ -96,17 +98,54 @@ test('storage: references only, Stores by machine, and jobs fed by on_progress',
   assert.deepEqual(view.buckets.map((b) => b.name), ['b1', 'b2'])
   await st.listBucket('b1')
   assert.equal((await st.view()).buckets[0].files[0].state, 'store_changed')
-  const job = st.move('s1', 'lima1')
-  assert.equal(job.kind, 'move')
+  const job = st.push('s1', 'lima1')
+  assert.equal(job.kind, 'push')
   await new Promise((r) => setTimeout(r, 10))
   const done = st.job(job.id)
-  assert.deepEqual([done.phase, done.done, done.total, !!done.ended], ['send', 5, 10, true])
+  assert.deepEqual([done.phase, done.done, done.total, !!done.ended, done.error], ['send', 5, 10, true, null])
   rmSync(s.state, { recursive: true, force: true })
 })
 
-test('machines: Compute’s Move to starts the host’s job', async () => {
+test('storage: a move between machines is a pull, then a push, in one job with two halves (U5)', async () => {
+  const lfs = fake()
+  const s = spec()
+  const st = new Storage({ spec: s, client: lfs, log: () => {} })
+  const halves = []
+  st.on('event', (e) => e.type === 'storage-job' && e.job.half && halves.at(-1) !== e.job.half && halves.push(e.job.half))
+  const job = st.move('far', 'lima2')
+  await new Promise((r) => setTimeout(r, 10))
+  assert.deepEqual(halves, ['pull', 'push'])
+  assert.deepEqual(lfs.calls.filter((c) => c[0] === 'store.pull' || c[0] === 'store.push').map((c) => [c[0], c[1], typeof c[2] === 'string' ? c[2] : null]), [['store.pull', 'far', null], ['store.push', 'far', 'lima2']])
+  assert.equal(st.job(job.id).error, null)
+  // the push half refused: the Store stays on native and the job says so
+  lfs.store.push = async () => { throw Object.assign(new Error('store push, check: machine lima2 is not running; start it with `layerfs machine start lima2`'), { code: 'Unavailable', detail: { phase: 'check' } }) }
+  const failed = st.move('far', 'lima2')
+  await new Promise((r) => setTimeout(r, 10))
+  const error = st.job(failed.id).error
+  assert.deepEqual([error.code, error.phase, error.note], ['Unavailable', 'check', 'pulled'])
+  assert.match(error.message, /layerfs machine start lima2/)
+  rmSync(s.state, { recursive: true, force: true })
+})
+
+test('storage: place picks push from native, pull to native, else a move; PostgreSQL never moves', async () => {
+  const lfs = fake()
+  const s = spec()
+  const st = new Storage({ spec: s, client: lfs, log: () => {} })
+  assert.equal((await st.place('s1', 'lima1')).kind, 'push')
+  await new Promise((r) => setTimeout(r, 5))
+  assert.equal((await st.place('far', 'native')).kind, 'pull')
+  await new Promise((r) => setTimeout(r, 5))
+  assert.equal((await st.place('far', 'lima2')).kind, 'move')
+  await new Promise((r) => setTimeout(r, 5))
+  await assert.rejects(st.place('s1', 'native'), /on native already/)
+  lfs.store.get = async (name) => ({ name, kind: 'postgresql', machine: null })
+  await assert.rejects(st.place('pg', 'lima1'), /never pushed or pulled/)
+  rmSync(s.state, { recursive: true, force: true })
+})
+
+test('machines: Compute’s “put a Store here” starts the host’s job', async () => {
   const moved = []
-  const m = new Machines({ spec: spec(), client: fake(), calls: [], move: (store, machine) => (moved.push([store, machine]), { id: 'j' }) })
+  const m = new Machines({ spec: spec(), client: fake(), calls: [], place: (store, machine) => (moved.push([store, machine]), { id: 'j' }) })
   await m.moveStore('s1', 'lima1')
   assert.deepEqual(moved, [['s1', 'lima1']])
   assert.equal((await m.view()).machines.length, 2)

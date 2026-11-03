@@ -129,7 +129,7 @@ function MachineDetail({ m, view, os, act }: { m: MachineInfo; view: Available; 
         <section aria-label={t('Stores on {machine}', { machine: m.name })} className="min-w-0">
           <h3 className="mb-1.5 text-xs font-medium text-muted-foreground">{t('Stores on it')}</h3>
           {storeRows.length === 0 ? (
-            <p className="text-xs text-faint">{t('No Stores. A Store moves here with Move to…')}</p>
+            <p className="text-xs text-faint">{t('No Stores. Push one here from native.')}</p>
           ) : (
             <ul className="flex flex-col divide-y rounded-xl bg-card/60 ring-1 ring-foreground/8">
               {storeRows.map((s) => (
@@ -142,13 +142,18 @@ function MachineDetail({ m, view, os, act }: { m: MachineInfo; view: Available; 
                   </span>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button size="sm" variant="ghost" className="h-7 shrink-0 rounded-lg px-2 text-xs" disabled={pending !== null || targets.length === 0 || machineState(m, live).key === 'down'} title={machineState(m, live).key === 'down' ? t('A Store moves once its machine answers') : undefined}>
+                      <Button size="sm" variant="ghost" className="h-7 shrink-0 rounded-lg px-2 text-xs" disabled={pending !== null || (m.name === 'native' && targets.length === 0)}>
                         <ArrowRightLeft className="size-3.5" />
-                        {pending === `move:${s.name}` ? t('Moving…') : t('Move to…')}
+                        {pending === `move:${s.name}` ? t('Starting…') : t(m.name === 'native' ? 'Push to…' : 'Pull or move…')}
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuLabel className="text-xs">{t('Move {store} to', { store: s.name })}</DropdownMenuLabel>
+                      {m.name !== 'native' && (
+                        <DropdownMenuItem onSelect={() => void run(`move:${s.name}`, { kind: 'move', store: s.name, machine: 'native' })}>
+                          <span>{t('Pull to native')}</span>
+                        </DropdownMenuItem>
+                      )}
+                      {targets.length > 0 && <DropdownMenuLabel className="text-xs">{t(m.name === 'native' ? 'Push {store} to' : 'Move {store} to (pull, then push)', { store: s.name })}</DropdownMenuLabel>}
                       {targets.map((x) => (
                         <DropdownMenuItem key={x.name} onSelect={() => void run(`move:${s.name}`, { kind: 'move', store: s.name, machine: x.name })}>
                           <KindLabel platform={x.platform} os={os} hideName />

@@ -1,7 +1,7 @@
 // The Storage page's dialogs on LayerFS 2.0: one small form per action. A
 // secret is never typed here: buckets and PostgreSQL Stores take a reference
 // (env:LAYERFS_… or file:/absolute/path) that LayerFS resolves.
-import { Archive, Database, HardDriveDownload, LoaderCircle, type LucideIcon, MoveRight, Plus, Unplug } from 'lucide-react'
+import { Archive, ArrowRightLeft, Database, HardDriveDownload, HardDriveUpload, LoaderCircle, type LucideIcon, Plus, TriangleAlert, Unplug } from 'lucide-react'
 import { useEffect, useId, useState } from 'react'
 
 import { BackLink, BTN, Field, FormError, message, SHEET, SheetFooter, SheetHeader } from '@/components/storage/dialogs/fields'
@@ -11,13 +11,17 @@ import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Notice } from '@/components/storage/notice'
+import { bytes } from '@/data/format'
 import { host } from '@/host/client'
+import { useHostQuery } from '@/host/use-host'
 import { t, useI18n } from '@/i18n'
-import type { StorageView, StoreRow } from '@shared/host-api'
+import type { MachinesView, StorageView, StoreRow } from '@shared/host-api'
 
 /** Which dialog is open, and on what. */
 export type StorageDialog =
   | { kind: 'new-store' }
+  | { kind: 'push'; store: StoreRow }
   | { kind: 'move'; store: StoreRow }
   | { kind: 'backup'; store: StoreRow }
   | { kind: 'postgresql' }
@@ -132,14 +136,9 @@ export function StorageDialogs({ dialog, view, onClose, done }: { dialog: Storag
           <TextField label={t('Name')} value={a} onChange={setA} placeholder="work" autoFocus mono />
         </FormSheet>
       )
-    case 'move': {
-      const machines = (view?.machines ?? []).filter((m) => m.name !== dialog.store.machine)
-      return (
-        <FormSheet open={open} onClose={close} icon={MoveRight} title={t('Move {store} to…', { store: dialog.store.name })} description={t('The whole Store moves, every project in it ({n}). It must be idle: no Sandbox open on it. Its Sandboxes then run on the new machine.', { n: dialog.store.projects.length })} action={t('Move')} valid={!!a} submit={() => after(host.moveStore(dialog.store.name, a))}>
-          <Choice label={t('Machine')} value={a} onChange={setA} options={machines.map((m) => ({ value: m.name, label: `${m.name} (${m.platform})` }))} />
-        </FormSheet>
-      )
-    }
+    case 'push':
+    case 'move':
+      return <PlaceSheet dialog={dialog} onClose={close} done={done} />
     case 'backup': {
       const buckets = (view?.buckets ?? []).map((x) => x.name)
       return (
@@ -167,6 +166,63 @@ export function StorageDialogs({ dialog, view, onClose, done }: { dialog: Storag
         </FormSheet>
       )
   }
+}
+
+/**
+ * Push a Store on native to a machine, or move one between two machines (a
+ * pull, then a push: two operations, U5). The targets are the machines whose
+ * `supports.sqlite` is true; each shows its state and free disk against the
+ * Store's size. What holds the Store (open processes, its projects' Sandbox
+ * records) is listed before it is sent: the push is refused `InUse` while any
+ * remain, its refusal naming them.
+ */
+function PlaceSheet({ dialog, onClose, done }: { dialog: { kind: 'push' | 'move'; store: StoreRow }; onClose: () => void; done: () => void }) {
+  useI18n()
+  const s = dialog.store
+  const machines = useHostQuery(() => host.machines(), [])
+  const [target, setTarget] = useState('')
+  const view: Extract<MachinesView, { available: true }> | null = machines.data?.available ? machines.data : null
+  const targets = (view?.machines ?? []).filter((m) => m.name !== 'native' && m.name !== s.machine && m.supports?.sqlite !== false)
+  const chosen = targets.find((m) => m.name === target)
+  const free = chosen ? (view?.status[chosen.name]?.freeDisk ?? null) : null
+  const size = s.size?.bytes ?? null
+  const sandboxes = (view?.sandboxes ?? []).filter((b) => b.project?.startsWith(`${s.name}/`))
+  const push = dialog.kind === 'push'
+  return (
+    <FormSheet
+      open
+      onClose={onClose}
+      icon={push ? HardDriveUpload : ArrowRightLeft}
+      title={t(push ? 'Push {store} to…' : 'Move {store} to another machine', { store: s.name })}
+      description={
+        push
+          ? t('The whole Store goes, every project in it ({n}); its Sandboxes then run on that machine. Pull brings it back to native.', { n: s.projects.length })
+          : t('A pull to native, then a push to the machine: two operations. If the push fails, the Store stays on native and you can push it again.')
+      }
+      action={t(push ? 'Push' : 'Move')}
+      valid={!!target}
+      submit={() => (push ? host.pushStore(s.name, target) : host.moveStore(s.name, target)).then(done)}
+    >
+      <Choice
+        label={t('Machine')}
+        value={target}
+        onChange={setTarget}
+        options={targets.map((m) => ({ value: m.name, label: `${m.name} (${m.platform}) · ${t(m.state)}` }))}
+        hint={machines.loading && !view ? t('Reading the machines…') : targets.length ? undefined : t('No other machine holds sqlite Stores. Add one on Compute.')}
+      />
+      {chosen && (
+        <p className="text-[11.5px] leading-relaxed text-muted-foreground tabular-nums">
+          {free !== null ? t('{free} free on {machine}; the Store is {size}.', { free: bytes(free), machine: chosen.name, size: size !== null ? bytes(size) : t('of unknown size') }) : t('{machine}’s free disk is not known until it runs.', { machine: chosen.name })}{' '}
+          {chosen.state !== 'running' && t('{machine} is {state}: start it on Compute first; nothing starts it for you.', { machine: chosen.name, state: t(chosen.state) })}
+        </p>
+      )}
+      {(s.holders > 0 || sandboxes.length > 0) && (
+        <Notice tone="warning" icon={TriangleAlert} title={t('Held now: the push is refused while these remain')}>
+          {[s.holders > 0 && t(s.holders === 1 ? '1 process has it open' : '{n} processes have it open', { n: s.holders }), ...sandboxes.map((b) => t('Sandbox {name} ({project})', { name: b.name, project: b.project ?? '' }))].filter(Boolean).join(' · ')}
+        </Notice>
+      )}
+    </FormSheet>
+  )
 }
 
 /** A provider's mark on a lit tile. */

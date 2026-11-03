@@ -174,8 +174,14 @@ export const host = {
   /** A PostgreSQL database as a Store: the URL holds no password; `password` is a reference (env:LAYERFS_… or file:/path). */
   connectPostgresql: (input: { name: string; url: string; password: string; synchronousCommit?: string }) => call<StorageView>('POST', '/api/stores/postgresql', input).then(projectsChanged),
   disconnectStore: (name: string) => call<StorageView>('POST', `/api/stores/${enc(name)}/disconnect`).then(projectsChanged),
-  /** Moves an idle sqlite Store to `machine`: a job. */
+  /** store.push: a sqlite Store on native to `machine`: a job. */
+  pushStore: (store: string, machine: string) => call<StorageJob>('POST', `/api/stores/${enc(store)}/push`, { machine }),
+  /** store.pull: a sqlite Store on a machine back to native: a job. */
+  pullStore: (store: string) => call<StorageJob>('POST', `/api/stores/${enc(store)}/pull`),
+  /** Between two machines: pull, then push, one job with two halves (#537 U5). */
   moveStore: (store: string, machine: string) => call<StorageJob>('POST', `/api/stores/${enc(store)}/move`, { machine }),
+  /** Puts a sqlite Store on `machine`, whichever of push, pull or move that takes: a job. */
+  placeStore: (store: string, machine: string) => call<StorageJob>('POST', `/api/machines/${enc(machine)}/stores`, { store }),
   /** Backs a sqlite Store up to `bucket` (as `file`, default its name): a job. */
   backupStore: (store: string, bucket: string, file?: string) => call<StorageJob>('POST', `/api/stores/${enc(store)}/backup`, { bucket, ...(file ? { file } : {}) }),
   /**

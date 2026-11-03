@@ -5,7 +5,7 @@
 // host's job table. Once the project is there, the Store can be moved to
 // another machine: the whole Store moves, every project in it.
 import { t, useI18n, getLocale } from '@/i18n'
-import { Database, FilePlus2, FolderOpen, FolderPlus, LoaderCircle, MoveRight, RefreshCw } from 'lucide-react'
+import { Database, FilePlus2, FolderOpen, FolderPlus, HardDriveUpload, LoaderCircle, RefreshCw } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import type { ProjectInitJob, ProjectSummary, StoreRow } from '@shared/host-api'
 
@@ -210,7 +210,7 @@ export function NewProjectDialog({ open, onOpenChange, onCreated, initialFolder 
     setMoving(true)
     setError('')
     try {
-      await host.moveStore(made.store, moveTo)
+      await host.pushStore(made.store, moveTo)
       onOpenChange(false)
     } catch (cause) {
       setError((cause as Error).message)
@@ -287,7 +287,7 @@ export function NewProjectDialog({ open, onOpenChange, onCreated, initialFolder 
             {made && (
               <div className="mt-4 space-y-2.5 rounded-2xl border border-foreground/[0.08] bg-background/40 px-3.5 py-3">
                 <p className="text-xs font-medium">{t("{project} is ready on native.", { project: made.key })}</p>
-                <p className="text-[11px] leading-relaxed text-muted-foreground">{t("Move its Store to another machine? The whole Store moves, every project in it, and their Sandboxes then run there.")}</p>
+                <p className="text-[11px] leading-relaxed text-muted-foreground">{t("Push its Store to another machine? The whole Store goes, every project in it, and their Sandboxes then run there.")}</p>
                 <div className="flex gap-2">
                   <Select value={moveTo || undefined} onValueChange={setMoveTo}>
                     <SelectTrigger type="button" className="h-9 flex-1 rounded-xl text-xs"><SelectValue placeholder={t("Keep it on native")} /></SelectTrigger>
@@ -295,7 +295,7 @@ export function NewProjectDialog({ open, onOpenChange, onCreated, initialFolder 
                       {(storage?.machines ?? []).filter((m) => m.name !== 'native').map((m) => <SelectItem key={m.name} value={m.name}>{m.name} ({m.platform})</SelectItem>)}
                     </SelectContent>
                   </Select>
-                  <Button type="button" size="sm" className="h-9 rounded-xl" disabled={!moveTo || moving} onClick={() => void moveStore()}>{moving ? <LoaderCircle className="size-3.5 animate-spin" /> : <MoveRight className="size-3.5" />}{t("Move Store")}</Button>
+                  <Button type="button" size="sm" className="h-9 rounded-xl" disabled={!moveTo || moving} onClick={() => void moveStore()}>{moving ? <LoaderCircle className="size-3.5 animate-spin" /> : <HardDriveUpload className="size-3.5" />}{t("Push Store")}</Button>
                 </div>
               </div>
             )}

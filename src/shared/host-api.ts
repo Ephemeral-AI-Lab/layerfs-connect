@@ -331,21 +331,24 @@ export interface BucketRow {
   stores: string[]
 }
 
-/** A move, backup or restore this host started, fed by its call's on_progress. */
+/** A push, pull, move, backup or restore this host started, fed by its calls' on_progress. */
 export interface StorageJob {
   id: string
+  /** `move` is a pull then a push (two operations, #537 U5). */
   kind: 'push' | 'pull' | 'move' | 'backup' | 'restore'
   store: string
-  /** The machine (move) or bucket (backup, restore). */
+  /** The machine (push, pull: native, move) or bucket (backup, restore). */
   target: string
+  /** The half a move is in: its pull, then its push. */
+  half?: 'pull' | 'push' | null
   file: string | null
   started: number
   ended: number | null
   phase: string | null
   done: number | null
   total: number | null
-  /** Preserve refusal details; an uncertain result requires its named clearing call. */
-  error: (SdkRefusal & { phase: string | null }) | null
+  /** The SDK's refusal as it came; `note: 'pulled'` when a move's push half failed after its pull (the Store is on native). */
+  error: (SdkRefusal & { phase: string | null; note?: 'pulled' }) | null
   result: unknown
 }
 

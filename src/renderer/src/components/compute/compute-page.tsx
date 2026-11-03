@@ -109,7 +109,7 @@ export function ComputePage({ simulate: given }: ComputePageProps) {
     }
     if (action.kind === 'create') await host.createMachine(action.input)
     else if (action.kind === 'remove') await host.removeMachine(action.name)
-    else if (action.kind === 'move') await host.moveStore(action.store, action.machine)
+    else if (action.kind === 'move') await host.placeStore(action.store, action.machine)
     else await host.updateMachine(action.name, action.changes)
     live.reload()
   }

@@ -44,18 +44,24 @@ export async function projectHandle(spec, key, machine = null) {
 
 /**
  * Puts a run on `machine`: Sandboxes follow the Store, so a sqlite project's
- * Store moves there (store.move, the whole Store, idle only). A PostgreSQL
- * project's Sandboxes run on native or docker; its Store never moves.
+ * Store goes there: a pull to native, then a push to `machine` (the whole
+ * Store; refused InUse while it is held). A PostgreSQL project's Store never
+ * moves; its Sandboxes run on any machine whose `supports.postgresql_sandbox`
+ * is true, and sandbox.create refuses one that is not.
  */
 export async function placeRun(spec, key, machine, phase = () => {}) {
   const record = await projectRecord(spec, key)
-  if (record.kind === 'postgresql') {
-    if (machine !== 'native' && machine !== 'docker') throw refuse('Unsupported', `${key} is in a PostgreSQL Store: its Sandboxes run on native or docker`)
-    return record
-  }
+  if (record.kind === 'postgresql') return record
   if (record.machine === machine) return record
-  phase(`Moving Store ${record.store} to ${machine}`)
-  await layerfs(spec).store.move(record.store, machine)
+  const lfs = layerfs(spec)
+  if (record.machine !== 'native') {
+    phase(`Pulling Store ${record.store} to native`)
+    await lfs.store.pull(record.store)
+  }
+  if (machine !== 'native') {
+    phase(`Pushing Store ${record.store} to ${machine}`)
+    await lfs.store.push(record.store, machine)
+  }
   return projectRecord(spec, key)
 }
 

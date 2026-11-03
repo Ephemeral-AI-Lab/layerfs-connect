@@ -118,7 +118,11 @@ export function createHandler(deps) {
         if (id === 'postgresql' && !sub && method === 'POST') return storage.connectPostgresql(body ?? {})
         if (id && !sub && method === 'DELETE') return storage.removeStore(id, { confirm: query.get('confirm') })
         if (id && sub === 'disconnect' && method === 'POST') return storage.disconnectStore(id)
-        // { machine }
+        // a sqlite Store on native to a machine: { machine }
+        if (id && sub === 'push' && method === 'POST') return storage.push(id, body?.machine)
+        // a sqlite Store on a machine back to native
+        if (id && sub === 'pull' && method === 'POST') return storage.pull(id)
+        // between two machines, pull then push in one job: { machine }
         if (id && sub === 'move' && method === 'POST') return storage.move(id, body?.machine)
         // { bucket, file? }
         if (id && sub === 'backup' && method === 'POST') return storage.backup(id, body ?? {})
@@ -141,7 +145,7 @@ export function createHandler(deps) {
       if (!id && !sub && method === 'POST') return body?.platform === 'ssh' ? machines.connect(body) : machines.create(body)
       if (id && !sub && method === 'DELETE') return machines.remove(id)
       if (id && sub === 'update' && method === 'POST') return machines.update(id, body)
-      // moves a sqlite Store here: { store }
+      // puts a sqlite Store here (push, pull, or pull then push): { store }
       if (id && sub === 'stores' && method === 'POST') return machines.moveStore(body?.store, id)
     }
     if (group === 'status' && !id && method === 'GET') return projects.status()

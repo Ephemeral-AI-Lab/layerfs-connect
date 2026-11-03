@@ -28,7 +28,9 @@ test('one home, one machine per kind: a Sandbox on each runs, commits and closes
     await lfs.project.init('plat/app', join(root, 'src'))
     await lfs.branch.fork('plat/app', 'work', 'main')
     for (const machine of machines) {
-      if (machine !== 'native') await lfs.store.move('plat', machine)
+      // no call starts a machine (#535 D11)
+      if (machine !== 'native') await lfs.machine.start(machine)
+      if (machine !== 'native') await lfs.store.push('plat', machine)
       const name = `plat-${machine}`
       await lfs.sandbox.create('plat/app', name, machine)
       const { ws } = await lfs.workspace.mount(name, 'work')
@@ -40,7 +42,7 @@ test('one home, one machine per kind: a Sandbox on each runs, commits and closes
         await lfs.workspace.unmount(ws)
         await lfs.sandbox.close(name)
       }
-      if (machine !== 'native') await lfs.store.move('plat', 'native')
+      if (machine !== 'native') await lfs.store.pull('plat')
       assert.equal((await lfs.file.read('plat/app', 'work', `/on-${machine}.txt`)).text, `${machine}\n`)
     }
   } finally {

@@ -109,8 +109,9 @@ export function inUse(m: MachineInfo): { stores: number; sandboxes: number } | n
 }
 
 /** The machines a Store on `from` can move to: every other machine that is not down (an ssh host takes Stores too). */
+/** The machines a Store on `from` can be pushed (or moved) to: not native, not `from`, holding sqlite Stores. */
 export function moveTargets(view: Extract<MachinesView, { available: true }>, from: string): MachineInfo[] {
-  return machineOrder(view.machines).filter((m) => m.name !== from && machineState(m, view.status[m.name]).key !== 'down')
+  return machineOrder(view.machines).filter((m) => m.name !== from && m.name !== 'native' && m.supports?.sqlite !== false)
 }
 
 /** A can_create need in words (2.0's machine/probe.rs names), as a template and its values for t(). */

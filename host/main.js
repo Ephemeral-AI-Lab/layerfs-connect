@@ -92,7 +92,7 @@ async function main() {
   const agents = await AgentManager.create({ state: spec.state, projectEnvironment: (key) => projects.recordOf(key), shellEnv, projectWorkspaces: new AgentWorkspaces({ projects }), scenarios })
   const token = newToken()
   // Compute's "Move to…" starts a job in Storage's table, so its progress shows there
-  const machines = new Machines({ spec, move: (store, machine) => storage.move(store, machine) })
+  const machines = new Machines({ spec, place: (store, machine) => storage.place(store, machine) })
   const server = createHostServer({ token, projects, storage, machines, agents: () => agents, runs: () => engine.runs, runsError: () => engine.error, log })
 
   const endpoint = join(spec.state, 'host.json')
