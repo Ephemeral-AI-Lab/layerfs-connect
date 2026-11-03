@@ -66,7 +66,7 @@ export function SandboxesTable({ sandboxes, onChanged, onOpenProject, onShowMach
                 )}
               </span>
               <span className="hidden truncate font-mono text-xs text-muted-foreground @min-[46rem]/sbx:block">{[b.backend, b.route].filter(Boolean).join(' · ') || '—'}</span>
-              <span className="justify-self-end @min-[46rem]/sbx:justify-self-start">
+              <span className="min-w-0 max-w-full justify-self-end @min-[46rem]/sbx:justify-self-start">
                 <StateChip entity="sandbox" state={b.state} op={b.op} />
               </span>
               <span className="hidden text-right text-[13px] tabular-nums @min-[46rem]/sbx:block">

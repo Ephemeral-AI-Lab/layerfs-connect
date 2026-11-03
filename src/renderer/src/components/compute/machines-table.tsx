@@ -75,7 +75,7 @@ export function MachinesTable({ view, os, open, onOpen, act }: Props) {
                 <span className="truncate text-[13.5px] font-semibold tracking-tight">{m.name}</span>
               </span>
               <KindLabel platform={m.platform} os={os} className="hidden @min-[46rem]/machines:inline-flex" />
-              <span className="justify-self-end @min-[46rem]/machines:justify-self-start">
+              <span className="min-w-0 max-w-full justify-self-end @min-[46rem]/machines:justify-self-start">
                 <StateChip entity="machine" state={state.state} op={state.op} />
               </span>
               <span className="hidden truncate text-[13px] text-muted-foreground tabular-nums @min-[46rem]/machines:block">{t(size.text, size.values)}</span>
