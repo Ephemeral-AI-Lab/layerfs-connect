@@ -108,12 +108,13 @@ export function NewProjectDialog({ open, onOpenChange, onCreated, initialFolder 
     setMoveTo('')
   }, [open])
 
-  // the Store to offer first: the one the last project went into, else the first, else a new one
+  // the Store to offer first: the one asked for (a Store row's Add project), else the one the last project went into, else the first, else a new one
   const storeChoices = stores?.map((item) => item.name).join('\n')
   useEffect(() => {
     if (!open || !stores || store) return
     const last = lastStore()
-    setStore(stores.some((item) => item.name === last) ? last! : (stores[0]?.name ?? NEW_STORE))
+    const first = [initialStore, last].find((name) => name && stores.some((item) => item.name === name))
+    setStore(first ?? stores[0]?.name ?? NEW_STORE)
   }, [open, storeChoices, store])
 
   function receive(next: ProjectInitJob) {

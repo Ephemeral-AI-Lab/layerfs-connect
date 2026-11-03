@@ -321,9 +321,9 @@ export class Storage extends EventEmitter {
    * `run(on_progress, step)` may make more than one call: `step(half)` marks
    * the half a move is in.
    */
-  start(kind, store, target, file, run) {
+  start(kind, store, target, file, run, from = null) {
     if ([...this.jobs.values()].some((j) => j.store === store && !j.ended)) throw refuse(409, 'ConnectBusy', `this Connect is already running a job on ${store}; wait for it to end`)
-    const job = { id: randomUUID(), kind, store, target, file: file ?? null, started: Date.now(), ended: null, half: null, phase: null, done: null, total: null, error: null, result: null }
+    const job = { id: randomUUID(), kind, store, target, from, file: file ?? null, started: Date.now(), ended: null, half: null, phase: null, done: null, total: null, error: null, result: null }
     this.jobs.set(job.id, job)
     while (this.jobs.size > KEEP_JOBS) {
       const oldest = [...this.jobs.values()].find((j) => j.ended)
@@ -377,9 +377,11 @@ export class Storage extends EventEmitter {
   }
 
   /** store.pull(store): a sqlite Store on a machine back to native. */
-  pull(store) {
+  async pull(store) {
     checkName(store, 'A pull')
-    return this.start('pull', store, 'native', null, (on_progress) => this.lfs.store.pull(store, { on_progress }))
+    // the machine it comes from (store.get reads the record; it starts nothing): the job row reads "<store> ← <machine>"
+    const from = (await this.lfs.store.get(store).catch(() => null))?.machine ?? null
+    return this.start('pull', store, 'native', null, (on_progress) => this.lfs.store.pull(store, { on_progress }), from)
   }
 
   /**

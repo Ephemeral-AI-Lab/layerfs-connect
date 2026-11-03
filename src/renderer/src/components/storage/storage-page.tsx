@@ -482,7 +482,7 @@ function JobRow({ job: j }: { job: StorageJob }) {
           {t(KIND[j.kind])}
         </Chip>
         <span className="font-mono">
-          {j.store} {j.kind === 'restore' || j.kind === 'pull' ? '←' : '→'} {j.target}
+          {j.store} {j.kind === 'restore' || j.kind === 'pull' ? '←' : '→'} {j.kind === 'pull' ? (j.from ?? j.target) : j.target}
           {j.file ? `/${j.file}` : ''}
         </span>
         {j.kind === 'move' && j.half && (

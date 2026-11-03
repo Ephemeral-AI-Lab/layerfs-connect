@@ -327,3 +327,11 @@ test('a job reads the Storage view again on each new phase and half, not on each
   assert.equal(views, 6)
   rmSync(s.state, { recursive: true, force: true })
 })
+
+test('a pull names the machine the Store came from (the job row reads "<store> ← <machine>")', async () => {
+  const s = spec()
+  const st = new Storage({ spec: s, client: fake(), log: () => {} })
+  assert.equal((await st.pull('far')).from, 'lima1')
+  await new Promise((r) => setTimeout(r, 5))
+  rmSync(s.state, { recursive: true, force: true })
+})

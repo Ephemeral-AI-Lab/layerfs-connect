@@ -334,6 +334,8 @@ export interface StorageJob {
   store: string
   /** The machine (push, pull: native, move) or bucket (backup, restore). */
   target: string
+  /** A pull's machine: where the Store came from (null when not known). */
+  from?: string | null
   /** The half a move is in: its pull, then its push. */
   half?: 'pull' | 'push' | null
   file: string | null
