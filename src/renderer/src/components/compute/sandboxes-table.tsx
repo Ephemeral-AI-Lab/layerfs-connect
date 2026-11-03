@@ -11,6 +11,7 @@ import { CloseSandbox } from '@/components/projects/sandbox-tiles'
 import { Refusal } from '@/components/refusal'
 import { StateChip } from '@/components/state-chip'
 import { Card } from '@/components/storage/overview/row-parts'
+import { Button } from '@/components/ui/button'
 import { clearingCall } from '@/data/states'
 import { host } from '@/host/client'
 import { useHostQuery } from '@/host/use-host'
@@ -109,6 +110,7 @@ function SandboxDetail({ sandbox: b, onChanged }: { sandbox: MachineSandbox; onC
               <span className="font-semibold">{w.name ?? t('unnamed')}</span>
               <span className="font-mono text-muted-foreground">{w.ws}</span>
               <span className="text-muted-foreground">{t('Branch {branch}', { branch: w.branch || '?' })}</span>
+              <Unmount ws={w.ws} onDone={() => { read.reload(); onChanged() }} />
             </li>
           ))}
         </ul>
@@ -119,5 +121,33 @@ function SandboxDetail({ sandbox: b, onChanged }: { sandbox: MachineSandbox; onC
         </div>
       )}
     </div>
+  )
+}
+
+/** Unmounts one Workspace (workspace.unmount); LayerFS's refusal shows beside it. Discard is not offered here. */
+function Unmount({ ws, onDone }: { ws: string; onDone: () => void }) {
+  useI18n()
+  const [busy, setBusy] = useState(false)
+  const [failed, setFailed] = useState<unknown>(null)
+  const run = async () => {
+    setBusy(true)
+    setFailed(null)
+    try {
+      await host.unmountWorkspace(ws, false)
+      onDone()
+    } catch (e) {
+      setFailed(e)
+    } finally {
+      setBusy(false)
+    }
+  }
+  return (
+    <span className="ml-auto flex min-w-0 items-center gap-2">
+      {failed != null && <Refusal error={failed} compact className="text-destructive" />}
+      <Button size="sm" variant="ghost" className="h-6 rounded-lg px-2 text-[11px]" disabled={busy} onClick={() => void run()}>
+        {busy && <LoaderCircle className="size-3 animate-spin" />}
+        {t('Unmount')}
+      </Button>
+    </span>
   )
 }

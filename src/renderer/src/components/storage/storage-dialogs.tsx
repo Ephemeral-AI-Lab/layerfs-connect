@@ -133,7 +133,7 @@ export function StorageDialogs({ dialog, view, onClose, done }: { dialog: Storag
   switch (dialog.kind) {
     case 'new-store':
       return (
-        <FormSheet open={open} onClose={close} icon={Plus} title={t('New Store')} description={t('An empty sqlite Store on native. Add projects to it, then move it to any machine.')} action={t('Create')} valid={!!a} submit={() => after(host.createStore(a))}>
+        <FormSheet open={open} onClose={close} icon={Plus} title={t('New Store')} description={t('An empty sqlite Store on native. Add projects to it, then push it to any machine.')} action={t('Create')} valid={!!a} submit={() => after(host.createStore(a))}>
           <TextField label={t('Name')} value={a} onChange={setA} placeholder="work" autoFocus mono />
         </FormSheet>
       )
@@ -151,7 +151,7 @@ export function StorageDialogs({ dialog, view, onClose, done }: { dialog: Storag
     }
     case 'postgresql':
       return (
-        <FormSheet open={open} onClose={close} icon={Database} title={t('Connect a PostgreSQL Store')} description={t('A database as a Store. It never moves; its projects’ Sandboxes run on any machine that supports PostgreSQL Sandboxes.')} action={t('Connect')} valid={!!a && !!b && !!c} submit={() => after(host.connectPostgresql({ name: a, url: b, password: c, synchronousCommit: d || undefined }))}>
+        <FormSheet open={open} onClose={close} icon={Database} title={t('Connect a PostgreSQL Store')} description={t('A database as a Store. It is never pushed or pulled; its projects’ Sandboxes run on any machine that supports PostgreSQL Sandboxes.')} action={t('Connect')} valid={!!a && !!b && !!c} submit={() => after(host.connectPostgresql({ name: a, url: b, password: c, synchronousCommit: d || undefined }))}>
           <TextField label={t('Name')} value={a} onChange={setA} placeholder="team" autoFocus mono />
           <TextField label={t('URL, without the password')} value={b} onChange={setB} placeholder="postgresql://user@host:5432/db" mono hint={t('A URL that holds a password is refused.')} />
           <TextField label={t('Password')} value={c} onChange={setC} placeholder="file:/Users/me/.config/layerfs/team.password" mono hint={t(REFERENCE_HINT)} />

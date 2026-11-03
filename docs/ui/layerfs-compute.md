@@ -1,128 +1,160 @@
 # LayerFS: Compute
 
-The machines this Connect's LayerFS home runs on (LayerFS 2.0, layerfs#533). There is one home, and
-its compute is a set of machines: `native` and `docker` are built in, VMs are created
-(`apple-container`, `microsandbox`, `lima`, `firecracker`) and ssh hosts are connected. A machine
-holds many sqlite Stores, and a project's Sandboxes run on its Store's machine. Machines start on the
-first call that needs them and stop after 10 idle minutes, so the page has no start or stop buttons.
-PostgreSQL servers are Storage's; a new Sandbox is made from a project's Sandboxes tab.
-Opens from: the Compute item in the sidebar.
+The machines this Connect's LayerFS home runs on, and every Sandbox in it (LayerFS 2.0, #537 §6). There
+is one home, and its compute is a set of machines: `native` and `docker` are built in, VMs are created
+(`apple-container`, `microsandbox`, `lima`, `firecracker`) and ssh hosts are connected. A machine holds
+many sqlite Stores; a sqlite project's Sandboxes run on its Store's machine, a PostgreSQL project's on
+any machine that supports PostgreSQL Sandboxes. **Power is manual:** a machine runs between **Start**
+and **Stop**, and reading this page starts nothing. States are the SDK's, never guessed.
+Opens from: the Compute item in the sidebar, or a machine link elsewhere (a Storage machine heading, a
+Sandbox tile's machine, a project's Machine fact), which scrolls to that machine's row and opens it.
 Source: `src/renderer/src/components/compute/compute-page.tsx` (main file; others named in Regions).
 
 ## Skeleton
 
 ```text
-+-[1] PageHeader ------------------------------------------------------------------------+
-| Compute                                     [Simulate v]  [+ New machine v]  [ Refresh ] |
-+-----------------------------------------------------------------------------------------+
-  2 ready . 1 running . 1 idle . 5 Sandboxes . * 1 needs you                          [2]
-+-[3] Notice ------------------------------------------------------------------------------+
-| (!) gpu-box is down                                                            [ Show ] |
-|     ssh: connect to host gpu-box.lan port 22: Operation timed out                       |
-|     Its Store can't be used until it answers.                                           |
-+-----------------------------------------------------------------------------------------+
-  Machines 5                                                                         [4]
-+-----------------------------------------------------------------------------------------+
-| MACHINE    KIND              STATE                 SIZE                    STORES  SBX   |
-| native     (A) Native        (Ready)               this Mac                     1    2 > |
-| docker     (D) Docker        (Ready)               Docker's VM . 43.7 GiB free  1    1 > |
-| dev        (L) Lima          (Running)             4 CPU . 8 GiB . 40 GiB       1    2 v |
-|   Stores on it                          Sandboxes                                       |
-|   | agents  4 projects . 6.8 GB  [Move to...] |   Sandbox 1 . agents/crawler . 3 Workspaces |
-|   Tool  limactl 2.0.1   Free disk 31.2 GiB   Sandbox image sha256:afa1...   Nested        |
-|   [Remove]  In use: holds 1 Store. Move it first.                                        |
-| gpu-box    [=] SSH host      (Down)                host's own                   1    0 > |
-| scratch    (m) Microsandbox  (Idle . starts on use) 2 CPU . 4 GiB . 20 GiB       1    0 > |
-+-----------------------------------------------------------------------------------------+
-  Add a machine                                                                      [5]
-+-----------------------------------------------------------------------------------------+
-| (A) Apple Container  A Linux VM from Apple's container tool . container 0.6.1  [Create] |
-| (m) Microsandbox     ! msb not found                                [How to install v] |
-|       Install msb, or put ~/.microsandbox/bin on PATH   [curl ... | sh (copy)]           |
-| (L) Lima             A Linux VM from Lima . limactl 2.0.1                      [Create] |
-|   +- Name [lima1] CPUs [2] Memory [4G] Disk [20G]                                   -+  |
-|   |  Sandbox image [layerfs runtime sha256:afa1...  v]   > Advanced (OS image)        |  |
-|   +- [Create] [Cancel]                                                              -+  |
-| (FC) Firecracker     ! Needs an M3 or later Mac for nested virtualization               |
-| [=] SSH host         A Linux host you reach over SSH with a key . OpenSSH 10.0 [Connect] |
-+-----------------------------------------------------------------------------------------+
-  Machines start on the first call that needs them and stop after 10 idle minutes.   [6]
++-[1] PageHeader --------------------------------------------------------------------------+
+| Compute                                       [Simulate v]  [+ New machine v]  [ Refresh ] |
++-------------------------------------------------------------------------------------------+
+  2 running . 2 stopped . 4 Sandboxes . * 1 needs you . 1 operation in flight            [2]
++-[3] Notice --------------------------------------------------------------------------------+
+| (!) box: unresolved machine.create                                               [ Show ] |
+|     see layerfs machine status box · clear: layerfs machine remove box                    |
++-------------------------------------------------------------------------------------------+
+  Machines 5                                                                             [4]
++-------------------------------------------------------------------------------------------+
+| MACHINE    PLATFORM          STATE         SIZE                       STORES  SANDBOXES    |
+| native     (A) Native        (Running)     this Mac                        1    2        > |
+| docker     (D) Docker        (Running)     Docker's VM . 43.7 GiB free     0    1        > |
+| dev-lima   (L) Lima          (Stopped)     2 CPU . 4 GiB . 40 GiB          1    0        v |
+|   Stores on it                              Sandboxes                                      |
+|   | app  api . 1.2 GB    [Pull or move... v] |  No Sandboxes running.                      |
+|   Tool limactl 2.2.1   Sandbox image ...   Sandboxes run as Linux namespaces              |
+|   dev-lima is stopped: its Stores and Sandboxes can't be used until it starts.  [Start]   |
+|   [Remove]  In use: holds 1 Store. Pull it to native first.                               |
++-------------------------------------------------------------------------------------------+
+  Sandboxes 2                                                                            [5]
++-------------------------------------------------------------------------------------------+
+| NAME   PROJECT    MACHINE   BACKEND . ROUTE     STATE        WORKSPACES                    |
+| a1     shop/web   native    native . nfs        (Running)    2/16                        > |
+| b1     pg/api     docker    docker . fuse       (Creating)   0/16                        > |
++-------------------------------------------------------------------------------------------+
+  Add a machine                                                                          [6]
++-------------------------------------------------------------------------------------------+
+| (L) Lima          A Linux VM from Lima . limactl 2.2.1                            [Create] |
+| (FC) Firecracker  ! Needs an M3 or later Mac for nested virtualization                     |
+| [=] SSH host      A Linux host you reach over SSH with a key . OpenSSH 10.0      [Connect] |
++-------------------------------------------------------------------------------------------+
+  Machine power is manual: a machine runs between Start and Stop ...                     [7]
 ```
 
 ## Regions
 
-1. **Page header** (sticky; once the page scrolls it is opaque, the page's own `--background`, with a hairline under it: `page-header-solid`): the title, **New machine** (a menu of the kinds `can_create` says are ready; choosing one opens its form in Add a machine and scrolls to it) and **Refresh** (rereads `GET /api/machines`). Dev builds put the simulation picker first. New machine is not shown when machines are unavailable.
-2. **Facts line**: each state counted as it is: ready (the built-ins, answering), running (only `running`), idle (stopped: they start on use), starting (only when some are starting or being created), Sandboxes (every machine's), and in red how many need you (down or failed). Each part carries its dot, so a wrapped line starts with one.
-3. **Notices**: one danger notice per machine that is down: its name, its reason (`machine.status().down_reason`, else the record's `error`), how many of its Stores wait on it, and **Show**, which opens its row and scrolls to it.
-4. **Machines** (`MachinesTable`, `compute/machines-table.tsx`): native and docker first, then the rest by name. Columns: Machine; Kind (`KindLabel`: the kind's mark and name; native is this computer's: Apple, Linux or a monitor); State (`StatePill`); Size; Stores; Sandboxes. Under 46rem a row is two lines: mark, name and state, then kind, size and counts.
-   - **Size**: a VM's `CPU . memory . disk`; native "this Mac" (this PC, this host); docker "Docker's VM . N GiB free" (its status's free disk; "this host's Docker" on Linux); ssh "host's own".
-   - **An opened row**: its down reason; **Stores on it**, each with its project count and size and **Move to...** (`store.move`; the menu lists every other machine that is not down; disabled while this one is down); **Sandboxes** (`Sandbox n . project . n Workspaces`; on Windows native says it keeps records only); facts (Tool version, Free disk, Sandbox image digest or archive, OS image, Lima host, Nested, SSH host `user@host[:port]`, Data root, Identity, Docker socket, WSL distribution, how Sandboxes run).
-   - **Actions**: a VM has **Remove**, an ssh host **Disconnect**, each confirmed inline ("Remove dev and its disk?", "Disconnect gpu-box? Its data root stays on the host."). While the machine holds Stores or Sandboxes the button is disabled with "In use: holds N Stores. Move them first." (LayerFS refuses `InUse` too; its words show under the actions). The built-ins have **Update settings** (Sandbox image; docker also its socket and, on Windows, its WSL distribution: `machine.update`) and "Built in . can't be removed".
-5. **Add a machine** (`AddMachine`, `compute/add-machine.tsx`): one row per `can_create` kind, in its order: the kind, what it is and its tool's version, or what it is missing in warning colour (`needWords`, with 2.0's `machine/probe.rs` names: `tool:msb` is "msb not found", `bundle:<folder>` "Needs the LayerFS Linux bundle", `host:apple-m3` and `host:macos15` the nested-virtualization needs, `host:apple-silicon`, `host:macos`, `host:macos-or-linux`, `host:wsl2`). The button is **Create** (VM kinds) or **Connect** (ssh).
-   - A missing tool's button is **How to install** (`installHelp`: msb's install line or `~/.microsandbox/bin` on PATH, Apple's container releases and `container system start`, `brew install lima`).
-   - A missing Linux bundle's is **How to get it**: the sealed Linux bundle for this LayerFS version goes in `~/.cache/layerfs/bundle/<version>/`, and in a dev build the layerfs repository places it with `python3 tools/linux_bundle.py daemon|worker|helper|seal --resources <resources.json>`, each line with a copy button, then "Then press Refresh."
-   - A hardware or OS need (`host:…`) keeps its reason and has no button, even when a tool is missing too.
-   - Forms open inline under their row and check themselves on submit; each error sits under its field, and "Check the fields marked above." beside the buttons.
-   - **Every form's Name** starts as a free name, `<short kind><n>` with the lowest unused n (`ac1`, `msb1`, `lima1`, `fc1`, `ssh1`), as 2.0's cell runner names machines (`freeMachineName`); its placeholder is the same.
-   - **VM form**: Name (required; lowercase letters, digits and dashes; not `native` or `docker`; not taken), CPUs (1-64, default 2), Memory (at least 512M, default 4G), Disk (at least 2G, default 20G), Sandbox image (the default "layerfs runtime", owner decision O36: `layerfs-352-runtime:node24-https-apt-20261024`, `sha256:afa1ef9c...`; or an archive path or digest), and an Advanced fold with OS image. Firecracker adds **Lima host**: an existing Lima machine made with `--nested`, or "Create a nested Lima machine..." with its name (made first, then the Firecracker machine). `can_create` says Firecracker is ready when the Mac can nest, whether or not a nested Lima machine exists; when none does, the form opens with "Create a nested Lima machine..." chosen and a free Lima name (`lima1`) filled in.
-   - **ssh form**: Name, Host (`user@host`, or a host name: user then `root`), Port (22), Identity (a key path; empty uses the ssh agent's keys), Data root (`/layerfs/data`), and the warning that LayerFS logs in as root and turns off user namespaces on that host.
+1. **Page header** (sticky, opaque once scrolled): the title, **New machine** (a menu of the platforms
+   `machine.platforms` says are ready; choosing one opens its form in Add a machine and scrolls to it)
+   and **Refresh**. Dev builds put the simulation picker first.
+2. **Facts line**: running, stopped, creating or removing (when any), unknown (when any), Sandboxes,
+   in red how many need you (failed, missing or unresolved), and operations in flight on machines,
+   Stores and Sandboxes.
+3. **Notices**: one danger notice per machine that needs you: "<machine> is failed/missing", or
+   "<machine>: unresolved <operation>" with "see `layerfs machine status <m>` · clear:
+   `layerfs machine remove <m>`" (`disconnect` for ssh). It gives LayerFS's reason, how many of its
+   Stores wait on it, and **Show**, which opens its row.
+4. **Machines** (`MachinesTable`, `compute/machines-table.tsx`): native and docker first, then the rest
+   by name. Columns: Machine; Platform (its mark and name); State (`StateChip`: the SDK's state,
+   or an operation's name and phase); Size; Stores; Sandboxes. Under 46rem a row is two lines.
+   - **Size**: a VM's `CPU . memory . disk`; native "this Mac" (this PC, this host); docker "Docker's
+     VM . N GiB free" ("this host's Docker" on Linux); ssh "host's own".
+   - **An opened row**: LayerFS's reason when it needs you; **Stores on it**, each name opening its
+     Storage row and each project name opening the project, with its size. On native the button is
+     **Push to…** (machines whose `supports.sqlite` is true); elsewhere **Pull or move…**: **Pull to
+     native**, then "Move <store> to (pull, then push)" and the other machines. Each starts a job that
+     shows on Storage. **Sandboxes on it** (name, project, Workspace count); facts (Tool, Free disk,
+     Sandbox image, Lima host, Nested, SSH host, Data root, Identity, Docker socket, WSL distribution,
+     how Sandboxes run).
+   - **Start / Stop** (not native; only while running or stopped): `machine.start` waits until its
+     worker answers; `machine.stop` is refused `InUse` while Sandboxes run, the refusal listing them.
+   - **Remove / Disconnect**: a VM has **Remove**, an ssh host **Disconnect**, each confirmed inline.
+     While it holds Stores or Sandboxes the button is disabled with the reason ("In use: holds 1 Store. Pull it to native first."); LayerFS refuses `InUse`
+     too, with what is in the way. The built-ins have **Update settings** (Sandbox image; docker also
+     its socket and, on Windows, its WSL distribution: `machine.update`) and "Built in . can't be
+     removed".
+   - A refused action shows LayerFS's refusal under the row (code, words, entity, phase, In the way).
+5. **Sandboxes** (`SandboxesTable`, `compute/sandboxes-table.tsx`): every Sandbox in the home, by name,
+   from `sandbox.list`. Columns: Name; Project (opens the project's Sandboxes tab); Machine (opens its
+   row); Backend · route; State (with any operation); Workspaces `n/16`. A row opens to its Workspaces
+   (`sandbox.get`): each one's name (or "unnamed"), its `<sandbox>:<path>` handle and Branch, and
+   **Close** (a refused close offers **Force close**, which names the Workspaces of unknown state). An
+   unresolved Sandbox shows its status and clearing calls. Empty: "No Sandboxes. A project's Sandboxes
+   page starts one."
+6. **Add a machine** (`AddMachine`, `compute/add-machine.tsx`): one row per platform `machine.platforms`
+   lists as created or connected, in its order: the platform, a short blurb (else LayerFS's description)
+   and its tool's version, or what it is missing in warning colour (`tool:msb` is "msb not found",
+   `bundle:<folder>` "Needs the LayerFS Linux bundle", `host:apple-m3` and `host:macos15` the
+   nested-virtualization needs, and the other `host:` needs). The button is **Create** (VMs) or
+   **Connect** (ssh).
+   - A missing tool's button is **How to install**, a missing Linux bundle's **How to get it**, each
+     with lines to copy and "Then press Refresh." A hardware or OS need has no button.
+   - Forms open inline and show only the fields the platform declares in `options`; anything else is
+     not sent (the host refuses it `InvalidInput`). They check themselves on submit; each error sits
+     under its field. A refused create shows the whole refusal.
+   - **Name** starts as a free name, `<short platform><n>` (`ac1`, `msb1`, `lima1`, `fc1`, `ssh1`).
+   - **VM form**: Name, CPUs (1-64, default 2), Memory (default 4G), Disk (default 20G; "Holds its
+     Stores"), Sandbox image ("The bundle's image", the default, or "Choose an archive…": an archive
+     path or digest). Lima adds **Nested** (a checkbox: Firecracker machines can run in it).
+     Firecracker adds **Lima host**: an existing nested Lima machine, or "Create a nested Lima
+     machine…" with its name (made first). With none, the form opens on that choice.
+   - **ssh form**: Name, Host (`user@host`, or a host name), Port (22), Identity (empty: the ssh
+     agent's keys), Known hosts file (empty: ssh's own), Data root (`/layerfs/data`; it stays when
+     disconnected), and the warning that LayerFS logs in as root by default and turns off user
+     namespaces on that host.
    - A machine made opens its row in the table.
-6. **Footnote**: "Machines start on the first call that needs them and stop after 10 idle minutes."
+7. **Footnote**: "Machine power is manual: a machine runs between Start and Stop, and nothing starts
+   or stops one by itself. Reading this page starts nothing."
 
 ## States
 
-- **Loading**: "Reading the machines" in place of the page; `LoadError` ("the machines") with Retry.
-- **Unavailable**: Connect links a LayerFS with no machines (1.x): one card, "Machines come with LayerFS 2.0", naming the linked version, and nothing else. No sample data on a live host.
-- **Machine states** (`machineState`): Ready and Running (success), Idle . starts on use (neutral: stopped), Starting and Creating (warning, glowing), Down and Failed (danger).
-- **Can create**: ready (version and a button), missing a tool (How to install), missing the Linux bundle (How to get it), missing hardware or OS support (warning words only).
-- **Refusals**: an action LayerFS refuses (`InUse`, `Exists`, `InvalidInput`, `Unsupported`) shows its words where the action was.
+- **Loading**: "Reading the machines"; `LoadError` ("the machines") with Retry.
+- **Unavailable**: Connect links a LayerFS with no machines (1.x): "Machines come with LayerFS 2.0",
+  naming the linked version, and nothing else.
+- **Machine states** (`data/states.ts`): Running (success; native's `ready` reads Running), Stopped
+  (neutral), Creating and Removing (warning, pulsing), Failed, Missing and Unresolved (danger; they
+  need you), Unknown (dashed).
+- **Sandbox states**: Creating, Running, Closing, Gone, Unresolved, Unknown.
+- **Platform rows**: ready (version and a button), missing a tool (How to install), missing the Linux
+  bundle (How to get it), missing hardware or OS support (warning words only).
 
 ## Data
 
-`GET /api/machines` answers `MachinesView` (`src/shared/host-api.ts`), built by `host/machines.js`
-from LayerFS 2.0's calls (`machine/calls.rs`):
+`GET /api/machines` answers `MachinesView` (`src/shared/host-api.ts`), built by `host/machines.js`. None
+of it starts a machine:
 
-- `machines`: `machine.list().machines`, each `{ name, platform, backend, state, cpus, memory, disk
-  (bytes), stores, sandboxes (names), image?, host?, nested?, docker?, wsl?, error?, ssh? }`.
-- `canCreate`: `machine.list().can_create`, each `{ platform, ready, missing, version }`.
-- `stores`: `store.list()` items on a machine (`{ name, machine, projects, size }`); PostgreSQL Stores
-  are on no machine and left to Storage.
-- `sandboxes`: `sandbox.list()` items (`{ name, machine, project, workspaces }`).
-- `status`: `machine.status(name)` for every machine but native (a stopped VM answers without being
-  started): `{ state, freeDisk, toolVersion, down }`.
-- `{ available: false, layerfs, reason }` when the linked LayerFS has no machine family.
+- `machines`: `machine.list().machines`, each `{ name, platform, backend, state, supports { sqlite,
+  postgresql_sandbox, reason }, cpus, memory, disk (bytes), stores, sandboxes (names), image?, host?,
+  nested?, docker?, wsl?, error?, ssh? }`.
+- `platforms`: `machine.platforms()` rows, each `{ platform, how, backend, kernel, sqlite, postgresql
+  { store_calls, sandbox, reason }, ready, missing, version, options [{ name, kind }], description }`.
+  Also on its own at `GET /api/platforms`.
+- `stores`: `store.list()` items on a machine (`{ name, machine, projects, names, size, state, op }`).
+- `sandboxes`: `sandbox.list()` items (`{ name, machine, project, workspaces, state, op, backend,
+  route }`).
+- `status`: `machine.status(name)` only for machines that run or hold or lost an operation: `{ state,
+  freeDisk, toolVersion, down, op }`.
 
-Actions: `POST /api/machines` (`machine.create(name, platform, { cpus, memory, disk, image, host,
-nested })`, or with `platform: 'ssh'` `machine.connect(name, host, { user, port, identity, root })`),
-`DELETE /api/machines/:name` (`machine.remove`, or `machine.disconnect` for an ssh host),
-`POST /api/machines/:name/update` (`machine.update`) and `POST /api/machines/:name/stores { store }`
-(`store.move(store, machine)`). Each is refused `Unsupported` on a LayerFS without machines. An OS
-image is sent only when the linked `machine.create` takes `os_image` (layerfs#533's first table does
-not; it is refused with words rather than sent).
-
-Today Connect links LayerFS 1.1.0 (`@layerfs/runtime`), so a live host answers `available: false`.
-The view and the forms are developed on the simulations below until Connect links the 2.0 package
-(`layerfs`, `client({ home })`).
+Actions: `POST /api/machines` (`machine.create(name, platform, options)`, or with `platform: 'ssh'`
+`machine.connect(name, host, options)`, the declared options only), `DELETE /api/machines/:name`
+(`machine.remove`, or `machine.disconnect` for an ssh host), `POST /api/machines/:name/start|stop`,
+`POST /api/machines/:name/update` (`machine.update`), `POST /api/machines/:name/stores { store }`
+(a push, pull, or pull then push, as a Storage job), `GET /api/sandboxes/:name` (`sandbox.get`) and
+`DELETE /api/sandboxes/:name?force=1` (`sandbox.close`).
 
 ## Simulation
 
-- `src/renderer/src/data/compute-sim.ts`: each case is a `MachinesView` in exactly the shape
-  `host/machines.js` builds from 2.0's answers. The page's actions work on a copy in memory
-  (`simulate`), refused as LayerFS refuses them (InUse while a machine holds Stores, Exists for a
-  taken name, a Firecracker host that is not a nested Lima machine); Refresh puts the case back.
-  - `mac-fresh`: an M1 Mac, native and docker only; every kind's create state (ready, a missing
-    tool, the Linux bundle missing, Firecracker on hardware that can't nest).
-  - `mac-nested`: an M3 Mac whose one Lima machine was made without `--nested`: Firecracker is
-    ready and its form makes a nested Lima machine first.
-  - `mac-mixed`: five machines (native, docker, a nested lima, an idle microsandbox, an ssh host
-    that is down).
-  - `mac-busy`: many Stores and Sandboxes on native, docker and a lima machine hosting a Firecracker
-    machine; an Apple Container machine starting.
-  - `windows`: native keeps records only; docker through WSL2; the Mac-only kinds need macOS, msb
-    is not found.
-  - `older`: a LayerFS with no machines.
-- In the app (dev builds): the flask picker in the header switches between the live host and the
-  simulated ones; the choice is kept in localStorage `connect.compute.simulate`, and a "Simulated"
-  chip says so.
+- `src/renderer/src/data/compute-sim.ts`: each case is a `MachinesView` in the shape `host/machines.js`
+  builds. The page's actions (create, remove, Start, Stop, push and pull) work on a copy in memory,
+  refused as LayerFS refuses them; Refresh puts the case back. Cases: `mac-fresh`, `mac-mixed`,
+  `mac-nested`, `mac-busy`, `windows`, `older`.
+- In dev builds the flask picker in the header switches between the live host and the simulated ones
+  (localStorage `connect.compute.simulate`); a "Simulated" chip says so.
 - The harness: `?page=compute&case=mac-mixed|mac-fresh|mac-nested|mac-busy|windows|older[&w=460][&dark=1]`
   (`.game-harness/pages/compute.tsx`).

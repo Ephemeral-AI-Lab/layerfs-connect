@@ -394,7 +394,7 @@ function StoreField({ stores, value, chosen, newStore, problem, onChange, onNewS
         <>
           <Input aria-label={t("New Store name")} value={newStore} maxLength={32} autoComplete="off" spellCheck={false} placeholder={t("my-store")} aria-invalid={!!problem} className="h-9 rounded-xl text-xs md:text-xs" onChange={(event) => onNewStore(event.target.value)} />
           <p className={cn('text-[11px] leading-relaxed', problem ? 'text-destructive' : 'text-muted-foreground')}>
-            {problem ? t(problem) : t("A new sqlite Store on native; more projects can join it later, and it can move to any machine.")}
+            {problem ? t(problem) : t("A new sqlite Store on native; more projects can join it later, and it can be pushed to any machine.")}
           </p>
         </>
       ) : chosen ? (

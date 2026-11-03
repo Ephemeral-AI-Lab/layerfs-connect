@@ -31,8 +31,8 @@ Branches: Connect is used at its `main`. LayerFS is used at the tip of its
    it to the branch tip with
      git -C layerfs/.claude/worktrees/connect-main checkout --detach origin/layerfs_v2_0_0
    If it has uncommitted changes, stop and tell me.
-4. In ./layerfs-connect run `pnpm install`. Confirm node_modules/@layerfs/cli
-   resolves into the connect-main worktree.
+4. In ./layerfs-connect run `pnpm install`. Confirm node_modules/layerfs
+   links to the LayerFS checkout's `api/node` (package.json pins the link).
 5. Verify: `pnpm typecheck` and `pnpm test:agents` (a local test model; no
    API key needed).
 6. Managed LayerFS projects need ~/.layerfs-connect/settings.json:
@@ -246,11 +246,20 @@ scripted sessions and replay controls are no longer part of the desktop UI.
   projects show empty states instead of sample workspaces or execution data.
   **New chat** opens a fresh draft bound to that project without starting an
   agent until the first message is sent.
-- **Storage** shows local volumes, disk and worker status. Project rows open
-  the actual project. Remote providers remain clearly marked as planned.
+- **Storage** shows each sqlite Store under the machine that holds it, and the
+  PostgreSQL Stores, with the state LayerFS gives (idle, in use, busy, down,
+  unresolved). A Store on native can be pushed to a machine (**Push to…**); one
+  on a machine can be pulled back (**Pull to native**) or moved to another
+  machine (**Move to another machine…**: a pull, then a push). Live operations
+  and this host's jobs show their phase; buckets hold point-in-time backups;
+  **Needs attention** shows what `layerfs doctor` finds
+  ([docs/ui/layerfs-storage.md](docs/ui/layerfs-storage.md)).
 - **Compute** lists the machines the LayerFS home runs on (native, docker,
-  VMs and ssh hosts, LayerFS 2.0), their Stores and Sandboxes, and adds or
-  removes machines. Linked to LayerFS 1.x it says machines need 2.0.
+  VMs and ssh hosts), their Stores and Sandboxes, every Sandbox in the home, and
+  adds or removes machines from the platforms `machine.platforms` reports.
+  Power is manual: a machine runs between **Start** and **Stop**, and no page
+  starts one by being looked at. Linked to LayerFS 1.x it says machines need
+  2.0 ([docs/ui/layerfs-compute.md](docs/ui/layerfs-compute.md)).
 
 Remote Push/Pull/conflict mocks and hardcoded native sandboxes have been removed. Backend scenario fixtures and command-line test
 runners remain available for development; this cleanup does not delete project
@@ -263,8 +272,12 @@ LayerFS project field in a new Chat workspace. Enter a project name, then select
 **Empty project** or **Import folder**. The latter copies files from the chosen
 local folder into LayerFS; it does not move or delete the original folder.
 
-Creation uses the configured local SQLite runtime and reports its actual
-scan, storage and import stages. A duplicate name is rejected instead of
+The project goes into a Store you choose: a sqlite Store on any machine (Init
+reads the folder on this Mac and writes through that machine), a PostgreSQL
+Store, or a new sqlite Store made on native. If the Store's machine is stopped,
+the dialog asks you to start it first. After Init into a Store on native it
+offers to push the Store to another machine. Creation reports its actual scan,
+files, tree, publish and seal steps. A duplicate name is rejected instead of
 replacing a project. Runtime or Docker setup errors remain visible in the
 form. If status polling is interrupted, **Check status** resumes the existing
 job without submitting another creation request.
@@ -310,34 +323,20 @@ Two branches go together: Connect works on its own `main`, and builds against
 LayerFS's `layerfs_v2_0_0` branch.
 
 Connect never installs into or edits the LayerFS repository. `package.json`
-links `@layerfs/*` to the `api/` packages of a LayerFS worktree beside this
-repo, kept at the tip of LayerFS `layerfs_v2_0_0`
-(`../layerfs/.claude/worktrees/connect-main/api/{agent,backend,cli,runtime}`;
-the folder's name is older than the branch). The worktree sits on that commit
-detached, so it does not follow the branch by itself; to move it forward,
-`git -C ../layerfs fetch origin layerfs_v2_0_0` then
-`git -C ../layerfs/.claude/worktrees/connect-main checkout --detach origin/layerfs_v2_0_0`.
-The host loads `host/resolve-layerfs.js`, so `@layerfs/*` resolves from
-Connect's `node_modules`. Local-folder bash calls also receive this resolver;
-project bash runs through the host's LayerFS workspace execution bridge inside
-the container. The macOS worker runs a
-sealed Linux LayerFS build from the same worktree (`tools/worktree.py build`
-in LayerFS), named in `~/.layerfs-connect/settings.json`:
+links the one LayerFS 2.0 package, `layerfs`, to
+`../layerfs-v2-merge/api/node` (a LayerFS checkout beside this repo); the
+package finds its native addon through the link's real path. The host makes one
+client, `client({ home })`, on its own home (`~/.layerfs-connect/home-2`).
 
-```json
-{ "image": "sha256:…", "bundle": "/path/to/build-linux-…", "containerPrefix": "lfc-" }
-```
-
-Connect keeps its own LayerFS home (`~/.layerfs-connect/home`) and container
-prefix, so its worker (`lfc-worker`), Sandboxes and volumes never meet another
-integration's.
-
-By default the home is placed on this machine's Docker. `"placement":
-"vm:apple-container"` (or `vm:microsandbox`, `vm:ssh`) puts each project in a
-Linux VM of its own instead, sized by `"vm": { "image", "cpus", "memory",
-"storeSize" }`; `vm:ssh` names its host in `"ssh": { "host", "user", "port",
-"identityFile" }`. host/README.md ("Deployment") lists every setting and its
-`LAYERFS_CONNECT_*` name.
+Every machine, Store and bucket is a record in that home; Connect keeps no
+placement settings of its own. A sqlite Store lives on one machine and is put
+on another with Push and Pull; a PostgreSQL Store is a connected database, and
+its projects' Sandboxes run on any machine that supports PostgreSQL Sandboxes.
+A new machine's Sandbox image is the LayerFS bundle's image unless you choose an
+archive; Connect pins no image digest. host/README.md ("Where LayerFS comes
+from", "Deployment") and
+[docs/layerfs-2.0-integration.md](docs/layerfs-2.0-integration.md) give the
+details.
 
 ## Develop
 
@@ -356,7 +355,7 @@ With Docker running and Connect's LayerFS image/bundle configured, verify real
 managed workspaces in a disposable project (local test model; no API key):
 
 ```bash
-CONNECT_REAL_LAYERFS=1 node --import ./host/resolve-layerfs.js --test --test-timeout=200000 host/test/agent-layerfs-real.test.js
+CONNECT_REAL_LAYERFS=1 node --test --test-timeout=200000 host/test/agent-layerfs-real.test.js
 ```
 
 This covers root and child bash, separate conversation branches, large UTF-8
@@ -366,13 +365,13 @@ sessions. It removes its own project, worker and temporary state after the run.
 Host tests (each command stays under two minutes):
 
 ```bash
-node --import ./host/resolve-layerfs.js --test host/test/*.test.js tools/checks/tests/*.test.mjs
+node --test host/test/*.test.js tools/checks/tests/*.test.mjs
 ```
 
 Developer scenario fixtures can still run without the window:
 
 ```bash
-node --import ./host/resolve-layerfs.js host/run-demo.js tour --project <key>  # an existing project; plays in /tour_<n>/
+node host/run-demo.js tour --project <key>  # an existing project; plays in /tour_<n>/
 ```
 
 Drive the running app's host from a terminal (it writes

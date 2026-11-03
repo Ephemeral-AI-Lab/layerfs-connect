@@ -24,7 +24,7 @@ import type { MachineInfo, MachinesView } from '@shared/host-api'
 
 type Available = Extract<MachinesView, { available: true }>
 
-/** Columns: Machine, Kind, State, Size, Stores, Sandboxes, the opener. */
+/** Columns: Machine, Platform, State, Size, Stores, Sandboxes, the opener. */
 const COLS = '@min-[46rem]/machines:grid-cols-[minmax(0,1.15fr)_minmax(0,1.05fr)_minmax(0,1fr)_minmax(0,1.35fr)_3.75rem_5rem_1rem]'
 
 interface Props {
@@ -43,7 +43,7 @@ export function MachinesTable({ view, os, open, onOpen, act }: Props) {
     <Card index={2} className="@container/machines overflow-hidden" aria-label={t('Machines')}>
       <div role="row" className={cn('hidden gap-x-3 border-b px-4 py-2 text-[11px] font-medium text-faint @min-[46rem]/machines:grid', COLS)}>
         <span role="columnheader">{t('Machine')}</span>
-        <span role="columnheader">{t('Kind')}</span>
+        <span role="columnheader">{t('Platform')}</span>
         <span role="columnheader">{t('State')}</span>
         <span role="columnheader">{t('Size')}</span>
         <span role="columnheader" className="text-right">
@@ -294,7 +294,7 @@ function RemoveAction({ m, pending, run }: { m: MachineInfo; pending: string | n
           {held && (
             <span className="text-xs text-muted-foreground">
               {held.stores > 0
-                ? t(held.stores === 1 ? 'In use: holds 1 Store. Move it first.' : 'In use: holds {n} Stores. Move them first.', { n: held.stores })
+                ? t(held.stores === 1 ? 'In use: holds 1 Store. Pull it to native first.' : 'In use: holds {n} Stores. Pull them to native first.', { n: held.stores })
                 : t('In use: Sandboxes are running on it.')}
             </span>
           )}

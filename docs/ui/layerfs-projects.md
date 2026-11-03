@@ -1,13 +1,12 @@
 # Projects
 
-Every LayerFS project in Connect's home, one card each. Opens from: Projects in the sidebar's
-Workspace group. A card opens the project page.
+Every LayerFS project in Connect's home, one card each (LayerFS 2.0, #537 §7). Opens from: the
+Projects heading in the sidebar. A card opens the project page.
 Source: `src/renderer/src/components/projects/projects-home.tsx` (main file; others named in Regions).
 
-A project goes by its **key** (`projectKey`, LayerFS #506): its name, or `store/name` for a project
-in a Store that holds other projects. Selection, routing, every host call and the Chat project
-choice use the key; the screens show it with `projectLabel` (`name · store`) or as the name with the
-Store beside it.
+A project goes by its **key**, `<store>/<project>`: its data lives in that Store. Selection, routing,
+every host call and the Chat project choice use the key; the screens show the name with the Store
+beside it.
 
 ## Skeleton
 
@@ -18,14 +17,14 @@ Store beside it.
 +-----------------------------------------------------------------------------------------------+
   3 projects
 +-[2] ProjectCard -----------------------+  +----------------------------------------+
-| /\ shop                             -> |  | /\ api                              -> |
-| [] /Users/you/shop                     |  | [] Empty workspace                     |
+| /\ web                              -> |  | /\ api                              -> |
+| [] shop/web                            |  | [] pg/api                              |
 | +-[3] StoreLine ---------------------+ |  | +------------------------------------+ |
-| | [R2] team                [In sync] | |  | | [db] api              [Local only] | |
-| |      r2-main / team · 265 MB       | |  | |      Local only · 78.6 MB          | |
+| | [db] shop                          | |  | | [pg] pg                            | |
+| |      on dev-lima · 265 MB · busy   | |  | |      in its database · in use      | |
 | +------------------------------------+ |  | +------------------------------------+ |
 | -------------------------------------- |  | -------------------------------------- |
-| (Ready)                 Created 2 h ago|  | (Ready)                 Created 3 h ago|
+| (store.push · send)     Created 2 h ago|  | (In use)                Created 3 h ago|
 +----------------------------------------+  +----------------------------------------+
 ```
 
@@ -33,32 +32,44 @@ Store beside it.
 
 1. **Page header** (`PageHeader` in `ProjectsHome`): "Projects", "Your LayerFS workspaces.", the
    search box, Refresh and New project ([dialog-new-project.md](dialog-new-project.md)). Search
-   matches the name, the Store and the source folder; Esc clears it.
+   matches the name, the Store and the machine; Esc clears it.
 2. **Project cards** (`ProjectCard`, `projects/home/project-card.tsx`): a liquid-glass grid. Each
-   card shows the project's name, its source folder (or "Empty workspace"), its Store line, and in
-   the footer Ready / Not initialized and its age. The card opens the project page by key.
-3. **Store line** (`StoreLine`, `projects/store-facts.tsx`): the Store's `StoreIcon` (the SQLite or
-   PostgreSQL mark, or the linked provider's), its name, where it syncs (`remote / file`, "Local
-   only", or "on <connection>" for PostgreSQL) and its size, then its `SyncPill`. The facts come from
-   one cached `host.storage()` view shared by every card, reread on Storage events, ended sync jobs
-   and project changes. A LayerFS build without Stores shows "Local SQLite" and no pill.
+   card shows the project's name, its key, its Store line, and in the footer the Store's state chip
+   (an operation in flight shows its name and phase) and its age.
+3. **Store line** (`StoreLine`, `projects/store-facts.tsx`): the Store's mark (SQLite or PostgreSQL),
+   its name, then where it is ("on <machine>", or "in its database" for PostgreSQL), its size and its
+   state. The facts come from one cached `host.storage()` view shared by every card, read again on
+   Storage events, ended Storage jobs and project changes.
 
 ## Project page
 
-`projects/project-view.tsx`. The title is the project's name; beside it a `StoreBadge` (Store mark,
-name, sync state). The facts row keeps Last Commit, Branches, Commits and the Store's bytes on disk.
-Actions: Refresh, Play scenario (see [project-sessions.md](project-sessions.md)) and New chat.
-Tabs: History (with Files),
-Storage, Sandboxes, then Sessions with its count and, on a project with a scenario of its
-own, Script. Old `worktrees` / `work` tab hashes open Sandboxes, whose Workspace rows carry
-"Browse files" (the Files view on that Workspace's Branch).
+`projects/project-view.tsx`. The title is the project's name; beside it a `StoreBadge` (the Store's
+mark and name), which opens the Store's row on Storage. The facts line keeps the last Commit and the
+Store's bytes on disk. Actions: Refresh and New chat. Tabs: Live, Files, Storage, History, Sessions
+(with its count) and Sandboxes. Old `worktrees` / `work` tab hashes open Sandboxes.
 
-- **History** (`history-tab.tsx`): reads the project, then every Branch's Commits in one
-  `host.branchCommits(key, branches)` call; a reread asks only for the Branches whose head moved.
-- **Storage** (`project-storage.tsx`): the Store card's header is the Store's mark, "SQLite Store
-  <name>" or "PostgreSQL Store <name>", its `SyncPill` and its link chip (`remote / file` or "local
-  only"), a family-specific line, and "Shared with N other projects" for a shared Store. The facts
-  show Volume (SQLite) or Connection (PostgreSQL).
+- **Store banner** (`projects/store-banner.tsx`), above every tab:
+  - **busy**: "Store <store> is busy: <operation · phase>". Writes and new Sandboxes are refused
+    until it ends; the page updates when it does.
+  - **down**: "Store <store> is down: <machine> is not running", LayerFS's reason, and **Start
+    <machine>** (`machine.start`; nothing starts it otherwise).
+  - **unresolved**: the operation, "Its outcome was lost", and "see `layerfs store status <store>` ·
+    clear: `<clearing call>`".
+  - each shows LayerFS's refusal under it when a read was refused.
+- **Reads while the Store refuses calls.** When a push or pull holds the Store (`Busy`), its outcome
+  is unresolved (`Unresolved`) or its machine is stopped (`Unavailable`), the page still renders from
+  the home's records: the project, its Sandboxes and the Store's state. Branches and Commits wait.
+- **Storage** ([project-storage.md](project-storage.md)): the Store card; its Machine fact opens
+  the machine's row on Compute.
+- **Sandboxes** ([project-sandboxes.md](project-sandboxes.md)).
+
+## Cross-links
+
+- Store badge → the Store's row on Storage.
+- Storage's machine heading, a Sandbox tile's machine, the project's Machine fact → the machine's row
+  on Compute.
+- Compute's Store rows → the Store's row on Storage and each project's page.
+- Compute's Sandboxes table: the project → its Sandboxes tab; the machine → its row.
 
 ## States
 
@@ -66,12 +77,15 @@ own, Script. Old `worktrees` / `work` tab hashes open Sandboxes, whose Workspace
 - **Error**: `LoadError` ("the projects") with Retry.
 - **Empty**: "No projects yet" with Create project.
 - **No match**: "No projects match" with Clear search; the count line reads "1 of 3 projects".
-- **Storage view unread or missing**: the Store line shows what the project summary carries
-  (`store`, `kind`, `storeSync`, `storeProviders`); size is left out until the view answers.
+- **Storage view unread or missing**: the Store line shows what the project summary carries (`store`,
+  `kind`, `machine`, `storeState`, `storeOp`); size is left out until the view answers.
 
 ## Delete
 
-The sidebar's x opens `DeleteProjectDialog` (`projects/delete-project-dialog.tsx`). It names the
-project and, for a project in a Store, says it is deleted from that Store and shows the Store line.
-When the Store holds other projects it says they and the Store stay, and that a linked copy keeps
-the project until the Store's next push. Deleting calls `host.removeProject(key)`.
+`DeleteProjectDialog` (`projects/delete-project-dialog.tsx`) opens from the project tree's x, which
+is off for now ([sidebar.md](sidebar.md)). It names the project and its Store, and when the Store
+holds other projects it says they and the Store stay. It lists the project's Sandboxes and offers
+**Close N Sandboxes and delete** (`project.remove` is refused `InUse` while any Sandbox record
+exists; the refusal lists them). After a refusal, **Force close and delete** closes them with `force`
+and lists Workspaces of unknown state. A PostgreSQL project cannot be removed by LayerFS 2.0
+(`Unsupported`): the dialog says to disconnect the Store on Storage instead.

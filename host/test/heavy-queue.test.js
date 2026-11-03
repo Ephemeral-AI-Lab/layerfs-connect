@@ -11,7 +11,8 @@ import { after, test } from 'node:test'
 import { HEAVY_AT_ONCE, isHeavy, RunManager, WAITING_PHASE } from '../runs/index.js'
 
 const root = mkdtempSync(join(tmpdir(), 'lfc-heavy-test-'))
-const spec = { state: root, home: join(root, 'home'), runs: join(root, 'runs'), image: 'sha256:' + '0'.repeat(64), bundle: null, daemon: '/x/layerfs-daemon', docker: '/var/run/docker.sock', prefix: 'lfc-test-', worker: false, think: false }
+// the 2.0 spec (config.js resolveSpec): no image, docker socket, prefix or worker; think off for speed
+const spec = { state: root, home: join(root, 'home'), runs: join(root, 'runs'), cli: null, daemon: '/x/layerfs-daemon', think: false }
 mkdirSync(spec.runs, { recursive: true })
 mkdirSync(join(root, 'scenarios'), { recursive: true })
 after(() => rmSync(root, { recursive: true, force: true }))

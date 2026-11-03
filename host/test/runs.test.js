@@ -14,7 +14,8 @@ import { Launch, Run } from '../runs/run.js'
 
 const root = mkdtempSync(join(tmpdir(), 'lfc-runs-test-'))
 after(() => rmSync(root, { recursive: true, force: true }))
-const spec = { state: root, home: join(root, 'home'), runs: join(root, 'runs'), image: 'sha256:' + '0'.repeat(64), bundle: null, daemon: '/x/layerfs-daemon', docker: '/var/run/docker.sock', prefix: 'lfc-test-', worker: false, think: false }
+// the 2.0 spec (config.js resolveSpec): no image, docker socket, prefix or worker; think off for speed
+const spec = { state: root, home: join(root, 'home'), runs: join(root, 'runs'), cli: null, daemon: '/x/layerfs-daemon', think: false }
 mkdirSync(spec.runs, { recursive: true })
 
 /** A trace line for the current step, as the SDK writes it. */
@@ -33,7 +34,7 @@ async function play(agents, { tags = ['cli', 'multi-agent'], stopAfter = null } 
   const run = new Run({
     spec,
     demo: { id, folder, scenario },
-    record: { id: `${id}-run`, demo: id, project: `${id}-1`, state: 'starting', started: Date.now() },
+    record: { id: `${id}-run`, demo: id, project: `demos/${id}-1`, state: 'starting', started: Date.now() },
     emit: (e) => events.push(e),
     loadSeed: async () => null,
     loadChecks: async () => null,
@@ -68,7 +69,7 @@ test('a placeholder with no value fails the step', async () => {
 test('a run still playing at a restart reads as failed (interrupted)', () => {
   const dir = join(spec.runs, 'old-run')
   mkdirSync(dir, { recursive: true })
-  writeFileSync(join(dir, 'run.json'), JSON.stringify({ id: 'old-run', demo: 'tour', project: 'tour-9', state: 'running', started: 1, ended: null, error: null, done: 1, of: 3, phase: null, agents: [{ name: 'root', parent: null, state: 'running', done: 1, of: 3 }], steps: [{ agent: 'root', index: 1, state: 'running', started: 2, ended: null, calls: [], checks: [] }], messages: [], captured: {}, checks: [] }))
+  writeFileSync(join(dir, 'run.json'), JSON.stringify({ id: 'old-run', demo: 'tour', project: 'demos/tour-9', state: 'running', started: 1, ended: null, error: null, done: 1, of: 3, phase: null, agents: [{ name: 'root', parent: null, state: 'running', done: 1, of: 3 }], steps: [{ agent: 'root', index: 1, state: 'running', started: 2, ended: null, calls: [], checks: [] }], messages: [], captured: {}, checks: [] }))
   const runs = new RunManager({ spec, scenarios: join(root, 'none') })
   const r = runs.run('old-run')
   assert.equal(r.state, 'failed')
@@ -90,7 +91,7 @@ function historyFixture(records) {
   for (const record of records) {
     const dir = join(localSpec.runs, record.id)
     mkdirSync(dir, { recursive: true })
-    writeFileSync(join(dir, 'run.json'), JSON.stringify({ demo: 'tour', project: 'tour', state: 'passed', started: 1, ended: 2, agents: [], ...record }))
+    writeFileSync(join(dir, 'run.json'), JSON.stringify({ demo: 'tour', project: 'demos/tour', state: 'passed', started: 1, ended: 2, agents: [], ...record }))
   }
   const manager = new RunManager({ spec: localSpec, scenarios, beforeRemove: () => assert.fail('deleting history must not remove a project') })
   const events = []
@@ -99,7 +100,7 @@ function historyFixture(records) {
 }
 
 test('removing saved history deletes only that run and stays removed after close and restart', async () => {
-  const f = historyFixture([{ id: 'older', started: 1 }, { id: 'latest', started: 3 }, { id: 'other', demo: 'other', project: 'other' }])
+  const f = historyFixture([{ id: 'older', started: 1 }, { id: 'latest', started: 3 }, { id: 'other', demo: 'other', project: 'demos/other' }])
   const project = join(f.spec.home, 'projects', 'tour')
   mkdirSync(project, { recursive: true })
   writeFileSync(join(project, 'sentinel'), 'keep the project, volume and workspace')
@@ -144,7 +145,7 @@ test('starting and running history cannot be deleted, including records owned by
 test('removing a live finished run waits for cleanup and prevents delayed writes or events from reviving it', async () => {
   const f = historyFixture([])
   const scenario = compileScenario(f.raw, { name: 'tour', folder: f.folder })
-  const run = new Run({ spec: f.spec, demo: { id: 'tour', folder: f.folder, scenario }, record: { id: 'live-done', demo: 'tour', project: 'tour', state: 'running', started: Date.now() }, emit: (event) => f.manager.emit('event', event), loadSeed: async () => null, loadChecks: async () => null })
+  const run = new Run({ spec: f.spec, demo: { id: 'tour', folder: f.folder, scenario }, record: { id: 'live-done', demo: 'tour', project: 'demos/tour', state: 'running', started: Date.now() }, emit: (event) => f.manager.emit('event', event), loadSeed: async () => null, loadChecks: async () => null })
   f.manager.live.set(run.id, run)
   let finishCleanup
   run.closeSandboxes = async () => {
@@ -236,7 +237,7 @@ async function playLaunch(sessions) {
   const runs = []
   const events = []
   scenario.sessions.forEach((s, i) => {
-    const record = { id: `${launch.id}-${s.name}`, demo: id, project: `${id}-1`, replay: i + 1, session: s.name, launch: launch.id, state: 'starting', started }
+    const record = { id: `${launch.id}-${s.name}`, demo: id, project: `demos/${id}-1`, replay: i + 1, session: s.name, launch: launch.id, state: 'starting', started }
     runs.push(new Run({ spec, demo: { id, folder, scenario: s.scenario }, record, emit: (e) => events.push(e), loadSeed: async () => null, loadChecks: async () => null, launch, after: runs[0] ?? null }))
   })
   let inits = 0

@@ -12,11 +12,12 @@ import { tabsZh } from './tabs'
 import { traceZh } from './trace'
 import { preferencesZh } from './preferences'
 import { computeZh } from './compute'
+import { layerfs2Zh } from './layerfs2'
 
 export type Locale = 'zh-CN' | 'en'
 export type TranslationValues = Record<string, string | number>
 const STORAGE_KEY = 'connect.language'
-const chinese = { ...computeZh, ...preferencesZh, ...resourcesZh, ...storageZh, ...projectsZh, ...signinZh, ...liveZh, ...scenariosZh, ...traceZh, ...tabsZh, ...settingsZh, ...chatZh, ...commonZh }
+const chinese = { ...layerfs2Zh, ...computeZh, ...preferencesZh, ...resourcesZh, ...storageZh, ...projectsZh, ...signinZh, ...liveZh, ...scenariosZh, ...traceZh, ...tabsZh, ...settingsZh, ...chatZh, ...commonZh }
 const english = Object.fromEntries(Object.entries(chinese).map(([key, value]) => [value, key]))
 const listeners = new Set<() => void>()
 const systemLocale = (): Locale => navigator.language.toLowerCase().startsWith('zh') ? 'zh-CN' : 'en'

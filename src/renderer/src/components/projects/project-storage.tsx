@@ -6,7 +6,7 @@ import { t as tr, useI18n } from '@/i18n'
 // Commit, and what each Commit added, by kind. Sandboxes: the Sandboxes open
 // on it, as tiles.
 import type { ProjectState, SandboxInfo, StoreStats } from '@shared/host-api'
-import { type CSSProperties, useState } from 'react'
+import { type CSSProperties, useEffect, useState } from 'react'
 import { LoaderCircle, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -211,8 +211,8 @@ function StoreCard({ s, store }: { s: ProjectState; store: StoreFacts }) {
           {store.shared && (
             <p className="mt-1 text-xs text-muted-foreground">
               {store.others.length > 0
-                ? tr(store.others.length === 1 ? "Shared with 1 other project: a move or backup carries it too." : "Shared with {count} other projects: a move or backup carries them too.", { count: store.others.length })
-                : tr("Shared with other projects: a move or backup carries them too.")}
+                ? tr(store.others.length === 1 ? "Shared with 1 other project: a push, pull or backup carries it too." : "Shared with {count} other projects: a push, pull or backup carries them too.", { count: store.others.length })
+                : tr("Shared with other projects: a push, pull or backup carries them too.")}
             </p>
           )}
         </div>
@@ -271,6 +271,13 @@ function NewSandbox({ project, state, taken, onMade }: { project: string; state:
   const machines = useStorageView()?.machines ?? []
   const pgReason = (m: (typeof machines)[number]) => (m.supports?.postgresql_sandbox ? null : (m.supports?.reason ?? tr('This machine does not run PostgreSQL Sandboxes')))
   const chosen = machines.find((m) => m.name === machine)
+  // native by default (§7), else the first machine that runs PostgreSQL Sandboxes
+  useEffect(() => {
+    if (!postgresql || !chosen || !pgReason(chosen)) return
+    const first = machines.find((m) => !pgReason(m))
+    if (first) setMachine(first.name)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [postgresql, machines.map((m) => `${m.name}:${m.supports?.postgresql_sandbox}`).join(',')])
   const make = async () => {
     setBusy(true)
     setError(null)

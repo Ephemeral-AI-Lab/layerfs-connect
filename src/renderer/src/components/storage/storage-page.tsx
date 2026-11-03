@@ -238,7 +238,7 @@ export function StoragePage({ catalog, onOpenProject, onAddProject, focus }: Sto
                 <header className="flex items-center gap-2 border-b border-foreground/[0.06] px-5 py-3">
                   <Database aria-hidden="true" className="size-4 text-(--icon-accent)" />
                   <h2 className="text-sm font-semibold">{t('PostgreSQL Stores')}</h2>
-                  <span className="ml-auto text-xs text-muted-foreground">{t('Connected databases: they never move')}</span>
+                  <span className="ml-auto text-xs text-muted-foreground">{t('Connected databases: never pushed or pulled')}</span>
                 </header>
                 <ul className="divide-y divide-foreground/[0.05]">
                   {postgresql.map((s) => (

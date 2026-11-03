@@ -206,19 +206,21 @@ run the native `layerfs` command (the linked checkout's `target/debug/layerfs`, 
   `layerfs import-env`, since `machine.update` takes no daemon).
 - Agents' shells get `LAYERFS_HOME`, the trace settings (`LAYERFS_TRACE*`) and the project key in
   `LAYERFS_CONNECT_PROJECT`; scoped runs add `LAYERFS_CONNECT_SCOPE` and `LAYERFS_CONNECT_MACHINE`.
-- There is no worker to start: machines start on the first call that needs them. Electron starts
-  the host with `UV_THREADPOOL_SIZE=16` (each call holds a libuv thread).
+- There is no worker to start, and machine power is manual (#535 D11): a machine runs between
+  `machine.start` and `machine.stop`, which only Compute's and the pages' **Start**/**Stop** buttons
+  call. No read starts a machine. Electron starts the host with `UV_THREADPOOL_SIZE=16` (each call
+  holds a libuv thread).
+- Sandbox images: a new machine gets the LayerFS bundle's image unless the form names an archive or
+  digest. Connect pins no image digest.
 
 ## Layout
 
 ```
 host/
-  main.js              entry: opens the runtime, starts the worker, serves HTTP; prints one ready line
+  main.js              entry: makes the LayerFS client, serves HTTP; prints one ready line
   server.js            routes and the event stream
   projects.js          real project reads (state, commits, files, Sandboxes), creation and removal
-  storage.js           Stores, remotes, PostgreSQL connections and sync jobs (layerfs#506, #509)
-  storage-sync.js      the sync state of each Store's link (pure)
-  storage-checks.js    cached remote checks and sync job sampling
+  storage.js           Stores, buckets, PostgreSQL Stores, push/pull/move/backup/restore jobs, doctor
   agents/              interactive Pi sessions, models, bash and subagent extension
     models.js          provider connections and model selection on Pi's ModelRuntime
     model-login.js     subscription sign-in (ChatGPT, Claude, …) through Pi's OAuth flows
@@ -257,35 +259,50 @@ live host on a state folder also writes `<state>/host.json` (owner-only:
 exit. A run's record names the host playing it (`host`: its pid), so a second
 host on the same state leaves that run alone. Logs go to stderr. It exits
 when stdin closes (the Electron parent died) or on SIGTERM, ending its runs
-(and closing their Sandboxes) and the runtime first, within 30 s. It does not stop the worker on exit.
+(and closing their Sandboxes) first, within 30 s. It stops no machine on exit. The Node SDK's
+client has no close, so the host cannot release its client's leases on Stores before it exits (an
+open item: `docs/layerfs-2.0-integration.md` §9 Q16).
 
 ## HTTP API
 
 Every route needs `Authorization: Bearer <token>`, except `/api/events`,
 which takes `?token=` (EventSource cannot set headers). Answers are JSON;
-errors are `{ code, message }` with a 4xx/5xx status. CORS allows any origin
+errors are `{ code, message, detail?, conversion? }` with a 4xx/5xx status:
+the SDK's refusal as it came (its message names any status or clearing call;
+`detail` holds `entity`, `phase`, `op` and `related`). `Busy`, `Unresolved`,
+`InUse` and Connect's own `ConnectBusy` (one job per Store on this host, a
+project being deleted, the scenario limits) answer 409, `Capacity` 507,
+`Unavailable` 502, `Unsupported` 501, `Unknown` 500. `conversion: true` marks
+the layout 2 home's conversion refusal (`InUse` whose `related` items carry
+`why`), on which the app shows its "Upgrading this home" screen. CORS allows any origin
 (the dev renderer is on localhost:5173, the packaged one on file://).
 
 | Route | Answer |
 | --- | --- |
-| `GET /api/status` | `HostStatus`, with `placement`, the runtime's `sweep` and `platforms` (LayerFS's `runtime.status().platforms`, layerfs#529; absent on an older LayerFS) |
-| `POST /api/worker/start` | `HostStatus` once the worker answers. On a VM home it starts every project's VM whose worker does not answer |
+| `GET /api/status` | `HostStatus`: platform, linked LayerFS version, settings (state, home, CLI), the native daemon record, each machine's name, platform and state, the Store count. Starts nothing |
 | `GET /api/machines` | `MachinesView` (see "Compute"); `{ available: false, layerfs, reason }` on a LayerFS with no machines |
-| `POST /api/machines` | a VM `{ name, platform, cpus?, memory?, disk?, image?, os_image?, host?, nested? }`, or an ssh host `{ name, platform: 'ssh', host, user?, port?, identity?, root? }` |
+| `GET /api/platforms` | `machine.platforms()`: each platform on this host, how it is added, backend, kernel route, sqlite and PostgreSQL support, readiness, what is missing, its version, its declared options |
+| `POST /api/machines` | a VM `{ name, platform, cpus?, memory?, disk?, image?, host?, nested? }`, or an ssh host `{ name, platform: 'ssh', host, user?, port?, identity?, known_hosts?, root? }`; only the options the platform declares, else `InvalidInput` naming them |
+| `POST /api/machines/:name/start` | `machine.start`: waits until its worker answers |
+| `POST /api/machines/:name/stop` | `machine.stop`: `InUse` (409) while Sandboxes run on it, `related` naming them |
 | `DELETE /api/machines/:name` | removes a VM or disconnects an ssh host; `InUse` (409) while it holds Stores or running Sandboxes |
 | `POST /api/machines/:name/update` | a built-in's `{ image, docker, wsl }` or a VM's `{ cpus, memory }` |
-| `POST /api/machines/:name/stores` | `{ store }`: moves that sqlite Store to this machine |
-| `GET /api/projects` | `ProjectSummary[]` |
-| `POST /api/projects` | `{ name, source?, store? }` starts a real Init and returns `ProjectInitJob`; omit `source` for an empty project, or provide an existing absolute folder to import. With `store` the project goes into that existing Store (layerfs#506), else into a new SQLite Store of its own. Existing names return 409 without changing the existing project. |
-| `GET /api/project-inits/:id` | `ProjectInitJob`: the runtime's `scan`, `volume`, `import`, `done` or `failed` step, live counts, terminal error, and `ProjectSummary` on success. Unknown or expired jobs return 404. Polling never restarts a job. |
-| `GET /api/projects/:name` | `ProjectState` from the Store alone (branches, layers, Sandboxes from their records and containers with no Workspaces, last Commit, Commit count, Store file and size, Store totals and each Commit's added bytes); asks no Sandbox daemon |
-| `POST /api/projects/:name/sandboxes` | `{ platform? }` → `{ sandbox, image, platform }`: `sandbox.create({ platform })` (layerfs#529); left out, the home's default. A platform the home does not allow is refused `Unsupported` (501), an unknown one `InvalidInput` (400), before anything is made |
-| `GET /api/projects/:name/sandboxes` | `SandboxInfo[]` with each running Sandbox's mounted Workspaces (`sandbox.list_workspaces`, each Sandbox on its own with a 4 s limit); one that did not answer has `reach: 'busy'` (left alone 10 s), one that refused `reach: 'unreachable'`, both with `detail` |
+| `POST /api/machines/:name/stores` | `{ store }`: puts that sqlite Store on this machine as a Storage job: a push from native, a pull to native, or a pull then a push between two machines |
+| `GET /api/projects` | `ProjectSummary[]` (each with its Store's `state` and `op`) |
+| `POST /api/projects` | `{ name, store, source? }` starts a real Init into the existing Store `store` (a sqlite Store on any machine, through its worker, or a PostgreSQL Store) and returns `ProjectInitJob`; omit `source` for an empty project, or give an existing absolute folder to import. A Store that is down or busy refuses it |
+| `GET /api/project-inits/:id` | `ProjectInitJob`: Init's `scan`, `files`, `tree`, `publish`, `seal`, then `done` or `failed`, with live counts, a terminal error, and `ProjectSummary` on success. Unknown or expired jobs return 404. Polling never restarts a job. |
+| `GET /api/projects/:name` | `ProjectState` from the Store alone (Branches, Sandbox records, last Commit, Commit count, Store file and size); asks no Sandbox daemon. While the Store refuses Store calls (`Busy`, `Unresolved`, or `Unavailable` for a stopped machine) it answers from the home's records: the project, its Sandboxes, the Store's `storeState`, `storeOp`, `storeDown` and the `refusal`, with no Branches |
+| `POST /api/projects/:name/sandboxes` | `{ name, image?, machine? }`: `sandbox.create`. A sqlite project's Sandbox goes on its Store's machine; a PostgreSQL project's on `machine` (default native), which must have `supports.postgresql_sandbox` |
+| `GET /api/projects/:name/sandboxes` | `SandboxInfo[]` (`state`, `op`, `backend`, `route`) with each one's Workspaces (`sandbox.get`; each with `name` and `ws`); a refused read keeps the SDK's refusal in `refusal` |
+| `GET /api/sandboxes/:name` | one Sandbox with its Workspaces (`sandbox.get`) |
+| `POST /api/sandboxes/:name/workspaces` | `{ branch, fork?, name? }`: `workspace.mount` of a side Branch (main is refused, owner D14); `fork: true` forks it from main first; `name` names the Workspace (`<sandbox>:<name>`) |
+| `DELETE /api/sandboxes/:name?force=1` | `sandbox.close`; with `force`, it answers the Workspaces of unknown state |
+| `DELETE /api/workspaces/:ws?discard=1` | `workspace.unmount`; refused while it has changes unless discarded |
 | `GET /api/projects/:name/commits?branch=&limit=` | `CommitInfo[]`, newest first |
 | `GET /api/projects/:name/branch-commits?branch=a&branch=b` | `{ [branch]: CommitInfo[] }`: several Branches' Commits in one call; main's are `[]`, a Branch gone meanwhile is left out |
 | `GET /api/projects/:name/fs?branch=&path=` | `FsEntry[]` of one folder |
 | `GET /api/projects/:name/file?branch=&path=` | `{ path, size, binary, text }` (text null when binary or over 1 MiB) |
-| `DELETE /api/projects/:name` | `{ removed: true }` (`runtime.project.delete`, confirm by name; `project.remove` on a LayerFS build from before layerfs#506). Refused 409 `Busy` while an agent session on the project works |
+| `DELETE /api/projects/:name` | `{ removed: true }` (`project.remove`; `InUse` while any Sandbox record exists, `Unsupported` for a PostgreSQL project). Refused 409 `ConnectBusy` while an agent session on the project works |
 | `GET /api/demos` | `DemoSummary[]` |
 | `GET /api/demos/:id` | `DemoDetail` (every agent's steps, parsed) |
 | `POST /api/demos/:id/runs` | `RunSummary`: scenario `id` plays on project `project` (body `{ project }`, a project key: `store/name` in a shared Store; 400 without it, 404 when it is not there), in a folder `/<id>_<n>/` of its own (see "Where a run plays"); other runs and Chat sessions there go on |
@@ -295,40 +312,48 @@ errors are `{ code, message }` with a 4xx/5xx status. CORS allows any origin
 | `GET /api/runs/:id/trace?agent=&before=&limit=` | `TracePage`: one agent's Trace rows (runs/trajectory.js), newest last; `limit` (default 400) rows before `before` (default the end). A replay's model side comes from the scenario's script (a live session an earlier build saved: pi's log) |
 | `POST /api/runs/:id/stop` | `RunSummary`: the run stops (a queued one is dropped) |
 | `DELETE /api/runs/:id` | `{ id }`; removes a finished session's saved record and execution logs, keeping its LayerFS project; 409 while running |
-| `GET /api/events?token=` | `text/event-stream`, one `data: <HostEvent JSON>` per event: the runs' events, interactive chat snapshots, and from `storage.js` `{ type: 'sync', job }` and `{ type: 'storage' }` (below) |
+| `GET /api/events?token=` | `text/event-stream`, one `data: <HostEvent JSON>` per event: the runs' events, interactive chat snapshots, and from `storage.js` `{ type: 'storage-job', job }` and `{ type: 'storage' }` (below) |
 
-Since layerfs#506 a Store holds many projects and a project name may be in
-several Stores. Every `/api/projects/:name…` route above takes `store=` to
-name the project's Store; without it, a name in several Stores is refused
-400 `AmbiguousProject`. `ProjectSummary` carries `store`, `kind`, `shared`
-and `key` (`store/name` for a project in a shared Store, else the name), and
-`storeSync`, `storeProviders` and `connection` from a Storage view at most
-15 s old. The renderer's client (`src/renderer/src/host/client.ts`) takes a
-key and splits it into the route and `store=`; agent sessions name their
-project by key. A PostgreSQL Store's project is read with its connection's
-URL, which `storage.js` gives `projects.js`; `config.js` `notePostgresql`
-keeps it in this process only, and `deploymentEnv` gives such a project's
-clients `LAYERFS_STORE_POSTGRESQL` and no volume.
+A Store holds many projects, and every project goes by its key
+`<store>/<project>`; the `/api/projects/:name…` routes above take that key as
+one encoded segment. `ProjectSummary` carries `key`, `store`, `kind`, the
+Store's `machine`, and its `storeState` and `storeOp`. A PostgreSQL Store is
+read through the home's record (`store.connect` with a password reference);
+Connect holds no connection URL with a password and sets no per-project
+environment for it.
 
 ### Compute ([`machines.js`](machines.js))
 
-- `GET /api/machines`: `machine.list()` (machines, `can_create`), `store.list()`, `sandbox.list()`
-  and each non-native machine's `machine.status()` (it starts none).
-- `POST /api/machines` creates a VM (`machine.create`) or connects an ssh host (`machine.connect`);
-  `DELETE /api/machines/<name>` removes or disconnects it (`InUse` while it holds Stores or
-  Sandboxes); `POST /api/machines/<name>/update` sets a built-in's image or a VM's size.
-- `POST /api/machines/<machine>/stores { store }`: **Move to…**, a job in Storage's table.
+- `GET /api/machines`: `machine.list()` (each machine's `state` and `supports`, as the SDK gives
+  them), `machine.platforms()`, `store.list()` and `sandbox.list()` (items with `state` and `op`),
+  and `machine.status()` of the machines that run or hold or lost an operation (free disk, `op`).
+  None of it starts a machine. `GET /api/platforms` answers `machine.platforms()` alone.
+- `POST /api/machines` creates a VM (`machine.create`) or connects an ssh host (`machine.connect`),
+  sending only the options the platform declares; `DELETE /api/machines/<name>` removes or
+  disconnects it (`InUse` while it holds Stores or Sandboxes); `POST /api/machines/<name>/update`
+  sets a built-in's image or a VM's size; `POST /api/machines/<name>/start|stop` power it.
+- `POST /api/machines/<machine>/stores { store }`: puts the Store there (push, pull, or pull then
+  push), a job in Storage's table.
 
 ### Storage ([`storage.js`](storage.js); `docs/ui/layerfs-storage.md`)
 
-- `GET /api/storage`: Stores by machine (`store.list`, `store.status` each), buckets with their
-  last listing, and this host's jobs. `POST /api/storage/check { bucket? }` lists buckets again.
+- `GET /api/storage`: Stores by machine (`store.list` with each Store's `state` and `op`,
+  `store.status` for size), the machines (with `state` and `supports`), buckets with their last
+  listing, and this host's jobs. `POST /api/storage/check { bucket? }` lists buckets again.
 - `POST /api/stores { name }`, `DELETE /api/stores/<name>?confirm=<name>`,
   `POST /api/stores/postgresql { name, url, password, synchronousCommit? }`,
   `POST /api/stores/<name>/disconnect`.
-- `POST /api/stores/<name>/move { machine }`, `POST /api/stores/<name>/backup { bucket, file? }`,
+- `POST /api/stores/<name>/push { machine }` (`store.push`: native → a machine whose
+  `supports.sqlite` is true), `POST /api/stores/<name>/pull` (`store.pull`: back to native),
+  `POST /api/stores/<name>/move { machine }` (between two machines: `store.pull` then `store.push`,
+  two operations in one job, `half` naming the one running; if the push half fails the Store is on
+  native and the error carries `note: 'pulled'`), `POST /api/stores/<name>/backup { bucket, file? }`,
   `POST /api/buckets/<bucket>/restore { store, file? }` (installs on native): jobs, answered at
-  once, followed on `storage-job` events and `GET /api/storage-jobs/<id>`.
+  once, followed on `storage-job` events and `GET /api/storage-jobs/<id>`. A push or pull job's
+  `phase` is LayerFS's: `check`, `snapshot`, `send` (with `done`/`total` bytes), `verify`,
+  `install`, `record`, `retire`. One job per Store on this host; another is `ConnectBusy`.
+- `GET /api/doctor`: `layerfs.doctor()` on the home: `{ ok, findings: [{ severity, entity, message,
+  fix }] }`. Report-only; it starts no machine and changes nothing.
 - `POST /api/buckets { name, url, key, region? }`, `DELETE /api/buckets/<name>`,
   `GET /api/buckets/<name>/files` (`backup.list(bucket)`).
 - `password` and `key` are references (`env:LAYERFS_…`, `file:/abs`); a URL holding a password is
@@ -337,9 +362,12 @@ clients `LAYERFS_STORE_POSTGRESQL` and no volume.
 ### Projects and Sandboxes
 
 `/api/projects/<key>` takes the key `<store>/<project>` as one encoded segment: state, commits,
-branch-commits, fs, file, sandboxes (`POST { name, image?, machine? }`), close-sandboxes, DELETE.
-`DELETE /api/sandboxes/<name>?force=1` closes a Sandbox. `GET /api/project-inits[/<id>]`: this
-host's Init jobs.
+branch-commits, fs, file, sandboxes (`POST { name, image?, machine? }`; `machine` for PostgreSQL
+projects only, any machine whose `supports.postgresql_sandbox` is true), close-sandboxes, DELETE.
+`GET /api/sandboxes/<name>` reads one Sandbox; `POST /api/sandboxes/<name>/workspaces { branch,
+fork?, name? }` mounts a named Workspace; `DELETE /api/sandboxes/<name>?force=1` closes a Sandbox;
+`DELETE /api/workspaces/<ws>?discard=1` unmounts one. Chat Workspaces are mounted with a name from
+the chat's Branch. `GET /api/project-inits[/<id>]`: this host's Init jobs.
 
 ## The engine (`runs/`)
 
@@ -373,9 +401,8 @@ plays the root agent. A scenario of several sessions
 run.js): the first sets up the folder, the others wait for it, all play in
 it at once, a cut-short one stops the others, the scope's Sandboxes are
 closed once, and the folder lands once every session passed. A project of a
-PostgreSQL Store plays too: `config.js` `notePostgresql` notes its
-connection's URL in this process for the run's clients, bash calls and
-Sandboxes.
+PostgreSQL Store plays too; its runs place nothing. A sqlite project's run on
+another machine pulls its Store to native, then pushes it there (`placeRun`).
 
 ### Where a run plays
 
@@ -404,8 +431,8 @@ Sandboxes.
   first input may be absent (on a trunk there is nothing to merge).
   `final.tree` hashes `/<run>/` on the last trunk, and `final.closed` looks
   at the run's Sandboxes only. Cleanup (`closeRunSandboxes`) closes only
-  those too; one whose daemon does not answer within 30 s is stopped as a
-  container (`sandboxContainer`: `<prefix>[<store>.]<project>-<n>`).
+  those too, each call bounded to 30 s; one that does not close is closed
+  with `force`, and the Workspaces of unknown state it names are logged.
 - **Landing on main.** When the checks pass, the last trunk joins main, one
   run at a time per project (`landOnMain`): a Branch `<run>.land` from the
   trunk with main's `/.lww` put back, merged with main into `<run>.landed`,

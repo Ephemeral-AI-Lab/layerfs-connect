@@ -1,7 +1,7 @@
 // The host's HTTP API (README.md, "HTTP API"): routes, the bearer token,
 // CORS and the event stream. It holds no LayerFS state of its own: project
-// routes go to `projects` (projects.js), Store, remote, PostgreSQL and sync
-// job routes to `storage` (storage.js), agent routes to the AgentManager
+// routes go to `projects` (projects.js), Store, bucket, PostgreSQL, push,
+// pull, backup and restore routes to `storage` (storage.js), agent routes to the AgentManager
 // (agents/routes.js), and demo and run routes to `runs` (the RunManager of
 // runs/), which may be missing; then those routes answer 503 with the reason
 // it did not load.
@@ -98,7 +98,7 @@ export function errorAnswer(error) {
  * @param {() => object | null} deps.runs the RunManager, null while it is missing
  * @param {() => object | null} [deps.agents] the interactive Pi AgentManager
  * @param {() => string | null} [deps.runsError] why the RunManager is missing
- * @param {object} [deps.storage] storage.js's Storage: Stores, remotes, publish/push/pull/send/load/unlink, PostgreSQL (absent: those routes 404)
+ * @param {object} [deps.storage] storage.js's Storage: Stores, buckets, push/pull/move, backup/restore, PostgreSQL, doctor (absent: those routes 404)
  * @param {object} [deps.machines] machines.js's Machines: Compute's machines (absent: those routes 404)
  * @param {number} [deps.heartbeatMs]
  * @param {(line: string) => void} [deps.log]

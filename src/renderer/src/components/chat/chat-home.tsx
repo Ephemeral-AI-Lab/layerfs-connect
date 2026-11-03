@@ -595,7 +595,7 @@ export function ChatHome({ projects, initialProject, initialSession, startNew, o
     ? {
         id: 'scenario',
         label: t("Play scenario"),
-        description: t("A new chat plays a scenario’s script here, in a folder of its own. Add -machine <name> to run its Sandboxes on another machine (the project’s Store moves there)"),
+        description: t("A new chat plays a scenario’s script here, in a folder of its own. Add -machine <name> to run its Sandboxes on another machine (the project’s Store is pushed there)"),
         onSelect: () => {},
         options: [
           ...(playable.length > 1 ? [{ id: 'all', label: t("All scenarios"), description: t("{count} at once, each in a chat and folder of its own", { count: playable.length }) }] : []),

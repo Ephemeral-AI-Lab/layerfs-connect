@@ -1,19 +1,20 @@
 # Project: Storage
 
-The project's Store told as a story: what the history costs on disk, how it shrinks to that, how both grow, and what each Commit added. Opens from: the Storage tab of a project page (a project's name in the sidebar, or its card on the LayerFS page).
-Source: `src/renderer/src/components/projects/project-storage.tsx` (`ProjectStorage`; others named in Regions).
+The project's Store told as a story: which Store holds it and where, what the history costs on disk, how it shrinks to that, how both grow, and what each Commit added. Opens from: the Storage tab of a project page (a project's name in the sidebar, or its card on the Projects page).
+Source: `src/renderer/src/components/projects/project-storage.tsx` (`ProjectStorageContent`, `StoreCard`; others named in Regions).
 
 ## Skeleton
 
 ```text
 +-[1] Tab row -------------------------------------------------------------------------------------+
-| History   Storage   Sandboxes                                  |  Sessions 28   [ > Replay | v ] |
-|                             =======                                                              |
+| Live   Files   Storage   History   Sessions 28   Sandboxes                                        |
+|                =======                                                                           |
 +--------------------------------------------------------------------------------------------------+
      +-[2] StoreCard -------------------------------------------------------------------------+
-     | [=] Local SQLite Store                                                                 |
-     |     Every Commit, Branch and Layer of playground lives in one SQLite file in its       |
-     |     Docker volume; each new session starts it again from the demo's fixture.           |
+     | [=] SQLite Store shop   (on dev-lima)                                                  |
+     |     Every Commit, Branch and Layer of web lives in this Store's one SQLite file, on    |
+     |     dev-lima.                                                                          |
+     |     Shared with 1 other project: ...                                                   |
      |                                                                                        |
      | [3] ON DISK                                                                  .-----.   |
      |     78.6 MB  for 2.0 GB of history  (25x smaller)                            ( 96% )   |
@@ -46,26 +47,25 @@ Source: `src/renderer/src/components/projects/project-storage.tsx` (`ProjectStor
      | _______________....~~~~~~~'__________       # fs write           6.1 MB     50 Commits |
      |                                             # merge              4.5 MB     12 Commits |
      |----------------------------------------------------------------------------------------|
-     | [7] CREATED             VOLUME                                                         |
-     |     Oct 27, 08:01       <volume>                                                       |
-     |     STORE FILE                                                                         |
-     |     /var/lib/docker/volumes/<volume>/_data/global/store.sqlite                         |
+     | [7] CREATED             MACHINE                                                        |
+     |     Oct 27, 08:01       dev-lima                                                       |
      +----------------------------------------------------------------------------------------+
 ```
 
 ## Regions
 
-1. **Tab row** (`ProjectPage`, `projects/project-view.tsx`): the project page's first row (the sidebar names the project): History, Storage, Sandboxes, then Sessions with its count, then `ReplayControl` (`runs/replay-control.tsx`), shown once the demo is read. Every tab reads the project's newest session (`RunPanel`, `runs/run-view.tsx`).
-2. **StoreCard** (`StoreCard`, `projects/project-storage.tsx`): "Local SQLite Store" and a line on what it holds, then the story (`StoreStatsBody`), in a 1000 px column.
+1. **Tab row** (`ProjectView`, `projects/project-view.tsx`): Live, Files, Storage, History, Sessions (with its count) and Sandboxes, shortest label first. Above every tab sits the Store banner when the Store is busy, down or unresolved ([layerfs-projects.md](layerfs-projects.md)).
+2. **StoreCard** (`StoreCard`, `projects/project-storage.tsx`): "SQLite Store <name>" with an "on <machine>" chip, or "PostgreSQL Store <name>"; a line on where its history lives (the Store's one SQLite file on its machine, or the PostgreSQL Store, where each Commit goes straight); for a shared Store, "Shared with N other projects" and that a push, pull or backup carries them too. Then the story (`StoreStatsBody`). No file path.
 3. **StoreStatsBody headline** (`StoreStatsBody`, `projects/project-storage.tsx`; `CountBytes`, `SavedRing`, `projects/store-visuals.tsx`): "ON DISK" bytes counting up, "for 2.0 GB of history", "25x smaller" (shown from 1.1x), the Commit, Branch and Layer counts, and the ring "96% saved".
 4. **DiskFlow** (`DiskFlow`, `projects/store-visuals.tsx`), section 1 "From history to disk": four stages (Every snapshot, Unique, Compressed, On disk) with bytes and share. A band whose thickness is the bytes is marked "8.1x dedupe", "3.6x compression" and "+ 7.4 MB metadata". Pills follow: "main, latest, raw", "from Init" (when known), "SQLite pages", and "free" (when any).
 5. **GrowthChart** (`GrowthChart`, `projects/store-visuals.tsx`), section 2 "History against disk": cumulative raw history against compressed content, Commit by Commit, with totals in the legend and "Init -> newest Commit"; hovering shows a Commit.
 6. **CommitBars, CommitKinds** (`CommitBars`, `CommitKinds`, `projects/store-visuals.tsx`), section 3 "Each Commit": the average and largest added. Bars show the newest 60 Commits coloured by kind; hovering a bar shows added, new unique and tree. A split bar and list give each kind (fs write, Workspace commit, merge) with bytes and Commit count.
-7. **Fact list** (`Fact`, `projects/project-storage.tsx`): Created, Volume, Store file.
+7. **Fact list** (`Fact`, `projects/project-storage.tsx`): Created, then Machine (sqlite; opens the machine's row on Compute) or Store (PostgreSQL; opens its row on Storage).
 
 ## States
 
 - **Loading**: "Reading <project>"; a failed read shows `LoadError` with a retry.
-- **Totals unreadable**: "The Store's totals are not readable right now. File size: <bytes>", then the facts.
+- **Totals unreadable** (today always: LayerFS 2.0 has no totals call): "Store file with its WAL: <bytes>" and the gap line, then the facts.
+- **Store busy, down or unresolved**: the page answers from the home's records; the banner says why, and the story waits.
 - **No Commits**: "No Commits yet.", "The first Commit's bar shows here", and "only Init so far" on the chart.
 - **Commit landing** (live): a glowing "+<bytes> <message>" pill rises beside the headline for about 2.6 s.

@@ -15,6 +15,13 @@
 >
 > **LayerFS commit Connect links:** `0b8ae8af5f` (`origin/layerfs_v2_0_0`; product source as of
 > `e9c0e793d3`).
+>
+> **Updated 2026-11-04 for #535/#536 (Connect #537, steps 1–8 on `main`).** Connect now links
+> `link:../layerfs-v2-merge/api/node` (LayerFS `layerfs_v2_0_0` at `d046e7e2c1`, product as
+> `5d13a1f62f`). That build removed `store.move` and automatic machine power. §3, §4, §7 and §9 are
+> corrected below; §1, §5, §6 and §8 are kept as the record of the first port. The UI is described in
+> `docs/ui/` ([layerfs-storage.md](ui/layerfs-storage.md), [layerfs-compute.md](ui/layerfs-compute.md),
+> [layerfs-projects.md](ui/layerfs-projects.md)).
 
 ## 1. Outcome
 
@@ -56,27 +63,48 @@ filed as a LayerFS question (§9). A live check on this Mac passes, covering:
 - **Machines are compute.**
   - `native` and `docker` are built in. VM kinds (apple-container, microsandbox, lima, firecracker)
     are created; ssh hosts are connected.
-  - A machine starts on the first call that needs it and stops after 10 idle minutes. There are no
-    start/stop calls and no worker to manage.
+  - **Power is manual** (#535 D11). A machine runs between `machine.start` and `machine.stop`; no
+    other call starts one, and none stops one when idle. No read starts a machine: Connect's pages
+    use list, get, status and `layerfs.doctor()` only, and offer **Start** where a stopped machine is
+    in the way (a Storage machine heading, the Push sheet, a project's "Store is down" banner, New
+    project). `machine.stop` is refused `InUse` while Sandboxes run.
+  - `machine.platforms()` lists each platform on this host: how it is added, backend, kernel route,
+    sqlite and PostgreSQL support, readiness, what is missing, the tool version and the create
+    options it declares. Connect builds Add a machine from it and sends only declared options.
+  - States come from the SDK: machine `creating · running · stopped · removing · failed · missing ·
+    unresolved` (and `unknown`); an `op { name, phase, uncertain }` in flight overrides the word.
 - **Stores are history.**
   - A sqlite Store lives on exactly one machine and holds many projects. A PostgreSQL Store is a
-    connected database and never moves.
+    connected database; it is never pushed or pulled.
+  - Store states: `idle · in_use · busy · down · unresolved`, with any `op`.
   - Every project key is `<store>/<project>`; a bare name is refused.
 - **A sqlite project's Sandboxes run on its Store's machine.** Running on another machine is
-  `Unsupported`. PostgreSQL projects run on `native` or `docker`.
-- **Data movement.**
-  - `store.move(store, machine)`: an idle sqlite Store goes from any machine to any machine in one
-    call, with the calling process relaying the bytes.
+  `Unsupported`. A PostgreSQL project's Sandboxes run on any machine whose
+  `supports.postgresql_sandbox` is true; Connect shows the others disabled with LayerFS's `reason`.
+  Sandboxes are a top-level list by name (`creating · running · closing · gone · unresolved`, with
+  `backend`, `route` and any `op`); a Workspace may be mounted with a name (`<sandbox>:<name>`).
+- **Data movement** (#536 §7.3; `store.move` is gone).
+  - `store.push(store, machine)`: a sqlite Store on `native` goes to a machine whose
+    `supports.sqlite` is true. `store.pull(store)`: a Store on a machine comes back to `native`.
+    Both run the same phases, with the two sides swapped: `check` (no leases, no Sandboxes, target
+    free disk), `snapshot`, `send` (one worker connection; bytes in `on_progress`), `verify`,
+    `install`, `record` (placement flips here), `retire` (the source's files go). A crash before
+    `record` leaves the Store on the source; one at `record` is unresolved, cleared by running the
+    push or pull again.
+  - **Between two machines** there is no one call: Connect's **Move to another machine…** is
+    `store.pull` then `store.push`, two operations in one Connect job (`half: pull | push`). If the
+    push half fails, the Store stays on native, the job error carries `note: 'pulled'`, and the job
+    row offers Push again.
   - `backup.create`: snapshots a sqlite Store on its own machine; the bytes pass through the caller to
     an r2/minio bucket.
   - `backup.restore`: installs on `native` only.
-  - `project.init`: only into an existing Store on `native`, or into a PostgreSQL Store. It never
-    creates a Store.
-- **Default Sandbox image (O36):** `layerfs-352-runtime:node24-https-apt-20261024`
-  (`sha256:afa1ef9c…`).
-  - VMs use one image per machine.
-  - `docker` takes any digest per Sandbox, but the docker machine needs an image recorded
-    (`machine.update("docker", {image})`) before its first Sandbox.
+  - `project.init`: into any existing Store: a sqlite Store on any machine (the caller reads the
+    folder and writes through the Store's machine, a VM's worker) or a PostgreSQL Store. It never
+    creates a Store; a Store that is down or busy refuses it.
+- **Sandbox image: the bundle's image.** Connect pins no digest. Add a machine's image field
+  defaults to "the bundle's image" (no `image` option is sent), or takes an archive path or digest.
+  VMs use one image per machine; `docker` still needs an image recorded
+  (`machine.update("docker", {image})`) before its first Sandbox.
 
 ## 4. API facts for the port
 
@@ -84,6 +112,8 @@ filed as a LayerFS question (§9). A live check on this Mac passes, covering:
   (ESM, Node ≥ 20).
   - Construct once with `client({ home })`. There is no open/close and no per-project client
     (`LayerFS.open` is gone); every call names its project.
+  - **No close (open item).** The Node SDK's client has no `close`, so on quit Connect cannot
+    release the leases its client holds on Stores. See §9 Q16.
 - **Async.** Every Node call is async and runs once on the libuv threadpool (4 threads by default).
   Long execs can starve it, so set `UV_THREADPOOL_SIZE` for the host. A call cannot be cancelled; a
   timeout only stops waiting.
@@ -96,11 +126,13 @@ filed as a LayerFS question (§9). A live check on this Mac passes, covering:
   - Output: `items` and `next_page_pos` (null at the end). `sandbox.list`, `sandbox.get` and
     `project.list` give no `has_more`.
 - **Progress** is one stream (O22).
-  - `on_progress(obj)` is available on `project.init`, `store.move`, `backup.create` and
-    `backup.restore`.
-  - The promise resolves after every event has been delivered. There is no job registry, so Connect
-    keeps its own table of the calls it started.
-  - `store.status` shows a move by another process (`state: moving`, `in_progress`).
+  - `on_progress(obj)` is available on `project.init`, `store.push`, `store.pull`, `backup.create`
+    and `backup.restore`.
+  - The promise resolves after every event has been delivered. Connect keeps its own job table of the
+    calls it started (Storage's jobs, SSE `storage-job`). One job per Store per host; a second is
+    refused `ConnectBusy` (409), not the SDK's `Busy`.
+  - Operations from any process show in `store.list`, `machine.status` and `sandbox.list` as an `op`
+    (a Store holding one is `busy`); Connect's Operations panel lists the Stores' beside its own jobs.
 - **Exec output** arrives when the command ends, never live.
   - Up to 1 MiB per stream comes back inline.
   - Above that, the output comes only through `stdout`/`stderr` functions or `stream: true`. Pass
@@ -110,8 +142,16 @@ filed as a LayerFS question (§9). A live check on this Mac passes, covering:
   - A refusal throws `LayerFSError{code, message, detail}`.
   - These codes survive from 1.1.0: `NoSuchProject`, `NoSuchStore`, `NoSuchBranch`, `NoSuchCommit`,
     `NoSuchSandbox`, `Binary`, `Busy`, `Unsupported`.
-  - New codes: `NotFound`, `InUse`, `Unavailable`, `Denied`, `Failed`, `Unknown`. After `Unknown`,
-    re-read the state.
+  - New codes: `NotFound`, `InUse`, `Unavailable`, `Denied`, `Failed`, `Unknown`, `Unresolved`,
+    `Capacity`. After `Unknown`, re-read the state.
+  - `detail` carries `entity`, `phase`, `op` and `related` (what is in the way, each with `kind`,
+    `name` and, for the home conversion, `why`). The host answers `{ code, message, detail?,
+    conversion? }`: `Busy`, `Unresolved`, `InUse` and `ConnectBusy` are 409, `Capacity` 507,
+    `Unknown` 500. The UI shows the refusal as it came (`components/refusal.tsx`).
+  - **Home conversion.** The first call of this build on a layout 2 home converts it to layout 3; it
+    is refused `InUse` (with `why` on each `related` item) while anything is live, and every call,
+    `sandbox.close` included, is refused until then. Connect shows a full-page "Upgrading this home"
+    screen with each item's `why` and Check again.
   - `CODES` and `isRefusal` are not exported (see §9).
 - **Secrets are references only (O1).**
   - Bucket keys: `env:LAYERFS_BUCKET_<NAME>` or `file:/abs/path`.
@@ -191,14 +231,14 @@ filed as a LayerFS question (§9). A live check on this Mac passes, covering:
 
 | Area | Connect today (1.1.0) | 2.0 |
 | --- | --- | --- |
-| Runtime | `LayerFSRuntime.open`, `runtime.status()`, `worker.start`, `vm.status` | `client({home})`; `machine.list()` (`machines`, `can_create`), `machine.status(name)`; nothing to start |
+| Runtime | `LayerFSRuntime.open`, `runtime.status()`, `worker.start`, `vm.status` | `client({home})` (no close); `machine.list()` (`state`, `supports`), `machine.platforms()` (replaces `can_create`), `machine.status(name)` (only machines that run or hold an `op`); `machine.start(name)` / `machine.stop(name)`, called only from Start/Stop; `layerfs.doctor({home})` (report-only, outside the table) |
 | Projects | `start_init` + `get_init`, `project.list()`, `project.delete` | `store.create` (if needed), `await project.init(p, dir, {timeout, on_progress})`; `project.list([store], paging)`; `project.remove(p)` (`InUse` while any Sandbox record exists; `Unsupported` for PostgreSQL) |
 | Branches | `list_branches`, `branch.fork(name, from)`, `merge(a,b,name,msg)`, `publish(b)` | `branch.list(p, paging)`; `branch.fork(p, name, from_branch, [from_commit])`; `branch.merge(p, name, a, b, {message})`; `branch.publish(p, b, [commit])` |
 | Commits | `list_commits`, `diff_commits` | `commit.list(p, b, paging)`; `commit.diff(p, from, to, {paths_only, cursor})` |
 | Files | `fs.list/stat/read/write/rm/apply/diff_files` | `file.list/stat/read/write/rm/apply/diff(p, branch, …, [commit])` (O13, O29) |
-| Sandboxes | `sandbox.create({platform})`, `list_sandboxes`, `list_workspaces`, `close(id)`, docker stop + `clean_leftovers` | `sandbox.create(p, name, machine, {image})` (name unique in the home; machine = `project.get(p).machine` for sqlite); `sandbox.list(p)`; `sandbox.get(name).workspaces`; `sandbox.close(name, {force})` |
-| Workspaces | `mount → {sandbox,path}`, `exec(ws,cmd,msg,{stdout})`, `commit(ws,msg,force)`, `unmount(ws,discard,force)`, `daemon.workspace.status` | `mount(name, branch) → {ws:"name:/path"}`; `exec(ws, cmd, {message, stream, stdout, stderr})`; `commit(ws, {message, force})`; `unmount(ws, {discard, force})`; `workspace.status(ws)` → `base_layer` |
-| Storage | `store.list/create/remove`, `remote.add/remove/list/list_stores`, `store.check`, `start_publish/push/send/pull/load`, `store.unlink`, `postgresql.status`, `start_import_postgresql`, `sync.get`, `docker exec stat` | `store.list/create/remove/status/move`; `backup.connect/disconnect/list/create/restore`; `store.connect/disconnect` for PostgreSQL; `on_progress` on the call; `store.status(s).file.{bytes, wal_bytes}` |
+| Sandboxes | `sandbox.create({platform})`, `list_sandboxes`, `list_workspaces`, `close(id)`, docker stop + `clean_leftovers` | `sandbox.create(p, name, machine, {image})` (name unique in the home; machine = `project.get(p).machine` for sqlite, any machine with `supports.postgresql_sandbox` for PostgreSQL); `sandbox.list([p])` (`state`, `op`, `backend`, `route`); `sandbox.get(name).workspaces` (each with `name`, `ws`); `sandbox.close(name, {force})` |
+| Workspaces | `mount → {sandbox,path}`, `exec(ws,cmd,msg,{stdout})`, `commit(ws,msg,force)`, `unmount(ws,discard,force)`, `daemon.workspace.status` | `mount(name, branch, {name}) → {ws:"name:<name or /path>"}` (side Branches only, owner D14; chats pass a name from their Branch); `exec(ws, cmd, {message, stream, stdout, stderr})`; `commit(ws, {message, force})`; `unmount(ws, {discard, force})`; `workspace.status(ws)` → `base_layer` |
+| Storage | `store.list/create/remove`, `remote.add/remove/list/list_stores`, `store.check`, `start_publish/push/send/pull/load`, `store.unlink`, `postgresql.status`, `start_import_postgresql`, `sync.get`, `docker exec stat` | `store.list` (`state`, `op`), `store.create/remove/status`; `store.push(s, machine)` / `store.pull(s)` (replace `store.move`; a move between machines is pull then push); `backup.connect/disconnect/list/create/restore`; `store.connect/disconnect` for PostgreSQL; `on_progress` on the call; `store.status(s).file.{bytes, wal_bytes}` |
 | Dropped, no replacement (O25) | `daemon.process.start/list/cancel`, `get_history` (Layers), `get_storage`, `get_comparable`, `remote.list`, `remote.providers`, push `force`, per-Store `unlink`, the PostgreSQL import | see §9 |
 
 ## 8. Work steps (in order; one or more commits each)
@@ -314,7 +354,11 @@ filed as a LayerFS question (§9). A live check on this Mac passes, covering:
    - bytes in the backup progress.
 8. **Moves.** Progress visible to other processes, cancelling, a copy between machines, restoring to a
    chosen machine, and `store.status` naming the blocking Sandboxes.
+   - *#536:* `store.move` became `store.push` / `store.pull`; progress from any process shows as an
+     `op` with its phase, and a refusal's `related` names what blocks it. A copy between two machines,
+     cancelling and restoring to a chosen machine are still open.
 9. **Init.** Init into a sqlite Store not on native, the `on_progress` shape, and cancel.
+   - *#536:* Init into a Store on any machine works (through its worker). Cancel is still open.
 10. **Migration.** Placing macOS Docker Desktop volume Stores, and importing a loose Store file.
 11. **A sqlite Sandbox on another machine** than its Store's (Connect's per-chat platform choice).
 12. **The scope.** Can a folder scope allow `sandbox.create` and `commit.list` for its own project, so
@@ -327,11 +371,15 @@ filed as a LayerFS question (§9). A live check on this Mac passes, covering:
     - *Port:* the daemon is recorded with `layerfs import-env` (`LAYERFS_DAEMON`); a `machine.update`
       option, or `machine.get` showing the recorded daemon, would let Connect do and check it
       through a call.
+    - *#537:* Connect no longer pins the O36 digest; a new machine gets the bundle's image.
 14. **Native macOS tools.** A native macOS Sandbox runs the Mac's BSD tools (`sed -i` differs, no
     `timeout`, no `sha256sum`). Scenarios written for Linux fail there (seen: conflicts at its
     GNU `sed -i`). Is that the intended contract, or should native Sandboxes carry GNU tools?
 15. **A whole-project history check** needs main's Layer list (Q3): Connect's `tools/checks/final.mjs`
     and recording `final.json` are refused `Unsupported` until then.
+16. **Client close.** The Node SDK's `client({ home })` has no `close`, so Connect cannot release its
+    client's leases when it quits. A `close()`, or a documented promise that leases end with the
+    process, is needed. Open.
 
 ## 10. Owner decisions
 

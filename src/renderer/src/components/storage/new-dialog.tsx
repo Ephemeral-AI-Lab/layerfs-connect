@@ -129,13 +129,13 @@ export function NewDialog({ open, onOpenChange, view, onChanged, initial = 'empt
               {open ? (
                 <form className="flex w-full items-center gap-2" onSubmit={(e) => { e.preventDefault(); void run(() => host.restoreBackup(b.name, f.restoreAs, file)) }}>
                   <Input autoFocus value={f.restoreAs ?? ''} onChange={(e) => set('restoreAs')(e.target.value)} placeholder={t('the new Store’s name')} className="h-8 flex-1 rounded-xl font-mono text-xs" />
-                  <Button type="submit" size="sm" className="h-8 rounded-full" disabled={busy || !f.restoreAs}>{busy ? <LoaderCircle className="size-3.5 animate-spin" /> : <Download className="size-3.5" />}{t('Load')}</Button>
+                  <Button type="submit" size="sm" className="h-8 rounded-full" disabled={busy || !f.restoreAs}>{busy ? <LoaderCircle className="size-3.5 animate-spin" /> : <Download className="size-3.5" />}{t('Restore')}</Button>
                   <Button type="button" size="sm" variant="ghost" className="h-8 rounded-full" onClick={() => setLoading(null)}>{t('Cancel')}</Button>
                 </form>
               ) : loaded.length ? (
-                <span className="text-[13px] text-muted-foreground">{t('Loaded as {store}', { store: loaded.join(', ') })}</span>
+                <span className="text-[13px] text-muted-foreground">{t('Restored as {store}', { store: loaded.join(', ') })}</span>
               ) : (
-                <button type="button" className="text-[13px] text-primary hover:underline" onClick={() => { setLoading({ bucket: b.name, file }); setF({ restoreAs: file }) }}>{t('Load…')}</button>
+                <button type="button" className="text-[13px] text-primary hover:underline" onClick={() => { setLoading({ bucket: b.name, file }); setF({ restoreAs: file }) }}>{t('Restore…')}</button>
               )}
             </div>
           )
@@ -162,7 +162,7 @@ export function NewDialog({ open, onOpenChange, view, onChanged, initial = 'empt
           </div>
           {family === 'sqlite' ? (
             <>
-              <p className="px-2 pb-4 text-[13px] leading-relaxed text-muted-foreground">{t('A Store file on a machine; it can move to any machine and back up to buckets.')}</p>
+              <p className="px-2 pb-4 text-[13px] leading-relaxed text-muted-foreground">{t('A Store file on a machine; it can be pushed to any machine and backed up to buckets.')}</p>
               <p className="px-2 pb-1 text-[12.5px] text-muted-foreground">{t('New Store')}</p>
               <RailItem active={pane.kind === 'empty'} icon={<Plus />} onClick={() => setPane({ kind: 'empty' })}>{t('Empty Store')}</RailItem>
               <RailItem active={pane.kind === 'load'} icon={<Download />} onClick={() => setPane({ kind: 'load' })}>{t('From a bucket file')}</RailItem>
@@ -176,7 +176,7 @@ export function NewDialog({ open, onOpenChange, view, onChanged, initial = 'empt
             </>
           ) : (
             <>
-              <p className="px-2 pb-4 text-[13px] leading-relaxed text-muted-foreground">{t('A database as a Store. It never moves; its projects’ Sandboxes run on any machine that supports PostgreSQL Sandboxes.')}</p>
+              <p className="px-2 pb-4 text-[13px] leading-relaxed text-muted-foreground">{t('A database as a Store. It is never pushed or pulled; its projects’ Sandboxes run on any machine that supports PostgreSQL Sandboxes.')}</p>
               <RailItem active icon={<Database />} onClick={() => setPane({ kind: 'postgresql' })}>{t('Connect a database')}</RailItem>
             </>
           )}
@@ -185,7 +185,7 @@ export function NewDialog({ open, onOpenChange, view, onChanged, initial = 'empt
         <div className="flex min-w-0 flex-1 flex-col overflow-y-auto px-9 py-8">
           {pane.kind === 'empty' && (
             <form className="flex flex-1 flex-col gap-5" onSubmit={(e) => { e.preventDefault(); void run(() => host.createStore(f.name)) }}>
-              <PaneHeader icon={<Plus />} title={t('Empty Store')}>{t('A new SQLite Store on native, with no projects yet. Add projects to it, then move it to any machine.')}</PaneHeader>
+              <PaneHeader icon={<Plus />} title={t('Empty Store')}>{t('A new SQLite Store on native, with no projects yet. Add projects to it, then push it to any machine.')}</PaneHeader>
               <TextField label={t('Name')} value={f.name ?? ''} onChange={set('name')} placeholder="work" autoFocus mono />
               <FormError error={error} />
               <Footer missing={f.name ? [] : [t('name')]} busy={busy} valid={!!f.name} action={t('Create Store')} icon={<Plus className="size-3.5" />} onCancel={close} />
