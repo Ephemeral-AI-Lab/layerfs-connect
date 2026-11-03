@@ -19,6 +19,8 @@ import { StoreIcon } from '@/components/storage/identity/store-icon'
 import { Bar } from '@/components/storage/meters'
 import { Notice } from '@/components/storage/notice'
 import { Card } from '@/components/storage/overview/row-parts'
+import { NeedsAttention } from '@/components/storage/needs-attention'
+import { go, useFocusRow } from '@/components/tabs/go'
 import { NewDialog } from '@/components/storage/new-dialog'
 import { type StorageDialog, StorageDialogs } from '@/components/storage/storage-dialogs'
 import { Button } from '@/components/ui/button'
@@ -49,11 +51,13 @@ interface StoragePageProps {
   catalog: ProjectCatalog
   /** Opens a project's page by its key. */
   onOpenProject?: (key: string) => void
+  /** A row to scroll to and mark (`store:<name>`; go.ts). */
+  focus?: string
   /** Opens New project with the Store chosen. */
   onAddProject?: (store: string) => void
 }
 
-export function StoragePage({ catalog, onOpenProject, onAddProject }: StoragePageProps) {
+export function StoragePage({ catalog, onOpenProject, onAddProject, focus }: StoragePageProps) {
   useI18n()
   const [tick, setTick] = useState(0)
   const reload = () => setTick((n) => n + 1)
@@ -80,6 +84,7 @@ export function StoragePage({ catalog, onOpenProject, onAddProject }: StoragePag
     [],
   )
   const view = storage.data
+  useFocusRow(focus, !!view)
   const done = () => {
     reload()
     catalog.reload()
@@ -170,7 +175,12 @@ export function StoragePage({ catalog, onOpenProject, onAddProject }: StoragePag
               <Card key={machine.name} index={i} className="p-0">
                 <header className="flex items-center gap-2 border-b border-foreground/[0.06] px-5 py-3">
                   <HardDrive aria-hidden="true" className="size-4 text-(--icon-accent)" />
-                  <h2 className="text-sm font-semibold">{machine.name}</h2>
+                  <h2 className="text-sm font-semibold">
+                    {/* a Store's machine → its row on Compute (#537 §7) */}
+                    <button type="button" className="underline-offset-2 hover:underline" title={t('Show {machine} on Compute', { machine: machine.name })} onClick={() => go.machine(machine.name)}>
+                      {machine.name}
+                    </button>
+                  </h2>
                   <span className="text-xs text-muted-foreground">{machine.platform}</span>
                   {machine.name !== 'native' && machine.state && <StateChip entity="machine" state={machine.state} />}
                   <span className="ml-auto text-xs text-muted-foreground">{t(stores.length === 1 ? '1 Store' : '{n} Stores', { n: stores.length })}</span>
@@ -264,6 +274,8 @@ export function StoragePage({ catalog, onOpenProject, onAddProject }: StoragePag
                 view.buckets.map((b, i) => <BucketCard key={b.name} bucket={b} index={i} listing={listing === b.name} onList={() => void listBucket(b.name)} onRestore={(file) => setDialog({ kind: 'restore', bucket: b.name, file })} onDisconnect={() => setDropping({ kind: 'bucket', name: b.name })} />)
               )}
             </section>
+
+            <NeedsAttention tick={tick} />
           </>
         )}
       </div>
@@ -307,7 +319,7 @@ export function StoragePage({ catalog, onOpenProject, onAddProject }: StoragePag
 function StoreLine({ store: s, view, menu, onOpenProject }: { store: StoreRow; view: StorageView; menu: React.ReactNode; onOpenProject?: (key: string) => void }) {
   useI18n()
   return (
-    <li className="flex flex-wrap items-center gap-x-3 gap-y-2 px-5 py-3">
+    <li data-focus={`store:${s.name}`} className="flex scroll-mt-24 flex-wrap items-center gap-x-3 gap-y-2 px-5 py-3" style={{ '--flash': 'var(--primary)' } as CSSProperties}>
       <StoreIcon family={s.kind} />
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">

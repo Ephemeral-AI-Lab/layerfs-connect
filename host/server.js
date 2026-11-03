@@ -158,6 +158,8 @@ export function createHandler(deps) {
         return undefined
       }
       if (group === 'storage-jobs' && id && !sub && method === 'GET') return storage.job(id)
+      // layerfs doctor: report-only, starts nothing (#537 §8.7)
+      if (group === 'doctor' && !id && method === 'GET') return storage.doctor()
     }
     // Compute's machines. Power is manual (#535 D11): start and stop are their own calls, and no read starts one
     if (machines && group === 'platforms' && !id && method === 'GET') return machines.platforms()

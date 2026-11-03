@@ -35,7 +35,7 @@ import { randomUUID } from 'node:crypto'
 import { EventEmitter } from 'node:events'
 import { chmodSync, existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { layerfs } from './layerfs.js'
+import { doctorOf, layerfs } from './layerfs.js'
 
 const refuse = (status, code, message) => Object.assign(new Error(message), { status, code })
 
@@ -109,17 +109,34 @@ export class Storage extends EventEmitter {
    * @param {(line: string) => void} [o.log]
    * @param {object} [o.client] a LayerFS client (tests pass a stand-in)
    */
-  constructor({ spec, log = (line) => process.stderr.write(`${line}\n`), client = null }) {
+  constructor({ spec, log = (line) => process.stderr.write(`${line}\n`), client = null, doctor = null }) {
     super()
     this.spec = spec
     this.log = log
     this.lfs = client ?? layerfs(spec)
+    this.doctorCall = doctor ?? (() => doctorOf(spec))
     /** job id -> StorageJob */
     this.jobs = new Map()
     /** bucket name -> { at, items, error } (its last backup.list) */
     this.listings = new Map()
     this.lastView = null
     this.bucketsFile = join(spec.state, 'buckets.json')
+  }
+
+  /**
+   * What `layerfs doctor` finds in the home (#537 §5 "Needs attention"):
+   * `{ ok, findings: [{ severity, entity: { kind, name }, message, fix }], at }`.
+   * Report-only; read when the Storage page asks, never on a timer.
+   */
+  async doctor() {
+    const report = await this.doctorCall()
+    const findings = (report?.findings ?? []).map((f) => ({
+      severity: f?.severity === 'error' ? 'error' : 'warning',
+      entity: f?.entity && typeof f.entity === 'object' ? { kind: String(f.entity.kind ?? ''), name: String(f.entity.name ?? '') } : null,
+      message: String(f?.message ?? ''),
+      fix: typeof f?.fix === 'string' && f.fix ? f.fix : null,
+    }))
+    return { ok: report?.ok !== false && !findings.some((f) => f.severity === 'error'), findings, at: Date.now() }
   }
 
   changed() {

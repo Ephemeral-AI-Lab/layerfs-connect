@@ -10,8 +10,8 @@ import type { NavId, Selection } from '@/components/app-sidebar'
 /** A request to open the Chat page on a project or a conversation; a new id remounts the page. */
 /** `fresh`: a new chat, never the last conversation restored from an earlier visit. */
 export type ChatIntent = { id: number; project?: string; session?: string; fresh?: boolean }
-/** Where a project tab opens: its own tab (history, files, …) and branch. */
-export type ProjectLocation = { tab?: string; branch?: string }
+/** Where a project tab opens: its own tab (history, files, …) and branch; on Storage and Compute, `focus` is a row to scroll to (see go.ts). */
+export type ProjectLocation = { tab?: string; branch?: string; focus?: string }
 
 /** A place a tab showed, to go Back or Forward to; `label` names it (a chat's title). */
 export type TabPlace = { selected: Selection; location?: ProjectLocation; label?: string }

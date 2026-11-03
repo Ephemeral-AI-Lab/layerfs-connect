@@ -9,6 +9,7 @@ import { t, useI18n } from '@/i18n'
 import { ChevronDown, FlaskConical, Plus, RotateCw, Server, TriangleAlert } from 'lucide-react'
 import { type CSSProperties, useMemo, useState } from 'react'
 
+import { useFocusRow } from '@/components/tabs/go'
 import { AddMachine } from '@/components/compute/add-machine'
 import { SandboxesTable } from '@/components/compute/sandboxes-table'
 import { MachinesTable } from '@/components/compute/machines-table'
@@ -63,8 +64,10 @@ function SimulationPicker({ value, onChange }: { value: SimId | null; onChange: 
 interface ComputePageProps {
   /** Draw a simulated host instead of asking this one (the harness). */
   simulate?: SimId
-  /** Opens a project's page by its key (the Sandboxes table's project links). */
-  onOpenProject?: (key: string) => void
+  /** Opens a project's page by its key, at one of its tabs (the Sandboxes table's and Store rows' project links). */
+  onOpenProject?: (key: string, tab?: string) => void
+  /** A row to scroll to and open (`machine:<name>`; go.ts). */
+  focus?: string
 }
 
 /** This computer's OS, from the preload; the host's status is not read for it. */
@@ -73,7 +76,7 @@ const osOfWindow = (): Os => {
   return p === 'win32' || p === 'linux' ? p : 'darwin'
 }
 
-export function ComputePage({ simulate: given, onOpenProject }: ComputePageProps) {
+export function ComputePage({ simulate: given, onOpenProject, focus }: ComputePageProps) {
   useI18n()
   const [picked, setPicked] = useState<SimId | null>(() => (import.meta.env.DEV ? readSim() : null))
   const sim = given ?? picked
@@ -122,6 +125,7 @@ export function ComputePage({ simulate: given, onOpenProject }: ComputePageProps
   const refresh = () => (simulated ? setSimView(null) : live.reload())
 
   const available = view?.available ? view : null
+  useFocusRow(focus, !!available, setOpen)
   const facts = useMemo(() => (available ? factsOf(available) : null), [available])
   // failed, missing or unresolved: each gets a notice with what LayerFS says and the call that clears it
   const down = available ? machineOrder(available.machines).filter((m) => machineState(m, available.status[m.name]).key === 'needs') : []

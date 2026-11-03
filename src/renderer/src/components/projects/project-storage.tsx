@@ -16,6 +16,7 @@ import { CountUp, spotlight } from '@/components/motion'
 import { SandboxTiles } from '@/components/projects/sandbox-tiles'
 import { useProjectSandboxes } from '@/components/projects/use-sandboxes'
 import { type StoreFacts, useStorageView } from '@/components/projects/store-facts'
+import { go } from '@/components/tabs/go'
 import { Refusal } from '@/components/refusal'
 import { CommitBars, CommitKinds, CountBytes, DiskFlow, GrowthChart, SavedRing, times, useLanded } from '@/components/projects/store-visuals'
 import { plural } from '@/data/format'
@@ -228,7 +229,12 @@ function StoreCard({ s, store }: { s: ProjectState; store: StoreFacts }) {
         <Fact label={tr("Created")}>{when(s.project.created)}</Fact>
         <div className="col-span-1 sm:col-span-3">
           <Fact label={tr(store.family === 'postgresql' ? "Store" : "Machine")} mono>
-            {store.family === 'postgresql' ? store.name : (store.machine ?? '—')}
+            {/* the Store's row on Storage, or its machine's on Compute (#537 §7) */}
+            {store.family === 'postgresql' ? (
+              <button type="button" className="underline-offset-2 hover:underline" onClick={() => go.store(store.name)}>{store.name}</button>
+            ) : store.machine ? (
+              <button type="button" className="underline-offset-2 hover:underline" onClick={() => go.machine(store.machine!)}>{store.machine}</button>
+            ) : '—'}
           </Fact>
         </div>
       </dl>

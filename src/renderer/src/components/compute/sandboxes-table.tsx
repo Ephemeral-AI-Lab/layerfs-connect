@@ -22,7 +22,7 @@ import { SANDBOX_CAPACITY } from './sandbox-list'
 
 const COLS = '@min-[46rem]/sbx:grid-cols-[minmax(0,1.1fr)_minmax(0,1.2fr)_minmax(0,0.9fr)_minmax(0,1.1fr)_minmax(0,1.1fr)_4rem_1rem]'
 
-export function SandboxesTable({ sandboxes, onChanged, onOpenProject, onShowMachine }: { sandboxes: MachineSandbox[]; onChanged: () => void; onOpenProject?: (key: string) => void; onShowMachine?: (name: string) => void }) {
+export function SandboxesTable({ sandboxes, onChanged, onOpenProject, onShowMachine }: { sandboxes: MachineSandbox[]; onChanged: () => void; onOpenProject?: (key: string, tab?: string) => void; onShowMachine?: (name: string) => void }) {
   useI18n()
   const [open, setOpen] = useState<string | null>(null)
   if (sandboxes.length === 0) return <p className="px-1 text-xs text-muted-foreground">{t('No Sandboxes. A project’s Sandboxes page starts one.')}</p>
@@ -48,7 +48,7 @@ export function SandboxesTable({ sandboxes, onChanged, onOpenProject, onShowMach
               </button>
               <span className="hidden min-w-0 truncate text-[13px] @min-[46rem]/sbx:block">
                 {b.project ? (
-                  <button type="button" className="truncate font-mono hover:underline" onClick={() => onOpenProject?.(b.project!)} disabled={!onOpenProject}>
+                  <button type="button" className="truncate font-mono hover:underline" onClick={() => onOpenProject?.(b.project!, 'sandboxes')} disabled={!onOpenProject}>
                     {b.project}
                   </button>
                 ) : (

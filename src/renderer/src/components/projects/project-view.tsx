@@ -15,7 +15,7 @@ import { StoreBanner } from '@/components/projects/store-banner'
 import { projectRuns } from '@/components/live/live-data'
 import { LiveTab } from '@/components/live/live-tab'
 import { isLive } from '@/components/live/run-format'
-import { isProject, storeFacts, useStorageView } from '@/components/projects/store-facts'
+import { isProject, StoreBadge, storeFacts, useStorageView } from '@/components/projects/store-facts'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { ago, bytes } from '@/data/format'
@@ -118,6 +118,12 @@ export function ProjectView({ project, initialTab, initialBranch, onBack, backLa
   // History and Storage hold the detailed counts; the header only gives recency and size.
   const facts = s ? (
     <>
+      {store && (
+        <>
+          <StoreBadge facts={store} project={s.project.name} />
+          <span aria-hidden="true" className="px-2 text-faint">·</span>
+        </>
+      )}
       <span title={s.last ? t("Last Commit {value1} on {value2}", { value1: ago(s.last.at), value2: s.last.branch }) : undefined}>
         {s.last ? t("Last Commit {value1}", { value1: ago(s.last.at) }) : t("No Commits yet")}
       </span>

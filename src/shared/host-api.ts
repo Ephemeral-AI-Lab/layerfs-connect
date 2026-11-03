@@ -144,6 +144,8 @@ export interface MachineStore {
   name: string
   machine: string
   projects: number
+  /** Its projects' names (keys are `<store>/<name>`), when store.list gives them. */
+  names?: string[]
   /** Bytes, when LayerFS reports it. */
   size: number | null
 }
@@ -346,6 +348,21 @@ export interface StorageJob {
 }
 
 /** GET /api/storage. */
+/** GET /api/doctor: `layerfs doctor` on the home (report-only; #536 H7). */
+export interface DoctorFinding {
+  severity: 'error' | 'warning'
+  entity: { kind: string; name: string } | null
+  message: string
+  /** The call that fixes it, in LayerFS's words. */
+  fix: string | null
+}
+
+export interface DoctorReport {
+  ok: boolean
+  findings: DoctorFinding[]
+  at: number
+}
+
 export interface StorageView {
   machines: { name: string; platform: string; state: string | null; supports: MachineSupports | null }[]
   stores: StoreRow[]

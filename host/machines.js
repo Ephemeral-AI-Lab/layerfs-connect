@@ -72,7 +72,7 @@ export const opOf = (o) => (o && typeof o === 'object' && typeof o.name === 'str
 export function storeOf(s) {
   const machine = text(s.machine)
   if (!machine) return null
-  return { name: String(s.name), machine, projects: count(s.projects), size: num(s.size ?? s.bytes), state: text(s.state) ?? 'unknown', op: opOf(s.op) }
+  return { name: String(s.name), machine, projects: count(s.projects), names: Array.isArray(s.projects) ? s.projects.map(String) : [], size: num(s.size ?? s.bytes), state: text(s.state) ?? 'unknown', op: opOf(s.op) }
 }
 
 /** One sandbox.list() item. */

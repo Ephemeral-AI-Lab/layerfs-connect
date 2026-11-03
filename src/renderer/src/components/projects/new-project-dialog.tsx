@@ -10,7 +10,8 @@ import { Database, FilePlus2, FolderOpen, FolderPlus, HardDriveUpload, LoaderCir
 import { useEffect, useRef, useState } from 'react'
 import type { ProjectInitJob, ProjectSummary, StoreRow } from '@shared/host-api'
 
-import { initStores, useStorageView } from '@/components/projects/store-facts'
+import { initStores, reloadStorageView, useStorageView } from '@/components/projects/store-facts'
+import { Refusal } from '@/components/refusal'
 import { StoreIcon } from '@/components/storage/identity/store-icon'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -278,6 +279,7 @@ export function NewProjectDialog({ open, onOpenChange, onCreated, initialFolder 
                   onNewStore={(value) => { setNewStore(value); setStoreNamed(true); setError('') }}
                 />
               )}
+              {!making && chosen?.state === 'down' && chosen.machine && <StartFirst machine={chosen.machine} />}
             </fieldset>
             {busy && (
               <div role="status" className="mt-4 rounded-xl border border-primary/10 bg-primary/[0.04] px-3.5 py-3">
@@ -402,6 +404,38 @@ function StoreField({ stores, value, chosen, newStore, problem, onChange, onNewS
             : t("It shares {store}’s file on {machine}: a push, pull or backup carries every project in it.", { store: chosen.name, machine: chosen.machine ?? '?' })}
         </p>
       ) : null}
+    </div>
+  )
+}
+
+/**
+ * U3: a Store whose machine is stopped is down, and Init into it is refused.
+ * Nothing starts a machine on its own: the dialog asks, and Start runs
+ * machine.start; the Storage view is read again when it answers.
+ */
+function StartFirst({ machine }: { machine: string }) {
+  const [starting, setStarting] = useState(false)
+  const [failed, setFailed] = useState<unknown>(null)
+  const start = async () => {
+    setStarting(true)
+    setFailed(null)
+    try {
+      await host.startMachine(machine)
+      reloadStorageView()
+    } catch (e) {
+      setFailed(e)
+    } finally {
+      setStarting(false)
+    }
+  }
+  return (
+    <div role="status" className="space-y-2 rounded-xl bg-warning/[0.06] px-3.5 py-3 text-xs leading-relaxed">
+      <p>{t("{machine} is stopped, so this Store is down. Start it to add a project here.", { machine })}</p>
+      <Button type="button" size="sm" variant="outline" className="h-8 rounded-xl" disabled={starting} onClick={() => void start()}>
+        {starting && <LoaderCircle className="size-3.5 animate-spin" />}
+        {t("Start {machine}", { machine })}
+      </Button>
+      {failed != null && <Refusal error={failed} className="text-destructive" />}
     </div>
   )
 }

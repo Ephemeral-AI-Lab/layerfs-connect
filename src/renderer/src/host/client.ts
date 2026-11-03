@@ -1,27 +1,5 @@
 // The Connect host's HTTP API (host/README.md), typed by @shared/host-api.
-import type {
-  FsEntry,
-  CommitInfo,
-  HostStatus,
-  MachinesView,
-  NewMachine,
-  ProjectState,
-  SandboxInfo,
-  SandboxRecord,
-  ProjectSummary,
-  NewProjectInput,
-  ProjectInitJob,
-  DemoDetail,
-  DemoSummary,
-  RunDetail,
-  RunSummary,
-  TracePage,
-  HostEvent,
-  BackupFile,
-  RefusalDetail,
-  StorageJob,
-  StorageView,
-} from '@shared/host-api'
+import type { BackupFile, CommitInfo, DemoDetail, DemoSummary, DoctorReport, FsEntry, HostEvent, HostStatus, MachinesView, NewMachine, NewProjectInput, ProjectInitJob, ProjectState, ProjectSummary, RefusalDetail, RunDetail, RunSummary, SandboxInfo, SandboxRecord, StorageJob, StorageView, TracePage } from '@shared/host-api'
 
 /** A refused call: LayerFS's code, its text (naming any status or clearing call) and its detail (entity, phase, op, related). */
 export class HostError extends Error {
@@ -202,6 +180,8 @@ export const host = {
 
   /** Stores by machine, PostgreSQL Stores, buckets and this host's jobs. */
   storage: () => call<StorageView>('GET', '/api/storage'),
+  /** `layerfs doctor` on the home: report-only (#537 §8.7). */
+  doctor: () => call<DoctorReport>('GET', '/api/doctor'),
   /** A new, empty sqlite Store on native. */
   createStore: (name: string) => call<StorageView>('POST', '/api/stores', { name }).then(projectsChanged),
   /** Removes a Store and every project in it; `confirm` is the Store's name. */

@@ -3,6 +3,7 @@ import type { SandboxInfo } from '@shared/host-api'
 import { ChevronDown, FolderTree, LoaderCircle, Plus, X } from 'lucide-react'
 import { useState } from 'react'
 
+import { go } from '@/components/tabs/go'
 import { LfsBranch, LfsSandbox, LfsWorkspace } from '@/components/lfs-icons'
 import { StateChip } from '@/components/state-chip'
 import { Refusal } from '@/components/refusal'
@@ -109,7 +110,12 @@ function SandboxTile({ sandbox, branches, reading, unavailable, onBrowseFiles, o
     <header className="flex min-w-0 items-center gap-2.5">
       <LfsSandbox className="size-4 shrink-0 text-muted-foreground" />
       <h4 className="min-w-0 flex-1 truncate text-[13px] font-medium" title={sandbox.name}>{sandbox.name}</h4>
-      {sandbox.machine && <span className="font-mono text-[11px] text-muted-foreground">{sandbox.machine}</span>}
+      {sandbox.machine && (
+        // the machine's row on Compute (#537 §7)
+        <button type="button" className="font-mono text-[11px] text-muted-foreground underline-offset-2 hover:text-foreground hover:underline" title={t('Show {machine} on Compute', { machine: sandbox.machine })} onClick={() => go.machine(sandbox.machine!)}>
+          {sandbox.machine}
+        </button>
+      )}
       <StateChip entity="sandbox" state={sandbox.state} op={sandbox.op} />
       {sandbox.state !== 'gone' && <CloseSandbox name={sandbox.name} onClosed={onChanged} />}
     </header>

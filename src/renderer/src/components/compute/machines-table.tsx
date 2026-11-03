@@ -7,6 +7,7 @@ import { t, useI18n } from '@/i18n'
 import { ArrowRightLeft, ChevronRight, Lock, Power } from 'lucide-react'
 import { useState } from 'react'
 
+import { go } from '@/components/tabs/go'
 import { Fact, KindLabel } from '@/components/compute/target-parts'
 import { StateChip } from '@/components/state-chip'
 import { Refusal } from '@/components/refusal'
@@ -59,7 +60,7 @@ export function MachinesTable({ view, os, open, onOpen, act }: Props) {
         const size = sizeOf(m, os, live)
         const expanded = open === m.name
         return (
-          <div key={m.name} id={`machine-${m.name}`} className={cn('reveal scroll-mt-24', i > 0 && 'border-t', expanded && 'bg-muted/25')} style={revealStyle(i + 3)}>
+          <div key={m.name} id={`machine-${m.name}`} data-focus={`machine:${m.name}`} className={cn('reveal scroll-mt-24', i > 0 && 'border-t', expanded && 'bg-muted/25')} style={revealStyle(i + 3)}>
             <button
               type="button"
               aria-expanded={expanded}
@@ -135,7 +136,19 @@ function MachineDetail({ m, view, os, act }: { m: MachineInfo; view: Available; 
               {storeRows.map((s) => (
                 <li key={s.name} className="flex min-w-0 items-center gap-2 px-3 py-1.5">
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-[13px] font-medium">{s.name}</span>
+                    {/* the Store's row on Storage; its projects' pages (#537 §7) */}
+                    <button type="button" className="block max-w-full truncate text-left text-[13px] font-medium underline-offset-2 hover:underline" title={t('Show {store} on Storage', { store: s.name })} onClick={() => go.store(s.name)}>
+                      {s.name}
+                    </button>
+                    {'names' in s && s.names && s.names.length > 0 && (
+                      <span className="flex min-w-0 flex-wrap gap-x-2 text-xs">
+                        {s.names.map((p) => (
+                          <button key={p} type="button" className="truncate font-mono text-muted-foreground underline-offset-2 hover:text-foreground hover:underline" onClick={() => go.project(`${s.name}/${p}`)}>
+                            {p}
+                          </button>
+                        ))}
+                      </span>
+                    )}
                     <span className="block truncate text-xs text-muted-foreground tabular-nums">
                       {[s.projects !== null && t(s.projects === 1 ? '1 project' : '{n} projects', { n: s.projects }), s.size !== null && bytes(s.size)].filter(Boolean).join(' · ') || '—'}
                     </span>

@@ -7,6 +7,7 @@
 import { useSyncExternalStore } from 'react'
 import { type ProjectSummary, type SdkOperation, type StorageView, type StoreFamily, type StoreRow } from '@shared/host-api'
 
+import { go } from '@/components/tabs/go'
 import { StoreIcon } from '@/components/storage/identity/store-icon'
 import { bytes } from '@/data/format'
 import { stateLook } from '@/data/states'
@@ -37,6 +38,9 @@ function load() {
     },
   )
 }
+
+/** Reads the Storage view again (after a start the page asked for). */
+export const reloadStorageView = () => load()
 
 function subscribe(listener: () => void) {
   listeners.add(listener)
@@ -137,12 +141,13 @@ export function StoreLine({ facts, className }: { facts: StoreFacts; className?:
 export function StoreBadge({ facts, project }: { facts: StoreFacts; project?: string }) {
   const { t } = useI18n()
   const named = !(!facts.shared && facts.name === project)
+  // the badge opens the Store's row on Storage (#537 §7)
   return (
-    <span className={cn('glass-liquid inline-flex max-w-full min-w-0 items-center gap-2 rounded-full py-0.5 pl-0.5 text-xs shadow-xs', named ? 'pr-2.5' : 'pr-0.5')}>
+    <button type="button" onClick={() => go.store(facts.name)} title={t('Show {store} on Storage', { store: facts.name })} className={cn('glass-liquid inline-flex max-w-full min-w-0 items-center gap-2 rounded-full py-0.5 pl-0.5 text-xs shadow-xs outline-none hover:ring-1 hover:ring-foreground/15 focus-visible:ring-2 focus-visible:ring-ring', named ? 'pr-2.5' : 'pr-0.5')}>
       <span className="inline-flex shrink-0" title={named ? undefined : t('Store {value1}', { value1: storeTitle(facts) })}>
         <StoreIcon family={facts.family} size="sm" className="[&>span]:size-6 [&>span]:rounded-full" />
       </span>
       {named && <span className="min-w-0 truncate font-medium" title={storeWhere(facts, t) ?? undefined}>{storeTitle(facts)}</span>}
-    </span>
+    </button>
   )
 }

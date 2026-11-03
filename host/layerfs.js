@@ -6,8 +6,14 @@
 import { execFile } from 'node:child_process'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { client } from 'layerfs'
+import { client, doctor } from 'layerfs'
 import { packageDir } from './config.js'
+
+/**
+ * `layerfs doctor` on the home (#536 H7): report-only, starts no machine and
+ * changes nothing. `{ ok, findings: [{ severity, entity, message, fix }] }`.
+ */
+export const doctorOf = (spec) => doctor({ home: spec.home })
 
 /** The largest page a list call takes. */
 export const PAGE = 1000

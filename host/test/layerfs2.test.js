@@ -290,3 +290,18 @@ test('a PostgreSQL project’s Sandbox goes on the machine named, not only nativ
   await p.createSandbox('pg/app', { name: 'sb2' })
   assert.deepEqual(lfs.calls.filter((c) => c[0] === 'sandbox.create').map((c) => c[3]), ['lima1', 'native'])
 })
+
+test('doctor: the home’s findings pass through with their fix; ok is false on an error (#537 §8.7)', async () => {
+  const s = spec()
+  const st = new Storage({ spec: s, client: fake(), log: () => {}, doctor: async () => ({ ok: false, findings: [{ severity: 'error', entity: { kind: 'store', name: 'app' }, message: 'push intent uncertain', fix: 'layerfs store pull app' }, { severity: 'warning', entity: { kind: 'lease', name: '4242' }, message: 'stale lease', fix: '' }] }) })
+  const r = await st.doctor()
+  assert.equal(r.ok, false)
+  assert.deepEqual(r.findings.map((f) => [f.severity, f.entity?.name, f.fix]), [['error', 'app', 'layerfs store pull app'], ['warning', '4242', null]])
+  rmSync(s.state, { recursive: true, force: true })
+})
+
+test('Compute’s Store rows carry their projects’ names, for the links to project pages (#537 §7)', async () => {
+  const { storeOf } = await import('../machines.js')
+  assert.deepEqual(storeOf({ name: 'app', machine: 'lima1', projects: ['web', 'api'], state: 'idle' }).names, ['web', 'api'])
+  assert.deepEqual(storeOf({ name: 'app', machine: 'lima1', projects: 2 }).names, [])
+})

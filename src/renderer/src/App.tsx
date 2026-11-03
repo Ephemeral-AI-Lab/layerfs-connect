@@ -18,6 +18,7 @@ import { StoragePage } from '@/components/storage/storage-page'
 import { TabErrorBoundary } from '@/components/tabs/tab-error-boundary'
 import { TabStrip } from '@/components/tabs/tab-strip'
 import { sameTarget, useTabs, type TabsApi, type TabTarget } from '@/components/tabs/use-tabs'
+import { setGo } from '@/components/tabs/go'
 import { SidebarProvider } from '@/components/ui/sidebar'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { useProjects } from '@/host/use-projects'
@@ -103,8 +104,15 @@ export function App() {
     viewTransition(() => tabs.openHere({ selected: { kind: 'project', id }, location: branch ? { tab: 'history', branch } : undefined }, from))
   const openStorageProject = (id: string) =>
     viewTransition(() => tabs.openHere({ selected: { kind: 'project', id } }, t('Storage')))
-  const openComputeProject = (id: string) =>
-    viewTransition(() => tabs.openHere({ selected: { kind: 'project', id } }, t('Compute')))
+  const openComputeProject = (id: string, tab?: string) =>
+    viewTransition(() => tabs.openHere({ selected: { kind: 'project', id }, location: tab ? { tab } : undefined }, t('Compute')))
+  // cross-links (#537 §7): a row on Storage or Compute, or a project's tab, from anywhere
+  useEffect(() =>
+    setGo((place) => {
+      if ('page' in place) open({ selected: { kind: 'nav', id: place.page }, location: { focus: place.focus } })
+      else open({ selected: { kind: 'project', id: place.project }, location: place.tab ? { tab: place.tab } : undefined })
+    }),
+  )
   /** Return to the previous place, including an unlabelled page in tab history. */
   const cameFrom = tab.back?.at(-1)
   const backLabel = cameFrom?.label ?? (cameFrom?.selected.kind === 'project'
@@ -187,6 +195,7 @@ export function App() {
             )}
             {page === 'storage' && <StoragePage
               key={tab.id}
+              focus={tab.location?.focus}
               catalog={projects}
               onOpenProject={openStorageProject}
               onAddProject={(store) => { setNewProjectStore(store); setNewProjectOpen(true) }}
@@ -205,7 +214,7 @@ export function App() {
                 initialBranch={tab.location?.branch}
               />
             )}
-            {page === 'compute' && <ComputePage key={tab.id} onOpenProject={openComputeProject} />}
+            {page === 'compute' && <ComputePage key={tab.id} focus={tab.location?.focus} onOpenProject={openComputeProject} />}
             </TabErrorBoundary>
           </main>
         </div>
