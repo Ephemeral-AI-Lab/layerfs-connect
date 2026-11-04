@@ -159,7 +159,7 @@ test('scope: 2.0 arguments move into the run’s folder, namespace, Sandboxes an
   const made = scope.args('sandbox.create', { project: 's1/app', name: 'sb1', machine: 'native' })
   assert.deepEqual(made, { project: 's1/app', name: 'tour_1.sb1', machine: 'lima1' })
   assert.equal(scope.args('workspace.exec', { ws: 'sb1:/w/1', command: 'ls' }).ws, 'tour_1.sb1:/w/1')
-  assert.equal(scope.args('workspace.exec', { ws: 'tour_1.sb1:/w/1', command: 'ls' }).command, 'cd tour_1 || exit 97\nls')
+  assert.match(scope.args('workspace.exec', { ws: 'tour_1.sb1:/w/1', command: 'ls' }).command, /\ncd tour_1 \|\| exit 97\nls$/)
   rmSync(dir, { recursive: true, force: true })
 })
 

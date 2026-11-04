@@ -14,7 +14,7 @@ import { readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { dirname } from 'node:path'
 import { APP, layerfsEnv, resolveSpec } from './config.js'
-import { recordNativeDaemon } from './layerfs.js'
+import { closeStores, recordNativeDaemon } from './layerfs.js'
 import { AgentManager } from './agents/index.js'
 import { Projects } from './projects.js'
 import { AgentWorkspaces } from './agents/workspaces.js'
@@ -74,6 +74,7 @@ async function main() {
   // §5: the native machine's daemon, once per home (a value already recorded is kept)
   const daemon = await recordNativeDaemon(spec)
   if (!daemon.recorded && !daemon.kept && daemon.why !== 'not macOS') log(`[host] the native daemon is not recorded: ${daemon.why}`)
+  if (daemon.replaced) log(`[host] the recorded native daemon ${daemon.replaced} is not there; recorded ${spec.daemon}`)
   const engine = { runs: null, error: 'loading' }
   const projects = new Projects({ spec, runs: () => engine.runs, daemon, log })
   const storage = new Storage({ spec, projects, log })
@@ -116,6 +117,12 @@ async function main() {
         .then(() => engine.runs?.close?.())
         .catch((error) => log(`[host] closing the engine: ${error?.message ?? error}`))
       await projects.close()
+      // the Stores this process holds open, so their leases go with it
+      try {
+        closeStores()
+      } catch (error) {
+        log(`[host] closing the Stores: ${error?.message ?? error}`)
+      }
       if (owned) rmSync(endpoint, { force: true })
       process.exit(clean ? 0 : 1)
     })()

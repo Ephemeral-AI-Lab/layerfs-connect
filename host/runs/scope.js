@@ -85,8 +85,15 @@ export function lwwFor(run, text) {
     .join('\n')
 }
 
+/**
+ * `timeout` where the Sandbox has none: a macOS native Sandbox runs this
+ * Mac's own processes, and macOS has no `timeout`. perl's alarm survives the
+ * exec and ends the command (exit 142, not GNU's 124).
+ */
+const TIMEOUT = `command -v timeout >/dev/null 2>&1 || timeout() { perl -e 'alarm shift; exec @ARGV or exit 127' "$@"; }`
+
 /** `cd` into the run's folder first; a missing folder fails the command. */
-export const inRunFolder = (run, command) => (typeof command === 'string' ? `cd ${run} || exit 97\n${command}` : command)
+export const inRunFolder = (run, command) => (typeof command === 'string' ? `${TIMEOUT}\ncd ${run} || exit 97\n${command}` : command)
 
 export class Scope {
   /** The scope in `dir`, as the engine made it. */
@@ -263,7 +270,7 @@ export class Scope {
     if (op === 'branch.fork' || op === 'branch.merge') a.name = this.name(a.name)
     for (const key of ['path', 'from_path', 'to_path', 'left_path', 'right_path']) if (key in a) a[key] = inFolder(this.run, a[key])
     if ((op === 'file.glob' || op === 'file.grep') && !('path' in a)) a.path = `/${this.run}`
-    if (op === 'file.apply' && Array.isArray(a.changes)) a.changes = a.changes.flatMap((c) => (c?.op === 'write' && c.path === '/.lww' ? [this.change(c), { ...c, path: `/${this.run}/.lww` }] : [this.change(c)]))
+    if (op === 'file.apply' && Array.isArray(a.changes)) a.changes = this.changes(a.changes)
     if ((op === 'file.write' || op === 'file.edit') && a.path === '/.lww') Object.assign(a, this.lwwBody(a))
     if (op.startsWith('sandbox.') || op === 'workspace.mount') {
       if (op === 'sandbox.create') a.name = this.realSandbox(a.name)
@@ -275,6 +282,11 @@ export class Scope {
     if ('ws' in a) a.ws = this.realWs(a.ws)
     if (op === 'workspace.exec') a.command = inRunFolder(this.run, a.command)
     return a
+  }
+
+  /** A file.apply's changes in the folder; a root /.lww write also keeps its copy under the folder. */
+  changes(list) {
+    return list.flatMap((c) => (c?.op === 'write' && c.path === '/.lww' ? [this.change(c), { ...c, path: `/${this.run}/.lww` }] : [this.change(c)]))
   }
 
   change(c) {

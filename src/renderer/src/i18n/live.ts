@@ -36,7 +36,6 @@ export const liveZh: Record<string, string> = {
   // Live: header and stat row
   '{n} chat working': '{n} 个对话正在工作',
   '{n} chats working': '{n} 个对话正在工作',
-  '{n} more projects are working: open one to see its Live.': '还有 {n} 个项目正在工作：打开项目即可查看其实时视图。',
   'No chat working': '没有正在工作的对话',
   '{n} ended recently': '{n} 个刚刚结束',
   '{n} call in flight': '{n} 个调用进行中',

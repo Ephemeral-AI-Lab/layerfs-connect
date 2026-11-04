@@ -3,14 +3,15 @@
 // the next trunk, and that every scenario's calls and change files land
 // under the folder. Run: node --test host/test/scope.test.js
 import assert from 'node:assert/strict'
-import { mkdtempSync, readdirSync, readFileSync, rmSync } from 'node:fs'
+import { spawnSync } from 'node:child_process'
+import { chmodSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { after, test } from 'node:test'
 import { fileURLToPath } from 'node:url'
 import { loadScenarios } from '../../tools/lib/scenario.mjs'
 import { translateRecorded } from '../checks/history.js'
-import { inFolder, lwwFor, Scope, scopedScenario } from '../runs/scope.js'
+import { inFolder, inRunFolder, lwwFor, Scope, SCOPE_ENV, scopedScenario } from '../runs/scope.js'
 
 const SCENARIOS = fileURLToPath(new URL('../../scenarios/', import.meta.url))
 const root = mkdtempSync(join(tmpdir(), 'lfc-scope-test-'))
@@ -29,6 +30,43 @@ async function call(s, op, args, answer = () => ({})) {
   return { sent, value }
 }
 
+/** Runs the `layerfs` command a scoped run's bash finds (cli-shim.mjs) over a stand-in native binary that prints `answer`. */
+function shim(s, args, { answer = '{"kind":"Forked"}', status = 0 } = {}) {
+  const native = join(s.dir, `native-${++n}`)
+  writeFileSync(native, `#!/bin/sh\necho "$@" >> ${JSON.stringify(join(s.dir, 'native.log'))}\necho '${answer}'\nexit ${status}\n`)
+  chmodSync(native, 0o755)
+  const done = spawnSync(process.execPath, [fileURLToPath(new URL('../runs/cli-shim.mjs', import.meta.url)), native, ...args], { encoding: 'utf8', env: { ...process.env, [SCOPE_ENV]: s.dir } })
+  return { status: done.status, stdout: done.stdout, calls: readFileSync(join(s.dir, 'native.log'), 'utf8').trim().split('\n') }
+}
+
+test('the command: a publish moves the trunk, so the next fork from main starts from what was published', () => {
+  const s = scope()
+  const published = shim(s, ['branch', 'publish', 'p', 'skeleton'])
+  assert.equal(published.status, 0)
+  assert.deepEqual(published.calls, ['branch fork p tour_1.main.1 tour_1.skeleton'])
+  assert.deepEqual(s.trunk(), { k: 1, branch: 'tour_1.main.1' })
+  assert.match(published.stdout, /Forked/)
+  assert.deepEqual(shim(s, ['branch', 'fork', 'p', 'catalog', 'main']).calls.at(-1), 'branch fork p tour_1.catalog tour_1.main.1')
+})
+
+test('the command: a refused publish keeps the trunk and passes on its exit code', () => {
+  const s = scope()
+  const refused = shim(s, ['branch', 'publish', 'p', 'skeleton'], { answer: '{"code":"NotFound"}', status: 3 })
+  assert.equal(refused.status, 3)
+  assert.deepEqual(s.trunk(), { k: 0, branch: 'tour_1.main' })
+  assert.deepEqual(s.trunks(), [{ k: 0, branch: 'tour_1.main' }])
+})
+
+test('the command: a merge with main that fast-forwards is kept, and a closed Sandbox leaves the scope', () => {
+  const s = scope()
+  shim(s, ['branch', 'merge', 'p', 'up', 'main', 'feature'], { answer: '{"kind":"Merged","fast_forward":true,"head":"abc"}' })
+  assert.deepEqual([...s.fastForwards()], [['tour_1.up', 'abc']])
+  const real = s.realSandbox('sb1')
+  assert.equal(s.sandboxes().size, 1)
+  assert.equal(shim(s, ['sandbox', 'close', real]).status, 0)
+  assert.equal(s.sandboxes().size, 0)
+})
+
 test('paths go under the folder once; the root /.lww stays where LayerFS reads it', () => {
   assert.equal(inFolder('tour_1', '/app/page.tsx'), '/tour_1/app/page.tsx')
   assert.equal(inFolder('tour_1', '/'), '/tour_1')
@@ -46,7 +84,34 @@ test('a command runs in the folder', async () => {
   const s = scope()
   const created = await call(s, 'sandbox.create', {}, () => ({ sandbox: '7' }))
   const { sent } = await call(s, 'workspace.exec', { sandbox: created.value.sandbox, path: '/workspaces/1', command: 'sh build.sh' })
-  assert.deepEqual([sent[0].args.sandbox, sent[0].args.command], ['7', 'cd tour_1 || exit 97\nsh build.sh'])
+  assert.equal(sent[0].args.sandbox, '7')
+  assert.match(sent[0].args.command, /\ncd tour_1 \|\| exit 97\nsh build\.sh$/)
+})
+
+test('a command finds `timeout` where the Sandbox has none (a macOS native Sandbox), and it ends the command', () => {
+  const dir = mkdtempSync(join(root, 'run-'))
+  mkdirSync(join(dir, 'tour_1'))
+  const sh = (command) => spawnSync('/bin/sh', ['-c', inRunFolder('tour_1', command)], { cwd: dir, encoding: 'utf8', env: { PATH: '/usr/bin:/bin' } })
+  assert.equal(sh('timeout 5 pwd').stdout.trim().endsWith('/tour_1'), true)
+  const started = Date.now()
+  assert.notEqual(sh('timeout 1 sleep 5').status, 0)
+  assert.ok(Date.now() - started < 4000)
+  assert.equal(sh('timeout 5 sh -c "exit 3"').status, 3)
+})
+
+test('the command: a `file apply --from` keeps a root /.lww and adds its copy under the folder, as the SDK call does', () => {
+  const s = scope()
+  const from = join(s.dir, 'changes.json')
+  writeFileSync(from, JSON.stringify([{ op: 'write', path: '/.lww', content: '/a.txt\n' }, { op: 'write', path: '/a.txt', content: 'x' }]))
+  const native = join(s.dir, 'native-apply')
+  writeFileSync(native, `#!/bin/sh\nwhile [ "$1" != --from ]; do shift; done\ncat "$2" > ${JSON.stringify(join(s.dir, 'sent.json'))}\necho '{"kind":"Committed"}'\n`)
+  chmodSync(native, 0o755)
+  const done = spawnSync(process.execPath, [fileURLToPath(new URL('../runs/cli-shim.mjs', import.meta.url)), native, 'file', 'apply', 'p', 'b', '-m', 'm', '--from', from], { encoding: 'utf8', env: { ...process.env, [SCOPE_ENV]: s.dir } })
+  assert.equal(done.status, 0, done.stderr)
+  const sent = JSON.parse(readFileSync(join(s.dir, 'sent.json'), 'utf8'))
+  const expected = s.args('file.apply', { changes: JSON.parse(readFileSync(from, 'utf8')) }).changes
+  assert.deepEqual(sent, expected)
+  assert.deepEqual(sent.map((c) => c.path), ['/.lww', '/tour_1/.lww', '/tour_1/a.txt'])
 })
 
 test('answers name Branches and paths as the script wrote them; the trace has the real ones', async () => {

@@ -200,7 +200,7 @@ export function App() {
               onOpenProject={openStorageProject}
               onAddProject={(store) => { setNewProjectStore(store); setNewProjectOpen(true) }}
             />}
-            {page === 'projects' && <ProjectsHome key={tab.id} projects={projects} onOpenProject={openProject} onNewProject={() => setNewProjectOpen(true)} onOpenChat={openChat} />}
+            {page === 'projects' && <ProjectsHome key={tab.id} projects={projects} onOpenProject={openProject} onNewProject={() => setNewProjectOpen(true)} />}
             {selected.kind === 'project' && (
               <ProjectView
                 key={`${tab.id}:${selected.id}:${tab.location?.branch ?? ''}`}

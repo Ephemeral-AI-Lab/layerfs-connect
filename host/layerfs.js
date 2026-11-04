@@ -1,12 +1,13 @@
 // The one LayerFS 2.0 client of Connect's home (docs/layerfs-2.0-integration.md
-// §4): `client({ home })`, made once per process. There is no open or close
-// and no per-project client; every call names its project (`<store>/<project>`).
+// §4): `client({ home })`, made once per process. There is no open and no
+// per-project client; every call names its project (`<store>/<project>`).
 // Every call is one attempt; a refusal throws LayerFSError { code, message,
-// detail } and passes through with its code.
+// detail } and passes through with its code. `closeStores()` at exit closes
+// the Stores the process holds open, so it leaves no stale lease.
 import { execFile } from 'node:child_process'
-import { readFileSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { client, doctor } from 'layerfs'
+import { client, close, doctor } from 'layerfs'
 import { packageDir } from './config.js'
 
 /**
@@ -14,6 +15,13 @@ import { packageDir } from './config.js'
  * changes nothing. `{ ok, findings: [{ severity, entity, message, fix }] }`.
  */
 export const doctorOf = (spec) => doctor({ home: spec.home })
+
+/**
+ * Closes every Store this process holds open with no call running, dropping
+ * its leases (`layerfs.close()`); answers how many. The host's last step at
+ * exit: a lease of a process that ended shows as stale until the Store's next call.
+ */
+export const closeStores = () => close()
 
 /** The largest page a list call takes. */
 export const PAGE = 1000
@@ -61,11 +69,28 @@ export function linkedVersion() {
 
 /**
  * On macOS, records the native daemon (spec.daemon) on the home's `native`
- * machine: `machine.update` takes no daemon, so this runs the CLI's
- * `import-env` with only LAYERFS_HOME and LAYERFS_DAEMON set (§5). It keeps a
- * value already recorded. Answers what it did; never throws.
+ * machine: the CLI's `import-env` with only LAYERFS_HOME and LAYERFS_DAEMON
+ * set (§5) writes it when none is recorded. It keeps a
+ * value already recorded, unless that daemon is not there any more (its
+ * checkout moved or was removed): then `machine.update` records spec.daemon
+ * in its place (`replaced` names the old one). Answers what it did; never throws.
  */
-export function recordNativeDaemon(spec) {
+export async function recordNativeDaemon(spec) {
+  const done = await importDaemon(spec)
+  if (!done.kept) return done
+  try {
+    const lfs = layerfs(spec)
+    const recorded = (await lfs.machine.get('native')).daemon
+    if (!recorded || existsSync(recorded)) return done
+    await lfs.machine.update('native', { daemon: spec.daemon })
+    return { recorded: true, kept: false, replaced: recorded }
+  } catch (error) {
+    return { recorded: false, why: `the recorded native daemon is not there and was not replaced: ${error?.message ?? error}` }
+  }
+}
+
+/** `import-env` of spec.daemon: what it wrote or kept, or why it did neither. */
+function importDaemon(spec) {
   if (process.platform !== 'darwin') return Promise.resolve({ recorded: false, why: 'not macOS' })
   if (!spec.cli || !spec.daemon) return Promise.resolve({ recorded: false, why: `no ${spec.cli ? 'daemon' : 'layerfs CLI'} found (LAYERFS_CONNECT_${spec.cli ? 'DAEMON' : 'CLI'})` })
   return new Promise((resolve) => {

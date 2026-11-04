@@ -112,8 +112,9 @@ filed as a LayerFS question (§9). A live check on this Mac passes, covering:
   (ESM, Node ≥ 20).
   - Construct once with `client({ home })`. There is no open/close and no per-project client
     (`LayerFS.open` is gone); every call names its project.
-  - **No close (open item).** The Node SDK's client has no `close`, so on quit Connect cannot
-    release the leases its client holds on Stores. See §9 Q16.
+  - **Close at exit.** The client has no `close`; the package's top-level `layerfs.close()` closes
+    the Stores the process holds open and drops their leases. The host calls it last at exit. See
+    §9 Q16.
 - **Async.** Every Node call is async and runs once on the libuv threadpool (4 threads by default).
   Long execs can starve it, so set `UV_THREADPOOL_SIZE` for the host. A call cannot be cancelled; a
   timeout only stops waiting.
@@ -186,6 +187,9 @@ filed as a LayerFS question (§9). A live check on this Mac passes, covering:
       from `LAYERFS_DAEMON` (`home/import_env.rs`, read back by `family/deploy.rs::daemon`). Connect
       records it once on a fresh home by running the CLI's `import-env` with only `LAYERFS_HOME` and
       `LAYERFS_DAEMON` set.
+    - *Superseded (2026-11-04):* `machine.update` now takes `daemon` for the built-in machines and
+      `machine.get` shows it. `import-env` still writes it on a fresh home; at each start the host
+      replaces a recorded daemon that is not there through `machine.update` (§9 Q13).
     - *Corrected:* `target/debug/layerfs-daemon` is dated 10:08, not 12:59. No source under `core/`
       or the daemon-side engine crates changed after 10:08 (only docs), so it matches
       `0b8ae8af5f`'s source. It runs native Sandboxes on a fresh home (checked 2026-11-02).
@@ -371,6 +375,11 @@ filed as a LayerFS question (§9). A live check on this Mac passes, covering:
     - *Port:* the daemon is recorded with `layerfs import-env` (`LAYERFS_DAEMON`); a `machine.update`
       option, or `machine.get` showing the recorded daemon, would let Connect do and check it
       through a call.
+    - *Closed (2026-11-04):* `machine.update` takes `daemon` for the built-in machines and
+      `machine.get` shows it. At start the host keeps a recorded daemon that is there and replaces one
+      that is not (its checkout moved) with the one it found (`recordNativeDaemon`). A missing
+      recorded daemon refuses a Sandbox `Unavailable`, naming `machine update`, and `layerfs doctor`
+      reports it.
     - *#537:* Connect no longer pins the O36 digest; a new machine gets the bundle's image.
 14. **Native macOS tools.** A native macOS Sandbox runs the Mac's BSD tools (`sed -i` differs, no
     `timeout`, no `sha256sum`). Scenarios written for Linux fail there (seen: conflicts at its
@@ -379,7 +388,12 @@ filed as a LayerFS question (§9). A live check on this Mac passes, covering:
     and recording `final.json` are refused `Unsupported` until then.
 16. **Client close.** The Node SDK's `client({ home })` has no `close`, so Connect cannot release its
     client's leases when it quits. A `close()`, or a documented promise that leases end with the
-    process, is needed. Open.
+    process, is needed.
+    - *Closed (2026-11-04):* the package has a top-level `layerfs.close()` (outside the table),
+      which closes the Stores the process holds open and drops their leases; the host calls it last
+      at exit (`closeStores()`, `host/layerfs.js`). A process that ends without it (a crash, a
+      kill) leaves stale leases, and taking a lease now removes a Store's stale ones under its lock,
+      so the Store's next call clears them.
 
 ## 10. Owner decisions
 

@@ -203,7 +203,8 @@ run the native `layerfs` command (the linked checkout's `target/debug/layerfs`, 
 - Every machine, Store, bucket and image is a record in the home; Connect keeps no LayerFS
   settings of its own. Two dev settings, from the environment: `LAYERFS_CONNECT_CLI` and
   `LAYERFS_CONNECT_DAEMON` (the macOS native daemon, recorded once on the `native` machine with
-  `layerfs import-env`, since `machine.update` takes no daemon).
+  `layerfs import-env`; at each start a recorded daemon that is not there any more, its checkout
+  moved or removed, is replaced through `machine.update native { daemon }`).
 - Agents' shells get `LAYERFS_HOME`, the trace settings (`LAYERFS_TRACE*`) and the project key in
   `LAYERFS_CONNECT_PROJECT`; scoped runs add `LAYERFS_CONNECT_SCOPE` and `LAYERFS_CONNECT_MACHINE`.
 - There is no worker to start, and machine power is manual (#535 D11): a machine runs between
@@ -259,9 +260,10 @@ live host on a state folder also writes `<state>/host.json` (owner-only:
 exit. A run's record names the host playing it (`host`: its pid), so a second
 host on the same state leaves that run alone. Logs go to stderr. It exits
 when stdin closes (the Electron parent died) or on SIGTERM, ending its runs
-(and closing their Sandboxes) first, within 30 s. It stops no machine on exit. The Node SDK's
-client has no close, so the host cannot release its client's leases on Stores before it exits (an
-open item: `docs/layerfs-2.0-integration.md` §9 Q16).
+(and closing their Sandboxes) first, within 30 s. It stops no machine on exit. Its last step is
+`layerfs.close()` (`closeStores()`), which closes the Stores it holds open and drops their leases;
+a host that is killed leaves them stale until the Store's next call removes them
+(`docs/layerfs-2.0-integration.md` §9 Q16).
 
 ## HTTP API
 
@@ -418,7 +420,13 @@ another machine pulls its Store to native, then pushes it there (`placeRun`).
   `node_modules` (scope-client.js) put each call's 2.0 arguments through the
   scope: paths under `/<run>/`; `main` is the current trunk; Branch `x` is
   `<run>.x`; ids pass; Sandbox `sb1` is `<run>.sb1` on the run's machine;
-  `workspace.exec` runs `cd <run>` first; a publish forks the next trunk.
+  `workspace.exec` runs `cd <run>` first, with a perl `timeout` where the
+  Sandbox has none (a macOS native Sandbox); a publish forks the next trunk.
+  The command runs the native call to its end before the scope records what
+  it did (the new trunk, a fast-forward, a closed Sandbox) and then exits
+  with its status, so a refused call changes nothing in the scope; a
+  `file apply --from` file gets the same changes as the SDK call, a root
+  `/.lww` with its copy under the folder.
   `expect` checks are blocked while LayerFS 2.0 writes no trace (§9 Q1).
 - **Checks** (`checks/`). With the scope, `final.order` compares the run's
   own Branches (names without the prefix) and its trunks as main's Layers
