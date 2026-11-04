@@ -292,8 +292,8 @@ Saved conversations keep their existing project association.
 ### Look and motion
 
 - **Theme:** colours, radii, shadows and motion are tokens in
-  `src/renderer/src/styles.css`, with light and dark modes (the system's, or
-  `CONNECT_THEME`).
+  `src/renderer/src/styles.css`, one light soft-matte theme taken from the app
+  icon (no dark mode; the system's setting is ignored).
 - **Components:** shadcn components live in `components/ui/`. Shared motion
   (reveals, the sliding tab indicator, page cross-fades) lives in
   `components/motion/`.
@@ -383,5 +383,4 @@ node tools/connect-run.mjs start tour merge
 
 Dev aids: `CONNECT_VIEW=<hash>` opens a page (`chat`, `projects/<project>[/<tab>]`, `storage`, `compute`); `CONNECT_SHOT=<file.png>` saves a
 screenshot once loaded, then quits (`CONNECT_SHOT_DELAY` waits longer;
-`CONNECT_EVAL=<js>` runs in the page first and prints its result);
-`CONNECT_THEME=dark|light`.
+`CONNECT_EVAL=<js>` runs in the page first and prints its result).

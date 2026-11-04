@@ -10,6 +10,7 @@ import { join } from 'node:path'
 import { after, test } from 'node:test'
 import { fileURLToPath } from 'node:url'
 import { loadScenarios } from '../../tools/lib/scenario.mjs'
+import { chatLive } from '../agents/trace.js'
 import { translateRecorded } from '../checks/history.js'
 import { inFolder, inRunFolder, lwwFor, Scope, SCOPE_ENV, scopedScenario } from '../runs/scope.js'
 
@@ -31,11 +32,11 @@ async function call(s, op, args, answer = () => ({})) {
 }
 
 /** Runs the `layerfs` command a scoped run's bash finds (cli-shim.mjs) over a stand-in native binary that prints `answer`. */
-function shim(s, args, { answer = '{"kind":"Forked"}', status = 0 } = {}) {
+function shim(s, args, { answer = '{"kind":"Forked"}', status = 0, stderr = '', env = {} } = {}) {
   const native = join(s.dir, `native-${++n}`)
-  writeFileSync(native, `#!/bin/sh\necho "$@" >> ${JSON.stringify(join(s.dir, 'native.log'))}\necho '${answer}'\nexit ${status}\n`)
+  writeFileSync(native, `#!/bin/sh\necho "$@" >> ${JSON.stringify(join(s.dir, 'native.log'))}\necho '${answer}'\n${stderr ? `echo '${stderr}' >&2\n` : ''}exit ${status}\n`)
   chmodSync(native, 0o755)
-  const done = spawnSync(process.execPath, [fileURLToPath(new URL('../runs/cli-shim.mjs', import.meta.url)), native, ...args], { encoding: 'utf8', env: { ...process.env, [SCOPE_ENV]: s.dir } })
+  const done = spawnSync(process.execPath, [fileURLToPath(new URL('../runs/cli-shim.mjs', import.meta.url)), native, ...args], { encoding: 'utf8', env: { ...process.env, [SCOPE_ENV]: s.dir, ...env } })
   return { status: done.status, stdout: done.stdout, calls: readFileSync(join(s.dir, 'native.log'), 'utf8').trim().split('\n') }
 }
 
@@ -65,6 +66,32 @@ test('the command: a merge with main that fast-forwards is kept, and a closed Sa
   assert.equal(s.sandboxes().size, 1)
   assert.equal(shim(s, ['sandbox', 'close', real]).status, 0)
   assert.equal(s.sandboxes().size, 0)
+})
+
+test('the command writes the call lines Live reads (LayerFS 2.0 traces only worker connections)', () => {
+  const s = scope()
+  const traces = join(s.dir, 'traces')
+  mkdirSync(traces)
+  const env = { LAYERFS_TRACE: join(traces, 'root.jsonl'), LAYERFS_TRACE_STEP: 'root:call-1', LAYERFS_TRACE_START: '1' }
+  const sb = s.realSandbox('sb1')
+  const ws = `${sb}:/w/1`
+  assert.equal(shim(s, ['sandbox', 'create', 'p', 'sb1'], { answer: `{"kind":"Created","name":"${sb}"}`, env }).status, 0)
+  shim(s, ['workspace', 'mount', sb, 'skeleton'], { answer: `{"kind":"Mounted","path":"/w/1","ws":"${ws}"}`, env })
+  // a streamed exec exits with its command's code: the call itself worked
+  assert.equal(shim(s, ['workspace', 'exec', ws, 'npm test', '--stream'], { answer: 'out', status: 1, env }).status, 1)
+  const refused = shim(s, ['branch', 'fork', 'p', 'x', 'main'], { answer: '', stderr: '{"code":"Exists","message":"x exists"}', status: 125, env })
+  assert.equal(refused.status, 125)
+  const { calls, live } = chatLive(traces, { running: true })
+  assert.deepEqual(calls.map((c) => [c.method, c.ok, c.step]), [
+    ['sandbox.create', true, 'root:call-1'],
+    ['workspace.mount', true, 'root:call-1'],
+    ['workspace.exec', true, 'root:call-1'],
+    ['branch.fork', false, 'root:call-1'],
+  ])
+  assert.equal(calls[3].code, 'Exists')
+  assert.deepEqual(live.sandboxes.map((x) => x.id), [sb])
+  assert.deepEqual(live.mounts.map((m) => [m.sandbox, m.path, m.branch, m.last?.kind]), [[sb, '/w/1', 'tour_1.skeleton', 'exit:1']])
+  assert.deepEqual(live.running, [])
 })
 
 test('paths go under the folder once; the root /.lww stays where LayerFS reads it', () => {

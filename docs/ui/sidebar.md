@@ -1,7 +1,8 @@
 # Sidebar
 
-The app's left column: the brand, New chat, Resources, every LayerFS project with its chats, and
-Settings. Opens from: always shown, on the left of the window; ⌘B (Ctrl+B) hides it.
+The app's left column: the brand, New chat, the pages (Projects, Machines, Storage), the chats
+grouped by project, and Settings. Opens from: always shown, on the left of the window; ⌘B (Ctrl+B)
+hides it.
 Source: `src/renderer/src/components/app-sidebar.tsx` (every region is in this file).
 
 ## Skeleton
@@ -10,16 +11,17 @@ Source: `src/renderer/src/components/app-sidebar.tsx` (every region is in this f
 +-[1] Brand ---------------------------+
 | [o] LayerFS Connect               [<] |
 | [ New chat ]                          |
-+-[2] Resources -----------------------+
-| RESOURCES                            |
-|    Storage                           |
-|    Compute                           |
-+-[3] Projects ------------------------+
-| PROJECTS  14                [#] [+]  |
-|  /\ web   shop                  3  > |
-|     [] Fix the login form         x  |
-|     [] Add a health check         x  |
-|  /\ api   pg                         |
++-[2] Pages ---------------------------+
+|  /\ Projects                         |
+|     Machines                         |
+|     Storage                          |
++-[3] Chats ---------------------------+
+| CHATS                            [+] |
+| v /\ web   shop                    2 |
+|      [] Fix the login form         x |
+|      [] Add a health check         x |
+| > /\ api   pg                      1 |
+| > [] No project                    1 |
 |  ...                     (scrolls)   |
 +-[4] Footer --------------------------+
 | (*) Settings                         |
@@ -28,32 +30,37 @@ Source: `src/renderer/src/components/app-sidebar.tsx` (every region is in this f
 
 ## Regions
 
-1. **Brand**: the Connect mark in a liquid-glass tile, "LayerFS Connect", and a button that hides the
-   sidebar. Under it, **New chat** opens a new chat in a tab of its own.
-2. **Resources**: Storage and Compute, with a sliding glass indicator on the open one. ⌘-click
-   (Ctrl-click) or a middle click opens a page in a new tab.
-3. **Projects** (`ProjectList`): the project directory shared with the Projects page and Chat
-   (`useProjects`). The "Projects" heading, with the count, and the grid button open the Projects page;
-   + starts a chat with no project picked yet. Each project is a row with the LayerFS mark, its name
-   and its Store's name faint after it; a click opens the project page. A row with chats shows their
-   count, a hover + for a new chat on it, and a chevron that folds its chats (newest first, five
-   before **Show all**; each with an x that deletes the conversation). The projects with the newest
-   chats, the open one and any with a chat working start unfolded. The section fills the rest of the
-   column and its list scrolls.
+1. **Brand**: the Connect mark (the soft-matte handshake tile, `assets/connect-logo.png`: cobalt and slate hands on a pale blue-white tile, lighter than the sidebar), "LayerFS Connect", and a button that hides the
+   sidebar. Under it, **New chat** opens a new chat (Back returns to where it started); it is a soft cobalt tint
+   (`--accent` with 10% `--primary` mixed in, 18% on hover; `--accent-foreground` text, cobalt icon), set apart from the white brand tile and the active page.
+2. **Pages**: Projects, Machines (formerly Compute) and Storage, with no heading, and a sliding
+   glass indicator on the open one (a project's page counts as Projects). The window shows one place
+   at a time (there are no tabs); Back and Forward (⌘[ ⌘]) move through the places it showed.
+3. **Chats** (`ChatList`): every chat that is not archived (`useChatSessions`), grouped by its
+   project (`chatProject`; a scenario chat goes under its scenario's project). The heading's + starts
+   a chat with no project picked yet. A group's header has a chevron, the LayerFS mark, the project's
+   name with its Store faint after it, and its count; a click folds it. On hover the count gives way
+   to ↗ (opens the project page) and + (a new chat on it).
+   Under it its chats, newest first, five before **Show all**, each with an x that deletes the
+   conversation. The group with the newest chat comes first; projects with no chats are not listed
+   (the Projects page has them all). The chats on a local folder come last under **No project**
+   (a laptop icon; + starts a chat on a local folder, no ↗). The three groups with the newest chats,
+   the open project's, the open chat's and any with a chat working start unfolded. The section fills
+   the rest of the column and its list scrolls.
 4. **Footer**: **Settings** opens the Settings dialog (language among it).
 
-The sidebar shows no Store or machine state; that is on Storage, Compute and the project pages.
+The sidebar shows no Store or machine state; that is on Machines, Storage and the project pages.
 
 **Off for now (2026-10-31):** the older project tree with its All / Running filter, each project's ×
 (Delete project) and "Local chats" (`ProjectTree`) is not shown; `SHOW_PROJECT_TREE` turns it back on.
 
 ## States
 
-- **Loading**: three skeleton rows under Projects.
-- **Error**: "Could not load projects." with Retry.
-- **Empty**: "Create project" under the Projects heading.
-- **Selected**: the open Resources page (sliding indicator), the Projects heading on the Projects
-  page, or the open project's row (a glass pill).
+- **Loading**: three skeleton rows under Chats.
+- **Error**: "Could not load chats." with Retry, above whatever chats were read.
+- **Empty**: "No chats yet" with **New chat** under the Chats heading.
+- **Selected**: the open page (sliding indicator; Projects for a project's page too), the open
+  project's group header (its mark in the accent colour) and the open chat's row.
 
 ## Upgrading this home
 

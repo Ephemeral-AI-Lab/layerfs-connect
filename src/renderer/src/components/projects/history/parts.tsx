@@ -47,7 +47,7 @@ export function SearchField({ label, value, onChange, className, size = 'md' }: 
             onChange('')
           }
         }}
-        className={cn('pr-7 pl-7 text-[13px] shadow-[var(--highlight)] dark:bg-input/20', size === 'sm' ? 'h-7' : 'h-8')}
+        className={cn('pr-7 pl-7 text-[13px] shadow-[var(--highlight)]', size === 'sm' ? 'h-7' : 'h-8')}
       />
       {value && (
         <button

@@ -1,25 +1,35 @@
 // Page navigation uses quiet glass buttons. Segmented controls keep their
 // sliding selection and support arrow keys, Home and End.
-import type { ComponentType, KeyboardEvent, ReactNode } from 'react'
+import { createContext, useContext, type ComponentType, type KeyboardEvent, type ReactNode } from 'react'
 
 import { useIndicator } from '@/components/motion/indicator'
 import { cn } from '@/lib/utils'
 import './tabs.css'
 
+type TabBarVariant = 'glass' | 'line'
+const VariantContext = createContext<TabBarVariant>('glass')
+
 interface TabBarProps {
   'aria-label': string
   className?: string
+  /** 'glass' (buttons) or 'line' (text tabs on a hairline, the chosen one underlined: a compact header's). */
+  variant?: TabBarVariant
   /** Page navigation buttons. */
   children: ReactNode
 }
 
-/** A horizontally scrollable row of glass navigation buttons. */
-export function TabBar({ className, children, ...aria }: TabBarProps) {
+/** A horizontally scrollable row of page tabs. */
+export function TabBar({ className, variant = 'glass', children, ...aria }: TabBarProps) {
   return (
-    <nav {...aria} className={cn('view-nav scrollbar-none', className)}>
-      {children}
+    <nav {...aria} className={cn('view-nav scrollbar-none', variant === 'line' && 'view-nav-line', className)}>
+      <VariantContext.Provider value={variant}>{children}</VariantContext.Provider>
     </nav>
   )
+}
+
+/** A thin rule between groups of tabs. */
+export function TabDivider() {
+  return <span aria-hidden="true" className="view-nav-divider" />
 }
 
 interface TabProps {
@@ -34,6 +44,7 @@ interface TabProps {
 
 /** One page tab: a button that marks itself `aria-current="page"` when active. */
 export function Tab({ active, quiet, onClick, title, className, children }: TabProps) {
+  const variant = useContext(VariantContext)
   return (
     <button
       type="button"
@@ -42,7 +53,8 @@ export function Tab({ active, quiet, onClick, title, className, children }: TabP
       onClick={onClick}
       title={title}
       className={cn(
-        'glass-liquid view-button',
+        variant === 'glass' && 'glass-liquid',
+        'view-button',
         quiet && 'view-button-quiet',
         className,
       )}
@@ -100,9 +112,9 @@ export function Segmented<T extends string>({ value, onChange, options, role = '
       role={role}
       {...aria}
       onKeyDown={onKeyDown}
-      className={cn('relative isolate flex w-fit gap-0.5 rounded-xl bg-muted/80 backdrop-blur-xs p-1 ring-1 ring-foreground/[0.04] ring-inset', className)}
+      className={cn('relative isolate flex w-fit gap-0.5 rounded-xl bg-muted p-1 shadow-(--pressed)', className)}
     >
-      <span ref={indicator} aria-hidden="true" className="indicator -z-10 rounded-lg bg-card shadow-[var(--highlight),var(--elev-1)] ring-1 ring-foreground/[0.06] dark:bg-input" />
+      <span ref={indicator} aria-hidden="true" className="indicator -z-10 rounded-lg bg-card shadow-[var(--highlight),var(--elev-1)] ring-1 ring-foreground/[0.06]" />
       {options.map((o) => {
         const on = o.value === value
         return (

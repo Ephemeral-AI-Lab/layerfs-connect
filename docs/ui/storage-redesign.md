@@ -1590,20 +1590,19 @@ The layout uses container queries on the page body (`@container/storage`):
 There is no horizontal page scroll at any width. Long names, paths and URLs
 truncate in the middle, with the full value in `title`.
 
-### 10.6 Dark mode
+### 10.6 Theme
 
-Every colour is a token from `styles.css` (and the new ones in
-[§11](#11-tokens-accessibility-and-motion)), defined for both `:root` and
-`.dark`. Brand marks go through `brandColor`, so SQLite's near-black mark
-follows the theme in dark mode and pale marks deepen in light. The badge ring
-uses `var(--card)`, so it cuts out cleanly on both. `sc-soon` tiles and dashed
-rings use `color-mix` on `--foreground` and work in both, as today.
+The app has one light theme. Every colour is a token from `styles.css` (and the
+new ones in [§11](#11-tokens-accessibility-and-motion)), defined on `:root`.
+Brand marks go through `brandColor`, so pale marks deepen. The badge ring uses
+`var(--card)`, so it cuts out cleanly. `sc-soon` tiles and dashed rings use
+`color-mix` on `--foreground`.
 
 ---
 
 ## 11. Tokens, accessibility and motion
 
-### 11.1 New tokens (in `styles.css`, `:root` and `.dark`)
+### 11.1 New tokens (in `styles.css`, `:root`)
 
 ```css
 :root {
@@ -1616,7 +1615,6 @@ rings use `color-mix` on `--foreground` and work in both, as today.
   /* A provider badge's cut-out ring and size. */
   --badge-ring: var(--card);
 }
-.dark { /* the aliases follow the dark values of their sources; nothing to redefine */ }
 ```
 
 Register them under `@theme inline` as `--color-sync-*`. `Chip` gains no new

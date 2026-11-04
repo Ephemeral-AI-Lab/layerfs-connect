@@ -1,7 +1,8 @@
 import { t, useI18n } from '@/i18n'
-// Add a machine (docs/ui/layerfs-compute.md): one row per platform this host
-// creates or connects (machine.platforms), with its tool's version or what it
-// is missing. A ready platform opens its form inline: Create for a VM,
+// Add a machine (docs/ui/layerfs-compute.md), the dialog New machine opens:
+// one row per platform this host creates or connects (machine.platforms),
+// with its tool's version or what it is missing. A ready platform opens its
+// form in its row: Create for a VM,
 // Connect for an ssh host; a missing tool shows how to install it. A form
 // shows the fields of the options its platform declares (cpus, memory, disk,
 // image, nested, host; ssh: user, port, identity, known_hosts, root) and
@@ -9,11 +10,10 @@ import { t, useI18n } from '@/i18n'
 import { ChevronDown, TriangleAlert } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 
-import { Field } from '@/components/compute/machines-table'
-import { CopyCode, KindLabel } from '@/components/compute/target-parts'
+import { CopyCode, Field, KindLabel } from '@/components/compute/target-parts'
 import { revealStyle } from '@/components/motion'
-import { Card } from '@/components/storage/overview/row-parts'
 import { Button } from '@/components/ui/button'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import {
@@ -47,27 +47,48 @@ interface Props {
   platforms: MachinePlatformInfo[]
   machines: MachineInfo[]
   os: Os
-  /** The kind whose form is open (the header's New machine menu opens one too). */
+  /** The kind whose form is open. */
   open: string | null
   onOpen: (platform: string | null) => void
   act: (action: MachineAction) => Promise<void>
-  /** A machine was made: the page opens its row. */
+  /** A machine was made: the page shows its card. */
   onMade: (name: string) => void
   /** The linked LayerFS's version, for the bundle's folder. */
   layerfs?: string | null
+}
+
+/** New machine's dialog: the platforms, each with its readiness and its form. */
+export function AddMachineDialog({ open, onOpenChange, onMade, ...rest }: Omit<Props, 'open' | 'onOpen'> & { open: boolean; onOpenChange: (open: boolean) => void }) {
+  useI18n()
+  const [form, setForm] = useState<string | null>(null)
+  const change = (o: boolean) => {
+    onOpenChange(o)
+    if (!o) setForm(null)
+  }
+  return (
+    <Dialog open={open} onOpenChange={change}>
+      <DialogContent className="max-h-[calc(100svh-2rem)] overflow-y-auto sm:max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>{t('Add a machine')}</DialogTitle>
+          <DialogDescription>{t('Create a VM on this computer, or connect a Linux host over SSH.')}</DialogDescription>
+        </DialogHeader>
+        <AddMachine {...rest} open={form} onOpen={setForm} onMade={(name) => (change(false), onMade(name))} />
+      </DialogContent>
+    </Dialog>
+  )
 }
 
 export function AddMachine({ platforms, machines, os, open, onOpen, act, onMade, layerfs = null }: Props) {
   useI18n()
   const [help, setHelp] = useState<string | null>(null)
   return (
-    <Card index={6} className="@container/add overflow-hidden">
+    <div className="@container/add min-w-0 overflow-hidden rounded-xl bg-card/50 ring-1 ring-foreground/8">
       {platforms.map((c, i) => {
         const tool = installHelp(c.missing, layerfs)
         const expanded = open === c.platform
         const ssh = c.platform === 'ssh'
         return (
-          <div key={c.platform} id={`add-${c.platform}`} className={cn('reveal scroll-mt-24', i > 0 && 'border-t', expanded && 'bg-muted/25')} style={revealStyle(i + 7)}>
+          <div key={c.platform} id={`add-${c.platform}`} className={cn('reveal scroll-mt-24', i > 0 && 'border-t', expanded && 'bg-muted/25')} style={revealStyle(i)}>
             <div className="flex items-center gap-3 px-4 py-2.5">
               <KindLabel platform={c.platform} os={os} hideName />
               <div className="min-w-0 flex-1">
@@ -118,7 +139,7 @@ export function AddMachine({ platforms, machines, os, open, onOpen, act, onMade,
           </div>
         )
       })}
-    </Card>
+    </div>
   )
 }
 

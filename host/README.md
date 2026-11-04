@@ -419,7 +419,8 @@ another machine pulls its Store to native, then pushes it there (`placeRun`).
   command (cli-shim.mjs) and the `layerfs` package in the run's
   `node_modules` (scope-client.js) put each call's 2.0 arguments through the
   scope: paths under `/<run>/`; `main` is the current trunk; Branch `x` is
-  `<run>.x`; ids pass; Sandbox `sb1` is `<run>.sb1` on the run's machine;
+  `<run>.x`; ids pass; Sandbox `sb1` is `<run>.sb1.<tag>` on the run's machine
+  (`<run>` is unique in its project only, a Sandbox name in the whole home);
   `workspace.exec` runs `cd <run>` first, with a perl `timeout` where the
   Sandbox has none (a macOS native Sandbox); a publish forks the next trunk.
   The command runs the native call to its end before the scope records what
@@ -427,7 +428,10 @@ another machine pulls its Store to native, then pushes it there (`placeRun`).
   with its status, so a refused call changes nothing in the scope; a
   `file apply --from` file gets the same changes as the SDK call, a root
   `/.lww` with its copy under the folder.
-  `expect` checks are blocked while LayerFS 2.0 writes no trace (§9 Q1).
+  LayerFS 2.0's `LAYERFS_TRACE` records only worker connections, so both
+  also write each call's trace start and end lines (`runs/trace-line.js`,
+  with the real names), which Live and the Trace tab read.
+  `expect` checks stay blocked (§9 Q1).
 - **Checks** (`checks/`). With the scope, `final.order` compares the run's
   own Branches (names without the prefix) and its trunks as main's Layers
   (`scopedHistoryOf`; the record's forks from a published Layer read as forks

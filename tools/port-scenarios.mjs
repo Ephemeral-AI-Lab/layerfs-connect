@@ -19,15 +19,15 @@
 //                   and the demo's opening prompt (lib/prompts.mjs) follows
 //                   its blurb; "5 agents" (agents) also keeps two Sandboxes
 //                   for the session instead of one per command
-//                   (lib/agents-sandboxes.mjs); "tour" and "merge" run
-//                   their in-place seds in a form BSD sed reads too, for a
+//                   (lib/agents-sandboxes.mjs); "tour", "merge" and
+//                   "conflicts" run their in-place seds in a form BSD sed reads too, for a
 //                   `mac` Sandbox (lib/portable-sed.mjs)
 //                   then LayerFS 2.0's forms (lib/layerfs2.mjs): project-first
 //                   calls, file.*, named Sandboxes; a scenario using background
 //                   processes or the 1.1.0 JS SDK is marked `blocked`
 //   CONVERSION.md   prose naming dsh's host and plugin
 // Nothing else changes: steps, expects, exits, commits, placeholders, the
-// shell and the JS stay as they are, apart from agents' Sandbox steps and tour's and merge's seds. A DSH_ name with no mapping stops the port.
+// shell and the JS stay as they are, apart from agents' Sandbox steps and tour's, merge's and conflicts' seds. A DSH_ name with no mapping stops the port.
 import { execFileSync } from 'node:child_process'
 import { chmodSync, existsSync, mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs'
 import { dirname, join, relative, resolve } from 'node:path'
@@ -118,7 +118,7 @@ function walk(value, counts) {
 }
 
 /** Connect's own changes to one ported scenario, by id, after the renames. */
-const CHANGES = { agents: shareSandboxes, tour: portableSed('tour'), merge: portableSed('merge') }
+const CHANGES = { agents: shareSandboxes, tour: portableSed('tour'), merge: portableSed('merge'), conflicts: portableSed('conflicts') }
 
 /** A scenario.json's text, ported: parsed, rewritten, changed (CHANGES), given `prompt` after its blurb, written back in its own layout (indent 1). */
 export function portScenario(text, counts = {}, prompt = null, id = null) {

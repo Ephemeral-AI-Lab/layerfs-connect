@@ -38,7 +38,7 @@ export function SubscriptionShortcuts({ providers, disabled, onSignIn }: {
         disabled={disabled}
         title={t("Sign in to {plan}", { plan: p.signIn!.plan })}
         onClick={() => onSignIn(p.id)}
-        className="inline-flex h-8 min-w-0 items-center gap-1.5 rounded-full border border-foreground/[0.07] bg-background/50 px-3 text-[11px] font-medium text-foreground/85 outline-none backdrop-blur-xs transition-colors hover:border-primary/25 hover:bg-primary/[0.06] hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
+        className="inline-flex h-8 min-w-0 items-center gap-1.5 rounded-full border border-foreground/[0.07] bg-card px-3 text-[11px] font-medium text-foreground/85 shadow-[var(--highlight),var(--elev-1)] outline-none transition-colors hover:border-primary/25 hover:bg-primary/[0.06] hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
       >
         <LogIn className="size-3.5 shrink-0 text-(--icon-accent)" />
         <span className="truncate">{t(p.signIn!.label)}</span>

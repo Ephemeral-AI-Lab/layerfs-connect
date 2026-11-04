@@ -9,13 +9,12 @@
   box-shadow: var(--highlight), var(--elev-2);
 }
 
-/* A pane's header: frosted, hairline under it; sticky inside a scroller. */
+/* A pane's header: opaque, hairline under it; sticky inside a scroller. */
 .hist-pane-head {
   position: sticky;
   top: 0;
   z-index: 5;
-  background-color: color-mix(in oklab, var(--card) 80%, transparent);
-  backdrop-filter: blur(12px) saturate(1.4);
+  background: var(--grain), var(--card);
   border-bottom: 1px solid var(--border);
 }
 /* The small caps label that names a pane. */

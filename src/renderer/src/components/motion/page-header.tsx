@@ -36,8 +36,11 @@ interface PageHeaderProps {
   tabs?: ReactNode
   /** Between the title row and the tabs: alerts. */
   children?: ReactNode
-  /** 'lg' for top-level pages (Projects, Storage, Compute), 'md' for a project or session. */
-  size?: 'lg' | 'md'
+  /**
+   * 'lg' for top-level pages (Projects, Storage, Compute), 'md' for a session; 'sm' for a project:
+   * one thin row (back, eyebrow / title, the facts, actions) over line tabs, to give the page its height.
+   */
+  size?: 'lg' | 'md' | 'sm'
   /** Turn off entrance effects on data-heavy project pages. */
   motion?: boolean
   sticky?: boolean
@@ -69,8 +72,25 @@ export function PageHeader({ eyebrow, title, badges, description, icon, back, li
           className
         )}
       >
-        <div className={cn('mx-auto flex w-full min-w-0 flex-col px-6 @min-[56rem]/workspace:px-8 app-no-drag', width, size === 'lg' ? 'gap-1 pt-7' : 'gap-2 pt-4', !tabs && (size === 'lg' ? 'pb-6' : 'pb-4'))}>
-          {eyebrow && !title ? (
+        <div className={cn('mx-auto flex w-full min-w-0 flex-col px-6 @min-[56rem]/workspace:px-8 app-no-drag', width, size === 'lg' ? 'gap-1 pt-7' : size === 'md' ? 'gap-2 pt-4' : 'pt-1.5', !tabs && (size === 'lg' ? 'pb-6' : size === 'md' ? 'pb-4' : 'pb-1.5'))}>
+          {size === 'sm' ? (
+            <div className="flex min-h-10 min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+              {back && <BackButton {...back} small />}
+              {icon && <div className="shrink-0">{icon}</div>}
+              <div className="flex min-w-0 shrink items-center gap-1 text-[13px] @max-[46rem]/page-header:flex-1 @max-[46rem]/page-header:basis-0">
+                {eyebrow}
+                {eyebrow && title && <span aria-hidden="true" className="shrink-0 text-faint">/</span>}
+                {title && <h1 className="truncate px-1 text-[15px] leading-6 font-semibold tracking-[-0.011em]">{title}</h1>}
+                {badges}
+              </div>
+              {description && (
+                <div className="ml-1 flex min-w-0 flex-1 items-center truncate text-xs text-muted-foreground tabular-nums @max-[46rem]/page-header:order-last @max-[46rem]/page-header:ml-0 @max-[46rem]/page-header:basis-full">
+                  {description}
+                </div>
+              )}
+              {actions && <div className="ml-auto flex shrink-0 items-center gap-1.5">{actions}</div>}
+            </div>
+          ) : eyebrow && !title ? (
             <div className="flex min-h-11 min-w-0 flex-wrap items-center gap-x-4 gap-y-3">
               <div className="flex min-w-0 flex-1 items-center gap-1 text-sm">{eyebrow}</div>
               {actions && <div className="flex max-w-full flex-wrap items-center gap-2">{actions}</div>}
@@ -110,7 +130,7 @@ export function PageHeader({ eyebrow, title, badges, description, icon, back, li
             </>
           )}
           {children}
-          {tabs && <div className={cn('min-w-0', size === 'lg' ? 'mt-4' : icon ? 'mt-3' : 'mt-1')}>{tabs}</div>}
+          {tabs && <div className={cn('min-w-0', size === 'lg' ? 'mt-4' : size === 'sm' ? 'mt-0.5' : icon ? 'mt-3' : 'mt-1')}>{tabs}</div>}
         </div>
         {live && <span aria-hidden="true" className="live-line" />}
       </header>
@@ -119,13 +139,13 @@ export function PageHeader({ eyebrow, title, badges, description, icon, back, li
 }
 
 /** A round chevron that goes back; where it goes is its tooltip and its name. */
-function BackButton({ label, onBack }: { label: string; onBack: () => void }) {
+function BackButton({ label, onBack, small }: { label: string; onBack: () => void; small?: boolean }) {
   const name = t('Back to {value1}', { value1: label })
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <Button variant="ghost" size="icon" aria-label={name} onClick={onBack} className="group/back -ml-2.5 rounded-full text-muted-foreground hover:text-foreground">
-          <ChevronLeft className="size-5 transition-transform duration-(--dur-base) ease-out-expo group-hover/back:-translate-x-0.5" />
+        <Button variant="ghost" size={small ? 'icon-sm' : 'icon'} aria-label={name} onClick={onBack} className={cn('group/back rounded-full text-muted-foreground hover:text-foreground', small ? '-ml-2' : '-ml-2.5')}>
+          <ChevronLeft className={cn('transition-transform duration-(--dur-base) ease-out-expo group-hover/back:-translate-x-0.5', small ? 'size-4' : 'size-5')} />
         </Button>
       </TooltipTrigger>
       <TooltipContent side="bottom" align="start" className="max-w-80 text-pretty">{name}</TooltipContent>

@@ -80,6 +80,28 @@ export function bucketUrl({ provider, endpoint, account, jurisdiction, bucket, p
   throw refuse(400, 'InvalidInput', 'Choose MinIO or Cloudflare R2')
 }
 
+/** A PostgreSQL URL as `user@host:port/db`, never its password or parameters; null when it does not parse. */
+function pgTarget(url) {
+  try {
+    const u = new URL(url)
+    return `${u.username ? `${decodeURIComponent(u.username)}@` : ''}${u.host}${u.pathname}`
+  } catch {
+    return null
+  }
+}
+
+/** A PostgreSQL Store's server: its record's URL (no password) and what store.status's `server` answered. */
+function pgServer(s, server) {
+  const reached = typeof server?.reachable === 'boolean' ? server.reachable : null
+  return {
+    target: typeof s.url === 'string' ? pgTarget(s.url) : null,
+    reachable: reached,
+    version: reached ? (server.serverVersion ?? null) : null,
+    latencyMs: reached ? (server.latencyMs ?? null) : null,
+    error: server?.unavailable ?? server?.error?.message ?? null,
+  }
+}
+
 /** A store.list item and its store.status -> StoreRow. */
 export function storeRow(s, status, jobs) {
   const op = s.op ?? status?.op ?? null
@@ -98,6 +120,7 @@ export function storeRow(s, status, jobs) {
     down: status?.down_reason ?? (status ? null : 'store.status did not answer'),
     links: Object.entries(s.backups ?? {}).map(([bucket, link]) => ({ bucket, file: link.file ?? s.name, last: link.last ? { op: link.last.op, at: link.last.at ?? null, bytes: link.last.bytes ?? null } : null })),
     job: jobs.find((j) => j.store === s.name && !j.ended)?.id ?? null,
+    postgresql: s.kind === 'postgresql' ? pgServer(s, status?.server) : null,
   }
 }
 

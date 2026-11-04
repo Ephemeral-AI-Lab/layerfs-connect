@@ -3,8 +3,6 @@
 @import "shadcn/tailwind.css";
 @import "@fontsource-variable/inter";
 
-@custom-variant dark (&:is(.dark *));
-
 /* One theme source: the colours of the LayerFS Connect dashboard mock,
    mapped onto shadcn's variables. xterm.js and CodeMirror will read the
    same variables. */
@@ -73,57 +71,63 @@
 }
 
 :root {
-  --background: #ffffff;
-  --foreground: #18181b;
-  --card: #ffffff;
-  --card-foreground: #18181b;
-  --popover: #ffffff;
-  --popover-foreground: #18181b;
-  --primary: #4050c8;
+  /* One light theme: native controls and scrollbars stay light whatever the system setting. */
+  color-scheme: light;
+  /* Soft matte, from the app icon: a pale blue-white silicone tile with raised cobalt and
+     charcoal strokes. Opaque surfaces, a fine grain, light from above, soft diffuse
+     shadows; nothing is see-through or specular. */
+  --background: #edf2f9;
+  --foreground: #2a2e34;
+  --card: #fbfcfe;
+  --card-foreground: #2a2e34;
+  --popover: #fdfeff;
+  --popover-foreground: #2a2e34;
+  --primary: #316cb9;
   --primary-foreground: #ffffff;
-  --secondary: #f4f4f6;
-  --secondary-foreground: #18181b;
-  --muted: #f4f4f7;
-  --muted-foreground: #5f5f69;
-  --faint: #8b8b94;
-  --accent: #eef0fc;
-  --accent-foreground: #2d3a9a;
+  --secondary: #e6edf6;
+  --secondary-foreground: #2a2e34;
+  --muted: #e8eef6;
+  --muted-foreground: #586170;
+  --faint: #8a93a2;
+  --accent: #dfe9f6;
+  --accent-foreground: #24548f;
   --destructive: #c23b22;
   --danger-label: var(--destructive);
   --success: #1c7a43;
   --warning: #8c5b00;
-  --border: #e8e8ed;
-  --input: #d9d9de;
-  --ring: #cbd0f4;
-  --radius: 0.875rem;
-  /* Apple Liquid Glass: 3-stop optical meniscus, dual specular rim, crystal depth */
-  --glass-card-bg: linear-gradient(180deg, rgba(255, 255, 255, 0.80) 0%, rgba(255, 255, 255, 0.54) 50%, rgba(255, 255, 255, 0.68) 100%);
-  --glass-panel-bg: linear-gradient(180deg, rgba(255, 255, 255, 0.88) 0%, rgba(255, 255, 255, 0.68) 50%, rgba(255, 255, 255, 0.78) 100%);
-  --glass-border: rgba(15, 23, 42, 0.08);
+  --border: #d9e2ee;
+  --input: #c8d4e3;
+  --ring: #a8c2e6;
+  --radius: 0.3rem;
+  /* The grain: fractal noise tinted the icon's slate blue, about 4% strong, tiled.
+     It sits on the canvas, the sidebar and every matte surface. */
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.16 0 0 0 0 0.23 0 0 0 0 0.36 0.16 0 0 0 -0.035'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
+  /* Matte surfaces (the --glass-* names are kept so every surface follows): a card is
+     lit from above, slightly lighter at the top, and casts a soft blue-grey shadow. */
+  --glass-card-bg: var(--grain), linear-gradient(180deg, #fdfeff 0%, #f6f9fd 100%);
+  --glass-panel-bg: var(--grain), linear-gradient(180deg, #ffffff 0%, #f7f9fd 100%);
+  --glass-border: rgb(44 76 124 / 0.11);
   --glass-shadow:
-    inset 0 1px 1px 0 rgba(255, 255, 255, 0.95),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.55),
-    inset 0 2px 6px -2px rgba(15, 23, 42, 0.03),
-    inset 0 -1px 1px 0 rgba(255, 255, 255, 0.75),
-    0 1px 2px 0 rgba(0, 0, 0, 0.02),
-    0 8px 24px -4px rgba(15, 23, 42, 0.05),
-    0 20px 48px -12px rgba(15, 23, 42, 0.03);
+    inset 0 1px 0 0 rgb(255 255 255 / 0.9),
+    inset 0 -1px 0 0 rgb(44 76 124 / 0.04),
+    0 1px 2px 0 rgb(38 66 110 / 0.06),
+    0 6px 18px -8px rgb(38 66 110 / 0.14);
   --glass-panel-shadow:
-    inset 0 1.5px 1.5px 0 rgba(255, 255, 255, 1),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.70),
-    inset 0 3px 8px -2px rgba(15, 23, 42, 0.04),
-    inset 0 -1px 1.5px 0 rgba(255, 255, 255, 0.85),
-    0 2px 4px 0 rgba(0, 0, 0, 0.03),
-    0 14px 36px -8px rgba(15, 23, 42, 0.07);
-  --glass-field-bg: rgba(255, 255, 255, 0.6);
-  --sidebar: #ffffff;
-  --sidebar-foreground: #18181b;
-  --sidebar-primary: #4050c8;
+    inset 0 1px 0 0 rgb(255 255 255 / 0.95),
+    inset 0 -1px 0 0 rgb(44 76 124 / 0.05),
+    0 2px 4px 0 rgb(38 66 110 / 0.06),
+    0 18px 44px -16px rgb(38 66 110 / 0.26);
+  /* A field is pressed into the surface: a touch darker, shaded at its top edge. */
+  --glass-field-bg: #f3f6fb;
+  --pressed: inset 0 1px 2px 0 rgb(38 66 110 / 0.1), inset 0 0 0 1px rgb(44 76 124 / 0.05);
+  --sidebar: #e3ebf6;
+  --sidebar-foreground: #2a2e34;
+  --sidebar-primary: #316cb9;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #f2f3f8;
-  --sidebar-accent-foreground: #18181b;
-  --sidebar-border: #e8e8ed;
-  --sidebar-ring: #cbd0f4;
+  --sidebar-accent: #d8e3f2;
+  --sidebar-accent-foreground: #2a2e34;
+  --sidebar-border: #d3dde9;
+  --sidebar-ring: #a8c2e6;
   /* A session's dot: its agent's colour while a call is in flight. */
   --idle: #d9d9de;
   --agent-builder: #c4502a;
@@ -147,27 +151,27 @@
   --hl-function: #2d5bb5;
   --hl-type: #a86a10;
   --hl-property: #2d3a9a;
-  /* the LayerFS icon tones (assets/icons): light = committed, dark = live */
-  --lfs-light: #93b1e0;
-  --lfs-dark: #2f5bb5;
+  /* the LayerFS icon tones (assets/icons): light = committed, dark = live; the app icon's blues */
+  --lfs-light: #8fb1e2;
+  --lfs-dark: #316cb9;
   --icon-accent: var(--primary);
   --lfs-warn: #e0a030;
   --lfs-surface: var(--card);
-  /* Brand light: the primary indigo, extended to violet and sky. Use sparingly:
+  /* Brand: the icon's cobalt, with its charcoal and a sky tint. Use sparingly:
      active indicators, primary actions, live states, hero numbers, focus. */
-  --brand-1: #4050c8;
-  --brand-2: #7a4fd6;
-  --brand-3: #1c9bd6;
-  --brand-gradient: linear-gradient(135deg, color-mix(in oklab, var(--primary) 78%, white), var(--primary));
-  --glow: color-mix(in oklab, var(--primary) 32%, transparent);
-  --glow-strong: color-mix(in oklab, var(--primary) 55%, transparent);
-  /* Elevation: 1 resting card, 2 hovered or raised, 3 popovers and dialogs. */
-  --elev-1: 0 1px 2px rgb(20 22 48 / 0.05), 0 1px 1px rgb(20 22 48 / 0.03);
-  --elev-2: 0 6px 16px -4px rgb(20 22 48 / 0.1), 0 2px 4px -2px rgb(20 22 48 / 0.06);
-  --elev-3: 0 20px 44px -14px rgb(20 22 48 / 0.22), 0 8px 16px -8px rgb(20 22 48 / 0.1);
-  /* A card's top inner highlight, the lit edge of a layer. */
-  --highlight: inset 0 1px 0 0 rgb(255 255 255 / 0.75);
-  --surface-sheen: linear-gradient(to bottom, rgb(255 255 255 / 0.6), transparent 3rem);
+  --brand-1: #316cb9;
+  --brand-2: #3c4046;
+  --brand-3: #5a9bd8;
+  --brand-gradient: linear-gradient(180deg, color-mix(in oklab, var(--primary) 84%, white), var(--primary));
+  --glow: color-mix(in oklab, var(--primary) 22%, transparent);
+  --glow-strong: color-mix(in oklab, var(--primary) 40%, transparent);
+  /* Elevation, soft and diffuse like the icon's tile: 1 resting, 2 raised, 3 popovers and dialogs. */
+  --elev-1: 0 1px 2px rgb(38 66 110 / 0.07), 0 1px 1px rgb(38 66 110 / 0.03);
+  --elev-2: 0 8px 20px -8px rgb(38 66 110 / 0.18), 0 2px 4px -2px rgb(38 66 110 / 0.08);
+  --elev-3: 0 24px 48px -16px rgb(38 66 110 / 0.3), 0 8px 16px -8px rgb(38 66 110 / 0.12);
+  /* A surface's top inner highlight, where the light from above meets it. */
+  --highlight: inset 0 1px 0 0 rgb(255 255 255 / 0.8);
+  --surface-sheen: none;
   /* Motion: fast for hover and press, base for state, slow for entrances, xslow for count-ups and draws. */
   --dur-fast: 150ms;
   --dur-base: 240ms;
@@ -176,119 +180,6 @@
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-out-soft: cubic-bezier(0.25, 0.8, 0.35, 1);
   --stagger: 40ms;
-  /* Ambient pastel aurora palette (learned from agibase.dev: DeepMind & Apple pastel depth) */
-  --aura-lavender: #c7d2fe;
-  --aura-mint: #a7f3d0;
-  --aura-cyan: #ccfbf1;
-  --aura-rose: #fecdd3;
-  --aura-amber: #fef08a;
-  --aura-blue: #0071e3;
-  --grid-dot: rgba(0, 0, 0, 0.045);
-  /* Shared glass tint follows the current hue; the canvas retains a soft ambient light. */
-  --card-pastel-gradient: none;
-  --glass-sheen: none;
-}
-
-.dark {
-  /* Smoke glass on a neutral canvas: a soft rim gives depth without a colored wash. */
-  --glass-card-bg: linear-gradient(165deg, rgb(62 62 62 / 64%), rgb(38 38 38 / 78%) 52%, rgb(48 48 48 / 68%));
-  --glass-panel-bg: linear-gradient(155deg, rgb(54 54 54 / 92%), rgb(36 36 36 / 94%) 58%, rgb(43 43 43 / 92%));
-  --glass-border: rgb(255 255 255 / 11%);
-  --glass-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 15%),
-    inset 0 -1px 0 rgb(255 255 255 / 4%),
-    0 2px 8px rgb(0 0 0 / 14%);
-  --glass-panel-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 18%),
-    inset 0 -1px 0 rgb(255 255 255 / 5%),
-    0 18px 48px -12px rgb(0 0 0 / 48%);
-  --glass-field-bg: rgb(255 255 255 / 5%);
-
-  /* Main canvas, content, raised panels and sidebar use an achromatic scale. */
-  --background: #1f1f1f;
-  --foreground: #ededed;
-  --card: #262626;
-  --card-foreground: #ededed;
-  --popover: #2c2c2c;
-  --popover-foreground: #ededed;
-
-  /* Actions are gray-white; icons, status and syntax retain their colors. */
-  --primary: #ededed;
-  --primary-foreground: #1b1b1b;
-  --secondary: #303030;
-  --secondary-foreground: #ededed;
-  --muted: #2b2b2b;
-  --muted-foreground: #bcbcbc;
-  --faint: #b4b4b4;
-  --accent: #363636;
-  --accent-foreground: #ededed;
-  --destructive: #f07878;
-  --danger-label: #ffaaaa;
-  --success: #22c55e;
-  --warning: #f59e0b;
-  --border: #363636;
-  --input: #474747;
-  --ring: #858585;
-
-  /* Sidebar sits one step below the workspace. */
-  --sidebar: #181818;
-  --sidebar-foreground: #ededed;
-  --sidebar-primary: #ededed;
-  --sidebar-primary-foreground: #1b1b1b;
-  --sidebar-accent: #2b2b2b;
-  --sidebar-accent-foreground: #ededed;
-  --sidebar-border: #2b2b2b;
-  --sidebar-ring: #858585;
-
-  --idle: #707070;
-  --agent-builder: #f97316;
-  --agent-reviewer: #818cf8;
-  --agent-tester: #fbbf24;
-  --agent-docs: #34d399;
-  --lane-1: #f59e0b;
-  --lane-2: #10b981;
-  --lane-3: #f43f5e;
-  --lane-4: #a855f7;
-  --commit-fs: #5880f0;
-  --commit-exec: #f97316;
-  --commit-merge: #10b981;
-  --hl-comment: var(--muted-foreground);
-  --hl-keyword: #a78bfa;
-  --hl-string: #4ade80;
-  --hl-number: #fb923c;
-  --hl-function: #60a5fa;
-  --hl-type: #facc15;
-  --hl-property: #93c5fd;
-  --lfs-light: #93b1e0;
-  --lfs-dark: #6f93e6;
-  --icon-accent: #8aa7f8;
-
-  /* Neutral surfaces preserve the existing colors of icons and status marks. */
-  --brand-1: #dedede;
-  --brand-2: #b7b7b7;
-  --brand-3: #929292;
-  --brand-gradient: linear-gradient(#dedede, #dedede);
-  --glow: transparent;
-  --glow-strong: transparent;
-
-  --elev-1: 0 0 0 transparent;
-  --elev-2: 0 2px 8px rgb(0 0 0 / 16%);
-  --elev-3: 0 16px 40px rgb(0 0 0 / 32%);
-  --highlight: inset 0 1px 0 rgb(255 255 255 / 8%);
-  --surface-sheen: none;
-
-  --aura-violet: #a0a0a0;
-  --aura-rose: #a0a0a0;
-  --aura-cyan: #a0a0a0;
-  --aura-amber: #a0a0a0;
-  --aura-mint: #a0a0a0;
-  --ambient-1: transparent;
-  --ambient-2: transparent;
-  --ambient-3: transparent;
-  --ambient-4: transparent;
-  --grid-dot: transparent;
-  --card-pastel-gradient: none;
-  --glass-sheen: none;
 }
 
 @layer base {
@@ -297,6 +188,7 @@
   }
   body {
     @apply bg-background text-foreground antialiased;
+    background-image: var(--grain);
     font-family: var(--font-sans);
     font-size: 14px;
     font-weight: 400;
@@ -505,14 +397,6 @@
       0 0 22px -6px color-mix(in oklab, var(--live-c, var(--primary)) 65%, transparent);
   }
 }
-@keyframes sheen {
-  from {
-    transform: translateX(-120%) skewX(-18deg);
-  }
-  to {
-    transform: translateX(220%) skewX(-18deg);
-  }
-}
 @keyframes page-out {
   to {
     opacity: 0;
@@ -522,26 +406,6 @@
   from {
     opacity: 0;
     transform: translateY(6px);
-  }
-}
-
-/* Canvas ambient drift */
-@keyframes canvas-ambient-drift {
-  0% {
-    transform: translate(0, 0) scale(1);
-    opacity: 0.85;
-  }
-  33% {
-    transform: translate(25px, -15px) scale(1.08);
-    opacity: 1;
-  }
-  66% {
-    transform: translate(-20px, 20px) scale(0.95);
-    opacity: 0.8;
-  }
-  100% {
-    transform: translate(0, 0) scale(1);
-    opacity: 0.85;
   }
 }
 
@@ -588,43 +452,17 @@
 }
 
 @layer components {
-  /* The main canvas: soft porcelain pearl surface with delicate dot matrix so liquid glass cards gleam */
+  /* The main canvas: the icon's powder-blue matte, grained, a little lighter where the light falls. */
   .canvas {
     position: relative;
-    background: linear-gradient(180deg, rgb(250 251 254 / 36%), rgb(242 245 252 / 44%));
-  }
-  .canvas::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    z-index: 0;
-    pointer-events: none;
-    background-image: radial-gradient(circle at 1px 1px, rgba(15, 23, 42, 0.032) 1px, transparent 0);
-    background-size: 24px 24px;
-    mask-image: radial-gradient(90rem 45rem at 50% 0%, #000, transparent 92%);
-  }
-  .canvas::after {
-    display: none;
+    background: var(--grain), linear-gradient(180deg, #f1f5fb 0%, var(--background) 22rem);
   }
 
-  .dark .canvas {
-    /* The shell supplies the black-grey base; let its bottom light through. */
-    background: transparent;
-  }
-  .dark .canvas::before {
-    display: none;
-  }
-  .dark .canvas::after {
-    display: none;
-  }
-
-  /* Apple Liquid Glass: continuous optical refraction, natural surface tension, no harsh cutouts */
+  /* Soft matte surfaces (class names kept from the glass era): opaque, grained, lit from above. */
   .glass, .glass-liquid, .surface {
     position: relative;
     background: var(--glass-card-bg);
     border: 1px solid var(--glass-border);
-    -webkit-backdrop-filter: blur(28px) saturate(190%) contrast(102%) brightness(104%);
-    backdrop-filter: blur(28px) saturate(190%) contrast(102%) brightness(104%);
     box-shadow: var(--glass-shadow);
     transition:
       transform var(--dur-base) cubic-bezier(0.22, 1, 0.36, 1),
@@ -635,85 +473,39 @@
     position: relative;
     background: var(--glass-panel-bg);
     border: 1px solid var(--glass-border);
-    -webkit-backdrop-filter: blur(34px) saturate(195%) contrast(103%) brightness(105%);
-    backdrop-filter: blur(34px) saturate(195%) contrast(103%) brightness(105%);
     box-shadow: var(--glass-panel-shadow);
   }
 
-  /* Blur belongs to the background; content and icons remain sharp and unfiltered. */
-  .dark :is(.glass, .glass-liquid, .surface, .glass-strong, .surface-raised) {
-    -webkit-backdrop-filter: blur(24px) saturate(100%);
-    backdrop-filter: blur(24px) saturate(100%);
-  }
-
-  /* Pure Apple Liquid Glass inputs, search pills, and floating controls */
+  /* Inputs and search pills are pressed into the surface rather than raised from it. */
   input.glass,
   input.glass-liquid {
-    background: var(--glass-card-bg) !important;
-    border: 1px solid var(--glass-border) !important;
-    -webkit-backdrop-filter: blur(28px) saturate(190%) contrast(102%) brightness(104%) !important;
-    backdrop-filter: blur(28px) saturate(190%) contrast(102%) brightness(104%) !important;
-    box-shadow: var(--glass-shadow) !important;
-    transition: all var(--dur-base) cubic-bezier(0.22, 1, 0.36, 1) !important;
-  }
-  .dark input:is(.glass, .glass-liquid) {
     background: var(--glass-field-bg) !important;
-    -webkit-backdrop-filter: none !important;
-    backdrop-filter: none !important;
+    border: 1px solid var(--glass-border) !important;
+    box-shadow: var(--pressed) !important;
+    transition: all var(--dur-base) cubic-bezier(0.22, 1, 0.36, 1) !important;
   }
   input.glass:focus,
   input.glass:focus-visible,
   input.glass-liquid:focus,
   input.glass-liquid:focus-visible {
     border-color: color-mix(in oklab, var(--primary) 55%, var(--glass-border)) !important;
-    box-shadow: var(--glass-shadow), 0 0 0 3px color-mix(in oklab, var(--primary) 28%, transparent) !important;
+    box-shadow: var(--pressed), 0 0 0 3px color-mix(in oklab, var(--primary) 22%, transparent) !important;
   }
 
-  /* Sidebar Frosted Glass: subtle translucent depth against the porcelain canvas */
+  /* The sidebar: one step deeper than the canvas, the same grain, a soft lit edge toward the page. */
   .sidebar-glass {
-    background: linear-gradient(180deg, rgba(242, 244, 250, 0.86) 0%, rgba(236, 239, 247, 0.80) 100%) !important;
-    -webkit-backdrop-filter: blur(36px) saturate(190%);
-    backdrop-filter: blur(36px) saturate(190%);
-    border-right: 1px solid rgba(15, 23, 42, 0.06);
-    box-shadow:
-      inset -1px 0 0 0 rgba(255, 255, 255, 0.7),
-      inset 0 1px 0 0 rgba(255, 255, 255, 0.9);
-  }
-
-  .dark .sidebar-glass {
-    background: var(--sidebar) !important;
-    -webkit-backdrop-filter: none;
-    backdrop-filter: none;
+    background: var(--grain), var(--sidebar) !important;
     border-right: 1px solid var(--sidebar-border);
-    box-shadow: none;
+    box-shadow: inset -1px 0 0 0 rgb(255 255 255 / 0.55);
   }
 
-  /* Chase light: subtle optical sheen across cards on hover */
+  /* Matte surfaces do not catch light: no sweep. The class stays for its layout. */
   .sheen-sweep {
     position: relative;
     overflow: hidden;
   }
-  .sheen-sweep::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(
-      105deg,
-      transparent 25%,
-      rgba(255, 255, 255, 0.55) 48%,
-      hsla(var(--cursor-hue, 215), 70%, 75%, 0.08) 54%,
-      transparent 75%
-    );
-    transform: translateX(-100%);
-    transition: transform 0.75s cubic-bezier(0.22, 1, 0.36, 1);
-    pointer-events: none;
-    z-index: 1;
-  }
-  .sheen-sweep:hover::before {
-    transform: translateX(100%);
-  }
 
-  /* Card hover: Light refraction catching the top edge and dynamic single-hue projection */
+  /* Card hover: the card lifts a little and its soft shadow spreads. */
   .card-hover {
     transition:
       transform var(--dur-base) cubic-bezier(0.22, 1, 0.36, 1),
@@ -721,70 +513,21 @@
       box-shadow var(--dur-base) cubic-bezier(0.22, 1, 0.36, 1);
   }
   .card-hover:hover {
-    transform: translateY(-2px);
-    border-color: rgba(255, 255, 255, 0.85);
+    transform: translateY(-1px);
+    border-color: color-mix(in oklab, var(--primary) 18%, var(--glass-border));
     box-shadow:
-      inset 0 1.5px 1.5px 0 rgba(255, 255, 255, 1),
-      inset 0 0 0 1px rgba(255, 255, 255, 0.70),
-      0 2px 6px 0 rgba(0, 0, 0, 0.02),
-      0 12px 32px -4px rgba(15, 23, 42, 0.07),
-      0 24px 52px -12px hsla(var(--cursor-hue, 215), 65%, 45%, 0.06);
+      inset 0 1px 0 0 rgb(255 255 255 / 0.95),
+      0 2px 4px 0 rgb(38 66 110 / 0.06),
+      0 14px 30px -12px rgb(38 66 110 / 0.22);
   }
-  .dark .card-hover:hover {
-    transform: none;
-    border-color: var(--input);
-    box-shadow: var(--glass-shadow);
+  .card-hover:active {
+    transform: translateY(0);
   }
 
-  /* Optical Specular Spotlight: delicate white core + whisper-soft single-hue refraction */
+  /* No specular spotlight on matte; the class stays for its stacking context. */
   .spotlight {
     position: relative;
     isolation: isolate;
-  }
-  .spotlight::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    z-index: 1;
-    border-radius: inherit;
-    pointer-events: none;
-    opacity: 0;
-    background: radial-gradient(
-      400px circle at var(--mx, 50%) var(--my, 50%),
-      rgba(255, 255, 255, 0.55) 0%,
-      hsla(var(--cursor-hue, 215), 70%, 72%, 0.065) 38%,
-      transparent 72%
-    );
-    transition: opacity var(--dur-base) cubic-bezier(0.22, 1, 0.36, 1);
-  }
-  .spotlight:hover::after {
-    opacity: 1;
-  }
-
-  .cursor-aura {
-    --cursor-light: var(--cursor-hue, 215) 58% 80%;
-    --cursor-core: var(--cursor-hue, 215) 58% 86%;
-  }
-  .cursor-orb-wide {
-    background: radial-gradient(circle, hsl(var(--cursor-light) / 0.18), hsl(var(--cursor-light) / 0.06) 42%, transparent 72%);
-  }
-  .cursor-orb-core {
-    background: radial-gradient(circle, hsl(var(--cursor-core) / 0.126), hsl(var(--cursor-core) / 0.03) 40%, transparent 72%);
-  }
-  .dark .cursor-aura {
-    --cursor-light: 0 0% 72%;
-    --cursor-core: 0 0% 78%;
-  }
-  .dark .cursor-orb-wide {
-    background: radial-gradient(circle, hsl(var(--cursor-light) / 0.12), hsl(var(--cursor-light) / 0.035) 42%, transparent 72%);
-  }
-  .dark .cursor-orb-core {
-    background: radial-gradient(circle, hsl(var(--cursor-core) / 0.075), hsl(var(--cursor-core) / 0.02) 40%, transparent 72%);
-  }
-
-  .dark .spotlight::after,
-  .dark .sheen-sweep::before {
-    display: none;
   }
 
   /* Entrances: fade and rise; --i staggers siblings, capped at 10 steps. */
@@ -909,47 +652,29 @@
     background-image: var(--brand-gradient);
   }
 
-  /* The primary button: brand light, a lit top edge and a sheen that passes on hover. */
+  /* The primary button: a raised cobalt stroke like the icon's, lit on top, pressed in when held. */
   .btn-primary {
     position: relative;
     overflow: hidden;
-    background-image: linear-gradient(to bottom, rgb(255 255 255 / 0.14), transparent);
+    background-image: var(--grain), linear-gradient(to bottom, rgb(255 255 255 / 0.12), transparent);
     box-shadow:
-      inset 0 1px 0 0 rgb(255 255 255 / 0.22),
-      0 1px 2px color-mix(in oklab, var(--primary) 40%, transparent),
-      0 0 0 0 var(--glow);
+      inset 0 1px 0 0 rgb(255 255 255 / 0.2),
+      inset 0 -1px 0 0 rgb(10 30 70 / 0.18),
+      0 1px 2px color-mix(in oklab, var(--primary) 35%, transparent),
+      0 4px 10px -6px color-mix(in oklab, var(--primary) 60%, transparent);
   }
   .btn-primary:hover:not(:disabled) {
     box-shadow:
       inset 0 1px 0 0 rgb(255 255 255 / 0.22),
-      0 2px 8px -2px color-mix(in oklab, var(--primary) 60%, transparent),
-      0 0 16px -4px var(--glow);
+      inset 0 -1px 0 0 rgb(10 30 70 / 0.18),
+      0 2px 4px color-mix(in oklab, var(--primary) 35%, transparent),
+      0 8px 16px -8px color-mix(in oklab, var(--primary) 65%, transparent);
   }
-  .btn-primary::after {
-    content: '';
-    position: absolute;
-    inset: 0 auto 0 0;
-    width: 45%;
-    pointer-events: none;
-    background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.28), transparent);
-    transform: translateX(-120%) skewX(-18deg);
-  }
-  .btn-primary:hover:not(:disabled)::after {
-    animation: sheen 0.7s var(--ease-out-soft);
+  .btn-primary:active:not(:disabled) {
+    box-shadow: inset 0 2px 4px 0 rgb(10 30 70 / 0.28);
   }
 
-  .dark .btn-primary {
-    background: var(--primary) !important;
-    color: var(--primary-foreground) !important;
-    border-color: transparent !important;
-    box-shadow: none !important;
-  }
-  .dark .btn-primary:hover:not(:disabled) {
-    background: #d8d8d8 !important;
-  }
-  .dark .btn-primary::after { display: none; }
-
-  /* The page header: sticky and frosted once content scrolls under it (see <PageHeader>). */
+  /* The page header: sticky, and opaque matte once content scrolls under it (see <PageHeader>). */
   .page-header {
     transition:
       background-color var(--dur-base) var(--ease-out-soft),
@@ -958,24 +683,13 @@
     border-bottom: 1px solid transparent;
   }
   .page-header[data-stuck] {
-    background-color: color-mix(in oklab, var(--card) 75%, transparent);
-    background-image: var(--surface-sheen);
-    backdrop-filter: blur(18px) saturate(1.6);
-    -webkit-backdrop-filter: blur(18px) saturate(1.6);
-    border-bottom-color: color-mix(in oklab, var(--border) 60%, transparent);
-    box-shadow:
-      inset 0 1px 0 0 rgb(255 255 255 / 0.6),
-      0 8px 24px -10px rgb(0 0 0 / 0.12);
+    background: var(--grain), var(--background);
+    border-bottom-color: var(--border);
+    box-shadow: 0 8px 20px -14px rgb(38 66 110 / 0.28);
   }
-  .dark .page-header[data-stuck] {
-    background: var(--background);
-    box-shadow: none;
-  }
-  /* A header nothing shows through once stuck (Compute): the page's own surface, opaque, keeping the hairline. */
+  /* Compute's header: the same opaque surface, keeping the hairline. */
   .page-header.page-header-solid[data-stuck] {
-    background: var(--background);
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
+    background: var(--grain), var(--background);
   }
 }
 
@@ -1020,7 +734,7 @@
     inset: 6px;
     border-radius: 999px;
     background-image: var(--brand-gradient);
-    opacity: 0.3;
+    opacity: 0.16;
     filter: blur(16px);
     transition: opacity var(--dur-slow) var(--ease-out-soft);
   }
@@ -1035,17 +749,10 @@
     height: 100%;
     align-items: center;
     justify-content: center;
-    border: 1px solid rgba(0, 0, 0, 0.08);
-    border-radius: 1.25rem;
-    background-color: rgba(255, 255, 255, 0.85);
-    -webkit-backdrop-filter: blur(24px) saturate(180%);
-    backdrop-filter: blur(24px) saturate(180%);
-    box-shadow: inset 0 1px 1px 0 rgba(255, 255, 255, 0.95), var(--elev-2);
-  }
-  .dark .hero-tile-face {
-    border-color: var(--glass-border);
-    background: var(--glass-card-bg);
-    box-shadow: var(--glass-shadow);
+    border: 1px solid var(--glass-border);
+    border-radius: 0.5rem;
+    background: var(--glass-panel-bg);
+    box-shadow: var(--highlight), var(--elev-2);
   }
 
   /* Something is playing: a calm, clean hairline along the header's bottom edge. */
@@ -1078,9 +785,7 @@
     transition-property: background-color, color, transform, box-shadow;
   }
   .side-tree :is([data-sidebar='menu-button'], [data-sidebar='menu-sub-button']):hover:not([data-active='true']) {
-    box-shadow:
-      inset 0 0 0 1px color-mix(in oklab, var(--foreground) 5%, transparent),
-      0 0 16px -10px var(--glow);
+    box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--foreground) 5%, transparent);
   }
 }
 
@@ -1135,11 +840,11 @@ html:active-view-transition-type(tab)::view-transition-new(page) {
 main.vt-page {
   view-transition-name: page;
 }
-/* The tab strip stays put while the page under it changes. */
-.tab-strip {
-  view-transition-name: tab-strip;
+/* The window bar stays put while the page under it changes. */
+.window-bar {
+  view-transition-name: window-bar;
 }
-/* Pages fill the window (h-svh); under the tab strip they fill what is left. */
+/* Pages fill the window (h-svh); under the window bar they fill what is left. */
 .tab-body > .h-svh {
   height: 100%;
 }

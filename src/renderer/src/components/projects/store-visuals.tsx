@@ -137,7 +137,7 @@ export function DiskFlow({ t, onDisk }: { t: StoreStats; onDisk: number }) {
   const id = useSvgId()
   const stages: Stage[] = [
     { label: 'Every snapshot', sub: 'raw history', value: t.logical, color: 'var(--faint)' },
-    { label: 'Unique', sub: 'after dedupe', value: t.canonical, color: 'var(--brand-1)' },
+    { label: 'Unique', sub: t.partial ? 'new in these Commits' : 'after dedupe', value: t.canonical, color: 'var(--brand-1)' },
     { label: 'Compressed', sub: 'pack bytes', value: t.stored, color: 'var(--brand-2)' },
     { label: 'On disk', sub: 'the SQLite file', value: onDisk, color: 'var(--brand-3)' },
   ]
@@ -294,7 +294,7 @@ export function GrowthChart({ t }: { t: StoreStats }) {
             <CountBytes value={last[s.key]} className="font-mono text-foreground" />
           </span>
         ))}
-        <span className="ml-auto text-faint">{t.commits.length ? tr("Init → newest Commit") : tr("only Init so far")}</span>
+        <span className="ml-auto text-faint">{t.partial ? tr("first Commit read → newest") : t.commits.length ? tr("Init → newest Commit") : tr("only Init so far")}</span>
       </div>
       <div ref={ref} className="relative" style={{ height: H }} onMouseMove={onMove} onMouseLeave={() => setHover(null)}>
         <span className="pointer-events-none absolute top-0 left-0 font-mono text-[10px] text-faint">{bytes(top)}</span>
@@ -356,7 +356,7 @@ export function GrowthChart({ t }: { t: StoreStats }) {
         )}
         {picked && (
           <div className={cn(TIP, 'w-64')} style={{ left: Math.min(Math.max(0, x(hover!) - 128), Math.max(0, width - 256)) }}>
-            <p className="truncate font-medium">{picked.commit ? picked.commit.message || shortId(picked.commit.id) : tr("Init and the Layers")}</p>
+            <p className="truncate font-medium">{picked.commit ? picked.commit.message || shortId(picked.commit.id) : tr(t.partial ? "Before these Commits" : "Init and the Layers")}</p>
             {picked.commit && <p className="truncate font-mono text-[11px] text-faint">{picked.commit.branch}</p>}
             <dl className="mt-1.5 grid grid-cols-2 gap-2">
               {series.map((s) => (

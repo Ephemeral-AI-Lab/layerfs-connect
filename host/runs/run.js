@@ -273,7 +273,8 @@ export class Run {
 
   /**
    * The environment of an agent's bash call labelled `label`: the home, the
-   * trace settings (LayerFS 2.0 writes no trace yet: §9 Q1), the project key
+   * trace settings (LayerFS 2.0 traces only worker connections; Connect's
+   * `layerfs` command and package write the call lines: trace-line.js), the project key
    * in LAYERFS_CONNECT_PROJECT and the run's scope.
    */
   env(agent, label) {

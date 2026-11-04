@@ -1,4 +1,4 @@
-// Compute: the machines this Connect's LayerFS home runs on (LayerFS 2.0,
+// Machines: the machines this Connect's LayerFS home runs on (LayerFS 2.0,
 // layerfs#533). `native` and `docker` are built in; VMs are created
 // (apple-container, microsandbox, lima, firecracker) and ssh hosts connected.
 // A machine holds sqlite Stores, and a project's Sandboxes run on its
@@ -6,10 +6,11 @@
 // and Stop; nothing starts it on use or stops it when idle.
 //
 // This file turns GET /api/machines (MachinesView) into what the page shows,
-// and checks the New machine forms. It also keeps the Sandbox platform
+// matches chats to the Workspaces they use, and checks the New machine forms. It also keeps the Sandbox platform
 // helpers the Sandbox lists use (layerfs#529).
 
-import type { HostStatus, MachineInfo, MachinePlatformInfo, MachineLive, MachinePlatform, MachinesView, SandboxInfo, SandboxPlatform, SdkOperation } from '@shared/host-api'
+import type { AgentSessionSummary } from '@shared/agent-api'
+import type { HostStatus, MachineInfo, MachinePlatformInfo, MachineLive, MachinePlatform, MachinesView, MachineStore, SandboxInfo, SandboxPlatform, SdkOperation, WorkspaceInfo } from '@shared/host-api'
 
 import { stateLook } from '@/data/states'
 
@@ -84,35 +85,46 @@ export function gib(n: number | null | undefined): string {
   return `${Math.round(n / 2 ** 20)} MiB`
 }
 
-/** The Size column: a VM's CPUs, memory and disk; the built-ins and ssh hosts in words. */
+/** A machine's size: a VM's CPUs, memory and disk (and its free disk, when known); the built-ins and ssh hosts in words. */
 export function sizeOf(m: MachineInfo, os: Os, live?: MachineLive): { text: string; values?: Record<string, string | number> } {
   if (m.platform === 'native') return { text: os === 'darwin' ? 'this Mac' : os === 'win32' ? 'this PC' : 'this host' }
   if (m.platform === 'docker') {
     if (os === 'linux') return { text: 'this host’s Docker' }
     return live?.freeDisk != null ? { text: 'Docker’s VM · {free} free', values: { free: gib(live.freeDisk) } } : { text: 'Docker’s VM' }
   }
-  if (m.platform === 'ssh') return { text: 'host’s own' }
-  return { text: '{cpus} CPU · {memory} · {disk}', values: { cpus: m.cpus ?? VM_DEFAULTS.cpus, memory: gib(m.memory ?? VM_DEFAULTS.memory), disk: gib(m.disk ?? VM_DEFAULTS.disk) } }
+  if (m.platform === 'ssh') return live?.freeDisk != null ? { text: 'host’s own · {free} free', values: { free: gib(live.freeDisk) } } : { text: 'host’s own' }
+  const values = { cpus: m.cpus ?? VM_DEFAULTS.cpus, memory: gib(m.memory ?? VM_DEFAULTS.memory), disk: gib(m.disk ?? VM_DEFAULTS.disk) }
+  return live?.freeDisk != null ? { text: '{cpus} CPU · {memory} · {disk} · {free} free', values: { ...values, free: gib(live.freeDisk) } } : { text: '{cpus} CPU · {memory} · {disk}', values }
 }
 
-/** The facts line's numbers (§6): running, stopped, creating or removing, needs you, and the operations in flight. */
+/** The sqlite Stores a machine holds; one store.list() omits still shows by name. */
+export function storesOn(view: Extract<MachinesView, { available: true }>, m: MachineInfo): MachineStore[] {
+  return m.stores.map((name) => view.stores.find((s) => s.name === name && s.machine === m.name) ?? { name, machine: m.name, projects: 0, size: null })
+}
+
+/** The chats using Workspace `w` of Sandbox `sandbox`: their workspace names the Sandbox and its path (or the `<sandbox>:<path>` handle). */
+export function chatsOn(chats: AgentSessionSummary[] | undefined, sandbox: string, w: WorkspaceInfo): AgentSessionSummary[] {
+  return (chats ?? []).filter((c) => {
+    const at = c.workspace
+    if (!at?.path || at.sandbox !== sandbox || at.state === 'closed') return false
+    const path = at.path.replace(/\/+$/, '')
+    return path === w.path.replace(/\/+$/, '') || `${sandbox}:${path}` === w.ws
+  })
+}
+
+/** The facts line's numbers (§6): running, stopped, creating or removing, needs you, Sandboxes and Workspaces, and the operations in flight. */
 export function factsOf(view: Extract<MachinesView, { available: true }>) {
   const n: Record<MachineKey, number> = { running: 0, stopped: 0, busy: 0, needs: 0, unknown: 0 }
   for (const m of view.machines) n[machineState(m, view.status[m.name]).key]++
   const ops = [...Object.values(view.status).filter((s) => s.op), ...view.stores.filter((s) => s.op), ...view.sandboxes.filter((b) => b.op)].length
   const sandboxes = view.sandboxes.length
-  return { ...n, ops, sandboxes }
+  const workspaces = view.sandboxes.reduce((sum, b) => sum + (b.workspaces ?? 0), 0)
+  return { ...n, ops, sandboxes, workspaces }
 }
 
 /** A machine `remove`/`disconnect` refuses while it holds Stores or running Sandboxes (InUse): the reason, or null. */
 export function inUse(m: MachineInfo): { stores: number; sandboxes: number } | null {
   return m.stores.length || m.sandboxes.length ? { stores: m.stores.length, sandboxes: m.sandboxes.length } : null
-}
-
-/** The machines a Store on `from` can move to: every other machine that is not down (an ssh host takes Stores too). */
-/** The machines a Store on `from` can be pushed (or moved) to: not native, not `from`, holding sqlite Stores. */
-export function moveTargets(view: Extract<MachinesView, { available: true }>, from: string): MachineInfo[] {
-  return machineOrder(view.machines).filter((m) => m.name !== from && m.name !== 'native' && m.supports?.sqlite !== false)
 }
 
 /** A can_create need in words (2.0's machine/probe.rs names), as a template and its values for t(). */

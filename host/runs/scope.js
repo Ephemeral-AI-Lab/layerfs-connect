@@ -4,8 +4,9 @@
 //   a trunk      the Branch that stands for main: <run>.main (the fixture's
 //                Commit), then <run>.main.1, .2, … one per publish
 //   a namespace  its Branches are <run>.<name>
-//   Sandboxes    the script's names (sb1, …) as <run>.<name>, unique in the
-//                home, made on the run's machine (Sandboxes follow the Store)
+//   Sandboxes    the script's names (sb1, …) as <run>.<name>.<tag>, unique in
+//                the home (<run> is unique in its project only), made on the
+//                run's machine (Sandboxes follow the Store)
 // The scripts stay as written. Every agent's bash call finds the scope in
 // LAYERFS_CONNECT_SCOPE: the `layerfs` command (cli-shim.mjs) and the
 // `layerfs` package (scope-client.js) rewrite each call's 2.0 arguments
@@ -98,13 +99,14 @@ export const inRunFolder = (run, command) => (typeof command === 'string' ? `${T
 export class Scope {
   /** The scope in `dir`, as the engine made it. */
   static open(dir) {
-    const { run, project, machine = null } = JSON.parse(readFileSync(join(dir, 'scope.json'), 'utf8'))
-    return new Scope(dir, run, project, machine)
+    const { run, project, machine = null, tag = null } = JSON.parse(readFileSync(join(dir, 'scope.json'), 'utf8'))
+    return new Scope(dir, run, project, machine, tag)
   }
 
   /**
    * Makes a scope's folder: the run's name, its project (its key), its first
-   * trunk and the machine its Sandboxes run on.
+   * trunk, the machine its Sandboxes run on, and a tag of its own: the run's
+   * name is unique in its project only, Sandbox names in the whole home.
    */
   static create(dir, { run, project, trunk, machine = null }) {
     rmSync(dir, { recursive: true, force: true })
@@ -112,17 +114,20 @@ export class Scope {
     mkdirSync(join(dir, 'sandboxes'), { recursive: true })
     mkdirSync(join(dir, 'mounts'), { recursive: true })
     mkdirSync(join(dir, 'ffs'), { recursive: true })
-    writeFileSync(join(dir, 'scope.json'), JSON.stringify({ run, project, ...(machine ? { machine } : {}) }))
-    const scope = new Scope(dir, run, project, machine)
+    const tag = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 4)}`
+    writeFileSync(join(dir, 'scope.json'), JSON.stringify({ run, project, ...(machine ? { machine } : {}), tag }))
+    const scope = new Scope(dir, run, project, machine, tag)
     scope.setTrunk(0, trunk)
     return scope
   }
 
-  constructor(dir, run, project, machine = null) {
+  constructor(dir, run, project, machine = null, tag = null) {
     this.dir = dir
     this.run = run
     this.project = project
     this.machine = machine
+    /** Null in a scope made before tags: its Sandboxes keep `<run>.<name>`. */
+    this.tag = tag
   }
 
   // ---------- state ----------
@@ -179,13 +184,14 @@ export class Scope {
     return out
   }
 
-  /** The real name of the script's Sandbox `name`: `<run>.<name>`, recorded once; a real name passes as it is. */
+  /** The real name of the script's Sandbox `name`: `<run>.<name>.<tag>`, recorded once; a real name passes as it is. */
   realSandbox(name) {
     if (typeof name !== 'string') return name
     const known = this.sandboxes()
     if ([...known.values()].includes(name)) return name
     if (known.has(name)) return known.get(name)
-    const real = `${this.run}.${name}`.toLowerCase().replace(/[^a-z0-9_.-]/g, '-').slice(0, 63)
+    const end = this.tag ? `.${this.tag}` : ''
+    const real = `${`${this.run}.${name}`.toLowerCase().replace(/[^a-z0-9_.-]/g, '-').slice(0, 63 - end.length)}${end}`
     try {
       writeFileSync(join(this.dir, 'sandboxes', name), real, { flag: 'wx' })
     } catch (error) {

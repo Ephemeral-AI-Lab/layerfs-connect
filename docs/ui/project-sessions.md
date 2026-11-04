@@ -1,76 +1,67 @@
-# Project: Sessions, Script and Play scenario
+# Project: Chats
 
-The project's scenario runs, newest first, each a row that opens its run page; the scenario's
-script; and the "Play scenario" picker that starts runs. Opens from: the "Sessions N" tab after
-the divider in a project page's tab row (or `CONNECT_VIEW=projects/<project>/sessions`; old
-`live` links open it too).
-Source: `src/renderer/src/components/runs/run-list.tsx` (Sessions),
-`runs/demo-script.tsx` (Script), `projects/scenario-picker.tsx` (Play scenario).
+The project's chats, newest first, as a table: each chat works on its own Branch, mounted as a
+Workspace in a Sandbox, so the user's hierarchy is Project → Chat → (Branch, Workspace). A row opens
+the chat on the Chat page. Opens from: the "Chats N" tab of a project page (or
+`#projects/<key>/chats`; old `sessions` and `runs` hashes open it too). The sidebar's Chats section
+lists the same chats under the project's group, whose ↗ opens the project page.
+Source: `src/renderer/src/components/projects/project-sessions.tsx` (`ProjectSessionsContent`),
+wired in `projects/project-view.tsx`.
 
 ## Skeleton
 
 ```text
-+-[1] PageHeader ------------------------------------------------------------------------------+
-| < Projects                                                                                   |
-| [P] shop   (Store badge)                     [ Refresh ] [ > Play scenario v ] [ New chat ]  |
-| (Last Commit 3 min ago) (4 Branches) (12 Commits) (2 MB on disk)                             |
-| History   Storage   Sandboxes   |   Sessions 3   Script                                       |
-|                                                       ========                               |
++-[1] PageHeader (compact) --------------------------------------------------------------------+
+| < Storage / shop / [A] shop   Runs on [native] · Last Commit 3 min ago · 2 MB  [↻] [New chat] |
+| • Live 1   • Chats 4   Files   History  │  Sandboxes   Storage                               |
+|            =========                                                                          |
 +----------------------------------------------------------------------------------------------+
-+-[2b] Live card: the live diagram (project-live.md), while a run plays or ended < 5 min ago --+
-+-[3] RunList ---------------------------------------------------------------------------------+
-| Sessions 3   (* 1 playing)                                                                   |
-| SESSION                              STARTED    DURATION  STEPS              AGENTS          |
-| * crew_2   Running                   2 min ago  2 m 05 s  [====------] 31/96  ** 2  [Stop] > |
-|   Crew                                                                                       |
-| o depot_1  (Queued)                  1 min ago  –         [----------]  0/40  –     [Stop] > |
-|   Depot · waiting for a heavy scenario                                                       |
-| o crew_1                             3 h ago    2 m 40 s  [==========] 96/96  ** 2  [ 🗑 ] > |
-|   Crew                                                                                       |
++-[2] Chats table -----------------------------------------------------------------------------+
+| Working · 2                                                               [ Show archived 1 ] |
+| CHAT                          BRANCH        WORKSPACE           STATE        UPDATED          |
+| * Fix the login form          fix-login     [native · a1]       (Working)    just now       > |
+| o Add a health check          health        [native · a1]       (Idle)       2 hours ago    > |
+| # Crew run  crew_2  31/96     crew_2.*      [native · a2]       (Running)    2 min  [Stop]  > |
+| o Old experiment              experiment    — closed            (Archived)   5 days ago     > |
 +----------------------------------------------------------------------------------------------+
 ```
 
+`#` stands for the ⧉ scenario marker. Under 48 rem of its own width a row folds into two lines:
+the title, the state chip and the actions, then Branch, Workspace and Updated.
+
 ## Regions
 
-1. **PageHeader** (`ProjectView`, `projects/project-view.tsx`): a live line runs under it while a
-   run plays (not while one is only queued). Sessions is the default tab once the project has runs,
-   and gets a pulsing dot while a run plays. It opens with the Live card (`LiveTab`,
-   [project-live.md](project-live.md)) while a run plays or ended in the last 5 minutes, then
-   the list. A refused start shows a
-   red alert under the facts, "Could not start the scenario: <message>", with a dismiss ×.
-2. **Play scenario** (`ScenarioPicker`, `projects/scenario-picker.tsx`): an outline button with a
-   menu of `host.demos()`, the project's own scenario first ("This project's"), each with its title,
-   agent count and blurb; then "All scenarios". A choice calls `host.startRun(id, projectKey)` or
-   `host.startAll(projectKey)` (`useStartRun`, `runs/use-runs.ts`) and opens the first new run's
-   page. Disabled until the project is initialised; "Starting…" with a spinner meanwhile.
-3. **RunList** (`RunList`, `runs/run-list.tsx`, styles in `runs/run-list.css`): a liquid-glass
-   card, "Sessions" with its count and an "N playing" chip. Columns fold away under 44 rem.
-4. **RunRow**: a click on the name (or the chevron) opens the run page.
-   - SESSION: `RunDot` and the run's folder in mono (`runName`: `crew_2`, or `teams_1 · docs` for a
-     session of a multi-session scenario); "Running"/"Starting" in the primary colour, "Stopped" in
-     amber, or a "Queued" chip with an hourglass for a heavy scenario waiting its turn. Under it the
-     scenario's title, and the run's phase while it starts.
-   - STARTED (clock time on hover), DURATION (counts up while it plays; "–" while queued), STEPS (a
-     calm progress bar and done/of), AGENTS (up to 6 colour dots and the count).
-   - Actions: Stop (`host.stopRun`) while it plays or waits; once ended a trash button that turns
-     into Delete / Cancel, and Delete calls `host.removeRun` (the record and traces go; the project
-     and its history stay). A failed action shows its message under the row.
+1. **PageHeader** (`ProjectView`): the Chats tab carries the count of chats that are not archived
+   and a dot while one works (`chatLive`). The header's one row names where the project is stored
+   and where it runs (see [layerfs-projects.md](layerfs-projects.md#project-page)).
+2. **Header row**, only when there is something to say: "Working · N", and **Show archived N** /
+   **Hide archived** when some are archived (archived rows are dimmed). The tab above names the
+   table and counts it, so the row does not repeat "Chats N". Each row is its own grid; the actions
+   column has one fixed width (Stop and the chevron), so a running scenario's Stop does not shift
+   that row's columns.
+3. **Rows** (`ChatRow`): the row opens the chat (`onOpenChat`).
+   - CHAT: a state dot (pulsing while working, red on error) and the title; a scenario chat has the
+     ⧉ marker, its scenario's title, its folder and steps done/of. A failed chat shows its error under
+     the title.
+   - BRANCH: `workspace.branch`; a click opens the project's History at that Branch
+     (`onOpenBranch` → `setBranch` + the History tab). A scenario chat with no Branch yet shows
+     `<folder>.*`.
+   - WORKSPACE: a machine chip "machine · sandbox" that opens the machine's row on Machines
+     (`go.machine`). The machine is the Sandbox's (from the project read's Sandboxes), else the
+     scenario's, else the Store's. "— closed" when the Workspace is closed, or a chat at rest has
+     none.
+   - STATE: Archived; a scenario's state (Preparing, Running, Passed, Failed, Stopped); Error;
+     Working; the Workspace's Preparing or Saving; else Idle.
+   - UPDATED: `ago(updated)`, the clock time on hover.
+   - Actions: **Stop** on a scenario chat that is running (`agentHost.stop`); a refused stop shows
+     its message under the title.
 
-Old run records saved by an earlier engine as live Pi sessions (`kind: 'live'`, or state `idle`)
-are hidden here, in the sidebar and on the run page; Chat replaces them.
+Branch, Workspace and Stop clicks do not open the row.
 
 ## States
 
-- **Loading**: three skeleton bars.
-- **Error**: `LoadError` ("the sessions") with Try again.
-- **Empty**: "No sessions yet", with the Play scenario picker as its action.
-- **Live**: rows follow the host's `run`, `agent` and `run-removed` events (`useRuns`).
-
-## Script
-
-The project's own scenario (the one whose run made it, `ProjectSummary.demo`, or the scenario
-named like the project), shown only when it has one. `DemoScript` (`runs/demo-script.tsx`): a glass
-card with "Script", the agents (an `AgentRail` of pills for up to 8, else the `AgentSwitcher`
-dropdown), "N agents · N steps", the blurb, a bar of the script's calls by kind and its legend;
-under it the shown agent's thread in the run page's conversation look, with no times
-(`Conversation` with `script`). Loading shows `Loading`; a failed read shows `LoadError`.
+- **Loading**: `Loading` ("Reading the chats…").
+- **Error**: `LoadError` ("Chats") with Retry, which reads the chats again.
+- **Empty**: "No chats yet" with **New chat** (off until the project is read).
+- **Live**: rows follow the host's `chat` events (`useChatSessions`); the page reads the project
+  again when a chat's Workspace head, save or state moves.

@@ -47,16 +47,56 @@ export async function pages(read, most = Infinity) {
   return all
 }
 
-/** A Sandbox's Workspaces: every page of sandbox.get (its pages hold `workspaces`, not `items`). */
-export async function workspacesOf(lfs, sandbox) {
-  const all = []
-  for (let pos = 0; pos !== null; ) {
-    const page = await lfs.sandbox.get(sandbox, { page_size: PAGE, page_pos: pos })
-    all.push(...(page.workspaces ?? []))
-    pos = page.next_page_pos ?? null
+/** How long a Sandbox's `Busy` refusal (its daemon admits no connection: LayerFS waited 60 s for one) answers its reads before it is asked again. */
+export const BUSY_MS = 30_000
+/** Per client: each Sandbox's read in flight, and its last `Busy` refusal. */
+const reads = new WeakMap()
+
+/**
+ * A Sandbox's Workspaces: every page of sandbox.get (its pages hold
+ * `workspaces`, not `items`). One read per Sandbox at a time: callers share
+ * the one in flight, so polls never stack 60 s admission waits on the host's
+ * threads. A `Busy` refusal answers again for BUSY_MS without a call. With
+ * `wait` (ms) the caller gives up first, refused `Timeout`; the read goes on
+ * and the next caller shares it.
+ */
+export function workspacesOf(lfs, sandbox, { wait = null } = {}) {
+  if (!reads.has(lfs)) reads.set(lfs, { flying: new Map(), busy: new Map() })
+  const { flying, busy } = reads.get(lfs)
+  const refused = busy.get(sandbox)
+  if (refused && Date.now() - refused.at < BUSY_MS) return Promise.reject(refused.error)
+  let read = flying.get(sandbox)
+  if (!read) {
+    read = (async () => {
+      const all = []
+      for (let pos = 0; pos !== null; ) {
+        const page = await lfs.sandbox.get(sandbox, { page_size: PAGE, page_pos: pos })
+        all.push(...(page.workspaces ?? []))
+        pos = page.next_page_pos ?? null
+      }
+      return all
+    })().then(
+      (all) => (busy.delete(sandbox), all),
+      (error) => {
+        if (error?.code === 'Busy') busy.set(sandbox, { at: Date.now(), error })
+        throw error
+      },
+    ).finally(() => flying.delete(sandbox))
+    read.started = Date.now()
+    flying.set(sandbox, read)
   }
-  return all
+  if (!wait) return read
+  // a read already past the wait is not waited for again
+  const left = wait - (Date.now() - read.started)
+  let timer
+  const late = new Promise((_, reject) => {
+    timer = setTimeout(() => reject(Object.assign(new Error(`Sandbox ${sandbox} did not answer in ${wait / 1000} s`), { code: 'Timeout' })), Math.max(0, left))
+  })
+  return Promise.race([read, late]).finally(() => clearTimeout(timer))
 }
+
+/** How long a page's view waits for one Sandbox's Workspaces before showing it unread. */
+export const VIEW_WAIT_MS = 5000
 
 /** The linked `layerfs` package's version, or null. */
 export function linkedVersion() {

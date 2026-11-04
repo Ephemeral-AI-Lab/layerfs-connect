@@ -45,7 +45,7 @@ export function UpgradeScreen({ refusal }: { refusal: HostError }) {
     <div className="flex h-svh min-w-0 items-center justify-center overflow-y-auto px-6 py-10">
       <div className="glass-liquid flex w-full max-w-2xl flex-col gap-4 rounded-3xl px-7 py-6 shadow-sm">
         <header className="flex items-start gap-3">
-          <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
+          <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600">
             <TriangleAlert className="size-5" />
           </span>
           <div className="min-w-0">

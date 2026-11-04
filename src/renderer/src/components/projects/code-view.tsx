@@ -75,5 +75,5 @@ export function CodeView({ path, text }: { path: string; text: string }) {
     return () => view.destroy()
   }, [path, text])
 
-  return <div ref={host} className="code-view h-full min-h-0 overflow-hidden dark:[--code-line-number:var(--muted-foreground)] [&_.cm-editor]:h-full" />
+  return <div ref={host} className="code-view h-full min-h-0 overflow-hidden [&_.cm-editor]:h-full" />
 }

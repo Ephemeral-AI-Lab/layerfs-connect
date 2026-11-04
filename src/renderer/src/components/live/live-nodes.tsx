@@ -503,6 +503,10 @@ export function SandboxNode({ sandbox, groups, folders, now }: SandboxProps) {
   const execs = sandbox.workspaces.map(execOf)
   const first = execs.find((e) => e)
   const maker = sandbox.madeBy && groupOf(sandbox.madeBy.run)
+  const title = t('Sandbox {id}', { id: sandbox.id })
+  const sub = sandbox.madeBy
+    ? `${t('made by {agent}', { agent: sandbox.madeBy.agent })}${maker ? ` · ${maker.session.run.folder ? '/' : ''}${maker.name}` : ''}`
+    : t(sandbox.state)
   return (
     <div
       data-anchor={`sandbox-${sandbox.id}`}
@@ -510,30 +514,14 @@ export function SandboxNode({ sandbox, groups, folders, now }: SandboxProps) {
       className={CARD}
     >
       <span aria-hidden="true" className={cn('live-ring', first ? first.group.colorOf(first.call.agent).text : 'text-(--icon-accent)')} />
-      <div className="relative z-[2] flex min-w-0 items-center gap-2.5 px-3 py-2.5">
-        <span className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-card text-muted-foreground ring-1 ring-foreground/[0.08] ring-inset">
-          <LfsSandbox className="size-4" />
-        </span>
-        <span className="flex min-w-0 flex-1 flex-col">
-          <span className="flex min-w-0 items-baseline gap-2">
-            <span className="shrink-0 text-sm font-medium">{t('Sandbox {id}', { id: sandbox.id })}</span>
-            {sandbox.name && <span className="min-w-0 truncate text-[11px] text-muted-foreground">{sandbox.name}</span>}
-          </span>
-          <span className="truncate text-[11px] text-muted-foreground">
-            {sandbox.madeBy ? (
-              <>
-                {t('made by {agent}', { agent: sandbox.madeBy.agent })}
-                {maker ? ` · ${maker.session.run.folder ? '/' : ''}${maker.name}` : ''}
-              </>
-            ) : (
-              t(sandbox.state)
-            )}
-          </span>
-        </span>
-        <span className="shrink-0 text-[11px] text-muted-foreground tabular-nums">{t('{n} mounted', { n: sandbox.workspaces.length })}</span>
+      <div className="relative z-[2] flex min-w-0 items-center gap-2 px-2.5 py-1.5" title={[title, sandbox.name, sub].filter(Boolean).join(' · ')}>
+        <LfsSandbox className="size-3.5 shrink-0 text-muted-foreground" />
+        <span className="min-w-0 shrink truncate text-[13px] font-medium">{title}</span>
+        <span className="min-w-0 flex-1 shrink-[2] truncate text-[11px] text-muted-foreground">{sub}</span>
+        <WsCount n={sandbox.workspaces.length} label={t('{n} mounted', { n: sandbox.workspaces.length })} />
       </div>
       {sandbox.workspaces.length === 0 ? (
-        <div className="relative z-[2] flex items-center gap-2 border-t border-foreground/[0.06] px-3 py-2 text-xs text-muted-foreground italic">
+        <div className="relative z-[2] flex items-center gap-2 border-t border-foreground/[0.06] px-2.5 py-1.5 text-xs text-muted-foreground italic">
           <LfsWorkspace className="size-3.5" />
           {t('No mounted workspaces')}
         </div>
@@ -549,31 +537,31 @@ export function SandboxNode({ sandbox, groups, folders, now }: SandboxProps) {
               key={w.key}
               data-anchor={`ws-${w.key}`}
               className={cn(
-                'relative z-[2] flex flex-col gap-1 border-t border-foreground/[0.06] px-3 py-2 text-xs transition-colors duration-(--dur-base) last:rounded-b-xl',
+                'relative z-[2] flex flex-col gap-0.5 border-t border-foreground/[0.06] px-2.5 py-1.5 text-xs transition-colors duration-(--dur-base) last:rounded-b-xl',
                 exec ? 'bg-card' : 'bg-card/55',
               )}
             >
               <span className="flex min-w-0 items-center gap-2">
                 <LfsWorkspace className="size-3.5 shrink-0 text-muted-foreground" />
-                <span className="shrink-0 font-mono text-[11px]">{w.path}</span>
+                <span className="min-w-0 shrink truncate font-mono text-[11px]" title={w.path}>{shortPath(w.path)}</span>
                 {w.branch && (
-                  <span className="flex min-w-0 items-center gap-1 rounded-md bg-card/80 px-1.5 py-px ring-1 ring-foreground/10 ring-inset">
+                  <span className="flex min-w-0 shrink-[2] items-center gap-1 rounded-md bg-card/80 px-1.5 py-px ring-1 ring-foreground/10 ring-inset">
                     <LfsBranch className="size-3 shrink-0 text-muted-foreground" />
                     <BranchName name={w.branch} folders={folders} className="text-[11px]" />
                   </span>
                 )}
-                <span className="ml-auto flex shrink-0 items-center gap-1.5 text-muted-foreground">
+                <span className="ml-auto flex min-w-0 shrink-[3] items-center gap-1.5 text-muted-foreground">
                   {mount ? (
                     <>
-                      <span aria-hidden="true" className={cn('size-2 rounded-full', ownerColor?.dot ?? 'bg-idle')} />
-                      <span className="text-foreground/85">{mount.agent}</span>
+                      <span aria-hidden="true" className={cn('size-2 shrink-0 rounded-full', ownerColor?.dot ?? 'bg-idle')} />
+                      <span className="truncate text-foreground/85">{mount.agent}</span>
                     </>
                   ) : (
-                    <span>{t('mounted')}</span>
+                    !exec && <span className="shrink-0">{t('idle')}</span>
                   )}
                 </span>
               </span>
-              <span className="flex min-w-0 items-center gap-1.5 pl-5.5 text-muted-foreground">
+              {(exec || mount) && <span className="flex min-w-0 items-center gap-1.5 pl-5.5 text-muted-foreground">
                 {exec ? (
                   <>
                     <Spinner className={cn('size-3', execColor?.text)} />
@@ -591,16 +579,16 @@ export function SandboxNode({ sandbox, groups, folders, now }: SandboxProps) {
                     <span className={cn('ml-auto shrink-0 font-mono text-[11px]', mount.last.kind && mount.last.kind !== 'exit:0' && 'text-warning')}>{mount.last.kind ?? ''}</span>
                   </>
                 ) : (
-                  <span className="tabular-nums">{mount ? t('idle · mounted {time}', { time: ago(mount.since, now) }) : t('idle')}</span>
+                  <span className="truncate tabular-nums">{mount ? t('idle · mounted {time}', { time: ago(mount.since, now) }) : t('idle')}</span>
                 )}
                 {mount && mount.commits > 0 && <span className="shrink-0 tabular-nums">· {count(t, mount.commits, '{n} Commit', '{n} Commits')}</span>}
-              </span>
+              </span>}
             </div>
           )
         })
       )}
       {calls.filter((call) => !sandbox.workspaces.some((workspace) => workspace.path === call.path)).map((call) => (
-        <div key={call.id} className="relative z-[2] flex min-w-0 items-center gap-2 border-t border-foreground/[0.06] px-3 py-2 text-xs text-muted-foreground">
+        <div key={call.id} className="relative z-[2] flex min-w-0 items-center gap-2 border-t border-foreground/[0.06] px-2.5 py-1.5 text-xs text-muted-foreground">
           <span className="min-w-0 flex-1 truncate font-mono" title={callTarget(call) ?? undefined}>{call.method}</span>
           <span className="shrink-0 tabular-nums">{duration(now - call.start)}</span>
         </div>
@@ -626,9 +614,25 @@ export function SandboxLine({ sandbox, groups, onOpen }: { index: number; sandbo
         <span key={w.key} data-anchor={`ws-${w.key}`} aria-hidden="true" className="pointer-events-none absolute inset-0" />
       ))}
       <LfsSandbox className="size-3.5 shrink-0" />
-      <span className="shrink-0 font-medium text-foreground">{t('Sandbox {id}', { id: sandbox.id })}</span>
-      <span className={cn('min-w-0 flex-1 truncate', maker?.session.run.folder && 'font-mono')}>{maker ? `${maker.session.run.folder ? '/' : ''}${maker.name}` : t(sandbox.state)}</span>
-      <span className="shrink-0 tabular-nums">{n ? count(t, n, '{n} Workspace', '{n} Workspaces') : t('no Workspace')}</span>
+      <span className="min-w-0 shrink truncate font-medium text-foreground">{t('Sandbox {id}', { id: sandbox.id })}</span>
+      <span className={cn('min-w-0 flex-1 shrink-[2] truncate', maker?.session.run.folder && 'font-mono')}>{maker ? `${maker.session.run.folder ? '/' : ''}${maker.name}` : t(sandbox.state)}</span>
+      <WsCount n={n} label={n ? count(t, n, '{n} Workspace', '{n} Workspaces') : t('no Workspace')} />
     </button>
   )
+}
+
+/** A Workspace count as an icon and a number; the words are in its tooltip. */
+function WsCount({ n, label }: { n: number; label: string }) {
+  return (
+    <span title={label} aria-label={label} className={cn('flex shrink-0 items-center gap-1 text-[11px] text-muted-foreground tabular-nums', !n && 'opacity-50')}>
+      <LfsWorkspace aria-hidden="true" className="size-3" />
+      {n}
+    </span>
+  )
+}
+
+/** A long Workspace path as its last two parts: `…/workspaces/1`. */
+function shortPath(path: string) {
+  const parts = path.split('/').filter(Boolean)
+  return parts.length > 2 ? `…/${parts.slice(-2).join('/')}` : path
 }

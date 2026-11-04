@@ -6,6 +6,7 @@ export const commonZh: Record<string, string> = {
   "Compute": "计算",
   "Workspace": "工作区",
   "Resources": "资源",
+  "Infrastructure": "基础设施",
   "Your projects": "我的项目",
   "New project": "新建项目",
   "Create project": "创建项目",

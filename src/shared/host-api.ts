@@ -150,12 +150,24 @@ export interface MachineStore {
   size: number | null
 }
 
+/** A PostgreSQL Store (store.list()): on no machine; Sandboxes on a machine that supports PostgreSQL reach its database. */
+export interface MachinePgStore {
+  state?: StoreState | string
+  op?: SdkOperation | null
+  name: string
+  projects: number
+  /** Its projects' names (keys are `<store>/<name>`). */
+  names?: string[]
+}
+
 /** A Sandbox on a machine (sandbox.list()). */
 export interface MachineSandbox {
   state?: SandboxState | string
   op?: SdkOperation | null
   backend?: string | null
   route?: string | null
+  /** The image it was created from (a digest, or an archive path), when its record names one. */
+  image?: string | null
   name: string
   machine: string | null
   project: string | null
@@ -184,6 +196,8 @@ export type MachinesView =
       /** machine.platforms(): each platform on this host, its readiness and its create options. */
       platforms: MachinePlatformInfo[]
       stores: MachineStore[]
+      /** The PostgreSQL Stores; a machine whose `supports.postgresql_sandbox` is true reaches every one. */
+      postgresql: MachinePgStore[]
       sandboxes: MachineSandbox[]
       /** By machine name. */
       status: Record<string, MachineLive>
@@ -303,6 +317,17 @@ export interface StoreRow {
   links: StoreBackupLink[]
   /** The job of this host running on it. */
   job: string | null
+  /** A PostgreSQL Store's server: `user@host:port/db` from its record (never a password) and store.status's answer. */
+  postgresql?: PgServer | null
+}
+
+export interface PgServer {
+  target: string | null
+  /** null when store.status did not say. */
+  reachable: boolean | null
+  version: string | null
+  latencyMs: number | null
+  error: string | null
 }
 
 /** A file in a bucket, as backup.list answers it: one row per Store linked to it (or one with no Store). */
@@ -481,6 +506,12 @@ export interface ProjectState {
  * space outside packs (it overlaps `stored`: do not add them).
  */
 export interface StoreStats {
+  /**
+   * True when summed from the Commits read (LayerFS 2.0 has no Store totals):
+   * Init, main's Layers and earlier history are not counted, and init, main
+   * and free are null / 0.
+   */
+  partial?: boolean
   logical: number
   canonical: number
   stored: number

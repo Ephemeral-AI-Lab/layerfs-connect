@@ -1,4 +1,4 @@
-import { Check, ChevronDown, ChevronRight, Cpu, PanelLeftClose, FolderClosed, FolderOpen, Laptop, LayoutGrid, MessageSquare, MessageSquarePlus, Plus, RefreshCw, Settings, X } from 'lucide-react'
+import { ArrowUpRight, Check, ChevronDown, ChevronRight, Cpu, PanelLeftClose, FolderClosed, FolderOpen, Laptop, MessageSquarePlus, Plus, RefreshCw, Settings, X } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import type { AgentSessionSummary } from '@shared/agent-api'
 import { projectKey, projectRef, type ProjectSummary } from '@shared/host-api'
@@ -23,13 +23,15 @@ import {
 } from '@/components/ui/sidebar'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Skeleton } from '@/components/ui/skeleton'
+import { jobCounts } from '@/data/job-progress'
+import { useStorageJobs } from '@/host/storage-jobs'
 import { chatLive, chatProject, useChatSessions } from '@/host/use-chat-sessions'
 import type { ProjectCatalog } from '@/host/use-projects'
 import { cn } from '@/lib/utils'
 import { useI18n } from '@/i18n'
 import './app-shell.css'
 
-export type NavId = 'chat' | 'projects' | 'storage' | 'compute'
+export type NavId = 'chat' | 'projects' | 'machines' | 'storage'
 /**
  * A page (Chat with the conversation open on it, if any), or a project by its
  * key (projectKey: `store/name` in a shared Store).
@@ -43,14 +45,14 @@ interface NavItem {
   icon: React.ComponentType<{ className?: string }>
 }
 
-// Projects are their own section below (its heading opens the Projects page); Chat is reached
-// from New chat on a project and from the chat page's history.
+// The pages sit at the top (Projects, then where they run and keep their data); the Chats section
+// below lists the chats grouped by project. Chat is reached from New chat and from those chat rows.
 const groups: { label?: string; items: NavItem[] }[] = [
   {
-    label: 'Resources',
     items: [
+      { id: 'projects', label: 'Projects', icon: LfsProject },
+      { id: 'machines', label: 'Machines', icon: Cpu },
       { id: 'storage', label: 'Storage', icon: LfsStore },
-      { id: 'compute', label: 'Compute', icon: Cpu },
     ],
   },
 ]
@@ -61,7 +63,7 @@ const inNewTab = (e: React.MouseEvent) => e.metaKey || e.ctrlKey
 /** The project and session list under the pages: off for now (owner, 2026-10-31). */
 const SHOW_PROJECT_TREE = false
 
-/** A small icon button in the Projects heading. */
+/** A small icon button in a section heading. */
 const HEAD_BUTTON = 'flex size-7 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-foreground/[0.04] hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
 
 /** Which sessions the list shows: all of them, or only the working ones. */
@@ -98,9 +100,13 @@ interface AppSidebarProps {
 
 export function AppSidebar({ selected, projects, onSelect, onNewProject, onDeleteProject, onDeleteChat, onOpenChat, onNewChat, onNewSession, settingsOpen, onOpenSettings }: AppSidebarProps) {
   const { t } = useI18n()
+  const known = useStorageJobs()
+  // Storage's mark: a live dot while a job runs, red while a failed one is not dismissed
+  const jobs = jobCounts(known.jobs, known.dismissed)
   const { container, indicator } = useIndicator<HTMLDivElement>()
   const isMac = window.connect.platform === 'darwin'
-  const activePage = selected.kind === 'nav' && selected.id !== 'chat' ? selected.id : undefined
+  // a project's page counts as Projects
+  const activePage = selected.kind === 'project' ? 'projects' : selected.id !== 'chat' ? selected.id : undefined
   const { open, setOpen } = useSidebar()
 
   return (
@@ -113,9 +119,7 @@ export function AppSidebar({ selected, projects, onSelect, onNewProject, onDelet
     <Sidebar collapsible="none" className="shell-sidebar sidebar-glass relative z-10 h-svh shrink-0">
       <SidebarHeader className={cn('shell-sidebar-header px-3 pb-3 app-drag', isMac ? 'pt-[52px]' : 'pt-4')}>
         <div className="group/brand flex items-center gap-2.5 px-1.5 app-no-drag">
-          <span className="glass-liquid relative flex size-9.5 shrink-0 items-center justify-center rounded-xl">
-            <ConnectMark className="size-6 transition-transform duration-(--dur-slow) ease-out-expo group-hover/brand:scale-[1.05]" />
-          </span>
+          <ConnectMark className="size-9.5 shrink-0 drop-shadow-[0_1px_2px_rgb(40_70_120/0.18)] transition-transform duration-(--dur-slow) ease-out-expo group-hover/brand:scale-[1.05]" />
           <span className="min-w-0 flex-1 truncate text-[15px] font-medium leading-tight tracking-[-0.015em] text-foreground/90">LayerFS Connect</span>
           <button type="button" onClick={() => setOpen(false)} aria-label={t('Hide sidebar')} title={`${t('Hide sidebar')} (${isMac ? '⌘B' : 'Ctrl+B'})`} className={HEAD_BUTTON}>
             <PanelLeftClose className="size-4" />
@@ -133,7 +137,7 @@ export function AppSidebar({ selected, projects, onSelect, onNewProject, onDelet
 
       <SidebarContent className="gap-0 overflow-hidden pb-3">
         <div ref={container} className="side-tree relative shrink-0">
-          <span ref={indicator} aria-hidden="true" className="indicator glass-liquid rounded-xl shadow-xs border border-white/80 dark:border-(--glass-border)" />
+          <span ref={indicator} aria-hidden="true" className="indicator glass-liquid rounded-xl shadow-xs border border-white/80" />
           {groups.map((group, g) => (
             <SidebarGroup key={group.label ?? g} className={cn('px-3 pb-2', group.label ? 'pt-3' : 'pt-1')}>
               {group.label && (
@@ -159,6 +163,14 @@ export function AppSidebar({ selected, projects, onSelect, onNewProject, onDelet
                       >
                         <item.icon />
                         <span>{t(item.label)}</span>
+                        {item.id === 'storage' && (jobs.running > 0 || jobs.failed > 0) && (
+                          <span
+                            role="img"
+                            aria-label={jobs.running ? t('{n} running', { n: jobs.running }) : t('{n} failed', { n: jobs.failed })}
+                            title={jobs.running ? t('{n} running', { n: jobs.running }) : t('{n} failed', { n: jobs.failed })}
+                            className={cn('ml-auto size-2 rounded-full', jobs.running ? 'pulse-ring bg-primary text-primary' : 'bg-destructive')}
+                          />
+                        )}
                       </SidebarMenuButton>
                             </SidebarMenuItem>
                   )
@@ -167,7 +179,7 @@ export function AppSidebar({ selected, projects, onSelect, onNewProject, onDelet
             </SidebarGroup>
           ))}
         </div>
-        <ProjectList selected={selected} projects={projects} onSelect={onSelect} onNewProject={onNewProject} onDeleteChat={onDeleteChat} onOpenChat={onOpenChat} onNewChat={onNewChat} />
+        <ChatList selected={selected} onSelect={onSelect} onDeleteChat={onDeleteChat} onOpenChat={onOpenChat} onNewChat={onNewChat} />
         {SHOW_PROJECT_TREE && <ProjectTree selected={selected} projects={projects} onSelect={onSelect} onNewProject={onNewProject} onDeleteProject={onDeleteProject} onDeleteChat={onDeleteChat} onOpenChat={onOpenChat} onNewChat={onNewChat} />}
       </SidebarContent>
       <SidebarFooter className="shell-sidebar-footer shrink-0 p-0">
@@ -190,40 +202,38 @@ export function AppSidebar({ selected, projects, onSelect, onNewProject, onDelet
 }
 
 /**
- * The Projects section: its heading and the grid button open the Projects
- * page, + starts a chat with no project picked yet, and each project is a row
- * with the LayerFS mark (a shared Store's name faint after it), a + for a chat
- * on it, and, folding under it, its chat sessions. It sits under Resources and
- * fills the rest of the column; the list scrolls.
+ * The Chats section: every chat that is not archived, grouped by its project (the group with the
+ * newest chat first), then the chats on a local folder under "No project". A group's header folds
+ * it; on hover it offers its project's page and a new chat on it. The heading's + starts a chat
+ * with no project picked yet. It fills the rest of the column; the list scrolls.
  */
-function ProjectList({ selected, projects, onSelect, onNewProject, onDeleteChat, onOpenChat, onNewChat }: Pick<AppSidebarProps, 'selected' | 'projects' | 'onSelect' | 'onNewProject' | 'onDeleteChat' | 'onOpenChat' | 'onNewChat'>) {
+function ChatList({ selected, onSelect, onDeleteChat, onOpenChat, onNewChat }: Pick<AppSidebarProps, 'selected' | 'onSelect' | 'onDeleteChat' | 'onOpenChat' | 'onNewChat'>) {
   const { t } = useI18n()
-  const items = projects.data ?? []
-  const onPage = selected.kind === 'nav' && selected.id === 'projects'
+  const [retry, setRetry] = useState(0)
   // a new or removed conversation shows on the next page change too; chat events keep the rest current
-  const { sessions } = useChatSessions(selected.kind === 'nav' ? `${selected.id}:${selected.session ?? ''}` : selected.id)
-  // each project's chats (scenario chats too), newest first; archived ones left out
-  const byProject = useMemo(() => {
+  const { sessions, error } = useChatSessions(`${selected.kind === 'nav' ? `${selected.id}:${selected.session ?? ''}` : selected.id}#${retry}`)
+  // each project's chats (scenario chats too), newest first, the project with the newest chat first; archived ones left out
+  const { groups, local } = useMemo(() => {
     const map = new Map<string, AgentSessionSummary[]>()
+    const local: AgentSessionSummary[] = []
     for (const chat of sessions ?? []) {
+      if (chat.archived) continue
       const key = chatProject(chat)
-      if (chat.archived || !key) continue
-      map.set(key, [...(map.get(key) ?? []), chat])
+      if (!key) local.push(chat)
+      else map.set(key, [...(map.get(key) ?? []), chat])
     }
-    for (const list of map.values()) list.sort((a, b) => b.updated - a.updated)
-    return map
+    const newestFirst = (a: AgentSessionSummary, b: AgentSessionSummary) => b.updated - a.updated
+    for (const list of map.values()) list.sort(newestFirst)
+    return { groups: [...map].sort((a, b) => b[1][0].updated - a[1][0].updated), local: local.sort(newestFirst) }
   }, [sessions])
   const openChat = selected.kind === 'nav' && selected.id === 'chat' ? selected.session : undefined
   const openChatProject = useMemo(() => {
     const chat = openChat ? sessions?.find((c) => c.id === openChat) : undefined
-    return chat ? chatProject(chat) : null
+    return chat ? (chatProject(chat) ?? LOCAL) : null
   }, [openChat, sessions])
   const selectedProject = selected.kind === 'project' ? selected.id : undefined
-  // unfolded at first: the projects with the newest chats, the one open (or whose chat is), and any with a chat working
-  const recent = useMemo(
-    () => new Set([...byProject].sort((a, b) => b[1][0].updated - a[1][0].updated).slice(0, OPEN_FIRST).map(([key]) => key)),
-    [byProject],
-  )
+  // unfolded at first: the groups with the newest chats, the open project (or the open chat's), and any with a chat working
+  const recent = useMemo(() => new Set(groups.slice(0, OPEN_FIRST).map(([key]) => key)), [groups])
   const [toggled, setToggled] = useState<Map<string, boolean>>(() => new Map())
   useEffect(() => {
     for (const key of [selectedProject, openChatProject]) {
@@ -231,163 +241,165 @@ function ProjectList({ selected, projects, onSelect, onNewProject, onDeleteChat,
     }
   }, [selectedProject, openChatProject])
   const isOpen = (key: string, chats: AgentSessionSummary[]) =>
-    chats.length > 0 && (toggled.get(key) ?? (recent.has(key) || key === selectedProject || key === openChatProject || chats.some(chatLive)))
+    toggled.get(key) ?? (recent.has(key) || key === selectedProject || key === openChatProject || chats.some(chatLive) || (key === LOCAL && groups.length === 0))
+  const toggle = (key: string, open: boolean) => setToggled((m) => new Map(m).set(key, !open))
+  const shared = { openChat, onOpenChat, onDeleteChat }
   return (
-    <SidebarGroup aria-label={t('Projects')} className="flex min-h-0 flex-1 flex-col px-3 pt-3 pb-0">
+    <SidebarGroup aria-label={t('Chats')} className="flex min-h-0 flex-1 flex-col px-3 pt-3 pb-0">
       <div className="flex shrink-0 items-center gap-1 pr-1">
-        <button
-          type="button"
-          aria-current={onPage ? 'page' : undefined}
-          title={t('All projects')}
-          onClick={(e) => onSelect({ kind: 'nav', id: 'projects' }, inNewTab(e))}
-          className={cn(
-            'flex h-8 min-w-0 flex-1 items-center gap-2 rounded-md px-3 text-left text-[11px] font-medium tracking-wider uppercase transition-colors outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring',
-            onPage ? 'text-foreground' : 'text-muted-foreground',
-          )}
-        >
-          {t('Projects')}
-          {items.length > 0 && <span className="text-[10px] font-medium tabular-nums tracking-normal">{items.length}</span>}
-        </button>
-        <button type="button" aria-label={t('All projects')} title={t('All projects')} onClick={(e) => onSelect({ kind: 'nav', id: 'projects' }, inNewTab(e))} className={cn(HEAD_BUTTON, onPage && 'text-foreground')}>
-          <LayoutGrid className="size-3.5" />
-        </button>
+        <SidebarGroupLabel className="min-w-0 flex-1 px-3 text-[11px] font-medium tracking-wider uppercase text-muted-foreground">
+          {t('Chats')}
+        </SidebarGroupLabel>
         <button type="button" aria-label={t('New chat')} title={t('New chat')} onClick={() => onNewChat('')} className={HEAD_BUTTON}>
           <Plus className="size-3.5" />
         </button>
       </div>
       <div className="min-h-0 overflow-y-auto overscroll-contain pt-1">
-        {projects.error && !projects.data ? (
-          <div role="status" className="mx-1 rounded-xl bg-foreground/[0.03] px-3 py-2.5 text-xs leading-relaxed text-muted-foreground">
-            {t('Could not load projects.')}
-            <button type="button" onClick={projects.reload} className="ml-1 rounded-sm font-medium text-primary underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">{t('Retry')}</button>
+        {error && (
+          <div role="status" className="mx-1 mb-2 rounded-xl bg-foreground/[0.03] px-3 py-2.5 text-xs leading-relaxed text-muted-foreground">
+            {t('Could not load chats.')}
+            <button type="button" onClick={() => setRetry((n) => n + 1)} className="ml-1 rounded-sm font-medium text-primary underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">{t('Retry')}</button>
           </div>
-        ) : !projects.data ? (
-          <div aria-label={t('Loading sidebar projects')} aria-busy="true" className="space-y-2 px-2">
+        )}
+        {!sessions ? (
+          <div aria-label={t('Loading chats')} aria-busy="true" className="space-y-2 px-2">
             {[0, 1, 2].map((i) => <Skeleton key={i} className="h-9 rounded-xl" />)}
           </div>
-        ) : items.length === 0 ? (
-          <button type="button" onClick={onNewProject} className="mx-3 inline-flex items-center gap-1.5 rounded-md py-1 text-xs font-medium text-primary underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-            <Plus className="size-3" />{t('Create project')}
-          </button>
+        ) : groups.length === 0 && local.length === 0 ? (
+          !error && (
+            <div className="px-3 pt-1 text-xs leading-relaxed text-muted-foreground">
+              <p>{t('No chats yet')}</p>
+              <button type="button" onClick={() => onNewChat('')} className="mt-1.5 inline-flex items-center gap-1.5 rounded-md py-1 font-medium text-primary underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                <Plus className="size-3" />{t('New chat')}
+              </button>
+            </div>
+          )
         ) : (
-          <SidebarMenu className="gap-1">
-            {items.map((project, i) => {
-              const key = projectKey(project)
-              const store = projectRef(key).store
-              const active = selected.kind === 'project' && selected.id === key
-              const chats = byProject.get(key) ?? []
+          <ul className="flex flex-col gap-1">
+            {groups.map(([key, chats], i) => {
+              const { name, store } = projectRef(key)
               const open = isOpen(key, chats)
               return (
-                <ProjectRow
+                <ChatGroup
                   key={key}
                   index={i}
-                  name={project.name}
+                  icon={LfsProject}
+                  name={name}
                   store={store}
-                  active={active}
+                  active={key === selectedProject}
                   chats={chats}
                   open={open}
-                  openChat={openChat}
-                  onSelect={(newTab) => onSelect({ kind: 'project', id: key }, newTab)}
-                  onToggle={() => setToggled((m) => new Map(m).set(key, !open))}
-                  onOpenChat={onOpenChat}
-                  onDeleteChat={onDeleteChat}
+                  onToggle={() => toggle(key, open)}
+                  onOpenPage={(newTab) => onSelect({ kind: 'project', id: key }, newTab)}
+                  newChatLabel={t('New chat on {name}', { name })}
                   onNewChat={() => onNewChat(key)}
+                  {...shared}
                 />
               )
             })}
-          </SidebarMenu>
+            {local.length > 0 && (
+              <ChatGroup
+                index={groups.length}
+                icon={Laptop}
+                name={t('No project')}
+                chats={local}
+                open={isOpen(LOCAL, local)}
+                onToggle={() => toggle(LOCAL, isOpen(LOCAL, local))}
+                newChatLabel={t('New chat on a local folder')}
+                onNewChat={() => onNewChat('')}
+                {...shared}
+              />
+            )}
+          </ul>
         )}
       </div>
     </SidebarGroup>
   )
 }
 
-interface ProjectRowProps {
+/** The Chats section's key for the chats on a local folder (no project key has a leading NUL). */
+const LOCAL = '\0local'
+
+interface ChatGroupProps {
   index: number
+  icon: React.ComponentType<{ className?: string }>
   name: string
-  store: string | null
-  active: boolean
+  /** A project's Store, faint after its name. */
+  store?: string | null
+  /** Its project's page is open. */
+  active?: boolean
   /** Its chats, newest first. */
   chats: AgentSessionSummary[]
   open: boolean
   /** The conversation open on the Chat page. */
   openChat?: string
-  onSelect: (newTab: boolean) => void
   onToggle: () => void
+  /** Opens its project's page; none for the local chats. */
+  onOpenPage?: (newTab: boolean) => void
+  newChatLabel: string
+  onNewChat: () => void
   onOpenChat: (session: string) => void
   onDeleteChat: AppSidebarProps['onDeleteChat']
-  onNewChat: () => void
 }
 
-/** A project's row (opens its page; + starts a chat on it, shown on hover; the chevron folds its chats), and under it its chats. */
-function ProjectRow({ index, name, store, active, chats, open, openChat, onSelect, onToggle, onOpenChat, onDeleteChat, onNewChat }: ProjectRowProps) {
+/** A group of chats: its header (folds it; on hover, its project's page and a new chat on it), and under it its chats. */
+function ChatGroup({ index, icon: Icon, name, store, active, chats, open, openChat, onToggle, onOpenPage, newChatLabel, onNewChat, onOpenChat, onDeleteChat }: ChatGroupProps) {
   const { t } = useI18n()
   const [all, setAll] = useState(false)
   const shown = all ? chats : chats.slice(0, SHOWN)
-  const has = chats.length > 0
+  const label = store ? `${name} · ${store}` : name
   return (
-    <SidebarMenuItem className="side-in group/project" style={revealStyle(index)}>
+    <li className="side-in" style={revealStyle(index)}>
       <div className="group/row relative">
-      <SidebarMenuButton
-        type="button"
-        isActive={active}
-        aria-current={active ? 'page' : undefined}
-        title={store ? t('{name} in Store {store}', { name, store }) : name}
-        onClick={(e) => onSelect(inNewTab(e))}
-        onAuxClick={(e) => { if (e.button === 1) onSelect(true) }}
-        className={cn(
-          'sidebar-project-open glass-liquid h-10 gap-3 px-3 pr-9 text-[14px] [&_svg]:size-[18px]',
-          active
-            ? 'data-active:font-medium text-foreground/90'
-            : 'font-medium text-foreground/80 hover:text-foreground',
-        )}
-      >
-        <LfsProject className={active ? undefined : 'opacity-80'} />
-        <span className="flex min-w-0 flex-1 items-baseline gap-1.5">
-          {/* the Store's name gives way before the project's */}
-          <span className="max-w-full shrink-0 truncate">{name}</span>
-          {store && <span className="min-w-0 truncate text-[11px] font-normal text-muted-foreground">{store}</span>}
-        </span>
-        {/* + takes the count's place while the row is hovered. */}
-        {has && (
+        <button
+          type="button"
+          onClick={onToggle}
+          aria-expanded={open}
+          aria-label={open ? t('Hide {name}’s chats', { name: label }) : t('Show {name}’s chats', { name: label })}
+          title={label}
+          className={cn(
+            'flex h-9 w-full min-w-0 items-center gap-2 rounded-xl pr-3 pl-2 text-left text-[14px] font-medium outline-none transition-colors hover:bg-foreground/[0.03] focus-visible:ring-2 focus-visible:ring-ring',
+            active ? 'text-foreground' : 'text-foreground/80 hover:text-foreground',
+          )}
+        >
+          <ChevronRight aria-hidden="true" className={cn('size-3.5 shrink-0 text-muted-foreground transition-transform duration-(--dur-base) ease-out-expo', open && 'rotate-90')} />
+          <Icon className={cn('size-4 shrink-0', active ? 'text-(--icon-accent)' : 'opacity-80')} />
+          <span className="flex min-w-0 flex-1 items-baseline gap-1.5">
+            {/* the Store's name gives way before the project's */}
+            <span className="max-w-full shrink-0 truncate">{name}</span>
+            {store && <span className="min-w-0 truncate text-[11px] font-normal text-muted-foreground">{store}</span>}
+          </span>
+          {/* the actions take the count's place while the header is hovered */}
           <span className="shrink-0 text-[11px] font-normal text-muted-foreground tabular-nums transition-opacity group-has-[:focus-visible]/row:opacity-0 group-hover/row:opacity-0">
             {chats.length}
           </span>
-        )}
-      </SidebarMenuButton>
-      <SidebarMenuAction
-        type="button"
-        onClick={onNewChat}
-        aria-label={t('New chat on {name}', { name })}
-        title={t('New chat on {name}', { name })}
-        className={cn(
-          'top-2 size-6 rounded-lg text-muted-foreground opacity-0 transition-opacity hover:text-foreground focus-visible:opacity-100 group-has-[:focus-visible]/row:opacity-100 group-hover/row:opacity-100 peer-data-[size=default]/menu-button:top-2 [&>svg]:size-3.5',
-          has ? 'right-8' : 'right-1.5',
-        )}
-      >
-        <Plus />
-      </SidebarMenuAction>
-      {has && (
-        <SidebarMenuAction
-          type="button"
-          onClick={onToggle}
-          aria-label={open ? t('Hide {name}’s sessions', { name }) : t('Show {name}’s sessions', { name })}
-          aria-expanded={open}
-          className="top-2 right-1.5 size-6 rounded-lg text-muted-foreground hover:text-foreground peer-data-[size=default]/menu-button:top-2 [&>svg]:size-3.5"
-        >
-          <ChevronRight className={cn('transition-transform duration-(--dur-base) ease-out-expo', open && 'rotate-90')} />
-        </SidebarMenuAction>
-      )}
+        </button>
+        <div className="absolute top-1.5 right-1.5 flex items-center gap-0.5 opacity-0 transition-opacity group-has-[:focus-visible]/row:opacity-100 group-hover/row:opacity-100">
+          {onOpenPage && (
+            <button
+              type="button"
+              aria-label={t('Open project {name}', { name: label })}
+              title={t('Open project {name}', { name: label })}
+              onClick={(e) => onOpenPage(inNewTab(e))}
+              onAuxClick={(e) => { if (e.button === 1) onOpenPage(true) }}
+              className="flex size-6 items-center justify-center rounded-lg text-muted-foreground outline-none hover:bg-foreground/[0.05] hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <ArrowUpRight className="size-3.5" />
+            </button>
+          )}
+          <button type="button" aria-label={newChatLabel} title={newChatLabel} onClick={onNewChat} className="flex size-6 items-center justify-center rounded-lg text-muted-foreground outline-none hover:bg-foreground/[0.05] hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring">
+            <Plus className="size-3.5" />
+          </button>
+        </div>
       </div>
-      {has && (
-        <Collapse open={open} appear={false}>
-          <ul aria-label={t('{name}’s sessions', { name })} className="flex flex-col gap-0.5 py-1">
-            {shown.map((chat, i) => <ChatRow key={chat.id} index={i} chat={chat} active={openChat === chat.id} onOpen={() => onOpenChat(chat.id)} onDelete={onDeleteChat} />)}
-            {chats.length > SHOWN && <ShowAll all={all} count={chats.length} onToggle={() => setAll(!all)} />}
-          </ul>
-        </Collapse>
-      )}
-    </SidebarMenuItem>
+      <Collapse open={open} appear={false}>
+        {/* the chats' icons line up under the group's */}
+        <ul aria-label={t('{name}’s chats', { name: label })} className="ml-[18px] flex flex-col gap-0.5 py-1">
+          {shown.map((chat, i) => <ChatRow key={chat.id} index={i} chat={chat} active={openChat === chat.id} onOpen={() => onOpenChat(chat.id)} onDelete={onDeleteChat} />)}
+          {chats.length > SHOWN && <ShowAll all={all} count={chats.length} onToggle={() => setAll(!all)} />}
+        </ul>
+      </Collapse>
+    </li>
   )
 }
 
@@ -531,7 +543,7 @@ function ProjectGroup({ index, project, projectKey: key, entries, open, selected
         title={store ? t('{name} in Store {store}', { name: project.name, store }) : project.name}
         onClick={() => onSelect({ kind: 'project', id: key })}
         className={cn('h-10 gap-2.5 border pr-16 pl-8 text-[13px] [&_svg]:size-4', active
-          ? 'glass-liquid border-white/80 font-medium text-foreground shadow-xs dark:border-(--glass-border) [&_svg]:text-(--icon-accent)'
+          ? 'glass-liquid border-white/80 font-medium text-foreground shadow-xs [&_svg]:text-(--icon-accent)'
           : 'border-transparent text-foreground/80 hover:text-foreground [&_svg]:text-muted-foreground')}
       >
         <Icon />
@@ -613,9 +625,8 @@ function ChatRow({ index, chat, active, onOpen, onDelete }: { index: number; cha
   return (
     <li className="sidebar-chat-row side-in" data-active={active} style={revealStyle(index)}>
       <button type="button" onClick={onOpen} aria-current={active ? 'page' : undefined} className={ROW} title={chat.title}>
-        <span className="sidebar-chat-title flex h-6 items-center gap-2">
-          <MessageSquare aria-hidden="true" className="size-[18px] shrink-0 text-muted-foreground" />
-          <span className="sidebar-chat-label truncate text-[15px] font-normal leading-6">{chat.title || t('New session')}</span>
+        <span className="sidebar-chat-title flex h-5 items-center gap-2">
+          <span className="sidebar-chat-label truncate text-[13px] font-normal leading-5">{chat.title || t('New session')}</span>
         </span>
       </button>
       <button type="button" className="sidebar-chat-delete" aria-haspopup="dialog" aria-label={t('Delete conversation {name}', { name: chat.title || t('New session') })} title={t('Delete conversation')} onClick={(event) => onDelete(chat, event.currentTarget)}>

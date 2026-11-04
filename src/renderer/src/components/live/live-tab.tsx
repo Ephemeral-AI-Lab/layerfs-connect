@@ -146,7 +146,7 @@ export function LiveTab({ project, runs, onOpenRun }: LiveTabProps) {
     : t('Reading the chats…')
 
   return (
-    <section aria-label={t('Live')} className="glass-liquid live-panel flex min-w-0 flex-col overflow-hidden rounded-2xl shadow-xs">
+    <section aria-label={t('Live')} className="glass-liquid live-panel flex min-w-0 flex-auto flex-col overflow-hidden rounded-2xl shadow-xs">
       <header className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-foreground/[0.06] px-5 py-3.5">
         <h2 className="flex items-center gap-2 text-sm font-semibold">
           <span aria-hidden="true" className={cn('size-1.5 rounded-full', playing ? 'bg-(--icon-accent)' : 'bg-idle')} />
@@ -324,16 +324,20 @@ function FlowGraph({ project, state, store, groups, sandboxes, folds, now, live,
     'self-start rounded-lg px-2 py-1 text-xs text-muted-foreground outline-none transition-colors hover:bg-foreground/[0.04] hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring'
 
   return (
-    <div className="overflow-x-auto">
+    <div className="flex flex-auto flex-col overflow-x-auto">
       <div
         ref={box}
-        className="live-field relative grid min-h-[22rem] min-w-[880px] grid-cols-[minmax(16rem,22rem)_minmax(3.5rem,1fr)_minmax(13rem,16rem)_minmax(3.5rem,1fr)_minmax(16rem,25rem)] items-start px-5 py-6"
+        className="live-field relative grid min-h-[22rem] min-w-[880px] flex-auto grid-cols-[minmax(16rem,22rem)_minmax(3.5rem,1fr)_minmax(13rem,16rem)_minmax(3.5rem,1fr)_minmax(16rem,25rem)] grid-rows-[auto_1fr] gap-y-6 px-5 pt-5 pb-8"
       >
         {/* Connections dock at card edges; each Branch keeps its own row-aligned entry. */}
         <svg ref={svg} aria-hidden="true" className="live-overlay pointer-events-none absolute inset-0 z-20 size-full overflow-visible" />
 
-        <div className="relative z-10 flex min-w-0 flex-col gap-3">
-          <ZoneLabel label={t('Agents')} count={noAgents ? undefined : agentCount} />
+        {/* The zone labels head the canvas; each column centres on its middle, around the project. */}
+        <div className="relative z-10 col-start-1 row-start-1"><ZoneLabel label={t('Agents')} count={noAgents ? undefined : agentCount} /></div>
+        <div className="relative z-10 col-start-3 row-start-1"><ZoneLabel label="LayerFS" /></div>
+        <div className="relative z-10 col-start-5 row-start-1"><ZoneLabel label={t('Sandboxes')} count={noSandboxes ? undefined : sandboxes.length} /></div>
+
+        <div className="relative z-10 col-start-1 row-start-2 flex min-w-0 flex-col gap-3 self-center">
           {noAgents && <IdleAgents note={idleNote} />}
           {layouts.map((l) => (
             <SessionGroup
@@ -346,14 +350,10 @@ function FlowGraph({ project, state, store, groups, sandboxes, folds, now, live,
             />
           ))}
         </div>
-        <span />
-        <div className="relative z-10 flex min-w-0 flex-col gap-3">
-          <ZoneLabel label="LayerFS" />
+        <div className="relative z-10 col-start-3 row-start-2 flex min-w-0 flex-col gap-3 self-center">
           <HubNode project={project} state={state} store={store} rows={rows} owners={owners} live={live} busy={busy} />
         </div>
-        <span />
-        <div className="relative z-10 flex min-w-0 flex-col gap-3">
-          <ZoneLabel label={t('Sandboxes')} count={noSandboxes ? undefined : sandboxes.length} />
+        <div className="relative z-10 col-start-5 row-start-2 flex min-w-0 flex-col gap-3 self-center">
           {noSandboxes ? (
             <IdleSandboxes />
           ) : (

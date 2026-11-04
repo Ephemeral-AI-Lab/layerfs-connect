@@ -27,7 +27,7 @@
    {
     "bash": {
      "description": "sb1: open a Workspace on feature and change the heading",
-     "command": "layerfs sandbox create \"$LAYERFS_CONNECT_PROJECT\" sb1 \"$LAYERFS_CONNECT_MACHINE\" | tee sandbox.json\nlayerfs workspace mount \"$(jq -r .name sandbox.json)\" feature | tee mount.json\nlayerfs workspace exec \"$(jq -r .ws mount.json)\" \"sed -i 's/Hello world/Hello from the Workspace/' app/page.tsx\" --stream"
+     "command": "layerfs sandbox create \"$LAYERFS_CONNECT_PROJECT\" sb1 \"$LAYERFS_CONNECT_MACHINE\" | tee sandbox.json\nlayerfs workspace mount \"$(jq -r .name sandbox.json)\" feature | tee mount.json\nlayerfs workspace exec \"$(jq -r .ws mount.json)\" \"sed -i.bak 's/Hello world/Hello from the Workspace/' app/page.tsx && rm app/page.tsx.bak\" --stream"
     },
     "expect": [
      "sandbox.create:running",
@@ -67,7 +67,7 @@
    {
     "bash": {
      "description": "sb1: keep the Workspace's heading, clear the markers and commit",
-     "command": "layerfs workspace exec {{ws}} \"sed -i '/Hello from fs\\|^<<<<<<<\\|^=======\\|^>>>>>>>/d' app/page.tsx\" --stream\nlayerfs workspace commit {{ws}} -m \"sb1: keep the Workspace's heading\""
+     "command": "layerfs workspace exec {{ws}} \"sed -E -i.bak '/Hello from fs|^<<<<<<<|^=======|^>>>>>>>/d' app/page.tsx && rm app/page.tsx.bak\" --stream\nlayerfs workspace commit {{ws}} -m \"sb1: keep the Workspace's heading\""
     },
     "expect": [
      "workspace.exec:exit:0",

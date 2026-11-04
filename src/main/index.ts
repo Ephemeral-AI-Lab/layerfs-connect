@@ -14,7 +14,7 @@ import { BrowserWindow, app, dialog, ipcMain, nativeTheme, shell } from 'electro
 
 type HostAddress = { url: string; token: string } | { error: string }
 
-/** The app icon (resources/icon.svg, drawn at 1024 px): the window's on Linux and Windows, the Dock's on macOS. */
+/** The app icon (the soft-matte handshake tile at 1024 px): the window's on Linux and Windows, the Dock's on macOS. */
 const ICON = join(__dirname, '../../resources/icon.png')
 
 /** How long the host may take to print its ready line. */
@@ -83,7 +83,6 @@ function stopHost() {
 
 function createWindow(): BrowserWindow {
   const isMac = process.platform === 'darwin'
-  const isDark = nativeTheme.shouldUseDarkColors
 
   const win = new BrowserWindow({
     width: 1280,
@@ -93,14 +92,14 @@ function createWindow(): BrowserWindow {
     show: false,
     title: isMac ? '' : 'LayerFS Connect',
     icon: ICON,
-    backgroundColor: isDark ? '#111113' : '#F6F6F7',
+    backgroundColor: '#F6F6F7',
     titleBarStyle: 'hidden',
     trafficLightPosition: isMac ? { x: 16, y: 16 } : undefined,
     titleBarOverlay: isMac
       ? false
       : {
-          color: isDark ? '#10121a' : '#f6f7fa',
-          symbolColor: isDark ? '#ededef' : '#18181b',
+          color: '#f6f7fa',
+          symbolColor: '#18181b',
           height: 38,
         },
     webPreferences: {
@@ -125,15 +124,6 @@ function createWindow(): BrowserWindow {
   }
 
   win.once('ready-to-show', () => win.show())
-
-  // ⌘W (Ctrl+W) closes the active tab, not the window: the renderer decides,
-  // and closes the window itself when its last tab goes.
-  win.webContents.on('before-input-event', (event, input) => {
-    if (input.type !== 'keyDown' || input.alt || input.shift || input.key.toLowerCase() !== 'w') return
-    if (!(isMac ? input.meta && !input.control : input.control && !input.meta)) return
-    event.preventDefault()
-    win.webContents.send('connect:tab-command', 'close')
-  })
 
   // Links open in the default browser, never inside the app window.
   win.webContents.setWindowOpenHandler(({ url }) => {
@@ -198,9 +188,8 @@ void app.whenReady().then(async () => {
   })
   // a packaged app takes its icon from the bundle; unpackaged, the Dock would show Electron's
   if (process.platform === 'darwin' && !app.isPackaged) app.dock?.setIcon(ICON)
-  // Dev aid: CONNECT_THEME=dark or light overrides the system setting.
-  const theme = process.env.CONNECT_THEME
-  if (!app.isPackaged && (theme === 'dark' || theme === 'light')) nativeTheme.themeSource = theme
+  // one light theme: native menus, dialogs and the title bar ignore the system's dark setting
+  nativeTheme.themeSource = 'light'
   hostAddress = await startHost()
   createWindow()
   app.on('activate', () => {

@@ -111,8 +111,8 @@ function SandboxTile({ sandbox, branches, reading, unavailable, onBrowseFiles, o
       <LfsSandbox className="size-4 shrink-0 text-muted-foreground" />
       <h4 className="min-w-0 flex-1 truncate text-[13px] font-medium" title={sandbox.name}>{sandbox.name}</h4>
       {sandbox.machine && (
-        // the machine's row on Compute (#537 §7)
-        <button type="button" className="font-mono text-[11px] text-muted-foreground underline-offset-2 hover:text-foreground hover:underline" title={t('Show {machine} on Compute', { machine: sandbox.machine })} onClick={() => go.machine(sandbox.machine!)}>
+        // the machine's row on Machines (#537 §7)
+        <button type="button" className="font-mono text-[11px] text-muted-foreground underline-offset-2 hover:text-foreground hover:underline" title={t('Show {machine} on Machines', { machine: sandbox.machine })} onClick={() => go.machine(sandbox.machine!)}>
           {sandbox.machine}
         </button>
       )}

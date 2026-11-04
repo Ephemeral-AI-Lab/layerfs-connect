@@ -1,15 +1,13 @@
-/* Conversation surfaces share the app's glass, radii and single cursor hue.
+/* Conversation surfaces share the app's matte surfaces and radii.
    Dialogs, menus and history inherit glass-strong from the shared components. */
 .chat-glass-card {
   --hl-comment: var(--muted-foreground);
-  --chat-tint-opacity: 0.065;
   --chat-glass-base: var(--glass-card-bg);
-  background-image:
-    radial-gradient(ellipse at 0% 0%, hsla(var(--cursor-hue, 215), 70%, 78%, var(--chat-tint-opacity)), transparent 68%),
-    var(--chat-glass-base);
+  background-image: var(--chat-glass-base);
 }
 
-.chat-user-message { --chat-tint-opacity: 0.16; }
+/* The user's own message: the icon tile's powder blue. */
+.chat-user-message { --chat-glass-base: var(--grain), linear-gradient(180deg, #e8f0fa, #e0eaf7); }
 
 /* The optical highlight stays underneath text, syntax and action controls. */
 .chat-glass-card.spotlight::after { z-index: 0; }
@@ -53,15 +51,6 @@
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
   box-shadow: var(--highlight);
-}
-
-.dark .chat-glass-card {
-  --chat-tint-opacity: 0;
-}
-.dark .chat-user-message { --chat-glass-base: linear-gradient(var(--secondary), var(--secondary)); }
-.dark .chat-composer-surface:focus-within {
-  border-color: color-mix(in oklab, var(--primary) 32%, var(--glass-border));
-  box-shadow: var(--glass-shadow), 0 0 0 2px color-mix(in oklab, var(--primary) 10%, transparent);
 }
 
 /* Workspace context sits above the input; only writing controls sit inside. */
@@ -116,7 +105,7 @@
   justify-content: center;
   gap: 6px;
   padding: 0 8px;
-  border-radius: 10px;
+  border-radius: 6px;
   color: var(--muted-foreground);
   font-size: 12px;
   font-weight: 500;
@@ -151,10 +140,9 @@
   width: 232px;
   max-width: calc(100vw - 32px);
   padding: 6px;
-  border-radius: 16px;
+  border-radius: 10px;
   box-shadow: var(--glass-shadow), 0 8px 28px -8px rgb(25 35 65 / 18%);
 }
-.dark .chat-choice-menu { box-shadow: var(--glass-panel-shadow); }
 .chat-choice-menu [data-slot='dropdown-menu-item'],
 .chat-choice-menu [data-slot='dropdown-menu-radio-item'] {
   min-height: 32px;
@@ -187,7 +175,7 @@
   flex-direction: column;
   gap: 4px;
   padding: 8px;
-  border-radius: 20px;
+  border-radius: 8px;
 }
 .chat-actions-menu [data-slot='dropdown-menu-item'] {
   flex-shrink: 0;
@@ -195,7 +183,7 @@
   gap: 10px;
   padding: 7px 12px;
   border: 1px solid var(--glass-border);
-  border-radius: 12px;
+  border-radius: 8px;
   background: var(--glass-card-bg);
   box-shadow: var(--highlight);
   color: var(--foreground);

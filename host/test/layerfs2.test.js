@@ -9,6 +9,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import test from 'node:test'
 import { projectRef } from '../config.js'
+import { workspacesOf } from '../layerfs.js'
 import { Machines } from '../machines.js'
 import { Projects } from '../projects.js'
 import { Scope } from '../runs/scope.js'
@@ -49,7 +50,7 @@ function fake() {
       get: rec('branch.get', { name: 'work', base: LAYER, head: C2, forked_from: LAYER }),
     },
     commit: {
-      list: rec('commit.list', { items: [{ id: C2, branch: 'work', parent: C1, via: 'fs', message: 'two', time: 2 }, { id: C1, branch: 'work', parent: null, via: 'fs', message: 'one', time: 1 }], next_page_pos: null }),
+      list: rec('commit.list', { items: [{ id: C2, branch: 'work', parent: C1, via: 'fs', message: 'two', time: 2, logical: 1000, new_canonical: 40, new_stored: 10, new_metadata: 4 }, { id: C1, branch: 'work', parent: null, via: 'fs', message: 'one', time: 1, logical: 900, new_canonical: 60, new_stored: 15, new_metadata: 6 }], next_page_pos: null }),
       diff: rec('commit.diff', { items: [{ path: '/n.txt', kind: 'Modified' }], next_page_pos: null, next_cursor: null }),
     },
     sandbox: { list: rec('sandbox.list', { items: [], next_page_pos: null }), create: rec('sandbox.create', (p, name, machine) => ({ name, project: p, machine })) },
@@ -75,7 +76,10 @@ test('projects: list, state and Commits read 2.0 calls with the key first', asyn
   const st = await p.state('s1/app')
   assert.deepEqual(st.branches.map((b) => [b.name, b.parent, b.commits]), [['main', null, 0], ['work', 'main', 2]])
   assert.equal(st.store.bytes, 120)
-  assert.equal(st.storage, null)
+  // no Store totals in 2.0: summed from the Commits read, oldest first, marked partial
+  const { commits: added, ...totals } = st.storage
+  assert.deepEqual(totals, { partial: true, logical: 1900, canonical: 100, stored: 25, metadata: 10, file: 100, free: 0, dedupe: 19, compression: 4, init: null, main: null })
+  assert.deepEqual(added.map((c) => [c.message, c.kind, c.logical, c.canonical, c.stored]), [['one', 'fs', 900, 60, 15], ['two', 'fs', 1000, 40, 10]])
   const commits = await p.commits('s1/app', 'work')
   assert.deepEqual(commits.map((c) => [c.message, c.changes?.length ?? null]), [['two', 1], ['one', null]])
   assert.deepEqual(lfs.calls.find((c) => c[0] === 'commit.diff').slice(1, 4), ['s1/app', C1, C2])
@@ -157,10 +161,21 @@ test('scope: 2.0 arguments move into the run’s folder, namespace, Sandboxes an
   assert.deepEqual(scope.args('file.write', { project: 's1/app', branch: 'main', path: '/a.txt' }), { project: 's1/app', branch: 'tour_1.main', path: '/tour_1/a.txt' })
   assert.deepEqual(scope.args('branch.fork', { project: 's1/app', name: 'x', from_branch: 'main' }), { project: 's1/app', name: 'tour_1.x', from_branch: 'tour_1.main' })
   const made = scope.args('sandbox.create', { project: 's1/app', name: 'sb1', machine: 'native' })
-  assert.deepEqual(made, { project: 's1/app', name: 'tour_1.sb1', machine: 'lima1' })
-  assert.equal(scope.args('workspace.exec', { ws: 'sb1:/w/1', command: 'ls' }).ws, 'tour_1.sb1:/w/1')
-  assert.match(scope.args('workspace.exec', { ws: 'tour_1.sb1:/w/1', command: 'ls' }).command, /\ncd tour_1 \|\| exit 97\nls$/)
+  const real = `tour_1.sb1.${scope.tag}`
+  assert.deepEqual(made, { project: 's1/app', name: real, machine: 'lima1' })
+  assert.equal(scope.args('workspace.exec', { ws: 'sb1:/w/1', command: 'ls' }).ws, `${real}:/w/1`)
+  assert.equal(scope.args('workspace.exec', { ws: `${real}:/w/1`, command: 'ls' }).ws, `${real}:/w/1`)
+  assert.match(scope.args('workspace.exec', { ws: `${real}:/w/1`, command: 'ls' }).command, /\ncd tour_1 \|\| exit 97\nls$/)
+  // the same run name in another project gets Sandbox names of its own: they are unique in the home
+  const dir2 = mkdtempSync(join(tmpdir(), 'lfc-scope2-'))
+  const other = Scope.create(dir2, { run: 'tour_1', project: 's2/web', trunk: 'tour_1.main' })
+  assert.notEqual(other.realSandbox('sb1'), real)
+  assert.match(other.realSandbox('sb1'), /^tour_1\.sb1\.[a-z0-9]+$/)
+  // a scope made before tags keeps <run>.<name>
+  const old = new Scope(dir2, 'tour_2', 's2/web')
+  assert.equal(old.realSandbox('sb9'), 'tour_2.sb9')
   rmSync(dir, { recursive: true, force: true })
+  rmSync(dir2, { recursive: true, force: true })
 })
 
 test('the converter writes 2.0 commands and marks what cannot play', () => {
@@ -210,6 +225,17 @@ test('states come from the SDK: no machine, Store or Sandbox state is guessed (#
   assert.deepEqual([view.sandboxes[0].state, view.sandboxes[0].op.name, view.sandboxes[0].route], ['closing', 'sandbox.close', 'fuse'])
   const st = await new Storage({ spec: spec(), client: lfs, log: () => {} }).view()
   assert.deepEqual([st.stores[0].state, st.stores[0].op.name], ['busy', 'store.push'])
+})
+
+test('a PostgreSQL Store row says where its database is, without a password, and whether its server answered', async () => {
+  const lfs = fake()
+  lfs.store.list = async () => ({ items: [{ name: 'pg', kind: 'postgresql', url: 'postgresql://app:secret@db.internal:5432/layerfs?sslmode=require', password: 'env:LAYERFS_PG', projects: ['api'], state: 'idle' }, { name: 'off', kind: 'postgresql', url: 'postgresql://db2/x', projects: [], state: 'idle' }, { name: 's1', kind: 'sqlite', machine: 'native', projects: [], state: 'idle' }] })
+  lfs.store.status = async (name) => (name === 'pg' ? { state: 'idle', holders: [], server: { reachable: true, serverVersion: '16.4', latencyMs: 3 } } : name === 'off' ? { state: 'idle', holders: [], server: { reachable: false, error: { code: 'Unavailable', message: 'connection refused' } } } : { state: 'idle', holders: [], file: { exists: true, bytes: 1, wal_bytes: 0 } })
+  const st = await new Storage({ spec: spec(), client: lfs, log: () => {} }).view()
+  assert.deepEqual(st.stores[0].postgresql, { target: 'app@db.internal:5432/layerfs', reachable: true, version: '16.4', latencyMs: 3, error: null })
+  assert.deepEqual(st.stores[1].postgresql, { target: 'db2/x', reachable: false, version: null, latencyMs: null, error: 'connection refused' })
+  assert.equal(st.stores[2].postgresql, null)
+  assert.doesNotMatch(JSON.stringify(st), /secret|LAYERFS_PG/)
 })
 
 test('a busy Store: the project page gets its records, state, op and the refusal, not an error', async () => {
@@ -306,6 +332,17 @@ test('Compute’s Store rows carry their projects’ names, for the links to pro
   assert.deepEqual(storeOf({ name: 'app', machine: 'lima1', projects: 2 }).names, [])
 })
 
+test('a machine’s page gets the PostgreSQL Stores its Sandboxes can reach and each Sandbox’s image', async () => {
+  const lfs = fake()
+  lfs.machine.list = async () => ({ machines: [{ name: 'native', platform: 'native', backend: 'native', state: 'ready' }] })
+  lfs.store.list = async () => ({ items: [{ name: 's1', kind: 'sqlite', machine: 'native', projects: ['api'], state: 'idle' }, { name: 'pg', kind: 'postgresql', machine: null, projects: ['app', 'crm'], state: 'idle' }] })
+  lfs.sandbox.list = async () => ({ items: [{ name: 'a1', project: 's1/api', machine: 'native', state: 'running', image: 'sha256:abc' }, { name: 'a2', project: 'pg/app', machine: 'native', state: 'running' }], next_page_pos: null })
+  const view = await new Machines({ spec: spec(), client: lfs, calls: [] }).view()
+  assert.deepEqual(view.stores.map((s) => s.name), ['s1'])
+  assert.deepEqual(view.postgresql, [{ name: 'pg', projects: 2, names: ['app', 'crm'], state: 'idle', op: null }])
+  assert.deepEqual(view.sandboxes.map((b) => b.image), ['sha256:abc', null])
+})
+
 test('a job reads the Storage view again on each new phase and half, not on each byte step (#537 §8.9)', async () => {
   const s = spec()
   const st = new Storage({ spec: s, client: fake(), log: () => {} })
@@ -345,6 +382,30 @@ test('Compute’s Sandboxes carry their Workspace count from sandbox.get, which 
   }
   const view = await new Machines({ spec: spec(), client: lfs, calls: [] }).view()
   assert.deepEqual(view.sandboxes.map((b) => [b.name, b.workspaces]), [['a1', 1], ['a2', null]])
+})
+
+test('a Sandbox whose daemon admits no connection fails the view fast: one read at a time, its Busy remembered', async () => {
+  const lfs = fake()
+  let gets = 0
+  let answer
+  lfs.sandbox.list = async () => ({ items: [{ name: 'stuck', project: 's1/app', machine: 'box', state: 'running' }], next_page_pos: null })
+  // LayerFS waits 60 s for the daemon to admit a connection, then refuses Busy
+  lfs.sandbox.get = () => (gets++, new Promise((_, reject) => (answer = () => reject(Object.assign(new Error('admitted no connection'), { code: 'Busy' })))))
+  const machines = new Machines({ spec: spec(), client: lfs, calls: [] })
+  const started = Date.now()
+  const [a, b] = await Promise.all([machines.view(), machines.view()])
+  assert.ok(Date.now() - started < 8000)
+  assert.deepEqual([a.sandboxes[0].workspaces, b.sandboxes[0].workspaces, gets], [null, null, 1])
+  // the read still in flight is past the wait: the next view does not wait for it again
+  const again = Date.now()
+  assert.equal((await machines.view()).sandboxes[0].workspaces, null)
+  assert.ok(Date.now() - again < 1000)
+  answer()
+  await new Promise((r) => setTimeout(r, 5))
+  // the refusal answers the next reads without another call
+  assert.equal((await workspacesOf(lfs, 'stuck').catch((e) => e.code)), 'Busy')
+  assert.equal((await new Projects({ spec: spec(), client: lfs, log: () => {} }).sandboxes('s1/app'))[0].refusal.code, 'Busy')
+  assert.equal(gets, 1)
 })
 
 test('a down Store: the project page makes no Store call, and gets the down reason (U3)', async () => {

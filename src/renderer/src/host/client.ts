@@ -65,8 +65,25 @@ function oneAtATime<T>(path: string, run: () => Promise<T>): Promise<T> {
   return flight.promise as Promise<T>
 }
 
+/**
+ * Dev builds: a simulated host (components/simulation.tsx) answers the calls
+ * about its sample home (`route`: a value, or an Error to refuse with) and can
+ * add to a real answer (`extend`); every other call goes to the host.
+ */
+export interface SimHook {
+  route: (method: string, path: string) => { value: unknown } | null
+  extend?: (method: string, path: string, value: unknown) => unknown
+}
+let sim: SimHook | null = null
+export const setSimHook = (hook: SimHook | null) => {
+  sim = hook
+}
+
 export function call<T>(method: string, path: string, body?: unknown): Promise<T> {
-  return method === 'GET' ? oneAtATime(path, () => send<T>(method, path)) : send<T>(method, path, body)
+  const answer = sim?.route(method, path)
+  if (answer) return answer.value instanceof Error ? Promise.reject(answer.value) : Promise.resolve(answer.value as T)
+  const real = method === 'GET' ? oneAtATime(path, () => send<T>(method, path)) : send<T>(method, path, body)
+  return sim?.extend ? real.then((value) => (sim?.extend ? (sim.extend(method, path, value) as T) : value)) : real
 }
 
 async function send<T>(method: string, path: string, body?: unknown): Promise<T> {

@@ -1,36 +1,48 @@
-// Simulated machines for designing the Compute page on hosts this machine is
+// Simulated machines for designing the Machines page on hosts this machine is
 // not. Each case is GET /api/machines as host/machines.js builds it from
 // LayerFS 2.0's machine.list() (machine/calls.rs), store.list(),
-// sandbox.list() and machine.status(); `older` is a Connect linked to a
+// sandbox.list() and machine.status(), with each Sandbox's Workspaces
+// (sandbox.get) and the chats using them; `older` is a Connect linked to a
 // LayerFS with no machines. Dev builds switch between them on the page; the
 // harness takes ?page=compute&case=<id>. The page's actions work on a copy in
 // memory (simulate below), refused as LayerFS would refuse them.
 
 import { BUILT_IN, GIB, type Os } from '@/data/compute'
-import type { MachineInfo, MachineLive, MachinePlatformInfo, MachineSandbox, MachinesView, MachineStore, NewMachine, PlatformOption } from '@shared/host-api'
+import type { AgentSessionSummary } from '@shared/agent-api'
+import type { MachineInfo, MachineLive, MachinePgStore, MachinePlatformInfo, MachineSandbox, MachinesView, MachineStore, MachineSupports, NewMachine, PlatformOption, SandboxInfo, WorkspaceInfo } from '@shared/host-api'
 
 export type SimId = 'mac-fresh' | 'mac-mixed' | 'mac-nested' | 'mac-busy' | 'windows' | 'older'
 export const SIM_IDS: SimId[] = ['mac-fresh', 'mac-mixed', 'mac-nested', 'mac-busy', 'windows', 'older']
 export const isSimId = (v: unknown): v is SimId => typeof v === 'string' && (SIM_IDS as string[]).includes(v)
 
-export interface Simulation {
+/** A simulated host: its machines view, each Sandbox's Workspaces by Sandbox name, and the chats on them. */
+export interface SimHost {
+  view: MachinesView
+  workspaces: Record<string, WorkspaceInfo[]>
+  chats: AgentSessionSummary[]
+}
+
+export interface Simulation extends SimHost {
   label: string
   os: Os
-  view: MachinesView
 }
 
 // the sample machines' image: a made-up digest (a real machine reports the bundle's)
 const IMAGE = 'sha256:5a3b1e0c9d7f2468ace13579bdf02468ace13579bdf02468ace13579bdf0246'
+// a Sandbox made from its own image (sandbox.create's `image`), not its machine's
+const CUSTOM_IMAGE = 'sha256:9c1f7d3e5b2a4680fedcba9876543210fedcba9876543210fedcba98765432'
 const LAYERFS = '2.0.0'
+const PG: MachineSupports = { sqlite: true, postgresql_sandbox: true, reason: null }
 
 type Available = Extract<MachinesView, { available: true }>
 
-const native = (stores: string[] = [], sandboxes: string[] = []): MachineInfo => ({ name: 'native', platform: 'native', backend: 'native', state: 'ready', cpus: null, memory: null, disk: null, stores, sandboxes })
+const native = (stores: string[] = [], sandboxes: string[] = [], over: Partial<MachineInfo> = {}): MachineInfo => ({ name: 'native', platform: 'native', backend: 'native', state: 'ready', supports: PG, cpus: null, memory: null, disk: null, stores, sandboxes, ...over })
 const docker = (stores: string[] = [], sandboxes: string[] = [], over: Partial<MachineInfo> = {}): MachineInfo => ({
   name: 'docker',
   platform: 'docker',
   backend: 'docker',
   state: 'ready',
+  supports: PG,
   cpus: null,
   memory: null,
   disk: null,
@@ -45,6 +57,7 @@ const vm = (name: string, platform: MachineInfo['platform'], state: string, size
   platform,
   backend: 'namespaces',
   state,
+  supports: PG,
   cpus: size[0],
   memory: size[1] * GIB,
   disk: size[2] * GIB,
@@ -54,8 +67,14 @@ const vm = (name: string, platform: MachineInfo['platform'], state: string, size
   ...over,
 })
 const live = (name: string, state: string, freeGib: number | null, tool: string | null, down: string | null = null): MachineLive => ({ name, state, freeDisk: freeGib === null ? null : freeGib * GIB, toolVersion: tool, down })
-const store = (name: string, machine: string, projects: number, sizeGb: number): MachineStore => ({ name, machine, projects, size: sizeGb * 1e9 })
-const box = (name: string, machine: string, project: string, workspaces: number): MachineSandbox => ({ name, machine, project, workspaces })
+const store = (name: string, machine: string, projects: number | string[], sizeGb: number): MachineStore => ({ name, machine, projects: typeof projects === 'number' ? projects : projects.length, ...(typeof projects === 'number' ? {} : { names: projects }), size: sizeGb * 1e9 })
+const pg = (name: string, names: string[]): MachinePgStore => ({ name, projects: names.length, names, state: 'idle' })
+const ROUTE: Record<string, [string, string]> = { native: ['native', 'nfs'], docker: ['docker', 'fuse'] }
+// native Sandboxes are host processes: no image
+const box = (name: string, machine: string, project: string, workspaces: number, state = 'running', image?: string): MachineSandbox => {
+  const [backend, route] = ROUTE[machine] ?? ['namespaces', 'fuse']
+  return { name, machine, project, workspaces, state, backend, route, image: image ?? (machine === 'native' ? null : IMAGE) }
+}
 /** The create options each platform declares (as machine.platforms lists them), for sample rows. */
 const VM_OPTIONS: PlatformOption[] = [{ name: 'cpus', kind: 'int' }, { name: 'memory', kind: 'size' }, { name: 'disk', kind: 'size' }, { name: 'image', kind: 'text' }]
 const OPTIONS: Record<string, PlatformOption[]> = {
@@ -88,12 +107,13 @@ const MAC_CAN = (over: Partial<Record<string, MachinePlatformInfo>> = {}): Machi
     can('ssh', 'OpenSSH_10.0p2'),
   ].map((c) => over[c.platform as string] ?? c)
 
-const view = (machines: MachineInfo[], platforms: MachinePlatformInfo[], stores: MachineStore[], sandboxes: MachineSandbox[], status: MachineLive[]): Available => ({
+const view = (machines: MachineInfo[], platforms: MachinePlatformInfo[], stores: MachineStore[], sandboxes: MachineSandbox[], status: MachineLive[], postgresql: MachinePgStore[] = []): Available => ({
   available: true,
   layerfs: LAYERFS,
   machines,
   platforms,
   stores,
+  postgresql,
   sandboxes,
   status: Object.fromEntries(status.map((s) => [s.name, s])),
 })
@@ -116,31 +136,35 @@ const macFresh = view(
 // mac-mixed: the mockup's five machines; the ssh host is down
 const macMixed = view(
   [
-    native(['shop'], ['3', '4']),
-    docker(['team'], ['1']),
-    vm('dev', 'lima', 'running', [4, 8, 40], ['agents'], ['1', '2'], { nested: true }),
-    vm('scratch', 'microsandbox', 'stopped', [2, 4, 20], ['scratch'], []),
-    { name: 'gpu-box', platform: 'ssh', backend: 'namespaces', state: 'down', cpus: null, memory: null, disk: null, stores: ['models'], sandboxes: [], ssh: { host: 'gpu-box.lan', user: 'ubuntu', port: 22, identity: '~/.ssh/id_ed25519', root: '/layerfs/data' } },
+    native(['shop'], ['1', '2']),
+    docker(['team'], ['3', '6']),
+    // '6': the PostgreSQL Store's app, also running on docker
+    vm('dev', 'lima', 'running', [4, 8, 40], ['agents'], ['4', '5', '7'], { nested: true }),
+    vm('scratch', 'microsandbox', 'stopped', [2, 4, 20], ['scratch'], [], { supports: { sqlite: true, postgresql_sandbox: false, reason: 'microsandbox has no network route to a PostgreSQL server' } }),
+    { name: 'gpu-box', platform: 'ssh', backend: 'namespaces', state: 'unresolved', cpus: null, memory: null, disk: null, stores: ['models'], sandboxes: [], ssh: { host: 'gpu-box.lan', user: 'ubuntu', port: 22, identity: '~/.ssh/id_ed25519', root: '/layerfs/data' } },
   ],
   MAC_CAN(),
-  [store('shop', 'native', 3, 2.4), store('team', 'docker', 2, 1.1), store('agents', 'dev', 4, 6.8), store('scratch', 'scratch', 1, 0.3), store('models', 'gpu-box', 2, 41.5)],
-  [box('3', 'native', 'shop/api', 2), box('4', 'native', 'shop/web', 1), box('1', 'docker', 'team/todo', 1), box('1', 'dev', 'agents/crawler', 3), box('2', 'dev', 'agents/indexer', 1)],
+  [store('shop', 'native', ['admin', 'api', 'web'], 2.4), store('team', 'docker', ['todo', 'wiki'], 1.1), store('agents', 'dev', ['crawler', 'evals', 'indexer', 'planner'], 6.8), store('scratch', 'scratch', ['play'], 0.3), store('models', 'gpu-box', ['train', 'serve'], 41.5)],
+  // a sqlite project runs on its Store's machine; the PostgreSQL Store's app runs on dev and docker
+  [box('1', 'native', 'shop/api', 2), box('2', 'native', 'shop/web', 1), box('3', 'docker', 'team/todo', 1), box('4', 'dev', 'agents/crawler', 3, 'running', CUSTOM_IMAGE), box('5', 'dev', 'agents/indexer', 0, 'creating'), box('6', 'docker', 'pg/app', 1), box('7', 'dev', 'pg/app', 1)],
   [
     live('docker', 'ready', 43.7, 'Docker 29.5.2'),
     live('dev', 'running', 31.2, 'limactl version 2.0.1'),
     live('scratch', 'stopped', 18.9, 'msb 0.2.6'),
-    live('gpu-box', 'down', null, null, 'ssh: connect to host gpu-box.lan port 22: Operation timed out'),
+    { ...live('gpu-box', 'unresolved', null, null, 'ssh: connect to host gpu-box.lan port 22: Operation timed out'), op: { id: 'op-7', name: 'machine.connect', phase: 'probe', started: null, uncertain: true } },
   ],
+  [pg('pg', ['app'])],
 )
 
 // mac-nested: an M3 Mac that can nest, whose one Lima machine was made without --nested: Firecracker
 // is ready, and its form makes a nested Lima machine first
 const macNested = view(
-  [native(['shop'], ['1']), docker([], []), vm('dev', 'lima', 'running', [4, 8, 40], ['agents'], ['1'])],
+  [native(['shop'], ['1']), docker([], []), vm('dev', 'lima', 'running', [4, 8, 40], ['agents'], ['2'])],
   MAC_CAN(),
-  [store('shop', 'native', 2, 1.4), store('agents', 'dev', 3, 4.2)],
-  [box('1', 'native', 'shop/api', 1), box('1', 'dev', 'agents/crawler', 2)],
+  [store('shop', 'native', ['api', 'web'], 1.4), store('agents', 'dev', ['crawler', 'evals', 'indexer'], 4.2)],
+  [box('1', 'native', 'shop/api', 1), box('2', 'dev', 'agents/crawler', 2, 'running', '/Users/me/images/crawler-tools.tar')],
   [live('docker', 'ready', 47.9, 'Docker 29.5.2'), live('dev', 'running', 30.4, 'limactl version 2.0.1')],
+  [pg('crm', ['leads', 'billing'])],
 )
 
 // mac-busy: many Stores on each machine, many Sandboxes
@@ -150,29 +174,33 @@ const busyStores = [
   ...['agents', 'evals', 'crawl', 'search', 'notebooks', 'data'].map((n, i) => store(n, 'build', 1 + i, 3.1 + i * 2.2)),
   store('fc-runs', 'fc1', 5, 9.4),
 ]
+// Sandbox names are unique in a home: numbered across the machines
 const busyBoxes = [
-  ...Array.from({ length: 6 }, (_, i) => box(String(i + 1), 'native', ['shop/api', 'blog/main', 'docs/site', 'infra/tf', 'ml-lab/nb', 'site/web'][i], 1 + (i % 3))),
-  ...Array.from({ length: 4 }, (_, i) => box(String(i + 1), 'docker', ['team/todo', 'ci/runner', 'ci/runner', 'demo/app'][i], 1)),
-  ...Array.from({ length: 9 }, (_, i) => box(String(i + 1), 'build', ['agents/a', 'agents/b', 'evals/x', 'crawl/q', 'search/idx', 'notebooks/n', 'data/etl', 'data/etl', 'evals/y'][i], 1 + (i % 4))),
-  ...Array.from({ length: 3 }, (_, i) => box(String(i + 1), 'fc1', 'fc-runs/job', 1)),
-]
+  ...['shop/api', 'blog/main', 'docs/site', 'infra/tf', 'ml-lab/nb', 'site/web'].map((p, i) => ['native', p, 1 + (i % 3)] as const),
+  ...['team/todo', 'ci/runner', 'ci/runner', 'demo/app'].map((p) => ['docker', p, 1] as const),
+  ...['agents/a', 'agents/b', 'evals/x', 'crawl/q', 'search/idx', 'notebooks/n', 'data/etl', 'data/etl', 'evals/y'].map((p, i) => ['build', p, 1 + (i % 4)] as const),
+  ...['fc-runs/job', 'fc-runs/job', 'fc-runs/job'].map((p) => ['fc1', p, 1] as const),
+  // the PostgreSQL Store's app runs on several machines: docker, build and fc1
+  ...([['docker', 'pg/app', 1], ['build', 'pg/app', 2], ['fc1', 'pg/app', 1]] as const),
+].map(([machine, project, n], i) => box(String(i + 1), machine, project, n))
 const macBusy = view(
   [
     native(busyStores.filter((s) => s.machine === 'native').map((s) => s.name), busyBoxes.filter((b) => b.machine === 'native').map((b) => b.name)),
     docker(busyStores.filter((s) => s.machine === 'docker').map((s) => s.name), busyBoxes.filter((b) => b.machine === 'docker').map((b) => b.name)),
     vm('build', 'lima', 'running', [8, 16, 120], busyStores.filter((s) => s.machine === 'build').map((s) => s.name), busyBoxes.filter((b) => b.machine === 'build').map((b) => b.name), { nested: true }),
-    vm('fc1', 'firecracker', 'running', [2, 2, 20], ['fc-runs'], ['1', '2', '3'], { host: 'build' }),
+    vm('fc1', 'firecracker', 'running', [2, 2, 20], ['fc-runs'], busyBoxes.filter((b) => b.machine === 'fc1').map((b) => b.name), { host: 'build' }),
     vm('ac1', 'apple-container', 'starting', [2, 4, 20], [], []),
   ],
   MAC_CAN(),
   busyStores,
   busyBoxes,
   [live('docker', 'ready', 12.4, 'Docker 29.5.2'), live('build', 'running', 64.2, 'limactl version 2.0.1'), live('fc1', 'running', 8.1, 'firecracker v1.12.1'), live('ac1', 'starting', 20, 'container CLI version 0.6.1')],
+  [pg('pg', ['app']), pg('warehouse', ['etl', 'reports', 'dash'])],
 )
 
 // windows: native keeps records only (no Sandboxes run there); docker runs through WSL2
 const windows = view(
-  [native(['notes'], []), docker(['shop'], ['1', '2'], { wsl: 'Ubuntu-24.04', docker: 'npipe:////./pipe/docker_engine' })],
+  [native(['notes'], [], { supports: { sqlite: true, postgresql_sandbox: false, reason: 'native on Windows keeps records only; Sandboxes run on docker' } }), docker(['shop'], ['1', '2'], { wsl: 'Ubuntu-24.04', docker: 'npipe:////./pipe/docker_engine' })],
   [
     can('apple-container', null, ['host:macos']),
     can('microsandbox', null, ['tool:msb']),
@@ -183,17 +211,84 @@ const windows = view(
   [store('notes', 'native', 1, 0.05), store('shop', 'docker', 2, 2.2)],
   [box('1', 'docker', 'shop/api', 2), box('2', 'docker', 'shop/web', 1)],
   [live('docker', 'ready', 88.0, 'Docker 29.4.0 (WSL2)')],
+  [pg('pg', ['crm'])],
 )
 
 const older: MachinesView = { available: false, layerfs: '1.1.0', reason: 'This LayerFS has no machines: they come with LayerFS 2.0.' }
 
+// each Sandbox's Workspaces (sandbox.get), numbered paths on Branches from this list
+const BRANCHES: [string, string][] = [
+  ['fix-login', 'Fix the login form'],
+  ['health', 'Add a health check'],
+  ['header', 'Tidy the header'],
+  ['search', 'Speed up search'],
+  ['onboarding', 'Rework onboarding'],
+  ['cache-warm', 'Warm the cache'],
+  ['docs-pass', 'Proofread the docs'],
+  ['retry-flaky', 'Retry the flaky tests'],
+]
+const seed = (v: MachinesView): Record<string, WorkspaceInfo[]> => {
+  if (!v.available) return {}
+  let n = 0
+  return Object.fromEntries(
+    v.sandboxes.map((b) => [
+      b.name,
+      Array.from({ length: b.workspaces ?? 0 }, (_, i) => {
+        const [branch] = BRANCHES[n++ % BRANCHES.length]
+        const path = `/workspaces/${i + 1}`
+        return { ws: `${b.name}:${path}`, name: null, branch, path }
+      }),
+    ]),
+  )
+}
+const sim = (label: string, os: Os, v: MachinesView): Simulation => {
+  const workspaces = seed(v)
+  return { label, os, view: v, workspaces, chats: chatsOf(v, workspaces) }
+}
+
 export const SIMULATIONS: Record<SimId, Simulation> = {
-  'mac-fresh': { label: 'Mac, fresh home', os: 'darwin', view: macFresh },
-  'mac-mixed': { label: 'Mac, five machines, one down', os: 'darwin', view: macMixed },
-  'mac-nested': { label: 'Mac M3, no nested Lima machine', os: 'darwin', view: macNested },
-  'mac-busy': { label: 'Mac, many Stores', os: 'darwin', view: macBusy },
-  windows: { label: 'Windows (Docker via WSL2)', os: 'win32', view: windows },
-  older: { label: 'Older LayerFS (no machines)', os: 'darwin', view: older },
+  'mac-fresh': sim('Mac, fresh home', 'darwin', macFresh),
+  'mac-mixed': sim('Mac, five machines, one down', 'darwin', macMixed),
+  'mac-nested': sim('Mac M3, no nested Lima machine', 'darwin', macNested),
+  'mac-busy': sim('Mac, many Stores', 'darwin', macBusy),
+  windows: sim('Windows (Docker via WSL2)', 'win32', windows),
+  older: sim('Older LayerFS (no machines)', 'darwin', older),
+}
+
+/** sandbox.get on a simulated host. */
+export function simSandbox(h: SimHost, name: string): SandboxInfo {
+  const b = h.view.available ? h.view.sandboxes.find((x) => x.name === name) : undefined
+  if (!b) throw refuse('NotFound', `no Sandbox named ${name}`)
+  return { id: b.name, name: b.name, state: b.state ?? 'running', op: b.op ?? null, backend: b.backend, route: b.route, project: b.project, image: b.image ?? null, machine: b.machine, workspaces: h.workspaces[name] ?? [] }
+}
+
+/** The chats on a simulated host's Workspaces: every fourth Workspace has none, every third chat is working, one is a scenario's. */
+function chatsOf(v: MachinesView, workspaces: Record<string, WorkspaceInfo[]>): AgentSessionSummary[] {
+  const project = (sandbox: string) => (v.available ? v.sandboxes.find((b) => b.name === sandbox)?.project : null) ?? null
+  return Object.entries(workspaces)
+    .flatMap(([sandbox, list]) => list.map((w) => ({ sandbox, w })))
+    .flatMap(({ sandbox, w }, i) => {
+      if (i % 4 === 3) return []
+      const title = BRANCHES.find(([b]) => b === w.branch)?.[1] ?? w.branch
+      const key = project(sandbox)
+      const chat: AgentSessionSummary = {
+        id: `sim-${w.ws}`,
+        title,
+        cwd: '/',
+        project: key,
+        workspace: { branch: w.branch, state: 'ready', sandbox, path: w.path, head: null, commitCount: 0, lastSaved: null, error: null },
+        created: Date.now() - (i + 1) * 3_600_000,
+        updated: Date.now() - i * 37 * 60_000,
+        state: i % 3 === 0 ? 'running' : 'idle',
+        provider: null,
+        modelId: null,
+        thinkingLevel: 'medium',
+        permissionMode: 'ask',
+        error: null,
+        ...(i === 2 && key ? { scenario: { id: 'shop-tour', title: 'Shop tour, three agents', project: key, folder: 'shop-tour_1', state: 'playing' as const, phase: null, checks: [], error: null } } : {}),
+      }
+      return [chat]
+    })
 }
 
 // ---------- actions on a simulated view ----------
@@ -201,15 +296,37 @@ export const SIMULATIONS: Record<SimId, Simulation> = {
 export type MachineAction =
   | { kind: 'create'; input: NewMachine }
   | { kind: 'remove'; name: string }
-  | { kind: 'move'; store: string; machine: string }
   | { kind: 'start'; name: string }
   | { kind: 'stop'; name: string }
   | { kind: 'update'; name: string; changes: { image?: string; docker?: string; wsl?: string } }
+  | { kind: 'close'; sandbox: string; force: boolean }
+  | { kind: 'unmount'; ws: string }
 
 const refuse = (code: string, message: string) => Object.assign(new Error(message), { code })
 
-/** The view after `action`, refused as LayerFS refuses it (InUse, Exists, InvalidInput). */
-export function simulate(v: MachinesView, action: MachineAction): MachinesView {
+/** The host after `action`, refused as LayerFS refuses it (InUse, Exists, InvalidInput, NotFound). */
+export function simulate(h: SimHost, action: MachineAction): SimHost {
+  const v = h.view
+  if (!v.available) throw refuse('Unsupported', 'machines need Connect on LayerFS 2.0')
+  if (action.kind === 'close') {
+    const b = v.sandboxes.find((x) => x.name === action.sandbox)
+    if (!b) throw refuse('NotFound', `no Sandbox named ${action.sandbox}`)
+    const workspaces = { ...h.workspaces }
+    delete workspaces[b.name]
+    const machines = v.machines.map((m) => (m.name === b.machine ? { ...m, sandboxes: m.sandboxes.filter((x) => x !== b.name) } : m))
+    return { ...h, view: { ...v, machines, sandboxes: v.sandboxes.filter((x) => x !== b) }, workspaces }
+  }
+  if (action.kind === 'unmount') {
+    const sandbox = action.ws.slice(0, action.ws.indexOf(':'))
+    const list = h.workspaces[sandbox] ?? []
+    if (!list.some((w) => w.ws === action.ws)) throw refuse('NotFound', `no Workspace ${action.ws}`)
+    const left = list.filter((w) => w.ws !== action.ws)
+    return { ...h, view: { ...v, sandboxes: v.sandboxes.map((b) => (b.name === sandbox ? { ...b, workspaces: left.length } : b)) }, workspaces: { ...h.workspaces, [sandbox]: left } }
+  }
+  return { ...h, view: simulateView(v, action) }
+}
+
+function simulateView(v: MachinesView, action: Exclude<MachineAction, { kind: 'close' | 'unmount' }>): MachinesView {
   if (!v.available) throw refuse('Unsupported', 'machines need Connect on LayerFS 2.0')
   const machines = v.machines.map((m) => ({ ...m, stores: [...m.stores], sandboxes: [...m.sandboxes] }))
   const find = (name: string) => machines.find((m) => m.name === name)
@@ -241,15 +358,6 @@ export function simulate(v: MachinesView, action: MachineAction): MachinesView {
     if (action.kind === 'stop' && m.sandboxes.length) throw Object.assign(refuse('InUse', `machine ${m.name} runs Sandboxes ${m.sandboxes.join(', ')}; close them first`), { detail: { related: m.sandboxes.map((name) => ({ kind: 'sandbox', name })) } })
     if (m.platform !== 'native') m.state = action.kind === 'start' ? 'running' : 'stopped'
     return { ...v, machines, status: { ...v.status, [m.name]: { ...(v.status[m.name] ?? { name: m.name, freeDisk: null, toolVersion: null }), state: m.state, down: action.kind === 'stop' ? 'the machine is stopped' : null } } }
-  }
-  if (action.kind === 'move') {
-    const from = machines.find((m) => m.stores.includes(action.store))
-    const to = find(action.machine)
-    if (!from || !to) throw refuse('NotFound', 'no such Store or machine')
-    if (from.sandboxes.length && v.sandboxes.some((b) => b.machine === from.name && b.project?.startsWith(`${action.store}/`))) throw refuse('InUse', `${action.store} has running Sandboxes on ${from.name}`)
-    from.stores = from.stores.filter((s) => s !== action.store)
-    to.stores.push(action.store)
-    return { ...v, machines, stores: v.stores.map((s) => (s.name === action.store ? { ...s, machine: to.name } : s)) }
   }
   const m = find(action.name)
   if (!m) throw refuse('NotFound', `no machine named ${action.name}`)

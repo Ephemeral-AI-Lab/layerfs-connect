@@ -13,7 +13,7 @@ const TONE: Record<NoticeTone, { box: string; icon: string }> = {
   },
   warning: {
     box: 'border-amber-500/25 bg-linear-to-r from-amber-500/[0.08] to-amber-500/[0.02]',
-    icon: 'glass-strong border border-amber-500/35 text-amber-600 dark:text-amber-400 shadow-xs',
+    icon: 'glass-strong border border-amber-500/35 text-amber-600 shadow-xs',
   },
   danger: {
     box: 'border-destructive/25 bg-linear-to-r from-destructive/[0.08] to-destructive/[0.02]',
@@ -48,7 +48,7 @@ export function Notice({ tone, icon: Icon, title, children, actions }: NoticePro
         </span>
         <div className="min-w-0 flex-1">
           <p className="text-[13px] font-semibold text-foreground tracking-tight">{title}</p>
-          <p className="mt-0.5 text-xs text-muted-foreground leading-normal">{children}</p>
+          <div className="mt-0.5 text-xs text-muted-foreground leading-normal">{children}</div>
         </div>
       </div>
       {actions && <div className="flex shrink-0 items-center gap-2">{actions}</div>}

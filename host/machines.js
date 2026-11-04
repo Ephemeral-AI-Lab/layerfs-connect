@@ -13,7 +13,7 @@
 // and machine.status() of the machines that run or hold an operation (free
 // disk, `op`): one read for the page, and none of it starts a machine.
 // Every call goes through the host's one client (layerfs.js).
-import { layerfs, linkedVersion, pages, workspacesOf } from './layerfs.js'
+import { layerfs, linkedVersion, pages, VIEW_WAIT_MS, workspacesOf } from './layerfs.js'
 
 const BUILT_IN = new Set(['native', 'docker'])
 const SSH = 'ssh'
@@ -76,9 +76,15 @@ export function storeOf(s) {
   return { name: String(s.name), machine, projects: count(s.projects), names: Array.isArray(s.projects) ? s.projects.map(String) : [], size: num(s.size ?? s.bytes), state: text(s.state) ?? 'unknown', op: opOf(s.op) }
 }
 
+/** One store.list() item, when it is a PostgreSQL Store (on no machine: Sandboxes reach its database). */
+export function pgStoreOf(s) {
+  if (s.kind !== 'postgresql') return null
+  return { name: String(s.name), projects: count(s.projects), names: Array.isArray(s.projects) ? s.projects.map(String) : [], state: text(s.state) ?? 'unknown', op: opOf(s.op) }
+}
+
 /** One sandbox.list() item. */
 export function sandboxOf(b) {
-  return { name: String(b.name ?? b.sandbox), machine: text(b.machine), project: text(b.project), workspaces: b.workspaces === undefined ? null : count(b.workspaces), state: text(b.state) ?? 'unknown', op: opOf(b.op), backend: text(b.backend), route: text(b.route) }
+  return { name: String(b.name ?? b.sandbox), machine: text(b.machine), project: text(b.project), workspaces: b.workspaces === undefined ? null : count(b.workspaces), state: text(b.state) ?? 'unknown', op: opOf(b.op), backend: text(b.backend), route: text(b.route), image: text(b.image) }
 }
 
 /** One machine.status() answer (the reason is `down_reason`). */
@@ -109,18 +115,20 @@ export class Machines {
     const lfs = this.lfs
     const listed = await lfs.machine.list()
     const machines = list(listed.machines).map(machineOf)
-    const [platforms, stores, sandboxes, statuses] = await Promise.all([
+    const [platforms, listedStores, sandboxes, statuses] = await Promise.all([
       this.platforms().then((p) => p.platforms, () => []),
-      lfs.store.list().then((r) => list(r).map(storeOf).filter(Boolean), () => []),
+      lfs.store.list().then(list, () => []),
       // sandbox.list items carry no Workspaces: each one's count is its sandbox.get (a record read; null when refused)
       pages((p) => lfs.sandbox.list(p)).then(
-        (r) => Promise.all(r.map(sandboxOf).map((b) => workspacesOf(lfs, b.name).then((w) => ({ ...b, workspaces: w.length }), () => ({ ...b, workspaces: null })))),
+        (r) => Promise.all(r.map(sandboxOf).map((b) => workspacesOf(lfs, b.name, { wait: VIEW_WAIT_MS }).then((w) => ({ ...b, workspaces: w.length }), () => ({ ...b, workspaces: null })))),
         () => [],
       ),
       // starts nothing; asked only where it adds the free disk or the op (a stopped machine's says only that it is stopped)
       Promise.all(machines.filter((m) => m.platform !== 'native' && ASK_STATUS.has(m.state)).map((m) => lfs.machine.status(m.name).then(statusOf, (e) => ({ name: m.name, state: null, freeDisk: null, toolVersion: null, down: e?.message ?? String(e), op: null })))),
     ])
-    return { available: true, layerfs: this.version(), machines, platforms, stores, sandboxes, status: Object.fromEntries(statuses.map((s) => [s.name, s])) }
+    const stores = listedStores.map(storeOf).filter(Boolean)
+    const postgresql = listedStores.map(pgStoreOf).filter(Boolean)
+    return { available: true, layerfs: this.version(), machines, platforms, stores, postgresql, sandboxes, status: Object.fromEntries(statuses.map((s) => [s.name, s])) }
   }
 
   /** machine.platforms(): each platform on this host; starts nothing (PlatformsView). */

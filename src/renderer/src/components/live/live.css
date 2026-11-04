@@ -19,7 +19,7 @@
   pointer-events: none;
   background-image: radial-gradient(circle at 1px 1px, color-mix(in srgb, var(--foreground) 7%, transparent) 1px, transparent 0);
   background-size: 20px 20px;
-  mask-image: radial-gradient(44rem 24rem at 50% 50%, #000, transparent 78%);
+  mask-image: radial-gradient(ellipse 60% 55% at 50% 50%, #000, transparent 100%);
 }
 .live-light { display: none; }
 

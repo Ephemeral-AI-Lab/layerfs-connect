@@ -73,7 +73,7 @@ export function DiskGauge({
             <span
               className={cn(
                 'rounded-full px-2 py-0.5 text-[10px] font-semibold tracking-tight ring-1 ring-inset',
-                low ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400 ring-amber-500/30' : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 ring-emerald-500/25',
+                low ? 'bg-amber-500/15 text-amber-600 ring-amber-500/30' : 'bg-emerald-500/10 text-emerald-600 ring-emerald-500/25',
               )}
             >
               {low ? t("Low Space") : t("Healthy")}
@@ -82,7 +82,7 @@ export function DiskGauge({
         </dt>
         <dd className="mt-2">
           <div className="flex items-baseline gap-2">
-            <span className={cn('text-2xl font-medium tracking-tight tabular-nums', low ? 'text-amber-600 dark:text-amber-400' : 'text-foreground')}>
+            <span className={cn('text-2xl font-medium tracking-tight tabular-nums', low ? 'text-amber-600' : 'text-foreground')}>
               {free === null ? (
                 <span className="text-base font-medium text-muted-foreground">{unknown}</span>
               ) : (

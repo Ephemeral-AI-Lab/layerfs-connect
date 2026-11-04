@@ -212,7 +212,7 @@ function MissingNote({ item, onDismiss }: { item: HistoryItem; onDismiss: () => 
   useI18n()
   const kind = item.kind === 'layer' ? 'Layer' : 'Commit'
   return (
-    <div role="status" className="flex items-center gap-2 border-b bg-amber-500/10 px-3 py-1.5 text-xs text-amber-900 dark:text-amber-200">
+    <div role="status" className="flex items-center gap-2 border-b bg-amber-500/10 px-3 py-1.5 text-xs text-amber-900">
       <CircleAlert className="size-3.5 shrink-0" />
       <span className="min-w-0 flex-1">
         {kind} <HashChip id={item.id} className="mx-0.5 text-[11px]" />{t("is not available in this history.")}</span>

@@ -1,7 +1,7 @@
 import { t, useI18n } from '@/i18n'
-// What the Compute page's parts share: a machine kind's mark, a Sandbox's
-// platform badge, a machine's state pill, a fact, a command to copy and a
-// section title.
+// What the Machines page's parts share: a machine kind's mark, a Sandbox's
+// platform badge, a machine's state pill, a fact, a form field, a command to
+// copy and a section title.
 import { Check, Copy, Monitor, Server } from 'lucide-react'
 import { useState } from 'react'
 import { siApple, siDocker, siLinux } from 'simple-icons'
@@ -80,6 +80,17 @@ export function Fact({ label, children, className, mono }: { label: string; chil
       <dt className="text-xs text-faint">{label}</dt>
       <dd className={cn('mt-0.5 truncate text-[13px]', mono && 'font-mono text-[12.5px]')}>{children}</dd>
     </div>
+  )
+}
+
+/** A form field: its label, the control, and its error under it. */
+export function Field({ label, error, hint, children, className }: { label: string; error?: string | null; hint?: string; children: React.ReactNode; className?: string }) {
+  return (
+    <label className={cn('flex min-w-0 flex-col gap-1', className)}>
+      <span className="text-xs font-medium text-muted-foreground">{label}</span>
+      {children}
+      {error ? <span className="text-xs text-destructive">{error}</span> : hint ? <span className="text-xs text-faint">{hint}</span> : null}
+    </label>
   )
 }
 

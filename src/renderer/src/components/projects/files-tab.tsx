@@ -21,21 +21,21 @@ function FileBadge({ entry }: { entry: Pick<FsEntry, 'name' | 'kind'> }) {
   if (entry.kind === 'symlink') return <Link2 aria-hidden="true" className="size-4 shrink-0 text-faint" />
   const [text, tone] =
     name === 'package.json'
-      ? ['npm', 'text-[#c4502a] bg-[#c4502a]/10 dark:text-(--commit-exec)']
+      ? ['npm', 'text-[#c4502a] bg-[#c4502a]/10']
       : name.endsWith('-lock.json') || name.endsWith('.lock')
         ? ['lock', 'text-faint bg-muted']
         : name === '.gitignore'
-          ? ['git', 'text-[#e0703a] bg-[#e0703a]/10 dark:text-(--commit-exec)']
+          ? ['git', 'text-[#e0703a] bg-[#e0703a]/10']
           : name.endsWith('.sh')
             ? ['$', 'text-success bg-success/10']
             : name.endsWith('.md')
               ? ['i', 'text-(--icon-accent) bg-primary/10']
               : /\.[cm]?[tj]sx?$/.test(name)
-                ? [/\.[cm]?tsx?$/.test(name) ? 'TS' : 'JS', 'text-[#2d5bb5] bg-[#2d5bb5]/10 dark:text-(--icon-accent)']
+                ? [/\.[cm]?tsx?$/.test(name) ? 'TS' : 'JS', 'text-[#2d5bb5] bg-[#2d5bb5]/10']
                 : name.endsWith('.json')
                   ? ['{}', 'text-warning bg-warning/10']
                   : name.endsWith('.py')
-                    ? ['py', 'text-[#3572a5] bg-[#3572a5]/10 dark:text-(--hl-function)']
+                    ? ['py', 'text-[#3572a5] bg-[#3572a5]/10']
                     : ['', '']
   if (!text) return <FileText aria-hidden="true" className="size-4 shrink-0 text-faint" />
   return (

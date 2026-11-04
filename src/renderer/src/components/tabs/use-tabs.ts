@@ -1,8 +1,8 @@
-// The window's tabs: each one shows a page (Storage, Compute, Projects, a chat)
-// or a project, and keeps its own place. Only the active tab is mounted; the
-// others come back from what is stored here. The list survives a relaunch.
-// Like a browser tab, each keeps the places it showed before (Back) and
-// after (Forward): opening a place in a tab pushes the one it left.
+// The window's place: a page (Machines, Storage, Projects, a chat) or a project.
+// The window shows one place at a time (there is no tab strip); the state keeps
+// the tab shape, but holds one tab, restored across a relaunch. Like a browser
+// tab, it keeps the places it showed before (Back) and after (Forward):
+// opening a place pushes the one it left.
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import type { NavId, Selection } from '@/components/app-sidebar'
@@ -10,7 +10,7 @@ import type { NavId, Selection } from '@/components/app-sidebar'
 /** A request to open the Chat page on a project or a conversation; a new id remounts the page. */
 /** `fresh`: a new chat, never the last conversation restored from an earlier visit. */
 export type ChatIntent = { id: number; project?: string; session?: string; fresh?: boolean }
-/** Where a project tab opens: its own tab (history, files, …) and branch; on Storage and Compute, `focus` is a row to scroll to (see go.ts). */
+/** Where a project tab opens: its own tab (history, files, …) and branch; on Storage and Machines, `focus` is a row to scroll to (see go.ts). */
 export type ProjectLocation = { tab?: string; branch?: string; focus?: string }
 
 /** A place a tab showed, to go Back or Forward to; `label` names it (a chat's title). */
@@ -36,7 +36,7 @@ interface TabsState {
 const STORAGE_KEY = 'connect.tabs'
 const CLOSED_KEPT = 20
 const HISTORY_KEPT = 30
-const NAV_IDS: NavId[] = ['chat', 'projects', 'storage', 'compute']
+const NAV_IDS: NavId[] = ['chat', 'projects', 'machines', 'storage']
 
 let counter = 0
 const newId = () => `t${Date.now().toString(36)}${(counter++).toString(36)}`
@@ -88,13 +88,16 @@ const places = (value: unknown): TabPlace[] | undefined => {
 
 function load(): TabsState | null {
   try {
-    const raw = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? 'null') as { tabs?: unknown; active?: unknown } | null
+    // tabs saved while Machines was called Compute
+    const raw = JSON.parse(localStorage.getItem(STORAGE_KEY)?.replaceAll('"id":"compute"', '"id":"machines"') ?? 'null') as { tabs?: unknown; active?: unknown } | null
     if (!raw || !Array.isArray(raw.tabs)) return null
     const tabs: Tab[] = raw.tabs
       .filter((t): t is Tab => !!t && typeof (t as Tab).id === 'string' && validSelection((t as Tab).selected))
       .map((t) => ({ id: t.id, selected: t.selected, location: t.location && typeof t.location === 'object' ? t.location : undefined, back: places(t.back), forward: places(t.forward) }))
     if (!tabs.length) return null
-    return { tabs, active: tabs.some((t) => t.id === raw.active) ? (raw.active as string) : tabs[0].id }
+    // one view: only the tab that was showing comes back (older layouts saved several)
+    const active = tabs.find((t) => t.id === raw.active) ?? tabs[0]
+    return { tabs: [active], active: active.id }
   } catch {
     return null
   }
@@ -169,7 +172,7 @@ export interface TabsApi {
 export function useTabs(fallback: () => TabTarget, start?: TabTarget): TabsApi {
   const [state, setState] = useState<TabsState>(() => {
     const saved = load()
-    if (saved) return start ? openIn(saved, start, true) : saved
+    if (saved) return start ? openIn(saved, start, false) : saved
     const tab: Tab = { id: newId(), ...(start ?? fallback()) }
     return { tabs: [tab], active: tab.id }
   })

@@ -716,7 +716,7 @@ export function ChatHome({ projects, initialProject, initialSession, startNew, o
           )}
           </div>
         </div>
-        <TabBar aria-label={t("Chat views")}>
+        <TabBar aria-label={t("Chat views")} variant="line">
           {viewButtons.map(({ id, label }) => (
             <Tab
               key={id}
@@ -777,7 +777,7 @@ export function ChatHome({ projects, initialProject, initialSession, startNew, o
             </div>
           ) : fresh ? (
             <h2 className="flex items-center justify-center gap-3 text-center text-[26px] font-semibold tracking-[-0.025em] text-foreground">
-              <ConnectMark className="size-9 shrink-0" />
+              <ConnectMark className="size-10 shrink-0 drop-shadow-[0_1px_2px_rgb(40_70_120/0.18)]" />
               {t("What would you like to build?")}
             </h2>
           ) : messages.length > 0 ? (

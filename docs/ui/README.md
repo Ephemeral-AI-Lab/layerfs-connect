@@ -28,6 +28,28 @@ Source: `src/renderer/src/App.tsx` (the shell), `src/renderer/src/components/`.
 2. **Screen** (`App`, `App.tsx`): Projects (the default), Storage, Compute,
    Chat, a project page or a run page. A change of screen cross-fades.
 
+## The model
+
+Three kinds, each with one home page, and two relationships drawn the same way everywhere:
+
+```text
+  WHERE DATA LIVES            WHAT YOU WORK ON             WHERE IT RUNS
+  Store (Storage)  --holds-->  Project (Projects)  --runs in-->  Sandboxes on Machines
+  one Store                    many projects                    sqlite: its Store's machine
+                                                                PostgreSQL: any machines
+```
+
+- A project is **stored in** exactly one Store: its key is `<store>/<project>`, and every page shows
+  it as a Store chip or as the crumbs `Storage / <store>` above the project's title.
+- A project **runs on** the machines its Sandboxes are on (`RunsOnChips`, `projects/where-chips.tsx`):
+  a list, never a parent. A PostgreSQL Store's projects run on any number of machines.
+- A sqlite Store's file is on one machine ("file on native"): a fact of the Store, not of where its
+  projects run. A machine's page keeps the two apart: **Stores** (sqlite Stores
+  on its disk, PostgreSQL Stores it reaches) and **Sandboxes**.
+- Detail pages carry crumbs (`tabs/crumbs.tsx`): `Storage / <store>` (a Store, and above a project's
+  title), `Machines / <machine>`. A Back chevron beside them retraces the tab's history; the crumbs
+  climb the model. Every cross-link opens in the same tab.
+
 ## The screens
 
 | Group | Screen | File |
@@ -35,7 +57,7 @@ Source: `src/renderer/src/App.tsx` (the shell), `src/renderer/src/components/`.
 | Shell | Sidebar | [sidebar.md](sidebar.md) |
 | Pages | Projects | [layerfs-projects.md](layerfs-projects.md) |
 | | Storage | [layerfs-storage.md](layerfs-storage.md) |
-| | Compute | [layerfs-compute.md](layerfs-compute.md) |
+| | Machines | [layerfs-compute.md](layerfs-compute.md) |
 | Project page | Live (top of Sessions) | [project-live.md](project-live.md) |
 | | History (and Files) | [project-history.md](project-history.md) |
 | | Storage | [project-storage.md](project-storage.md) |
@@ -64,14 +86,20 @@ Run page:  Conversation | Checks | Trace
 
 ## Shared pieces
 
-- **Page frame:** `PageHeader`, `Tab` / `TabBar` with a sliding underline,
-  and `Segmented` switches (`components/motion/`).
+- **Page frame:** `PageHeader` (`size="sm"`: the compact one-row header of a project page),
+  `Tab` / `TabBar` (glass buttons, or `variant="line"`: text tabs on a hairline with the chosen one
+  underlined, on a project's and a chat's pages; `TabDivider` between groups), and `Segmented`
+  switches (`components/motion/`). Detail pages (a project, a chat, a machine) keep their header to
+  one thin row (Back, crumbs ending in the page's name at 15px, its facts, small actions) so the
+  page below keeps the height.
 - **States:** `Loading`, `Empty` and `LoadError` (`components/projects/states.tsx`).
 - **Controls:** shadcn components (`components/ui/`): button, dialog,
   dropdown-menu, select, sheet, table, tooltip.
 - **Icons:** LayerFS icons (`components/lfs-icons.tsx`, SVGs in `assets/icons/`).
 - **Theme:** colours, radii and motion are tokens in `src/renderer/src/styles.css`,
-  with light and dark modes.
+  one light theme (no dark mode): soft matte from the app icon. Powder-blue
+  canvas, cobalt primary, charcoal text, opaque grained surfaces (`--grain`), soft
+  blue-grey shadows, no backdrop blur, tight corners (`--radius: 0.3rem`).
 
 ## Dev aids
 

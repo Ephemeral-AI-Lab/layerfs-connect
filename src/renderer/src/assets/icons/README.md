@@ -9,8 +9,7 @@ round nodes, rounded caps and joins, a 1.8 stroke, two tones.
   `fork`'s open end.
 
 Each file carries those variables with the brand colours as fallbacks, so an
-`<img>` shows the brand colours and inline SVG follows the page's variables
-(for dark mode set `--lfs-dark: #6F93E6` and `--lfs-surface` to the card colour).
+`<img>` shows the brand colours and inline SVG follows the page's variables.
 
 | File | Concept |
 | --- | --- |

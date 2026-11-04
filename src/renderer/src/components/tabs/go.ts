@@ -1,12 +1,12 @@
 // Cross-links between pages (#537 §7): a Store badge opens its Storage row, a
-// Store's machine or a Sandbox's opens its Compute row, a Sandbox or Store row
+// Store's machine or a Sandbox's opens its Machines row, a Sandbox or Store row
 // opens its project. App registers the handler; a component deep in a page
 // calls `go.*` without threading callbacks. A page's row is reached through
 // the tab's `location.focus` (`store:<name>`, `machine:<name>`), which the
 // page scrolls to and marks once.
 import { useEffect } from 'react'
 
-export type GoPlace = { page: 'storage' | 'compute'; focus: string } | { project: string; tab?: string }
+export type GoPlace = { page: 'storage' | 'machines'; focus?: string } | { project: string; tab?: string }
 type Handler = (place: GoPlace) => void
 
 let handler: Handler | null = null
@@ -24,10 +24,12 @@ let n = 0
 const focus = (kind: string, name: string) => `${kind}:${name}#${++n}`
 
 export const go = {
-  /** The Storage page, at Store `name`'s row. */
+  /** A board: Storage's or Machines'. */
+  page: (page: 'storage' | 'machines') => handler?.({ page }),
+  /** Store `name`'s page on Storage. */
   store: (name: string) => handler?.({ page: 'storage', focus: focus('store', name) }),
-  /** The Compute page, at machine `name`'s row (opened). */
-  machine: (name: string) => handler?.({ page: 'compute', focus: focus('machine', name) }),
+  /** Machine `name`'s page on Machines. */
+  machine: (name: string) => handler?.({ page: 'machines', focus: focus('machine', name) }),
   /** A project's page, at one of its tabs (`sandboxes`, `storage`, …). */
   project: (key: string, tab?: string) => handler?.({ project: key, tab }),
   get ready() {

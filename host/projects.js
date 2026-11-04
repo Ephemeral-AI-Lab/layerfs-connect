@@ -17,12 +17,13 @@
 //   remove        project.remove (InUse while any Sandbox record exists)
 // Every LayerFS call is made once; a refusal passes through with its code.
 // What 2.0 cannot answer yet is left out and named (§9): main's Layers (only
-// its newest is known), a first Commit's changes, and the Store's totals.
+// its newest is known), a first Commit's changes, and the Store's totals
+// (summed from the Commits read instead, marked partial).
 import { randomUUID } from 'node:crypto'
 import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync } from 'node:fs'
 import { isAbsolute, join } from 'node:path'
 import { keyOf, projectRef } from './config.js'
-import { layerfs, linkedVersion, pages, PAGE, workspacesOf } from './layerfs.js'
+import { layerfs, linkedVersion, pages, PAGE, VIEW_WAIT_MS, workspacesOf } from './layerfs.js'
 
 export { keyOf }
 
@@ -327,8 +328,8 @@ export class Projects {
       last: newest ? commitInfo(newest) : null,
       commits: byId.size,
       store: { path: null, bytes: file?.exists ? (file.bytes ?? 0) + (file.wal_bytes ?? 0) : null },
-      // the Store's totals have no 2.0 call (§9 Q4)
-      storage: null,
+      // the Store's totals have no 2.0 call (§9 Q4): summed from the Commits read
+      storage: commitStats(byId, file),
     }
   }
 
@@ -340,7 +341,7 @@ export class Projects {
       listed.map(async (s) => {
         // a Sandbox its machine no longer runs answers `state: "gone"` with no Workspaces; a refusal is shown as it came
         try {
-          return sandboxInfo(s, await workspacesOf(this.lfs, s.name))
+          return sandboxInfo(s, await workspacesOf(this.lfs, s.name, { wait: VIEW_WAIT_MS }))
         } catch (error) {
           return { ...sandboxInfo(s), refusal: refusalOf(error) }
         }
@@ -545,6 +546,36 @@ export class Projects {
   /** Lets active Inits finish. */
   async close() {
     await Promise.all(this.creations.values())
+  }
+}
+
+const bytesOf = (n) => (typeof n === 'number' && n > 0 ? n : 0)
+
+/**
+ * StoreStats summed over the Commits read (each record's logical, new_canonical,
+ * new_stored, new_metadata), marked partial: 2.0 has no Store totals, so Init,
+ * main's Layers and history before these Commits are not counted. Null with no Commit.
+ */
+export function commitStats(byId, file) {
+  const commits = [...byId.values()]
+    .map((c) => ({ ...commitInfo(c), logical: bytesOf(c.logical), canonical: bytesOf(c.new_canonical), stored: bytesOf(c.new_stored), metadata: bytesOf(c.new_metadata) }))
+    .sort((a, b) => (a.at ?? 0) - (b.at ?? 0))
+  if (!commits.length) return null
+  const sum = (key) => commits.reduce((a, c) => a + c[key], 0)
+  const [logical, canonical, stored] = [sum('logical'), sum('canonical'), sum('stored')]
+  return {
+    partial: true,
+    logical,
+    canonical,
+    stored,
+    metadata: sum('metadata'),
+    file: file?.exists ? bytesOf(file.bytes) : 0,
+    free: 0,
+    dedupe: canonical > 0 ? logical / canonical : null,
+    compression: stored > 0 ? canonical / stored : null,
+    init: null,
+    main: null,
+    commits: commits.map(({ id, branch, message, at, kind, logical, canonical, stored }) => ({ id, branch, message, at, kind, logical, canonical, stored })),
   }
 }
 

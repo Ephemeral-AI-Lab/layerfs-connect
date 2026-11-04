@@ -7,7 +7,7 @@ import { t as tr, useI18n } from '@/i18n'
 // on it, as tiles.
 import type { ProjectState, SandboxInfo, StoreStats } from '@shared/host-api'
 import { type CSSProperties, useEffect, useState } from 'react'
-import { LoaderCircle, Plus } from 'lucide-react'
+import { Info, LoaderCircle, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { host } from '@/host/client'
@@ -114,7 +114,7 @@ function StoreStatsBody({ s, t }: { s: ProjectState; t: StoreStats }) {
             {landed && (
               <span
                 key={landed.id}
-                className="live-glow flex max-w-80 items-center gap-1.5 self-center rounded-full bg-primary/10 px-2.5 py-0.5 text-xs text-accent-foreground motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2 dark:text-primary"
+                className="live-glow flex max-w-80 items-center gap-1.5 self-center rounded-full bg-primary/10 px-2.5 py-0.5 text-xs text-accent-foreground motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2"
               >
                 <span className="font-mono font-medium">+{bytes(landed.stored)}</span>
                 <span className="truncate">{landed.message || tr('New commit')}</span>
@@ -124,6 +124,12 @@ function StoreStatsBody({ s, t }: { s: ProjectState; t: StoreStats }) {
           <p className="mt-2 text-xs text-muted-foreground tabular-nums">
             <CountUp value={s.commits} /> {tr(s.commits === 1 ? "Commit" : "Commits")} · <CountUp value={s.branches.length} /> {tr(s.branches.length === 1 ? "Branch" : "Branches")} · {plural(s.layers.length, 'Layer')}
           </p>
+          {t.partial && (
+            <p className="mt-1.5 flex items-start gap-1.5 text-xs text-muted-foreground text-pretty">
+              <Info aria-hidden="true" className="mt-px size-3.5 shrink-0" />
+              {tr("History, unique and compressed bytes are summed over the {n} Commits read on open Branches. Init, main’s Layers and older history are not counted: this LayerFS reports no Store totals.", { n: t.commits.length })}
+            </p>
+          )}
         </div>
         {saved !== null && <SavedRing saved={saved} wait={300} />}
       </div>
@@ -137,13 +143,13 @@ function StoreStatsBody({ s, t }: { s: ProjectState; t: StoreStats }) {
         >
           <DiskFlow t={t} onDisk={onDisk} />
           <div className="sc-fade mt-4 flex flex-wrap gap-2" style={{ '--d': '1300ms' } as CSSProperties}>
-            <Pill label={tr("main, latest, raw")}>{bytes(t.main)}</Pill>
+            {t.main !== null && <Pill label={tr("main, latest, raw")}>{bytes(t.main)}</Pill>}
             {t.init && (
               <Pill label={tr("from Init")}>
                 {bytes(t.init.bytes)} · {plural(t.init.files, 'file')}
               </Pill>
             )}
-            <Pill label={tr("SQLite pages")}>{bytes(t.file)}</Pill>
+            {t.file > 0 && <Pill label={tr("SQLite pages")}>{bytes(t.file)}</Pill>}
             {t.free > 0 && <Pill label={tr("free")}>{bytes(t.free)}</Pill>}
           </div>
         </Section>
@@ -229,7 +235,7 @@ function StoreCard({ s, store }: { s: ProjectState; store: StoreFacts }) {
         <Fact label={tr("Created")}>{when(s.project.created)}</Fact>
         <div className="col-span-1 sm:col-span-3">
           <Fact label={tr(store.family === 'postgresql' ? "Store" : "Machine")} mono>
-            {/* the Store's row on Storage, or its machine's on Compute (#537 §7) */}
+            {/* the Store's row on Storage, or its machine's on Machines (#537 §7) */}
             {store.family === 'postgresql' ? (
               <button type="button" className="underline-offset-2 hover:underline" onClick={() => go.store(store.name)}>{store.name}</button>
             ) : store.machine ? (

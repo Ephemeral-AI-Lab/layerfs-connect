@@ -1,18 +1,19 @@
-// Connect's change to the ported "tour" and "merge" scenarios: their scripts'
-// in-place sed runs in a Sandbox, which may be a Mac (`-platform mac`, BSD
-// sed) as well as Linux (GNU sed). dsh-layerfs writes GNU's forms:
+// Connect's change to the ported "tour", "merge" and "conflicts" scenarios:
+// their in-place sed runs in a Sandbox, which may be a Mac (`-platform mac`,
+// BSD sed) as well as Linux (GNU sed). dsh-layerfs writes GNU's forms:
 //   sed -i "<expr>" <file>         BSD reads the expression as -i's suffix
 //   '/a\|b/d'                      \| is a GNU extension of basic regexps
 // Each becomes the form both read: -i.bak with the backup removed after, and
 // -E with a plain | for an alternation:
 //   sed [-E] -i.bak "<expr>" <file> && rm <file>.bak
 //
-// Only a script's `lf.workspace.exec(ws, "sed -i ...")` is rewritten. Each
+// Only a command's `"sed -i ..."` (a script's `lf.workspace.exec(ws, ...)`, a
+// cli scenario's `layerfs workspace exec <ws> "..."`) is rewritten. Each
 // scenario expects its own count; a count that no longer matches stops the
 // port, so a changed upstream script is looked at, not half-moved.
 
-/** The in-place seds each scenario's scripts run. */
-export const SEDS = { tour: 1, merge: 3 }
+/** The in-place seds each scenario's commands run. */
+export const SEDS = { tour: 1, merge: 3, conflicts: 2 }
 
 // in the parsed text: "sed -i <expr quoted as \"...\" or '...'> <file>"
 const SED = /"sed -i (\\".*?\\"|'.*?') ([\w./-]+)"/g
@@ -22,8 +23,9 @@ export function portableSedText(text) {
   let n = 0
   const out = text.replace(SED, (_, expr, file) => {
     n++
-    const alt = expr.includes('\\\\|')
-    return `"sed${alt ? ' -E' : ''} -i.bak ${alt ? expr.replaceAll('\\\\|', '|') : expr} ${file} && rm ${file}.bak"`
+    // a GNU alternation: `\\|` inside a script's JS string, `\|` in a shell command
+    const bar = expr.includes('\\\\|') ? '\\\\|' : expr.includes('\\|') ? '\\|' : null
+    return `"sed${bar ? ' -E' : ''} -i.bak ${bar ? expr.replaceAll(bar, '|') : expr} ${file} && rm ${file}.bak"`
   })
   return { out, n }
 }

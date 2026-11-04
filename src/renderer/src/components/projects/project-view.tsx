@@ -1,51 +1,55 @@
 import { t, useI18n } from '@/i18n'
 import { MessageSquarePlus, RotateCw } from 'lucide-react'
-import { useEffect, useMemo, useState } from 'react'
+import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
 import { projectLabel, projectRef } from '@shared/host-api'
 
 import { LfsProject } from '@/components/lfs-icons'
 import { PageHeader } from '@/components/motion/page-header'
-import { Tab, TabBar } from '@/components/motion/tabs'
+import { Tab, TabBar, TabDivider } from '@/components/motion/tabs'
 import { FilesTab } from '@/components/projects/files-tab'
 import { HistoryTab, type HistoryView } from '@/components/projects/history-tab'
 import { ProjectSandboxesContent, ProjectStorageContent } from '@/components/projects/project-storage'
 import { ProjectSessionsContent } from '@/components/projects/project-sessions'
 import { LoadError, Loading } from '@/components/projects/states'
 import { StoreBanner } from '@/components/projects/store-banner'
+import { runsOn, RunsOnChips } from '@/components/projects/where-chips'
 import { projectRuns } from '@/components/live/live-data'
 import { LiveTab } from '@/components/live/live-tab'
 import { isLive } from '@/components/live/run-format'
-import { isProject, StoreBadge, storeFacts, useStorageView } from '@/components/projects/store-facts'
+import { isProject, storeFacts, useStorageView } from '@/components/projects/store-facts'
+import { StoreIcon } from '@/components/storage/identity/store-icon'
+import { Crumbs } from '@/components/tabs/crumbs'
+import { go } from '@/components/tabs/go'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { ago, bytes } from '@/data/format'
 import { host, onHostEvent } from '@/host/client'
 import { chatLive, chatProject, useChatSessions } from '@/host/use-chat-sessions'
 import { useHostQuery } from '@/host/use-host'
-import { sortByLabelLength } from '@/lib/utils'
+import { cn } from '@/lib/utils'
 
 import '@/components/projects/history/history.css'
 
-type ProjectTab = 'history' | 'files' | 'live' | 'storage' | 'sandboxes' | 'sessions'
+type ProjectTab = 'history' | 'files' | 'live' | 'storage' | 'sandboxes' | 'chats'
 /** The views a page that holds the project shows in its own tab bar (a chat's). */
 export type EmbeddedProjectView = 'files' | 'history' | 'sandboxes'
 
-// Base order for equally short labels; translated labels are sorted at render time.
+// By use, in every language: Live first, then the work (chats, files, history), then where it runs and where it is stored.
 const PROJECT_TABS: { id: ProjectTab; label: string }[] = [
   { id: 'live', label: 'Live' },
-  { id: 'sessions', label: 'Sessions' },
+  { id: 'chats', label: 'Chats' },
   { id: 'files', label: 'Files' },
-  { id: 'storage', label: 'Storage' },
-  { id: 'sandboxes', label: 'Sandboxes' },
   { id: 'history', label: 'History' },
+  { id: 'sandboxes', label: 'Sandboxes' },
+  { id: 'storage', label: 'Storage' },
 ]
 
-/** A `#projects/<key>/<tab>` hash's tab (older names too); Live when absent. */
-function openingTab(initial?: string): ProjectTab {
+/** A `#projects/<key>/<tab>` hash's tab (older names too); undefined when absent. */
+function askedTab(initial?: string): ProjectTab | undefined {
   if (initial === 'work' || initial === 'worktree' || initial === 'worktrees') return 'sandboxes'
-  if (initial === 'chats' || initial === 'runs') return 'sessions'
+  if (initial === 'sessions' || initial === 'runs') return 'chats'
   if (initial === 'blame') return 'files'
-  return PROJECT_TABS.find((tab) => tab.id === initial)?.id ?? 'live'
+  return PROJECT_TABS.find((tab) => tab.id === initial)?.id
 }
 
 interface ProjectViewProps {
@@ -70,8 +74,11 @@ interface ProjectViewProps {
 /** Real project state and history are available independently of agent sessions. */
 export function ProjectView({ project, initialTab, initialBranch, onBack, backLabel, onNewChat, onOpenChat, embedded, onEmbeddedView }: ProjectViewProps) {
   useI18n()
-  const tabs = sortByLabelLength(PROJECT_TABS.map((item) => ({ ...item, label: t(item.label) })))
-  const [ownTab, setTab] = useState<ProjectTab>(() => openingTab(initialTab))
+  const tabs = PROJECT_TABS.map((item) => ({ ...item, label: t(item.label) }))
+  const asked = askedTab(initialTab)
+  const [ownTab, setTab] = useState<ProjectTab>(asked ?? 'chats')
+  // with no tab asked for, the page opens on Live once the chats show one working; a click keeps its choice
+  const settled = useRef(asked !== undefined)
   const tab: ProjectTab = embedded ?? ownTab
   const [branch, setBranch] = useState(initialBranch)
   const [revision, setRevision] = useState(0)
@@ -83,7 +90,7 @@ export function ProjectView({ project, initialTab, initialBranch, onBack, backLa
   const label = projectLabel(project)
   const refresh = () => setRevision((value) => value + 1)
   const initialView: HistoryView = initialTab === 'map' ? 'map' : 'lineage'
-  const select = (next: ProjectTab) => setTab(next)
+  const select = (next: ProjectTab) => { settled.current = true; setTab(next) }
   // the project's chats, kept current from the host's chat events
   const [sessionsRead, setSessionsRead] = useState(0)
   const chats = useChatSessions(`${revision}:${sessionsRead}`)
@@ -92,7 +99,14 @@ export function ProjectView({ project, initialTab, initialBranch, onBack, backLa
   const working = sessions?.some((c) => !c.archived && chatLive(c)) ?? false
   // Live: the project's chats that work in LayerFS, drawn with every call they make
   const runs = useMemo(() => projectRuns(sessions, project), [sessions, project])
-  const liveNow = runs?.some((run) => isLive(run.state)) ?? false
+  const liveCount = runs?.filter((run) => isLive(run.state)).length ?? 0
+  const liveNow = liveCount > 0
+
+  useEffect(() => {
+    if (settled.current || !sessions) return
+    settled.current = true
+    if (liveNow) setTab('live')
+  }, [sessions, liveNow])
 
   useEffect(() => {
     const seen = new Map<string, { updated: number; signature: string }>()
@@ -115,15 +129,15 @@ export function ProjectView({ project, initialTab, initialBranch, onBack, backLa
     return () => { unsubscribe(); if (timer) clearTimeout(timer) }
   }, [project])
 
-  // History and Storage hold the detailed counts; the header only gives recency and size.
+  // The Store is the crumb above; the line says where it runs (each machine a link), then recency and size.
+  const runsAt = s ? runsOn(s.sandboxes) : null
   const facts = s ? (
     <>
-      {store && (
-        <>
-          <StoreBadge facts={store} project={s.project.name} />
-          <span aria-hidden="true" className="px-2 text-faint">·</span>
-        </>
-      )}
+      <span className="inline-flex min-w-0 items-center gap-1.5">
+        <button type="button" onClick={() => select('sandboxes')} title={t('Show its Sandboxes')} className="rounded-md outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring">{t('Runs on')}</button>
+        <RunsOnChips runs={runsAt} className="flex-nowrap" />
+      </span>
+      <span aria-hidden="true" className="px-2 text-faint">·</span>
       <span title={s.last ? t("Last Commit {value1} on {value2}", { value1: ago(s.last.at), value2: s.last.branch }) : undefined}>
         {s.last ? t("Last Commit {value1}", { value1: ago(s.last.at) }) : t("No Commits yet")}
       </span>
@@ -134,7 +148,7 @@ export function ProjectView({ project, initialTab, initialBranch, onBack, backLa
 
   const body = tab === 'live' ? (
     <LiveTab project={project} runs={runs} onOpenRun={(id) => onOpenChat(id)} />
-  ) : tab === 'sessions' ? (
+  ) : tab === 'chats' ? (
     <ProjectSessionsContent
       sessions={sessions}
       error={chats.error}
@@ -142,6 +156,12 @@ export function ProjectView({ project, initialTab, initialBranch, onBack, backLa
       onOpenChat={onOpenChat}
       onNewChat={onNewChat}
       canChat={!!s}
+      sandboxes={s?.sandboxes}
+      machine={store?.machine ?? null}
+      onOpenBranch={(name) => {
+        setBranch(name)
+        select('history')
+      }}
     />
   ) : !s ? (
     state.error ? <LoadError error={state.error} what={label} onRetry={refresh} /> : <Loading label={t("Reading {value1}", {value1: label})} />
@@ -183,45 +203,61 @@ export function ProjectView({ project, initialTab, initialBranch, onBack, backLa
     <div className="project-workspace flex h-svh min-h-0 flex-col">
       <PageHeader
         motion={false}
-        size="md"
+        size="sm"
         width="max-w-7xl"
-        className="[&>div]:pt-3"
         back={{ label: backLabel ?? t("Projects"), onBack }}
-        icon={<span className="glass-liquid flex size-10 items-center justify-center rounded-xl"><LfsProject className="size-5" /></span>}
-        title={projectRef(project).name}
+        eyebrow={projectRef(project).store && (
+          <Crumbs
+            items={[
+              { label: t('Storage'), onClick: () => go.page('storage'), title: t('Open Storage') },
+              {
+                label: projectRef(project).store,
+                icon: store && <StoreIcon family={store.family} size="sm" className="[&>span]:size-4 [&>span]:rounded-[5px] [&_svg]:size-2.5" />,
+                onClick: () => go.store(projectRef(project).store!),
+                title: t('Stored in {store}: open it on Storage', { store: projectRef(project).store! }),
+              },
+            ]}
+          />
+        )}
+        title={<span className="flex min-w-0 items-center gap-1.5"><LfsProject className="size-4 shrink-0" /><span className="truncate">{projectRef(project).name}</span></span>}
         description={facts}
         actions={
           <>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button variant="outline" size="icon-sm" className="rounded-xl" aria-label={t("Refresh")} disabled={state.loading} onClick={refresh}>
+                <Button variant="ghost" size="icon-sm" className="size-7 rounded-lg text-muted-foreground hover:text-foreground" aria-label={t("Refresh")} disabled={state.loading} onClick={refresh}>
                   <RotateCw className={state.loading ? 'size-3.5 animate-spin' : 'size-3.5'} /></Button>
               </TooltipTrigger>
               <TooltipContent side="bottom">{t("Refresh")}</TooltipContent>
             </Tooltip>
-            <Button size="sm" className="rounded-xl" disabled={!s} onClick={onNewChat}>
+            <Button size="sm" className="h-7 rounded-lg px-2.5" disabled={!s} onClick={onNewChat}>
               <MessageSquarePlus className="size-3.5" />{t("New chat")}</Button>
           </>
         }
         tabs={
-          <TabBar aria-label={t("Project")}>
+          <TabBar aria-label={t("Project")} variant="line">
             {tabs.map((item) => (
-              <Tab key={item.id} active={tab === item.id} onClick={() => select(item.id)}>
-                {((item.id === 'sessions' && working) || (item.id === 'live' && liveNow)) && <span aria-hidden="true" className="inline-block size-1.5 rounded-full bg-primary" />}
-                {item.label}
-                {item.id === 'sessions' && openSessions > 0 && (
-                  <span className="rounded-full bg-foreground/[0.05] px-1.5 text-[11px] leading-[18px] font-medium text-muted-foreground tabular-nums">
-                    {openSessions}
-                  </span>
-                )}
-              </Tab>
+              <Fragment key={item.id}>
+                {item.id === 'sandboxes' && <TabDivider />}
+                <Tab active={tab === item.id} onClick={() => select(item.id)}>
+                  {((item.id === 'chats' && working) || (item.id === 'live' && liveNow)) && (
+                    <span aria-hidden="true" className={cn('inline-block size-1.5 rounded-full bg-primary', item.id === 'live' && 'motion-safe:animate-pulse')} />
+                  )}
+                  {item.label}
+                  {((item.id === 'chats' && openSessions > 0) || (item.id === 'live' && liveNow)) && (
+                    <span className="rounded-full bg-foreground/[0.05] px-1.5 text-[11px] leading-[18px] font-medium text-muted-foreground tabular-nums">
+                      {item.id === 'live' ? liveCount : openSessions}
+                    </span>
+                  )}
+                </Tab>
+              </Fragment>
             ))}
           </TabBar>
         }
       />
       <div className="min-h-0 flex-1 overflow-y-auto">
-        <div className="mx-auto flex min-h-full w-full min-w-0 max-w-7xl flex-col gap-4 px-6 pt-4 pb-6 @min-[56rem]/workspace:px-8">
-          {s && state.error && <LoadError error={state.error} what={label} onRetry={refresh} />}
+        <div className="mx-auto flex min-h-full w-full min-w-0 max-w-7xl flex-col gap-4 px-6 pt-3 pb-6 @min-[56rem]/workspace:px-8">
+          {state.error && (s || tab === 'chats' || tab === 'live') && <LoadError error={state.error} what={label} onRetry={refresh} />}
           {s && <StoreBanner state={s} onStart={(machine) => host.startMachine(machine).then(refresh, refresh)} />}
           {body}
         </div>

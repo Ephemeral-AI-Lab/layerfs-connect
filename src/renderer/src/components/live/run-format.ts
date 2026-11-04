@@ -75,7 +75,7 @@ export const KIND: Record<SegmentKind, KindStyle> = {
     label: 'workspace',
     about: 'mount, exec, commit, unmount',
     tint: 'bg-primary/[0.05]',
-    chip: 'bg-primary/10 text-accent-foreground ring-primary/25 dark:text-primary',
+    chip: 'bg-primary/10 text-accent-foreground ring-primary/25',
     dot: 'bg-primary',
   },
   fs: {

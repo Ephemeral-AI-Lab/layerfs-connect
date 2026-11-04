@@ -6,7 +6,7 @@
 - The tab lists the project's Sandboxes (`sandbox.list(project)`, read again every 5 s) with each
   one's Workspaces (`sandbox.get(name)`). The header counts "N recorded · M mounted". Closed (`gone`)
   Sandboxes fold under **Closed**.
-- **A Sandbox tile** shows its name, its machine (opens the machine's row on Compute), its state chip
+- **A Sandbox tile** shows its name, its machine (opens the machine's row on Machines), its state chip
   (an operation in flight shows its name and phase) and **Close**. An unresolved Sandbox shows "see
   `layerfs sandbox get <name>` · clear: `layerfs sandbox close <name>`"; a refused `sandbox.get` shows
   LayerFS's code and words. **Details** gives the name, image, backend and route.
@@ -22,6 +22,8 @@
 - **Close** on each Sandbox; a refused close shows the refusal and offers **Force close**, which lists
   the Workspaces whose state LayerFS could not learn (`unknown`).
 - **Chat Workspaces** are mounted with a name taken from the chat's Branch (`chat-<id>`), so they show
-  by name here and on Compute.
+  by name here and on Machines.
 
-The same Sandboxes, with every other project's, are on Compute's Sandboxes table.
+The same Sandboxes, with every other project's, are on Machines' Sandboxes table. A chat's
+Workspace cell on the Chats tab ([project-sessions.md](project-sessions.md)) names the machine and
+Sandbox it runs in.

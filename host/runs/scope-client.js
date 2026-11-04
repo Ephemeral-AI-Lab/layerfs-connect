@@ -6,24 +6,27 @@
 // real call gets its positionals back in the table's order.
 import * as real from 'layerfs'
 import { Scope, SCOPE_ENV } from './scope.js'
+import { traced } from './trace-line.js'
 
 const scopeDir = process.env[SCOPE_ENV]
 const scope = scopeDir ? Scope.open(scopeDir) : null
 
-/** `client`'s families with each call scoped. */
+/** `client`'s families with each call scoped, and traced (trace-line.js). */
 function scoped(client) {
-  if (!scope) return client
+  if (!scope && !process.env.LAYERFS_TRACE) return client
   const out = { ...client }
   for (const spec of real.table) {
     out[spec.family] = out[spec.family] === client[spec.family] ? { ...client[spec.family] } : out[spec.family]
     out[spec.family][spec.call] = async (...given) => {
       const options = given.length > spec.args.length || (given.length && typeof given.at(-1) === 'object' && given.at(-1) !== null && !Array.isArray(given.at(-1)) && spec.args[given.length - 1]?.kind !== 'json') ? given.pop() : {}
       const named = Object.fromEntries(spec.args.map((a, i) => [a.name, given[i]]).filter(([, v]) => v !== undefined))
-      return scope.call(`${spec.family}.${spec.call}`, named, (op, args) => {
+      const send = (op, args) => traced(op, args, () => {
         const [family, call] = op.split('.')
         const target = real.table.find((t) => t.family === family && t.call === call)
         return client[family][call](...target.args.map((a) => args[a.name]), options)
       })
+      const op = `${spec.family}.${spec.call}`
+      return scope ? scope.call(op, named, send) : send(op, named)
     }
   }
   return Object.freeze(out)

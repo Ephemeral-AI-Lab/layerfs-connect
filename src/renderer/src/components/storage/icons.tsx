@@ -26,9 +26,9 @@ export function brandColor(hex: string): { className: string; style: React.CSSPr
   return {
     className:
       l < 0.25
-        ? 'text-(--brand) dark:text-foreground/80'
+        ? 'text-(--brand)'
         : l > 0.6
-          ? 'text-[color-mix(in_oklab,var(--brand)_70%,black)] dark:text-(--brand)'
+          ? 'text-[color-mix(in_oklab,var(--brand)_70%,black)]'
           : 'text-(--brand)',
     style: { '--brand': `#${hex}` } as React.CSSProperties,
   }
@@ -57,7 +57,7 @@ export function Tile({ size = 'md', className, children }: { size?: keyof typeof
   return (
     <span
       className={cn(
-        'inline-flex shrink-0 items-center justify-center bg-muted bg-linear-to-b from-card/70 to-transparent text-foreground/80 shadow-[var(--highlight),var(--elev-1)] ring-1 ring-foreground/[0.07] ring-inset dark:from-white/[0.04]',
+        'inline-flex shrink-0 items-center justify-center bg-muted bg-linear-to-b from-card/70 to-transparent text-foreground/80 shadow-[var(--highlight),var(--elev-1)] ring-1 ring-foreground/[0.07] ring-inset',
         TILE[size],
         className,
       )}

@@ -39,14 +39,47 @@
 .view-button:active {
   background-color: var(--accent);
 }
-.dark .view-button[aria-current='page'] {
-  background: linear-gradient(160deg, rgb(91 91 91 / 60%), rgb(54 54 54 / 74%));
-  border-color: rgb(255 255 255 / 22%);
-  box-shadow: var(--glass-shadow);
-}
 .view-button:focus-visible {
   outline: 2px solid var(--primary);
   outline-offset: 2px;
 }
 
 .view-button-quiet { font-size: 12px; }
+
+/* The line variant: text tabs on one hairline, the chosen one underlined in the brand colour. */
+.view-nav-line {
+  gap: 2px;
+  margin-inline: 0;
+  padding: 0;
+  box-shadow: inset 0 -1px 0 var(--border);
+}
+.view-nav-line .view-button {
+  position: relative;
+  min-height: 34px;
+  padding: 6px 10px;
+  border: 0;
+  border-radius: 6px 6px 0 0;
+  background: none;
+}
+.view-nav-line .view-button:hover { background-color: color-mix(in srgb, var(--foreground) 4%, transparent); }
+.view-nav-line .view-button[aria-current='page'] {
+  background: none;
+  color: var(--foreground);
+}
+.view-nav-line .view-button[aria-current='page']::after {
+  content: '';
+  position: absolute;
+  inset-inline: 8px;
+  bottom: 0;
+  height: 2px;
+  border-radius: 2px 2px 0 0;
+  background: var(--primary);
+}
+.view-nav-line .view-button:focus-visible { outline-offset: -2px; }
+.view-nav-divider {
+  flex: 0 0 auto;
+  width: 1px;
+  height: 16px;
+  margin-inline: 6px;
+  background: var(--border);
+}

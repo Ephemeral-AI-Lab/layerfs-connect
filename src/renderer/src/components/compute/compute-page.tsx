@@ -1,74 +1,52 @@
 import { t, useI18n } from '@/i18n'
-// Compute (docs/ui/layerfs-compute.md): the machines this Connect's LayerFS
-// home runs on. A header with New machine and Refresh, one line of facts, a
-// notice per machine that is down, the Machines table (native and docker
-// first), Add a machine, and a footnote on when machines start and stop.
-// Machines come with LayerFS 2.0; linked to an older LayerFS the page says so
-// and shows nothing else. Dev builds can draw it on a simulated host
-// (data/compute-sim.ts).
-import { ChevronDown, FlaskConical, Plus, RotateCw, Server, TriangleAlert } from 'lucide-react'
-import { type CSSProperties, useMemo, useState } from 'react'
+// Machines (docs/ui/layerfs-compute.md): the machines this Connect's LayerFS
+// home runs on, the home of machines, Sandboxes and Workspaces. The board: a
+// header with New machine and Refresh, one line of facts, a notice per
+// machine that needs you, and a grid of machine cards (those that need you
+// first), ending with a New machine card. A card opens the machine's page
+// (machine-page.tsx: its Sandboxes and Workspaces, Stores and facts) in the
+// same tab, so Back returns to the board.
+// Stores are only linked here: Storage pushes, pulls and moves them. Machines
+// come with LayerFS 2.0; linked to an older LayerFS the page says so and shows
+// nothing else. Dev builds can draw it on a simulated host (data/compute-sim.ts).
+import { Plus, RotateCw, Server, TriangleAlert } from 'lucide-react'
+import { type CSSProperties, useEffect, useMemo, useRef, useState } from 'react'
 
-import { useFocusRow } from '@/components/tabs/go'
-import { AddMachine } from '@/components/compute/add-machine'
-import { SandboxesTable } from '@/components/compute/sandboxes-table'
-import { MachinesTable } from '@/components/compute/machines-table'
-import { KindLabel, SectionTitle } from '@/components/compute/target-parts'
+import { SimulatedNote, SimulationPicker, useSimulation } from '@/components/simulation'
+import { focusOf, go } from '@/components/tabs/go'
+import { AddMachineDialog } from '@/components/compute/add-machine'
+import { MachineTile, NewMachineTile } from '@/components/compute/machine-card'
+import { MachinePage } from '@/components/compute/machine-page'
+import type { SandboxOps } from '@/components/compute/machine-sandboxes'
 import { PageHeader } from '@/components/motion/page-header'
 import { Empty, LoadError, Loading } from '@/components/projects/states'
-import { Chip } from '@/components/storage/chips'
 import { Notice } from '@/components/storage/notice'
 import { Button } from '@/components/ui/button'
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { clearingCall } from '@/data/states'
-import { addable, downReason, factsOf, kindLabel, machineOrder, machineState, type Os, readyKinds } from '@/data/compute'
-import { isSimId, type MachineAction, SIM_IDS, simulate, SIMULATIONS, type SimId } from '@/data/compute-sim'
+import { addable, downReason, factsOf, type MachineKey, machineOrder, machineState, type Os } from '@/data/compute'
+import { type MachineAction, type SimHost, simSandbox, simulate, SIMULATIONS, type SimId } from '@/data/compute-sim'
 import { host } from '@/host/client'
+import { useChatSessions } from '@/host/use-chat-sessions'
 import { useHostQuery, usePoll } from '@/host/use-host'
 import { cn } from '@/lib/utils'
 import type { MachinesView } from '@shared/host-api'
 
-const SIM_KEY = 'connect.compute.simulate'
-const LIVE = 'live'
-const readSim = (): SimId | null => {
-  try {
-    const v = localStorage.getItem(SIM_KEY)
-    return isSimId(v) ? v : null
-  } catch {
-    return null
-  }
-}
-
-/** Dev builds only: draw the page on a simulated host. */
-function SimulationPicker({ value, onChange }: { value: SimId | null; onChange: (v: SimId | null) => void }) {
-  useI18n()
-  return (
-    <Select value={value ?? LIVE} onValueChange={(v) => onChange(isSimId(v) ? v : null)}>
-      <SelectTrigger size="sm" aria-label={t('Simulate a host')} className="h-8 rounded-full px-3 text-xs">
-        <FlaskConical aria-hidden="true" className="size-3.5 text-muted-foreground" />
-        <SelectValue />
-      </SelectTrigger>
-      <SelectContent align="end">
-        <SelectItem value={LIVE}>{t('Live host')}</SelectItem>
-        {SIM_IDS.map((id) => (
-          <SelectItem key={id} value={id}>
-            {t(SIMULATIONS[id].label)}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
-  )
-}
-
 interface ComputePageProps {
   /** Draw a simulated host instead of asking this one (the harness). */
   simulate?: SimId
-  /** Opens a project's page by its key, at one of its tabs (the Sandboxes table's and Store rows' project links). */
+  /** Opens a project's page by its key, at one of its tabs (a Sandbox's project link). */
   onOpenProject?: (key: string, tab?: string) => void
-  /** A row to scroll to and open (`machine:<name>`; go.ts). */
+  /** Opens a chat by its session id (a Workspace's Used by link). */
+  onOpenChat?: (session: string) => void
+  /** The machine whose page shows (`machine:<name>`; go.ts); the board without one. */
   focus?: string
+  /** Opens a machine's page (null: the board), in this tab or a new one; go.machine without it. */
+  onOpenMachine?: (name: string | null, newTab?: boolean) => void
+  /** Back where this tab came from, when a machine's page was opened from another page. */
+  back?: { label: string; onBack: () => void }
 }
+
+type Available = Extract<MachinesView, { available: true }>
 
 /** This computer's OS, from the preload; the host's status is not read for it. */
 const osOfWindow = (): Os => {
@@ -76,62 +54,100 @@ const osOfWindow = (): Os => {
   return p === 'win32' || p === 'linux' ? p : 'darwin'
 }
 
-export function ComputePage({ simulate: given, onOpenProject, focus }: ComputePageProps) {
+/** The Sandbox rows open at first on a machine's page: those with Workspaces, while they are few (each open row reads sandbox.get). */
+const FIRST_OPEN = 12
+const firstOpen = (v: Available | null, machine: string | null) => {
+  const with_ = v && machine ? v.sandboxes.filter((b) => b.machine === machine && (b.workspaces ?? 0) > 0).map((b) => b.name) : []
+  return new Set(with_.length <= FIRST_OPEN ? with_ : [])
+}
+
+/** The board's order: machines that need you, then those changing, running, stopped and unknown; native and docker first within each. */
+const RANK: Record<MachineKey, number> = { needs: 0, busy: 1, running: 2, stopped: 3, unknown: 4 }
+
+/** The Machines page; App still names it ComputePage. */
+export function ComputePage({ simulate: given, onOpenProject, onOpenChat, focus, onOpenMachine, back }: ComputePageProps) {
   useI18n()
-  const [picked, setPicked] = useState<SimId | null>(() => (import.meta.env.DEV ? readSim() : null))
+  const picked = useSimulation()
   const sim = given ?? picked
-  const pick = (v: SimId | null) => {
-    setPicked(v)
-    setSimView(null)
-    try {
-      if (v) localStorage.setItem(SIM_KEY, v)
-      else localStorage.removeItem(SIM_KEY)
-    } catch {
-      /* the choice just isn't remembered */
-    }
-  }
+  // another host picked: its own copy, its own open rows
+  useEffect(() => {
+    setSim(null)
+    setOpenBoxes(null)
+  }, [sim])
 
   const live = useHostQuery(() => (sim ? Promise.resolve(null) : host.machines()), [sim])
-  // a simulated host's actions change a copy in memory
-  const [simView, setSimView] = useState<MachinesView | null>(null)
+  // a simulated host's actions change a copy in memory; the ref keeps the latest for actions in a row (a nested Lima host, then its Firecracker machine)
+  const [simHost, setSimHost] = useState<SimHost | null>(null)
+  const simRef = useRef<SimHost | null>(null)
+  const setSim = (h: SimHost | null) => {
+    simRef.current = h
+    setSimHost(h)
+  }
   const simulated = sim ? SIMULATIONS[sim] : null
-  const view: MachinesView | null | undefined = simulated ? (simView ?? simulated.view) : live.data
+  const simNow = simulated ? (simHost ?? simulated) : null
+  const view: MachinesView | null | undefined = simNow ? simNow.view : live.data
   const os: Os = simulated?.os ?? osOfWindow()
+  const sessions = useChatSessions().sessions
+  const chats = simNow ? simNow.chats : sessions
 
-  const [open, setOpen] = useState<string | null>(null)
-  const [adding, setAdding] = useState<string | null>(null)
-  const showMachine = (name: string) => {
-    setOpen(name)
-    requestAnimationFrame(() => document.getElementById(`machine-${name}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
+  const [adding, setAdding] = useState(false)
+  const [openBoxes, setOpenBoxes] = useState<Set<string> | null>(null)
+  const available = view?.available ? view : null
+  const f = focusOf(focus)
+  const detail = f?.kind === 'machine' ? f.name : null
+  // another machine's page: its own open rows
+  useEffect(() => setOpenBoxes(null), [detail])
+  const open = openBoxes ?? firstOpen(available, detail)
+  const toggle = (name: string) => {
+    const next = new Set(open)
+    if (next.has(name)) next.delete(name)
+    else next.add(name)
+    setOpenBoxes(next)
   }
-  const startAdding = (platform: string) => {
-    setAdding(platform)
-    requestAnimationFrame(() => document.getElementById(`add-${platform}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
-  }
+  const showMachine = (name: string | null, newTab = false) => (onOpenMachine ? onOpenMachine(name, newTab) : name ? go.machine(name) : undefined)
 
   const act = async (action: MachineAction) => {
     if (simulated) {
-      setSimView((v) => simulate(v ?? simulated.view, action))
+      setSim(simulate(simRef.current ?? simulated, action))
       return
     }
     if (action.kind === 'create') await host.createMachine(action.input)
     else if (action.kind === 'remove') await host.removeMachine(action.name)
-    else if (action.kind === 'move') await host.placeStore(action.store, action.machine)
     else if (action.kind === 'start') await host.startMachine(action.name)
     else if (action.kind === 'stop') await host.stopMachine(action.name)
+    else if (action.kind === 'close') await host.closeSandbox(action.sandbox, action.force)
+    else if (action.kind === 'unmount') await host.unmountWorkspace(action.ws, false)
     else await host.updateMachine(action.name, action.changes)
     live.reload()
   }
-  const refresh = () => (simulated ? setSimView(null) : live.reload())
+  const ops: SandboxOps = {
+    read: async (name) => (simulated ? simSandbox(simRef.current ?? simulated, name) : host.sandbox(name)),
+    close: async (name, force) => {
+      if (simulated) return act({ kind: 'close', sandbox: name, force }).then(() => [])
+      const done = await host.closeSandbox(name, force)
+      live.reload()
+      return done.unknown ?? []
+    },
+    unmount: (ws) => act({ kind: 'unmount', ws }),
+  }
+  const refresh = () => (simulated ? setSim(null) : live.reload())
 
-  const available = view?.available ? view : null
-  useFocusRow(focus, !!available, setOpen)
   // machine.list and sandbox.list carry state and op (§8.9); a simulated host is not read
   usePoll(live.reload, undefined, !simulated)
   const facts = useMemo(() => (available ? factsOf(available) : null), [available])
   // failed, missing or unresolved: each gets a notice with what LayerFS says and the call that clears it
-  const down = available ? machineOrder(available.machines).filter((m) => machineState(m, available.status[m.name]).key === 'needs') : []
-  const ready = available ? readyKinds(available.platforms) : []
+  const machines = available ? machineOrder(available.machines).sort((a, b) => RANK[machineState(a, available.status[a.name]).key] - RANK[machineState(b, available.status[b.name]).key]) : []
+  const down = available ? machines.filter((m) => machineState(m, available.status[m.name]).key === 'needs') : []
+
+  if (detail && available)
+    return (
+      <div className="h-svh min-w-0 overflow-y-auto">
+        <div className="mx-auto flex min-w-0 max-w-5xl flex-col gap-4 px-4 pt-1.5 pb-12 @min-[30rem]/workspace:px-6 @min-[56rem]/workspace:px-8">
+          {simulated && <SimulatedNote sim={simulated} />}
+          <MachinePage key={`${sim ?? 'live'}:${detail}`} name={detail} view={available} os={os} act={act} ops={ops} chats={chats} open={open} onToggle={toggle} onBack={() => showMachine(null)} back={back} onOpenProject={onOpenProject} onOpenChat={onOpenChat} />
+        </div>
+      </div>
+    )
 
   return (
     <div className="h-svh min-w-0 overflow-y-auto">
@@ -139,29 +155,15 @@ export function ComputePage({ simulate: given, onOpenProject, focus }: ComputePa
         sticky
         className="page-header-solid"
         width="max-w-5xl"
-        title={t('Compute')}
+        title={t('Machines')}
         actions={
           <div className="flex items-center gap-2">
-            {import.meta.env.DEV && !given && <SimulationPicker value={picked} onChange={pick} />}
+            {!given && <SimulationPicker />}
             {available && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button size="sm" className="rounded-full px-3.5" disabled={ready.length === 0}>
-                    <Plus />
-                    {t('New machine')}
-                    <ChevronDown className="size-3.5 opacity-70" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="min-w-56">
-                  <DropdownMenuLabel className="text-xs">{t('Ready on this computer')}</DropdownMenuLabel>
-                  {ready.map((c) => (
-                    <DropdownMenuItem key={c.platform} onSelect={() => startAdding(c.platform)}>
-                      <KindLabel platform={c.platform} os={os} hideName />
-                      <span>{t(c.platform === 'ssh' ? 'Connect an SSH host' : '{kind} VM', { kind: t(kindLabel(c.platform)) })}</span>
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <Button size="sm" className="rounded-full px-3.5" onClick={() => setAdding(true)}>
+                <Plus />
+                {t('New machine')}
+              </Button>
             )}
             <Button variant="outline" size="sm" className="rounded-full px-3.5" onClick={refresh}>
               <RotateCw />
@@ -171,14 +173,7 @@ export function ComputePage({ simulate: given, onOpenProject, focus }: ComputePa
         }
       />
       <div className="mx-auto flex min-w-0 max-w-5xl flex-col gap-4 px-4 pt-2 pb-12 @min-[30rem]/workspace:px-6 @min-[56rem]/workspace:px-8">
-        {simulated && (
-          <p className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-            <Chip tone="warning" icon={FlaskConical}>
-              {t('Simulated')}
-            </Chip>
-            {t('{label}: sample data, not this machine.', { label: t(simulated.label) })}
-          </p>
-        )}
+        {simulated && <SimulatedNote sim={simulated} />}
         {!view ? (
           live.error ? (
             <LoadError error={live.error} what={t('the machines')} onRetry={live.reload} />
@@ -198,6 +193,7 @@ export function ComputePage({ simulate: given, onOpenProject, focus }: ComputePa
                 facts!.busy > 0 && <span>{t('{n} creating or removing', { n: facts!.busy })}</span>,
                 facts!.unknown > 0 && <span>{t('{n} unknown', { n: facts!.unknown })}</span>,
                 <span>{t(facts!.sandboxes === 1 ? '1 Sandbox' : '{n} Sandboxes', { n: facts!.sandboxes })}</span>,
+                <span>{t(facts!.workspaces === 1 ? '1 Workspace' : '{n} Workspaces', { n: facts!.workspaces })}</span>,
                 facts!.needs > 0 && (
                   <span className="inline-flex items-center gap-1.5 font-medium text-destructive">
                     <span aria-hidden="true" className="size-1.5 rounded-full bg-destructive" />
@@ -242,26 +238,15 @@ export function ComputePage({ simulate: given, onOpenProject, focus }: ComputePa
               )
             })}
 
-            <section className="flex flex-col gap-2.5 pt-2" aria-labelledby="machines-title">
-              <SectionTitle id="machines-title" aside={String(available.machines.length)}>
-                {t('Machines')}
-              </SectionTitle>
-              <MachinesTable key={sim ?? 'live'} view={available} os={os} open={open} onOpen={setOpen} act={act} />
-            </section>
-
-            <section className="flex flex-col gap-2.5 pt-4" aria-labelledby="sandboxes-title">
-              <SectionTitle id="sandboxes-title" aside={String(available.sandboxes.length)}>
-                {t('Sandboxes')}
-              </SectionTitle>
-              <SandboxesTable sandboxes={available.sandboxes} onChanged={refresh} onShowMachine={showMachine} onOpenProject={onOpenProject} />
-            </section>
-
-            <section className="flex flex-col gap-2.5 pt-4" aria-labelledby="add-title">
-              <SectionTitle id="add-title">{t('Add a machine')}</SectionTitle>
-              <AddMachine platforms={addable(available.platforms)} machines={available.machines} os={os} open={adding} onOpen={setAdding} act={act} onMade={showMachine} layerfs={available.layerfs} />
+            <section className="grid grid-cols-[repeat(auto-fill,minmax(17.5rem,1fr))] gap-4" aria-label={t('Machines')}>
+              {machines.map((m, i) => (
+                <MachineTile key={`${sim ?? 'live'}:${m.name}`} m={m} view={available} os={os} index={Math.min(i + 2, 12)} act={act} chats={chats} onOpen={(newTab) => showMachine(m.name, newTab)} />
+              ))}
+              <NewMachineTile index={Math.min(machines.length + 2, 13)} kinds={addable(available.platforms).filter((p) => p.ready).map((p) => p.platform)} onClick={() => setAdding(true)} />
             </section>
 
             <p className="px-1 pt-2 text-xs text-faint">{t('Machine power is manual: a machine runs between Start and Stop, and nothing starts or stops one by itself. Reading this page starts nothing.')}</p>
+            <AddMachineDialog key={sim ?? 'live'} open={adding} onOpenChange={setAdding} platforms={addable(available.platforms)} machines={available.machines} os={os} act={act} onMade={showMachine} layerfs={available.layerfs} />
           </>
         )}
       </div>

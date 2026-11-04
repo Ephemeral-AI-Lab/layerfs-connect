@@ -4,7 +4,7 @@
 import { Archive, ArrowRightLeft, Database, HardDriveDownload, HardDriveUpload, LoaderCircle, type LucideIcon, Plus, Power, TriangleAlert, Unplug } from 'lucide-react'
 import { useEffect, useId, useState } from 'react'
 
-import { BackLink, BTN, Field, SHEET, SheetFooter, SheetHeader } from '@/components/storage/dialogs/fields'
+import { BTN, Field, SHEET, SheetFooter, SheetHeader } from '@/components/storage/dialogs/fields'
 import { Refusal } from '@/components/refusal'
 import { Mark, Tile } from '@/components/storage/icons'
 import { type FieldValues, isBrandMark, type ProviderEntry, PROVIDERS } from '@/components/storage/identity/providers'
@@ -32,7 +32,7 @@ export type StorageDialog =
 const REFERENCE_HINT = 'A reference, never the secret: file:/absolute/path (readable by you only) or env:LAYERFS_<NAME>.'
 
 /** A form in a sheet: its fields, one submit that may be refused (shown under the form). */
-function FormSheet({ open, onClose, icon, mark, title, description, action, valid, submit, left, hint, children }: { open: boolean; onClose: () => void; icon: LucideIcon; mark?: React.ReactNode; title: string; description?: React.ReactNode; action: string; valid: boolean; submit: () => Promise<unknown>; left?: React.ReactNode; hint?: string; children: React.ReactNode }) {
+export function FormSheet({ open, onClose, icon, mark, title, description, action, valid, submit, left, hint, wide, children }: { open: boolean; onClose: () => void; icon: LucideIcon; mark?: React.ReactNode; title: string; description?: React.ReactNode; action: string; valid: boolean; submit: () => Promise<unknown>; left?: React.ReactNode; hint?: string; wide?: boolean; children: React.ReactNode }) {
   useI18n()
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<unknown>()
@@ -55,7 +55,7 @@ function FormSheet({ open, onClose, icon, mark, title, description, action, vali
   const Icon = icon
   return (
     <Dialog open={open} onOpenChange={(next) => (!next && !busy ? onClose() : undefined)}>
-      <DialogContent className={`${SHEET} sm:max-w-[480px]`}>
+      <DialogContent className={`${SHEET} ${wide ? 'sm:max-w-[680px]' : 'sm:max-w-[480px]'}`}>
         <SheetHeader icon={icon} mark={mark} title={title}>
           {description}
         </SheetHeader>
@@ -133,7 +133,7 @@ export function StorageDialogs({ dialog, view, onClose, done }: { dialog: Storag
   switch (dialog.kind) {
     case 'new-store':
       return (
-        <FormSheet open={open} onClose={close} icon={Plus} title={t('New Store')} description={t('An empty sqlite Store on native. Add projects to it, then push it to any machine.')} action={t('Create')} valid={!!a} submit={() => after(host.createStore(a))}>
+        <FormSheet open={open} onClose={close} icon={Plus} title={t('New Store')} description={t('An empty sqlite Store saved under the home. Add projects to it, then push it to any machine.')} action={t('Create')} valid={!!a} submit={() => after(host.createStore(a))}>
           <TextField label={t('Name')} value={a} onChange={setA} placeholder="work" autoFocus mono />
         </FormSheet>
       )
@@ -162,7 +162,7 @@ export function StorageDialogs({ dialog, view, onClose, done }: { dialog: Storag
       return <BucketSheet onClose={close} done={done} />
     case 'restore':
       return (
-        <FormSheet open={open} onClose={close} icon={HardDriveDownload} title={t('Restore {file}', { file: dialog.file })} description={t('Installs the copy as a new Store on native, with its projects. The Store the copy came from is not changed.')} action={t('Restore')} valid={!!b} submit={() => after(host.restoreBackup(dialog.bucket, b, dialog.file))}>
+        <FormSheet open={open} onClose={close} icon={HardDriveDownload} title={t('Restore {file}', { file: dialog.file })} description={t('Saves the copy in the home as a new Store, with its projects. The Store the copy came from is not changed.')} action={t('Restore')} valid={!!b} submit={() => after(host.restoreBackup(dialog.bucket, b, dialog.file))}>
           <TextField label={t('New Store’s name')} value={b} onChange={setB} placeholder={`${dialog.file}-restored`} autoFocus mono />
         </FormSheet>
       )
@@ -200,7 +200,7 @@ function PlaceSheet({ dialog, onClose, done }: { dialog: { kind: 'push' | 'move'
       description={
         push
           ? t('The whole Store goes, every project in it ({n}); its Sandboxes then run on that machine. Pull brings it back to native.', { n: s.projects.length })
-          : t('A pull to native, then a push to the machine: two operations. If the push fails, the Store stays on native and you can push it again.')
+          : t('A pull to the home, then a push to the machine: two operations. If the push fails, the Store stays in the home and you can push it again.')
       }
       action={t(push ? 'Push' : 'Move')}
       valid={!!target}
@@ -211,7 +211,7 @@ function PlaceSheet({ dialog, onClose, done }: { dialog: { kind: 'push' | 'move'
         value={target}
         onChange={setTarget}
         options={targets.map((m) => ({ value: m.name, label: `${m.name} (${m.platform}) · ${t(m.state)}` }))}
-        hint={machines.loading && !view ? t('Reading the machines…') : targets.length ? undefined : t('No other machine holds sqlite Stores. Add one on Compute.')}
+        hint={machines.loading && !view ? t('Reading the machines…') : targets.length ? undefined : t('No other machine holds sqlite Stores. Add one on Machines.')}
       />
       {chosen && (
         <p className="text-[11.5px] leading-relaxed text-muted-foreground tabular-nums">
@@ -240,62 +240,70 @@ export function ProviderTile({ entry, size = 'md' }: { entry: ProviderEntry; siz
   return <Tile size={size}>{isBrandMark(mark) ? <Mark icon={mark} /> : (() => { const Icon = mark; return <Icon aria-hidden="true" className="text-muted-foreground" /> })()}</Tile>
 }
 
+/** A sheet's header choice: one tile per option (its mark and name), the chosen one lit. */
+export function TileChoice<T extends string>({ label, value, onChange, options }: { label: string; value: T; onChange: (v: T) => void; options: { value: T; label: string; mark: React.ReactNode }[] }) {
+  return (
+    <div role="radiogroup" aria-label={label} className="grid gap-2.5" style={{ gridTemplateColumns: `repeat(${options.length}, minmax(0, 1fr))` }}>
+      {options.map((o) => (
+        <button key={o.value} type="button" role="radio" aria-checked={value === o.value} onClick={() => onChange(o.value)} className={`flex min-w-0 items-center gap-3 rounded-2xl border px-3.5 py-2.5 text-left transition-colors ${value === o.value ? 'border-primary/40 bg-primary/[0.04] shadow-xs' : 'border-foreground/[0.08] bg-background/40 hover:bg-foreground/[0.03]'}`}>
+          {o.mark}
+          <span className="min-w-0 truncate text-[13px] font-semibold">{o.label}</span>
+        </button>
+      ))}
+    </div>
+  )
+}
+
+const READY = PROVIDERS.filter((p) => p.request)
+const KEY_FIELDS = new Set(['accessKey', 'secretKey'])
+/** Every provider's fields, on one row; the provider's own (endpoint, account) go on the next. */
+const SHARED_FIELDS = new Set(['name', 'bucket', 'prefix'])
+
 /**
- * Connect a bucket, as the 1.1.0 Storage page had it: pick MinIO or
- * Cloudflare R2 from the provider tiles, then fill its form. The keys are
- * written by the host to an owner-only file, passed to LayerFS by reference.
+ * New bucket (the Backups tab's one way in): the providers LayerFS backs up
+ * to (MinIO, Cloudflare R2) as a choice at the top, the chosen one's form
+ * under it, in one sheet. The keys are written by the host to an owner-only
+ * file, passed to LayerFS by reference.
  */
 function BucketSheet({ onClose, done }: { onClose: () => void; done: () => void }) {
   useI18n()
-  const [entry, setEntry] = useState<ProviderEntry | null>(null)
-  const [values, setValues] = useState<FieldValues>({})
+  const [entry, setEntry] = useState<ProviderEntry>(READY[0])
+  const [values, setValues] = useState<FieldValues>(() => Object.fromEntries(READY[0].fields.map((f) => [f.key, f.default ?? ''])))
   const pick = (e: ProviderEntry) => {
     setEntry(e)
-    setValues(Object.fromEntries(e.fields.map((f) => [f.key, f.default ?? ''])))
-  }
-  if (!entry) {
-    return (
-      <Dialog open onOpenChange={(next) => !next && onClose()}>
-        <DialogContent className={`${SHEET} sm:max-w-[520px]`}>
-          <SheetHeader icon={Unplug} title={t('Connect a bucket')}>
-            {t('Where Store backups go. LayerFS 2.0 backs up to MinIO and Cloudflare R2.')}
-          </SheetHeader>
-          <div className="grid grid-cols-2 gap-2.5">
-            {PROVIDERS.map((e) => {
-              const ready = !!e.request
-              return (
-                <button key={e.id} type="button" disabled={!ready} onClick={() => pick(e)} className="flex min-w-0 items-center gap-3 rounded-2xl border border-foreground/[0.08] bg-background/40 px-3.5 py-3 text-left transition-colors hover:border-primary/30 hover:bg-primary/[0.04] disabled:cursor-default disabled:opacity-50 disabled:hover:border-foreground/[0.08] disabled:hover:bg-background/40">
-                  <ProviderTile entry={e} />
-                  <span className="min-w-0">
-                    <span className="block truncate text-[13px] font-semibold">{e.label}</span>
-                    <span className="block truncate text-[11px] text-muted-foreground">{ready ? t(e.about) : t('comes with a later LayerFS')}</span>
-                  </span>
-                </button>
-              )
-            })}
-          </div>
-        </DialogContent>
-      </Dialog>
-    )
+    setValues((v) => Object.fromEntries(e.fields.map((f) => [f.key, v[f.key] || (f.default ?? '')])))
   }
   const problems = Object.fromEntries(entry.fields.map((f) => [f.key, values[f.key] ? (f.validate?.(values[f.key]) ?? null) : null]))
   const missing = entry.fields.filter((f) => f.needed && !values[f.key]?.trim()).map((f) => t(f.needed!))
   const valid = !missing.length && Object.values(problems).every((p) => !p)
   return (
-    <FormSheet open onClose={onClose} mark={<ProviderTile entry={entry} size="sm" />} icon={Unplug} title={t('Connect {provider}', { provider: entry.label })} description={t(entry.about)} action={t('Connect')} valid={valid} submit={() => host.connectBucket(entry.request!(values)).then(done)} left={<BackLink onBack={() => setEntry(null)} label={t('Providers')} />} hint={missing.length ? t('Still needed: {list}', { list: missing.join(', ') }) : undefined}>
-      {entry.fields.map((f) => (
-        <div key={f.key} className="flex flex-col gap-1.5">
-          {f.kind === 'select' ? (
-            <Choice label={t(f.label)} value={values[f.key] || '__none'} onChange={(v) => setValues((x) => ({ ...x, [f.key]: v === '__none' ? '' : v }))} options={(f.options ?? []).map((o) => ({ value: o.value || '__none', label: t(o.label) }))} />
-          ) : f.kind === 'secret' ? (
-            <SecretField label={t(f.label)} value={values[f.key] ?? ''} onChange={(v) => setValues((x) => ({ ...x, [f.key]: v }))} />
-          ) : (
-            <TextField label={t(f.label)} value={values[f.key] ?? ''} onChange={(v) => setValues((x) => ({ ...x, [f.key]: v }))} placeholder={f.placeholder ? t(f.placeholder) : undefined} mono={f.mono} autoFocus={f.key === 'name'} hint={problems[f.key] ? t(problems[f.key]!) : undefined} />
-          )}
-          {entry.notes.filter((n) => n.after === f.key).map((n, k) => (
+    <FormSheet open wide onClose={onClose} icon={Unplug} title={t('New bucket')} description={t('A bucket that holds SQLite Store backups. Connecting it links no Store; you can add as many as you like.')} action={t('Connect bucket')} valid={valid} submit={() => host.connectBucket(entry.request!(values)).then(done)} hint={missing.length ? t('Still needed: {list}', { list: missing.join(', ') }) : undefined}>
+      <TileChoice label={t('Provider')} value={entry.id} onChange={(id) => pick(READY.find((e) => e.id === id)!)} options={READY.map((e) => ({ value: e.id, label: e.label, mark: <ProviderTile entry={e} size="sm" /> }))} />
+      {[
+        { title: t('Where'), rows: [entry.fields.filter((f) => SHARED_FIELDS.has(f.key)), entry.fields.filter((f) => !SHARED_FIELDS.has(f.key) && !KEY_FIELDS.has(f.key))] },
+        { title: t('Keys'), rows: [entry.fields.filter((f) => KEY_FIELDS.has(f.key))] },
+      ].map((g) => (
+        <section key={g.title} className="flex flex-col gap-3 border-t border-foreground/[0.06] pt-4">
+          <h3 className="text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">{g.title}</h3>
+          {g.rows.filter((row) => row.length).map((row, r) => (
+            <div key={r} className="flex flex-col gap-x-4 gap-y-3.5 sm:flex-row">
+              {row.map((f) => (
+                <div key={f.key} className={f.kind === 'select' ? 'shrink-0 sm:min-w-36' : 'min-w-0 flex-1'}>
+                  {f.kind === 'select' ? (
+                    <Choice label={t(f.label)} value={values[f.key] || '__none'} onChange={(v) => setValues((x) => ({ ...x, [f.key]: v === '__none' ? '' : v }))} options={(f.options ?? []).map((o) => ({ value: o.value || '__none', label: t(o.label) }))} />
+                  ) : f.kind === 'secret' ? (
+                    <SecretField label={t(f.label)} value={values[f.key] ?? ''} onChange={(v) => setValues((x) => ({ ...x, [f.key]: v }))} />
+                  ) : (
+                    <TextField label={t(f.label)} value={values[f.key] ?? ''} onChange={(v) => setValues((x) => ({ ...x, [f.key]: v }))} placeholder={f.placeholder ? t(f.placeholder) : undefined} mono={f.mono} autoFocus={f.key === 'name'} hint={problems[f.key] ? t(problems[f.key]!) : undefined} />
+                  )}
+                </div>
+              ))}
+            </div>
+          ))}
+          {entry.notes.filter((n) => g.rows.flat().some((f) => f.key === n.after)).map((n, k) => (
             <p key={k} className={`text-[11.5px] leading-relaxed text-muted-foreground ${n.mono ? 'font-mono' : ''}`}>{n.text(values)}</p>
           ))}
-        </div>
+        </section>
       ))}
     </FormSheet>
   )

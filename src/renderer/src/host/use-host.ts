@@ -21,32 +21,59 @@ export const lastAnswer = <T>(key: string) => answers.get(key) as T | undefined
  * With a `key`, the last answer under it shows at once, as a page opens or the
  * key changes, while the fresh read runs: a tab that reads a run or a
  * project's state opens on what the last one read, not on a spinner.
+ * One read at a time: a `reload` (a poll, a Refresh) while one runs waits for
+ * it and then reads once more, so a slow read still lands instead of being
+ * dropped by every poll after it. New `deps` drop the read in flight.
  */
 export function useHostQuery<T>(load: () => Promise<T>, deps: unknown[], key?: string): Loaded<T> {
   const [data, setData] = useState<T | undefined>(() => (key ? (answers.get(key) as T | undefined) : undefined))
   const [error, setError] = useState<Error>()
   const [loading, setLoading] = useState(true)
-  const [tick, setTick] = useState(0)
   const loader = useRef(load)
   loader.current = load
-  useEffect(() => {
-    let live = true
-    if (key && answers.has(key)) setData(answers.get(key) as T)
+  const keyRef = useRef(key)
+  keyRef.current = key
+  /** Bumped by new deps and unmount: a read of an older generation is dropped. */
+  const generation = useRef(0)
+  const running = useRef(false)
+  const again = useRef(false)
+  const run = useCallback(() => {
+    if (running.current) {
+      again.current = true
+      return
+    }
+    running.current = true
+    const g = generation.current
+    const k = keyRef.current
     setLoading(true)
     loader.current().then(
       (value) => {
-        if (key) answers.set(key, value)
-        if (live) setData(value), setError(undefined), setLoading(false)
+        if (k) answers.set(k, value)
+        if (g === generation.current) setData(value), setError(undefined)
       },
-      (e: unknown) => live && (setError(e instanceof Error ? e : new Error(String(e))), setLoading(false)),
-    )
+      (e: unknown) => g === generation.current && setError(e instanceof Error ? e : new Error(String(e))),
+    ).finally(() => {
+      if (g !== generation.current) return
+      running.current = false
+      setLoading(false)
+      if (again.current) {
+        again.current = false
+        run()
+      }
+    })
+  }, [])
+  useEffect(() => {
+    generation.current++
+    running.current = false
+    again.current = false
+    if (key && answers.has(key)) setData(answers.get(key) as T)
+    run()
     return () => {
-      live = false
+      generation.current++
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [...deps, key, tick])
-  const reload = useCallback(() => setTick((t) => t + 1), [])
-  return { data, error, loading, reload }
+  }, [...deps, key])
+  return { data, error, loading, reload: run }
 }
 
 /** Calls `listener` for every RunEvent while mounted (chat events and Storage's `storage-job` and `storage` events go to onHostEvent's listeners only). */
