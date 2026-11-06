@@ -1,4 +1,4 @@
-// A Storage job's progress (docs/ui/layerfs-storage.md), drawn the same way
+// A Storage job's progress (docs/ui/storage.md), drawn the same way
 // wherever it shows: the bar of its steps (the byte step wide, filling by
 // bytes; the others small, filling as each ends; a move's two halves side by
 // side), what it is doing in words, its bytes, speed and time left; how it

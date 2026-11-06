@@ -1,54 +1,279 @@
-# Project: Live
+# Project page: Live tab
 
-The project's working sessions as one live diagram: agents on the left, the LayerFS project in the middle, Sandboxes and their Workspaces on the right, and every LayerFS call drawn as it travels. It appears in the project's Live tab and includes running chats plus those that ended in the last 5 minutes. The first 12 sessions are shown, with an option to reveal the rest.
-Source: `src/renderer/src/components/live/live-tab.tsx`. Nodes retain the shared glass edges with more opaque surfaces for legibility and efficient animation. Agent and brand colors are preserved. Only call traffic moves: no perpetual avatar rotation or breathing glow. Hovering or keyboard-focusing a node emphasizes its routes and dims unrelated routes. Every string goes through `t()` (Chinese in `i18n/live.ts`).
+Part of the project page (project.md).
 
-## Skeleton
+Source: `src/renderer/src/components/live/` (`live-tab.tsx`, `live-nodes.tsx`, `live-flow.ts`,
+`live-model.ts`, `live-data.ts`, `live-bindings.ts`, `run-badges.tsx`, `run-format.ts`, `live.css`)
+Opens from: project page tab Live (`project-view.tsx:150`); the page opens on it when a chat works.
+
+Paths in legends are relative to `src/renderer/src/components/live/`.
+
+## Live tab
+
+Sample: chat "Add login tests" works on `shop/api`; its `root` agent runs `npm test` in Workspace
+`feature-login` of Sandbox `api-dev` (native); a subagent `tester` sits between calls. The overview
+wraps some one-line rows; the zoom-ins below show each card's real row layout.
 
 ```text
-Live · 2 chats working · 3 calls in flight
-
-Agents 5                     LayerFS                      Sandboxes 2
-┌ Session ───────────┐       ┌ Project ────────────┐       ┌ Sandbox ─────────────┐
-│ root               │       │ Mark · name         │       │ name · creator       │
-│ ├ builder          │──────▶│ SQLite · size       │──────▶│ workspace · branch   │
-│ └ reviewer         │       │ layer / branches /  │       │ command · elapsed    │
-│ call · elapsed     │       │ commits             │       └──────────────────────┘
-└────────────────────┘       │ main                │       ┌ Quiet sandbox ──────┐
-                             │ session branches    │       └──────────────────────┘
-                             └─────────────────────┘
++-[1] Header -------------------------------------------------------------------------------------+
+| * Live   1 chat working - 1 call in flight              -> Request   <- Succeeded   x Failed    |
++-[2] Error strip (only when the Sandbox read fails) ---------------------------------------------+
+| Could not load sandboxes.  [Retry]                                                              |
+| > Details                                                                                       |
++-[3] Flow field ---------------- [7] zone labels on the first row -------------------------------+
+| Agents (2)                        LayerFS                       Sandboxes (1)                   |
+|                                                                                                 |
+| +-[4] ----------------------+     +-[5] ------------------+     +-[6] ------------------------+ |
+| | v * Add login tests  [^]  |     | [L] api               |     | <sb> Sandbox api-dev        | |
+| | (R) root    Calling  1 >  |==+  |     SQLite - 96 KB    |     |      running      <ws> 1    | |
+| |    @ Run command npm test |  |  |  L0      3        4   |     +-----------------------------+ |
+| |  (t) tester Between calls |  |  | main Branches Commits |  +=>| <ws> /workspaces/featu...   | |
+| +---------------------------+  |  | --------------------- |  |  |      (feature-login) * root | |
+|                                |  | (main              0) |  |  |   @ (exec) npm test   2.1 s | |
+|                                |  |  * Add login tests    |  |  +-----------------------------+ |
+|                                +=>| (feature-login     3) |==+                                  |
+|      [8] lanes  ==, packets >     | +1 other open Branch  |                                     |
+|                                   +-----------------------+                                     |
++-------------------------------------------------------------------------------------------------+
+  [9] [+3 more]      only past 12 shown sessions; reads [Show fewer] when open
 ```
 
-## Regions
+| [n] | Component | file:line | one line |
+|---|---|---|---|
+| [1] | header | live-tab.tsx:150 | Dot (accent while a chat plays), "Live", summary, legend |
+| [2] | error strip | live-tab.tsx:171 | Sandbox read failed; Retry rereads; Details: message |
+| [3] | FlowGraph | live-tab.tsx:217 | 5-column grid, min 880px (scrolls sideways), dotted field |
+| [4] | SessionGroup | live-nodes.tsx:147 | One per shown chat; working ones first, then newest |
+| [5] | HubNode | live-nodes.tsx:415 | The project: Store, counts, open Branch rows |
+| [6] | SandboxNode | live-nodes.tsx:493 | One card per open Sandbox; lines when there are many |
+| [7] | ZoneLabel | live-nodes.tsx:37 | Agents / LayerFS / Sandboxes; count pill unless empty |
+| [8] | FlowEngine | live-flow.ts:98 | SVG overlay: agent -> Branch row -> Workspace or Sandbox |
+| [9] | more sessions | live-tab.tsx:191 | "+{n} more" / "Show fewer"; resets on project change |
 
-1. **Tab row** (`ProjectView`, `projects/project-view.tsx`): Live is the first tab, before Chats, Files, History, Sandboxes and Storage, with a pulsing dot and the count of chats working while one does. A project page opened without a tab opens on Live when a chat is working. The project page passes its working chat runs to Live.
-2. **Live card** (`LiveTab`, `live/live-tab.tsx`): one `glass-liquid` card. Its header has a steady state dot, "Live", and a short summary of working chats, recently ended chats and calls in flight. The card and its canvas grow to fill the rest of the window (at least one screen tall below the tabs) and grow further when the diagram is taller. Live appears only here: the Projects page draws no diagram.
-3. **ZoneLabel** (`ZoneLabel`, `live/live-nodes.tsx`): three headings in a row across the top of the canvas, "Agents", "LayerFS" and "Sandboxes". Agent and Sandbox counts appear when nonzero. No decorative divider lines. Below them each column is centred vertically in the canvas, so the project sits in the middle with agents and Sandboxes balanced on either side.
-4. **SessionGroup** (`SessionGroup`, `live/live-nodes.tsx`): one group per chat or scenario, labelled by its title or folder. Its header has a fold toggle, state and open button. Progress appears only when the run has a known step total; ended, failed and stopped states remain distinct. Folded groups show a compact agent summary. Past three runs a folded group is a single line. Only actual scenario folders receive a slash prefix and monospace type.
-5. **AgentNode** (`AgentNode`, `live/live-nodes.tsx`): one row per agent, indented by depth. A steady ring and short Calling label reflect actual in-flight calls; agents between calls show the most recent result instead of an inferred Working state. Known API methods use short translated action names, with exact methods and full targets on hover. A check or cross identifies success or failure without relying on color. Failed results persist until new work replaces them. The parent fold toggle shows the child count; folded summaries count agents with actual calls. Clicking an agent opens its chat.
-6. **HubNode** (`HubNode`, `live/live-nodes.tsx`): a compact project card. A small LayerFS mark sits beside its name and storage type / size, followed by static main Layer, Branch and Commit counts. Open Branches show main first, then session groups with Commit counts, then a count of other open Branches. Shared Branches appear once. Calls pass through their branch row; short feedback replaces the former large glow and breathing border. The branch list scrolls independently when long.
-7. **SandboxNode** (`SandboxNode`, `live/live-nodes.tsx`): an open Sandbox, compact. A one-line header shows "Sandbox 1", then "made by builder · /crew_2" (or its state), then a Workspace icon with the mounted count. Its name and the full words are in the tooltip. Each Workspace row has its path cut to the last two parts (`…/workspaces/1`, full path in the tooltip), its Branch (the run folder dimmed: `crew_2.`build) and the mounting agent. All of these truncate, so nothing spills past the card. Under a row with an agent mount or an exec comes the running `workspace exec` (an `exec` chip, the command, its time), else "idle · last <command> <exit>" or "idle · mounted 3 min ago", plus "· N Commits". A Workspace with neither stays one line, with "idle" at its end. It reads "No mounted workspaces" when empty.
-8. **SandboxLine** (`SandboxLine`, `live/live-nodes.tsx`): past four Sandboxes, one not running a command is one line: "Sandbox 2", its run or state, and a Workspace icon with the count ("1 Workspace" in the tooltip). A click opens its card.
+Summary pieces (joined with " - "): "{n} chat(s) working" or "No chat working", "{n} ended
+recently" (only when some ended), "{n} call(s) in flight". Legend icons: ArrowRight "Request",
+ArrowLeft "Succeeded", X "Failed".
 
-## The diagram (`FlowEngine`, `live/live-flow.ts`; `live/live.css`)
+### The five columns and the lanes
 
-One SVG above the cards, positioned from `data-anchor`s. Lines stay thin and still; running calls retain a brighter route without a perpetual animation. Each new call sends a single small chevron in the agent's color. Results return along the same route with the arrow reversed, green for success and red for failure. Concurrent calls on one route share a packet; opposite directions wait rather than collide. Only the completed call's destination receives a brief border response. A small header legend explains request / success / failure.
+```text
+  col 1: Agents        col 2: gap      col 3: LayerFS      col 4: gap      col 5: Sandboxes
+  16-22rem             >= 3.5rem       13-16rem            >= 3.5rem       16-25rem
 
-Mounted routes remain faintly visible. Hover or keyboard focus highlights the selected node's connections and dims unrelated ones. Folding redirects routes to the visible ancestor. When nothing moves the engine stops scheduling frames. Reduced motion preserves status labels and still connections without traveling arrows or feedback flashes. All SVG layers and listeners are removed when the graph closes.
+  [agent card] ==+                                     +==> [Workspace row]   still lane: mount
+                 +=====> (Branch row) ==================+                     or binding [a]
+  [agent card] --+-->  ........ hub middle ........> [Sandbox card]    call without a Branch [b]
+  [agent card] ======> (Branch row)                                           binding only [c]
+  [child]  |                                                                  tree guide [d]
+  [ghost agents] - - - - - - [hub] - - - - - - [ghost sandboxes]               ghosts [e]
+```
 
-Routes use rounded elbows in the gaps between columns. They dock at the project's outside edge at the matching Branch row's height; no line runs across card text. Each gutter has one stable shared rail; new calls do not spread the wiring into a fan. Shared agent/Branch and Branch/Workspace legs are drawn once, including routes folded to the same visible ancestor. Resting links use neutral thin strokes; active or focused links retain agent colors and paint above quiet shared rails. Decorative endpoint dots are removed. Agent tree guides share a single trunk per parent. Narrow views keep at least 56px between columns and scroll horizontally instead of squeezing the wiring into cards.
+| [n] | Component | file:line | one line |
+|---|---|---|---|
+| [a] | scene.mounts | live-tab.tsx:276 | A mounted Workspace's lane, via its Branch row if shown |
+| [b] | routeOf | live-model.ts:213 | A call's route; `agent.*` and `job.*` calls draw nothing |
+| [c] | bindings | live-tab.tsx:229 | Agent joined to its Branch (Workspace's, else last call's) |
+| [d] | scene.tree | live-tab.tsx:292 | Guides from a subagent card to its parent's card |
+| [e] | scene.ghosts | live-tab.tsx:296 | Faint dotted joins to the idle placeholders |
+| - | useTraffic | live-tab.tsx:394 | Chevron out in the agent's colour, back green or red |
 
-## Data (`live/live-data.ts`, `live/live-model.ts`)
+Lanes keep their geometry; a running call brightens its lane (`.live-link[data-active]`), hover or
+focus on a node isolates its lanes and dims the rest. Calls finished over 5 s ago are not drawn, nor
+calls already there when a session first shows. A folded card or ancestor stands in as the origin.
 
-- **Runs shown**: those playing or queued, and those that ended in the last 5 minutes, the first 12 initially, playing ones first; more are available on demand. Each chat's live trace is read with `agentHost.live(id)` initially and every second while it works and the window is visible. Live keeps the run summary, trace calls and live mounts / sandboxes.
-- **Project**: `host.project(key)`, reread every 2 s while a run plays (not while the window is hidden) and once more when a run's state changes; reads of one address go one at a time.
-- **Sandboxes**: the project's open ones, joined with those the runs made and the Workspaces their playing runs hold mounted.
-- **Runs and Branches**: scenario folders retain prefix-based ownership (`<folder>.<name>`). Ordinary chats associate Branches from actual mounts and in-flight or recorded calls. Shared Branches have one anchor, reused by every calling session.
+## SessionGroup
+
+Open (the newest two playing chats start open; a lone chat is never folded):
+
+```text
++-[1] ------------------------------------------------+
+| [2] v * Add login tests                         [^] |   [^] = [3] Open chat
+| [4] (red run.error line, when the chat has one)     |
+| [5] (R) root ...                                    |
+| [5]     (t) tester ...                              |
++-----------------------------------------------------+
+```
+
+Folded, up to 3 sessions shown (two lines):
+
+```text
++-[6] ------------------------------------------------+
+| > * /shop_2                          [7] ####-- 3/5 |
+|     2 agents - 1 calling                [8] (R)(t)  |
++-----------------------------------------------------+
+```
+
+Folded, more than 3 sessions shown (one line each):
+
+```text
+[ > * Fix orders total ................................ Ended ]   [9]
+```
+
+| [n] | Component | file:line | one line |
+|---|---|---|---|
+| [1] | open group | live-nodes.tsx:211 | Ring-outlined group; anchor `session-<run id>` |
+| [2] | head | live-nodes.tsx:161 | Chevron, RunDot, name (scenario: "/shop_2", mono); folds |
+| [3] | Open chat | live-nodes.tsx:223 | Icon button "Open chat {name}"; opens the chat |
+| [4] | run.error | live-nodes.tsx:233 | Red text under the head |
+| [5] | AgentNode | live-nodes.tsx:289 | Each visible agent; see below |
+| [6] | folded card | live-nodes.tsx:189 | One button; click opens; ringed while an agent calls |
+| [7] | Progress | live-nodes.tsx:114 | Bar + "done/of", "waiting its turn", Ended/Failed/Stopped |
+| [8] | Avatars | live-nodes.tsx:102 | Up to 6 initials, busy ones lit, then "+N" |
+| [9] | dense line | live-nodes.tsx:171 | Name and Progress; agents line in the tooltip |
+
+Progress shows nothing for a working ordinary chat (`of` is 0); scenario chats have steps.
+
+## AgentNode
+
+```text
++-[1] ----------------------------------------------------------+
+| (R) root                              [2] Calling   [3] 1 >   |
+|     [4] @ Run command   npm test                      2.1 s   |
+|     [4] @ Write file    feature-login                 0.4 s   |
+|     [5] (t)(d) 2 subagents - 1 calling                        |
++---------------------------------------------------------------+
+    (t) tester                                   Between calls      24px indent per level, max 4
+        [6] <ok> Read file                       2 minutes ago
+```
+
+| [n] | Component | file:line | one line |
+|---|---|---|---|
+| [1] | agent button | live-nodes.tsx:305 | Avatar (ringed while calling), name; opens the chat |
+| [2] | status | live-nodes.tsx:297 | Calling/Thinking/Call failed/Stopped/Done/Between calls |
+| [3] | subagent fold | live-nodes.tsx:350 | Count + chevron; "Show/Fold {agent}'s subagents" |
+| [4] | running calls | live-nodes.tsx:318 | Spinner, label, target (command/path/Branch), elapsed |
+| [5] | folded kids | live-nodes.tsx:343 | When folded: avatars, "{n} subagents - {n} calling" |
+| [6] | last call | live-nodes.tsx:328 | Check/X, label, ago; "No call yet"; "thinking - 3.2 s" |
+
+Labels come from `CALL_LABEL` (`live-nodes.tsx:260`: Run command, Mount workspace, Read file,
+Create branch, ...); other methods show raw. Subagents from the third level start folded.
+
+## HubNode
+
+```text
++-[1] ----------------------------------------+
+| [L]  api                                    |
+|      SQLite - 96 KB                    [2]  |
+|                                             |
+|       L0          3             4      [3]  |
+|      main      Branches      Commits        |
+|  -----------------------------------------  |
+|  ( <br> main                           0 )  |  [4]
+|                                             |
+|    * Add login tests                   [5]  |
+|  ( <br> feature-login                  3 )  |
+|  +1 other open Branch                  [6]  |
++---------------------------------------------+
+```
+
+| [n] | Component | file:line | one line |
+|---|---|---|---|
+| [1] | HubNode | live-nodes.tsx:415 | LayerfsMark (flashes when a call lands), name `api` |
+| [2] | Store line | live-nodes.tsx:427 | "SQLite" or "PostgreSQL", then the Store's size |
+| [3] | counts | live-nodes.tsx:433 | "L{n-1}", Branches, Commits; "Reading..." until read |
+| [4] | BranchRow | live-nodes.tsx:384 | Pill: icon, name, Commit count; agent's colour outline |
+| [5] | chat rows | live-nodes.tsx:461 | RunDot + chat, its Branches; `<folder>.main` reads "main" |
+| [6] | others | live-nodes.tsx:474 | "+{n} other open Branch(es)" no shown chat uses |
+
+The rows list ("Open Branches") scrolls past 14rem. Only open Branches get rows.
+
+## SandboxNode and SandboxLine
+
+```text
++-[1] ----------------------------------------------------------------+
+| <sb> Sandbox api-dev   running                               <ws> 1 |  [2]
++---------------------------------------------------------------------+
+| <ws> /workspaces/feature-login   ( <br> feature-login )      * root |  [3]
+|      @ (exec) npm test                         2.1 s - 2 Commits    |  [4]
++---------------------------------------------------------------------+
+| sandbox.create                                               0.8 s  |  [5]
++---------------------------------------------------------------------+
+```
+
+Second-line variants of a Workspace row [4]:
+
+```text
+|      @ (exec) npm test   by tester                           2.1 s  |  exec by another agent
+|      idle - last  npm test                                  exit:0  |  kind not exit:0 = warning
+|      idle - mounted 4 minutes ago                                   |  mounted, nothing run
+| <ws> /workspaces/feature-login   ( <br> feature-login )       idle  |  not mounted: no 2nd line
+| <ws> No mounted workspaces                                          |  [6]
+```
+
+SandboxLine (more than 4 Sandboxes: each one not running a command):
+
+```text
+[ <sb> Sandbox api-dev   Add login tests                       <ws> 1 ]   [7]
+  [+2 more]                                                               [8]
+  [Fold the Sandboxes I opened]                                           [9]
+```
+
+| [n] | Component | file:line | one line |
+|---|---|---|---|
+| [1] | SandboxNode | live-nodes.tsx:493 | Card; ringed in the agent's colour while called |
+| [2] | header | live-nodes.tsx:517 | "Sandbox {id}", "made by {agent} - <chat>" or state, count |
+| [3] | Workspace row | live-nodes.tsx:536 | Path (last 2 parts), Branch chip, agent or "idle" |
+| [4] | exec line | live-nodes.tsx:564 | (exec) + command, or idle text; ". {n} Commits" if any |
+| [5] | other calls | live-nodes.tsx:590 | Calls here outside its Workspaces: raw method, elapsed |
+| [6] | no Workspaces | live-nodes.tsx:523 | Italic "No mounted workspaces" |
+| [7] | SandboxLine | live-nodes.tsx:601 | id, maker chat or state, count; click opens its card |
+| [8] | rows more | live-tab.tsx:369 | Past 10 lines: "+{n} more" / "Show fewer" |
+| [9] | fold opened | live-tab.tsx:376 | Puts clicked-open cards back to lines |
+
+## IdleAgents and IdleSandboxes
+
+```text
++ - [1] - - - - - - - - - - - - - - - - - - +            + - [2] - - - - - - - - - - - - +
+: <agent>  No agent working                 : - - [hub] - - : <sb>  No Sandbox open       :
+:          The last chat, Add login tests,  :            + - - - - - - - - - - - - - - - +
+:          ended 6 minutes ago              :
++ - - - - - - - - - - - - - - - - - - - - - +
+```
+
+| [n] | Component | file:line | one line |
+|---|---|---|---|
+| [1] | IdleAgents | live-nodes.tsx:47 | Dashed card when no session shows; the tab's idle note |
+| [2] | IdleSandboxes | live-nodes.tsx:64 | Dashed card when no Sandbox is open |
+
+## Folds and more sessions
+
+```text
+localStorage "connect.live.folds:<project>"  { "s:<run id>": true, "a:<scenario>:<agent>": false }
+```
+
+- A session's fold is keyed by run id; an agent's by scenario + name, so the next run keeps it.
+  At most 200 entries kept (`live-tab.tsx:74`). Session folds apply only with 2+ sessions.
+- Up to 12 sessions draw (`MAX_SESSIONS`); "+{n} more" shows the rest, "Show fewer" hides them.
 
 ## States
 
-- **Idle** (no run shown): short Agent and Sandbox placeholders remain connected to the project. Agent status may include the last chat's end time. No fake loading skeletons or explanatory paragraphs are shown.
-- **Hub before the project is read**: a dashed box reading "Reading…".
-- **Folds**: playing runs start open (the newest two), the others folded. Subagents from the third level start folded. What the user folds or opens is kept per project (`localStorage` `connect.live.folds:<project>`; runs by id, agents by scenario and name).
-- **Many runs** (more than 3): a folded run is a single line.
-- **Many Sandboxes** (more than 4): quiet ones become `SandboxLine`s. Past 10 lines "+N more" / "Show fewer" appear, and "Fold the Sandboxes I opened" after opening some.
+No chats yet (the `mac` world as seeded):
+
+```text
+| * Live   No chat working - 0 calls in flight            -> Request   <- Succeeded   x Failed   |
+| Agents                            LayerFS                       Sandboxes (1)                   |
+| + - - - - - - - - - - - - -+      +-----------------------+     +-----------------------------+ |
+| : <agent> No agent working : - - -| [L] api               |     | <sb> Sandbox api-dev        | |
+| :  No chat has worked in L.:      |  ...                  |     +-----------------------------+ |
+| + - - - - - - - - - - - - -+      | (main              0) |     | <ws> /workspaces/...   idle | |
+|                                   | +2 other open Branches|     +-----------------------------+ |
+```
+
+- Reading: idle note "Reading the chats..." until the chat list arrives; hub shows "Reading...".
+- Chats ended: "No chat working - 1 ended recently - 0 calls in flight"; Progress reads "Ended" /
+  "Failed" / "Stopped", agents "Done"; an ended chat's mounts are not drawn. It leaves after
+  5 minutes; then IdleAgents reads "The last chat, {name}, ended {time}".
+- Calls in flight: busy cards ring in the agent's colour (`.live-ring`), spinners and elapsed
+  times tick, chevrons fly; the landing target flashes. Reduced motion hides the chevrons.
+- Error: the error strip [2] above; a chat's own error is the red line in its group; a failed last
+  call reads "Call failed" with a red X.
+
+## Notes
+
+- Reads: chat calls every 1 s,
+  project every 2 s, Sandboxes every 4 s while a chat works (`live-data.ts`, `live-tab.tsx:134`).
+- Unused exports (grep-confirmed, imported nowhere): `run-badges.tsx` AgentDot, RunStateBadge,
+  KindChip, KindLegend, SessionHint; `run-format.ts` STEP_TONE, IDLE_AFTER_MS, isIdle,
+  methodKind, clock, plural, stepKey, ownProject, ms, runName; `live-model.ts` CYCLE. Exported but
+  used only in their own file: `live-data.ts` ACTIVE_AFTER_MS, worksInLayerfs, chatRun,
+  withAgents; `live-model.ts` wsKey; `live-flow.ts` LEG_MS; `live-nodes.tsx` BranchName.

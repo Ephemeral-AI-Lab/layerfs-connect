@@ -7,7 +7,8 @@
   `~/.layerfs-connect-sim`; `node tools/sim-table.mjs` after upgrading LayerFS (host/README.md).
 - Headless screenshots: `"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless=new
   --window-size=1280,760 --virtual-time-budget=8000 --screenshot=/tmp/x.png "<url>"`. There is one light theme; no dark mode.
-- UI specs live in `docs/ui/*.md`; update the page's spec with its code.
+- UI specs live in `docs/ui/*.md`: ASCII layout diagrams with numbered regions and little prose (conventions in
+  `docs/ui/README.md`); update the page's spec with its code.
 - Real Live fixtures on the running app: `node tools/live-fixtures.mjs setup | play [<project>…] | status | teardown`
   (`live-*` SQLite Stores on native/docker/lima1/lima2; PostgreSQL Stores in a Docker `live-pg` container on
   127.0.0.1:55442 whose Sandboxes run in lima1/lima2/docker, reached through LayerFS's loopback rewrite).

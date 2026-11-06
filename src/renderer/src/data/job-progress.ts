@@ -1,6 +1,6 @@
 import { t } from '@/i18n'
 // A Storage job's progress, as the Store's card, its page and the chips draw it
-// (docs/ui/layerfs-storage.md): its steps as LayerFS reports them (on_progress
+// (docs/ui/storage.md): its steps as LayerFS reports them (on_progress
 // phases), each step's state, the words for what it is doing, its speed and
 // time left from the byte samples, and which job a card shows. No React here.
 import type { StorageJob } from '@shared/host-api'

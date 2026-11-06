@@ -1,5 +1,5 @@
 import { t, useI18n } from '@/i18n'
-// The Projects list (docs/ui/layerfs-projects.md): one row per project with
+// The Projects list (docs/ui/projects.md): one row per project with
 // the Store it is stored in, the machines it runs on, its chats and its last
 // activity. A Store's state shows beside its chip only when it is not plainly
 // usable (busy, down, unresolved). Under 44 rem a row folds into two lines.

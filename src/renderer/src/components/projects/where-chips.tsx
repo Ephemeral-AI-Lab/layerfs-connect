@@ -1,4 +1,4 @@
-// A project's two relationships, as link chips (docs/ui/layerfs-projects.md):
+// A project's two relationships, as link chips (docs/ui/projects.md):
 // "Stored in" names its one Store (opens the Store's page on Storage); "Runs
 // on" lists the machines its Sandboxes run on (each opens the machine's page).
 // A project lives in one Store but may run in any number of Sandboxes on any

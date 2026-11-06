@@ -1,5 +1,5 @@
 import { t, useI18n } from '@/i18n'
-// One Store's page (docs/ui/layerfs-storage.md), opened from its card on the
+// One Store's page (docs/ui/storage.md), opened from its card on the
 // Storage board or any Store link: one scrolling page. Its crumbs (Back to
 // where you came from, `Storage / <name>`), its header (family, name, state,
 // where its file is, its size, the main move and the menu), why it needs you

@@ -1,115 +1,59 @@
-# LayerFS Connect UI
+# UI specs
 
-How the desktop app's screens are laid out. One window: the sidebar on the
-left, and on the right the screen it picks. Each screen has its own file here,
-with an ASCII skeleton and the components that draw it.
-Source: `src/renderer/src/App.tsx` (the shell), `src/renderer/src/components/`.
+One file per surface. Each is ASCII diagrams with numbered regions, a legend per diagram, and as
+little prose as possible. Update a page's file in the same change as its code.
 
-## The window
+## Index
 
-```text
-+-[1] Sidebar ---------------------+-[2] Screen --------------------------------------------------+
-| [o] LayerFS Connect              | Page header: title, facts       [ Play scenario v ] [ ... ] |
-|  * Projects                    + |  History   Storage   Sandboxes | Sessions 3 |               |
-| RESOURCES                        |  ====                                                        |
-|    Storage                       | +----------------------------------------------------------+ |
-|    Compute                       | |                                                          | |
-| YOUR PROJECTS  3       All v  ↻  | |  The tab's content                                       | |
-| > [] shop               *  + x   | |                                                          | |
-|   | o Fix the checkout test      | |                                                          | |
-|   | * Crew  crew_2 · 31/96       | +----------------------------------------------------------+ |
-| LOCAL CHATS                    + |                                                              |
-+----------------------------------+--------------------------------------------------------------+
-```
+| File | Surface |
+|---|---|
+| [shell.md](shell.md) | Window layout, sidebar, window bar, sim strip, mode chip, global overlays |
+| [chat.md](chat.md) | New chat, open chat (header, transcript, composer), Trace, subagent view, chat dialogs |
+| [projects.md](projects.md) | Projects list, New project dialog, Delete project dialog |
+| [project.md](project.md) | Project page: header, Store banner, Chats, Files, Sandboxes, Storage tabs |
+| [project-live.md](project-live.md) | Project page: Live tab |
+| [project-history.md](project-history.md) | Project page: History tab (Lineage, Map) |
+| [machines.md](machines.md) | Machines board, machine card, machine page, Add machine |
+| [storage.md](storage.md) | Storage board (Stores, Backups), Store card, bucket card, Store page, dialogs |
+| [settings.md](settings.md) | Settings dialog and every section |
 
-1. **Sidebar** (`AppSidebar`, `app-sidebar.tsx`): the pages, every project
-   with its chat conversations and scenario runs, and local chats. See
-   [sidebar.md](sidebar.md).
-2. **Screen** (`App`, `App.tsx`): Projects (the default), Storage, Compute,
-   Chat, a project page or a run page. A change of screen cross-fades.
+## Conventions
 
-## The model
-
-Three kinds, each with one home page, and two relationships drawn the same way everywhere:
+Plain ASCII only. Diagram lines at most 100 characters (legend tables may run longer). Diagrams
+sit in ```` ```text ```` blocks.
 
 ```text
-  WHERE DATA LIVES            WHAT YOU WORK ON             WHERE IT RUNS
-  Store (Storage)  --holds-->  Project (Projects)  --runs in-->  Sandboxes on Machines
-  one Store                    many projects                    sqlite: its Store's machine
-                                                                PostgreSQL: any machines
++-[1] Region name -------------------+   a numbered region; the legend under the diagram names it
+| ...                                |
++------------------------------------+
+
+[Button]        a button             [Primary]*    the primary button
+[v Label]       a select / dropdown  [...]         a "more" menu
+( Chip )        a chip / pill        (* Running)   a state chip; * = live / pulsing dot
+(o) / ( )       radio on / off       [x] / [ ]     checkbox on / off
+____________    a text input         [<]  [>]      back / chevron
+###.......      a bar or meter       |Tab| Tab     tabs; |Tab| is the selected one
+<icon>          an icon              x             a close / delete control
+~~~ text ~~~    placeholder text     ...           more rows of the same kind
 ```
 
-- A project is **stored in** exactly one Store: its key is `<store>/<project>`, and every page shows
-  it as a Store chip or as the crumbs `Storage / <store>` above the project's title.
-- A project **runs on** the machines its Sandboxes are on (`RunsOnChips`, `projects/where-chips.tsx`):
-  a list, never a parent. A PostgreSQL Store's projects run on any number of machines.
-- A sqlite Store's file is on one machine ("file on native"): a fact of the Store, not of where its
-  projects run. A machine's page keeps the two apart: **Stores** (sqlite Stores
-  on its disk, PostgreSQL Stores it reaches) and **Sandboxes**.
-- Detail pages carry crumbs (`tabs/crumbs.tsx`): `Storage / <store>` (a Store, and above a project's
-  title), `Machines / <machine>`. A Back chevron beside them retraces the tab's history; the crumbs
-  climb the model. Every cross-link opens in the same tab.
+UI text keeps its words; its typography is written in ASCII: ` - ` for the middle dot `·`, `...` for
+`…`, `--` for `—`, straight quotes for curly ones, `Cmd`/`Opt`/`Ctrl` for `⌘`/`⌥`/`^`, `->` for `→`.
+Names, sizes and times that the sample world does not seed are illustrative.
 
-## The screens
-
-| Group | Screen | File |
-|---|---|---|
-| Shell | Sidebar | [sidebar.md](sidebar.md) |
-| Pages | Projects | [layerfs-projects.md](layerfs-projects.md) |
-| | Storage | [layerfs-storage.md](layerfs-storage.md) |
-| | Machines | [layerfs-compute.md](layerfs-compute.md) |
-| Project page | Live (top of Sessions) | [project-live.md](project-live.md) |
-| | History (and Files) | [project-history.md](project-history.md) |
-| | Storage | [project-storage.md](project-storage.md) |
-| | Sandboxes | [project-sandboxes.md](project-sandboxes.md) |
-| | Sessions, Script and Play scenario | [project-sessions.md](project-sessions.md) |
-| Run page | Conversation and Checks | [session-conversation.md](session-conversation.md) |
-| | Trace | [session-trace.md](session-trace.md) |
-| Dialogs | Models | [dialog-models.md](dialog-models.md) |
-| | New project | [dialog-new-project.md](dialog-new-project.md) |
-
-## How the screens connect
+Each file follows this order:
 
 ```text
-Sidebar
- |- Projects / Storage / Compute --> those pages
- |- a project row -----------------> Project page
- |- a chat row, + on a project, + on Local chats --> Chat
- '- a run row ---------------------> Run page (under its project)
+# <Surface>
+Source: <files>     Opens from: <how the user gets here>
 
-Project page:  History | Storage | Sandboxes  |  Sessions N (Live on top) | Script
-   |- Play scenario (or /scenario in a chat on the project) --> the new run's page
-   '- Sessions: a row --> Run page
-Run page:  Conversation | Checks | Trace
-                                    '- an auto-checkpoint link --> History, on that Commit
+## <View>                 one diagram per view, sample data from the `mac` simulated world
+legend table:   [n] | Component | file:line | one line
+## States                 loading / empty / error / busy ... as mini diagrams or one line each
+## Menus and dialogs      a diagram per menu or dialog
+## Notes                  at most a few lines: hidden flags, dev-only parts, known gaps
 ```
 
-## Shared pieces
-
-- **Page frame:** `PageHeader` (`size="sm"`: the compact one-row header of a project page),
-  `Tab` / `TabBar` (glass buttons, or `variant="line"`: text tabs on a hairline with the chosen one
-  underlined, on a project's and a chat's pages; `TabDivider` between groups), and `Segmented`
-  switches (`components/motion/`). Detail pages (a project, a chat, a machine) keep their header to
-  one thin row (Back, crumbs ending in the page's name at 15px, its facts, small actions) so the
-  page below keeps the height.
-- **States:** `Loading`, `Empty` and `LoadError` (`components/projects/states.tsx`).
-- **Controls:** shadcn components (`components/ui/`): button, dialog,
-  dropdown-menu, select, sheet, table, tooltip.
-- **Icons:** LayerFS icons (`components/lfs-icons.tsx`, SVGs in `assets/icons/`).
-- **Theme:** colours, radii and motion are tokens in `src/renderer/src/styles.css`,
-  one light theme (no dark mode): soft matte from the app icon. Powder-blue
-  canvas, cobalt primary, charcoal text, opaque grained surfaces (`--grain`), soft
-  blue-grey shadows, no backdrop blur, tight corners (`--radius: 0.3rem`).
-
-## Dev aids
-
-Open a screen directly with `CONNECT_VIEW`:
-
-- `projects` (the default) or `chat`
-- `projects/<project>[/<tab>]` (tabs: history, storage, sandboxes, sessions, script; `live` opens Sessions)
-- `runs/<run id>[/<agent>]`
-- `storage`
-- `compute`
-
-Save a screenshot with `CONNECT_SHOT=<file.png>`. See the main
-[README](../../README.md#develop).
+Sample data: the simulated `mac` world (`host/sim/seed.js`): machines `native`, `docker`, `lima1`
+(running), `lima2` (stopped); Stores `shop` (native: `api`, `web`), `lab` (lima1: `notes`), `team`
+(PostgreSQL: `crm`); bucket `backups`; Sandbox `api-dev` with Workspace `feature-login`.

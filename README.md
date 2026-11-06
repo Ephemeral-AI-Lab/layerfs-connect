@@ -253,13 +253,13 @@ scripted sessions and replay controls are no longer part of the desktop UI.
   machine (**Move to another machine…**: a pull, then a push). Live operations
   and this host's jobs show their phase; buckets hold point-in-time backups;
   **Needs attention** shows what `layerfs doctor` finds
-  ([docs/ui/layerfs-storage.md](docs/ui/layerfs-storage.md)).
+  ([docs/ui/storage.md](docs/ui/storage.md)).
 - **Compute** lists the machines the LayerFS home runs on (native, docker,
   VMs and ssh hosts), their Stores and Sandboxes, every Sandbox in the home, and
   adds or removes machines from the platforms `machine.platforms` reports.
   Power is manual: a machine runs between **Start** and **Stop**, and no page
   starts one by being looked at. Linked to LayerFS 1.x it says machines need
-  2.0 ([docs/ui/layerfs-compute.md](docs/ui/layerfs-compute.md)).
+  2.0 ([docs/ui/machines.md](docs/ui/machines.md)).
 
 Remote Push/Pull/conflict mocks and hardcoded native sandboxes have been removed. Backend scenario fixtures and command-line test
 runners remain available for development; this cleanup does not delete project

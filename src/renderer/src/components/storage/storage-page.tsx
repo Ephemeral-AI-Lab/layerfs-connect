@@ -1,4 +1,4 @@
-// The Storage page on LayerFS 2.0 (docs/ui/layerfs-storage.md): the home of
+// The Storage page on LayerFS 2.0 (docs/ui/storage.md): the home of
 // Stores and their backups. Stores: every Store's card in one grid: the
 // sqlite Stores saved under the LayerFS home (`native`), those pushed to a
 // machine (by machine; a Store is in exactly one place), then the PostgreSQL

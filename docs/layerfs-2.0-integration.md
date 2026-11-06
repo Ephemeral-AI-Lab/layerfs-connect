@@ -20,8 +20,8 @@
 > `link:../layerfs-v2-merge/api/node` (LayerFS `layerfs_v2_0_0` at `d046e7e2c1`, product as
 > `5d13a1f62f`). That build removed `store.move` and automatic machine power. §3, §4, §7 and §9 are
 > corrected below; §1, §5, §6 and §8 are kept as the record of the first port. The UI is described in
-> `docs/ui/` ([layerfs-storage.md](ui/layerfs-storage.md), [layerfs-compute.md](ui/layerfs-compute.md),
-> [layerfs-projects.md](ui/layerfs-projects.md)).
+> `docs/ui/` ([storage.md](ui/storage.md), [machines.md](ui/machines.md),
+> [projects.md](ui/projects.md)).
 
 ## 1. Outcome
 
@@ -316,7 +316,7 @@ filed as a LayerFS question (§9). A live check on this Mac passes, covering:
    - The real platform test becomes one home with one machine per kind.
    - Runs that depend on trace lines (`expect` checks, live views) wait on the trace writer (§9 Q1).
 10. **Docs and tests.**
-    - Rewrite `docs/ui/layerfs-storage.md`, `dialog-new-project.md`, `project-sandboxes.md`,
+    - Rewrite `docs/ui/storage.md`, `dialog-new-project.md`, `project-sandboxes.md`,
       `host/README.md` (Deployment, Compute, Storage) and `scenarios/README.md`.
     - Retire `storage-links.md` and `storage-redesign.md` as history.
     - Tests: replace the 1.1.0 fakes with 2.0-shaped ones. Delete tests that are hard to adapt and

@@ -368,7 +368,7 @@ environment for it.
 - `POST /api/machines/<machine>/stores { store }`: puts the Store there (push, pull, or pull then
   push), a job in Storage's table.
 
-### Storage ([`storage.js`](storage.js); `docs/ui/layerfs-storage.md`)
+### Storage ([`storage.js`](storage.js); `docs/ui/storage.md`)
 
 - `GET /api/storage`: Stores by machine (`store.list` with each Store's `state` and `op`,
   `store.status` for size), the machines (with `state` and `supports`), buckets with their last

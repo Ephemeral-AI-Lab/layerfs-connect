@@ -205,7 +205,7 @@ export const layerfs2Zh: Record<string, string> = {
   "Unmount": "卸载",
   "{machine} is stopped. Start it to browse this Store’s files.": "{machine} 已停止。启动它后才能浏览此存储的文件。",
   "Its machine": "它的机器",
-  // the Storage page: Stores and Backups (docs/ui/layerfs-storage.md)
+  // the Storage page: Stores and Backups (docs/ui/storage.md)
   "Show {machine} on Machines": "在“机器”页查看 {machine}",
   "No other machine holds sqlite Stores. Add one on Machines.": "没有其他可存放 sqlite 存储的机器。请在“机器”页添加一台。",
   "Backups": "备份列表",

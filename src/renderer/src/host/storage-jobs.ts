@@ -1,4 +1,4 @@
-// The Storage jobs this window knows (docs/ui/layerfs-storage.md), shared by
+// The Storage jobs this window knows (docs/ui/storage.md), shared by
 // the Storage page, a Store's page, the sidebar and the Machines page: what the
 // host's `storage-job` events said, seeded from each Storage read; the byte
 // samples each running job sent (for its speed); and the ended jobs dismissed

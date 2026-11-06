@@ -1,5 +1,5 @@
 import { t, useI18n } from '@/i18n'
-// The Stores a machine's Sandboxes can use (docs/ui/layerfs-compute.md), one
+// The Stores a machine's Sandboxes can use (docs/ui/machines.md), one
 // section with two tabs: the sqlite Stores pushed to its disk, and the
 // PostgreSQL Stores its Sandboxes reach (every one, when the machine supports
 // PostgreSQL Sandboxes; else LayerFS's reason). Each Store is a tile that

@@ -1,5 +1,5 @@
 import { t, useI18n } from '@/i18n'
-// Machines (docs/ui/layerfs-compute.md): the machines this Connect's LayerFS
+// Machines (docs/ui/machines.md): the machines this Connect's LayerFS
 // home runs on, the home of machines, Sandboxes and Workspaces. The board: a
 // header with New machine and Refresh, one line of facts, a notice per
 // machine that needs you, and a grid of machine cards (those that need you

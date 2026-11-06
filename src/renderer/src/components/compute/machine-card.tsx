@@ -1,5 +1,5 @@
 import { t, useI18n } from '@/i18n'
-// A machine on the Machines board (docs/ui/layerfs-compute.md), and what its
+// A machine on the Machines board (docs/ui/machines.md), and what its
 // page shares with it: Start or Stop, the menu (Update settings… for the
 // built-ins, Remove… or Disconnect…, refused while it holds Stores or
 // Sandboxes) and its dialogs, a Store chip linking Storage (the Stores' home:

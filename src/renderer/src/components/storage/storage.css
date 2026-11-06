@@ -167,7 +167,7 @@
 }
 
 /* ===================================================================
-   Storage redesign (docs/ui/storage-redesign.md): the transfer stepper,
+   Storage redesign (docs/ui/storage.md): the transfer stepper,
    the import bridge and cards that open a page. The board's Store cards
    are plain Tailwind (overview/store-card.tsx).
    =================================================================== */

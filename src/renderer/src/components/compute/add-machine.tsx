@@ -1,5 +1,5 @@
 import { t, useI18n } from '@/i18n'
-// Add a machine (docs/ui/layerfs-compute.md), the dialog New machine opens:
+// Add a machine (docs/ui/machines.md), the dialog New machine opens:
 // one row per platform this host creates or connects (machine.platforms),
 // with its tool's version or what it is missing. A ready platform opens its
 // form in its row: Create for a VM,

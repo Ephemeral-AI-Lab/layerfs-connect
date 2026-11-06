@@ -1,5 +1,5 @@
 import { t, useI18n } from '@/i18n'
-// One machine's page (docs/ui/layerfs-compute.md), opened from its card on the
+// One machine's page (docs/ui/machines.md), opened from its card on the
 // Machines board or any machine link: one scrolling page. Its crumbs (Back to
 // where you came from, `Machines / <name>`), its header (kind, name, state,
 // size, default image, free disk, Start or Stop and the menu), why it needs
