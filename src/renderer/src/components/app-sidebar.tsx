@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react'
 import type { AgentSessionSummary } from '@shared/agent-api'
 import { projectKey, projectRef, type ProjectSummary } from '@shared/host-api'
 
+import { ModeChip } from '@/components/mode-switch'
 import { ConnectMark } from '@/components/connect-mark'
 import { LfsProject, LfsStore } from '@/components/lfs-icons'
 import { Collapse } from '@/components/motion/collapse'
@@ -182,7 +183,7 @@ export function AppSidebar({ selected, projects, onSelect, onNewProject, onDelet
         <ChatList selected={selected} onSelect={onSelect} onDeleteChat={onDeleteChat} onOpenChat={onOpenChat} onNewChat={onNewChat} />
         {SHOW_PROJECT_TREE && <ProjectTree selected={selected} projects={projects} onSelect={onSelect} onNewProject={onNewProject} onDeleteProject={onDeleteProject} onDeleteChat={onDeleteChat} onOpenChat={onOpenChat} onNewChat={onNewChat} />}
       </SidebarContent>
-      <SidebarFooter className="shell-sidebar-footer shrink-0 p-0">
+      <SidebarFooter className="shell-sidebar-footer flex shrink-0 flex-row items-center gap-0 p-0 pr-4">
         <button
           type="button"
           data-testid="open-settings"
@@ -190,11 +191,12 @@ export function AppSidebar({ selected, projects, onSelect, onNewProject, onDelet
           aria-haspopup="dialog"
           aria-expanded={settingsOpen}
           onClick={onOpenSettings}
-          className="shell-settings-button app-no-drag flex h-13 w-full items-center gap-2.5 rounded-none px-6 text-[13px] text-muted-foreground outline-none transition-colors hover:bg-foreground/[0.05] hover:text-foreground aria-expanded:bg-foreground/[0.05] aria-expanded:text-foreground"
+          className="shell-settings-button app-no-drag flex h-13 min-w-0 flex-1 items-center gap-2.5 rounded-none px-6 text-[13px] text-muted-foreground outline-none transition-colors hover:bg-foreground/[0.05] hover:text-foreground aria-expanded:bg-foreground/[0.05] aria-expanded:text-foreground"
         >
           <Settings className="size-[18px] shrink-0 text-muted-foreground" strokeWidth={1.7} />
           <span className="truncate">{t('Settings')}</span>
         </button>
+        <ModeChip />
       </SidebarFooter>
     </Sidebar>
     </div>

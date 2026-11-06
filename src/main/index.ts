@@ -5,14 +5,23 @@
 // why there is none) as --connect-host=<JSON>; the renderer then talks to the
 // host over HTTP, never through Electron IPC. The host exits when its stdin
 // closes, and is killed on quit.
+//
+// The host runs real LayerFS or the simulator (host/sim), its LayerFS mode,
+// chosen in the LayerFS menu or the sidebar's mode chip and kept in
+// <userData>/connect-mode.json (LAYERFS_CONNECT_MODE at launch overrides it
+// for that run). A switch stops the host, starts it in the other mode and
+// replaces each window with one that gets the new address: the two modes
+// have separate state folders, so nothing of one shows in the other.
 
 import { spawn, type ChildProcess } from 'node:child_process'
+import { readFileSync } from 'node:fs'
 import { writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { createInterface } from 'node:readline'
-import { BrowserWindow, app, dialog, ipcMain, nativeTheme, shell } from 'electron'
+import { BrowserWindow, Menu, app, dialog, ipcMain, nativeTheme, shell, type MenuItemConstructorOptions } from 'electron'
 
-type HostAddress = { url: string; token: string } | { error: string }
+type Mode = 'real' | 'sim'
+type HostAddress = ({ url: string; token: string } | { error: string }) & { mode: Mode }
 
 /** The app icon (the soft-matte handshake tile at 1024 px): the window's on Linux and Windows, the Dock's on macOS. */
 const ICON = join(__dirname, '../../resources/icon.png')
@@ -20,29 +29,49 @@ const ICON = join(__dirname, '../../resources/icon.png')
 /** How long the host may take to print its ready line. */
 const READY_MS = 20_000
 
-let hostProcess: ChildProcess | null = null
-let hostAddress: HostAddress = { error: 'The Connect host has not started.' }
+/** How long a stopping host may take to exit before a switch goes on without it. */
+const STOP_MS = 15_000
 
-/** Starts the host and answers its address, or why there is none. Never throws. */
-function startHost(): Promise<HostAddress> {
+let hostProcess: ChildProcess | null = null
+let hostAddress: HostAddress = { error: 'The Connect host has not started.', mode: 'real' }
+let mode: Mode = 'real'
+/** A mode switch in progress: a second one waits for it. */
+let switching: Promise<void> | null = null
+
+const isMode = (value: unknown): value is Mode => value === 'real' || value === 'sim'
+const modeFile = () => join(app.getPath('userData'), 'connect-mode.json')
+
+/** The mode to start in: LAYERFS_CONNECT_MODE, else the saved choice, else real. */
+function initialMode(): Mode {
+  if (isMode(process.env.LAYERFS_CONNECT_MODE)) return process.env.LAYERFS_CONNECT_MODE
+  try {
+    const saved = JSON.parse(readFileSync(modeFile(), 'utf8')) as { mode?: unknown }
+    return isMode(saved.mode) ? saved.mode : 'real'
+  } catch {
+    return 'real'
+  }
+}
+
+/** Starts the host in `want` mode and answers its address, or why there is none. Never throws. */
+function startHost(want: Mode): Promise<HostAddress> {
   const dir = join(app.getAppPath(), 'host')
   const node = process.env.LAYERFS_CONNECT_NODE || 'node'
   return new Promise((resolve) => {
     let settled = false
     let lastErr = ''
-    const done = (address: HostAddress) => {
+    const done = (answer: { url: string; token: string } | { error: string }) => {
       if (settled) return
       settled = true
       clearTimeout(timer)
-      if ('error' in address) console.error(`[host] ${address.error}`)
-      resolve(address)
+      if ('error' in answer) console.error(`[host] ${answer.error}`)
+      resolve({ ...answer, mode: want })
     }
     // stdin stays piped: the host exits when it closes (this process died).
     // Every LayerFS call runs once on the libuv threadpool and long execs hold a
     // thread each, so the host gets more than the default 4.
     const child = spawn(node, [join(dir, 'main.js')], {
       stdio: ['pipe', 'pipe', 'pipe'],
-      env: { ...process.env, UV_THREADPOOL_SIZE: process.env.UV_THREADPOOL_SIZE || '16' },
+      env: { ...process.env, LAYERFS_CONNECT_MODE: want, UV_THREADPOOL_SIZE: process.env.UV_THREADPOOL_SIZE || '16' },
     })
     hostProcess = child
     const timer = setTimeout(() => done({ error: `The Connect host did not start within ${READY_MS / 1000} s.` }), READY_MS)
@@ -73,24 +102,94 @@ function startHost(): Promise<HostAddress> {
   })
 }
 
-function stopHost() {
+/** Asks the host to exit; answers once it has, or after STOP_MS. */
+function stopHost(): Promise<void> {
   const child = hostProcess
-  if (!child) return
+  if (!child) return Promise.resolve()
   hostProcess = null
+  const exited = new Promise<void>((resolve) => {
+    if (child.exitCode !== null || child.signalCode !== null) return resolve()
+    child.once('exit', () => resolve())
+    setTimeout(resolve, STOP_MS).unref()
+  })
   child.stdin?.end()
   child.kill('SIGTERM')
+  return exited
 }
 
-function createWindow(): BrowserWindow {
+const MODE_WORDS: Record<Mode, string> = { real: 'Real LayerFS', sim: 'Simulated LayerFS' }
+
+/**
+ * Restarts the host in `want` mode and replaces every window with one on the
+ * new host (each keeps its place and size). `confirmed` skips the native
+ * question (the sidebar's chip asked already). Saves the choice.
+ */
+async function switchMode(want: Mode, { confirmed = false, owner }: { confirmed?: boolean; owner?: BrowserWindow | null } = {}) {
+  if (switching) await switching
+  if (want === mode) return buildMenu()
+  if (!confirmed) {
+    const parent = owner ?? BrowserWindow.getFocusedWindow() ?? undefined
+    const options = {
+      type: 'question' as const,
+      buttons: [`Switch to ${MODE_WORDS[want]}`, 'Cancel'],
+      defaultId: 0,
+      cancelId: 1,
+      message: `Switch Connect to ${MODE_WORDS[want]}?`,
+      detail: `${want === 'sim' ? 'Connect restarts on a simulated LayerFS with sample machines, Stores and projects. Nothing you do there reaches your real LayerFS home.' : 'Connect restarts on your real LayerFS home.'} Chats that are working stop; you can continue them after switching back.`,
+    }
+    const { response } = parent ? await dialog.showMessageBox(parent, options) : await dialog.showMessageBox(options)
+    if (response !== 0) return buildMenu()
+  }
+  switching = (async () => {
+    const windows = BrowserWindow.getAllWindows().map((win) => ({ win, bounds: win.getBounds() }))
+    await stopHost()
+    mode = want
+    await writeFile(modeFile(), JSON.stringify({ mode })).catch((error) => console.error(`[mode] could not save the mode: ${error?.message ?? error}`))
+    hostAddress = await startHost(mode)
+    buildMenu()
+    // the new window first, so the app never has no window (which would quit it off macOS)
+    if (windows.length === 0) createWindow()
+    for (const { win, bounds } of windows) {
+      createWindow(bounds)
+      if (!win.isDestroyed()) win.destroy()
+    }
+  })().finally(() => {
+    switching = null
+  })
+  return switching
+}
+
+/** The app menu: the platform's standard menus, and LayerFS with the mode. */
+function buildMenu() {
+  const isMac = process.platform === 'darwin'
+  const template: MenuItemConstructorOptions[] = [
+    ...(isMac ? [{ role: 'appMenu' as const }] : []),
+    { role: 'fileMenu' },
+    { role: 'editMenu' },
+    { role: 'viewMenu' },
+    {
+      label: 'LayerFS',
+      submenu: [
+        { label: MODE_WORDS.real, type: 'radio', checked: mode === 'real', accelerator: 'CmdOrCtrl+Alt+1', click: () => void switchMode('real') },
+        { label: MODE_WORDS.sim, type: 'radio', checked: mode === 'sim', accelerator: 'CmdOrCtrl+Alt+2', click: () => void switchMode('sim') },
+      ],
+    },
+    { role: 'windowMenu' },
+  ]
+  Menu.setApplicationMenu(Menu.buildFromTemplate(template))
+}
+
+function createWindow(bounds?: Electron.Rectangle): BrowserWindow {
   const isMac = process.platform === 'darwin'
 
   const win = new BrowserWindow({
     width: 1280,
     height: 820,
+    ...bounds,
     minWidth: 900,
     minHeight: 600,
     show: false,
-    title: isMac ? '' : 'LayerFS Connect',
+    title: isMac ? '' : mode === 'sim' ? 'LayerFS Connect (Simulated)' : 'LayerFS Connect',
     icon: ICON,
     backgroundColor: '#F6F6F7',
     titleBarStyle: 'hidden',
@@ -186,11 +285,18 @@ void app.whenReady().then(async () => {
     })
     return result.canceled ? null : result.filePaths[0] ?? null
   })
+  // the sidebar's mode chip: it asked already, so no native question
+  ipcMain.handle('connect:set-mode', async (event, want: unknown) => {
+    if (!isMode(want)) throw new Error('The mode is real or sim.')
+    await switchMode(want, { confirmed: true, owner: BrowserWindow.fromWebContents(event.sender) })
+  })
   // a packaged app takes its icon from the bundle; unpackaged, the Dock would show Electron's
   if (process.platform === 'darwin' && !app.isPackaged) app.dock?.setIcon(ICON)
   // one light theme: native menus, dialogs and the title bar ignore the system's dark setting
   nativeTheme.themeSource = 'light'
-  hostAddress = await startHost()
+  mode = initialMode()
+  buildMenu()
+  hostAddress = await startHost(mode)
   createWindow()
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
@@ -201,4 +307,4 @@ app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit()
 })
 
-app.on('will-quit', stopHost)
+app.on('will-quit', () => void stopHost())

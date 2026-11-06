@@ -5,11 +5,13 @@
 // once, loads the demo engine (runs/) and serves HTTP on 127.0.0.1. There
 // is no runtime to open and no worker to start: machines start on the first
 // call that needs them. Once it listens it prints one line on stdout,
-// {"ready":true,"url","token"}, or {"ready":false,"error"} and exits 1. Logs
+// {"ready":true,"url","token","mode"}, or {"ready":false,"error"} and exits 1. Logs
 // go to stderr. It exits when stdin closes or on SIGTERM. While it serves,
 // <state>/host.json (owner-only) holds the same url and token and its pid,
 // so tools on this machine can drive the running app's host
-// (tools/connect-run.mjs); it is removed at exit.
+// (tools/connect-run.mjs); it is removed at exit. LAYERFS_CONNECT_MODE=sim
+// runs it on the simulator (config.js, layerfs.js) in its own state folder;
+// scenario runs and scenario chats need real LayerFS and are off there.
 import { readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { dirname } from 'node:path'
@@ -73,7 +75,7 @@ async function main() {
   const spec = args.state ? resolveSpec(args.state) : resolveSpec()
   // §5: the native machine's daemon, once per home (a value already recorded is kept)
   const daemon = await recordNativeDaemon(spec)
-  if (!daemon.recorded && !daemon.kept && daemon.why !== 'not macOS') log(`[host] the native daemon is not recorded: ${daemon.why}`)
+  if (!daemon.recorded && !daemon.kept && daemon.why !== 'not macOS' && spec.mode !== 'sim') log(`[host] the native daemon is not recorded: ${daemon.why}`)
   if (daemon.replaced) log(`[host] the recorded native daemon ${daemon.replaced} is not there; recorded ${spec.daemon}`)
   const engine = { runs: null, error: 'loading' }
   const projects = new Projects({ spec, runs: () => engine.runs, daemon, log })
@@ -82,7 +84,7 @@ async function main() {
   projects.storeJoin = () => storage.projectJoin()
   // a session's project is a project key, `<store>/<project>`
   // a scenario chat plays its script on the scenario engine's folder and scope (agents/scenarios.js)
-  const scenarios = await import('./agents/scenarios.js')
+  const scenarios = spec.mode === 'sim' ? null : await import('./agents/scenarios.js')
     .then(({ AgentScenarios }) => new AgentScenarios({ spec }).ready())
     .catch((error) => {
       log(`[host] scenario chats are off: ${error?.message ?? error}`)
@@ -94,7 +96,18 @@ async function main() {
   const token = newToken()
   // Compute's "Move to…" starts a job in Storage's table, so its progress shows there
   const machines = new Machines({ spec, place: (store, machine) => storage.place(store, machine) })
-  const server = createHostServer({ token, projects, storage, machines, agents: () => agents, runs: () => engine.runs, runsError: () => engine.error, log })
+  // sim mode: the world's preset and its reset, which every page then reads again
+  const sim = spec.mode === 'sim'
+    ? await import('./sim/index.js').then((m) => ({
+        info: () => m.info(spec.home),
+        reset: (preset) => {
+          const done = m.reset(spec.home, preset)
+          storage.changed()
+          return done
+        },
+      }))
+    : null
+  const server = createHostServer({ token, projects, storage, machines, sim, agents: () => agents, runs: () => engine.runs, runsError: () => engine.error, log })
 
   const endpoint = join(spec.state, 'host.json')
   let owned = false
@@ -134,15 +147,15 @@ async function main() {
   process.stdin.on('close', () => void shutdown('stdin closed'))
   process.stdin.resume()
 
-  Object.assign(engine, await loadRuns(spec, projects))
+  Object.assign(engine, spec.mode === 'sim' ? { runs: null, error: 'Scenario runs need real LayerFS: switch Connect to Real to play them.' } : await loadRuns(spec, projects))
   const url = await listen(server, args.port)
   // a second host (another app window on the same state) leaves the first one's file alone
   if (!liveOwner(endpoint)) {
     writeFileSync(endpoint, JSON.stringify({ url, token, pid: process.pid }), { mode: 0o600 })
     owned = true
   }
-  process.stdout.write(`${JSON.stringify({ ready: true, url, token })}\n`)
-  log(`[host] listening on ${url} (state ${spec.state}, LayerFS home ${spec.home})`)
+  process.stdout.write(`${JSON.stringify({ ready: true, url, token, mode: spec.mode })}\n`)
+  log(`[host] listening on ${url} (${spec.mode === 'sim' ? 'simulated LayerFS, ' : ''}state ${spec.state}, LayerFS home ${spec.home})`)
 }
 
 main().catch((error) => {

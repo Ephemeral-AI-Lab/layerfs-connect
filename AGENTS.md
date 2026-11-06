@@ -3,6 +3,8 @@
 - Typecheck: `pnpm -s typecheck`
 - Tests: `node --test test/*.test.mjs` (a bare `node --test test/` fails on Node 24)
 - Build: `pnpm -s build`
+- Simulated LayerFS: `pnpm dev:sim` (or the LayerFS menu / sidebar mode chip) runs the host on `host/sim`, state in
+  `~/.layerfs-connect-sim`; `node tools/sim-table.mjs` after upgrading LayerFS (host/README.md).
 - Headless screenshots: `"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless=new
   --window-size=1280,760 --virtual-time-budget=8000 --screenshot=/tmp/x.png "<url>"`. There is one light theme; no dark mode.
 - UI specs live in `docs/ui/*.md`; update the page's spec with its code.

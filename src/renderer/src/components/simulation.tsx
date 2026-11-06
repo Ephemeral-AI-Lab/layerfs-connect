@@ -5,6 +5,8 @@
 // about the sample home from it (data/project-sim.ts: a sample project opens
 // with its Branches, Commits, files, Sandboxes and chats) and refuses every
 // call that would change it; nothing about the sample home reaches the host.
+// Off while the host itself runs the simulator (mode-switch.tsx): its pages
+// are simulated already.
 import { FlaskConical } from 'lucide-react'
 import { useSyncExternalStore } from 'react'
 
@@ -22,7 +24,7 @@ const OLD_KEY = 'connect.compute.simulate'
 const LIVE = 'live'
 
 const read = (): SimId | null => {
-  if (!import.meta.env.DEV) return null
+  if (!import.meta.env.DEV || window.connect.mode === 'sim') return null
   try {
     const v = localStorage.getItem(KEY) ?? localStorage.getItem(OLD_KEY)
     return isSimId(v) ? v : null
@@ -76,7 +78,7 @@ export const SIMULATED_REFUSAL = Object.assign(new Error('This is sample data: n
 export function SimulationPicker() {
   useI18n()
   const value = useSimulation()
-  if (!import.meta.env.DEV) return null
+  if (!import.meta.env.DEV || window.connect.mode === 'sim') return null
   return (
     <Select value={value ?? LIVE} onValueChange={(v) => setSimulation(isSimId(v) ? v : null)}>
       <SelectTrigger size="sm" aria-label={t('Simulate a host')} className="h-8 rounded-full px-3 text-xs">

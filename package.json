@@ -10,6 +10,7 @@
   },
   "scripts": {
     "dev": "electron-vite dev",
+    "dev:sim": "LAYERFS_CONNECT_MODE=sim electron-vite dev",
     "build": "electron-vite build",
     "start": "electron-vite preview",
     "typecheck": "tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.web.json",

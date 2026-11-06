@@ -145,6 +145,7 @@ export class Projects {
     const platform = process.platform === 'darwin' ? 'macos' : process.platform === 'win32' ? 'windows' : 'linux'
     return {
       platform,
+      mode: this.spec.mode ?? 'real',
       layerfs: linkedVersion(),
       settings: { state: this.spec.state, home: this.spec.home, cli: this.spec.cli },
       daemon: this.daemon ? { recorded: !!(this.daemon.recorded || this.daemon.kept), why: this.daemon.why ?? null } : null,

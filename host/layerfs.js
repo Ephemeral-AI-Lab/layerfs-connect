@@ -4,31 +4,45 @@
 // Every call is one attempt; a refusal throws LayerFSError { code, message,
 // detail } and passes through with its code. `closeStores()` at exit closes
 // the Stores the process holds open, so it leaves no stale lease.
+//
+// Which LayerFS answers is the process's mode (config.js modeOf,
+// LAYERFS_CONNECT_MODE), read once as this module loads: `real` loads the
+// linked `layerfs` package, `sim` the simulator (sim/index.js), which has the
+// same calls, answers and refusals. Nothing above this module knows which
+// one runs; a host never switches mode while it runs (the app restarts it).
 import { execFile } from 'node:child_process'
 import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { client, close, doctor } from 'layerfs'
-import { packageDir } from './config.js'
+import { modeOf, packageDir } from './config.js'
+
+/** The mode's package: `{ mode, client, close, doctor, table, LayerFSError, version }`. */
+export async function loadBackend(mode = modeOf()) {
+  const lib = mode === 'sim' ? await import('./sim/index.js') : await import('layerfs')
+  return { mode, client: lib.client, close: lib.close, doctor: lib.doctor, table: lib.table, LayerFSError: lib.LayerFSError, version: mode === 'sim' ? lib.VERSION : packageVersion() }
+}
+
+/** This process's LayerFS. */
+export const backend = await loadBackend()
 
 /**
  * `layerfs doctor` on the home (#536 H7): report-only, starts no machine and
  * changes nothing. `{ ok, findings: [{ severity, entity, message, fix }] }`.
  */
-export const doctorOf = (spec) => doctor({ home: spec.home })
+export const doctorOf = (spec) => backend.doctor({ home: spec.home })
 
 /**
  * Closes every Store this process holds open with no call running, dropping
  * its leases (`layerfs.close()`); answers how many. The host's last step at
  * exit: a lease of a process that ended shows as stale until the Store's next call.
  */
-export const closeStores = () => close()
+export const closeStores = () => backend.close()
 
 /** The largest page a list call takes. */
 export const PAGE = 1000
 
 /** The client of `spec.home`, made on first use. */
 export function layerfs(spec) {
-  spec.lfs ??= client({ home: spec.home })
+  spec.lfs ??= backend.client({ home: spec.home })
   return spec.lfs
 }
 
@@ -98,8 +112,11 @@ export function workspacesOf(lfs, sandbox, { wait = null } = {}) {
 /** How long a page's view waits for one Sandbox's Workspaces before showing it unread. */
 export const VIEW_WAIT_MS = 5000
 
+/** The running LayerFS's version: the linked package's, or the simulator's. */
+export const linkedVersion = () => backend.version
+
 /** The linked `layerfs` package's version, or null. */
-export function linkedVersion() {
+function packageVersion() {
   try {
     return JSON.parse(readFileSync(join(packageDir(), 'package.json'), 'utf8')).version ?? null
   } catch {
@@ -116,6 +133,7 @@ export function linkedVersion() {
  * in its place (`replaced` names the old one). Answers what it did; never throws.
  */
 export async function recordNativeDaemon(spec) {
+  if (backend.mode === 'sim') return { recorded: false, why: 'simulated LayerFS' }
   const done = await importDaemon(spec)
   if (!done.kept) return done
   try {

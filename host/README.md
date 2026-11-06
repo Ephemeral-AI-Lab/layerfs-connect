@@ -195,9 +195,39 @@ through the link's real path. The host makes one client, `client({ home })`
 run the native `layerfs` command (the linked checkout's `target/debug/layerfs`, or
 `LAYERFS_CONNECT_CLI`). See [the integration spec](../docs/layerfs-2.0-integration.md).
 
+## Real and simulated LayerFS ([`sim/`](sim/))
+
+The host runs in one of two modes, `LAYERFS_CONNECT_MODE` (`real`, the default, or `sim`), read once
+as [`layerfs.js`](layerfs.js) loads: `real` loads the linked `layerfs` package, `sim` the simulator
+in `sim/`, which exports the same `client`, `close`, `doctor` and `table`. Nothing above
+`layerfs.js` knows which one answers.
+
+- **The simulator** (`sim/world.js`) keeps one world per home in `<home>/sim-world.json`: machines,
+  Stores, buckets, projects with their Layers, Branches, Commits and files, and Sandboxes. Its
+  answers and refusals have the shapes and codes LayerFS 2.0.0 gives (recorded from the real
+  library); states are the SDK's words and work in flight shows as an `op` with its phase
+  (`machine.start · boot`, `store.push · send` with bytes). It takes arguments as the real package
+  does, from the real call table saved in `sim/table.json` (`node tools/sim-table.mjs` writes it
+  again; a test fails when it drifts). A call it does not cover is refused `Unsupported` naming it:
+  for now `workspace.exec`, `file.blame`, `file.diff` and `file.apply`, so agent chats on a project
+  cannot run commands in sim mode.
+- **Starting worlds** (`sim/seed.js`): `mac` (Docker, two Lima VMs, Stores on native and a VM, a
+  PostgreSQL Store, a backup, a running Sandbox), `empty` and `trouble` (the states that need the
+  person). A missing world file starts from `LAYERFS_SIM_PRESET` (default `mac`);
+  `POST /api/sim/reset { preset }` replaces the world. `LAYERFS_SIM_SPEED` scales every simulated
+  delay (`0` for tests).
+- **Separate state**: sim mode's `<state>` defaults to `~/.layerfs-connect-sim`, and a real home
+  (one with `layerfs.json`) is refused in sim mode, so a simulated call never reaches a real Store.
+  Sim mode records no native daemon, finds no CLI, and turns scenario runs and scenario chats off.
+- **The switch**: Electron starts the host with the saved mode (`<userData>/connect-mode.json`;
+  `LAYERFS_CONNECT_MODE` at launch overrides it, as `pnpm dev:sim` does). The LayerFS menu
+  (⌥⌘1 / ⌥⌘2) and the sidebar's mode chip (`docs/ui/shell.md`) switch: the host is stopped,
+  started in the other mode, and each window is replaced by one on the new host.
+
 ## Deployment ([`config.js`](config.js))
 
-- `<state>`: `LAYERFS_CONNECT_STATE`, else `~/.layerfs-connect`: runs, `host.json`, agent state.
+- `<state>`: `LAYERFS_CONNECT_STATE`, else `~/.layerfs-connect` (`~/.layerfs-connect-sim` in sim
+  mode): runs, `host.json`, agent state.
 - `<state>/home-2`: the LayerFS 2.0 home (`LAYERFS_HOME`), private. The 1.1.0 `<state>/home` is
   left as it is; a non-empty home folder without a 2.0 `layerfs.json` is refused.
 - Every machine, Store, bucket and image is a record in the home; Connect keeps no LayerFS
@@ -230,7 +260,8 @@ host/
     history.js         immutable turn checkpoints and Pi session copies without replaying old work
   config.js            deployment (above)
   machines.js          Compute's machines (LayerFS 2.0): the view and its calls (below)
-  layerfs.js           the one LayerFS client, paging, the native daemon record
+  layerfs.js           the one LayerFS client (real or simulated), paging, the native daemon record
+  sim/                 the simulated LayerFS: index.js (the package's exports), world.js, seed.js, table.json
   seed.js              writes a seed.json fixture out as a folder
   checks/              final checks of a finished run (final.json …)
   parse/               the call parser: splits each step into classified segments
@@ -251,7 +282,7 @@ tools/                 scenario tools (replay conversion, checks)
 prints exactly one line on stdout once it listens:
 
 ```json
-{"ready":true,"url":"http://127.0.0.1:53123","token":"<hex>"}
+{"ready":true,"url":"http://127.0.0.1:53123","token":"<hex>","mode":"real"}
 ```
 
 or `{"ready":false,"error":"…"}` and exits 1. While it serves, the first

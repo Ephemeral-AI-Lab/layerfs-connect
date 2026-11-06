@@ -4,7 +4,8 @@
 // pull, backup and restore routes to `storage` (storage.js), agent routes to the AgentManager
 // (agents/routes.js), and demo and run routes to `runs` (the RunManager of
 // runs/), which may be missing; then those routes answer 503 with the reason
-// it did not load.
+// it did not load. In sim mode `sim` answers /api/sim (the simulated world's
+// preset and the presets it can start from) and /api/sim/reset.
 import { createHash, randomBytes, timingSafeEqual } from 'node:crypto'
 import { createServer } from 'node:http'
 import { agentRoute } from './agents/routes.js'
@@ -27,6 +28,9 @@ const STATUS = {
   NoSuchCommit: 404,
   NoSuchSandbox: 404,
   NoSuchStore: 404,
+  NoSuchWorkspace: 404,
+  NoMatch: 400,
+  AmbiguousMatch: 400,
   NotFound: 404,
   // the SDK's: an operation holds the entity (detail names it, its phase and op)
   Busy: 409,
@@ -38,6 +42,7 @@ const STATUS = {
   Unknown: 500,
   Conflict: 409,
   Exists: 409,
+  NameTaken: 409,
   HeadMoved: 409,
   Dirty: 409,
   ReadOnly: 409,
@@ -100,11 +105,12 @@ export function errorAnswer(error) {
  * @param {() => string | null} [deps.runsError] why the RunManager is missing
  * @param {object} [deps.storage] storage.js's Storage: Stores, buckets, push/pull/move, backup/restore, PostgreSQL, doctor (absent: those routes 404)
  * @param {object} [deps.machines] machines.js's Machines: Compute's machines (absent: those routes 404)
+ * @param {object} [deps.sim] in sim mode, the simulated world: { info(), reset(preset) } (absent: those routes 404)
  * @param {number} [deps.heartbeatMs]
  * @param {(line: string) => void} [deps.log]
  */
 export function createHandler(deps) {
-  const { token, projects, storage = null, machines = null, runs = () => null, agents = () => null, runsError = () => null, heartbeatMs = HEARTBEAT_MS, log = (line) => process.stderr.write(`${line}\n`) } = deps
+  const { token, projects, storage = null, machines = null, sim = null, runs = () => null, agents = () => null, runsError = () => null, heartbeatMs = HEARTBEAT_MS, log = (line) => process.stderr.write(`${line}\n`) } = deps
   const streams = new Set()
 
   /** The RunManager, or a 503 naming why it is not there. */
@@ -174,6 +180,9 @@ export function createHandler(deps) {
       if (id && sub === 'stores' && method === 'POST') return machines.moveStore(body?.store, id)
     }
     if (group === 'status' && !id && method === 'GET') return projects.status()
+    // the simulated world (sim mode only): its preset, and a fresh copy of one
+    if (sim && group === 'sim' && !id && method === 'GET') return sim.info()
+    if (sim && group === 'sim' && id === 'reset' && !sub && method === 'POST') return sim.reset(body?.preset)
     // `id` is a project key, `<store>/<project>`, sent as one encoded segment
     if (group === 'projects') {
       if (!id) {

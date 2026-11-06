@@ -76,6 +76,51 @@
   box-shadow: inset 0 0 0 2px var(--ring);
 }
 
+/* The LayerFS mode chip (mode-switch.tsx): quiet for Real, amber for Simulated. */
+.mode-chip {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 5px;
+  height: 26px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in oklab, var(--foreground) 10%, transparent);
+  background: color-mix(in oklab, var(--background) 70%, transparent);
+  color: var(--muted-foreground);
+  font-size: 12px;
+  line-height: 1;
+  outline: none;
+  transition: background-color var(--dur-fast), color var(--dur-fast), border-color var(--dur-fast);
+}
+.mode-chip:hover,
+.mode-chip[data-state='open'] {
+  color: var(--foreground);
+  background: color-mix(in oklab, var(--foreground) 6%, transparent);
+}
+.mode-chip:focus-visible {
+  box-shadow: 0 0 0 2px var(--ring);
+}
+.mode-chip[data-mode='sim'] {
+  color: var(--warning);
+  border-color: color-mix(in oklab, var(--warning) 35%, transparent);
+  background: color-mix(in oklab, var(--warning) 9%, transparent);
+}
+.mode-chip[data-mode='sim']:hover,
+.mode-chip[data-mode='sim'][data-state='open'] {
+  background: color-mix(in oklab, var(--warning) 15%, transparent);
+}
+
+/* Sim mode: a striped strip across the top of the window, over everything, never in the way. */
+.sim-strip {
+  position: fixed;
+  inset: 0 0 auto 0;
+  z-index: 60;
+  height: 3px;
+  pointer-events: none;
+  background: repeating-linear-gradient(135deg, #e0a526 0 10px, #f3d27a 10px 20px);
+}
+
 /* Project headers keep their matte surface; conversations read as a quiet list. */
 .sidebar-project-open {
   border-radius: 999px;

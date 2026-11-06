@@ -74,8 +74,12 @@ export interface PlatformsView {
 // ---------- Deployment and status ----------
 
 /** GET /api/status: Connect on its one LayerFS 2.0 home. Machine power is manual; listing status starts nothing. */
+/** Which LayerFS the host runs on: the linked library, or the simulator (host/sim). */
+export type LayerfsMode = 'real' | 'sim'
+
 export interface HostStatus {
   platform: 'linux' | 'macos' | 'windows'
+  mode: LayerfsMode
   /** The linked `layerfs` package's version. */
   layerfs: string | null
   settings: {
