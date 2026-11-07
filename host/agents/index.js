@@ -19,6 +19,7 @@ import { readProjectInstructions } from './context.js'
 import { readToolOutput } from './tool-output.js'
 import { normalizePrompt, promptDetails } from './attachments.js'
 import { chatLive, chatTrace } from './trace.js'
+import { withStepViews } from './step-views.js'
 import { registerScenarioProvider, SCENARIO_PROVIDER } from './scenario-model.js'
 import { assertNativeControl, bindNativeInput, cancelNativeControls, currentNativeControl, nativeCommand, pendingNativeInput, runNativeControl, staleNativeControl } from './native-input.js'
 import { commandContextActions, commandForkTarget } from './command-context.js'
@@ -392,6 +393,8 @@ export class AgentManager extends EventEmitter {
     // ephemeral: a restored record has no trustworthy estimate until opened.
     return {
       ...detail,
+      // each bash call with what it did to LayerFS (step-views.js); not saved with the record
+      messages: withStepViews(record.messages, join(this.dir, id, 'traces')),
       children: describeChildren(record, join(this.dir, id)),
       workspace: workspaceSummary(record.workspace),
       queued: (active?.queued ?? []).map(({ id, text, mode, message }) => ({ id, text, mode, attachments: message.details?.connectAttachments ?? [] })),

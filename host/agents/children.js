@@ -1,11 +1,12 @@
 // A chat's subagents: each child run's numbers (tokens, cost, turns, tools,
 // time) and its own conversation, read from the child's Pi session file.
 import { existsSync, realpathSync, statSync } from 'node:fs'
-import { sep } from 'node:path'
+import { join, sep } from 'node:path'
 import { SessionManager } from '@earendil-works/pi-coding-agent'
 
 import { sessionUsage } from './runtime.js'
 import { sessionTranscript } from './transcript.js'
+import { withStepViews } from './step-views.js'
 
 const stats = new Map()
 
@@ -73,11 +74,16 @@ export function describeChildren(record, dir) {
   })
 }
 
-/** One child's conversation, read-only; empty until its session file exists. */
+/**
+ * One child's conversation, read-only; empty until its session file exists.
+ * Its bash calls carry step views from its own trace (traces/child-<its Pi
+ * session id>.jsonl, child-extension.js), as the chat's own do.
+ */
 export function childConversation(record, dir, childId) {
   const child = describeChildren(record, dir).find((item) => item.id === childId)
   if (!child) return null
   if (!child.conversation) return { child, messages: [] }
-  const messages = sessionTranscript(SessionManager.open(child.sessionFile))
+  const manager = SessionManager.open(child.sessionFile)
+  const messages = withStepViews(sessionTranscript(manager), join(dir, 'traces'), `child-${manager.getSessionId()}`)
   return { child, messages }
 }

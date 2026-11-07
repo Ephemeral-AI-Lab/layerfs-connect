@@ -1,0 +1,4 @@
+# desktop/ is its own pnpm root so the redesign installs apart from the current app.
+allowBuilds:
+  electron: true
+  esbuild: true

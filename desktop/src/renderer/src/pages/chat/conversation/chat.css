@@ -1,0 +1,29 @@
+/* A reply's Markdown (Markdown.tsx): prose in the conversation column. */
+.md > :first-child { margin-top: 0; }
+.md > :last-child { margin-bottom: 0; }
+.md p { margin: 0 0 0.75em; }
+.md h2, .md h3, .md h4, .md h5, .md h6 { margin: 1.1em 0 0.45em; font-weight: 600; line-height: 1.35; }
+.md h2 { font-size: 17px; }
+.md h3 { font-size: 15.5px; }
+.md h4, .md h5, .md h6 { font-size: 15px; }
+.md ul, .md ol { margin: 0 0 0.75em; padding-left: 1.4em; }
+.md ul { list-style: disc; }
+.md ol { list-style: decimal; }
+.md li { margin: 0.2em 0; }
+.md li > p { margin: 0; }
+.md a { color: var(--text-link, #417cdd); text-decoration: underline; text-underline-offset: 2px; }
+.md blockquote { margin: 0 0 0.75em; border-left: 3px solid var(--border-default); padding-left: 0.9em; color: var(--text-secondary); }
+.md hr { margin: 1.2em 0; border: 0; border-top: 1px solid var(--border-default); }
+.md-inline-code { border-radius: 4px; background: var(--surface-soft, #e8eff8); padding: 0.1em 0.35em; font-family: var(--font-mono, ui-monospace, monospace); font-size: 0.86em; }
+.md-code { margin: 0 0 0.85em; overflow: hidden; border: 1px solid var(--border-default); border-radius: 10px; background: var(--card); }
+.md-code-head { display: flex; height: 30px; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border-default); padding: 0 10px; font-size: 11.5px; color: var(--text-tertiary); }
+.md-code-head button { display: inline-flex; align-items: center; gap: 4px; color: var(--text-tertiary); }
+.md-code-head button:hover { color: var(--text-primary); }
+.md-code pre { overflow-x: auto; margin: 0; padding: 10px 12px; font-family: var(--font-mono, ui-monospace, monospace); font-size: 12.5px; line-height: 1.55; }
+.md-table { margin: 0 0 0.85em; overflow-x: auto; }
+.md-table table { border-collapse: collapse; font-size: 13.5px; }
+.md-table th, .md-table td { border: 1px solid var(--border-default); padding: 5px 10px; text-align: left; }
+.md-table th { background: var(--surface-soft, #e8eff8); font-weight: 600; }
+.md-caret { display: inline-block; width: 7px; height: 1.05em; margin-left: 2px; vertical-align: text-bottom; border-radius: 1px; background: var(--text-tertiary); animation: md-caret 1s steps(2, start) infinite; }
+@keyframes md-caret { to { visibility: hidden; } }
+@media (prefers-reduced-motion: reduce) { .md-caret { animation: none; } }

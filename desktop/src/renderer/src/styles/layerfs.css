@@ -1,0 +1,1341 @@
+/*
+  LayerFS page styles, from pi-desktop's features/layerfs/layerfs.css (the
+  original Connect app's styles.css and cindy-theme.css): shared animations,
+  component classes (.glass, .reveal, .pulse-ring, .lfs-page-header, …),
+  radix state variants and scroll-fade utilities, and the Cindy adapters.
+  Left out: pi-desktop's sidebar nav, chat styles, and the resets that undid
+  pi-desktop's own base CSS. Tokens live in globals.css.
+*/
+
+/* shadcn/tailwind.css (shadcn 4.22.1): radix state variants used by components/ui. */
+@theme inline {
+  @keyframes accordion-down {
+    from {
+      height: 0;
+    }
+    to {
+      height: var(
+        --radix-accordion-content-height,
+        var(--accordion-panel-height, auto)
+      );
+    }
+  }
+
+  @keyframes accordion-up {
+    from {
+      height: var(
+        --radix-accordion-content-height,
+        var(--accordion-panel-height, auto)
+      );
+    }
+    to {
+      height: 0;
+    }
+  }
+}
+
+/* Custom variants */
+@custom-variant data-open {
+  &:where([data-state="open"]),
+  &:where([data-open]:not([data-open="false"])) {
+    @slot;
+  }
+}
+
+@custom-variant data-closed {
+  &:where([data-state="closed"]),
+  &:where([data-closed]:not([data-closed="false"])) {
+    @slot;
+  }
+}
+
+@custom-variant data-checked {
+  &:where([data-state="checked"]),
+  &:where([data-checked]:not([data-checked="false"])) {
+    @slot;
+  }
+}
+
+@custom-variant data-unchecked {
+  &:where([data-state="unchecked"]),
+  &:where([data-unchecked]:not([data-unchecked="false"])) {
+    @slot;
+  }
+}
+
+@custom-variant data-selected {
+  &:where([data-selected="true"]) {
+    @slot;
+  }
+}
+
+@custom-variant data-disabled {
+  &:where([data-disabled="true"]),
+  &:where([data-disabled]:not([data-disabled="false"])) {
+    @slot;
+  }
+}
+
+@custom-variant data-active {
+  &:where([data-state="active"]),
+  &:where([data-active]:not([data-active="false"])) {
+    @slot;
+  }
+}
+
+@custom-variant data-horizontal {
+  &:where([data-orientation="horizontal"]) {
+    @slot;
+  }
+}
+
+@custom-variant data-vertical {
+  &:where([data-orientation="vertical"]) {
+    @slot;
+  }
+}
+
+@utility no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* scroll-fade */
+@property --scroll-fade-t {
+  syntax: "<length-percentage>";
+  inherits: false;
+  initial-value: 0px;
+}
+@property --scroll-fade-b {
+  syntax: "<length-percentage>";
+  inherits: false;
+  initial-value: 0px;
+}
+@property --scroll-fade-s {
+  syntax: "<length-percentage>";
+  inherits: false;
+  initial-value: 0px;
+}
+@property --scroll-fade-e {
+  syntax: "<length-percentage>";
+  inherits: false;
+  initial-value: 0px;
+}
+@property --scroll-fade-mask {
+  syntax: "*";
+  inherits: false;
+}
+
+@theme inline {
+  @keyframes scroll-fade-reveal-t {
+    from {
+      --scroll-fade-t: 0px;
+    }
+    to {
+      --scroll-fade-t: var(--_scroll-fade-size-t, var(--scroll-fade-size, min(12%, calc(var(--spacing) * 10))));
+    }
+  }
+  @keyframes scroll-fade-reveal-b {
+    from {
+      --scroll-fade-b: var(--_scroll-fade-size-b, var(--scroll-fade-size, min(12%, calc(var(--spacing) * 10))));
+    }
+    to {
+      --scroll-fade-b: 0px;
+    }
+  }
+  @keyframes scroll-fade-reveal-s {
+    from {
+      --scroll-fade-s: 0px;
+    }
+    to {
+      --scroll-fade-s: var(--_scroll-fade-size-s, var(--scroll-fade-size, min(12%, calc(var(--spacing) * 10))));
+    }
+  }
+  @keyframes scroll-fade-reveal-e {
+    from {
+      --scroll-fade-e: var(--_scroll-fade-size-e, var(--scroll-fade-size, min(12%, calc(var(--spacing) * 10))));
+    }
+    to {
+      --scroll-fade-e: 0px;
+    }
+  }
+}
+
+@utility scroll-fade {
+  --_scroll-fade-size-t: var(
+    --scroll-fade-t-size,
+    var(--scroll-fade-size, min(12%, calc(var(--spacing) * 10)))
+  );
+  --_scroll-fade-size-b: var(
+    --scroll-fade-b-size,
+    var(--scroll-fade-size, min(12%, calc(var(--spacing) * 10)))
+  );
+  --scroll-fade-block: linear-gradient(
+    to bottom,
+    transparent 0,
+    #000 var(--scroll-fade-t, 0px),
+    #000 calc(100% - var(--scroll-fade-b, 0px)),
+    transparent 100%
+  );
+  -webkit-mask-image: var(--scroll-fade-mask, var(--scroll-fade-block));
+  mask-image: var(--scroll-fade-mask, var(--scroll-fade-block));
+  -webkit-mask-composite: source-in;
+  mask-composite: intersect;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+
+  @supports (animation-timeline: scroll()) {
+    animation:
+      scroll-fade-reveal-t 1ms ease-in-out,
+      scroll-fade-reveal-b 1ms ease-in-out;
+    animation-timeline: scroll(self y), scroll(self y);
+    animation-range:
+      0 var(--scroll-fade-reveal, calc(var(--spacing) * 24)),
+      calc(100% - var(--scroll-fade-reveal, calc(var(--spacing) * 24))) 100%;
+    animation-fill-mode: both;
+  }
+
+  @supports not (animation-timeline: scroll()) {
+    --scroll-fade-t: var(--_scroll-fade-size-t);
+    --scroll-fade-b: var(--_scroll-fade-size-b);
+  }
+}
+
+@utility scroll-fade-y {
+  --_scroll-fade-size-t: var(
+    --scroll-fade-t-size,
+    var(--scroll-fade-size, min(12%, calc(var(--spacing) * 10)))
+  );
+  --_scroll-fade-size-b: var(
+    --scroll-fade-b-size,
+    var(--scroll-fade-size, min(12%, calc(var(--spacing) * 10)))
+  );
+  --scroll-fade-block: linear-gradient(
+    to bottom,
+    transparent 0,
+    #000 var(--scroll-fade-t, 0px),
+    #000 calc(100% - var(--scroll-fade-b, 0px)),
+    transparent 100%
+  );
+  -webkit-mask-image: var(--scroll-fade-mask, var(--scroll-fade-block));
+  mask-image: var(--scroll-fade-mask, var(--scroll-fade-block));
+  -webkit-mask-composite: source-in;
+  mask-composite: intersect;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+
+  @supports (animation-timeline: scroll()) {
+    animation:
+      scroll-fade-reveal-t 1ms ease-in-out,
+      scroll-fade-reveal-b 1ms ease-in-out;
+    animation-timeline: scroll(self y), scroll(self y);
+    animation-range:
+      0 var(--scroll-fade-reveal, calc(var(--spacing) * 24)),
+      calc(100% - var(--scroll-fade-reveal, calc(var(--spacing) * 24))) 100%;
+    animation-fill-mode: both;
+  }
+
+  @supports not (animation-timeline: scroll()) {
+    --scroll-fade-t: var(--_scroll-fade-size-t);
+    --scroll-fade-b: var(--_scroll-fade-size-b);
+  }
+}
+
+@utility scroll-fade-x {
+  --_scroll-fade-size-s: var(
+    --scroll-fade-s-size,
+    var(--scroll-fade-size, min(12%, calc(var(--spacing) * 10)))
+  );
+  --_scroll-fade-size-e: var(
+    --scroll-fade-e-size,
+    var(--scroll-fade-size, min(12%, calc(var(--spacing) * 10)))
+  );
+  --scroll-fade-inline: linear-gradient(
+    to right,
+    transparent 0,
+    #000 var(--scroll-fade-s, 0px),
+    #000 calc(100% - var(--scroll-fade-e, 0px)),
+    transparent 100%
+  );
+  &:where([dir="rtl"], [dir="rtl"] *) {
+    --scroll-fade-inline: linear-gradient(
+      to left,
+      transparent 0,
+      #000 var(--scroll-fade-s, 0px),
+      #000 calc(100% - var(--scroll-fade-e, 0px)),
+      transparent 100%
+    );
+  }
+  -webkit-mask-image: var(--scroll-fade-mask, var(--scroll-fade-inline));
+  mask-image: var(--scroll-fade-mask, var(--scroll-fade-inline));
+  -webkit-mask-composite: source-in;
+  mask-composite: intersect;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+
+  @supports (animation-timeline: scroll()) {
+    animation:
+      scroll-fade-reveal-s 1ms ease-in-out,
+      scroll-fade-reveal-e 1ms ease-in-out;
+    animation-timeline: scroll(self inline), scroll(self inline);
+    animation-range:
+      0 var(--scroll-fade-reveal, calc(var(--spacing) * 24)),
+      calc(100% - var(--scroll-fade-reveal, calc(var(--spacing) * 24))) 100%;
+    animation-fill-mode: both;
+  }
+
+  @supports not (animation-timeline: scroll()) {
+    --scroll-fade-s: var(--_scroll-fade-size-s);
+    --scroll-fade-e: var(--_scroll-fade-size-e);
+  }
+}
+
+@utility scroll-fade-t {
+  --_scroll-fade-size-t: var(
+    --scroll-fade-t-size,
+    var(--scroll-fade-size, min(12%, calc(var(--spacing) * 10)))
+  );
+  --scroll-fade-mask: linear-gradient(
+    to bottom,
+    transparent 0,
+    #000 var(--scroll-fade-t, 0px),
+    #000 100%
+  );
+  -webkit-mask-image: var(--scroll-fade-mask);
+  mask-image: var(--scroll-fade-mask);
+  -webkit-mask-composite: source-in;
+  mask-composite: intersect;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+
+  @supports (animation-timeline: scroll()) {
+    animation: scroll-fade-reveal-t 1ms ease-in-out;
+    animation-timeline: scroll(self y);
+    animation-range: 0 var(--scroll-fade-reveal, calc(var(--spacing) * 24));
+    animation-fill-mode: both;
+  }
+
+  @supports not (animation-timeline: scroll()) {
+    --scroll-fade-t: var(--_scroll-fade-size-t);
+  }
+}
+
+@utility scroll-fade-b {
+  --_scroll-fade-size-b: var(
+    --scroll-fade-b-size,
+    var(--scroll-fade-size, min(12%, calc(var(--spacing) * 10)))
+  );
+  --scroll-fade-mask: linear-gradient(
+    to bottom,
+    #000 0,
+    #000 calc(100% - var(--scroll-fade-b, 0px)),
+    transparent 100%
+  );
+  -webkit-mask-image: var(--scroll-fade-mask);
+  mask-image: var(--scroll-fade-mask);
+  -webkit-mask-composite: source-in;
+  mask-composite: intersect;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+
+  @supports (animation-timeline: scroll()) {
+    animation: scroll-fade-reveal-b 1ms ease-in-out;
+    animation-timeline: scroll(self y);
+    animation-range: calc(
+        100% - var(--scroll-fade-reveal, calc(var(--spacing) * 24))
+      )
+      100%;
+    animation-fill-mode: both;
+  }
+
+  @supports not (animation-timeline: scroll()) {
+    --scroll-fade-b: var(--_scroll-fade-size-b);
+  }
+}
+
+@utility scroll-fade-l {
+  --_scroll-fade-size-s: var(
+    --scroll-fade-s-size,
+    var(--scroll-fade-size, min(12%, calc(var(--spacing) * 10)))
+  );
+  --scroll-fade-mask: linear-gradient(
+    to right,
+    transparent 0,
+    #000 var(--scroll-fade-s, 0px),
+    #000 100%
+  );
+  -webkit-mask-image: var(--scroll-fade-mask);
+  mask-image: var(--scroll-fade-mask);
+  -webkit-mask-composite: source-in;
+  mask-composite: intersect;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+
+  @supports (animation-timeline: scroll()) {
+    animation: scroll-fade-reveal-s 1ms ease-in-out;
+    animation-timeline: scroll(self x);
+    animation-range: 0 var(--scroll-fade-reveal, calc(var(--spacing) * 24));
+    animation-fill-mode: both;
+  }
+
+  @supports not (animation-timeline: scroll()) {
+    --scroll-fade-s: var(--_scroll-fade-size-s);
+  }
+}
+
+@utility scroll-fade-r {
+  --_scroll-fade-size-e: var(
+    --scroll-fade-e-size,
+    var(--scroll-fade-size, min(12%, calc(var(--spacing) * 10)))
+  );
+  --scroll-fade-mask: linear-gradient(
+    to right,
+    #000 0,
+    #000 calc(100% - var(--scroll-fade-e, 0px)),
+    transparent 100%
+  );
+  -webkit-mask-image: var(--scroll-fade-mask);
+  mask-image: var(--scroll-fade-mask);
+  -webkit-mask-composite: source-in;
+  mask-composite: intersect;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+
+  @supports (animation-timeline: scroll()) {
+    animation: scroll-fade-reveal-e 1ms ease-in-out;
+    animation-timeline: scroll(self x);
+    animation-range: calc(
+        100% - var(--scroll-fade-reveal, calc(var(--spacing) * 24))
+      )
+      100%;
+    animation-fill-mode: both;
+  }
+
+  @supports not (animation-timeline: scroll()) {
+    --scroll-fade-e: var(--_scroll-fade-size-e);
+  }
+}
+
+@utility scroll-fade-s {
+  --_scroll-fade-size-s: var(
+    --scroll-fade-s-size,
+    var(--scroll-fade-size, min(12%, calc(var(--spacing) * 10)))
+  );
+  --scroll-fade-mask: linear-gradient(
+    to right,
+    transparent 0,
+    #000 var(--scroll-fade-s, 0px),
+    #000 100%
+  );
+  &:where([dir="rtl"], [dir="rtl"] *) {
+    --scroll-fade-mask: linear-gradient(
+      to left,
+      transparent 0,
+      #000 var(--scroll-fade-s, 0px),
+      #000 100%
+    );
+  }
+  -webkit-mask-image: var(--scroll-fade-mask);
+  mask-image: var(--scroll-fade-mask);
+  -webkit-mask-composite: source-in;
+  mask-composite: intersect;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+
+  @supports (animation-timeline: scroll()) {
+    animation: scroll-fade-reveal-s 1ms ease-in-out;
+    animation-timeline: scroll(self inline);
+    animation-range: 0 var(--scroll-fade-reveal, calc(var(--spacing) * 24));
+    animation-fill-mode: both;
+  }
+
+  @supports not (animation-timeline: scroll()) {
+    --scroll-fade-s: var(--_scroll-fade-size-s);
+  }
+}
+
+@utility scroll-fade-e {
+  --_scroll-fade-size-e: var(
+    --scroll-fade-e-size,
+    var(--scroll-fade-size, min(12%, calc(var(--spacing) * 10)))
+  );
+  --scroll-fade-mask: linear-gradient(
+    to right,
+    #000 0,
+    #000 calc(100% - var(--scroll-fade-e, 0px)),
+    transparent 100%
+  );
+  &:where([dir="rtl"], [dir="rtl"] *) {
+    --scroll-fade-mask: linear-gradient(
+      to left,
+      #000 0,
+      #000 calc(100% - var(--scroll-fade-e, 0px)),
+      transparent 100%
+    );
+  }
+  -webkit-mask-image: var(--scroll-fade-mask);
+  mask-image: var(--scroll-fade-mask);
+  -webkit-mask-composite: source-in;
+  mask-composite: intersect;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+
+  @supports (animation-timeline: scroll()) {
+    animation: scroll-fade-reveal-e 1ms ease-in-out;
+    animation-timeline: scroll(self inline);
+    animation-range: calc(
+        100% - var(--scroll-fade-reveal, calc(var(--spacing) * 24))
+      )
+      100%;
+    animation-fill-mode: both;
+  }
+
+  @supports not (animation-timeline: scroll()) {
+    --scroll-fade-e: var(--_scroll-fade-size-e);
+  }
+}
+
+@utility scroll-fade-* {
+  --scroll-fade-size: calc(var(--spacing) * --value(integer));
+  --scroll-fade-size: --value([length], [percentage]);
+}
+
+@utility scroll-fade-t-* {
+  --scroll-fade-t-size: calc(var(--spacing) * --value(integer));
+  --scroll-fade-t-size: --value([length], [percentage]);
+}
+
+@utility scroll-fade-b-* {
+  --scroll-fade-b-size: calc(var(--spacing) * --value(integer));
+  --scroll-fade-b-size: --value([length], [percentage]);
+}
+
+@utility scroll-fade-s-* {
+  --scroll-fade-s-size: calc(var(--spacing) * --value(integer));
+  --scroll-fade-s-size: --value([length], [percentage]);
+}
+
+@utility scroll-fade-e-* {
+  --scroll-fade-e-size: calc(var(--spacing) * --value(integer));
+  --scroll-fade-e-size: --value([length], [percentage]);
+}
+
+@utility scroll-fade-none {
+  --scroll-fade-mask: none;
+}
+
+/* shimmer */
+@property --shimmer-angle {
+  syntax: "<angle>";
+  inherits: true;
+  initial-value: 20deg;
+}
+@property --shimmer-image {
+  syntax: "*";
+  inherits: false;
+}
+@property --shimmer-text-fill {
+  syntax: "*";
+  inherits: false;
+}
+
+@theme inline {
+  @keyframes tw-shimmer {
+    from {
+      background-position: 100% 0;
+    }
+    to {
+      background-position: 0 0;
+    }
+  }
+}
+
+@utility shimmer {
+  --_spread: var(--shimmer-spread, calc(3ch + 40px));
+  --_base: currentColor;
+  --_highlight: var(
+    --shimmer-color,
+    oklch(from currentColor l c h / calc(alpha* 0.2))
+  );
+
+  background-image: var(
+    --shimmer-image,
+    linear-gradient(
+      calc(90deg + var(--shimmer-angle)),
+      var(--_base) calc(50% - var(--_spread)),
+      color-mix(in oklch, var(--_highlight), var(--_base) 50%)
+        calc(50% - var(--_spread) * 0.5),
+      var(--_highlight) 50%,
+      color-mix(in oklch, var(--_highlight), var(--_base) 50%)
+        calc(50% + var(--_spread) * 0.5),
+      var(--_base) calc(50% + var(--_spread))
+    )
+  );
+  background-repeat: no-repeat;
+  background-size: calc(200% + var(--_spread) * 2) 100%;
+  background-position: 0 0;
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: var(--shimmer-text-fill, transparent);
+  animation: tw-shimmer var(--shimmer-duration, 2s) linear infinite;
+
+  @variant dark {
+    --_highlight: var(
+      --shimmer-color,
+      oklch(from currentColor max(0.8, calc(l + 0.4)) c h / calc(alpha + 0.4))
+    );
+  }
+
+  &:where([dir="rtl"], [dir="rtl"] *) {
+    animation-direction: reverse;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+    background-image: none;
+    -webkit-text-fill-color: currentColor;
+  }
+}
+
+@utility shimmer-once {
+  animation-iteration-count: 1;
+}
+
+@utility shimmer-reverse {
+  animation-direction: reverse;
+}
+
+@utility shimmer-none {
+  --shimmer-image: none;
+  --shimmer-text-fill: currentColor;
+}
+
+@utility shimmer-color-* {
+  --shimmer-color: --value(--color, [color]);
+  --shimmer-color: color-mix(
+    in oklch,
+    --value(--color, [color]) calc(--modifier(integer) * 1%),
+    transparent
+  );
+}
+
+@utility shimmer-duration-* {
+  --shimmer-duration: calc(--value(integer) * 1ms);
+}
+
+@utility shimmer-spread-* {
+  --shimmer-spread: calc(var(--spacing) * --value(integer));
+  --shimmer-spread: --value([length], [percentage]);
+}
+
+@utility shimmer-angle-* {
+  --shimmer-angle: calc(--value(integer) * 1deg);
+}
+
+/* Kept for backwards compatibility. Unlayered, so it still wins over other
+   utilities on a plain .shimmer element. Variants are handled in the utility. */
+@media (prefers-reduced-motion: reduce) {
+  .shimmer {
+    animation: none;
+    background-image: none;
+    -webkit-text-fill-color: currentColor;
+  }
+}
+
+/* From the original Connect styles.css: animations and component layers. */
+@keyframes live-flash {
+  from {
+    background-color: color-mix(in oklab, var(--flash) 16%, transparent);
+    box-shadow: inset 0 0 0 1.5px var(--flash);
+  }
+  to {
+    box-shadow: inset 0 0 0 1.5px transparent;
+  }
+}
+.live-flash {
+  animation: live-flash 1.2s ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .live-flash {
+    animation-duration: 0.4s;
+  }
+}
+
+/* Storage tab: charts draw in from the left, lines trace themselves, bars
+   grow from the baseline; the history-to-disk flow keeps moving. */
+@keyframes reveal-x {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+.reveal-x {
+  animation: reveal-x 1.1s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes draw-line {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+.draw-line {
+  stroke-dasharray: 1;
+  animation: draw-line 1.2s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes grow-up {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+.grow-up {
+  transform-origin: bottom;
+  animation: grow-up 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes slide-across {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(300%);
+  }
+}
+@keyframes flow-along {
+  to {
+    stroke-dashoffset: -24;
+  }
+}
+.flow-along {
+  stroke-dasharray: 2 10;
+  stroke-linecap: round;
+  animation: flow-along 1.2s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .reveal-x,
+  .draw-line,
+  .grow-up,
+  .flow-along {
+    animation: none;
+  }
+  .draw-line {
+    stroke-dasharray: none;
+  }
+}
+
+/* ===================================================================
+   Luminous layers: the shared surfaces and motion classes.
+   React helpers that drive them live in components/motion/.
+   =================================================================== */
+
+@property --live-angle {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+
+@keyframes reveal {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+@keyframes reveal-scale {
+  from {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+}
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes shimmer {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -100% 0;
+  }
+}
+@keyframes float {
+  50% {
+    transform: translateY(-3px);
+  }
+}
+@keyframes pulse-ring {
+  from {
+    transform: scale(1);
+    opacity: 0.55;
+  }
+  to {
+    transform: scale(2.8);
+    opacity: 0;
+  }
+}
+@keyframes live-spin {
+  to {
+    --live-angle: 360deg;
+  }
+}
+@keyframes live-breathe {
+  50% {
+    box-shadow:
+      0 0 0 1px color-mix(in oklab, var(--live-c, var(--primary)) 30%, transparent),
+      0 0 22px -6px color-mix(in oklab, var(--live-c, var(--primary)) 65%, transparent);
+  }
+}
+@keyframes page-out {
+  to {
+    opacity: 0;
+  }
+}
+@keyframes page-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+/* Multi-color run breathing aura */
+@keyframes aura-pulse-1 {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0.22;
+  }
+  50% {
+    transform: translate(30px, -20px) scale(1.15);
+    opacity: 0.36;
+  }
+}
+@keyframes aura-pulse-2 {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0.18;
+  }
+  50% {
+    transform: translate(-35px, 25px) scale(1.2);
+    opacity: 0.32;
+  }
+}
+@keyframes aura-pulse-3 {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0.16;
+  }
+  50% {
+    transform: translate(20px, 30px) scale(1.12);
+    opacity: 0.28;
+  }
+}
+@keyframes aura-pulse-4 {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0.15;
+  }
+  50% {
+    transform: translate(-25px, -20px) scale(1.18);
+    opacity: 0.26;
+  }
+}
+
+@layer components {
+  /* The main canvas: the icon's powder-blue matte, grained, a little lighter where the light falls. */
+  .canvas {
+    position: relative;
+    background: var(--grain), linear-gradient(180deg, #f1f5fb 0%, var(--background) 22rem);
+  }
+
+  /* Soft matte surfaces (class names kept from the glass era): opaque, grained, lit from above. */
+  .glass, .glass-liquid, .surface {
+    position: relative;
+    background: var(--glass-card-bg);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--glass-shadow);
+    transition:
+      transform var(--dur-base) cubic-bezier(0.22, 1, 0.36, 1),
+      border-color var(--dur-base) cubic-bezier(0.22, 1, 0.36, 1),
+      box-shadow var(--dur-base) cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .glass-strong, .surface-raised {
+    position: relative;
+    background: var(--glass-panel-bg);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--glass-panel-shadow);
+  }
+
+  /* Inputs and search pills are pressed into the surface rather than raised from it. */
+  input.glass,
+  input.glass-liquid {
+    background: var(--glass-field-bg) !important;
+    border: 1px solid var(--glass-border) !important;
+    box-shadow: var(--pressed) !important;
+    transition: background-color var(--dur-fast), border-color var(--dur-fast) !important;
+  }
+  input.glass:focus,
+  input.glass:focus-visible,
+  input.glass-liquid:focus,
+  input.glass-liquid:focus-visible {
+    border-color: color-mix(in oklab, var(--primary) 55%, var(--glass-border)) !important;
+    box-shadow: var(--pressed), 0 0 0 3px color-mix(in oklab, var(--primary) 22%, transparent) !important;
+  }
+
+  /* The sidebar: one step deeper than the canvas, the same grain, a soft lit edge toward the page. */
+  .sidebar-glass {
+    background: var(--sidebar);
+    border-right: 1px solid var(--sidebar-border);
+    box-shadow: none;
+  }
+
+  /* Matte surfaces do not catch light: no sweep. The class stays for its layout. */
+  .sheen-sweep {
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Cards stay still; a neutral border signals hover. */
+  .card-hover { transition: border-color var(--dur-fast), background-color var(--dur-fast); }
+  .card-hover:hover { border-color: var(--input); box-shadow: none; }
+  .card-hover:active { transform: none; }
+
+  /* No specular spotlight on matte; the class stays for its stacking context. */
+  .spotlight {
+    position: relative;
+    isolation: isolate;
+  }
+
+  /* Entrances: fade and rise; --i staggers siblings, capped at 10 steps. */
+  .reveal {
+    animation: reveal var(--dur-slow) var(--ease-out-expo) backwards;
+    animation-delay: calc(min(var(--i, 0), 10) * var(--stagger));
+  }
+  .reveal-scale {
+    animation: reveal-scale var(--dur-slow) var(--ease-out-expo) backwards;
+    animation-delay: calc(min(var(--i, 0), 10) * var(--stagger));
+  }
+  /* Every child reveals in turn, by its place among its siblings. */
+  .stagger > * {
+    animation: reveal var(--dur-slow) var(--ease-out-expo) backwards;
+    animation-delay: calc(min(var(--i, 0), 10) * var(--stagger));
+    animation-delay: calc((min(sibling-index(), 11) - 1) * var(--stagger));
+  }
+
+  /* Expand and collapse: a grid row from 0fr to 1fr (see <Collapse>; not Tailwind's `collapse`). */
+  .collapsible {
+    display: grid;
+    grid-template-rows: 0fr;
+    opacity: 0;
+    transition:
+      grid-template-rows var(--dur-base) var(--ease-out-expo),
+      opacity var(--dur-base) var(--ease-out-soft);
+  }
+  .collapsible > * {
+    min-height: 0;
+    overflow: hidden;
+  }
+  .collapsible[data-open='true'] {
+    grid-template-rows: 1fr;
+    opacity: 1;
+    @starting-style {
+      grid-template-rows: 0fr;
+      opacity: 0;
+    }
+  }
+  /* A chevron that turns a quarter when its control is expanded. */
+  .chevron {
+    transition: transform var(--dur-base) var(--ease-out-expo);
+  }
+  [aria-expanded='true'] > .chevron,
+  [aria-expanded='true'] .chevron,
+  .chevron[data-open='true'] {
+    transform: rotate(90deg);
+  }
+
+  /* A sliding indicator (see useIndicator): placed by JS, glides once placed. */
+  .indicator {
+    position: absolute;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity var(--dur-fast) linear;
+  }
+  .indicator[data-placed] {
+    opacity: 1;
+  }
+  .indicator[data-glide] {
+    transition:
+      transform var(--dur-base) var(--ease-out-expo),
+      width var(--dur-base) var(--ease-out-expo),
+      height var(--dur-base) var(--ease-out-expo),
+      opacity var(--dur-fast) linear;
+  }
+
+  /* Loading placeholders: a light that sweeps across. */
+  .shimmer {
+    background-color: var(--muted);
+    background-image: linear-gradient(
+      100deg,
+      transparent 30%,
+      color-mix(in oklab, var(--foreground) 6%, transparent) 50%,
+      transparent 70%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.6s linear infinite;
+  }
+  .drift {
+    animation: float 4s ease-in-out infinite;
+  }
+
+  /* Live: a dot that glows and sends out a ring. Colour comes from currentColor. */
+  .pulse-ring {
+    position: relative;
+    box-shadow: 0 0 8px 0 color-mix(in oklab, currentColor 70%, transparent);
+  }
+  .pulse-ring::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: currentColor;
+    animation: pulse-ring 1.6s var(--ease-out-soft) infinite;
+  }
+  /* Live: a surface marked as currently active; clean, static, restrained. */
+  .live-border {
+    position: relative;
+    isolation: isolate;
+    box-shadow:
+      0 0 0 1.5px color-mix(in oklab, var(--primary) 45%, transparent),
+      0 1px 3px 0 rgba(0, 0, 0, 0.04);
+  }
+  .live-border::before {
+    display: none;
+  }
+  /* Live: a soft, calm ring for chips and small surfaces; --live-c tints it (primary by default). */
+  .live-glow {
+    box-shadow: 0 0 0 1px color-mix(in oklab, var(--live-c, var(--primary)) 28%, transparent);
+  }
+  /* Brand light as text, for hero numbers. */
+  .text-brand {
+    background: var(--brand-gradient);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .bg-brand {
+    background-image: var(--brand-gradient);
+  }
+
+  /* The primary button: a raised cobalt stroke like the icon's, lit on top, pressed in when held. */
+  .lfs-btn-primary {
+    position: relative;
+    overflow: hidden;
+    background-image: var(--grain), linear-gradient(to bottom, rgb(255 255 255 / 0.12), transparent);
+    box-shadow:
+      inset 0 1px 0 0 rgb(255 255 255 / 0.2),
+      inset 0 -1px 0 0 rgb(10 30 70 / 0.18),
+      0 1px 2px color-mix(in oklab, var(--primary) 35%, transparent),
+      0 4px 10px -6px color-mix(in oklab, var(--primary) 60%, transparent);
+  }
+  .lfs-btn-primary:hover:not(:disabled) {
+    box-shadow:
+      inset 0 1px 0 0 rgb(255 255 255 / 0.22),
+      inset 0 -1px 0 0 rgb(10 30 70 / 0.18),
+      0 2px 4px color-mix(in oklab, var(--primary) 35%, transparent),
+      0 8px 16px -8px color-mix(in oklab, var(--primary) 65%, transparent);
+  }
+  .lfs-btn-primary:active:not(:disabled) {
+    box-shadow: inset 0 2px 4px 0 rgb(10 30 70 / 0.28);
+  }
+
+  /* The page header: sticky, and opaque matte once content scrolls under it (see <PageHeader>). */
+  .lfs-page-header {
+    transition:
+      background-color var(--dur-base) var(--ease-out-soft),
+      box-shadow var(--dur-base) var(--ease-out-soft),
+      border-color var(--dur-base) var(--ease-out-soft);
+    border-bottom: 1px solid transparent;
+  }
+  .lfs-page-header[data-stuck] {
+    background: var(--grain), var(--background);
+    border-bottom-color: var(--border);
+    box-shadow: 0 8px 20px -14px rgb(38 66 110 / 0.28);
+  }
+  /* Compute's header: the same opaque surface, keeping the hairline. */
+  .lfs-page-header.page-header-solid[data-stuck] {
+    background: var(--grain), var(--background);
+  }
+}
+
+/* Phase 2: hero headers, the live line, the sidebar tree, the Trace sketch. */
+@keyframes live-line {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(260%);
+  }
+}
+@keyframes glow-breathe {
+  50% {
+    opacity: 0.6;
+    transform: scale(1.12);
+  }
+}
+@keyframes side-in {
+  from {
+    opacity: 0.4;
+    transform: translateX(-6px);
+  }
+}
+@keyframes side-breathe {
+  50% {
+    box-shadow:
+      inset 0 0 0 1px color-mix(in oklab, var(--pulse) 42%, transparent),
+      0 0 16px -6px color-mix(in oklab, var(--pulse) 50%, transparent);
+  }
+}
+@layer components {
+  /* A hero header's mark: a lit tile on a soft brand glow (<HeroTile>). */
+  .hero-tile {
+    position: relative;
+    display: flex;
+    width: 3.25rem;
+    height: 3.25rem;
+  }
+  .hero-tile-glow {
+    position: absolute;
+    inset: 6px;
+    border-radius: var(--radius-full);
+    background-image: var(--brand-gradient);
+    opacity: 0.16;
+    filter: blur(16px);
+    transition: opacity var(--dur-slow) var(--ease-out-soft);
+  }
+  .hero-tile[data-live] .hero-tile-glow {
+    opacity: 0.45;
+    animation: glow-breathe 2.4s ease-in-out infinite;
+  }
+  .hero-tile-face {
+    position: relative;
+    display: flex;
+    width: 100%;
+    height: 100%;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-xs);
+    background: var(--glass-panel-bg);
+    box-shadow: var(--highlight), var(--elev-2);
+  }
+
+  /* Something is playing: a calm, clean hairline along the header's bottom edge. */
+  .live-line {
+    position: absolute;
+    inset: 100% 0 auto;
+    height: 1.5px;
+    overflow: hidden;
+    pointer-events: none;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      color-mix(in oklab, var(--primary) 35%, transparent) 20%,
+      color-mix(in oklab, var(--brand-3) 35%, transparent) 80%,
+      transparent
+    );
+    opacity: 0.8;
+  }
+  .live-line::after {
+    display: none;
+  }
+
+  /* The sidebar tree: rows slide in without ever hiding (a busy first render
+     can hold animations at their first frame), hover lights them faintly. */
+  .side-in {
+    animation: side-in var(--dur-slow) var(--ease-out-expo) backwards;
+    animation-delay: calc(min(var(--i, 0), 10) * 30ms);
+  }
+  .side-tree :is([data-sidebar='menu-button'], [data-sidebar='menu-sub-button']) {
+    transition-property: background-color, color, transform, box-shadow;
+  }
+  .side-tree :is([data-sidebar='menu-button'], [data-sidebar='menu-sub-button']):hover:not([data-active='true']) {
+    box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--foreground) 5%, transparent);
+  }
+}
+
+/* Page and tab switches (viewTransition() in components/motion). The sidebar
+   stays put; the page cross-fades and rises; a tab switch moves only its panel. */
+
+/* Page and tab switches (viewTransition() in components/motion). */
+::view-transition-old(page),
+::view-transition-old(panel) {
+  animation: page-out 120ms var(--ease-out-soft) both;
+}
+::view-transition-new(page),
+::view-transition-new(panel) {
+  animation: page-in 320ms var(--ease-out-expo) both;
+}
+.vt-panel {
+  view-transition-name: panel;
+}
+main.vt-page {
+  view-transition-name: page;
+}
+.tab-body > .h-svh {
+  height: 100%;
+}
+.no-scrollbar {
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* From the original Connect cindy-theme.css: surface adapters for the pages. */
+:root .canvas { background: var(--background); box-shadow: none; }
+:root .sidebar-glass { background: var(--sidebar); box-shadow: none; }
+:root .sidebar-glass { border-right: 1px solid var(--border); }
+:root .glass, :root .glass-liquid, :root .surface {
+  background: var(--card);
+  border-color: var(--border);
+  box-shadow: none;
+  backdrop-filter: none;
+}
+:root .glass-strong, :root .surface-raised {
+  background: var(--popover);
+  border-color: var(--border);
+  box-shadow: var(--panel-shadow);
+  backdrop-filter: none;
+}
+:root input.glass, :root input.glass-liquid { background: var(--glass-field-bg) !important; }
+:root .lfs-btn-primary {
+  background-image: none;
+  box-shadow: none;
+}
+:root .lfs-btn-primary:hover:not(:disabled) { background: var(--primary-hover); box-shadow: none; }
+:root .lfs-btn-primary:active:not(:disabled) { background: var(--primary-pressed); box-shadow: none; }
+:root .text-brand { color: var(--foreground); background: none; }
+:root .bg-brand { background: var(--primary); }
+:root .lfs-page-header[data-stuck], :root .lfs-page-header.page-header-solid[data-stuck] {
+  background: var(--background);
+  box-shadow: none;
+  border-color: var(--border);
+}
+:root .hero-tile-face {
+  color: var(--muted-foreground);
+  background: var(--surface-hover);
+  border-color: transparent;
+  box-shadow: none;
+}
+:root .hero-tile-glow, :root .cursor-aura { display: none; }
+:root .pulse-ring { box-shadow: none; }
+:root .live-border { box-shadow: inset 0 0 0 1px var(--border); }
+:root .live-glow { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--live-c, var(--primary)) 25%, transparent); }
+:root .drift { animation: none; }
+:root .view-button[aria-current='page'] {
+  background: var(--surface-pressed);
+  border-color: transparent;
+  color: var(--foreground);
+}
+:root .view-nav-line .view-button[aria-current='page'] { background: none; }
+:root .map-label > rect { filter: none; }
+:root [data-slot='dialog-content'], :root [data-slot='sheet-content'] {
+  background: var(--popover);
+  border-color: var(--border);
+  box-shadow: var(--panel-shadow);
+}
+:root [data-slot='button'] { border-radius: var(--radius-control); }
+:root [data-slot='button'][data-size^='icon'] { border-radius: var(--radius-composer); }
+:root [data-slot='input'], :root [data-slot='select-trigger'] { border-radius: var(--radius-composer); }
+/* Cindy keeps operational headers and tabs subordinate to their content. */
+:root .lfs-page-header[data-size='lg'] > div { padding-top: 8px; padding-bottom: 16px; }
+:root .lfs-page-header[data-size='sm'] > div { padding-top: 3px; }
+/* sidebar hidden: the header starts after the traffic lights and chrome buttons (LfsPage) */
+:root .lfs-root[data-chrome-lead] .lfs-page-header > div { padding-left: max(20px, var(--chrome-lead)); transition: padding-left 250ms; }
+:root .lfs-page-header[data-size='lg'] h1 { font-size: var(--text-xl); line-height: var(--leading-normal); font-weight: var(--font-weight-medium); }
+:root .hero-tile { width: 32px; height: 32px; }
+:root .hero-tile-face { border: 0; border-radius: 0; background: transparent; }
+:root .hero-tile-face svg { width: 20px; height: 20px; }
+:root .glass, :root .glass-liquid, :root .surface { border-radius: var(--radius-composer); }
+:root .card-hover:hover, :root .card-hover:active { transform: none; box-shadow: none; border-color: var(--border); }
+:root .view-nav:not(.view-nav-line) .view-button {
+  min-height: 32px; padding: 6px 10px; border-radius: var(--radius-2xs);
+  background: transparent; font-weight: var(--font-weight-normal);
+}
+:root .view-nav:not(.view-nav-line) .view-button:hover { background: var(--surface-hover); }
+:root .view-nav:not(.view-nav-line) .view-button[aria-current='page'] { background: var(--surface-pressed); font-weight: var(--font-weight-medium); }
+
+/* LayerFS pages at the top of pi-desktop's sidebar (LayerfsSidebarNav). */
+
+@layer base {
+  .lfs-root,
+  .lfs-root *,
+  .lfs-root ::before,
+  .lfs-root ::after,
+  [data-slot],
+  [data-slot] *,
+  [data-slot] ::before,
+  [data-slot] ::after {
+    border-color: var(--border);
+    outline-color: color-mix(in oklab, var(--ring) 50%, transparent);
+  }
+  .lfs-root {
+    color: var(--foreground);
+    font-size: var(--text-base);
+    line-height: var(--leading-chat);
+    font-optical-sizing: auto;
+  }
+  .lfs-root code,
+  .lfs-root kbd,
+  .lfs-root samp,
+  .lfs-root pre {
+    font-family: var(--font-mono);
+  }
+  .lfs-root .app-drag {
+    -webkit-app-region: drag;
+  }
+  .lfs-root .app-no-drag,
+  .lfs-root .app-drag :is(button, a, input, textarea, select, [role="button"]) {
+    -webkit-app-region: no-drag;
+  }
+}
+
+/*
+  Line heights the original pages had. Tailwind's own text sizes carry a line
+  height; pi-desktop's tokens do not, so mapped sizes (original text-xs ->
+  text-sm here, sm -> base, base -> lg, lg -> lg-plus, xl -> xl, 2xl+ -> 2xl)
+  get theirs back unless the element sets leading-* itself, as in Tailwind.
+  leading-relaxed and leading-normal are 1.5 and 1.4 in pi-desktop's scale;
+  the original's were Tailwind's 1.625 and 1.5.
+*/
+:where(.lfs-root, [data-slot]) {
+  --lfs-lh-sm: 16px;
+  --lfs-lh-base: 20px;
+  --lfs-lh-lg: 24px;
+  --lfs-lh-lg-plus: 28px;
+  --lfs-lh-xl: 28px;
+  --lfs-lh-2xl: 32px;
+  --lfs-leading-relaxed: 1.625;
+  --lfs-leading-normal: 1.5;
+}
+/* text-xs here only comes from an original text-[11px], which inherited its line height. */
+:where(.lfs-root, [data-slot]) .text-xs:not([class*="leading-"]) { line-height: inherit; }
+:where(.lfs-root, [data-slot]) .text-sm:not([class*="leading-"]) { line-height: var(--lfs-lh-sm); }
+:where(.lfs-root, [data-slot]) .text-base:not([class*="leading-"]) { line-height: var(--lfs-lh-base); }
+:where(.lfs-root, [data-slot]) .text-lg:not([class*="leading-"]) { line-height: var(--lfs-lh-lg); }
+:where(.lfs-root, [data-slot]) .text-lg-plus:not([class*="leading-"]) { line-height: var(--lfs-lh-lg-plus); }
+:where(.lfs-root, [data-slot]) .text-xl:not([class*="leading-"]) { line-height: var(--lfs-lh-xl); }
+:where(.lfs-root, [data-slot]) .text-2xl:not([class*="leading-"]) { line-height: var(--lfs-lh-2xl); }
+:where(.lfs-root, [data-slot]) .leading-relaxed { line-height: var(--lfs-leading-relaxed); }
+:where(.lfs-root, [data-slot]) .leading-normal { line-height: var(--lfs-leading-normal); }
+

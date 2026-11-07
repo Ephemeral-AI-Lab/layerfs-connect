@@ -14,21 +14,22 @@ import { trajectory, writeNotes } from '../runs/trajectory.js'
 const textOf = (content) => (typeof content === 'string' ? content : Array.isArray(content) ? content.filter((c) => c.type === 'text').map((c) => c.text).join('\n') : '')
 const at = (entry) => Date.parse(entry?.timestamp) || entry?.message?.timestamp || null
 
-/** The root agent's LayerFS calls by tool call id: a call's end line replaces its start line. */
-export function chatCalls(traceDir) {
-  const file = join(traceDir, 'root.jsonl')
+/** One agent's LayerFS calls by tool call id (root, or a child's `child-<session id>`): a call's end line replaces its start line. */
+export function chatCalls(traceDir, agent = 'root') {
+  const file = join(traceDir, `${agent}.jsonl`)
+  const prefix = `${agent}:`
   const byStep = new Map()
   if (!existsSync(file)) return byStep
   for (const raw of readFileSync(file, 'utf8').split('\n')) {
     if (!raw.startsWith('{')) continue
     let line
     try { line = JSON.parse(raw) } catch { continue } // a line being written
-    if (line?.layerfs_trace !== 1 || typeof line.step !== 'string' || !line.step.startsWith('root:')) continue
-    const callId = line.step.slice('root:'.length)
+    if (line?.layerfs_trace !== 1 || typeof line.step !== 'string' || !line.step.startsWith(prefix)) continue
+    const callId = line.step.slice(prefix.length)
     if (!byStep.has(callId)) byStep.set(callId, new Map())
     const calls = byStep.get(callId)
     if (line.phase === 'start' && calls.has(String(line.id))) continue
-    calls.set(String(line.id), traceCall(line, 'root'))
+    calls.set(String(line.id), traceCall(line, agent))
   }
   return new Map([...byStep].map(([id, calls]) => [id, [...calls.values()]]))
 }
@@ -82,6 +83,7 @@ function steps(entries, calls, running) {
       out.push({
         agent: 'root',
         index: out.length,
+        callId: call.id,
         view: {
           tool: call.name,
           text: typeof args.command === 'string' ? args.command : typeof args.task === 'string' ? args.task : JSON.stringify(args, null, 2),
@@ -113,10 +115,11 @@ function steps(entries, calls, running) {
 export function chatTrace({ record, entries, dir, before = null, limit }) {
   const running = record.state === 'running'
   const s = record.scenario ?? null
+  const rootSteps = steps(entries, chatCalls(join(dir, 'traces')), running)
   const run = {
     kind: 'live',
     agents: [{ name: 'root', parent: null }],
-    steps: steps(entries, chatCalls(join(dir, 'traces')), running),
+    steps: rootSteps,
     messages: [],
     checks: s?.checks ?? [],
     started: record.created ?? null,
@@ -128,5 +131,12 @@ export function chatTrace({ record, entries, dir, before = null, limit }) {
   const page = trajectory({ run, agent: 'root', pi: entries, notes: writeNotes(dir), before, limit })
   // a scenario chat's model is its script: its answers read as the script's steps did
   if (s) for (const r of page.records) if (r.kind === 'assistant') r.scripted = true
+  // each tool row names its Pi tool call, the id the chat's messages use, so the page can link the two
+  for (const r of page.records) {
+    if (r.kind !== 'tool' && r.kind !== 'subagent') continue
+    const index = /^t:root:(\d+)$/.exec(r.id)
+    const callId = index ? rootSteps[Number(index[1])]?.callId : /^t:root:pi:\d+:(.+)$/.exec(r.id)?.[1]
+    if (callId) r.callId = callId
+  }
   return page
 }

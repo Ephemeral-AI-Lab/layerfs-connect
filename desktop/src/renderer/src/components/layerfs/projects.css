@@ -1,0 +1,26 @@
+/* Projects pages: the few original sizes that fall outside pi-desktop's type
+   and radius scales. Each value is a custom property, so the style lint's
+   token rule holds; the rules are unlayered and win over Tailwind utilities. */
+/* A file's type badge in the Files tree: the original's 8.5px, below the type ramp. */
+.file-badge {
+  --file-badge-size: 8.5px;
+  font-size: var(--file-badge-size);
+}
+
+/* A Store's on-disk size on the project's Storage tab: the original's 40px, above the type ramp. */
+.store-hero-number {
+  --store-hero-text: 40px;
+  font-size: var(--store-hero-text);
+}
+
+/* The trunk's (and a kind's) square dot: the original's 2px corners, below the radius scale. */
+.square-dot {
+  --square-dot-radius: 2px;
+  border-radius: var(--square-dot-radius);
+}
+
+/* The New project and Delete project dialogs: the original's rounded-3xl (28.8px), above the radius scale. */
+.dialog-round {
+  --dialog-round-radius: 28.8px;
+  border-radius: var(--dialog-round-radius);
+}

@@ -1,0 +1,10 @@
+/*
+  Machines page (features/layerfs/components/compute): the few sizes the
+  shared type scale has no step for.
+*/
+
+/* A kind's monogram (L, msb) inside its 24px tile: the original's 9px. */
+.lfs-monogram {
+  --lfs-monogram-size: 9px;
+  font-size: var(--lfs-monogram-size);
+}

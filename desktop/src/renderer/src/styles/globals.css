@@ -1,0 +1,402 @@
+/*
+ * Light blue theme, built on CINDY Light from makecindy/cindy (Apache-2.0,
+ * Copyright 2026 XD Inc.): apps/desktop/src/renderer/themes/builtin/cindy-light.ts
+ * and styles/globals.css, with the ivory surfaces retinted light blue. The
+ * Connect color names the LayerFS pages read (card, faint, success, …) and the
+ * type and radius scales are pi-desktop's (styles/connect-theme.css, tokens.css).
+ * Rules kept from Cindy's DESIGN.md: ink-alpha text (never solid grays or opacity),
+ * no pure black, 1px rgba(0,0,0,.08) borders, grayscale except registered
+ * semantic colors, shadows only on floating layers.
+ */
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@import './layerfs.css';
+
+:root {
+  color-scheme: light;
+
+  /* Surfaces: light blue. Hover and chip fills sit below the page. */
+  --background: #edf3fa;
+  --foreground: rgb(0 0 0 / 88%);
+  --card: #fafcff;
+  --card-foreground: var(--foreground);
+  --popover: #fafcff;
+  --popover-foreground: var(--foreground);
+  --surface-soft: #e8eff8;
+  --surface-hover: rgb(0 0 0 / 5%);
+  --surface-pressed: rgb(0 0 0 / 8%);
+  --sidebar: #e6eef8;
+  --content-area: var(--background);
+
+  /* Ink: black at decreasing alpha. */
+  --muted: rgb(0 0 0 / 5%);
+  --muted-foreground: rgb(0 0 0 / 56%);
+  --description: rgb(0 0 0 / 70%);
+  --faint: rgb(0 0 0 / 44%);
+  --placeholder: rgb(0 0 0 / 32%);
+  --secondary: rgb(0 0 0 / 5%);
+  --secondary-foreground: var(--foreground);
+  --accent: rgb(0 0 0 / 5%);
+  --accent-foreground: var(--foreground);
+
+  /* Neutral actions, never red; blue only for focus and links. */
+  --primary: #3c3f43;
+  --primary-foreground: #fcfcfc;
+  --primary-hover: #2e3237;
+  --primary-pressed: #25282c;
+  --border: rgb(0 0 0 / 8%);
+  --input: var(--border);
+  --ring: #417cdd;
+  --link: #1d4ed8;
+
+  /* Status. */
+  --destructive: #bc352b;
+  --danger-label: var(--destructive);
+  --success: #227246;
+  --warning: #885b0a;
+  --idle: rgb(0 0 0 / 20%);
+  --scrim: rgb(0 0 0 / 32%);
+  --panel-shadow: 0 12px 40px rgb(0 0 0 / 12%);
+
+  /* Data colors: lanes, Commit kinds, agents, code. */
+  --lane-1: #986614;
+  --lane-2: #187a70;
+  --lane-3: #aa4770;
+  --lane-4: #7560ba;
+  --commit-fs: #7560ba;
+  --commit-exec: #a34d31;
+  --commit-merge: #187a70;
+  --agent-builder: #a34d31;
+  --agent-reviewer: #7560ba;
+  --agent-tester: #90670e;
+  --agent-docs: #217957;
+  --hl-comment: #777772;
+  --hl-keyword: #7555a6;
+  --hl-string: #25704c;
+  --hl-number: #a34d31;
+  --hl-function: #285fa1;
+  --hl-type: #88600d;
+  --hl-property: #3b5186;
+  --code-background: var(--card);
+  --code-line-number: var(--faint);
+  --file-npm: var(--hl-number);
+  --file-git: var(--hl-number);
+  --file-script: var(--hl-function);
+  --file-python: var(--hl-type);
+
+  /* The original Connect token set the LayerFS pages read (layerfs.css). */
+  --sidebar-accent: var(--surface-pressed);
+  --grain: none;
+  --glass-card-bg: var(--card);
+  --glass-panel-bg: var(--popover);
+  --glass-field-bg: var(--surface-soft);
+  --glass-border: var(--border);
+  --glass-shadow: none;
+  --pressed: none;
+  --highlight: 0 0 transparent;
+  --elev-1: 0 0 transparent;
+  --elev-2: 0 0 transparent;
+  --elev-3: var(--panel-shadow);
+  --brand-1: var(--foreground);
+  --brand-2: var(--muted-foreground);
+  --brand-3: var(--faint);
+  --glow: transparent;
+  --icon-accent: var(--muted-foreground);
+  --lfs-light: var(--faint);
+  --lfs-dark: var(--description);
+  --lfs-warn: var(--warning);
+  --lfs-surface: var(--card);
+  --dur-fast: 150ms;
+  --dur-base: 200ms;
+  --dur-slow: 250ms;
+  --dur-xslow: 400ms;
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-out-soft: cubic-bezier(0.25, 0.8, 0.35, 1);
+  --radius-control: 9999px;
+  --radius-panel: 16px;
+  --radius-composer: 12px;
+
+  /* Shell (Cindy): sidebar, title bar and the user card. */
+  --sidebar-border: var(--border);
+  --sidebar-item-hover: rgb(0 0 0 / 5%);
+  --sidebar-item-active: #fdfeff;
+  --sidebar-item-active-foreground: #1f2937;
+  --sidebar-item-active-border: transparent;
+  --sidebar-muted: rgb(0 0 0 / 56%);
+  --sidebar-action-icon: rgb(0 0 0 / 44%);
+  --sidebar-nav-text: rgb(0 0 0 / 88%);
+  --sidebar-list-muted: rgb(0 0 0 / 44%);
+  --sidebar-user-card-bg: rgb(250 252 255 / 55%);
+  --sidebar-user-card-bg-hover: rgb(250 252 255 / 80%);
+  --sidebar-user-card-border: rgb(0 0 0 / 8%);
+  --titlebar-border: var(--border);
+  --titlebar-icon: rgb(0 0 0 / 56%);
+  --titlebar-button-hover: rgb(0 0 0 / 5%);
+
+  /* Cindy's names for the same things, used by the shell. */
+  --surface: var(--background);
+  --surface-elevated: var(--card);
+  --surface-elevated-soft: #f5f9fe;
+  --surface-translucent-sidebar: rgb(230 238 248 / 85%);
+  --surface-translucent-overlay: rgb(248 251 255 / 90%);
+  --border-default: var(--border);
+  --text-primary: rgb(0 0 0 / 88%);
+  --text-secondary: rgb(0 0 0 / 56%);
+  --text-tertiary: rgb(0 0 0 / 44%);
+  --text-placeholder: rgb(0 0 0 / 32%);
+  --accent-cta-bg: var(--primary);
+  --accent-cta-fg: var(--primary-foreground);
+  --focus-ring: var(--ring);
+  --focus-ring-soft: rgb(65 124 221 / 50%);
+  --status-running: #ea6b17;
+  --shadow-menu: 0 4px 16px rgb(0 0 0 / 15%);
+
+  --app-font-ui: 'Inter Variable', Inter, -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino Sans GB',
+    'Microsoft YaHei UI', 'Noto Sans CJK SC', 'Segoe UI', Roboto, sans-serif;
+  --app-font-code: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Monaco, Consolas, 'Liberation Mono', monospace;
+
+  /* Wallpaper: 63% veil, cards keep 72% of their fill. */
+  --app-wallpaper-veil: 63%;
+  --wallpaper-glass-opacity: 72%;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-description: var(--description);
+  --color-faint: var(--faint);
+  --color-placeholder: var(--placeholder);
+  --color-surface: var(--card);
+  --color-surface-hover: var(--surface-hover);
+  --color-surface-pressed: var(--surface-pressed);
+  --color-surface-soft: var(--surface-soft);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-link: var(--link);
+  --color-destructive: var(--destructive);
+  --color-idle: var(--idle);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-content-area: var(--content-area);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-item-hover: var(--sidebar-item-hover);
+  --color-sidebar-item-active: var(--sidebar-item-active);
+  --color-sidebar-muted: var(--sidebar-muted);
+  --color-sidebar-action-icon: var(--sidebar-action-icon);
+  --color-titlebar-border: var(--titlebar-border);
+  --color-titlebar-icon: var(--titlebar-icon);
+  --color-titlebar-button-hover: var(--titlebar-button-hover);
+
+  --font-sans: var(--app-font-ui);
+  --font-mono: var(--app-font-code);
+
+  /* pi-desktop's type scale (the pages were laid out on it), plus Cindy's pixel sizes. */
+  --text-3xs: 10.5px;
+  --text-2xs: 11px;
+  --text-xs: 11px;
+  --text-xs-plus: 11.5px;
+  --text-sm: 12px;
+  --text-sm-plus: 12.5px;
+  --text-md: 13px;
+  --text-md-plus: 13.5px;
+  --text-base: 14px;
+  --text-base-plus: 15px;
+  --text-lg: 16px;
+  --text-lg-plus: 18px;
+  --text-xl: 20px;
+  --text-2xl: 28px;
+  --text-10: 10px;
+  --text-11: 11px;
+  --text-12: 12px;
+  --text-13: 13px;
+  --text-14: 14px;
+  --text-15: 15px;
+  --text-16: 16px;
+  --text-18: 18px;
+  --text-20: 20px;
+  --text-24: 24px;
+  --text-28: 28px;
+
+  --font-weight-medium-plus: 520;
+  --font-weight-strong: 560;
+
+  --leading-heading: 1.15;
+  --leading-tighter: 1.2;
+  --leading-compact: 1.3;
+  --leading-compact-plus: 1.35;
+  --leading-body: 1.45;
+  --leading-chat: 1.55;
+  --leading-prose: 1.6;
+  --leading-row: 18px;
+
+  /* pi-desktop's radii: rounded-xs 8px, sm 10px, md 12px, lg 16px, xl 20px. */
+  --radius-3xs: 4px;
+  --radius-2xs: 6px;
+  --radius-xs: 8px;
+  --radius-sm: 10px;
+  --radius-md: 12px;
+  --radius-md-plus: 14px;
+  --radius-lg: 16px;
+  --radius-lg-plus: 18px;
+  --radius-xl: 20px;
+  --radius-2xl: 24px;
+  --radius-round: 50%;
+
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-fast: 0ms;
+    --dur-base: 0ms;
+    --dur-slow: 0ms;
+    --dur-xslow: 0ms;
+  }
+}
+
+@layer base {
+  *,
+  ::before,
+  ::after {
+    border-color: var(--border);
+  }
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+  body {
+    margin: 0;
+    overflow: hidden;
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--app-font-ui);
+    font-size: 14px;
+    -webkit-font-smoothing: antialiased;
+    user-select: none;
+  }
+  ::selection {
+    background: var(--focus-ring-soft);
+  }
+  textarea,
+  input {
+    caret-color: var(--ring);
+    user-select: text;
+  }
+  button:not(:disabled),
+  [role='button']:not(:disabled) {
+    cursor: pointer;
+  }
+}
+
+/* Multi-stroke Lucide icons composite once, so crossing strokes don't darken. */
+svg.lucide {
+  mask-image: linear-gradient(currentColor, currentColor);
+}
+svg.lucide > * {
+  color: rgb(from currentColor r g b / 1);
+}
+
+/* Window regions. */
+.drag {
+  -webkit-app-region: drag;
+}
+.no-drag {
+  -webkit-app-region: no-drag;
+}
+
+/* Raised in-page cards and the selected sidebar row. */
+.surface-card {
+  background-color: var(--surface-elevated);
+}
+.sidebar-row-active {
+  background-color: var(--sidebar-item-active);
+  color: var(--sidebar-item-active-foreground);
+  box-shadow: inset 0 0 0 1px var(--sidebar-item-active-border);
+}
+
+/* Native glass on macOS: the window has sidebar vibrancy; only the sidebar shows it. */
+html[data-platform='darwin']:not([data-wallpaper-active='true']) body {
+  background: transparent;
+}
+html[data-platform='darwin']:not([data-wallpaper-active='true']) aside.app-sidebar {
+  background: var(--surface-translucent-sidebar);
+}
+
+/* Wallpaper: one fixed canvas behind everything, veiled with the page color. */
+html[data-wallpaper-active='true'] body {
+  isolation: isolate;
+  background: var(--surface);
+}
+html[data-wallpaper-active='true'] body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -3;
+  pointer-events: none;
+  background-color: var(--surface);
+  background-image:
+    linear-gradient(
+      color-mix(in srgb, var(--surface) var(--app-wallpaper-veil), transparent),
+      color-mix(in srgb, var(--surface) var(--app-wallpaper-veil), transparent)
+    ),
+    var(--app-wallpaper-image);
+  background-size: auto, cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+/* Page containers and the sidebar go clear; regions are divided by 1px lines only. */
+html[data-wallpaper-active='true'] .bg-content-area,
+html[data-wallpaper-active='true'] aside.app-sidebar {
+  background-color: transparent;
+}
+/* Cards keep their fill at 72%, as fill only: no backdrop-filter, text never fades. */
+html[data-wallpaper-active='true'] .surface-card {
+  background-color: color-mix(in srgb, var(--surface-elevated) var(--wallpaper-glass-opacity), transparent);
+}
+html[data-wallpaper-active='true'] .sidebar-row-active {
+  background-color: color-mix(in srgb, var(--sidebar-item-active) var(--wallpaper-glass-opacity), transparent);
+}
+
+/* Floating menus: translucent with a light blur, plus the menu shadow. */
+.menu-surface {
+  background: var(--surface-translucent-overlay);
+  backdrop-filter: blur(6px);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-menu);
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 9999px;
+}
+:hover::-webkit-scrollbar-thumb {
+  background: rgb(0 0 0 / 10%);
+}
+
+/* A scroller with no visible bar (the sidebar's chat list, tab rows). */
+@utility scrollbar-none {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
