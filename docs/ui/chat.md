@@ -847,3 +847,12 @@ Sandbox uses the header action and its existing Overview/Workspaces tabs.
 Connection observations do not prove integrity. Simulated reports say so.
 Mounted chat Stop disables while stopping and retains Workspace/Sandbox; output
 appears after command completion. Cancellation unknown offers explicit retry.
+
+
+## Native Stop output delivery (2026-11-09)
+
+Stopping a mounted command may close its output stream. The host handles that
+closure without crashing and retains the confirmed cancellation, command exit
+and any separate partial-Commit error. The Workspace and Sandbox remain owned
+by the conversation. A transport failure is never a successful command or an
+automatic replay; output appears when the CLI command completes.

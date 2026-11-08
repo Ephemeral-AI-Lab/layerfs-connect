@@ -7,6 +7,7 @@ import { Tip } from '@/components/ui/tooltip'
 import { CHROME_CLUSTER_PX, macChrome, TRAFFIC_LIGHTS_PX } from '@/lib/platform'
 import { cn } from '@/lib/utils'
 import { EXAMPLE_CHAT_PATH } from '@/layerfs/chat-sim'
+import { connectBridge } from '@/layerfs/bridge'
 import layerfsLogo from '@/assets/layerfs-logo.png'
 
 // Cindy's sidebar row: 32px pill, 14px, ink-88 text.
@@ -115,7 +116,7 @@ function UserCard({ settings, onToggleSettings }: { settings: boolean; onToggleS
           <Avatar initials="YX" tint="#5A6B7D" size="user" />
           <span className="flex min-w-0 flex-col">
             <span className="truncate text-14 font-semibold leading-[1.286] text-[var(--text-primary)]">Ephemeral-AI</span>
-            <span className="flex min-w-0 items-center gap-1 text-10 leading-[1.3] text-[var(--text-secondary)]">Simulated · 0.0.0</span>
+            <span className="flex min-w-0 items-center gap-1 text-10 leading-[1.3] text-[var(--text-secondary)]">{connectBridge.mode === 'real' ? 'Real LayerFS' : 'Simulated LayerFS'}</span>
           </span>
         </button>
         <Tip label={settings ? 'Back to workspace' : 'Settings'} side="top">

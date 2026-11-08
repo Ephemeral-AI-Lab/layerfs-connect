@@ -326,3 +326,14 @@ renderer build receipts are tracked in `phase-2-record.md`.
 Files/History/statistics now share the CLI boundary with Doctor. Saved file
 queries preserve full pins, opaque continuations, omissions and partial coverage.
 Their load errors do not replay mutations or trigger automatic recovery.
+
+
+## Native Stop follow-up: output delivery (2026-11-09)
+
+A real packaged-app Stop exposed an asynchronous output-delivery rejection after
+the host closed the execution HTTP stream. Mounted execution now drains its
+ordered output callbacks and handles their rejected Promises. Cancellation may
+close the output consumer while the command's final result and partial Commit
+remain separate persisted facts; Stop retains the Workspace and Sandbox. A
+non-cancellation delivery error is reported after command completion and Save
+are recorded. Nothing is replayed. Doctor progress/cancellation stays deferred.

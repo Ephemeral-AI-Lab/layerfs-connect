@@ -100,3 +100,37 @@ test('folder launch retry observes fresh status and never resends when that read
   assert.equal(retained.observation.base, 'saved-pin')
   assert.equal(retained.cancel.outcome, 'cancelled')
 })
+
+
+test('Stop drains rejected output delivery without losing cancellation or partial Save facts', { timeout: 3000 }, async () => {
+  const controller = new AbortController()
+  let saves = 0
+  const f = fixture(async (_ws, _command, options) => {
+    options.on_spawn(12345)
+    controller.abort()
+    options.stdout(Buffer.from('partial output'))
+    return { kind: 'cancelled', exit_code: 143, stop: 'SIGTERM' }
+  }, async () => { saves++; throw Object.assign(new Error('changed head'), { code: 'Conflict' }) })
+  const result = await f.manager.run(f.record, { command: 'test' }, { signal: controller.signal, onData: async () => { throw new DOMException('The stream was cancelled', 'AbortError') } })
+  await new Promise(resolve => setImmediate(resolve))
+  assert.equal(result.kind, 'cancelled')
+  assert.equal(result.exitCode, 143)
+  assert.equal(result.saveError.code, 'Conflict')
+  assert.equal(saves, 1)
+  assert.equal(f.record.workspace.execution.finished, true)
+  assert.equal(f.record.workspace.execution.result.exit_code, 143)
+  assert.equal(f.record.workspace.handle, 'box:chat')
+})
+
+test('an output consumer failure is handled after preserving the completed command and Save', { timeout: 3000 }, async () => {
+  const delivery = new Error('output connection failed')
+  let saves = 0
+  const f = fixture(async (_ws, _command, options) => {
+    options.stdout(Buffer.from('first'))
+    return { kind: 'exit:0', exit_code: 0 }
+  }, async () => { saves++; return { kind: 'UpToDate' } })
+  await assert.rejects(f.manager.run(f.record, { command: 'test' }, { onData: async () => { await Promise.resolve(); throw delivery } }), delivery)
+  assert.equal(saves, 1)
+  assert.equal(f.record.workspace.execution.finished, true)
+  assert.equal(f.record.workspace.execution.result.exit_code, 0)
+})

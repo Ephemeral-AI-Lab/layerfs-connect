@@ -338,3 +338,22 @@ resizing and stays accessible at the top left when folded. At narrow sidebar wid
 the full label remains available to assistive technology and on hover.
 
 The secondary sidebar also links Tools, Agents and Hooks to their Pi configuration panels.
+
+
+## Current desktop host-mode footer (2026-11-09)
+
+Source: `desktop/src/renderer/src/components/shell/Sidebar.tsx`. This updates
+the current desktop footer; earlier root-renderer layouts above are historical.
+
+```text
++-- User card ----------------------------------+
+| [avatar] Ephemeral-AI       [Settings] [Help] |
+|          Real LayerFS                        |
++----------------------------------------------+
+Sim host: Simulated LayerFS
+```
+
+The subtitle uses `connectBridge.mode`, supplied by the Electron preload or the
+simulated web preview. It has no placeholder version. This mode label identifies
+the selected backend; it does not claim connectivity, a successful operation or
+Doctor coverage. Window and navigation behavior are unchanged.

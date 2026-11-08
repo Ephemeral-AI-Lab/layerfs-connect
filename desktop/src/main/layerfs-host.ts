@@ -64,11 +64,19 @@ export class LayerfsHost {
         stdio: ['pipe', 'pipe', 'pipe'],
       })
       this.child = child
+      let startupFailure: string | null = null
       const timer = setTimeout(() => {
         reject(new Error('The LayerFS host did not start in time.'))
         child.kill()
       }, READY_MS)
-      createInterface({ input: child.stderr! }).on('line', (line) => log(line.replace(/^\[host\] /, '')))
+      createInterface({ input: child.stderr! }).on('line', (line) => {
+        // Static discovery may fail before main.js can print its ready envelope.
+        // Recognize only error codes; stderr itself can contain private values.
+        const code = /\bcode:\s*['"](CliUnavailable|CliIncompatible)['"]/.exec(line)?.[1]
+        if (code === 'CliUnavailable') startupFailure = 'LayerFS CLI unavailable. Set LAYERFS_CONNECT_CLI to an absolute pinned LayerFS binary path, then restart Connect.'
+        if (code === 'CliIncompatible') startupFailure = 'LayerFS CLI incompatible. Configure a supported pinned LAYERFS_CONNECT_CLI and its matching LAYERFS_CONNECT_DAEMON, then restart Connect.'
+        log(line.replace(/^\[host\] /, ''))
+      })
       const lines = createInterface({ input: child.stdout! })
       lines.once('line', (line) => {
         clearTimeout(timer)
@@ -86,7 +94,8 @@ export class LayerfsHost {
         clearTimeout(timer)
         reject(new Error(`The LayerFS host could not start (${node}): ${error.message}`))
       })
-      child.on('exit', (code, signal) => {
+      // close follows stderr drainage, including a final startup error code.
+      child.on('close', (code, signal) => {
         clearTimeout(timer)
         log(`exited (${code ?? signal})`)
         this.child = null
@@ -94,7 +103,7 @@ export class LayerfsHost {
         this.stream?.abort()
         this.stream = null
         if (!this.closed) this.onStream({ kind: 'connection', state: 'reconnecting' })
-        reject(new Error('The LayerFS host exited.'))
+        reject(new Error(startupFailure ?? 'The LayerFS host exited.'))
       })
     })
     this.endpoint.catch(() => {

@@ -574,3 +574,24 @@ is Connect-owned compatibility code, not the removed linked Node addon.
 Packaging accepts explicit clean CLI/daemon resources and records build identity.
 See phase-2-record.md and docs/evidence/phase-2 for checks, gaps and retained
 initial failures. Electron verification remains NOT_RUN (not requested).
+
+
+## Native Stop follow-up: output delivery (2026-11-09)
+
+A real packaged-app Stop exposed an asynchronous output-delivery rejection after
+the host closed the execution HTTP stream. Mounted execution now drains its
+ordered output callbacks and handles their rejected Promises. Cancellation may
+close the output consumer while the command's final result and partial Commit
+remain separate persisted facts; Stop retains the Workspace and Sandbox. A
+non-cancellation delivery error is reported after command completion and Save
+are recorded. Nothing is replayed. Doctor progress/cancellation stays deferred.
+
+## Native startup refusal follow-up (2026-11-09)
+
+A configured missing or incompatible CLI can fail static JSON discovery before
+its host emits the ready envelope. The Electron bridge recognizes only the
+`CliUnavailable` and `CliIncompatible` error codes and returns fixed guidance to
+configure the explicit pinned CLI (and matching daemon for incompatibility), then
+restart Connect. It never forwards raw startup stderr to the renderer. Other
+host exits retain the ordinary host-exited error; a runtime failure is not
+misrepresented as a binary configuration failure.

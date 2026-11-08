@@ -219,12 +219,23 @@ export class AgentWorkspaces {
     const abort = () => { void this.cancel(record, onChange) }
     signal?.addEventListener('abort', abort, { once: true })
     const wrapped = timeout > 0 ? `if command -v timeout >/dev/null 2>&1; then timeout ${Math.ceil(timeout)} bash -c ${quote(command)}; else bash -c ${quote(command)}; fi` : `bash -c ${quote(command)}`
-    let result, spawned = false
+    let result, spawned = false, deliveryError
+    let output = Promise.resolve(), pendingOutput = 0, outputDrained
+    // Invoke frames in order without queueing their bytes behind an async consumer.
+    // Handle rejected delivery immediately, then drain before recording completion.
+    const delivered = () => { if (--pendingOutput === 0) outputDrained() }
+    const sink = (bytes) => {
+      if (deliveryError) return
+      if (pendingOutput++ === 0) output = new Promise(resolve => { outputDrained = resolve })
+      try {
+        Promise.resolve(onData?.(Buffer.from(bytes))).then(delivered, error => { deliveryError = error; delivered() })
+      } catch (error) { deliveryError = error; delivered() }
+    }
     try {
-      const sink = (bytes) => { void onData?.(Buffer.from(bytes)) }
       result = await this.lfs.workspace.exec(ws.handle, wrapped, { exec_id: execution.exec_id, before_spawn: () => signal?.throwIfAborted(), on_spawn: pid => { spawned = !!pid; execution.pid = pid; void onChange?.() }, stdout: sink, stderr: sink })
       execution.result = JSON.parse(stringify({ kind: result.kind, exit_code: result.exit_code, stop: result.stop, stdout_bytes: result.stdout_bytes, stderr_bytes: result.stderr_bytes }))
     } finally {
+      await output
       execution.finished = !!result || !spawned
       if (!result && spawned) execution.error = 'Command completion unavailable; remote execution may still be running.'
       if (!result && signal?.aborted) ws.state = 'ready'
@@ -238,8 +249,10 @@ export class AgentWorkspaces {
     catch (error) {
       saveError = { code: error.code ?? 'Unknown', message: error.message }
       await this.change(record, { state: 'ready', error: `Not saved: ${saveError.code}: ${saveError.message}` }, onChange)
-      await onData?.(Buffer.from(`\nNot saved: ${saveError.code}: ${saveError.message}\n`))
+      sink(Buffer.from(`\nNot saved: ${saveError.code}: ${saveError.message}\n`))
     }
+    await output
+    if (deliveryError && !signal?.aborted) throw deliveryError
     return { exitCode, kind: result.kind, stop: result.stop, saveError }
   }
 

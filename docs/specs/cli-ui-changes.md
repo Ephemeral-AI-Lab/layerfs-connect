@@ -214,3 +214,14 @@ from allocation; allocation-minus-free usage bars are removed.
 
 Owner selected Stop = cancel the mounted command and retain its Workspace and
 Sandbox. Explicit deletion/shutdown retain their separate release paths.
+
+
+## Native follow-up: accurate mode label (2026-11-09)
+
+Native verification exposed a hardcoded `Simulated · 0.0.0` subtitle in the
+current desktop sidebar even when the preload and host used the real pinned CLI.
+The sidebar now consumes the same `connectBridge.mode` as other live views and
+shows `Real LayerFS` or `Simulated LayerFS`. The placeholder version is removed;
+no binary version is inferred from the desktop manifest. This is a backend-mode
+label, separate from operation outcomes and Doctor completeness. Follow-up
+evidence and verification are in `phase-2-follow-up-record.md`.
