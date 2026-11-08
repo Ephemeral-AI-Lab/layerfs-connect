@@ -403,6 +403,41 @@ export class Projects {
   }
 
   /** CommitInfo[] of `branch`, newest first, each with its changed paths when LayerFS can compare it with its parent. */
+  /** Bounded History reads: metadata only, no eager diffs or full-history scan. */
+  async history(key, query) {
+    const project = projectRef(key).key
+    const pos = Number(query.get('pos') ?? 0)
+    if (!Number.isSafeInteger(pos) || pos < 0) throw refuse(400, 'InvalidInput', 'pos must be a nonnegative integer')
+    const branch = query.get('branch')
+    if (!branch) {
+      const page = await this.lfs.branch.list(project, { page_size: 100, page_pos: pos })
+      if (pos === 0 && !page.items.some(b => b.name === 'main')) page.items.unshift(await this.lfs.branch.get(project, 'main'))
+      return { branches: page.items.map(b => ({ name: b.name, head: b.name === 'main' ? b.base : b.head,
+        base: b.base, forkedFrom: b.forked_from ?? null })), next: page.next_page_pos ?? null }
+    }
+    checkBranch(branch)
+    const b = await this.lfs.branch.get(project, branch)
+    if (branch === 'main') return { items: [], next: null, head: b.base }
+    const expected = query.get('head')
+    if (expected && expected !== b.head) throw refuse(409, 'HeadMoved', 'This branch changed. Refresh History before loading earlier checkpoints.')
+    const commit = query.get('commit')
+    if (commit) {
+      const c = await this.lfs.commit.get(project, branch, commit)
+      const from = query.get('from') ?? c.parent
+      if (!from || isLayer(from)) return { item: commitInfo(c), changes: null, nextChanges: null }
+      const diff = await this.lfs.commit.diff(project, from, c.id, { paths_only: true, page_size: 100, page_pos: pos })
+      return { item: commitInfo(c), changes: diff.items ?? [], nextChanges: diff.next_page_pos ?? null }
+    }
+    const page = await this.lfs.commit.list(project, branch, { page_size: 100, page_pos: pos })
+    const own = []
+    let reachedFork = false
+    for (const c of page.items) {
+      if (c.id === b.forked_from || c.branch !== branch) { reachedFork = true; break }
+      own.push(commitInfo(c))
+    }
+    return { items: own, head: b.head, next: reachedFork ? null : page.next_page_pos ?? null }
+  }
+
   async commits(key, branch, limitText) {
     checkBranch(branch)
     const limit = limitText == null || limitText === '' ? LIMIT : Number(limitText)

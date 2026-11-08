@@ -8,27 +8,27 @@ export type Tone = 'neutral' | 'success' | 'info' | 'warning' | 'danger'
 // Literal class names, so Tailwind sees them.
 const TONE: Record<Tone, string> = {
   neutral: 'bg-muted/80 text-muted-foreground ring-foreground/10',
-  success: 'bg-emerald-500/10 text-emerald-600 ring-emerald-500/25',
+  success: 'bg-success/10 text-success ring-success/25',
   info: 'bg-primary/10 text-primary ring-primary/25',
-  warning: 'bg-amber-500/10 text-amber-600 ring-amber-500/25',
+  warning: 'bg-warning/10 text-warning ring-warning/25',
   danger: 'bg-destructive/10 text-destructive ring-destructive/25',
 }
 
 /** A dot's fill, and its text colour, which a live dot's ring and glow take (`pulse-ring`). */
 export const DOT: Record<Tone, string> = {
   neutral: 'bg-idle text-idle',
-  success: 'bg-emerald-500 text-emerald-500',
+  success: 'bg-success text-success',
   info: 'bg-primary text-primary',
-  warning: 'bg-amber-500 text-amber-500',
+  warning: 'bg-warning text-warning',
   danger: 'bg-destructive text-destructive',
 }
 
 /** A live chip's glow, in its tone: the same breathing glow (live-glow), tinted. */
 const GLOW: Record<Tone, string> = {
   neutral: '',
-  success: 'live-glow [--live-c:rgb(16_185_129)]',
+  success: 'live-glow [--live-c:var(--success)]',
   info: 'live-glow',
-  warning: 'live-glow [--live-c:rgb(245_158_11)]',
+  warning: 'live-glow [--live-c:var(--warning)]',
   danger: 'live-glow [--live-c:var(--destructive)]',
 }
 

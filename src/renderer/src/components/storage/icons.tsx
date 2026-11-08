@@ -26,9 +26,9 @@ export function brandColor(hex: string): { className: string; style: React.CSSPr
   return {
     className:
       l < 0.25
-        ? 'text-(--brand)'
+        ? 'text-foreground'
         : l > 0.6
-          ? 'text-[color-mix(in_oklab,var(--brand)_70%,black)]'
+          ? 'text-[color-mix(in_oklab,var(--brand)_70%,var(--foreground))]'
           : 'text-(--brand)',
     style: { '--brand': `#${hex}` } as React.CSSProperties,
   }

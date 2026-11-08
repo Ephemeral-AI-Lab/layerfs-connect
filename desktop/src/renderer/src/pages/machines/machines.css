@@ -8,3 +8,154 @@
   --lfs-monogram-size: 9px;
   font-size: var(--lfs-monogram-size);
 }
+
+/* Hallmark · pre-emit critique: P5 H5 E4 S5 R5 V4 */
+/* Hallmark · genre: modern-minimal · macrostructure: Workbench · design-system: design.md · designed-as-app */
+.machine-workbench { display: flex; flex-direction: column; min-width: 0; max-width: 1760px; gap: 20px; padding-top: 8px; }
+.machine-console { position: relative; min-width: 0; padding-bottom: 14px; border-bottom: 1px solid var(--border); }
+.machine-console-nav, .machine-console-identity, .machine-view-heading {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+}
+.machine-console-nav { flex-wrap: wrap; margin-bottom: 16px; }
+.machine-console-identity { justify-content: start; gap: 10px; }
+.machine-console-identity > div { flex: 0 1 auto; }
+.machine-console-identity > span:last-child { margin-left: 6px; }
+.machine-console-identity p { font-size: 12px; margin-top: 1px; }
+.machine-hardware-line { margin-top: 12px; }
+.machine-hardware { display: flex; flex-wrap: wrap; gap: 8px 24px; padding-right: 140px; }
+.machine-hardware > div { display: flex; align-items: baseline; gap: 8px; }
+.machine-hardware dt, .machine-module-label, .machine-workspace-bank-label {
+  font-family: var(--font-mono); font-size: 10px; font-weight: 500; letter-spacing: .025em;
+}
+.machine-hardware dt { color: var(--muted-foreground); }
+.machine-hardware dd { font-size: 12px; font-variant-numeric: tabular-nums; }
+.machine-technical { margin-top: 0; }
+.machine-technical > summary {
+  position: absolute; right: 0; bottom: 14px;
+  display: flex; width: fit-content; align-items: center; gap: 4px;
+  cursor: pointer; font-size: 12px; color: var(--muted-foreground);
+  list-style: none; border-radius: 4px;
+}
+.machine-technical > summary::-webkit-details-marker { display: none; }
+.machine-technical[open] > summary { position: static; margin-top: 12px; }
+.machine-technical[open] > summary > svg { transform: rotate(90deg); }
+.machine-inventory { display: flex; min-width: 0; flex-direction: column; gap: 14px; }
+.machine-view-heading { flex-wrap: wrap; }
+.machine-section-label { font-size: 14px; font-weight: 550; letter-spacing: -.01em; }
+.machine-view-switch { flex-shrink: 0; }
+.machine-sandbox-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 360px), 400px));
+  gap: 20px; align-items: start;
+}
+.machine-sandbox-box {
+  position: relative; display: flex; flex-direction: column;
+  min-width: 0; width: 100%; aspect-ratio: 1; padding: 18px 20px 0;
+  container-type: inline-size;
+  border: 1px solid var(--border); border-radius: 12px;
+  background: var(--card); box-shadow: 0 2px 0 var(--muted);
+}
+.machine-sandbox-box-top { display: flex; align-items: center; gap: 8px; min-width: 0; margin-bottom: 4px; }
+.machine-sandbox-box-top h3 { min-width: 0; flex: 0 1 auto; max-width: 52%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 20px; font-weight: 550; letter-spacing: -.025em; }
+.machine-identity-separator { color: var(--muted-foreground); }
+.machine-card-project { min-width: 0; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; color: var(--muted-foreground); }
+.machine-sandbox-action { position: relative; z-index: 2; flex-shrink: 0; margin-left: auto; }
+.machine-module-status { display: flex; align-items: center; gap: 7px; min-width: 0; font-size: 11px; font-weight: 500; }
+.machine-module-dot { width: 6px; height: 6px; flex-shrink: 0; border-radius: 50%; background: var(--muted-foreground); }
+.machine-module-dot[data-tone="success"] { background: var(--success); }
+.machine-module-dot[data-tone="warning"] { background: var(--warning); }
+.machine-module-dot[data-tone="danger"] { background: var(--destructive); }
+.machine-card-subtitle { margin-top: 0; display: flex; align-items: center; justify-content: space-between; gap: 12px; min-width: 0; }
+.machine-card-image { min-width: 0; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; line-height: 1.5; color: var(--muted-foreground); margin-bottom: 0; }
+.machine-card-image > span { color: var(--foreground); }
+.machine-card-kernel { font-size: 11px; white-space: nowrap; }
+.machine-card-kernel > span { color: var(--muted-foreground); margin-right: 5px; }
+.machine-card-resources { margin-top: 14px; padding: 10px 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+.machine-card-usage { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 12px; }
+.machine-card-usage dt { margin-bottom: 2px; font-size: 10px; line-height: 14px; color: var(--muted-foreground); }
+.machine-card-usage dd { font-size: 13px; line-height: 18px; }
+.machine-card-resources > p { margin-top: 4px; font-size: 10px; line-height: 14px; color: var(--muted-foreground); }
+.machine-card-workspaces { flex: 1; min-height: 0; margin-top: 12px; }
+.machine-card-workspaces h4 { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 6px; font-size: 12px; font-weight: 500; }
+.machine-card-workspaces h4 > span { font-family: var(--font-mono); font-size: 11px; }
+.machine-workspace-head { display: grid; grid-template-columns: minmax(0,1fr) 12px minmax(0,1fr); gap: 8px; margin-bottom: 2px; font-size: 10px; color: var(--muted-foreground); }
+.machine-workspace-head > span:last-child { grid-column: 3; }
+.machine-card-workspaces li { display: grid; grid-template-columns: minmax(0,1fr) 12px minmax(0,1fr); align-items: center; gap: 8px; min-height: 28px; border-top: 1px solid var(--border); font-size: 12px; }
+.machine-workspace-name, .machine-workspace-branch > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.machine-workspace-branch { display: flex; align-items: center; gap: 5px; min-width: 0; color: var(--muted-foreground); }
+.machine-card-empty, .machine-card-more { font-size: 12px; color: var(--muted-foreground); }
+.machine-card-more { margin-top: 6px; }
+.machine-sandbox-box-footer { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 42px; margin: 12px -20px 0; padding: 10px 20px; border-top: 1px solid var(--border); border-radius: 0 0 12px 12px; font-size: 12px; color: var(--muted-foreground); }
+.machine-sandbox-link { outline: none; }
+.machine-sandbox-link::after { content: ''; position: absolute; inset: 0; border-radius: 12px; z-index: 1; }
+.machine-sandbox-box:hover { border-color: var(--muted-foreground); }
+.machine-sandbox-box:hover .machine-sandbox-box-footer { color: var(--foreground); }
+.machine-sandbox-link:focus-visible::after { outline: 2px solid var(--ring); outline-offset: 3px; }
+.machine-technical > summary:focus-visible { outline: 2px solid var(--ring); outline-offset: 3px; }
+.machine-sandbox-notice { position: absolute; inset: auto 8px 8px; z-index: 3; max-height: 45%; overflow-y: auto; overflow-wrap: anywhere; padding: 8px; border: 1px solid var(--destructive); border-radius: 4px; background: var(--card); color: var(--destructive); font-size: 12px; }
+@media (max-width: 600px) {
+  .machine-hardware { padding-right: 0; }
+  .machine-technical > summary { position: static; margin-top: 10px; }
+}
+@container (max-width: 320px) {
+  .machine-card-resources { margin-top: 10px; padding: 8px 0; }
+  .machine-card-workspaces { margin-top: 10px; }
+  .machine-card-workspaces h4 { margin-bottom: 6px; }
+  .machine-card-workspaces li { min-height: 26px; font-size: 11px; }
+  .machine-sandbox-box-top h3 { font-size: 17px; }
+}
+
+.machine-card-open { display: flex; align-items: center; gap: 6px; white-space: nowrap; }
+
+/* Numbers align first; the two histories and capacity bar share a 40px band. */
+.machine-card-usage > div { min-width: 0; }
+.machine-card-usage dd { font-variant-numeric: tabular-nums; white-space: nowrap; font-size: 12px; font-weight: 500; letter-spacing: -.02em; }
+.sandbox-metric-sparkline { display: block; width: 100%; height: 40px; margin-top: 5px; color: var(--link); }
+.sandbox-metric-no-history { display: flex; align-items: center; height: 40px; margin-top: 5px; font-size: 10px; color: var(--muted-foreground); }
+.sandbox-metric-disk-wrap { display: flex; align-items: center; height: 40px; margin-top: 5px; }
+.sandbox-metric-disk { width: 100%; height: 5px; overflow: hidden; border-radius: 2px; background: var(--muted); }
+.sandbox-metric-disk > span { display: block; height: 100%; border-radius: inherit; background: var(--link); }
+.machine-card-resources[data-metrics="sample"] > p { color: var(--warning); }
+
+.sandbox-metric-end-halo { fill: var(--card); }
+
+/* Machine overview: aligned allocations and inventory in a compact hardware panel. */
+.machine-board-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 400px)); gap: 20px; max-width: 1600px; align-items: stretch; }
+.machine-board-card { position: relative; display: flex; flex-direction: column; min-width: 0; min-height: 300px; padding: 18px 20px 0; border: 1px solid var(--border); border-radius: 12px; background: var(--card); }
+.machine-board-card[data-attention="danger"] { border-color: var(--destructive); }
+.machine-board-card[data-attention="warning"] { border-color: var(--warning); }
+.machine-board-card:hover { border-color: var(--muted-foreground); }
+.machine-board-card[data-attention="danger"]:hover { border-color: var(--destructive); }
+.machine-board-card[data-attention="warning"]:hover { border-color: var(--warning); }
+.machine-board-identity { display: flex; align-items: center; min-width: 0; gap: 10px; }
+.machine-board-identity h2 { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 18px; line-height: 24px; font-weight: 550; letter-spacing: -.025em; }
+.machine-board-identity p { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 2px; font-size: 11px; line-height: 16px; color: var(--muted-foreground); }
+.machine-board-open { text-align: left; outline: none; }
+.machine-board-open::after { content: ''; position: absolute; inset: 0; border-radius: 12px; z-index: 1; }
+.machine-board-open:focus-visible::after { outline: 2px solid var(--ring); outline-offset: 3px; }
+.machine-board-control { position: relative; z-index: 2; flex-shrink: 0; }
+.machine-board-capacity, .machine-board-inventory { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 12px; }
+.machine-board-capacity { margin-top: 18px; }
+.machine-board-capacity > div, .machine-board-inventory > div { min-width: 0; }
+.machine-board-capacity dt { margin-bottom: 3px; font-size: 10px; line-height: 14px; color: var(--muted-foreground); }
+.machine-board-capacity dd { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; line-height: 18px; font-weight: 500; font-variant-numeric: tabular-nums; }
+.machine-board-shared { display: flex; align-items: center; min-height: 35px; margin-top: 18px; font-size: 12px; color: var(--muted-foreground); }
+.machine-board-inventory { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--border); }
+.machine-board-inventory > div { display: flex; flex-direction: column-reverse; align-items: flex-start; }
+.machine-board-inventory dd { font-size: 19px; line-height: 24px; font-weight: 500; letter-spacing: -.025em; font-variant-numeric: tabular-nums; }
+.machine-board-inventory dt { margin-top: 2px; font-size: 10px; line-height: 14px; color: var(--muted-foreground); }
+.machine-board-stores { display: flex; align-items: baseline; gap: 12px; min-width: 0; margin-top: 12px; font-size: 11px; line-height: 16px; }
+.machine-board-stores > span { color: var(--muted-foreground); }
+.machine-board-stores > div { display: flex; flex: 1; flex-wrap: wrap; align-items: center; min-width: 0; gap: 4px 10px; }
+.machine-board-store-link { position: relative; z-index: 2; min-width: 0; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; border-radius: 3px; text-align: left; }
+.machine-board-store-link:hover { color: var(--link); text-decoration: underline; text-underline-offset: 3px; }
+.machine-board-store-link:focus-visible { outline: 2px solid var(--ring); outline-offset: 3px; }
+.machine-board-disk { margin-top: auto; padding-top: 14px; min-height: 44px; }
+.machine-board-disk > div:first-child { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 6px; font-size: 10px; line-height: 14px; color: var(--muted-foreground); font-variant-numeric: tabular-nums; }
+.machine-board-footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 48px; margin: 12px -20px 0; padding: 10px 20px; border-top: 1px solid var(--border); border-radius: 0 0 12px 12px; }
+.machine-board-native { font-size: 11px; color: var(--muted-foreground); }
+.machine-board-notice { display: flex; flex-direction: column; gap: 4px; margin-top: 12px; padding: 8px 10px; border-radius: 6px; background: var(--muted); color: var(--destructive); font-size: 11px; }
+.machine-board-notice[data-tone="warning"] { color: var(--warning); }
+.machine-board-notice > p { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
+.machine-board-notice > button { display: inline-flex; align-items: center; gap: 4px; width: fit-content; border-radius: 3px; font-weight: 500; }
+.machine-board-notice > button:focus-visible { outline: 2px solid var(--ring); outline-offset: 3px; }

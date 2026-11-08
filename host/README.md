@@ -52,6 +52,14 @@ All state stays beneath Connect's state folder (normally
 - `chats/<id>/pending-subagent-stops.json`: run IDs awaiting confirmed exit,
   retained across stop retries and host restarts.
 
+The desktop's child-agent views use `GET /api/agent/sessions/:id/children/:childId`
+for their conversation and `GET /api/agent/sessions/:id/children/:childId/trace`
+for paginated Trace rows (`before` and `limit`, as on the parent Trace).
+Both resolve a known child within its parent's private directory. Child Trace
+reads that child's Pi branch and `traces/child-<Pi session id>.jsonl`; it never
+substitutes the parent's commands. Child conversations remain read-only, with
+their existing independent Stop action.
+
 The host sets `PI_CODING_AGENT_DIR` to its private `pi/` directory. Parent
 sessions explicitly select the allowed tools. The extension also constrains
 child tool selection, so a worker cannot restore Pi's default read/write/edit
@@ -315,10 +323,10 @@ the layout 2 home's conversion refusal (`InUse` whose `related` items carry
 | `GET /api/status` | `HostStatus`: platform, linked LayerFS version, settings (state, home, CLI), the native daemon record, each machine's name, platform and state, the Store count. Starts nothing |
 | `GET /api/machines` | `MachinesView` (see "Compute"); `{ available: false, layerfs, reason }` on a LayerFS with no machines |
 | `GET /api/platforms` | `machine.platforms()`: each platform on this host, how it is added, backend, kernel route, sqlite and PostgreSQL support, readiness, what is missing, its version, its declared options |
-| `POST /api/machines` | a VM `{ name, platform, cpus?, memory?, disk?, image?, host?, nested? }`, or an ssh host `{ name, platform: 'ssh', host, user?, port?, identity?, known_hosts?, root? }`; only the options the platform declares, else `InvalidInput` naming them |
+| `POST /api/machines` | a VM `{ name, platform, cpus?, memory?, disk?, image?, os_image? }`; only the options the platform declares, else `InvalidInput` naming them; `ssh` and `firecracker` are refused `Unsupported` (turned off in Connect) |
 | `POST /api/machines/:name/start` | `machine.start`: waits until its worker answers |
 | `POST /api/machines/:name/stop` | `machine.stop`: `InUse` (409) while Sandboxes run on it, `related` naming them |
-| `DELETE /api/machines/:name` | removes a VM or disconnects an ssh host; `InUse` (409) while it holds Stores or running Sandboxes |
+| `DELETE /api/machines/:name` | removes a VM (an ssh machine a home already had is disconnected); `InUse` (409) while it holds Stores or running Sandboxes |
 | `POST /api/machines/:name/update` | a built-in's `{ image, docker, wsl }` or a VM's `{ cpus, memory }` |
 | `POST /api/machines/:name/stores` | `{ store }`: puts that sqlite Store on this machine as a Storage job: a push from native, a pull to native, or a pull then a push between two machines |
 | `GET /api/projects` | `ProjectSummary[]` (each with its Store's `state` and `op`) |
@@ -361,9 +369,11 @@ environment for it.
   them), `machine.platforms()`, `store.list()` and `sandbox.list()` (items with `state` and `op`),
   and `machine.status()` of the machines that run or hold or lost an operation (free disk, `op`).
   None of it starts a machine. `GET /api/platforms` answers `machine.platforms()` alone.
-- `POST /api/machines` creates a VM (`machine.create`) or connects an ssh host (`machine.connect`),
-  sending only the options the platform declares; `DELETE /api/machines/<name>` removes or
-  disconnects it (`InUse` while it holds Stores or Sandboxes); `POST /api/machines/<name>/update`
+- SSH hosts and Firecracker are turned off in Connect (`OFF` in machines.js): `machine.platforms()`
+  rows for them are left out, and so is lima's `nested` option (only Firecracker used it). The
+  simulator keeps them, as the real library has them.
+- `POST /api/machines` creates a VM (`machine.create`), sending only the options the platform
+  declares; `DELETE /api/machines/<name>` removes it (`InUse` while it holds Stores or Sandboxes); `POST /api/machines/<name>/update`
   sets a built-in's image or a VM's size; `POST /api/machines/<name>/start|stop` power it.
 - `POST /api/machines/<machine>/stores { store }`: puts the Store there (push, pull, or pull then
   push), a job in Storage's table.
@@ -519,3 +529,36 @@ exactly one segment; neighbouring lines of the same kind and call merge. A
 `local`. `workspace exec`'s inner command becomes the segment's `detail`.
 Non-bash tools are one `form: 'tool'` segment: subagent tools are
 `subagent`, job tools `job`.
+
+### Rich web-preview fixtures
+
+With `pnpm --dir desktop web` running, open its browser console and import
+`desktop/tools/populate-preview.mjs` through Vite's `/@fs` path (replace
+`<checkout>` with the absolute checkout path):
+
+```js
+const { populatePreview } = await import('/@fs<checkout>/desktop/tools/populate-preview.mjs')
+await populatePreview()
+```
+
+This adds five simulated machines, seven Stores, eighteen projects and twenty-nine
+Sandboxes with varied Workspace counts. SQLite Stores stay on their assigned
+machine; the PostgreSQL projects span native, Docker and the build VM. Workspace
+branches are forked from main. Projects start empty. Existing resources are kept,
+and repeating the command fills missing fixtures. Both `/api/sim` and the host's
+simulated status are checked before writing. No real VM, container or database
+is created. Fixtures persist for the current preview's temporary state directory;
+resetting the simulated world removes them.
+
+### Paged desktop History
+
+`GET /api/projects/:key/history` returns `{ branches, next }` from one 100-item
+`branch.list` page (the first also includes main). `pos` is the SDK continuation.
+With `branch`, it returns `{ items, next, head }` from one 100-item `commit.list`
+page, stopping at the fork; `head` optionally guards continuation against drift
+(`HeadMoved`, HTTP 409). These reads never eagerly diff checkpoint histories.
+With `branch` and `commit`, it reads the selected commit and up to 100 changed
+paths, returning `{ item, changes, nextChanges }`; optional `from` compares a
+group's first parent to its last commit. `pos` pages changed paths. A first
+checkpoint without a comparable parent Commit returns `changes: null`. SDK
+refusals propagate. No write is performed.

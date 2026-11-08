@@ -39,36 +39,36 @@
 .shell-new-chat {
   display: flex;
   width: 100%;
-  height: 40px;
+  height: 42px;
   align-items: center;
   justify-content: flex-start;
   gap: 10px;
-  margin-top: 18px;
+  margin-top: 8px;
   padding: 0 13px;
-  border: 1px solid color-mix(in oklab, var(--primary) 22%, transparent);
+  border: 1px solid transparent;
   border-radius: 8px;
-  background: color-mix(in oklab, var(--primary) 10%, var(--accent));
-  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.7), 0 1px 2px rgb(38 66 110 / 0.06);
-  font-size: 13px;
-  font-weight: 500;
+  background: transparent;
+  box-shadow: none;
+  font-size: 14px;
+  font-weight: 400;
   line-height: 20px;
-  color: var(--accent-foreground);
+  color: var(--foreground);
   outline: none;
-  transition: background var(--dur-fast), border-color var(--dur-fast), box-shadow var(--dur-fast);
+  transition: background var(--dur-fast);
 }
 .shell-new-chat > svg {
   width: 17px;
   height: 17px;
-  color: var(--primary);
+  color: currentColor;
 }
-.shell-new-chat:hover {
-  border-color: color-mix(in oklab, var(--primary) 34%, transparent);
-  background: color-mix(in oklab, var(--primary) 18%, var(--accent));
-  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.7), 0 2px 4px rgb(38 66 110 / 0.06), 0 8px 18px -12px rgb(38 66 110 / 0.28);
+.shell-new-chat:hover { background: var(--surface-hover); }
+.shell-new-chat:active { background: var(--surface-pressed); }
+.shell-nav-indicator {
+  background: var(--surface-pressed);
+  border: 0;
+  box-shadow: none;
 }
-.shell-new-chat:active {
-  box-shadow: var(--pressed);
-}
+
 .shell-sidebar-footer {
   border-top: 1px solid color-mix(in oklab, var(--foreground) 5%, transparent);
 }
@@ -118,13 +118,13 @@
   z-index: 60;
   height: 3px;
   pointer-events: none;
-  background: repeating-linear-gradient(135deg, #e0a526 0 10px, #f3d27a 10px 20px);
+  background: repeating-linear-gradient(135deg, var(--warning) 0 10px, color-mix(in srgb, var(--warning) 35%, var(--background)) 10px 20px);
 }
 
-/* Project headers keep their matte surface; conversations read as a quiet list. */
+/* Project groups and conversations share the quiet sidebar surface. */
 .sidebar-project-open {
-  border-radius: 999px;
-  box-shadow: var(--highlight), var(--elev-1);
+  border-radius: 8px;
+  box-shadow: none;
   transition: border-color var(--dur-fast);
 }
 .sidebar-chat-row {
@@ -132,23 +132,23 @@
   grid-template-columns: minmax(0, 1fr) 28px;
   gap: 8px;
   align-items: center;
-  min-height: 34px;
+  min-height: 56px;
   padding: 0 6px 0 12px;
   border-radius: 8px;
   transition: background var(--dur-fast);
 }
 .sidebar-project-open:hover {
-  border-color: color-mix(in oklab, var(--primary) 18%, var(--glass-border));
+  border-color: var(--border);
 }
 .sidebar-project-open[data-active='true'] {
-  background: var(--glass-panel-bg);
-  border-color: color-mix(in oklab, var(--primary) 30%, var(--glass-border));
+  background: var(--surface-pressed);
+  border-color: transparent;
 }
 .sidebar-chat-row:hover {
   background: color-mix(in oklab, var(--foreground) 3%, transparent);
 }
 .sidebar-chat-row[data-active='true'] {
-  background: var(--glass-card-bg);
+  background: var(--surface-pressed);
 }
 .sidebar-chat-open {
   padding: 6px 0;
@@ -170,13 +170,58 @@
   align-items: center;
   justify-content: center;
   border-radius: 6px;
-  color: color-mix(in oklab, var(--muted-foreground) 75%, transparent);
+  color: var(--muted-foreground);
+  opacity: 0;
   outline: none;
-  transition: color var(--dur-fast);
+  transition: color var(--dur-fast), opacity var(--dur-fast);
 }
+.sidebar-chat-row:hover .sidebar-chat-delete,
+.sidebar-chat-row:focus-within .sidebar-chat-delete { opacity: 1; }
+.sidebar-chat-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 2px;
+  color: var(--muted-foreground);
+  font-size: 11px;
+  line-height: 16px;
+}
+.sidebar-chat-state { display: inline-flex; min-width: 0; align-items: center; gap: 5px; }
+
 .sidebar-chat-delete > svg { width: 14px; height: 14px; }
 .sidebar-chat-delete:hover {
   color: var(--destructive);
 }
 .sidebar-chat-delete:focus-visible { box-shadow: 0 0 0 2px var(--ring); }
 
+
+/* Compact renderers use an overlay; desktop windows retain the in-flow column. */
+.shell-sidebar-dismiss { display: none; }
+@media (max-width: 767px) {
+  .shell-sidebar-wrap {
+    position: absolute;
+    inset: 0 auto 0 0;
+    z-index: 40;
+    max-width: calc(100vw - 56px);
+  }
+  .shell-sidebar-wrap[data-open='true'] { width: 260px; }
+  .shell-sidebar-wrap[data-open='false'] { pointer-events: none; }
+  .shell-sidebar-wrap .shell-sidebar {
+    width: 100%;
+    background: var(--background) !important;
+  }
+  .shell-sidebar-dismiss {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 30;
+    width: 100%;
+    height: 100%;
+    border: 0;
+    padding: 0;
+    background: var(--scrim);
+    cursor: pointer;
+  }
+  .shell-sidebar-dismiss:focus-visible { outline: 2px solid var(--ring); outline-offset: -4px; }
+}

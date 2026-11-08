@@ -2,6 +2,7 @@
 // goes through Electron main (connect-bridge.ts); the host's token never
 // reaches the renderer.
 import { connectBridge } from '@/layerfs/bridge'
+import { exampleChatReply } from '@/layerfs/chat-sim'
 import type { BackupFile, CommitInfo, DemoDetail, DemoSummary, DoctorReport, FsEntry, HostEvent, HostStatus, MachinesView, NewMachine, NewProjectInput, ProjectInitJob, ProjectState, ProjectSummary, RefusalDetail, RunDetail, RunSummary, SandboxInfo, SandboxRecord, StorageJob, StorageView, TracePage } from '@/layerfs/host-api'
 
 /** A refused call: LayerFS's code, its text (naming any status or clearing call) and its detail (entity, phase, op, related). */
@@ -79,7 +80,7 @@ export const setSimHook = (hook: SimHook | null) => {
 }
 
 export function call<T>(method: string, path: string, body?: unknown): Promise<T> {
-  const answer = sim?.route(method, path)
+  const answer = exampleChatReply(method, path) ?? sim?.route(method, path)
   if (answer) return answer.value instanceof Error ? Promise.reject(answer.value) : Promise.resolve(answer.value as T)
   const real = method === 'GET' ? oneAtATime(path, () => send<T>(method, path)) : send<T>(method, path, body)
   return sim?.extend ? real.then((value) => (sim?.extend ? (sim.extend(method, path, value) as T) : value)) : real

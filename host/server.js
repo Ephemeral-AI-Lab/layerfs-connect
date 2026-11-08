@@ -173,7 +173,7 @@ export function createHandler(deps) {
       if (!id && !sub && method === 'GET') return machines.view()
       if (id && sub === 'start' && method === 'POST') return machines.start(id)
       if (id && sub === 'stop' && method === 'POST') return machines.stop(id)
-      if (!id && !sub && method === 'POST') return body?.platform === 'ssh' ? machines.connect(body) : machines.create(body)
+      if (!id && !sub && method === 'POST') return machines.create(body)
       if (id && !sub && method === 'DELETE') return machines.remove(id)
       if (id && sub === 'update' && method === 'POST') return machines.update(id, body)
       // puts a sqlite Store here (push, pull, or pull then push): { store }
@@ -201,6 +201,7 @@ export function createHandler(deps) {
       if (sub === 'close-sandboxes' && method === 'POST') return projects.closeSandboxes(id, { force: body?.force === true })
       if (method !== 'GET') return undefined
       const branch = query.get('branch') ?? 'main'
+      if (sub === 'history') return projects.history(id, query)
       if (sub === 'commits') return projects.commits(id, branch, query.get('limit'))
       // several Branches' Commits in one call: ?branch=a&branch=b
       if (sub === 'branch-commits') return projects.branchCommits(id, query.getAll('branch'))

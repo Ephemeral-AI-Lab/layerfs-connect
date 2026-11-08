@@ -2,10 +2,12 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 @import "@fontsource-variable/inter";
+@import "./tokens.css";
+@import "./cindy-theme.css";
 
-/* One theme source: the colours of the LayerFS Connect dashboard mock,
-   mapped onto shadcn's variables. xterm.js and CodeMirror will read the
-   same variables. */
+/* Shared Tailwind mappings and legacy utility fallbacks. The current Cindy
+   single light semantic palette lives in tokens.css; cindy-theme.css adapts the
+   existing surfaces without replacing their component ownership. */
 
 @theme inline {
   --font-heading: var(--font-sans);
@@ -68,118 +70,6 @@
   --radius-2xl: calc(var(--radius) * 1.9);
   --radius-3xl: calc(var(--radius) * 2.4);
   --radius-4xl: calc(var(--radius) * 3);
-}
-
-:root {
-  /* One light theme: native controls and scrollbars stay light whatever the system setting. */
-  color-scheme: light;
-  /* Soft matte, from the app icon: a pale blue-white silicone tile with raised cobalt and
-     charcoal strokes. Opaque surfaces, a fine grain, light from above, soft diffuse
-     shadows; nothing is see-through or specular. */
-  --background: #edf2f9;
-  --foreground: #2a2e34;
-  --card: #fbfcfe;
-  --card-foreground: #2a2e34;
-  --popover: #fdfeff;
-  --popover-foreground: #2a2e34;
-  --primary: #316cb9;
-  --primary-foreground: #ffffff;
-  --secondary: #e6edf6;
-  --secondary-foreground: #2a2e34;
-  --muted: #e8eef6;
-  --muted-foreground: #586170;
-  --faint: #8a93a2;
-  --accent: #dfe9f6;
-  --accent-foreground: #24548f;
-  --destructive: #c23b22;
-  --danger-label: var(--destructive);
-  --success: #1c7a43;
-  --warning: #8c5b00;
-  --border: #d9e2ee;
-  --input: #c8d4e3;
-  --ring: #a8c2e6;
-  --radius: 0.3rem;
-  /* The grain: fractal noise tinted the icon's slate blue, about 4% strong, tiled.
-     It sits on the canvas, the sidebar and every matte surface. */
-  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.16 0 0 0 0 0.23 0 0 0 0 0.36 0.16 0 0 0 -0.035'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
-  /* Matte surfaces (the --glass-* names are kept so every surface follows): a card is
-     lit from above, slightly lighter at the top, and casts a soft blue-grey shadow. */
-  --glass-card-bg: var(--grain), linear-gradient(180deg, #fdfeff 0%, #f6f9fd 100%);
-  --glass-panel-bg: var(--grain), linear-gradient(180deg, #ffffff 0%, #f7f9fd 100%);
-  --glass-border: rgb(44 76 124 / 0.11);
-  --glass-shadow:
-    inset 0 1px 0 0 rgb(255 255 255 / 0.9),
-    inset 0 -1px 0 0 rgb(44 76 124 / 0.04),
-    0 1px 2px 0 rgb(38 66 110 / 0.06),
-    0 6px 18px -8px rgb(38 66 110 / 0.14);
-  --glass-panel-shadow:
-    inset 0 1px 0 0 rgb(255 255 255 / 0.95),
-    inset 0 -1px 0 0 rgb(44 76 124 / 0.05),
-    0 2px 4px 0 rgb(38 66 110 / 0.06),
-    0 18px 44px -16px rgb(38 66 110 / 0.26);
-  /* A field is pressed into the surface: a touch darker, shaded at its top edge. */
-  --glass-field-bg: #f3f6fb;
-  --pressed: inset 0 1px 2px 0 rgb(38 66 110 / 0.1), inset 0 0 0 1px rgb(44 76 124 / 0.05);
-  --sidebar: #e3ebf6;
-  --sidebar-foreground: #2a2e34;
-  --sidebar-primary: #316cb9;
-  --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #d8e3f2;
-  --sidebar-accent-foreground: #2a2e34;
-  --sidebar-border: #d3dde9;
-  --sidebar-ring: #a8c2e6;
-  /* A session's dot: its agent's colour while a call is in flight. */
-  --idle: #d9d9de;
-  --agent-builder: #c4502a;
-  --agent-reviewer: #6352c8;
-  --agent-tester: #a86a10;
-  --agent-docs: #17805a;
-  /* History lanes, by fork depth; main uses the primary colour. */
-  --lane-1: #b8701a;
-  --lane-2: #138a7a;
-  --lane-3: #c04878;
-  --lane-4: #6a5ad0;
-  /* A Commit by how it was made (Store page): a file call, a Workspace commit, a merge. */
-  --commit-fs: #6a72d8;
-  --commit-exec: #c4502a;
-  --commit-merge: #0f9483;
-  /* Code highlighting in the file view. */
-  --hl-comment: #8b8b94;
-  --hl-keyword: #6352c8;
-  --hl-string: #17805a;
-  --hl-number: #c4502a;
-  --hl-function: #2d5bb5;
-  --hl-type: #a86a10;
-  --hl-property: #2d3a9a;
-  /* the LayerFS icon tones (assets/icons): light = committed, dark = live; the app icon's blues */
-  --lfs-light: #8fb1e2;
-  --lfs-dark: #316cb9;
-  --icon-accent: var(--primary);
-  --lfs-warn: #e0a030;
-  --lfs-surface: var(--card);
-  /* Brand: the icon's cobalt, with its charcoal and a sky tint. Use sparingly:
-     active indicators, primary actions, live states, hero numbers, focus. */
-  --brand-1: #316cb9;
-  --brand-2: #3c4046;
-  --brand-3: #5a9bd8;
-  --brand-gradient: linear-gradient(180deg, color-mix(in oklab, var(--primary) 84%, white), var(--primary));
-  --glow: color-mix(in oklab, var(--primary) 22%, transparent);
-  --glow-strong: color-mix(in oklab, var(--primary) 40%, transparent);
-  /* Elevation, soft and diffuse like the icon's tile: 1 resting, 2 raised, 3 popovers and dialogs. */
-  --elev-1: 0 1px 2px rgb(38 66 110 / 0.07), 0 1px 1px rgb(38 66 110 / 0.03);
-  --elev-2: 0 8px 20px -8px rgb(38 66 110 / 0.18), 0 2px 4px -2px rgb(38 66 110 / 0.08);
-  --elev-3: 0 24px 48px -16px rgb(38 66 110 / 0.3), 0 8px 16px -8px rgb(38 66 110 / 0.12);
-  /* A surface's top inner highlight, where the light from above meets it. */
-  --highlight: inset 0 1px 0 0 rgb(255 255 255 / 0.8);
-  --surface-sheen: none;
-  /* Motion: fast for hover and press, base for state, slow for entrances, xslow for count-ups and draws. */
-  --dur-fast: 150ms;
-  --dur-base: 240ms;
-  --dur-slow: 400ms;
-  --dur-xslow: 800ms;
-  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
-  --ease-out-soft: cubic-bezier(0.25, 0.8, 0.35, 1);
-  --stagger: 40ms;
 }
 
 @layer base {
@@ -482,7 +372,7 @@
     background: var(--glass-field-bg) !important;
     border: 1px solid var(--glass-border) !important;
     box-shadow: var(--pressed) !important;
-    transition: all var(--dur-base) cubic-bezier(0.22, 1, 0.36, 1) !important;
+    transition: background-color var(--dur-fast), border-color var(--dur-fast) !important;
   }
   input.glass:focus,
   input.glass:focus-visible,
@@ -494,9 +384,9 @@
 
   /* The sidebar: one step deeper than the canvas, the same grain, a soft lit edge toward the page. */
   .sidebar-glass {
-    background: var(--grain), var(--sidebar) !important;
+    background: var(--sidebar);
     border-right: 1px solid var(--sidebar-border);
-    box-shadow: inset -1px 0 0 0 rgb(255 255 255 / 0.55);
+    box-shadow: none;
   }
 
   /* Matte surfaces do not catch light: no sweep. The class stays for its layout. */
@@ -505,24 +395,10 @@
     overflow: hidden;
   }
 
-  /* Card hover: the card lifts a little and its soft shadow spreads. */
-  .card-hover {
-    transition:
-      transform var(--dur-base) cubic-bezier(0.22, 1, 0.36, 1),
-      border-color var(--dur-base) cubic-bezier(0.22, 1, 0.36, 1),
-      box-shadow var(--dur-base) cubic-bezier(0.22, 1, 0.36, 1);
-  }
-  .card-hover:hover {
-    transform: translateY(-1px);
-    border-color: color-mix(in oklab, var(--primary) 18%, var(--glass-border));
-    box-shadow:
-      inset 0 1px 0 0 rgb(255 255 255 / 0.95),
-      0 2px 4px 0 rgb(38 66 110 / 0.06),
-      0 14px 30px -12px rgb(38 66 110 / 0.22);
-  }
-  .card-hover:active {
-    transform: translateY(0);
-  }
+  /* Cards stay still; a neutral border signals hover. */
+  .card-hover { transition: border-color var(--dur-fast), background-color var(--dur-fast); }
+  .card-hover:hover { border-color: var(--input); box-shadow: none; }
+  .card-hover:active { transform: none; }
 
   /* No specular spotlight on matte; the class stays for its stacking context. */
   .spotlight {

@@ -64,6 +64,7 @@ export function App() {
   // the sidebar folds away (its button, the window bar's, or ⌘B) and stays so across launches
   const [sidebarOpen, setSidebarOpen] = useState(() => {
     try {
+      if (window.matchMedia('(max-width: 767px)').matches) return false
       return localStorage.getItem(SIDEBAR_STORE) !== 'closed'
     } catch {
       return true
@@ -182,7 +183,7 @@ export function App() {
   return (
     <SettingsContext.Provider value={settings}>
     <TooltipProvider>
-      <SidebarProvider open={sidebarOpen} onOpenChange={showSidebar} className="relative isolate min-h-svh w-full bg-background overflow-hidden">
+      <SidebarProvider open={sidebarOpen} onOpenChange={showSidebar} className="app-shell relative isolate min-h-svh w-full overflow-hidden">
         <AppSidebar selected={selected} projects={projects} onSelect={select} onNewProject={() => setNewProjectOpen(true)} onDeleteProject={setDeleteTarget} onDeleteChat={(chat, returnFocus) => setDeleteChatTarget({ chat, returnFocus })} onOpenChat={openChat} onNewChat={newProjectChat} onNewSession={newChat} settingsOpen={settingsOpen} onOpenSettings={() => settings.open()} />
         <SimStrip />
         <div className="canvas relative z-10 flex h-svh min-w-0 flex-1 flex-col">

@@ -9,7 +9,7 @@
 // can run beside the current Connect app.
 import { type ChildProcess, spawn } from 'node:child_process'
 import { homedir } from 'node:os'
-import { join } from 'node:path'
+import { delimiter, join } from 'node:path'
 import { createInterface } from 'node:readline'
 
 export type LayerfsReply = { status: number; body: unknown }
@@ -37,6 +37,7 @@ export class LayerfsHost {
   constructor(
     private readonly hostDir: string,
     private readonly onStream: (message: LayerfsStreamMessage) => void,
+    private readonly runtimeBin: string | null = null,
   ) {}
 
   /** The host's address, starting the host on first use. */
@@ -48,9 +49,18 @@ export class LayerfsHost {
       // Real mode keeps the host's own state (the user's LayerFS home); sim gets a folder of its own.
       if (mode === 'sim') args.push('--state', join(homedir(), '.layerfs-connect-desktop-sim'))
       // System node, as the current app does: the real LayerFS addon is built for it, not for Electron.
-      const node = process.env.LAYERFS_CONNECT_NODE || 'node'
+      const node = process.env.LAYERFS_CONNECT_NODE || (this.runtimeBin ? join(this.runtimeBin, 'node') : 'node')
       const child = spawn(node, args, {
-        env: { ...process.env, LAYERFS_CONNECT_MODE: mode, UV_THREADPOOL_SIZE: process.env.UV_THREADPOOL_SIZE || '16' },
+        env: {
+          ...process.env,
+          ...(this.runtimeBin ? {
+            PATH: `${this.runtimeBin}${delimiter}${process.env.PATH ?? '/usr/bin:/bin:/usr/sbin:/sbin'}`,
+            LAYERFS_CONNECT_CLI: process.env.LAYERFS_CONNECT_CLI || join(this.runtimeBin, 'layerfs'),
+            LAYERFS_CONNECT_DAEMON: process.env.LAYERFS_CONNECT_DAEMON || join(this.runtimeBin, 'layerfs-daemon'),
+          } : {}),
+          LAYERFS_CONNECT_MODE: mode,
+          UV_THREADPOOL_SIZE: process.env.UV_THREADPOOL_SIZE || '16',
+        },
         stdio: ['pipe', 'pipe', 'pipe'],
       })
       this.child = child

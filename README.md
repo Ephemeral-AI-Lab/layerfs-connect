@@ -254,12 +254,14 @@ scripted sessions and replay controls are no longer part of the desktop UI.
   and this host's jobs show their phase; buckets hold point-in-time backups;
   **Needs attention** shows what `layerfs doctor` finds
   ([docs/ui/storage.md](docs/ui/storage.md)).
-- **Compute** lists the machines the LayerFS home runs on (native, docker,
-  VMs and ssh hosts), their Stores and Sandboxes, every Sandbox in the home, and
-  adds or removes machines from the platforms `machine.platforms` reports.
-  Power is manual: a machine runs between **Start** and **Stop**, and no page
+- **Compute** lists the machines the LayerFS home runs on (native, docker
+  and VMs; SSH hosts and Firecracker are turned off), their Stores and
+  Sandboxes, every Sandbox in the home, and adds or removes machines from
+  the platforms `machine.platforms` reports. Power is manual: a machine runs between **Start** and **Stop**, and no page
   starts one by being looked at. Linked to LayerFS 1.x it says machines need
   2.0 ([docs/ui/machines.md](docs/ui/machines.md)).
+  How machines, Stores, Sandboxes and Workspaces relate:
+  [docs/layerfs-model.md](docs/layerfs-model.md).
 
 Remote Push/Pull/conflict mocks and hardcoded native sandboxes have been removed. Backend scenario fixtures and command-line test
 runners remain available for development; this cleanup does not delete project
@@ -291,9 +293,10 @@ Saved conversations keep their existing project association.
 
 ### Look and motion
 
-- **Theme:** colours, radii, shadows and motion are tokens in
-  `src/renderer/src/styles.css`, one light soft-matte theme taken from the app
-  icon (no dark mode; the system's setting is ignored).
+- **Theme:** one Cindy-inspired light theme on a plain canvas; native controls stay light.
+  There are no theme or wallpaper selectors.
+  The shared system is documented in `design.md`; colors live in `tokens.css`
+  and surfaces in `cindy-theme.css` (under `src/renderer/src`).
 - **Components:** shadcn components live in `components/ui/`. Shared motion
   (reveals, the sliding tab indicator, page cross-fades) lives in
   `components/motion/`.

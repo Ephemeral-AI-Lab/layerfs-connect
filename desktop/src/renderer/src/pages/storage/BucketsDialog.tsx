@@ -7,8 +7,8 @@ import { fill } from '@/lib/text'
 // written and the move that fits (Restore…, Sync backup, Back up now), with
 // List again and Configure: where it points (LayerFS keeps that fixed), its
 // keys (those Connect saved can be replaced), its Stores and Disconnect. Or
-// the Add bucket form: a provider card (MinIO and Cloudflare R2 connect;
-// Amazon S3 waits for a later LayerFS), its fields or a pasted URL, and the
+// the Add bucket form: supported provider cards (MinIO and Cloudflare R2),
+// their fields or a pasted URL, and the
 // keys, which the host keeps in an owner-only file. Listing asks the bucket
 // each time, so it is a button, never automatic.
 import { Archive, ArrowLeft, Database, HardDriveDownload, KeyRound, ListRestart, LoaderCircle, Plus, RefreshCw, Settings2, TriangleAlert, Unplug } from 'lucide-react'
@@ -35,8 +35,8 @@ export type BucketsFocus = string | { add: true } | null
 
 const SHORT: Record<string, string> = { minio: 'MinIO', r2: 'R2' }
 const LONG: Record<string, string> = { minio: 'MinIO', r2: 'Cloudflare R2' }
-/** The providers offered: those LayerFS backs up to, then Amazon S3 for later. */
-const OFFERED = PROVIDERS.filter((p) => p.request || p.id === 's3')
+/** Offer providers with a supported connection request. */
+const OFFERED = PROVIDERS.filter((p) => p.request)
 const READY = OFFERED.filter((p) => p.request)
 const KEY_FIELDS = new Set(['accessKey', 'secretKey'])
 const SHARED_FIELDS = new Set(['name', 'bucket', 'prefix'])
@@ -492,7 +492,7 @@ function AddBucket({ simulated, taken, onConnected }: { simulated: boolean; take
         <p className="mt-0.5 text-sm text-muted-foreground">{'A bucket that holds SQLite Store backups. Connecting it links no Store.'}</p>
       </header>
       <div className="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto px-5 py-4">
-        <div role="radiogroup" aria-label={'Provider'} className="grid grid-cols-3 gap-2.5">
+        <div role="radiogroup" aria-label={'Provider'} className="grid grid-cols-2 gap-2.5">
           {OFFERED.map((p) => {
             const on = p.id === entry.id
             const ready = !!p.request

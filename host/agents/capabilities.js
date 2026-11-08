@@ -4,7 +4,9 @@ import { existsSync, readFileSync, renameSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-import { AGENT_TOOLS, CHILD_TOOLS, CONNECT_TOOLS, DEFAULT_SETUP, INSTRUCTIONS_HOOK, LEAD_TOOLS, TOOL_NEEDS, agentToolState, instructionsOn, leadsAllowed, toolState } from './extensions.js'
+import { AGENT_TOOLS, CHILD_TOOLS, CONNECT_TOOLS, DEFAULT_SETUP, INSTRUCTIONS_HOOK, LEAD_TOOLS, TOOL_NEEDS, agentToolState, instructionsOn, leadsAllowed, toolState, workerDefinition, leadDefinition } from './extensions.js'
+
+import { connectPrompt } from './prompt.js'
 
 const fail = (status, message) => Object.assign(new Error(message), { status })
 
@@ -317,6 +319,13 @@ export function capabilityCatalog(setup = DEFAULT_SETUP, { session, busy = [] } 
     ).map(own)
     return {
       ...agent,
+      prompt: {
+        source: agent.id === 'main' ? 'Connect base system prompt' : `${agent.name} definition`,
+        text: agent.id === 'main'
+          ? connectPrompt({ cwd: '<working folder>' }, names.filter((name) => agentToolState(name, agent.id, setup).on))
+          : agent.id === 'worker' ? workerDefinition(setup) : leadDefinition(setup),
+        note: 'Configured template. Project, conversation and SDK instructions are added when the agent starts.',
+      },
       enabled: usable,
       locked: agentLock(agent.id, setup),
       tools: names.map((name) => ({ name, enabled: agentToolState(name, agent.id, setup).on, locked: agentToolLock(name, agent.id, setup) })),
@@ -328,6 +337,7 @@ export function capabilityCatalog(setup = DEFAULT_SETUP, { session, busy = [] } 
 
   return {
     live: !!session,
+    runtime: { name: 'Pi', version: packageVersion('@earendil-works/pi-coding-agent') },
     agents,
     // chats whose run blocks changes now
     busy,

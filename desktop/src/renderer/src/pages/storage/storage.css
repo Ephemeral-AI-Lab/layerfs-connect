@@ -1,223 +1,112 @@
-/* Storage and compute: bars that fill, gauges that draw, the history-to-disk
-   flow, Sandbox slots, live rows and the quiet "not yet" cards. Tokens come
-   from styles.css; the global reduced-motion rule settles every animation here. */
+@import "../../components/storage/storage.css";
 
-/* A bar that fills from its left edge. Set --d for its delay. */
-@keyframes sc-fill-x {
-  from {
-    transform: scaleX(0);
-  }
+/* Hallmark · existing Cindy workbench: Store grid with inset project carousels. */
+.storage-store-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 360px), 1fr));
+  gap: 20px;
+  align-items: start;
 }
-.sc-fill-x {
-  transform-origin: left center;
-  animation: sc-fill-x var(--dur-xslow) var(--ease-out-expo) backwards;
-  animation-delay: var(--d, 0ms);
-}
-
-/* A job's current step with no byte count: a light that sweeps across it, in the brand tint. */
-.job-now {
-  background-color: color-mix(in oklab, var(--primary) 22%, var(--muted));
-  background-image: linear-gradient(100deg, transparent 25%, color-mix(in oklab, var(--primary) 55%, transparent) 50%, transparent 75%);
-  background-size: 200% 100%;
-  animation: shimmer 1.6s linear infinite;
-}
-
-/* A ring that draws its arc: stroke-dashoffset eases from empty to the value set inline. */
-@keyframes sc-ring {
-  from {
-    stroke-dashoffset: 1;
-  }
-}
-.sc-ring {
-  stroke-dasharray: 1;
-  animation: sc-ring 1.1s var(--ease-out-expo) backwards;
-  animation-delay: var(--d, 0ms);
-}
-
-/* The flow's stage pillars grow from their middle; its bands wipe in from the left. */
-@keyframes sc-node {
-  from {
-    transform: scaleY(0);
-    opacity: 0;
-  }
-}
-.sc-node {
-  transform-box: fill-box;
-  transform-origin: center;
-  animation: sc-node 0.6s var(--ease-out-expo) backwards;
-  animation-delay: var(--d, 0ms);
-}
-@keyframes sc-wipe {
-  from {
-    clip-path: inset(0 100% 0 0);
-  }
-  to {
-    clip-path: inset(0 0 0 0);
-  }
-}
-.sc-wipe {
-  animation: sc-wipe 0.7s var(--ease-out-soft) backwards;
-  animation-delay: var(--d, 0ms);
-}
-/* Something that pops in once its part of the story has arrived. */
-@keyframes sc-pop {
-  from {
-    opacity: 0;
-    transform: translate(-50%, -50%) scale(0.85);
-  }
-}
-.sc-pop {
-  animation: sc-pop var(--dur-slow) var(--ease-out-expo) backwards;
-  animation-delay: var(--d, 0ms);
-}
-@keyframes sc-fade {
-  from {
-    opacity: 0;
-    transform: translateY(4px);
-  }
-}
-.sc-fade {
-  animation: sc-fade var(--dur-slow) var(--ease-out-expo) backwards;
-  animation-delay: var(--d, 0ms);
-}
-
-/* A Workspace slot in a Sandbox: lit in brand light when a Workspace is mounted. */
-.sc-slot {
-  background: var(--muted);
-  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--foreground) 6%, transparent);
-  transition:
-    background-color var(--dur-slow) var(--ease-out-soft),
-    box-shadow var(--dur-slow) var(--ease-out-soft);
-}
-.sc-slot[data-on='true'] {
-  background: linear-gradient(135deg, var(--primary), color-mix(in oklab, var(--primary) 82%, white));
-  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.2);
-  animation: sc-slot-in var(--dur-slow) var(--ease-out-expo) backwards;
-  animation-delay: var(--d, 0ms);
-}
-@keyframes sc-slot-in {
-  from {
-    transform: scale(0.3);
-    opacity: 0;
-  }
-}
-
-/* A connector between a Workspace and its Branch; bytes travel along it while the Sandbox runs. */
-.sc-wire {
-  position: relative;
-  height: 1px;
+.store-carousel-card {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: var(--card);
   overflow: hidden;
-  background: color-mix(in oklab, var(--foreground) 12%, transparent);
 }
-.sc-wire[data-live='true'] {
-  background: color-mix(in oklab, var(--primary) 82%, white);
-  opacity: 0.75;
-}
-.sc-wire[data-live='true']::after {
-  display: none;
-}
+.store-carousel-card--board { width: 100%; max-width: 480px; min-height: 360px; aspect-ratio: 1.15; }
+.store-carousel-heading { display: flex; align-items: center; gap: 10px; padding: 20px 20px 0; }
+.store-name-link { max-width: 100%; overflow: hidden; text-overflow: ellipsis; vertical-align: bottom; border-radius: 3px; text-align: left; }
+.store-name-link:hover { color: var(--primary); }
+.store-name-link:focus-visible, .store-project-tile:focus-visible { outline: 2px solid var(--ring); outline-offset: 3px; }
+.store-carousel-location { min-width: 0; padding: 8px 20px 0; color: var(--muted-foreground); font-size: 12px; }
+.store-location-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.store-location-size { flex-shrink: 0; font-variant-numeric: tabular-nums; }
+.store-project-carousel { min-width: 0; min-height: 0; flex: 1; display: flex; flex-direction: column; padding-top: 20px; padding-bottom: 14px; }
+.store-project-carousel-label { display: flex; flex-shrink: 0; align-items: center; justify-content: space-between; height: 26px; margin: 0 20px 8px; font-size: 13px; font-weight: 500; }
+.store-project-track { display: flex; flex: 1; gap: 12px; overflow-x: auto; scroll-snap-type: x mandatory; scroll-padding-inline: 20px; padding: 4px 20px 8px; scrollbar-width: thin; scrollbar-color: var(--border) transparent; overscroll-behavior-x: contain; }
+.store-project-track > li { display: flex; flex: 0 0 180px; min-width: 0; scroll-snap-align: start; }
+.store-project-tile { display: flex; flex-direction: column; align-items: stretch; gap: 10px; width: 100%; min-height: 144px; padding: 16px; border: 1px solid var(--border); border-radius: 12px; background: var(--background); font-size: 14px; font-weight: 500; text-align: left; transition: border-color 150ms, background-color 150ms; }
+.store-project-tile > span { max-width: 100%; }
+.store-project-heading { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.store-project-footprint { color: var(--muted-foreground); font-size: 11px; line-height: 1.4; font-weight: 400; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.store-project-identity { display: flex; min-width: 0; align-items: center; gap: 8px; }
+.store-project-branches { display: flex; align-items: center; gap: 6px; color: var(--muted-foreground); font-size: 12px; font-weight: 400; }
+.store-project-counts { display: flex; flex-direction: column; gap: 4px; color: var(--muted-foreground); font-size: 12px; font-weight: 400; font-variant-numeric: tabular-nums; }
+.store-project-machines { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted-foreground); font-size: 11px; font-weight: 400; }
+.store-project-tile:hover { border-color: var(--muted-foreground); background: var(--muted); }
+.store-project-tile:disabled { cursor: default; }
+.store-project-empty { display: flex; flex: 1; align-items: center; min-height: 156px; margin: 0 20px; font-size: 13px; color: var(--muted-foreground); }
+.store-carousel-footer { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; min-height: 52px; padding: 10px 20px; border-top: 1px solid var(--border); }
+.store-carousel-notice { width: 100%; overflow-wrap: anywhere; font-size: 12px; }
+@media (prefers-reduced-motion: reduce) { .store-project-tile { transition: none; } }
+.store-shared-machines { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-top: 6px; }
+.store-machine-links { display: inline-flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.store-machine-links button { color: var(--foreground); text-decoration: underline; text-underline-offset: 3px; }
 
-/* A running row: a thin monochromatic brand edge on its left. */
-.sc-live-row {
-  position: relative;
-}
-.sc-live-row::before {
-  content: '';
-  position: absolute;
-  inset: 8px auto 8px 0;
-  width: 2px;
-  border-radius: var(--radius-3xs);
-  background: color-mix(in oklab, var(--primary) 82%, white);
-}
+/* Store workspace: project grid, static graph placeholder, inline backup destinations. */
+.store-workspace { display: flex; flex-direction: column; gap: 18px; max-width: 1440px; width: 100%; margin-inline: auto; padding-top: 4px; }
+.store-workspace-breadcrumb { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.store-workspace-header { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.store-workspace-title { display: flex; align-items: baseline; gap: 12px; min-width: 0; }
+.store-workspace-title h1 { font-size: 20px; line-height: 1.2; font-weight: 600; letter-spacing: -0.4px; overflow: hidden; text-overflow: ellipsis; }
+.store-workspace-title > span, .store-workspace-size { font-size: 12px; color: var(--muted-foreground); white-space: nowrap; }
+.store-workspace-location { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; margin-top: 4px; font-size: 12px; color: var(--muted-foreground); }
+.store-workspace-alert { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; font-size: 13px; }
+.store-section-heading { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+.store-section-heading h2 { font-size: 14px; font-weight: 600; }
+.store-section-heading > span, .store-section-heading h2 span { color: var(--muted-foreground); font-size: 12px; font-weight: 400; }
+.store-workspace-projects { display: flex; flex-direction: column; gap: 12px; }
+.store-project-search { display: flex; align-items: center; gap: 6px; width: 220px; max-width: 100%; color: var(--muted-foreground); }
+.store-project-search input { min-width: 0; height: 30px; font-size: 12px; }
+.store-project-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 190px), 1fr)); gap: 14px; }
+.store-project-grid > li { display: flex; min-width: 0; max-width: 280px; }
+.store-project-grid .store-project-tile { min-height: 168px; padding: 16px; }
+.store-workspace-section { display: flex; flex-direction: column; gap: 10px; padding-top: 16px; border-top: 1px solid var(--border); }
+.store-section-note { font-size: 12px; line-height: 1.6; color: var(--muted-foreground); }
+.store-workspace-empty { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; min-height: 120px; justify-content: center; font-size: 13px; color: var(--muted-foreground); }
+.store-backup-list { display: flex; flex-direction: column; border: 1px solid var(--border); border-radius: 12px; }
+.store-backup-list li { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 14px 16px; }
+.store-backup-list li + li { border-top: 1px solid var(--border); }
+.store-backup-name { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 100px; font-size: 13px; overflow-wrap: anywhere; }
+.store-backup-name small { font-size: 12px; color: var(--muted-foreground); }
+.store-machine-list { display: flex; flex-wrap: wrap; gap: 8px; }
+.store-workspace-disclosure { border-top: 1px solid var(--border); padding-top: 18px; }
+.store-workspace-disclosure summary { cursor: pointer; font-size: 13px; font-weight: 500; }
+.store-workspace-disclosure summary span { margin-left: 12px; color: var(--muted-foreground); font-size: 12px; font-weight: 400; }
+.store-disclosure-body { padding-top: 18px; }
+.store-detail-facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 20px; font-size: 12px; }
+.store-detail-facts dt { color: var(--muted-foreground); margin-bottom: 5px; }
+.store-detail-facts dd { overflow-wrap: anywhere; }
+.store-danger-zone { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; border-top: 1px solid var(--border); margin-top: 24px; padding-top: 18px; font-size: 13px; }
+.store-danger-zone h3 { color: var(--destructive); margin-bottom: 6px; font-weight: 500; }
+.store-danger-zone p { max-width: 560px; color: var(--muted-foreground); font-size: 12px; }
+.store-workspace-header > [data-slot] { flex-shrink: 0; }
+.store-breakdown { padding: 12px 16px; border: 1px solid var(--border); border-radius: 12px; }
+.store-breakdown-controls { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--muted-foreground); }
+.store-disk-diagram { min-width: 0; padding-top: 4px; }
+.store-disk-stack { display: flex; height: 12px; border-radius: 3px; overflow: hidden; margin: 10px 0 12px; gap: 2px; }
+.store-disk-stack .payload, .store-disk-legend .payload { background: var(--link); }
+.store-disk-stack .metadata, .store-disk-legend .metadata { background: var(--link); opacity: 0.45; }
+.store-disk-stack .indexes, .store-disk-legend .indexes { background: var(--muted-foreground); }
+.store-disk-stack .free, .store-disk-legend .free { background: var(--muted); border: 1px solid var(--border); }
+.store-disk-legend { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 14px; font-size: 10px; color: var(--muted-foreground); }
+.store-disk-legend li { display: flex; align-items: center; flex-wrap: wrap; gap: 4px; }
+.store-disk-legend i { display: inline-block; width: 6px; height: 6px; border-radius: 1px; }
+.store-disk-legend strong { font-weight: 400; color: var(--foreground); margin-left: auto; font-variant-numeric: tabular-nums; }
+.store-breakdown-note { margin-top: 8px; font-size: 10px; color: var(--muted-foreground); line-height: 1.5; }
+.store-breakdown-empty { padding: 20px 0 8px; font-size: 12px; color: var(--muted-foreground); }
 
-/* A brand progress fill: the icon's cobalt, a touch lighter at its leading end. */
-.sc-bar-brand {
-  background: linear-gradient(90deg, var(--primary) 0%, color-mix(in oklab, var(--primary) 82%, white) 100%);
-  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.2);
-}
-
-/* A target or storage LayerFS cannot use yet: present, calm, plainly not live. */
-.sc-soon {
-  border: 1px dashed color-mix(in oklab, var(--foreground) 14%, transparent);
-  border-radius: var(--radius-xs);
-  background: var(--grain), color-mix(in oklab, var(--card) 55%, var(--background));
-  box-shadow: var(--highlight);
-}
-.sc-soon-mark {
-  filter: grayscale(1);
-  opacity: 0.6;
-  transition:
-    filter var(--dur-base) var(--ease-out-soft),
-    opacity var(--dur-base) var(--ease-out-soft);
-}
-.sc-soon:hover .sc-soon-mark {
-  filter: grayscale(0.2);
-  opacity: 0.9;
-}
-
-/* The Storage page's list indicator: a raised matte tile behind the chosen row */
-.sc-pick {
-  border-radius: var(--radius-2xs);
-  background: var(--glass-panel-bg);
-  border: 1px solid var(--glass-border);
-  box-shadow: var(--glass-shadow);
-}
-.sc-pick::before {
-  display: none;
-}
-
-/* ===================================================================
-   Storage redesign (docs/ui/storage.md): the transfer stepper,
-   the import bridge and cards that open a page. The board's Store cards
-   are plain Tailwind (overview/store-card.tsx).
-   =================================================================== */
-
-/* The stepper's dots: hollow for later steps, a brand dot that pulses for the current one. */
-.sc-step-dot {
-  display: inline-block;
-  width: 7px;
-  height: 7px;
-  border-radius: var(--radius-full);
-  box-shadow: inset 0 0 0 1.25px color-mix(in oklab, var(--foreground) 28%, transparent);
-}
-.sc-step-dot[data-state='now'] {
-  position: relative;
-  background: var(--primary);
-  color: var(--primary);
-}
-.sc-step-dot[data-state='now']::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  box-shadow: 0 0 0 0 currentColor;
-  animation: pulse-ring 1.8s var(--ease-out-soft) infinite;
-}
-
-/* The import bridge's arrow: a still line of single-hue brand light. */
-.sc-bridge {
-  position: relative;
-  width: 48px;
-  justify-content: center;
-}
-.sc-bridge::before {
-  content: '';
-  position: absolute;
-  inset: 50% 14.4px auto 0;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, color-mix(in oklab, var(--primary) 82%, white));
-  opacity: 0.7;
-}
-
-/* A card that opens a page: its arrow wakes on hover (connections, related Stores). */
-.sc-arrow {
-  opacity: 0.45;
-  transition:
-    opacity var(--dur-fast) var(--ease-out-soft),
-    transform var(--dur-base) var(--ease-out-expo);
-}
-.sc-card:hover .sc-arrow,
-.sc-card:focus-visible .sc-arrow {
-  opacity: 1;
-  transform: translate(1px, -1px);
-}
+.store-compact-flow { margin-top: 10px; }
+.store-flow-stages { display: grid; gap: 12px; text-align: center; }
+.store-flow-stages > div { display: flex; flex-direction: column; align-items: center; gap: 3px; min-width: 0; }
+.store-flow-stages span { font-size: 11px; color: var(--muted-foreground); }
+.store-flow-stages strong { font-size: 15px; font-weight: 600; font-variant-numeric: tabular-nums; line-height: 1.2; }
+.store-flow-ribbon { position: relative; height: 46px; margin-top: 3px; }
+.store-flow-ribbon svg { display: block; width: 100%; height: 100%; }
+.store-flow-step { position: absolute; top: 50%; transform: translate(-50%, -50%); background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 3px 8px; font-size: 10px; color: var(--muted-foreground); white-space: nowrap; }
+.store-composition-details { margin-top: 6px; font-size: 10px; color: var(--muted-foreground); }
+.store-composition-details summary { cursor: pointer; }
+.store-composition-details summary span { margin-left: 8px; }

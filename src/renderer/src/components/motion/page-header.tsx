@@ -66,6 +66,7 @@ export function PageHeader({ eyebrow, title, badges, description, icon, back, li
       <header
         ref={header}
         data-live={live || undefined}
+        data-size={size}
         className={cn(
           'page-header @container/page-header relative z-20 shrink-0 app-drag',
           sticky && 'sticky top-0 -mt-px',

@@ -2,6 +2,8 @@
 
 One file per surface. Each is ASCII diagrams with numbered regions, a legend per diagram, and as
 little prose as possible. Update a page's file in the same change as its code.
+The LayerFS model the pages show (machines, Stores, Sandboxes, Workspaces) is drawn in
+[../layerfs-model.md](../layerfs-model.md).
 
 ## Index
 
@@ -10,9 +12,11 @@ little prose as possible. Update a page's file in the same change as its code.
 | [shell.md](shell.md) | Window layout, sidebar, window bar, sim strip, mode chip, global overlays |
 | [chat.md](chat.md) | New chat, open chat (header, transcript, composer), Trace, subagent view, chat dialogs |
 | [projects.md](projects.md) | Projects list, New project dialog, Delete project dialog |
-| [project.md](project.md) | Project page: header, Store banner, Chats, Files, Sandboxes, Storage tabs |
+| [project.md](project.md) | Desktop project page: header, Files, History, Sandboxes, Storage tabs |
+| [sandbox.md](sandbox.md) | Desktop chat Sandbox: project-wide animated agent, branch and workspace map |
 | [project-live.md](project-live.md) | Project page: Live tab |
-| [project-history.md](project-history.md) | Project page: History tab (Lineage, Map) |
+| [chat-history.md](chat-history.md) | Desktop chat History: centered main, branch families, checkpoint groups, Trace links |
+| [project-history.md](project-history.md) | Project History: shared desktop graph; legacy Lineage and Map notes |
 | [machines.md](machines.md) | Machines board, machine card, machine page, Add machine |
 | [storage.md](storage.md) | Storage board (Stores, Backups), Store card, bucket card, Store page, dialogs |
 | [settings.md](settings.md) | Settings dialog and every section |

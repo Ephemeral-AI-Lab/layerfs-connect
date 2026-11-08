@@ -1,23 +1,25 @@
-// The chat's tab row: Chat, Trace, Subagents (with how many, and a pulsing
-// dot while one works). The row's far end keeps the quiet facts: context
-// used and the model.
+// Conversation views live here; agent hierarchy navigation lives in the header.
 import { Sparkles } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
-import { Tab, TabBar, TabCount } from '@/components/layerfs/motion/tabs'
-import { childActive, type ChatDetail } from '@/layerfs/agent-api'
+import { useNavigate, useSearchParams } from 'react-router-dom'
+import { Tab, TabBar } from '@/components/layerfs/motion/tabs'
+import type { ChatDetail, ChildRun } from '@/layerfs/agent-api'
 
-export type ChatTab = 'chat' | 'trace' | 'subagents'
+export type ChatTab = 'chat' | 'files' | 'sandboxes' | 'trace' | 'history' | 'subagents'
 
 const TABS: { id: ChatTab; label: string; path: string }[] = [
   { id: 'chat', label: 'Chat', path: '' },
+  { id: 'files', label: 'Files', path: '/files' },
+  { id: 'sandboxes', label: 'Sandbox', path: '/sandboxes' },
   { id: 'trace', label: 'Trace', path: '/trace' },
-  { id: 'subagents', label: 'Subagents', path: '/subagents' },
+  { id: 'history', label: 'History', path: '/history' },
 ]
 
-export function ChatTabs({ chat, current, lead }: { chat: ChatDetail | null; current: ChatTab; lead: number }) {
+export function ChatTabs({ chat, current, lead, child, onSelect }: { chat: ChatDetail | null; current: ChatTab; lead: number; child?: ChildRun; onSelect?: (tab: ChatTab) => void }) {
   const navigate = useNavigate()
-  const children = chat?.children ?? []
-  const working = children.some(childActive)
+  const [params] = useSearchParams()
+  const aside = params.get('aside')
+  const base = chat ? `/chat/${encodeURIComponent(chat.id)}${child ? `/subagents/${encodeURIComponent(child.id)}` : ''}` : ''
+  const model = child ? child.model : chat?.provider !== 'scenario' ? chat?.modelId : null
   return (
     <div className="shrink-0 pr-4" style={{ paddingLeft: lead }}>
       <TabBar
@@ -26,10 +28,10 @@ export function ChatTabs({ chat, current, lead }: { chat: ChatDetail | null; cur
         end={
           chat && (
             <span className="flex items-center gap-3 text-12 tabular-nums text-[var(--text-tertiary)]">
-              {chat.contextUsage?.percent != null && <span title="Context used">{Math.round(chat.contextUsage.percent)}% context</span>}
-              {chat.modelId && chat.provider !== 'scenario' && (
+              {!child && chat.contextUsage?.percent != null && <span title="Context used">{Math.round(chat.contextUsage.percent)}% context</span>}
+              {model && (
                 <span className="flex items-center gap-1">
-                  <Sparkles className="size-3" /> {chat.modelId}
+                  <Sparkles className="size-3" /> {model}
                 </span>
               )}
             </span>
@@ -37,10 +39,8 @@ export function ChatTabs({ chat, current, lead }: { chat: ChatDetail | null; cur
         }
       >
         {TABS.map((tab) => (
-          <Tab key={tab.id} active={current === tab.id} onClick={() => chat && navigate(`/chat/${encodeURIComponent(chat.id)}${tab.path}`)}>
+          <Tab key={tab.id} active={current === tab.id} onClick={() => onSelect ? onSelect(tab.id) : chat && navigate(`${base}${tab.path}${aside ? `?aside=${encodeURIComponent(aside)}` : ''}`)}>
             {tab.label}
-            {tab.id === 'subagents' && children.length > 0 && <TabCount>{children.length}</TabCount>}
-            {tab.id === 'subagents' && working && <span aria-label="working" className="ml-1 inline-block size-1.5 animate-pulse rounded-full bg-[var(--ring)]" />}
           </Tab>
         ))}
       </TabBar>

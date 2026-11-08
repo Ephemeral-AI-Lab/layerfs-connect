@@ -18,6 +18,8 @@ export interface ProjectRowData {
   facts: StoreFacts
   /** The machines its Sandboxes run on; null when the machines were not read. */
   runs: RunsOn[] | null
+  sandboxCount: number | null
+  workspaceCount: number | null
   /** When the project was made. */
   activity: number | null
 }
@@ -45,7 +47,11 @@ export function useProjectRows(projects: ProjectCatalog): ProjectRows {
     const by = new Map<string, ProjectRowData>()
     for (const project of data ?? []) {
       const key = projectKey(project)
-      by.set(key, { project, facts: storeFacts(project, storage), runs: sandboxes ? runsOn(sandboxes.get(key)) : null, activity: toMs(project.created) })
+      const boxes = sandboxes?.get(key)?.filter(b => b.state !== 'gone') ?? []
+      by.set(key, { project, facts: storeFacts(project, storage), runs: sandboxes ? runsOn(boxes) : null,
+        sandboxCount: sandboxes ? boxes.length : null,
+        workspaceCount: sandboxes && boxes.every(b => typeof b.workspaces === 'number') ? boxes.reduce((sum, b) => sum + b.workspaces!, 0) : null,
+        activity: toMs(project.created) })
     }
     return by
   }, [data, sandboxes, storage])

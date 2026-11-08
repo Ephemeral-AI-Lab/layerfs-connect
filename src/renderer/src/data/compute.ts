@@ -1,6 +1,7 @@
 // Machines: the machines this Connect's LayerFS home runs on (LayerFS 2.0,
 // layerfs#533). `native` and `docker` are built in; VMs are created
-// (apple-container, microsandbox, lima, firecracker) and ssh hosts connected.
+// (apple-container, microsandbox, lima). SSH hosts and Firecracker are turned
+// off in Connect: the host leaves them out of machine.platforms (host/machines.js).
 // A machine holds sqlite Stores, and a project's Sandboxes run on its
 // Store's machine. Power is manual (#535 D11): a machine runs between Start
 // and Stop; nothing starts it on use or stops it when idle.
@@ -21,8 +22,8 @@ export const OS_OF: Record<HostStatus['platform'], Os> = { macos: 'darwin', linu
 
 export const GIB = 2 ** 30
 
-/** The VM kinds a home creates; ssh hosts are connected. */
-export const VM_KINDS = ['apple-container', 'microsandbox', 'lima', 'firecracker'] as const
+/** The VM kinds a home creates. */
+export const VM_KINDS = ['apple-container', 'microsandbox', 'lima'] as const
 export type VmKind = (typeof VM_KINDS)[number]
 export const isVmKind = (p: string): p is VmKind => (VM_KINDS as readonly string[]).includes(p)
 export const BUILT_IN = new Set(['native', 'docker'])
@@ -33,8 +34,6 @@ export const KIND_LABEL: Record<MachinePlatform, string> = {
   'apple-container': 'Apple Container',
   microsandbox: 'Microsandbox',
   lima: 'Lima',
-  firecracker: 'Firecracker',
-  ssh: 'SSH host',
 }
 export const kindLabel = (p: string) => KIND_LABEL[p as MachinePlatform] ?? p
 
@@ -43,14 +42,10 @@ export const KIND_BLURB: Record<Exclude<MachinePlatform, 'native' | 'docker'>, s
   'apple-container': 'A Linux VM from Apple’s container tool',
   microsandbox: 'A microVM from msb',
   lima: 'A Linux VM from Lima',
-  firecracker: 'A Firecracker microVM inside a nested Lima machine',
-  ssh: 'A Linux host you reach over SSH with a key',
 }
 
 /** LayerFS's defaults for a new VM (2.0's machine/record.rs). */
 export const VM_DEFAULTS = { cpus: 2, memory: 4 * GIB, disk: 20 * GIB } as const
-/** The default Sandbox image (owner decision O36): LayerFS's runtime image, sealed into the bundle. */
-export const SSH_DEFAULTS = { port: 22, root: '/layerfs/data', user: 'root' } as const
 
 /** Native and Docker first, then the rest by name. */
 export function machineOrder(machines: MachineInfo[]): MachineInfo[] {
@@ -85,14 +80,13 @@ export function gib(n: number | null | undefined): string {
   return `${Math.round(n / 2 ** 20)} MiB`
 }
 
-/** A machine's size: a VM's CPUs, memory and disk (and its free disk, when known); the built-ins and ssh hosts in words. */
+/** A machine's size: a VM's CPUs, memory and disk (and its free disk, when known); the built-ins in words. */
 export function sizeOf(m: MachineInfo, os: Os, live?: MachineLive): { text: string; values?: Record<string, string | number> } {
   if (m.platform === 'native') return { text: os === 'darwin' ? 'this Mac' : os === 'win32' ? 'this PC' : 'this host' }
   if (m.platform === 'docker') {
     if (os === 'linux') return { text: 'this host’s Docker' }
     return live?.freeDisk != null ? { text: 'Docker’s VM · {free} free', values: { free: gib(live.freeDisk) } } : { text: 'Docker’s VM' }
   }
-  if (m.platform === 'ssh') return live?.freeDisk != null ? { text: 'host’s own · {free} free', values: { free: gib(live.freeDisk) } } : { text: 'host’s own' }
   const values = { cpus: m.cpus ?? VM_DEFAULTS.cpus, memory: gib(m.memory ?? VM_DEFAULTS.memory), disk: gib(m.disk ?? VM_DEFAULTS.disk) }
   return live?.freeDisk != null ? { text: '{cpus} CPU · {memory} · {disk} · {free} free', values: { ...values, free: gib(live.freeDisk) } } : { text: '{cpus} CPU · {memory} · {disk}', values }
 }
@@ -122,7 +116,7 @@ export function factsOf(view: Extract<MachinesView, { available: true }>) {
   return { ...n, ops, sandboxes, workspaces }
 }
 
-/** A machine `remove`/`disconnect` refuses while it holds Stores or running Sandboxes (InUse): the reason, or null. */
+/** A machine `remove` refuses while it holds Stores or running Sandboxes (InUse): the reason, or null. */
 export function inUse(m: MachineInfo): { stores: number; sandboxes: number } | null {
   return m.stores.length || m.sandboxes.length ? { stores: m.stores.length, sandboxes: m.sandboxes.length } : null
 }
@@ -157,7 +151,6 @@ export function installHelp(missing: string[], layerfs: string | null = null): {
   if (tool === 'msb') return { label: 'How to install', words: 'Install msb, or put ~/.microsandbox/bin on PATH if it is installed', commands: ['curl -fsSL https://install.microsandbox.dev | sh', 'export PATH="$HOME/.microsandbox/bin:$PATH"'] }
   if (tool === 'container') return { label: 'How to install', words: 'Install Apple’s container tool (macOS 26, Apple silicon), then start it', commands: ['https://github.com/apple/container/releases', 'container system start'] }
   if (tool === 'limactl') return { label: 'How to install', words: 'Install Lima', commands: ['brew install lima'] }
-  if (tool === 'ssh') return { label: 'How to install', words: 'Install an OpenSSH client', commands: [] }
   if (tool) return { label: 'How to install', words: 'Install {tool}', values: { tool }, commands: [] }
   if (missing.some((n) => n.startsWith('bundle:'))) {
     // the sealed Linux bundle (2.0 O16): a build places it; fetching it is not built yet
@@ -185,8 +178,8 @@ export function parseSize(text: string): number | null {
 
 const NAME = /^[a-z0-9][a-z0-9-]{0,30}$/
 
-/** Each kind's short name, as 2.0's cell runner names machines (ac1, msb1, lima1, fc1, ssh1). */
-export const KIND_SHORT: Record<string, string> = { 'apple-container': 'ac', microsandbox: 'msb', lima: 'lima', firecracker: 'fc', ssh: 'ssh' }
+/** Each kind's short name, as 2.0's cell runner names machines (ac1, msb1, lima1). */
+export const KIND_SHORT: Record<string, string> = { 'apple-container': 'ac', microsandbox: 'msb', lima: 'lima' }
 
 /** A free name for a new machine of `kind`: `<short><n>`, the lowest n no machine (nor `also`) takes. */
 export function freeMachineName(kind: string, machines: MachineInfo[], also: string[] = []): string {
@@ -213,30 +206,12 @@ export interface VmForm {
   /** '' for the default Sandbox image, else a digest or an archive path. */
   image: string
   osImage: string
-  /** firecracker: an existing nested lima machine, or `new:<name>` to create one with --nested first. */
-  host: string
-  /** lima: made with --nested, so Firecracker machines can run in it. */
-  nested: boolean
-}
-export interface SshForm {
-  name: string
-  /** user＠host */
-  host: string
-  port: string
-  identity: string
-  /** A known_hosts file to check the host's key against; empty: ssh's own. */
-  knownHosts: string
-  root: string
 }
 export type FormErrors<F> = Partial<Record<keyof F, { text: string; values?: Record<string, string> }>>
 
-export const emptyVm = (): VmForm => ({ name: '', cpus: String(VM_DEFAULTS.cpus), memory: '4G', disk: '20G', image: '', osImage: '', host: '', nested: false })
-export const emptySsh = (): SshForm => ({ name: '', host: '', port: String(SSH_DEFAULTS.port), identity: '', knownHosts: '', root: SSH_DEFAULTS.root })
+export const emptyVm = (): VmForm => ({ name: '', cpus: String(VM_DEFAULTS.cpus), memory: '4G', disk: '20G', image: '', osImage: '' })
 
-/** The nested lima machines a Firecracker machine can run in. */
-export const nestedHosts = (machines: MachineInfo[]) => machines.filter((m) => m.platform === 'lima' && m.nested)
-
-export function vmErrors(kind: VmKind, f: VmForm, machines: MachineInfo[]): FormErrors<VmForm> {
+export function vmErrors(f: VmForm, machines: MachineInfo[]): FormErrors<VmForm> {
   const e: FormErrors<VmForm> = {}
   const named = nameError(f.name, machines)
   if (named) e.name = { text: named, values: { name: f.name.trim() } }
@@ -247,42 +222,22 @@ export function vmErrors(kind: VmKind, f: VmForm, machines: MachineInfo[]): Form
   const disk = parseSize(f.disk)
   if (disk === null || disk < 2 * GIB) e.disk = { text: 'At least 2G, such as 20G' }
   if (f.image && !/^sha256:[0-9a-f]{12,64}$/.test(f.image) && !f.image.startsWith('/')) e.image = { text: 'A sha256: digest, or an archive’s absolute path' }
-  if (kind === 'firecracker') {
-    if (!f.host) e.host = { text: 'Choose the Lima machine it runs in' }
-    else if (f.host.startsWith('new:')) {
-      const hostName = f.host.slice(4)
-      const bad = nameError(hostName, machines) ?? (hostName === f.name.trim() ? 'A machine named {name} exists' : null)
-      if (bad) e.host = { text: bad, values: { name: hostName } }
-    } else if (!nestedHosts(machines).some((m) => m.name === f.host)) e.host = { text: '{name} is not a Lima machine made with --nested', values: { name: f.host } }
-  }
   return e
 }
 
-export function sshErrors(f: SshForm, machines: MachineInfo[]): FormErrors<SshForm> {
-  const e: FormErrors<SshForm> = {}
-  const named = nameError(f.name, machines)
-  if (named) e.name = { text: named, values: { name: f.name.trim() } }
-  if (!/^([a-z_][a-z0-9_.-]*@)?[a-z0-9]([a-z0-9.-]*[a-z0-9])?$/i.test(f.host.trim())) e.host = { text: 'user@host, or a host name' }
-  const port = Number(f.port)
-  if (!Number.isInteger(port) || port < 1 || port > 65535) e.port = { text: 'A port from 1 to 65535' }
-  if (f.identity && !/^(~\/|\/)/.test(f.identity.trim())) e.identity = { text: 'A key file’s path, such as ~/.ssh/id_ed25519' }
-  if (!f.root.trim().startsWith('/')) e.root = { text: 'An absolute path on the host' }
-  return e
-}
-
-/** The platforms a machine is created or connected on (machine.platforms), in its order: not the built-ins. */
-export const addable = (platforms: MachinePlatformInfo[]) => platforms.filter((p) => p.how === 'created' || p.how === 'connected')
+/** The platforms a machine is created on (machine.platforms), in its order: not the built-ins. */
+export const addable = (platforms: MachinePlatformInfo[]) => platforms.filter((p) => p.how === 'created')
 
 /** The ready ones the New machine menu offers. */
 export const readyKinds = (platforms: MachinePlatformInfo[]) => addable(platforms).filter((p) => p.ready)
 
-/** Whether `platform` declares create (or connect) option `name`. */
+/** Whether `platform` declares create option `name`. */
 export const declares = (platforms: MachinePlatformInfo[], platform: string, name: string) => !!platforms.find((p) => p.platform === platform)?.options.some((o) => o.name === name)
 
 // ---------- Sandbox platforms (layerfs#529) ----------
 
 /** Every Sandbox platform. */
-export const PLATFORMS: readonly SandboxPlatform[] = ['docker', 'mac', 'linux', 'apple-container', 'microsandbox', 'lima', 'firecracker', 'ssh']
+export const PLATFORMS: readonly SandboxPlatform[] = ['docker', 'mac', 'linux', 'apple-container', 'microsandbox', 'lima']
 
 export const PLATFORM_LABEL: Record<SandboxPlatform, string> = {
   docker: 'Docker',
@@ -291,8 +246,6 @@ export const PLATFORM_LABEL: Record<SandboxPlatform, string> = {
   'apple-container': 'Apple Container',
   microsandbox: 'Microsandbox',
   lima: 'Lima',
-  firecracker: 'Firecracker',
-  ssh: 'SSH host',
 }
 
 const isPlatform = (v: unknown): v is SandboxPlatform => typeof v === 'string' && (PLATFORMS as readonly string[]).includes(v)

@@ -7,6 +7,7 @@ import { SessionManager } from '@earendil-works/pi-coding-agent'
 import { sessionUsage } from './runtime.js'
 import { sessionTranscript } from './transcript.js'
 import { withStepViews } from './step-views.js'
+import { chatTrace } from './trace.js'
 
 const stats = new Map()
 
@@ -86,4 +87,20 @@ export function childConversation(record, dir, childId) {
   const manager = SessionManager.open(child.sessionFile)
   const messages = withStepViews(sessionTranscript(manager), join(dir, 'traces'), `child-${manager.getSessionId()}`)
   return { child, messages }
+}
+
+/** A child's own paginated Trace, using its Pi branch and its own LayerFS calls. */
+export function childTrace(record, dir, childId, { before = null, limit } = {}) {
+  const child = describeChildren(record, dir).find((item) => item.id === childId)
+  if (!child) return null
+  const manager = child.conversation ? SessionManager.open(child.sessionFile) : null
+  const page = chatTrace({
+    record: {
+      state: ['running', 'pending', 'queued', 'paused'].includes(child.state) ? 'running' : 'idle',
+      created: child.startedAt, updated: child.endedAt,
+    },
+    entries: manager?.getBranch() ?? [], dir, before, limit,
+    traceAgent: manager ? `child-${manager.getSessionId()}` : undefined,
+  })
+  return { ...page, agent: child.agent }
 }

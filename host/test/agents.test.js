@@ -965,6 +965,18 @@ test('a subagent’s numbers and conversation come from its own session file', {
   assert.ok(messages.some((message) => message.role === 'tool' && message.toolName === 'bash' && message.status === 'done'))
   assert.equal(messages.filter((message) => message.role === 'assistant').at(-1).text, 'CHILD_SAID_DONE')
 
+  const trace = await agentRoute(f.manager, 'GET', ['sessions', chat.id, 'children', child.id, 'trace'])
+  assert.equal(trace.agent, child.agent)
+  assert.ok(trace.records.some((row) => row.kind === 'tool' && row.text.includes('child-conv.txt')))
+  assert.ok(trace.records.some((row) => row.kind === 'assistant' && row.text === 'CHILD_SAID_DONE'))
+  assert.ok(!trace.records.some((row) => row.text === 'PARENT_DONE'))
+  const newest = await agentRoute(f.manager, 'GET', ['sessions', chat.id, 'children', child.id, 'trace'], null, new URLSearchParams('limit=1'))
+  assert.equal(newest.records.length, 1)
+  assert.equal(newest.total, trace.total)
+  const earlier = f.manager.childTrace(chat.id, child.id, { before: newest.from, limit: 1 })
+  assert.equal(earlier.from + earlier.records.length, newest.from)
+  assert.throws(() => f.manager.childTrace(chat.id, 'not-a-child'), (error) => error.status === 404)
+
   assert.throws(() => f.manager.childConversation(chat.id, 'not-a-child'), (error) => error.status === 404)
   await f.restart()
   assert.equal(f.manager.detail(chat.id).children.find((item) => item.id === child.id).turns, 2)
@@ -972,6 +984,7 @@ test('a subagent’s numbers and conversation come from its own session file', {
   f.manager.record(chat.id).children = f.manager.record(chat.id).children.map((item) => ({ ...item, sessionFile: '/etc/hosts' }))
   assert.deepEqual(f.manager.childConversation(chat.id, child.id).messages, [])
   assert.equal(f.manager.detail(chat.id).children.find((item) => item.id === child.id).conversation, false)
+  assert.deepEqual(f.manager.childTrace(chat.id, child.id).records, [])
 })
 
 test('turning leads off stops chats from starting connect-lead, and back on allows it', { timeout: 60_000 }, async (t) => {

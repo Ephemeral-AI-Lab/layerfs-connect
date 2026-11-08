@@ -1,7 +1,7 @@
 /*
- * Light blue theme, built on CINDY Light from makecindy/cindy (Apache-2.0,
+ * White/light theme, built on CINDY Light from makecindy/cindy (Apache-2.0,
  * Copyright 2026 XD Inc.): apps/desktop/src/renderer/themes/builtin/cindy-light.ts
- * and styles/globals.css, with the ivory surfaces retinted light blue. The
+ * and styles/globals.css, with neutral white and light gray surfaces. The
  * Connect color names the LayerFS pages read (card, faint, success, …) and the
  * type and radius scales are pi-desktop's (styles/connect-theme.css, tokens.css).
  * Rules kept from Cindy's DESIGN.md: ink-alpha text (never solid grays or opacity),
@@ -15,17 +15,17 @@
 :root {
   color-scheme: light;
 
-  /* Surfaces: light blue. Hover and chip fills sit below the page. */
-  --background: #edf3fa;
+  /* Surfaces: white with neutral light gray supporting fills. Hover and chip fills sit below the page. */
+  --background: #ffffff;
   --foreground: rgb(0 0 0 / 88%);
-  --card: #fafcff;
+  --card: #ffffff;
   --card-foreground: var(--foreground);
-  --popover: #fafcff;
+  --popover: #ffffff;
   --popover-foreground: var(--foreground);
-  --surface-soft: #e8eff8;
+  --surface-soft: #f5f5f5;
   --surface-hover: rgb(0 0 0 / 5%);
   --surface-pressed: rgb(0 0 0 / 8%);
-  --sidebar: #e6eef8;
+  --sidebar: #f5f5f5;
   --content-area: var(--background);
 
   /* Ink: black at decreasing alpha. */
@@ -119,15 +119,15 @@
   /* Shell (Cindy): sidebar, title bar and the user card. */
   --sidebar-border: var(--border);
   --sidebar-item-hover: rgb(0 0 0 / 5%);
-  --sidebar-item-active: #fdfeff;
-  --sidebar-item-active-foreground: #1f2937;
+  --sidebar-item-active: #ffffff;
+  --sidebar-item-active-foreground: rgb(0 0 0 / 88%);
   --sidebar-item-active-border: transparent;
   --sidebar-muted: rgb(0 0 0 / 56%);
   --sidebar-action-icon: rgb(0 0 0 / 44%);
   --sidebar-nav-text: rgb(0 0 0 / 88%);
   --sidebar-list-muted: rgb(0 0 0 / 44%);
-  --sidebar-user-card-bg: rgb(250 252 255 / 55%);
-  --sidebar-user-card-bg-hover: rgb(250 252 255 / 80%);
+  --sidebar-user-card-bg: rgb(255 255 255 / 55%);
+  --sidebar-user-card-bg-hover: rgb(255 255 255 / 80%);
   --sidebar-user-card-border: rgb(0 0 0 / 8%);
   --titlebar-border: var(--border);
   --titlebar-icon: rgb(0 0 0 / 56%);
@@ -136,9 +136,9 @@
   /* Cindy's names for the same things, used by the shell. */
   --surface: var(--background);
   --surface-elevated: var(--card);
-  --surface-elevated-soft: #f5f9fe;
-  --surface-translucent-sidebar: rgb(230 238 248 / 85%);
-  --surface-translucent-overlay: rgb(248 251 255 / 90%);
+  --surface-elevated-soft: #fafafa;
+  --surface-translucent-sidebar: rgb(245 245 245 / 95%);
+  --surface-translucent-overlay: rgb(255 255 255 / 90%);
   --border-default: var(--border);
   --text-primary: rgb(0 0 0 / 88%);
   --text-secondary: rgb(0 0 0 / 56%);

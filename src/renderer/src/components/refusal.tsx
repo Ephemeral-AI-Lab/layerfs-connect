@@ -15,7 +15,7 @@ export function refusalOf(error: unknown): SdkRefusal {
   return { code: 'Failed', message: error instanceof Error ? error.message : String(error), detail: null }
 }
 
-const KIND: Record<string, string> = { sandbox: 'Sandbox', store: 'Store', lease: 'process', machine: 'machine', project: 'project', workspace: 'Workspace', firecracker: 'Firecracker machine' }
+const KIND: Record<string, string> = { sandbox: 'Sandbox', store: 'Store', lease: 'process', machine: 'machine', project: 'project', workspace: 'Workspace' }
 
 /** `related` as words: "Sandbox a1, process 4242". */
 export function relatedWords(detail: RefusalDetail | null | undefined): string[] {

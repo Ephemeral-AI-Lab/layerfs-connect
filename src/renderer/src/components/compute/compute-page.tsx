@@ -76,7 +76,7 @@ export function ComputePage({ simulate: given, onOpenProject, onOpenChat, focus,
   }, [sim])
 
   const live = useHostQuery(() => (sim ? Promise.resolve(null) : host.machines()), [sim])
-  // a simulated host's actions change a copy in memory; the ref keeps the latest for actions in a row (a nested Lima host, then its Firecracker machine)
+  // a simulated host's actions change a copy in memory; the ref keeps the latest for actions in a row (a create, then a start)
   const [simHost, setSimHost] = useState<SimHost | null>(null)
   const simRef = useRef<SimHost | null>(null)
   const setSim = (h: SimHost | null) => {
@@ -214,7 +214,7 @@ export function ComputePage({ simulate: given, onOpenProject, onOpenChat, focus,
 
             {down.map((m) => {
               const st = machineState(m, available.status[m.name])
-              const calls = clearingCall('machine', m.name, st.op, m.platform)
+              const calls = clearingCall('machine', m.name, st.op)
               return (
               <Notice
                 key={m.name}

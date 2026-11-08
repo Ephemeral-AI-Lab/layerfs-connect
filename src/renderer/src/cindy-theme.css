@@ -1,0 +1,98 @@
+/* Hallmark · modern-minimal Workbench · studied Cindy theme · design-system: design.md */
+/* This adapter preserves Connect's component and data boundaries. */
+html, body { overflow-x: clip; }
+body { isolation: isolate; background: var(--background); }
+:root .canvas { background: var(--background); box-shadow: none; }
+:root .sidebar-glass { background: var(--sidebar); box-shadow: none; }
+:root[data-platform="darwin"] body { background: transparent; }
+:root[data-platform="darwin"] .sidebar-glass { background: var(--sidebar-material); }
+:root .sidebar-glass { border-right: 1px solid var(--border); }
+:root .glass, :root .glass-liquid, :root .surface {
+  background: var(--card);
+  border-color: var(--border);
+  box-shadow: none;
+  backdrop-filter: none;
+}
+:root .glass-strong, :root .surface-raised {
+  background: var(--popover);
+  border-color: var(--border);
+  box-shadow: var(--panel-shadow);
+  backdrop-filter: none;
+}
+:root input.glass, :root input.glass-liquid { background: var(--glass-field-bg) !important; }
+:root .btn-primary {
+  background-image: none;
+  box-shadow: none;
+}
+:root .btn-primary:hover:not(:disabled) { background: var(--primary-hover); box-shadow: none; }
+:root .btn-primary:active:not(:disabled) { background: var(--primary-pressed); box-shadow: none; }
+:root .text-brand { color: var(--foreground); background: none; }
+:root .bg-brand { background: var(--primary); }
+:root .page-header[data-stuck], :root .page-header.page-header-solid[data-stuck] {
+  background: var(--background);
+  box-shadow: none;
+  border-color: var(--border);
+}
+:root .hero-tile-face {
+  color: var(--muted-foreground);
+  background: var(--surface-hover);
+  border-color: transparent;
+  box-shadow: none;
+}
+:root .hero-tile-glow, :root .cursor-aura { display: none; }
+:root .pulse-ring { box-shadow: none; }
+:root .live-border { box-shadow: inset 0 0 0 1px var(--border); }
+:root .live-glow { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--live-c, var(--primary)) 25%, transparent); }
+:root .drift { animation: none; }
+:root .view-button[aria-current='page'] {
+  background: var(--surface-pressed);
+  border-color: transparent;
+  color: var(--foreground);
+}
+:root .view-nav-line .view-button[aria-current='page'] { background: none; }
+:root .hist-frame, :root .code-view, :root .chat-md-code, :root .chat-md-table,
+:root .chat-markdown pre, :root .chat-inset { background: var(--code-background); }
+:root .map-label > rect { filter: none; }
+:root .chat-markdown a { color: var(--link); text-decoration-color: currentColor; }
+:root [data-slot='dialog-overlay'], :root [data-slot='sheet-overlay'], :root .st-mask { background: var(--scrim); }
+:root [data-slot='dialog-content'], :root [data-slot='sheet-content'] {
+  background: var(--popover);
+  border-color: var(--border);
+  box-shadow: var(--panel-shadow);
+}
+:root [data-slot='button'] { border-radius: var(--radius-control); }
+:root [data-slot='button'][data-size^='icon'] { border-radius: var(--radius-composer); }
+:root [data-slot='input'], :root [data-slot='select-trigger'] { border-radius: var(--radius-composer); }
+:root .st-panel { background: var(--popover); border-color: var(--border); border-radius: var(--radius-panel); }
+:root .st-nav { background: var(--popover); }
+:root .st-nav-cell[aria-current='true'] { background: var(--surface-pressed); box-shadow: none; }
+:root .st-card, :root .st-row { background: var(--card); box-shadow: none; }
+:root .st-btn { border-radius: var(--radius-control); box-shadow: none; }
+:root .st-input { background: var(--surface-soft); box-shadow: none; }
+:root .st-close { background: transparent; border-color: transparent; border-radius: var(--radius-control); }
+:root .st-close:hover { background: var(--surface-hover); }
+/* Cindy keeps operational headers and tabs subordinate to their content. */
+:root .page-header[data-size='lg'] > div { padding-top: 20px; padding-bottom: 16px; }
+:root .page-header[data-size='lg'] h1 { font-size: 20px; line-height: 28px; font-weight: 500; }
+:root .hero-tile { width: 32px; height: 32px; }
+:root .hero-tile-face { border: 0; border-radius: 0; background: transparent; }
+:root .hero-tile-face svg { width: 20px; height: 20px; }
+:root .glass, :root .glass-liquid, :root .surface { border-radius: var(--radius-composer); }
+:root .card-hover:hover, :root .card-hover:active { transform: none; box-shadow: none; border-color: var(--border); }
+:root .view-nav:not(.view-nav-line) .view-button {
+  min-height: 32px; padding: 6px 10px; border-radius: 6px;
+  background: transparent; font-weight: 400;
+}
+:root .view-nav:not(.view-nav-line) .view-button:hover { background: var(--surface-hover); }
+:root .view-nav:not(.view-nav-line) .view-button[aria-current='page'] { background: var(--surface-pressed); font-weight: 500; }
+
+/* Material comes from translucent light, not a grain image or raised blue edge. */
+:root .chat-composer-surface {
+  background: var(--composer-material);
+  border-color: var(--material-outline);
+  box-shadow: var(--composer-shadow);
+}
+:root .sidebar-chat-row[data-active='true'] {
+  background: var(--composer-material);
+  box-shadow: inset 0 0 0 1px var(--material-edge);
+}

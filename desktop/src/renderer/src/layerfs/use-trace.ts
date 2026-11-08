@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { onHostEvent } from '@/layerfs/client'
 import { TRACE_PAGE, traceHost, type TracePage, type TraceRecord } from '@/layerfs/trace-api'
 
-export function useTrace(id: string) {
+export function useTrace(id: string, childId?: string) {
   const [page, setPage] = useState<TracePage | null>(null)
   const [older, setOlder] = useState<TraceRecord[]>([])
   const [error, setError] = useState<string | null>(null)
@@ -20,7 +20,7 @@ export function useTrace(id: string) {
     const load = () => {
       timer.current = null
       last.current = Date.now()
-      void traceHost.page(id).then(
+      void traceHost.page(id, null, TRACE_PAGE, childId).then(
         (next) => live && (setPage(next), setError(null)),
         (cause: Error) => live && setError(cause.message),
       )
@@ -40,21 +40,21 @@ export function useTrace(id: string) {
       if (timer.current) clearTimeout(timer.current)
       timer.current = null
     }
-  }, [id])
+  }, [id, childId])
 
   const from = page ? page.from - older.length : 0
   const loadEarlier = useCallback(async () => {
     if (!page || from <= 0) return
     setLoadingOlder(true)
     try {
-      const prev = await traceHost.page(id, from, TRACE_PAGE)
+      const prev = await traceHost.page(id, from, TRACE_PAGE, childId)
       setOlder((rows) => [...prev.records, ...rows])
     } catch (cause) {
       setError((cause as Error).message)
     } finally {
       setLoadingOlder(false)
     }
-  }, [id, page, from])
+  }, [id, page, from, childId])
 
   const records = page ? [...older, ...page.records] : []
   return { page, records, earlier: from, loadEarlier, loadingOlder, error }

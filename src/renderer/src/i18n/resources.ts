@@ -335,7 +335,6 @@ export const resourcesZh: Record<string, string> = {
   "Encrypted backup copies in Google Drive.": "在 Google Drive 中保存加密备份。",
   "Every snapshot": "所有快照",
   "Fargate tasks in your AWS account": "AWS 账户中的 Fargate 任务",
-  "Firecracker microVMs": "Firecracker 微型虚拟机",
   "Gone": "已移除",
   "Host loopback mount · Local SQLite": "主机回环挂载 · 本地 SQLite",
   "Import folder": "导入文件夹",

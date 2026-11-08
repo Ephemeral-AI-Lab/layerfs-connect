@@ -67,14 +67,14 @@ export function opWords(op: SdkOperation | null | undefined): string | null {
 /**
  * The status call that shows an unresolved entity, and the call that clears
  * it, as LayerFS documents them (#536: store push or pull clears a Store's
- * transfer, store remove its removal; machine remove, or disconnect for ssh;
+ * transfer, store remove its removal; machine remove;
  * sandbox close). A refusal's own text names them too, and wins when shown.
  */
-export function clearingCall(entity: Entity, name: string, op?: SdkOperation | null, platform?: string): { status: string; clear: string } {
+export function clearingCall(entity: Entity, name: string, op?: SdkOperation | null): { status: string; clear: string } {
   if (entity === 'store') {
     const clear = op?.name === 'store.remove' ? `layerfs store remove ${name}` : op?.name === 'store.pull' ? `layerfs store pull ${name}` : `layerfs store push ${name} <machine> (or store pull ${name})`
     return { status: `layerfs store status ${name}`, clear }
   }
-  if (entity === 'machine') return { status: `layerfs machine status ${name}`, clear: `layerfs machine ${platform === 'ssh' ? 'disconnect' : 'remove'} ${name}` }
+  if (entity === 'machine') return { status: `layerfs machine status ${name}`, clear: `layerfs machine remove ${name}` }
   return { status: `layerfs sandbox get ${name}`, clear: `layerfs sandbox close ${name}` }
 }

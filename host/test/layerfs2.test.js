@@ -268,24 +268,32 @@ test('a Sandbox whose Workspaces cannot be read carries the refusal; named Works
   assert.deepEqual(a2.workspaces, [{ ws: 'a2:chat-1', name: 'chat-1', branch: 'chat-1', path: '/w/1', activity: null }])
 })
 
-test('platforms, start and stop: the SDK answers; create sends only the options the platform declares', async () => {
+test('platforms, start and stop: the SDK answers; create sends only the options the platform declares; ssh and Firecracker are off', async () => {
   const lfs = fake()
   const calls = []
-  lfs.machine.platforms = async () => ({ host: 'macos', platforms: [{ platform: 'lima', how: 'created', backend: 'namespaces', kernel: 'fuse', sqlite: 'worker', postgresql: { store_calls: 'in_process', sandbox: true, reason: null }, ready: true, missing: [], version: 'limactl 2.2.1', options: [{ name: 'cpus', kind: 'int' }, { name: 'nested', kind: 'bool' }], description: 'a Lima VM' }, { platform: 'ssh', how: 'connected', ready: true, missing: [], options: [{ name: 'user', kind: 'text' }, { name: 'known_hosts', kind: 'text' }] }] })
+  lfs.machine.platforms = async () => ({ host: 'macos', platforms: [
+    { platform: 'lima', how: 'created', backend: 'namespaces', kernel: 'fuse', sqlite: 'worker', postgresql: { store_calls: 'in_process', sandbox: true, reason: null }, ready: true, missing: [], version: 'limactl 2.2.1', options: [{ name: 'cpus', kind: 'int' }, { name: 'nested', kind: 'bool' }], description: 'a Lima VM' },
+    { platform: 'firecracker', how: 'created', ready: true, missing: [], options: [{ name: 'cpus', kind: 'int' }, { name: 'host', kind: 'name' }] },
+    { platform: 'ssh', how: 'connected', ready: true, missing: [], options: [{ name: 'user', kind: 'text' }, { name: 'known_hosts', kind: 'text' }] },
+  ] })
   lfs.machine.start = async (name) => (calls.push(['start', name]), { name, state: 'running' })
   lfs.machine.stop = async (name) => { throw Object.assign(new Error(`machine ${name} runs Sandboxes a1`), { code: 'InUse', detail: { related: [{ kind: 'sandbox', name: 'a1' }] } }) }
   lfs.machine.create = async (name, platform, o) => (calls.push(['create', name, platform, o]), { name })
   lfs.machine.connect = async (name, host, o) => (calls.push(['connect', name, host, o]), { name })
   const m = new Machines({ spec: spec(), client: lfs })
   const view = await m.view()
-  assert.deepEqual(view.platforms.map((p) => [p.platform, p.ready, p.options.map((o) => o.name)]), [['lima', true, ['cpus', 'nested']], ['ssh', true, ['user', 'known_hosts']]])
+  // ssh and Firecracker rows are left out, and so is lima's `nested` (only Firecracker used it)
+  assert.deepEqual(view.platforms.map((p) => [p.platform, p.ready, p.options.map((o) => o.name)]), [['lima', true, ['cpus']]])
   assert.equal('canCreate' in view, false)
   assert.equal((await m.start('box')).state, 'running')
   await assert.rejects(m.stop('box'), (e) => e.code === 'InUse' && e.detail.related[0].name === 'a1')
-  await m.create({ name: 'box', platform: 'lima', cpus: 4, nested: true })
+  await m.create({ name: 'box', platform: 'lima', cpus: 4 })
   await assert.rejects(m.create({ name: 'box2', platform: 'lima', disk: '40G' }), /lima takes no disk/)
-  await m.connect({ name: 'gpu', host: 'gpu.lan', user: 'ubuntu', known_hosts: '/k', root: '/x' })
-  assert.deepEqual(calls.slice(1), [['create', 'box', 'lima', { cpus: 4, nested: true }], ['connect', 'gpu', 'gpu.lan', { user: 'ubuntu', known_hosts: '/k' }]])
+  await assert.rejects(m.create({ name: 'box3', platform: 'lima', nested: true }), /lima takes no nested/)
+  await assert.rejects(m.create({ name: 'fc1', platform: 'firecracker' }), (e) => e.code === 'Unsupported')
+  await assert.rejects(m.create({ name: 'gpu', platform: 'ssh', host: 'gpu.lan' }), (e) => e.code === 'Unsupported')
+  assert.equal(typeof m.connect, 'undefined')
+  assert.deepEqual(calls.slice(1), [['create', 'box', 'lima', { cpus: 4 }]])
 })
 
 test('Workspaces: main is never mounted; a new Branch is forked from main first; a name is passed on (D14, #537 §7)', async () => {

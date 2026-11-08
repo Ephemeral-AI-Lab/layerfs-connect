@@ -126,13 +126,13 @@ export const host = {
   status: () => call<HostStatus>('GET', '/api/status'),
   /** Compute's machines (layerfs#533); `available: false` on a LayerFS with none. */
   machines: () => call<MachinesView>('GET', '/api/machines'),
-  /** A VM, or (platform `ssh`) an ssh host. */
+  /** A VM. */
   createMachine: (input: NewMachine) => call<unknown>('POST', '/api/machines', input),
   /** machine.start: a stopped machine and its worker (nothing else starts one, #535 D11). */
   startMachine: (name: string) => call<unknown>('POST', `/api/machines/${enc(name)}/start`),
   /** machine.stop: refused InUse while Sandboxes run on it (detail.related names them). */
   stopMachine: (name: string) => call<unknown>('POST', `/api/machines/${enc(name)}/stop`),
-  /** Removes a VM or disconnects an ssh host; refused InUse while it holds Stores or running Sandboxes. */
+  /** Removes a VM; refused InUse while it holds Stores or running Sandboxes. */
   removeMachine: (name: string) => call<unknown>('DELETE', `/api/machines/${enc(name)}`),
   /** A built-in's { image, docker, wsl }, or a VM's { cpus, memory }. */
   updateMachine: (name: string, changes: { image?: string; docker?: string; wsl?: string; cpus?: number; memory?: number }) => call<unknown>('POST', `/api/machines/${enc(name)}/update`, changes),

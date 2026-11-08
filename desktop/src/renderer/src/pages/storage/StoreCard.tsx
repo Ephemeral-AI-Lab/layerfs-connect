@@ -241,7 +241,7 @@ export function StoreCard({ store: s, index, machine, buckets, job, sandboxes, o
 }
 
 /** Where a Store is: the home's file, the machine it was pushed to (opens it on Machines) with its state, or its PostgreSQL database. */
-export function Location({ store: s, machine }: { store: StoreRow; machine: Machine | undefined }) {
+export function Location({ store: s, machine, showState = true }: { store: StoreRow; machine: Machine | undefined; showState?: boolean }) {
   if (s.kind === 'postgresql')
     return s.postgresql?.target ? (
       <span className="inline-flex min-w-0 items-center gap-1.5" title={`Its database: ${s.postgresql.target}`}>
@@ -267,7 +267,7 @@ export function Location({ store: s, machine }: { store: StoreRow; machine: Mach
         <span className="truncate">{s.machine ?? '?'}</span>
       </button>
       {machine?.platform && <span className="text-xs text-muted-foreground">{machine.platform}</span>}
-      <StateChip entity="machine" state={machine?.state ?? 'missing'} />
+      {showState && <StateChip entity="machine" state={machine?.state ?? 'missing'} />}
     </span>
   )
 }

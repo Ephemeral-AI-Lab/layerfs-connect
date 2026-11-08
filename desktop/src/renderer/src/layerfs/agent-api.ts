@@ -129,7 +129,7 @@ export interface ChatDetail extends ChatSummary {
   contextUsage: { tokens: number | null; contextWindow: number; percent: number | null } | null
   usage?: { totalTokens: number; cost: number }
   recovery?: { required: boolean; canContinue: boolean }
-  execution?: { phase: ChatPhase; startedAt: number | null; turns?: number; toolCalls?: number; retryAttempt?: number; reason?: string }
+  execution?: { phase: ChatPhase; startedAt: number | null; turns?: number; toolCalls?: number; retryAttempt?: number; retryMaxAttempts?: number; retryAt?: number; reason?: string }
 }
 
 export interface ChatModel {
@@ -137,12 +137,46 @@ export interface ChatModel {
   id: string
   name: string
   thinkingLevels?: string[]
+  reasoning?: boolean
+  input?: string[]
+  contextWindow?: number
+  maxTokens?: number
+}
+
+export interface ChatProvider {
+  id: string
+  name?: string
+  hasKey: boolean
+  baseUrl?: string
+  api?: string
+  signIn?: { label: string; plan: string } | null
+  signedIn?: boolean
+  builtIn?: boolean
+  custom?: boolean
+}
+
+export interface ModelSettings {
+  provider: string
+  modelId: string
+  thinkingLevel?: string
+  apiKey?: string
+  baseUrl?: string
+  api?: string
+}
+
+export interface ModelLogin {
+  id: string
+  state: 'starting' | 'waiting' | 'done' | 'failed' | 'cancelled'
+  step: { type: 'auth_url'; url: string; instructions?: string } | { type: 'device_code'; userCode: string; verificationUri: string; expires?: number } | null
+  prompt: { type: 'select' | 'manual_code' | 'text' | 'secret'; message: string; placeholder?: string; options?: { id: string; label: string; description?: string }[] } | null
+  progress: string | null
+  error: string | null
 }
 
 export interface ChatModels {
   models: ChatModel[]
   selected: { provider: string; modelId: string; thinkingLevel: string } | null
-  providers: { id: string; name?: string; hasKey: boolean }[]
+  providers: ChatProvider[]
 }
 
 export interface NewChat {
@@ -163,10 +197,19 @@ export const chatHost = {
   update: (id: string, patch: { title?: string; archived?: boolean }) => call<ChatSummary>('POST', `${sessionPath(id)}/update`, patch),
   remove: (id: string) => call<{ id: string }>('DELETE', sessionPath(id)),
   models: () => call<ChatModels>('GET', '/api/agent/models'),
+  configureModel: (input: ModelSettings) => call<ChatModels>('POST', '/api/agent/models', input),
+  configureProvider: (input: { provider: string; name?: string; apiKey?: string; baseUrl?: string; api?: string; models?: { id: string; name?: string }[] }) => call<ChatModels>('POST', '/api/agent/providers', input),
+  testModel: () => call<{ text: string }>('POST', '/api/agent/models/test', {}),
+  startLogin: (provider: string) => call<ModelLogin>('POST', `/api/agent/providers/${encodeURIComponent(provider)}/login`, {}),
+  login: (id: string) => call<ModelLogin>('GET', `/api/agent/logins/${encodeURIComponent(id)}`),
+  respondLogin: (id: string, value: string) => call<ModelLogin>('POST', `/api/agent/logins/${encodeURIComponent(id)}/respond`, { value }),
+  openLogin: (id: string) => call<ModelLogin>('POST', `/api/agent/logins/${encodeURIComponent(id)}/open`, {}),
+  cancelLogin: (id: string) => call<ModelLogin>('POST', `/api/agent/logins/${encodeURIComponent(id)}/cancel`, {}),
   detail: (id: string) => call<ChatDetail>('GET', sessionPath(id)),
   /** A message; while the chat works it queues as a follow-up. */
   message: (id: string, text: string, mode?: 'followUp' | 'steer') => call<ChatDetail>('POST', `${sessionPath(id)}/message`, mode ? { text, mode } : { text }),
   stop: (id: string) => call<ChatDetail>('POST', `${sessionPath(id)}/stop`),
+  compact: (id: string) => call<ChatDetail>('POST', `${sessionPath(id)}/compact`, {}),
   continue: (id: string) => call<ChatDetail>('POST', `${sessionPath(id)}/continue`, {}),
   approve: (id: string, requestId: string, decision: 'approve' | 'reject') =>
     call<ChatDetail>('POST', `${sessionPath(id)}/approvals/${encodeURIComponent(requestId)}`, { decision }),

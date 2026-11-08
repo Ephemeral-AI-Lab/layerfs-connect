@@ -214,6 +214,8 @@ export interface AgentExecution {
   turns: number
   toolCalls: number
   retryAttempt: number
+  retryMaxAttempts?: number
+  retryAt?: number
   reason?: string
 }
 
@@ -482,6 +484,8 @@ export interface AgentInfo {
   startedBy: string
   model: string
   instructions: string
+  /** The actual configured base prompt/definition, before dynamic workspace context. */
+  prompt: { source: string; text: string; note: string }
   /** It can run now. */
   enabled: boolean
   locked: string | null
@@ -494,6 +498,7 @@ export interface AgentInfo {
 
 /** GET /api/agent/capabilities: the setup, with what an open chat's Pi session reports (`live`). */
 export interface AgentCapabilities {
+  runtime: { name: string; version: string | null }
   live: boolean
   agents: AgentInfo[]
   /** Chats whose work blocks changes now. */

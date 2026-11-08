@@ -4,12 +4,13 @@ import { existsSync, mkdirSync, readdirSync, readFileSync, renameSync, rmSync, s
 import { join, resolve } from 'node:path'
 import { createAgentSession, DefaultResourceLoader, SessionManager, SettingsManager } from '@earendil-works/pi-coding-agent'
 import { AgentModels } from './models.js'
+import { DEFAULT_PI_POLICIES, PiPolicySettings, validatePiPolicies } from './pi-policies.js'
 import { asyncSnapshotChildren, asyncSubagentChildren, createConnectExtensions, leadsAllowed, setupTools } from './extensions.js'
 import { AgentSetup, capabilityCatalog } from './capabilities.js'
 import { connectPrompt } from './prompt.js'
 import { mounted } from './workspaces.js'
 import { childrenFrom, sessionTranscript } from './transcript.js'
-import { childConversation, describeChildren } from './children.js'
+import { childConversation, childTrace, describeChildren } from './children.js'
 import { ApprovalService, permissionMode } from './permissions.js'
 import { CHECKPOINT_TYPE, checkpointFor, cloneSession } from './history.js'
 import { DEFAULT_LIMITS, idleExecution, OLD_DEFAULT_BASH_TIMEOUT_SECONDS, REMOVED_LIMITS, RUN_LIMIT_FIELDS, RunLimitSettings, runLimits, sessionUsage } from './runtime.js'
@@ -101,6 +102,8 @@ export class AgentManager extends EventEmitter {
     mkdirSync(this.dir, { recursive: true })
     this.setup = new AgentSetup(join(this.state, 'agent-setup.json'))
     this.runLimits = new RunLimitSettings(join(this.state, 'run-limits.json'))
+    this.piPolicies = new PiPolicySettings(join(this.state, 'pi-policies.json'))
+    this.syncPiPolicies()
     this.sdks = new SdkSettings(join(this.state, 'sdks.json'))
     this.records = new Map()
     this.live = new Map()
@@ -257,6 +260,15 @@ export class AgentManager extends EventEmitter {
     return result
   }
 
+  /** A page of the selected child's own session and LayerFS trace. */
+  childTrace(id, childId, options = {}) {
+    const record = this.record(id)
+    this.detail(id)
+    const result = childTrace(record, join(this.dir, id), childId, options)
+    if (!result) throw fail(404, 'This subagent is not part of the chat.')
+    return result
+  }
+
   output(id, artifactId, offset = 0) {
     this.record(id)
     return readToolOutput(join(this.dir, id), artifactId, offset)
@@ -341,6 +353,24 @@ export class AgentManager extends EventEmitter {
     return { ...this.sdks.view(), busy: this.setupBusy() }
   }
 
+  piPolicyView() {
+    return { policies: this.piPolicies.get(this.runLimits.get().maxRetries), defaults: { ...structuredClone(DEFAULT_PI_POLICIES), retry: { ...DEFAULT_PI_POLICIES.retry, maxRetries: DEFAULT_LIMITS.maxRetries } }, busy: this.setupBusy() }
+  }
+
+  syncPiPolicies() {
+    this.piPolicies.syncAgentSettings(join(this.agentDir, 'settings.json'), this.runLimits.get().maxRetries)
+  }
+
+  async setPiPolicies(input) {
+    const policies = validatePiPolicies(input, this.piPolicyView().policies)
+    const busy = this.setupBusy()
+    if (busy.length) throw fail(409, 'Finish or stop active chats and subagents before changing Pi policies.')
+    this.piPolicies.set(policies)
+    // Reuse the run-limit lifecycle: preserve instructions, update all chats and close idle Pi sessions.
+    await this.setRunSettings({ maxRetries: policies.retry.maxRetries })
+    return this.piPolicyView()
+  }
+
   /** Settings → Runs: the run limits every chat uses, and the chats that keep them from changing now. */
   runSettings() {
     return { limits: this.runLimits.get(), defaults: Object.fromEntries(RUN_LIMIT_FIELDS.map((field) => [field, DEFAULT_LIMITS[field]])), busy: this.setupBusy() }
@@ -356,6 +386,7 @@ export class AgentManager extends EventEmitter {
     const busy = this.setupBusy()
     if (busy.length) throw fail(409, `Wait for ${busy.length === 1 ? `“${busy[0]}”` : `${busy.length} chats`} to finish, or stop ${busy.length === 1 ? 'it' : 'them'}, before changing run limits.`)
     this.runLimits.set(limits)
+    this.syncPiPolicies()
     for (const record of this.records.values()) {
       record.limits = { ...record.limits, ...limits }
       // saved without touching `updated`, so the chat list keeps its order
@@ -597,7 +628,9 @@ export class AgentManager extends EventEmitter {
         },
       })
       active.extensions = extensions
-      const settingsManager = SettingsManager.inMemory({ retry: { enabled: record.limits.maxRetries > 0, maxRetries: record.limits.maxRetries, baseDelayMs: 500, maxAgentDelayMs: 5000 }, compaction: { enabled: true } })
+      const policies = this.piPolicies.get(record.limits.maxRetries)
+      policies.retry.enabled = policies.retry.enabled && record.limits.maxRetries > 0
+      const settingsManager = SettingsManager.inMemory(policies)
       const resourceLoader = new DefaultResourceLoader({
         cwd: controlCwd, agentDir: this.agentDir, settingsManager,
         noContextFiles: true,
@@ -692,9 +725,10 @@ export class AgentManager extends EventEmitter {
     }
     if (event.type === 'auto_retry_start' || event.type === 'summarization_retry_scheduled') {
       record.error = null
-      Object.assign(record.execution, { phase: 'retrying', retryAttempt: event.attempt, reason: event.errorMessage })
+      Object.assign(record.execution, { phase: 'retrying', retryAttempt: event.attempt, retryMaxAttempts: event.maxAttempts, retryAt: Date.now() + event.delayMs, reason: event.errorMessage })
     }
     if (event.type === 'auto_retry_end') {
+      delete record.execution.retryAt
       if (event.success) { record.error = null; delete record.execution.reason }
       record.execution.phase = 'thinking'
     }

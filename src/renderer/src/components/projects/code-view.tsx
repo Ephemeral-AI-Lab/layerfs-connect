@@ -27,7 +27,7 @@ const highlight = HighlightStyle.define([
 ])
 
 const theme = EditorView.theme({
-  '&': { fontSize: '13px', backgroundColor: 'transparent', color: 'var(--foreground)', height: '100%' },
+  '&': { fontSize: '13px', backgroundColor: 'var(--code-background)', color: 'var(--foreground)', height: '100%' },
   '.cm-scroller': { fontFamily: 'var(--font-mono)', lineHeight: '1.7', fontVariantLigatures: 'none' },
   '.cm-content': { padding: '12px 0', caretColor: 'transparent' },
   '.cm-gutters': {

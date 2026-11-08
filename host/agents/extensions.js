@@ -85,7 +85,7 @@ const instructionsLine = (on) => on
   ? "- Root-level project instructions are already loaded in your system prompt; before editing files in a subdirectory, check with `bash` for nested `AGENTS.override.md`, `AGENTS.md`, or `CLAUDE.md` files in that subdirectory.\n"
   : ''
 
-function workerDefinition(setup) {
+export function workerDefinition(setup) {
   return `---
 name: connect-worker
 description: Complete a focused task using bash in the current workspace.
@@ -104,7 +104,7 @@ ${instructionsLine(instructionsOn('worker', setup))}- Connect gates every \`bash
 `
 }
 
-function leadDefinition(setup) {
+export function leadDefinition(setup) {
   return `---
 name: connect-lead
 description: Coordinate a task that explicitly needs further delegation.

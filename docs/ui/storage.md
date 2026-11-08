@@ -1,5 +1,155 @@
 # Storage
 
+## Desktop Storage: Store cards and project carousels
+
+Source: `desktop/src/renderer/src/pages/storage/{StoragePage,StoreSection}.tsx`
+and `storage.css`. Existing Store and project routes are preserved.
+
+```text
+Storage                 [Search Stores and projects] [Backup buckets] [+ New Store]
+10 Stores - 22 projects - actual SQLite bytes
+
++-[1] Store -------------------------+  +-[1] Store -------------------------+
+| <store> studio         SQLite [...]|  | <store> build-cache     SQLite [...]|
+| [2] LayerFS Home    [3] 213 KB      |  | [2] build - Lima       [3] 213 KB     |
+|                                   |  |                                     |
+|                                   |  |                                     |
+|                                   |  |                                     |
+| [4] Projects - 3           [<] [>]  |  | [4] Projects - 3             [<] [>]  |
+| +----------------+ +--------------|  | +----------------+ +----------------|
+| | <LayerFS> design| | <LayerFS> docs|  | | <LayerFS> cli   | | <LayerFS> comp|
+| +----------------+ +--------------|  | +----------------+ +----------------|
+| [5] No backup yet    [+ Add project]| | [5] No backup yet      [+ Add project]|
++-----------------------------------+  +-------------------------------------+
+```
+
+1. Responsive grid: minimum track 360px, cards capped at 480px; near-square
+   proportions with a minimum height, and extra height for errors or jobs.
+2. SQLite is either LayerFS Home or one assigned machine (linked). PostgreSQL
+   shows its database target and Shared across machines. When available, Used by
+   links list distinct machines with recorded Sandboxes across all its projects,
+   including projects hidden by search. These are placements, not live database
+   connections. No single machine binding is implied for PostgreSQL.
+3. Physical SQLite size sits at the right of the location line, with no separate
+   size row or divider. PostgreSQL uses its database location. Store cards omit
+   routine Store, machine and PostgreSQL server status badges.
+4. Project tiles show the LayerFS icon and name on one left-aligned row,
+   a quiet storage line immediately underneath, then branch and Sandbox/Workspace
+   counts as a compact block. PostgreSQL
+   projects also list their own Sandbox machine names (truncated with tooltip).
+   Tiles are 180px wide and at least 144px tall.
+   The carousel fills the card's remaining height instead of leaving an auto
+   spacer above it. Location-to-project spacing is 20px; tile gaps are 12px.
+   Horizontal
+   native scrolling, snap alignment, keyboard focus and previous/next controls;
+   arrows appear only with overflow and disable at either end. Reduced motion
+   disables smooth scrolling. Project click opens the existing Files route.
+   Search filters projects before the carousel; a changed set resets its scroll.
+5. Existing backup controls, Add project and Store menu actions remain.
+   Busy jobs, refusals and doctor findings stay visible. Empty Stores show
+   No projects yet; Add project keeps its existing availability rules.
+
+The shared Store section also uses the carousel on a machine's Stores view.
+Project summaries load when a tile nears the viewport. Branch counts include
+main. The storage line uses the project's compressed content size, never the
+parent Store's bytes. Partial statistics say "in saved history" and their tooltip
+explains excluded Init, main layers, earlier history and Store overhead. Missing
+footprints show Storage followed by an em dash. There is a 5px name-to-storage
+gap and 10px between groups; counts no longer have an auto spacer above them.
+Unavailable counts use an em dash. Sandbox and Workspace counts reuse the shared machine inventory;
+unknown Workspace counts stay unknown, while known empty projects show zero.
+No compression or deduplication diagrams appear in these cards.
+
+## Desktop Store workspace
+
+Source: `desktop/src/renderer/src/pages/storage/StorePage.tsx`, shared
+`StoreSection.tsx` ProjectTile, `StorageRoute.tsx`, `NewProjectDialog.tsx`, `storage.css`.
+Route: `#/storage/:store`. Replaces the desktop Projects/Activity/Backups/Settings tabs.
+
+```text
+[1] Storage / shop                                               [Actions ...]
+
+[2] <store> shop  SQLite                              221 KB   [+ Add project]
+            LayerFS Home - store/shop
+
++-[3] Store storage breakdown -----------------------------------------------+
+| Placeholder on real hosts; labeled sample scenario in the web preview      |
++----------------------------------------------------------------------------+
+
+[4] Projects - 2                                          [Search projects...]
++-----------------------+ +-----------------------+
+| <LayerFS> api         | | <LayerFS> web          |
+| project storage line  | | project storage line   |
+| Branch / Sandbox /    | | Branch / Sandbox /     |
+| Workspace counts      | | Workspace counts       |
++-----------------------+ +-----------------------+
+
+[5] Backups - 1                                                 [Back up...]
+backups / shop - last saved 8h ago                         [Back up now]
+
+[6] > Recent operations - This session
+[7] > Store details
+```
+
+1. Breadcrumb returns to Storage. Menu preserves Store-wide transfer, backup,
+   removal and PostgreSQL disconnection actions and their existing refusals.
+2. SQLite is in Home or on one machine; PostgreSQL uses a database target and
+   Shared across machines. Routine status badges are omitted. Errors, stopped
+   machines and active jobs remain visible with manual Start / retry controls.
+3. Real hosts keep the static placeholder. Development web previews show a
+   labeled simulated scenario with Hide sample / Show sample. Sample values are
+   independent of actual Store sizes. Reported physical SQLite bytes remain
+   beside the location. No project history graph appears.
+4. Responsive project grid, reusing the board's ProjectTile; no carousel here.
+   Search is scoped to this Store, with Clear search and empty Store states.
+   Clicking a tile opens its existing project Files route. Add project creates
+   an empty project via the existing Init job; the form waits for completion,
+   reports errors, and refreshes the catalog. No automatic machine start.
+5. SQLite only: linked backup destinations, saved time and size, backup controls,
+   and Restore when a backup file is listed. All projects travel with the Store.
+   PostgreSQL instead shows distinct machines with recorded Sandboxes using any
+   of its projects, with links to machine pages; this is not a connection registry.
+6. Native disclosure with session-only push/pull/move/backup jobs; clear empty text.
+7. Native disclosure with creation/location/file facts and removal/disconnection
+   controls. Existing confirmation dialogs remain. No project graphs in details.
+
+### Store storage diagram simulation
+
+Source: `StoreBreakdown.tsx`. Based on `layerfs_v2_0_0` physical-storage docs:
+canonical content identity reuse, full/delta encoding, Zstandard compression
+where useful, and immutable payload/metadata packs.
+
+```text
+Full snapshots       Distinct objects       Encoded packs        SQLite file
+    12 GiB                3 GiB               1.125 GiB             1.5 GiB
+       =======> narrow ========> narrower ==========> slight increase
+              4.0x dedup       2.7x encoding        +384 MiB file space
+
+> File composition - sample 1.5 GiB
+  [Payload 1 GiB | Metadata 128 MiB | Tables/indexes 256 MiB | Free 128 MiB]
+```
+
+The compact ribbon follows the project-storage flow's visual structure. Its
+thickness uses one linear scale; badges explain each transition. Detailed file
+composition is collapsed by default in a native disclosure.
+Encoded packs include metadata packs; composition
+does not add those twice. WAL is separate from the SQLite file. PostgreSQL shows
+only payload/metadata pack composition (1.125 GiB), with database overhead
+explicitly unmodeled. It never shows SQLite free-page stats.
+Store headers use 20px titles with a 4px location gap; section spacing is 18px,
+with 168px minimum project tiles. Flow labels use responsive grid columns.
+
+## Desktop project files
+
+In `desktop/`, opening a project row on Storage or a Store's Projects tab
+navigates to `#/storage/:store/:project/files`. The page's Back link returns to
+the Store. It uses the same `components/files/ProjectFiles.tsx` and `FilesTab.tsx`
+as chat's Files tab: branch picker, expandable directory tree, search over
+opened folders, closeable file tabs, and read-only code with syntax highlighting.
+Reads use the selected LayerFS project and branch; opening the page does not
+mount a Workspace or start a Sandbox. The browser shows loading, retryable
+errors, empty folders and binary/oversize-file states.
+
 Source: `src/renderer/src/components/storage/*`, `src/renderer/src/data/job-progress.ts`,
 `src/renderer/src/host/storage-jobs.ts`     Opens from: sidebar Storage; a Store link
 (`go.store`, focus `store:<name>`) opens the Store page in place of the board.
@@ -590,3 +740,14 @@ Cloudflare R2, WHERE 2nd row:  Account ID ~~~ from the R2 overview page ~~~  Jur
   (dialogs/fields.tsx), `placeWords` (store-card.tsx), the `BACKUP` re-export in storage-page.tsx.
   `JobChip` is used only by Machines (compute/machine-data.tsx).
 - Dismissed job ids are kept in localStorage `layerfs-connect.storage.dismissed-jobs` (last 100).
+
+## Desktop project routes
+
+Project rows open `/storage/:store/:project/files`. The project header provides Files, History,
+Sandboxes and Storage; see [project.md](project.md). Store links remain on `/storage/:store`.
+
+## Available backup providers
+
+The Add bucket provider picker shows only entries with a supported connection
+request. Disabled Later LayerFS provider tiles are hidden. StoreBreakdown and
+Project statistics previews remain planned UI and are preserved by this cleanup.

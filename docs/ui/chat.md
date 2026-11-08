@@ -1,5 +1,140 @@
 # Chat
 
+## Desktop example chat
+
+The rebuilt `desktop/` app provides a read-only preview at
+`#/chat/ui-example-chat`, opened from **Example chat** in the sidebar or
+**Explore an example chat** below the new-chat composer. It needs no model.
+
+```text
+Example · Add project search             Scenario UI preview · simulated
+Example - Add project search                   [1 subagent v]
+[Chat] [Files] [Sandbox] [Trace] [History]
+Chat:       request → inspection → write → failed check → fix → review → reply
+Trace:      expandable steps, two sample checkpoints, search, failure filter
+Header:     subagent catalog; open reviewer here or in the side panel
+Files:      shared LayerFS browser; sample main and search branches
+Sandbox:    animated project-wide agent / branch / workspace simulation
+Composer:   Read-only example · explore Chat, Trace, and Subagents above.
+```
+
+The example uses the regular Chat, Trace, and Subagents components. Messages,
+tool outputs, writes, and results are sample data; no commands, model requests,
+or filesystem operations run. Only requests for the reserved example session
+are handled locally (`desktop/src/renderer/src/layerfs/chat-sim.ts`); other
+sessions continue to use the host. Reloading restores the same example.
+
+## Desktop chat files and Sandbox
+
+`#/chat/:id/files` browses the linked LayerFS project using the shared
+`desktop/src/renderer/src/components/files/ProjectFiles.tsx` and `FilesTab.tsx`
+components, also mounted by Storage's project file page. Chat without a
+linked project shows "No LayerFS project linked". The browser is read-only;
+it reads LayerFS branches, directory entries and file content, not `chat.cwd`.
+
+```text
+[Chat] [Files] [Sandbox] [Trace] [History]
+LayerFS project files · read-only                       Open in Storage
++--------------------------+-------------------------------------------+
+| Branch v                 | README.md [x]   filter.ts [x]             |
+| Find in opened folders   | src / filter.ts          lines · size     |
+| > src                    | 1  export const matches = ...             |
+| > test                   | 2    name.toLowerCase()...                 |
+|   README.md              |                                           |
++--------------------------+-------------------------------------------+
+```
+
+Directories expand on demand; files open in closeable tabs with line numbers
+and syntax highlighting. The example defaults to `search`; switching to
+`main` shows the earlier filter. On narrow layouts the tree stacks above the
+file. `#/chat/:id/sandboxes` opens the project-wide Sandbox simulation described in
+[sandbox.md](sandbox.md). Sandbox headings open the shared detail view with Overview, Workspaces, Scratch, Activity and Diagnostics. It never reads or creates real LayerFS resources.
+Chat drafts remain mounted across tabs.
+
+## Desktop agent navigation
+
+Source: `desktop/src/renderer/src/pages/chat/`. Subagents are header navigation;
+Chat, Files, Sandbox and Trace remain conversation views.
+
+```text
++-[1] Header -------------------------------------------------------------------+
+| Add project search [2][<users> 2 subagents v]                 search - ui-example |
++-------------------------------------------------------------------------------+
+| [Chat] Files Sandbox Trace                                                   |
+|                                                                               |
+|                           Parent conversation                                 |
+|                                                                               |
+| [Message composer - unsent draft stays mounted]                                |
++-------------------------------------------------------------------------------+
+
+                     +-[2] Subagent catalog ----------------------+
+                     | Subagents                   1 active - 2  |
+                     | * Review project filtering            [>] |
+                     |   reviewer - running                      |
+                     |   3k tok - 4s                             |
+                     | o Check empty queries                 [>] |
+                     |   tester - completed                      |
+                     |   1 turn - 2s                             |
+                     | All subagents                             |
+                     +-------------------------------------------+
+```
+
+| [n] | Component | File | Behavior |
+|---|---|---|---|
+| [1] | ChatHeader | ChatHeader.tsx | Parent title; project/scenario facts hide as space narrows |
+| [2] | SubagentNavigation | subagents/SubagentNavigation.tsx | Task first, agent/state, available usage; row opens main, trailing action opens side panel |
+
+```text
++-[3] Child header -------------------------------------------------------------+
+| [Add project search] / [reviewer v]                                            |
++-------------------------------------------------------------------------------+
+| Chat Files Sandbox Trace                                                     |
+|                                                                               |
+|                     Child task and transcript                                  |
+|                                                                               |
++-------------------------------------------------------------------------------+
+| [Same composer and status/Stop area - delegated runs cannot accept replies]     |
++-------------------------------------------------------------------------------+
+
++-[4] Parent with side panel ----------------------------------------------------+
+| Add project search [2 subagents v]                                             |
++-----------------------------------------+-------------------------------------+
+| Chat Files Sandbox Trace               | [reviewer v]       [Open main] [x] |
+|                                         +-------------------------------------+
+| Parent conversation                     | Chat Files Sandbox Trace          |
+|                                         | Child task                          |
+|                                         |                                     |
+|                                         | Child transcript                    |
+|                                         |                                     |
+| [Message composer - draft retained]      +-------------------------------------+
+|                                         | [Same composer and status/Stop]     |
++-----------------------------------------+-------------------------------------+
+```
+
+| [n] | Component | File | Behavior |
+|---|---|---|---|
+| [3] | Parent breadcrumb and sibling switcher | ChatHeader.tsx | Parent returns to chat; dropdown selects another direct child |
+| [4] | SubagentPanel | subagents/SubagentPanel.tsx | Shared ChatTabs, ConversationTab, Files and Trace; switch child, promote to main, close or Escape |
+
+Child routes stay `/chat/:id/subagents/:child`; `/chat/:id/subagents` keeps the
+overview and empty state. Child view tabs append `/files`, `/sandboxes`, or `/trace`.
+Chat uses the same transcript, composer, status and Stop components as the parent;
+child drafts have separate identities. Files use the shared project's browser,
+Sandbox shares the project-wide simulation, and Trace reads the child's own session
+and SDK calls through `/api/agent/sessions/:id/children/:child/trace`.
+The composer explains that delegated runs do not accept follow-ups.
+`?aside=:child` restores side-panel selection, including
+on Files/Trace routes. Promoting the inspected child removes its duplicate pane.
+Closing restores focus to the header trigger. Below 820px of chat width, the
+side panel occupies the content area; closing reveals the still-mounted parent.
+Below 560px the root count becomes an icon, keeping its accessible label.
+Dropdowns support arrow-key navigation, Enter and Escape through Radix.
+The API exposes direct children only; no nested descendant tree is invented.
+Browser smoke: from `desktop/`, run `node tools/smoke-agent-navigation.mjs`
+against `pnpm web` (or pass a served production-renderer URL). It owns an
+isolated headless Chrome profile and uses synthetic chats; the host child
+conversation test separately checks the real child Trace route and pagination.
+
 Source: `src/renderer/src/components/chat/*` (file:line below is relative to it), mounted by
 `chat-home.tsx`     Opens from: sidebar New chat, New chat on a project, a chat row (see shell.md)
 
@@ -329,6 +464,13 @@ Command descriptions change with state: /model "Available after the current turn
 the agent before compacting" or "Start a conversation first"; /stop "Stop the current turn";
 /scenario without a project: "Needs a LayerFS project: choose one in Workspace first".
 
+## Desktop History tab
+
+See [chat-history.md](chat-history.md) for the current desktop History tab, its
+centered main graph, checkpoint grouping, branch families and two-way Trace links.
+The Example chat includes a separate dense sample history in addition to its
+two transcript checkpoints.
+
 ## Trace tab
 
 ```text
@@ -606,3 +748,81 @@ started local-folder chat. `/workspace` opens the project menu.
 - WorkspaceStatus mounts only with a Workspace, so "New branch on first message" and "Workspace
   details unavailable" never show; Composer's default placeholder and its "Shift+Enter for new
   line" fallback are always overridden by ChatHome.
+
+## Cindy theme layout
+
+```text
+New chat:    [Connect identity]
+             [folder] [LayerFS project / Store context]
+             +-[1] Composer ----------------------------------+
+             | Message                                       |
+             | [+]            [model] [thinking] [send/stop]  |
+             +------------------------------------------------+
+Active chat: transcript; the same composer is docked below it
+```
+
+The composer uses a 12px rounded theme surface, with an opaque raised fill. Model/thinking controls remain on the right and wrap in
+compact widths. Send is a neutral circular control. Code/tool output, menus
+and dialogs use solid surfaces in the fixed light theme. All draft, queue, IME, attachment,
+stop and recovery behavior remains the existing chat behavior.
+
+
+## Pi context and lifecycle preview (desktop)
+
+Source: `pages/chat/conversation/PiContext.tsx`, `pi-preview.ts`, `ChatDock.tsx`.
+
+```text
++-- Conversation -----------------------------------------------------+
+| Messages; compaction summaries appear once in a collapsed panel      |
++--------------------------------------------------------------------+
+| [1] Example only: Pi lifecycle preview [Near context limit       v]  |
+|     Sample states only. No model requests or commands run.          |
+| [2] 184,616 / 200,000 tokens · 92%   [Configurations] [Compact now]      |
+|     =======================----                                    |
+|     > Compacted context   (when present; expandable summary)        |
+| [3] Retry 1 of 2 in 1s                          [Stop]               |
+|     503 · The model provider is temporarily overloaded.             |
+| [4] Composer                                                       |
++--------------------------------------------------------------------+
+```
+
+1. `#/chat/ui-example-chat?policy=near-limit` opens the preview. Options:
+   original, near-limit, compacting, compacted, retrying, exhausted,
+   compact-failed. Saved policies supply preview budgets; disabled policies
+   still permit inspection of sample states, with an explanatory note.
+   Finish simulation advances compacting to compacted. Stop and Continue
+   only change local preview state. Retry stays paused for inspection.
+2. Live Pi context estimate, progress bar and manual compaction. Estimates
+   may be unavailable after compaction until another model response.
+   Summaries can be expanded; raw history remains preserved. Compaction
+   failures show an alert. Compact now is disabled during a run and hidden
+   for read-only delegated/scenario conversations.
+3. Live retry events supply attempt, maximum attempts, deadline and reason.
+   Countdown updates each second; Stop uses the existing cancellation flow.
+   Exhausted requests use the existing error and Continue flow.
+4. Example composer remains read-only; previews never invoke a model.
+
+## Shared project tabs
+
+Files uses `components/files/ProjectFiles.tsx`; History uses `components/history/ProjectHistory.tsx`
+with trace enrichment from its chat wrapper. Sandbox uses the shared project resource map;
+Example chat alone supplies simulated playback. Storage project pages reuse these features.
+
+## Unified sandbox navigation
+
+```text
+Chat / Storage project -> shared SandboxMap -> SandboxDetail
+                                                |
+                 [Project activity] <-----------+
+                 restores map selection and scroll
+
+SandboxDetail: Overview | Workspaces | Scratch | Activity | Diagnostics
+```
+
+`components/sandbox/ProjectSandboxNavigation.tsx` owns this flow for both the chat example
+and host-backed project views. The map stays mounted during inspection. Source adapters
+supply data and playback; they do not implement separate navigation. Resource management
+controls live inside host-backed details. Map headers retain New Sandbox and Refresh.
+`HostSandboxDetail.tsx` reads the selected Sandbox and verifies its project/machine identity;
+Refresh rereads that record. Unknown workspace reads and unreported files/activity stay
+explicitly unavailable. Real observations do not carry simulation playback or labels.

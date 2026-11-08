@@ -9,7 +9,7 @@ import { Markdown } from './Markdown'
 import { WorkBlock } from './WorkBlock'
 
 export function Transcript({ messages, running, opener = 'user' }: { messages: ChatMessage[]; running: boolean; opener?: 'user' | 'task' }) {
-  const turns = useMemo(() => toTurns(messages, running), [messages, running])
+  const turns = useMemo(() => toTurns(messages.filter(message => message.details?.kind !== 'compactionSummary'), running), [messages, running])
   return turns.map((turn) => (
     <section key={turn.id} className="flex flex-col gap-1.5">
       {turn.user && (opener === 'task' ? <TaskMessage message={turn.user} /> : <UserMessage message={turn.user} />)}

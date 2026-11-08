@@ -850,10 +850,10 @@
 }
 
 @layer components {
-  /* The main canvas: the icon's powder-blue matte, grained, a little lighter where the light falls. */
+  /* The main canvas uses the shared neutral surface palette. */
   .canvas {
     position: relative;
-    background: var(--grain), linear-gradient(180deg, #f1f5fb 0%, var(--background) 22rem);
+    background: var(--grain), linear-gradient(180deg, var(--surface-elevated-soft) 0%, var(--background) 22rem);
   }
 
   /* Soft matte surfaces (class names kept from the glass era): opaque, grained, lit from above. */

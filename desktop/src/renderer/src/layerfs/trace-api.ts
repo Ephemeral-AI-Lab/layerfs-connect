@@ -88,6 +88,6 @@ export const TRACE_PAGE = 300
 
 export const traceHost = {
   /** The newest `limit` rows, or the `limit` before row `before`. */
-  page: (id: string, before: number | null = null, limit = TRACE_PAGE) =>
-    call<TracePage>('GET', `/api/agent/sessions/${encodeURIComponent(id)}/trace?limit=${limit}${before === null ? '' : `&before=${before}`}`),
+  page: (id: string, before: number | null = null, limit = TRACE_PAGE, childId?: string) =>
+    call<TracePage>('GET', `/api/agent/sessions/${encodeURIComponent(id)}${childId ? `/children/${encodeURIComponent(childId)}` : ''}/trace?limit=${limit}${before === null ? '' : `&before=${before}`}`),
 }

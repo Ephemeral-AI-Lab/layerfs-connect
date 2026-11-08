@@ -1,3 +1,4 @@
+import { capabilityCatalog } from '../agents/capabilities.js'
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { mkdir, mkdtemp, readFile, rm } from 'node:fs/promises'
@@ -51,6 +52,14 @@ test('Pi loads the real subagent extension, limits tools, and gives children the
   await session.bindExtensions({ mode: 'print', onError: (error) => extensionErrors.push(error) })
   assert.deepEqual(extensionErrors, [])
   assert.deepEqual(session.getActiveToolNames(), CONNECT_TOOLS)
+  const catalog = capabilityCatalog(undefined, { session })
+  assert.equal(catalog.live, true)
+  const loadedSubagents = session.extensionRunner.extensions.find((extension) => extension.path === '<inline:pi-subagents>')
+  assert.ok(loadedSubagents)
+  assert.deepEqual(catalog.hooks.filter((hook) => hook.extension === 'pi-subagents').map((hook) => hook.event).sort(), [...loadedSubagents.handlers.keys()].sort())
+  for (const hook of catalog.hooks.filter((hook) => hook.extension === 'pi-subagents')) assert.equal(hook.handlers, loadedSubagents.handlers.get(hook.event).length)
+  assert.equal(catalog.agents.find((agent) => agent.id === 'worker').prompt.text, await readFile(join(agentDir, 'agents', 'connect-worker.md'), 'utf8'))
+
   const { resolveCurrentSubagentCapabilityCeiling } = await import('pi-subagents/capability-ceiling')
   const ceiling = resolveCurrentSubagentCapabilityCeiling(session.sessionManager.getSessionId())
   assert.deepEqual(ceiling.allowedTools.sort(), ['bash', 'contact_supervisor'])

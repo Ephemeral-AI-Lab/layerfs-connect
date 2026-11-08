@@ -4,7 +4,6 @@ import type { AgentSessionSummary } from '@shared/agent-api'
 import { projectKey, projectRef, type ProjectSummary } from '@shared/host-api'
 
 import { ModeChip } from '@/components/mode-switch'
-import { ConnectMark } from '@/components/connect-mark'
 import { LfsProject, LfsStore } from '@/components/lfs-icons'
 import { Collapse } from '@/components/motion/collapse'
 import { useIndicator } from '@/components/motion/indicator'
@@ -25,6 +24,7 @@ import {
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Skeleton } from '@/components/ui/skeleton'
 import { jobCounts } from '@/data/job-progress'
+import { ago, when } from '@/data/format'
 import { useStorageJobs } from '@/host/storage-jobs'
 import { chatLive, chatProject, useChatSessions } from '@/host/use-chat-sessions'
 import type { ProjectCatalog } from '@/host/use-projects'
@@ -111,17 +111,18 @@ export function AppSidebar({ selected, projects, onSelect, onNewProject, onDelet
   const { open, setOpen } = useSidebar()
 
   return (
-    // folded, it slides away: its width eases to nothing, its content keeps its own width
+    // Folded, it slides away; compact windows present it above a dismissible scrim.
+    <>
+    {open && <button type="button" className="shell-sidebar-dismiss app-no-drag" aria-label={t('Hide sidebar')} onClick={() => setOpen(false)} />}
     <div
       inert={!open}
+      data-open={open}
       style={{ width: open ? 'var(--sidebar-width)' : 0 }}
-      className="relative z-10 h-svh shrink-0 overflow-hidden transition-[width] duration-(--dur-slow) ease-out-expo"
+      className="shell-sidebar-wrap relative z-10 h-svh shrink-0 overflow-hidden transition-[width] duration-(--dur-slow) ease-out-expo"
     >
     <Sidebar collapsible="none" className="shell-sidebar sidebar-glass relative z-10 h-svh shrink-0">
-      <SidebarHeader className={cn('shell-sidebar-header px-3 pb-3 app-drag', isMac ? 'pt-[52px]' : 'pt-4')}>
-        <div className="group/brand flex items-center gap-2.5 px-1.5 app-no-drag">
-          <ConnectMark className="size-9.5 shrink-0 drop-shadow-[0_1px_2px_rgb(40_70_120/0.18)] transition-transform duration-(--dur-slow) ease-out-expo group-hover/brand:scale-[1.05]" />
-          <span className="min-w-0 flex-1 truncate text-[15px] font-medium leading-tight tracking-[-0.015em] text-foreground/90">LayerFS Connect</span>
+      <SidebarHeader className="shell-sidebar-header px-3 pt-3 pb-2 app-drag">
+        <div className="flex h-7 items-center justify-end px-1.5 app-no-drag">
           <button type="button" onClick={() => setOpen(false)} aria-label={t('Hide sidebar')} title={`${t('Hide sidebar')} (${isMac ? '⌘B' : 'Ctrl+B'})`} className={HEAD_BUTTON}>
             <PanelLeftClose className="size-4" />
           </button>
@@ -132,17 +133,17 @@ export function AppSidebar({ selected, projects, onSelect, onNewProject, onDelet
           className="shell-new-chat app-no-drag"
         >
           <MessageSquarePlus />
-          {t('New chat')}
+          {t('New')}
         </button>
       </SidebarHeader>
 
       <SidebarContent className="gap-0 overflow-hidden pb-3">
         <div ref={container} className="side-tree relative shrink-0">
-          <span ref={indicator} aria-hidden="true" className="indicator glass-liquid rounded-xl shadow-xs border border-white/80" />
+          <span ref={indicator} hidden={!activePage} aria-hidden="true" className="indicator shell-nav-indicator rounded-lg" />
           {groups.map((group, g) => (
             <SidebarGroup key={group.label ?? g} className={cn('px-3 pb-2', group.label ? 'pt-3' : 'pt-1')}>
               {group.label && (
-                <SidebarGroupLabel className="px-3 text-[11px] font-medium tracking-wider uppercase text-muted-foreground">
+                <SidebarGroupLabel className="px-3 text-xs font-normal text-muted-foreground">
                   {t(group.label)}
                 </SidebarGroupLabel>
               )}
@@ -156,9 +157,9 @@ export function AppSidebar({ selected, projects, onSelect, onNewProject, onDelet
                         onClick={(e) => onSelect({ kind: 'nav', id: item.id }, inNewTab(e))}
                         onAuxClick={(e) => { if (e.button === 1) onSelect({ kind: 'nav', id: item.id }, true) }}
                         className={cn(
-                          'h-10 gap-3 px-3 text-[13px] font-normal [&_svg]:size-[17px] [&_svg]:transition-colors [&_svg]:duration-(--dur-base)',
+                          'h-[42px] gap-3 px-3 text-[14px] font-normal [&_svg]:size-[17px] [&_svg]:transition-colors [&_svg]:duration-(--dur-base)',
                           active
-                            ? 'data-active:font-medium text-foreground/90 [&_svg]:text-(--icon-accent)'
+                            ? 'data-active:font-medium text-foreground [&_svg]:text-foreground'
                             : 'text-muted-foreground hover:text-foreground [&_svg]:text-muted-foreground hover:[&_svg]:text-foreground',
                         )}
                       >
@@ -200,6 +201,7 @@ export function AppSidebar({ selected, projects, onSelect, onNewProject, onDelet
       </SidebarFooter>
     </Sidebar>
     </div>
+    </>
   )
 }
 
@@ -249,7 +251,7 @@ function ChatList({ selected, onSelect, onDeleteChat, onOpenChat, onNewChat }: P
   return (
     <SidebarGroup aria-label={t('Chats')} className="flex min-h-0 flex-1 flex-col px-3 pt-3 pb-0">
       <div className="flex shrink-0 items-center gap-1 pr-1">
-        <SidebarGroupLabel className="min-w-0 flex-1 px-3 text-[11px] font-medium tracking-wider uppercase text-muted-foreground">
+        <SidebarGroupLabel className="min-w-0 flex-1 px-3 text-xs font-normal text-muted-foreground">
           {t('Chats')}
         </SidebarGroupLabel>
         <button type="button" aria-label={t('New chat')} title={t('New chat')} onClick={() => onNewChat('')} className={HEAD_BUTTON}>
@@ -545,7 +547,7 @@ function ProjectGroup({ index, project, projectKey: key, entries, open, selected
         title={store ? t('{name} in Store {store}', { name: project.name, store }) : project.name}
         onClick={() => onSelect({ kind: 'project', id: key })}
         className={cn('h-10 gap-2.5 border pr-16 pl-8 text-[13px] [&_svg]:size-4', active
-          ? 'glass-liquid border-white/80 font-medium text-foreground shadow-xs [&_svg]:text-(--icon-accent)'
+          ? 'bg-sidebar-accent font-medium text-foreground [&_svg]:text-foreground'
           : 'border-transparent text-foreground/80 hover:text-foreground [&_svg]:text-muted-foreground')}
       >
         <Icon />
@@ -621,14 +623,21 @@ function LocalChats({ entries, openChat, onOpenChat, onNewChat, onDeleteChat }: 
 
 const ROW = 'sidebar-chat-open block w-full min-w-0 text-left outline-none focus-visible:ring-2 focus-visible:ring-ring'
 
-/** A single-line chat title, with a separate delete button on the right. */
+/** A title with the persisted session state and recency; deletion remains a separate control. */
 function ChatRow({ index, chat, active, onOpen, onDelete }: { index: number; chat: AgentSessionSummary; active: boolean; onOpen: () => void; onDelete: AppSidebarProps['onDeleteChat'] }) {
   const { t } = useI18n()
   return (
     <li className="sidebar-chat-row side-in" data-active={active} style={revealStyle(index)}>
       <button type="button" onClick={onOpen} aria-current={active ? 'page' : undefined} className={ROW} title={chat.title}>
         <span className="sidebar-chat-title flex h-5 items-center gap-2">
-          <span className="sidebar-chat-label truncate text-[13px] font-normal leading-5">{chat.title || t('New session')}</span>
+          <span className="sidebar-chat-label truncate text-[14px] font-normal leading-5">{chat.title || t('New session')}</span>
+        </span>
+        <span className="sidebar-chat-meta">
+          <span className={cn('sidebar-chat-state', chat.state === 'running' && 'text-success', chat.state === 'error' && 'text-destructive')} title={chat.error || undefined}>
+            {chat.state === 'running' && <span aria-hidden="true" className="size-1.5 shrink-0 rounded-full bg-current" />}
+            {t(chat.state === 'running' ? 'Working' : chat.state === 'error' ? 'Error' : 'Idle')}
+          </span>
+          <span className="shrink-0 tabular-nums" title={when(chat.updated)}>{ago(chat.updated)}</span>
         </span>
       </button>
       <button type="button" className="sidebar-chat-delete" aria-haspopup="dialog" aria-label={t('Delete conversation {name}', { name: chat.title || t('New session') })} title={t('Delete conversation')} onClick={(event) => onDelete(chat, event.currentTarget)}>

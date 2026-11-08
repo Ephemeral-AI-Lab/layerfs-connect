@@ -368,12 +368,14 @@ export function StoragePage({ catalog, onOpenProject, onAddProject, onOpenStore,
                 {`No Store or project matches “${query.trim()}”. Search by name or machine.`}
               </Empty>
             ) : (
-              <section aria-label={'Stores'} className="flex flex-col gap-4">
+              <section aria-label={'Stores'} className="storage-store-grid">
                 {shownSections.map(({ s, projects, searching }, i) => (
                   <StoreSection
+                    board
                     key={s.name}
                     index={Math.min(i, 12)}
                     store={s}
+                    usedByMachines={sandboxes ? [...new Set(s.projects.flatMap(name => (sandboxes.get(`${s.name}/${name}`) ?? []).filter(b => b.state !== 'gone').flatMap(b => b.machine ? [b.machine] : [])))].sort() : null}
                     machine={view.machines.find((m) => m.name === s.machine)}
                     buckets={view.buckets}
                     job={jobOf(s.name)}

@@ -4,7 +4,7 @@ import { fill } from '@/lib/text'
 // built-ins, Remove…, refused while it holds Stores or
 // Sandboxes) and its dialogs, a Store chip linking Storage (the Stores' home:
 // pushing, pulling and moving them is done there), and its facts.
-import { ArrowRight, Box, Lock, Plus, Power, Settings2, Trash2 } from 'lucide-react'
+import { ArrowRight, Lock, Power, Settings2, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 
 import { go } from '@/layerfs/go'
@@ -13,13 +13,14 @@ import { LfsStore } from '@/components/layerfs/LfsIcons'
 import { Refusal } from '@/components/layerfs/Refusal'
 import { StateChip } from '@/components/layerfs/StateChip'
 import { Bar } from '@/pages/storage/Meters'
-import { Card, MoreButton } from '@/pages/storage/RowParts'
+import { MoreButton } from '@/pages/storage/RowParts'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input'
-import { BUILT_IN, downReason, gib, inUse, kindLabel, machineState, type Os, sizeOf, storesOn } from '@/layerfs/compute'
+import { BUILT_IN, downReason, gib, inUse, kindLabel, machineState, type Os, storesOn } from '@/layerfs/compute'
 import type { MachineAction } from '@/layerfs/compute-sim'
+import { clearingCall } from '@/layerfs/states'
 import { bytes, shortDigest } from '@/layerfs/format'
 import { cn } from '@/lib/utils'
 import type { MachineInfo, MachineLive, MachinesView } from '@/layerfs/host-api'
@@ -140,116 +141,76 @@ interface TileProps {
   onOpen: (newTab: boolean) => void
 }
 
-/**
- * A machine on the board: its mark, name and menu; its kind and size; how many
- * Sandboxes and Workspaces run on it; the Stores
- * it holds (links to Storage); its free disk; and a footer with its state and
- * Start or Stop. The whole card opens the machine's page.
- */
-export function MachineTile({ m, view, os, index, act, onOpen }: TileProps) {
+/** A machine overview: identity, allocation, inventory, disk and manual power. */
+export function MachineTile({ m, view, os, act, onOpen }: TileProps) {
   const live = view.status[m.name]
   const state = machineState(m, live)
   const reason = downReason(m, live)
   const stores = storesOn(view, m)
-  const boxes = view.sandboxes.filter((b) => b.machine === m.name)
-  const workspaces = boxes.reduce((n, b) => n + (b.workspaces ?? 0), 0)
+  const boxes = m.sandboxes.map(name => view.sandboxes.find(b => b.name === name) ?? { name, workspaces: null })
+  const knownWorkspaces = boxes.reduce((n, b) => n + (b.workspaces ?? 0), 0)
+  const workspaces = boxes.some(b => b.workspaces === null) ? knownWorkspaces > 0 ? `${knownWorkspaces}+` : '—' : knownWorkspaces
   const attention = attentionOf(m, live)
-  const disk = m.disk && live?.freeDisk != null ? { used: Math.max(0, m.disk - live.freeDisk) / m.disk, free: live.freeDisk } : null
-  // the disk bar says what is free; the size line leaves it out then
-  const size = sizeOf(m, os, disk ? undefined : live)
+  const disk = m.disk && live?.freeDisk != null ? { used: Math.max(0, Math.min(1, (m.disk - live.freeDisk) / m.disk)), free: live.freeDisk } : null
   const { run, pending, error } = useMachineRun(act)
   const [dialog, setDialog] = useState<'settings' | 'remove' | null>(null)
   const open = (e: React.MouseEvent) => onOpen(e.metaKey || e.ctrlKey)
+  const runtime = m.platform === 'native' && os === 'win32' ? 'Records only' : m.backend === 'native' ? 'Host processes' : m.backend === 'docker' ? 'Containers' : m.backend === 'namespaces' ? 'Linux namespaces' : m.backend || 'Runtime not reported'
+  const noAllocation = m.platform === 'native' || m.cpus == null && m.memory == null && m.disk == null
+  const calls = state.state === 'unresolved' ? clearingCall('machine', m.name, state.op) : null
   return (
-    <Card
-      index={index}
-      data-focus={`machine:${m.name}`}
-      aria-labelledby={`machine-${m.name}-title`}
-      className={cn('group/card relative flex flex-col gap-3 p-4 transition-shadow hover:shadow-md', attention === 'warning' && 'ring-1 ring-amber-500/45', attention === 'danger' && 'ring-1 ring-destructive/45')}
-    >
-      <header className="flex min-w-0 items-start gap-3">
-        <KindLabel platform={m.platform} os={os} hideName className="pt-0.5" />
+    <article data-focus={`machine:${m.name}`} aria-labelledby={`machine-${m.name}-title`} className="machine-board-card" data-attention={attention ?? undefined}>
+      <header className="machine-board-identity">
+        <KindLabel platform={m.platform} os={os} hideName className="[&>span]:size-9 [&>span_svg]:size-4.5" />
         <div className="min-w-0 flex-1">
-          {/* the name stretches over the card: a click anywhere opens the machine, its own controls sit above */}
-          <h2 id={`machine-${m.name}-title`} className="truncate text-base leading-chat font-strong tracking-tight">
-            <button type="button" onClick={open} onAuxClick={(e) => e.button === 1 && onOpen(true)} title={`Open ${m.name}`} className="rounded-sm text-left outline-none after:absolute after:inset-0 after:rounded-2xl after:content-[''] group-hover/card:text-primary focus-visible:ring-2 focus-visible:ring-ring">
-              {m.name}
-            </button>
+          <h2 id={`machine-${m.name}-title`}>
+            <button type="button" onClick={open} onAuxClick={e => e.button === 1 && onOpen(true)} title={`Open ${m.name}`} className="machine-board-open">{m.name}</button>
           </h2>
-          <p className="mt-0.5 truncate text-sm text-muted-foreground tabular-nums">
-            {fill(kindLabel(m.platform))} · {fill(size.text, size.values)}
-          </p>
+          <p title={`${fill(kindLabel(m.platform))} · ${runtime}`}>{fill(kindLabel(m.platform))} · {runtime}</p>
         </div>
-        <span className="relative z-10">
-          <MachineMenu m={m} pending={pending} run={run} onOpen={() => onOpen(false)} onDialog={setDialog} className="-mt-1 -mr-1" />
-        </span>
+        <div className="machine-board-control"><MachineMenu m={m} pending={pending} run={run} onOpen={() => onOpen(false)} onDialog={setDialog} className="-mr-1" /></div>
       </header>
 
-      <div className="flex min-w-0 flex-col gap-1.5 text-md">
-        {reason && (
-          <p className="line-clamp-2 text-sm break-words text-destructive" title={reason}>
-            {reason}
-          </p>
-        )}
-        <p className="flex min-w-0 items-center gap-2">
-          <Box aria-hidden="true" className="size-3.5 shrink-0 text-muted-foreground" />
-          {boxes.length === 0 ? (
-            <span className="text-muted-foreground">{m.platform === 'native' && os === 'win32' ? 'Records only' : 'No Sandboxes'}</span>
-          ) : (
-            <span className="truncate tabular-nums">
-              {fill(boxes.length === 1 ? '1 Sandbox' : '{n} Sandboxes', { n: boxes.length })}
-              <span className="text-muted-foreground"> · {fill(workspaces === 1 ? '1 Workspace' : '{n} Workspaces', { n: workspaces })}</span>
-            </span>
-          )}
-        </p>
-        <div className="relative z-10 flex min-w-0 flex-wrap items-center gap-1.5">
-          {stores.length === 0 ? (
-            <span className="flex items-center gap-2 text-muted-foreground">
-              <LfsStore className="size-3.5 shrink-0" />
-              {'No Stores'}
-            </span>
-          ) : (
-            <>
-              {stores.slice(0, STORES_SHOWN).map((s) => <StoreChip key={s.name} name={s.name} size={s.size} />)}
-              {stores.length > STORES_SHOWN && <span className="text-sm text-muted-foreground">{`+${stores.length - STORES_SHOWN} more`}</span>}
-            </>
-          )}
-        </div>
-        {disk && (
-          <div className="flex items-center gap-2 pt-0.5 text-xs leading-chat text-muted-foreground tabular-nums" title={`${gib(disk.free)} free of ${gib(m.disk)}`}>
-            <Bar share={disk.used} tone={disk.used > 0.9 ? 'danger' : disk.used > 0.75 ? 'warning' : 'brand'} className="flex-1" />
-            <span className="shrink-0">{`${gib(disk.free)} free`}</span>
-          </div>
-        )}
+      {noAllocation ? <div className="machine-board-shared" aria-label="Machine resource allocation">
+        {m.platform === 'native' ? os === 'win32' ? 'Sandbox records only · run workloads on Docker' : 'Uses this computer’s resources' : m.platform === 'docker' ? 'CPU, memory and disk managed by Docker' : 'Resource allocation not reported'}
+      </div> : <dl className="machine-board-capacity" aria-label="Machine resource allocations">
+        <div><dt>CPU</dt><dd>{m.cpus != null ? `${m.cpus} ${m.cpus === 1 ? 'core' : 'cores'}` : 'Not reported'}</dd></div>
+        <div><dt>Memory</dt><dd>{m.memory != null ? gib(m.memory) : 'Not reported'}</dd></div>
+        <div><dt>Disk capacity</dt><dd>{m.disk != null ? gib(m.disk) : 'Not reported'}</dd></div>
+      </dl>}
+
+      <dl className="machine-board-inventory" aria-label="Machine inventory">
+        <div><dt>{boxes.length === 1 ? 'Sandbox' : 'Sandboxes'}</dt><dd>{boxes.length}</dd></div>
+        <div title={typeof workspaces === 'string' ? 'Some workspace counts could not be read' : undefined}><dt>{workspaces === 1 ? 'Workspace' : 'Workspaces'}</dt><dd>{workspaces}</dd></div>
+        <div><dt>{stores.length === 1 ? 'Local Store' : 'Local Stores'}</dt><dd>{stores.length}</dd></div>
+      </dl>
+
+      <div className="machine-board-stores">
+        <span>Stores</span>
+        <div>{stores.length ? <>
+          {stores.slice(0, STORES_SHOWN).map(store => <button key={store.name} type="button" className="machine-board-store-link" onClick={() => go.store(store.name)} title={`Open ${store.name} in Storage${store.size != null ? ` · ${bytes(store.size)}` : ''}`}>{store.name}</button>)}
+          {stores.length > STORES_SHOWN && <span className="text-muted-foreground">+{stores.length - STORES_SHOWN} more</span>}
+        </> : <span className="text-faint">None on this machine</span>}</div>
       </div>
 
-      <footer className="mt-auto flex min-h-10 min-w-0 items-center gap-2 border-t border-foreground/[0.06] pt-3">
+      {(reason || attention || error !== null) && <div className="machine-board-notice" data-tone={attention === 'warning' ? 'warning' : 'danger'}>
+        {(reason || attention) && <p title={reason ?? undefined}>{reason || (attention === 'warning' ? `Start to use ${stores.length === 1 ? 'its local Store' : 'its local Stores'}.` : `${state.label}. Open details to inspect the machine.`)}</p>}
+        {calls && <p className="font-mono" title={`${calls.status} · ${calls.clear}`}>{`Inspect: ${calls.status}`}</p>}
+        {error !== null && <Refusal error={error} compact />}
+        {attention && <button type="button" className="machine-board-control" onClick={() => onOpen(false)}>View details <ArrowRight className="size-3" /></button>}
+      </div>}
+
+      <div className="machine-board-disk" aria-label="Machine disk status">
+        <div><span>Disk</span><span>{live?.freeDisk != null ? `${gib(live.freeDisk)} free${m.disk != null ? ` of ${gib(m.disk)}` : ''}` : m.platform === 'native' ? 'Shared with this computer' : 'Free space not reported'}</span></div>
+        {disk && <Bar share={disk.used} tone={disk.used > .9 ? 'danger' : disk.used > .75 ? 'warning' : 'brand'} className="w-full" />}
+      </div>
+
+      <footer className="machine-board-footer">
         <StateChip entity="machine" state={state.state} op={state.op} />
-        <span className="min-w-0 flex-1 truncate text-sm text-destructive">{error !== null && <Refusal error={error} compact />}</span>
-        <span className="relative z-10">
-          <PowerButton m={m} pending={pending} run={run} />
-        </span>
+        <div className="machine-board-control">{m.platform === 'native' ? <span className="machine-board-native">This computer</span> : <PowerButton m={m} pending={pending} run={run} />}</div>
       </footer>
       <MachineDialogs m={m} os={os} dialog={dialog} onClose={() => setDialog(null)} pending={pending} run={run} />
-    </Card>
-  )
-}
-
-/** The dashed last card: New machine, with the kinds this host can add. */
-export function NewMachineTile({ index, kinds, onClick }: { index: number; kinds: string[]; onClick: () => void }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="reveal flex min-h-44 flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-foreground/15 p-4 text-center text-muted-foreground outline-none transition-colors hover:border-primary/40 hover:bg-primary/[0.03] hover:text-primary focus-visible:ring-2 focus-visible:ring-ring"
-      style={{ '--i': index } as React.CSSProperties}
-    >
-      <span className="flex size-9 items-center justify-center rounded-lg-plus bg-foreground/[0.04]">
-        <Plus className="size-4.5" />
-      </span>
-      <span className="text-md font-medium">{'New machine'}</span>
-      {kinds.length > 0 && <span className="max-w-56 text-sm text-faint">{kinds.map((k) => fill(kindLabel(k))).join(', ')}</span>}
-    </button>
+    </article>
   )
 }
 

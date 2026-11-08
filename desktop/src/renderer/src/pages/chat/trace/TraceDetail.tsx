@@ -3,12 +3,13 @@
 // auto-checkpoints), its output, checks and token use, and a link to the
 // same step in the chat or to the subagent it started.
 import { ArrowUpRight, CircleCheck, CircleX } from 'lucide-react'
-import type { ReactNode } from 'react'
-import { Link } from 'react-router-dom'
+import { useContext, useEffect, useRef, type ReactNode } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
 import { duration } from '@/layerfs/call-labels'
 import { bytes } from '@/layerfs/format'
 import type { TraceRecord, TraceWrite } from '@/layerfs/trace-api'
 import { cn } from '@/lib/utils'
+import { TraceChatPath, historyLink } from './scope'
 
 function Block({ label, children, tone }: { label: string; children: ReactNode; tone?: 'error' }) {
   return (
@@ -54,6 +55,13 @@ function writeTarget(w: TraceWrite) {
 }
 
 export function TraceDetail({ chatId, row }: { chatId: string; row: TraceRecord }) {
+  const chatPath = useContext(TraceChatPath) ?? `/chat/${encodeURIComponent(chatId)}`
+  const [params] = useSearchParams()
+  const checkpoint = params.get('checkpoint')
+  const checkpointRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (checkpoint) requestAnimationFrame(() => checkpointRef.current?.scrollIntoView({ block: 'center' }))
+  }, [checkpoint])
   const label = TEXT_LABEL[row.kind]
   const writes = row.writes ?? []
   return (
@@ -84,8 +92,8 @@ export function TraceDetail({ chatId, row }: { chatId: string; row: TraceRecord 
         <Block label={writes.some((w) => w.checkpoint !== null) ? 'Auto-checkpoints' : 'Refused writes'}>
           <div className="flex flex-col rounded-xs border border-[var(--border-default)] bg-[var(--card)] py-1">
             {writes.map((w, i) => (
-              <div key={i} className="flex min-h-7 min-w-0 items-center gap-2 px-3 text-12">
-                <span className="w-8 shrink-0 font-mono text-[var(--text-secondary)]">{w.checkpoint !== null ? `#${w.checkpoint}` : '—'}</span>
+              <div key={i} ref={checkpoint !== null && String(w.checkpoint) === checkpoint ? checkpointRef : undefined} data-checkpoint={w.checkpoint ?? undefined} className={cn("flex min-h-7 min-w-0 items-center gap-2 px-3 text-12", checkpoint !== null && String(w.checkpoint) === checkpoint && "ring-2 ring-[var(--ring)]")} >
+                {w.checkpoint !== null ? <Link className="w-8 shrink-0 font-mono text-[var(--text-secondary)] underline underline-offset-2" title="View checkpoint in History" to={historyLink(chatPath, w.commit ?? w.layer, w.branch, row.callId ?? row.id)}>#{w.checkpoint}</Link> : <span className="w-8 shrink-0">—</span>}
                 <span className="w-32 shrink-0 text-[var(--text-primary)]">{WRITE_LABEL[w.kind]}</span>
                 <code className="min-w-0 flex-1 truncate font-mono text-[var(--text-secondary)]" title={w.message ?? undefined}>{writeTarget(w)}</code>
                 <span className="flex shrink-0 items-center gap-2 tabular-nums text-[var(--text-tertiary)]">
@@ -133,7 +141,7 @@ export function TraceDetail({ chatId, row }: { chatId: string; row: TraceRecord 
       )}
       {(row.kind === 'tool' || row.kind === 'subagent') && row.callId && (
         <div className="flex gap-3 text-12">
-          <Link to={`/chat/${encodeURIComponent(chatId)}?at=${encodeURIComponent(row.callId)}`} className="flex items-center gap-1 text-[var(--text-tertiary)] hover:text-[var(--text-primary)]">
+          <Link to={`${chatPath}?at=${encodeURIComponent(row.callId)}`} className="flex items-center gap-1 text-[var(--text-tertiary)] hover:text-[var(--text-primary)]">
             <ArrowUpRight className="size-3.5" /> Show in chat
           </Link>
           {row.kind === 'subagent' && (

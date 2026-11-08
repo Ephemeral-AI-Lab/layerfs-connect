@@ -417,3 +417,140 @@ Change error  <host refusal>; the list reloads                       capability-
 
 - Agent facts, hook purposes and tool notes are host text (`host/agents/capabilities.js`); the
   samples are its defaults. Commands has no "working" notice (`switches={false}`).
+
+
+## Desktop Models page
+
+Source: `desktop/src/renderer/src/pages/settings/ModelsPage.tsx`,
+`ProviderConnection.tsx`, `ProviderSignIn.tsx`.
+Opens at `#/settings/models`, from the Settings sidebar or Manage models.
+Develop and verify in the web preview at `http://127.0.0.1:1025/#/settings/models`.
+
+```text
+Providers & models                                            [Refresh]
+Connect a provider, explore its models, and choose a default for new chats.
+
++-[1] Providers ----------------+-[2] Selected provider --------------------+
+| Search providers              | Connection               <status>        |
+| Connected                     | [Sign in] (when supported)               |
+|   Provider A · Signed in      | > Use an API key instead / Edit connection|
+| Available                     |   API key [************************]     |
+|   Provider B · Sign in        |   > Advanced connection settings         |
+|   Provider C · API key        |   [Connect provider / Save connection]   |
+|                               +------------------------------------------+
+|                               | [3] Models <count>                       |
+|                               | Search models                            |
+|                               | Friendly name          [Set as default] |
+|                               | model-id · known capabilities            |
+|                               | Friendly name                  Default  |
+|                               | model-id                                 |
+| [+ Add custom provider]       | > Model missing? Enter its ID            |
++-------------------------------+------------------------------------------+
+[4] Default for new chats                 [Test default model] [Start a chat]
+```
+
+- [1] Providers are visible buttons grouped by credential availability. Search
+  matches provider name and ID. Selecting one scopes the model list and clears
+  unsaved credentials. Provider selection and Refresh are disabled during
+  saves and active sign-in; Cancel sign-in remains available.
+- [2] OAuth uses the existing host sign-in flow: device codes, browser approval,
+  prompts, polling, cancellation and retry. API keys use the provider-only save
+  endpoint; saving credentials does not select a default or send a model request.
+  Keys clear after a successful save and remain in the field after a failure.
+  Advanced settings hold the endpoint and protocol. Custom providers have a
+  focused name, ID, endpoint, protocol, optional key and initial model form.
+- [3] Catalog models remain visible before connecting. Rows show display name,
+  model ID, and reasoning/image/context metadata only when supplied by the host.
+  Model search matches name and ID; empty search and empty catalog states are
+  distinct. The list scrolls independently for large catalogs. Selecting a
+  default requires an available credential or a configured custom endpoint.
+  Unknown model IDs can still be entered explicitly. Local custom endpoints can
+  omit an API key. Saving a connection preserves the previous default.
+- [4] The default applies to new chats. Test is a separate, explicit action that
+  sends a short request to that default and can incur provider usage charges.
+  Only a successful test earns "Connection verified"; merely having credentials
+  is labeled "Credential available" or "Signed in". Refresh or a configuration
+  change clears the verification indicator. Errors show inline and allow retry.
+
+The two panes remain side by side at desktop sizes (900×600 and 1280×820),
+and stack when the available content width is below 560px. The existing Settings
+sidebar and semantic theme are preserved. New chat reloads the saved host
+selection; the composer continues to offer Manage models.
+
+
+## Desktop Tools, Agents and Hooks
+
+Each secondary Settings page has one content heading and Reload action. There
+is no separate top title row. With the sidebar collapsed, the content heading
+leaves room for the shared window controls, matching the Models page.
+
+Source: desktop/src/renderer/src/pages/settings/CapabilitiesPage.tsx
+Opens from: the secondary Settings sidebar.
+
+```text
++-Settings sidebar---+--[1] Tools / Agents / Hooks ----------------------------+
+| Models            | [2] Pi version - Configured setup / Live session        |
+| Tools             |     pi-subagents <installed version> - Enabled / Off   |
+| Agents            |     Active chats prevent configuration changes         |
+| Hooks             |                                                        |
+|                   | [3] Tools: extension groups, descriptions, parameters   |
+|                   |     Used by: Main agent / Worker / Lead     [On / Off] |
+|                   | [4] Agents: Main agent / Worker / Lead                 |
+|                   |     Model, instructions, extensions         [On / Off] |
+|                   |     > Tools      (individual switches)                 |
+|                   |     > Prompt     (configured template, read-only)      |
+|                   |     > Hooks      (individual switches)                 |
+|                   | [5] Hooks: extension, event, purpose         [On / Off] |
+|                   |     Live handler count, or configured-event label      |
++-------------------+--------------------------------------------------------+
+```
+
+| Region | Data and behavior |
+|---|---|
+| [2] | Host capabilities report the installed Pi and subagent package versions |
+| [3] | Tool and extension switches use the existing capability configuration API |
+| [4] | Prompt text comes from the same builders used to start agents; workspace context is added later |
+| [5] | Required hooks are locked; subagent lifecycle hooks switch with pi-subagents |
+
+The Tools page shows pi-subagents installation and extension state. Connect
+loads its own connect-worker and connect-lead definitions; packaged workflow
+shortcuts and skills are not automatically enabled. The configured setup is
+distinct from the live session's tool parameters and hook registrations.
+Busy chats disable switches. Server refusals remain visible. No changes are
+applied to active agents, and required bash/checkpoint controls stay locked.
+
+
+## Desktop Configurations
+
+Source: `desktop/src/renderer/src/pages/settings/PiPoliciesPage.tsx`.
+Opens from the secondary Settings sidebar at `#/settings/configurations`.
+
+```text
++-Settings sidebar---+--[1] Configurations ------------------------[Reload]--+
+| Models             | How agents manage long conversations and errors   |
+| (Configurations)      | [2] Context & compaction                          |
+| Tools              | Automatic compaction                        [On] |
+| Agents             | Reserved tokens                          [16384] |
+| Hooks              | Recent tokens to keep                    [20000] |
+|                    | Manage models · Hooks                            |
+|                    | [3] Retries                                      |
+|                    | Automatic retries                           [On] |
+|                    | Maximum retries                              [2] |
+|                    | Initial delay (ms)                         [500] |
+|                    | Maximum delay (ms)                        [5000] |
+|                    | [4] Validation / save status                     |
+|                    | [Restore defaults]       [Discard] [Save configurations]|
+|                    | [5] Preview in Example chat                      |
++--------------------+--------------------------------------------------+
+```
+
+1. One page heading; Reload fetches saved settings and active-chat status.
+2. Automatic compaction and token budgets map directly to Pi settings.
+   Model context limits stay under Models; instruction hooks stay under Hooks.
+3. Retry controls govern transient provider failures. Commands/tests are not
+   automatically repeated. Maximum retries shares the existing run-limit value.
+4. Explicit Save; invalid fields cannot save. Restore defaults edits the draft.
+   Saves are refused while any main chat or subagent works. Idle Pi sessions
+   reload on their next run. New subagents inherit the private Pi settings.
+   Errors preserve the draft and show an alert. Successful saves show status.
+5. Links to the existing model-free Example chat. Form rows wrap at narrow widths.

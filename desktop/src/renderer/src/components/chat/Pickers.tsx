@@ -2,6 +2,7 @@
 // which folder it works in (a new scratch folder, or one chosen), and its model.
 import { Check, ChevronDown, FolderOpen, Sparkles, SquareDashed } from 'lucide-react'
 import type { ReactNode } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { LfsProject } from '@/components/layerfs/LfsIcons'
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
@@ -108,6 +109,7 @@ export function ModelPicker({ value, models, onChange }: {
   models: ChatModel[]
   onChange: (model: ChatModel) => void
 }) {
+  const navigate = useNavigate()
   const providers = new Map<string, ChatModel[]>()
   for (const m of models) providers.set(m.provider, [...(providers.get(m.provider) ?? []), m])
   const chosen = value && models.find((m) => m.provider === value.provider && m.id === value.modelId)
@@ -128,9 +130,11 @@ export function ModelPicker({ value, models, onChange }: {
         ))}
         {!models.length && (
           <p className="max-w-64 px-2 py-1.5 text-12 text-[var(--text-tertiary)]">
-            No model is set up. Add a provider key or sign in from Settings (coming later).
+            No model is set up. Connect a provider to start chatting.
           </p>
         )}
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onSelect={() => navigate('/settings')}>Manage models…</DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   )

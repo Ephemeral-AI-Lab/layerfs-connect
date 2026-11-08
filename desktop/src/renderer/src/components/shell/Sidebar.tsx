@@ -1,10 +1,13 @@
-import { CircleHelp, Database, type LucideIcon, Server, Settings, SquarePen } from 'lucide-react'
-import { NavLink, useNavigate } from 'react-router-dom'
+import { SlidersHorizontal, Bot, Wrench, Workflow, ArrowLeft, Cpu, CircleHelp, Database, FlaskConical, type LucideIcon, Server, Settings, SquarePen } from 'lucide-react'
+import { useEffect, useRef } from 'react'
+import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { ChatList } from '@/components/chat/ChatList'
 import { Avatar } from '@/components/ui/avatar'
 import { Tip } from '@/components/ui/tooltip'
 import { CHROME_CLUSTER_PX, macChrome, TRAFFIC_LIGHTS_PX } from '@/lib/platform'
 import { cn } from '@/lib/utils'
+import { EXAMPLE_CHAT_PATH } from '@/layerfs/chat-sim'
+import layerfsLogo from '@/assets/layerfs-logo.png'
 
 // Cindy's sidebar row: 32px pill, 14px, ink-88 text.
 const ROW =
@@ -17,8 +20,18 @@ export function Sidebar({ width, open, dragging, onResizeStart }: {
   dragging: boolean
   onResizeStart: (e: React.PointerEvent) => void
 }) {
+  const location = useLocation()
+  const navigate = useNavigate()
+  const settings = location.pathname === '/settings' || location.pathname.startsWith('/settings/')
+  const previous = useRef('/')
+  useEffect(() => {
+    if (!settings) previous.current = location.pathname + location.search + location.hash
+  }, [location, settings])
+  function toggleSettings() {
+    navigate(settings ? previous.current : '/settings/models')
+  }
   return (
-    <aside
+    <aside aria-label={settings ? 'Settings sidebar' : 'Workspace sidebar'}
       style={{ width: open ? width : 0 }}
       className={cn(
         'app-sidebar relative flex shrink-0 flex-col overflow-hidden bg-sidebar',
@@ -27,22 +40,35 @@ export function Sidebar({ width, open, dragging, onResizeStart }: {
       )}
     >
       <div className="flex min-h-0 flex-1 flex-col" style={{ width }}>
-        {/* Top row lines up with the traffic lights; the chrome buttons float above it. */}
-        <div className="drag flex h-[46px] w-full shrink-0 items-center">
-          <div className="no-drag h-7" style={{ marginLeft: macChrome ? TRAFFIC_LIGHTS_PX : 8, width: CHROME_CLUSTER_PX }} />
+        {/* Back is on the left; reserve the right edge for the floating sidebar toggle. */}
+        <div className="drag flex h-[46px] w-full shrink-0 items-center" style={{ paddingLeft: macChrome ? TRAFFIC_LIGHTS_PX : 8, paddingRight: CHROME_CLUSTER_PX + 16 }}>
+          {settings && <button type="button" onClick={toggleSettings} title="Back to workspace" aria-label="Back to workspace" className="no-drag flex h-7 min-w-0 items-center gap-1.5 rounded-full px-2 text-12 text-[var(--text-secondary)] outline-none hover:bg-sidebar-item-hover focus-visible:ring-2 focus-visible:ring-ring">
+            <ArrowLeft className="size-3.5 shrink-0" /><span className="truncate">Back to workspace</span>
+          </button>}
+          {!settings && <div className="flex min-w-0 items-center gap-2" title="LayerFS Connect" aria-label="LayerFS Connect">
+            <img src={layerfsLogo} alt="" aria-hidden="true" draggable={false} className="size-5 shrink-0 object-contain" />
+            <span className="truncate text-13 font-medium tracking-tight text-[var(--text-primary)]">LayerFS Connect</span>
+          </div>}
         </div>
-        <div className="shrink-0 px-3 pb-2 pt-1">
-          <NewChatButton />
-        </div>
-        <nav aria-label="Pages" className="flex shrink-0 flex-col gap-0.5 px-3">
-          <NavRow to="/machines" icon={Server} label="Machines" />
-          <NavRow to="/storage" icon={Database} label="Storage" />
-        </nav>
-        {/* the chats scroll on their own between the pages and the user card */}
-        <div className="scrollbar-none min-h-0 flex-1 overflow-y-auto px-3 pb-4">
-          <ChatList />
-        </div>
-        <UserCard />
+        {settings ? <div className="flex min-h-0 flex-1 flex-col">
+          <h2 className="px-6 pb-3 pt-3 text-12 font-medium text-[var(--text-tertiary)]">Settings</h2>
+          <nav aria-label="Settings" className="space-y-0.5 px-3">
+            <NavRow to="/settings/models" icon={Cpu} label="Models" />
+            <NavRow to="/settings/configurations" icon={SlidersHorizontal} label="Configurations" />
+            <NavRow to="/settings/tools" icon={Wrench} label="Tools" />
+            <NavRow to="/settings/agents" icon={Bot} label="Agents" />
+            <NavRow to="/settings/hooks" icon={Workflow} label="Hooks" />
+          </nav>
+        </div> : <>
+          <div className="shrink-0 px-3 pb-2 pt-1"><NewChatButton /></div>
+          <nav aria-label="Pages" className="flex shrink-0 flex-col gap-0.5 px-3">
+            <NavRow to={EXAMPLE_CHAT_PATH} icon={FlaskConical} label="Example chat" />
+            <NavRow to="/machines" icon={Server} label="Machines" />
+            <NavRow to="/storage" icon={Database} label="Storage" />
+          </nav>
+          <div className="scrollbar-none min-h-0 flex-1 overflow-y-auto px-3 pb-4"><ChatList /></div>
+        </>}
+        <UserCard settings={settings} onToggleSettings={toggleSettings} />
       </div>
       {open && (
         <div
@@ -79,8 +105,7 @@ function NewChatButton() {
   )
 }
 
-function UserCard() {
-  const navigate = useNavigate()
+function UserCard({ settings, onToggleSettings }: { settings: boolean; onToggleSettings: () => void }) {
   const round =
     'flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-full border border-[var(--sidebar-user-card-border)] bg-[var(--sidebar-user-card-bg)] text-[var(--text-secondary)] hover:bg-sidebar-item-hover'
   return (
@@ -93,8 +118,8 @@ function UserCard() {
             <span className="flex min-w-0 items-center gap-1 text-10 leading-[1.3] text-[var(--text-secondary)]">Simulated · 0.0.0</span>
           </span>
         </button>
-        <Tip label="Settings" side="top">
-          <button type="button" aria-label="Settings" className={cn(round, 'mr-1')} onClick={() => navigate('/settings')}>
+        <Tip label={settings ? 'Back to workspace' : 'Settings'} side="top">
+          <button type="button" aria-label="Settings" aria-pressed={settings} className={cn(round, 'mr-1', settings && 'bg-sidebar-item-active text-[var(--text-primary)]')} onClick={onToggleSettings}>
             <Settings className="h-3 w-3" />
           </button>
         </Tip>

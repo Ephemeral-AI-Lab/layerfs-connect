@@ -1,38 +1,26 @@
+// Store identity, a compact project carousel, and the existing Store controls.
 import { fill } from '@/lib/text'
-// One Store on the Storage page, as a wide card that holds its projects
-// (docs/connect README, "Storage and projects"). Header: the Store's mark,
-// name (opens its page), family, state, where it is and its size, its main
-// moves and its menu (every Store-wide action). Body: a tile per project
-// (the machines it runs on and when it was made) and a
-// dashed Add project tile; past SHOWN tiles it folds. Footer: its backups (a
-// menu of the backup moves) or its PostgreSQL server, what doctor finds on it,
-// or its job while one runs. A Store that needs you gets a tinted ring.
-import { Archive, ChevronDown, FolderPlus, HardDriveDownload, RefreshCw, Settings2, Stethoscope } from 'lucide-react'
-import { type CSSProperties, type KeyboardEvent, useState } from 'react'
+import { Archive, ChevronDown, ChevronLeft, ChevronRight, FolderPlus, GitBranch, HardDriveDownload, RefreshCw, Settings2, Stethoscope } from 'lucide-react'
+import { useCallback, useEffect, useId, useRef, useState } from 'react'
 
 import { LfsProject } from '@/components/layerfs/LfsIcons'
 import type { ProjectRowData } from '@/layerfs/project-rows'
-import { RunsOnChips } from '@/components/layerfs/WhereChips'
-import { StateChip } from '@/components/layerfs/StateChip'
+import { useSimulation } from '@/components/layerfs/Simulation'
+import { host, onProjectsChanged } from '@/layerfs/client'
+import { useHostQuery } from '@/layerfs/use-host'
 import { BACKUP } from '@/pages/storage/BucketCard'
 import { Chip } from '@/components/layerfs/Chips'
 import { StoreIcon } from '@/components/layerfs/identity/StoreIcon'
 import { JobPanel, OpPanel } from '@/pages/storage/JobProgress'
-import { Card } from '@/pages/storage/RowParts'
-import { attentionOf, canAddProject, Location, movesOf, PgState, type StoreActions, StoreMenu } from '@/pages/storage/StoreCard'
+import { attentionOf, canAddProject, Location, type StoreActions, StoreMenu } from '@/pages/storage/StoreCard'
+import { go } from '@/layerfs/go'
 import { Button } from '@/components/ui/button'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
-import { ago, bytes, when } from '@/layerfs/format'
+import { ago, bytes } from '@/layerfs/format'
 import { clearingCall } from '@/layerfs/states'
 import { cn } from '@/lib/utils'
 import type { BucketRow, DoctorFinding, StorageJob, StorageView, StoreRow } from '@/layerfs/host-api'
 
-/** Tiles a card shows before "Show all". */
-const SHOWN = 8
-
-type Machine = StorageView['machines'][number]
-
-/** One project in a Store: its row when the catalog has it, else just its name. */
 export interface StoreProject {
   key: string
   name: string
@@ -42,173 +30,140 @@ export interface StoreProject {
 interface StoreSectionProps {
   store: StoreRow
   index: number
-  machine: Machine | undefined
+  machine: StorageView['machines'][number] | undefined
   buckets: BucketRow[]
   job: StorageJob | undefined
-  /** The projects to show (all, or those the search matches). */
   projects: StoreProject[]
-  /** A search is on: no folding, and no Add project tile. */
   searching: boolean
   now: number
-  /** What `layerfs doctor` finds on this Store. */
   findings: DoctorFinding[]
-  /** Its moves, menu, Add project and backups; absent: a bare card (the machine page), the Store and its projects only. */
+  board?: boolean
+  /** Observed Sandbox placements, not a PostgreSQL connection registry. */
+  usedByMachines?: string[] | null
   on?: StoreActions
   onOpenProject?: (key: string) => void
-  /** Opens the Store's page (⌘/Ctrl- or middle-click: in a new tab). */
   onOpen?: (newTab: boolean) => void
 }
 
-export function StoreSection({ store: s, index, machine, buckets, job, projects, searching, now, findings, on, onOpenProject, onOpen }: StoreSectionProps) {
-  const [all, setAll] = useState(false)
+export function StoreSection({ store: s, machine, buckets, job, projects, findings, board, usedByMachines, on, onOpenProject, onOpen }: StoreSectionProps) {
   const pg = s.kind === 'postgresql'
   const attention = job?.ended && job.error ? 'danger' : attentionOf(s, machine, buckets)
-  // PostgreSQL's one move is Add project: its tile says it already
-  const moves = on ? movesOf(s, machine, buckets, on).filter((m) => m.key !== 'add') : []
-  const folded = !searching && !all && projects.length > SHOWN
-  const shown = folded ? projects.slice(0, SHOWN) : projects
   return (
-    <Card
-      index={index}
-      data-focus={`store:${s.name}`}
-      aria-label={s.name}
-      className={cn('relative flex scroll-mt-24 flex-col overflow-hidden', attention === 'warning' && 'ring-1 ring-amber-500/45', attention === 'danger' && 'ring-1 ring-destructive/45')}
-      style={{ '--i': index, '--flash': 'var(--primary)' } as CSSProperties}
-    >
-      <header className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-2 px-4 pt-3.5 pb-3">
+    <section data-focus={`store:${s.name}`} aria-label={s.name}
+      className={cn('store-carousel-card', board && 'store-carousel-card--board', attention === 'warning' && 'ring-1 ring-amber-500/45', attention === 'danger' && 'ring-1 ring-destructive/45')}>
+      <header className="store-carousel-heading">
         <StoreIcon family={s.kind} size="sm" />
-        <div className="min-w-0 flex-1">
-          <div className="flex min-w-0 items-center gap-2">
-            <h3 className="min-w-0 truncate font-mono text-base font-strong tracking-tight" title={s.name}>
-              {onOpen ? (
-                <button type="button" onClick={(e) => onOpen(e.metaKey || e.ctrlKey)} onAuxClick={(e) => e.button === 1 && onOpen(true)} title={`Open ${s.name}`} className="rounded-sm text-left font-mono outline-none hover:text-primary focus-visible:ring-2 focus-visible:ring-ring">
-                  {s.name}
-                </button>
-              ) : s.name}
-            </h3>
-            <span className="shrink-0 rounded-full bg-foreground/[0.05] px-2 py-px text-xs font-medium text-muted-foreground">{pg ? 'PostgreSQL' : 'SQLite'}</span>
-            <StateChip entity="store" state={s.state} op={s.op} className="shrink" />
-          </div>
-          <div className="mt-1 flex min-w-0 items-center gap-2 text-sm text-muted-foreground">
-            <span className="flex min-w-0 items-center"><Location store={s} machine={machine} /></span>
-            {!pg && (
-              <>
-                <span aria-hidden="true" className="text-faint">·</span>
-                <span className="shrink-0 tabular-nums" title={s.size ? `${bytes(s.size.file)} file, ${bytes(s.size.wal)} WAL` : undefined}>
-                  {s.size ? bytes(s.size.bytes) : 'size unknown'}
-                </span>
-              </>
-            )}
-          </div>
-        </div>
-        <div className="flex shrink-0 items-center gap-1.5">
-          {!job &&
-            moves.map((m) => (
-              <Button key={m.key} size="xs" variant="outline" className="rounded-md" onClick={m.run} disabled={m.disabled || !m.run} title={m.title}>
-                <m.icon /> {m.label}
-              </Button>
-            ))}
-          {on && <StoreMenu store={s} on={on} />}
-        </div>
+        <h3 className="min-w-0 flex-1 truncate text-lg font-strong tracking-tight" title={s.name}>
+          {onOpen ? <button type="button" className="store-name-link" onClick={e => onOpen(e.metaKey || e.ctrlKey)} onAuxClick={e => e.button === 1 && onOpen(true)} title={`Open ${s.name}`}>{s.name}</button> : s.name}
+        </h3>
+        <span className="text-xs text-muted-foreground">{pg ? 'PostgreSQL' : 'SQLite'}</span>
+        {on && <StoreMenu store={s} on={on} />}
       </header>
-
-      <div className="flex flex-col gap-2 px-4 pb-4">
-        <ul aria-label={`Projects in ${s.name}`} className="grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-2.5">
-          {shown.map((p, i) => (
-            <li key={p.key} className="flex">
-              <ProjectTile project={p} index={i} now={now} onOpen={onOpenProject} />
-            </li>
-          ))}
-          {!searching && on && (
-            <li className="flex">
-              <AddTile store={s} on={on} />
-            </li>
-          )}
-          {!searching && projects.length === 0 && (
-            <li className="flex items-center px-1 text-sm text-muted-foreground">{'No projects yet'}</li>
-          )}
-        </ul>
-        {projects.length > SHOWN && !searching && (
-          <button type="button" onClick={() => setAll(!all)} className="self-start rounded-sm px-1 text-sm text-muted-foreground outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring">
-            {all ? 'Show fewer' : `Show all (${projects.length})`}
-          </button>
-        )}
+      <div className="store-carousel-location">
+        <div className="store-location-row">
+          <div className="min-w-0"><Location store={s} machine={machine} showState={false} /></div>
+          {!pg && <span className="store-location-size" title={s.size ? `${bytes(s.size.file)} file, ${bytes(s.size.wal)} WAL` : undefined}>{s.size ? bytes(s.size.bytes) : 'Size unavailable'}</span>}
+        </div>
+        {pg && <div className="store-shared-machines">
+          <span>Shared across machines</span>
+          {!!usedByMachines?.length && <span className="store-machine-links" title="Machines with recorded Sandboxes using this Store; not an active database connection list">
+            Used by {usedByMachines.map(name => <button key={name} type="button" className="store-name-link" onClick={() => go.machine(name)}>{name}</button>)}
+          </span>}
+        </div>}
       </div>
-
-      {(on || job || s.op || s.down || s.state === 'unresolved') && (
-      <footer className="flex min-h-10 min-w-0 flex-wrap items-center gap-x-4 gap-y-2 border-t border-foreground/[0.06] bg-foreground/[0.015] px-4 py-2 text-sm text-muted-foreground">
-        {job ? (
-          <div className="min-w-0 flex-1">
-            <JobPanel job={job} onRetry={on?.retry && (() => on.retry!(job))} onDetails={onOpen && (() => onOpen(false))} />
-          </div>
-        ) : s.state === 'busy' && s.op ? (
-          <div className="min-w-0 flex-1">
-            <OpPanel store={s} />
-          </div>
-        ) : (
-          <>
-            {on && (pg ? <PgState store={s} /> : <BackupsMenu store={s} buckets={buckets} on={on} />)}
-            {s.down ? (
-              <span className="min-w-0 truncate text-destructive" title={s.down}>{s.down}</span>
-            ) : s.state === 'unresolved' ? (
-              <span className="min-w-0 truncate font-mono text-xs text-destructive">{fill('see {status} · clear: {clear}', clearingCall('store', s.name, s.op))}</span>
-            ) : null}
-            <Findings findings={findings} />
-          </>
-        )}
+      <ProjectCarousel projects={projects} store={s.name} onOpen={onOpenProject} />
+      <footer className="store-carousel-footer">
+        {job ? <JobPanel job={job} onRetry={on?.retry && (() => on.retry!(job))} onDetails={onOpen && (() => onOpen(false))} />
+          : s.state === 'busy' && s.op ? <OpPanel store={s} />
+          : <>
+            <div className="min-w-0 flex-1 text-xs text-muted-foreground">
+              {on ? !pg && <BackupsMenu store={s} buckets={buckets} on={on} /> : <span>{s.projects.length} {s.projects.length === 1 ? 'project' : 'projects'}</span>}
+            </div>
+            {on && <Button size="xs" variant="ghost" onClick={on.addProject} disabled={!canAddProject(s, on)}><FolderPlus /> Add project</Button>}
+          </>}
+        {s.down ? <p className="store-carousel-notice text-destructive">{s.down}</p>
+          : s.state === 'unresolved' ? <p className="store-carousel-notice text-destructive">{fill('see {status} · clear: {clear}', clearingCall('store', s.name, s.op))}</p> : null}
+        <Findings findings={findings} />
       </footer>
-      )}
-    </Card>
+    </section>
   )
 }
 
-/** A project: its name, where it runs and when it was made. Opens its Store's page. */
-function ProjectTile({ project: p, index, now, onOpen }: { project: StoreProject; index: number; now: number; onOpen?: (key: string) => void }) {
-  const activity = p.row?.activity ?? null
-  const open = () => onOpen?.(p.key)
-  return (
-    // a div that opens, so the machine chips inside stay buttons of their own
-    <div
-      role="button"
-      tabIndex={0}
-      aria-label={`Open ${p.key}`}
-      onClick={open}
-      onKeyDown={(e: KeyboardEvent) => {
-        if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) {
-          e.preventDefault()
-          open()
-        }
-      }}
-      style={{ '--i': Math.min(index, 10) } as CSSProperties}
-      className="reveal group/tile flex min-h-[84px] w-full cursor-pointer flex-col gap-1.5 rounded-xl bg-background/70 p-3 outline-none ring-1 ring-inset ring-foreground/[0.07] transition-[background-color,box-shadow,transform] duration-(--dur-fast) hover:-translate-y-px hover:bg-card hover:shadow-sm hover:ring-foreground/[0.14] focus-visible:ring-2 focus-visible:ring-ring"
-    >
-      <span className="flex min-w-0 items-center gap-1.5">
-        <LfsProject className="size-3.5 shrink-0 text-muted-foreground" />
-        <span className="min-w-0 truncate text-md-plus font-strong tracking-tight" title={p.key}>{p.name}</span>
-      </span>
-      <RunsOnChips runs={p.row ? p.row.runs : null} max={2} />
-      <span className="mt-auto flex min-w-0 items-center gap-1.5 text-xs tabular-nums text-muted-foreground">
-        {activity !== null && <span className="truncate" title={when(activity)}>{`made ${ago(activity, now)}`}</span>}
-      </span>
+function ProjectCarousel({ projects, store, onOpen }: { projects: StoreProject[]; store: string; onOpen?: (key: string) => void }) {
+  const track = useRef<HTMLUListElement>(null)
+  const id = useId()
+  const [edges, setEdges] = useState({ before: false, after: false })
+  const measure = useCallback(() => {
+    const el = track.current
+    if (el) setEdges({ before: el.scrollLeft > 2, after: el.scrollLeft + el.clientWidth < el.scrollWidth - 2 })
+  }, [])
+  useEffect(() => {
+    const el = track.current
+    if (!el) return
+    el.scrollLeft = 0
+    measure()
+    const observer = new ResizeObserver(measure)
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [projects.map(p => p.key).join('|'), measure])
+  const move = (direction: number) => {
+    const el = track.current
+    if (el) el.scrollBy({ left: direction * el.clientWidth * 0.8, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' })
+  }
+  return <div className="store-project-carousel">
+    <div className="store-project-carousel-label">
+      <h4>Projects <span className="text-muted-foreground">· {projects.length}</span></h4>
+      {(edges.before || edges.after) && <div className="flex gap-1">
+        <Button size="icon-xs" variant="ghost" aria-label={`Previous projects in ${store}`} aria-controls={id} disabled={!edges.before} onClick={() => move(-1)}><ChevronLeft /></Button>
+        <Button size="icon-xs" variant="ghost" aria-label={`Next projects in ${store}`} aria-controls={id} disabled={!edges.after} onClick={() => move(1)}><ChevronRight /></Button>
+      </div>}
     </div>
-  )
+    {projects.length ? <ul id={id} ref={track} aria-label={`Projects in ${store}`} className="store-project-track" onScroll={measure}>
+      {projects.map(p => <li key={p.key}><ProjectTile project={p} onOpen={onOpen} /></li>)}
+    </ul> : <div className="store-project-empty">No projects yet</div>}
+  </div>
 }
 
-/** The last tile: a new project in this Store. */
-function AddTile({ store: s, on }: { store: StoreRow; on: StoreActions }) {
-  const can = canAddProject(s, on)
-  return (
-    <button
-      type="button"
-      onClick={on.addProject}
-      disabled={!can}
-      title={`Add a project to ${s.name}`}
-      className="flex min-h-[84px] w-full flex-col items-center justify-center gap-1.5 rounded-xl border border-dashed border-foreground/15 text-sm text-muted-foreground outline-none transition-colors duration-(--dur-fast) hover:border-foreground/30 hover:bg-foreground/[0.02] hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
-    >
-      <FolderPlus className="size-4" />
-      {'Add project'}
-    </button>
-  )
+export function ProjectTile({ project: p, onOpen }: { project: StoreProject; onOpen?: (key: string) => void }) {
+  const tile = useRef<HTMLButtonElement>(null)
+  const [visible, setVisible] = useState(false)
+  const simulation = useSimulation()
+  useEffect(() => {
+    const observer = new IntersectionObserver(entries => {
+      if (entries.some(e => e.isIntersecting)) { setVisible(true); observer.disconnect() }
+    }, { rootMargin: '160px' })
+    if (tile.current) observer.observe(tile.current)
+    return () => observer.disconnect()
+  }, [])
+  const branches = useHostQuery(async () => {
+    if (!visible) return null
+    const state = await host.project(p.key)
+    return { count: state.storage === null && (state.project.storeDown || state.project.refusal) ? null : state.branches.length, storage: state.storage }
+  }, [visible, p.key, simulation], `project-tile-summary:${simulation ?? 'host'}:${p.key}`)
+  useEffect(() => onProjectsChanged(() => { if (visible) branches.reload() }), [visible, branches.reload])
+  const count = (n: number | null | undefined, singular: string, plural: string) => `${n ?? '—'} ${n === 1 ? singular : plural}`
+  const machines = p.row?.project.kind === 'postgresql' ? p.row.runs?.map(r => r.machine) : null
+  const storage = branches.data?.storage
+  return <button ref={tile} type="button" className="store-project-tile" aria-label={`Open ${p.key}`} disabled={!onOpen} onClick={() => onOpen?.(p.key)}>
+    <span className="store-project-heading">
+      <span className="store-project-identity">
+        <LfsProject aria-hidden="true" className="size-5 shrink-0 text-muted-foreground" />
+        <span className="truncate" title={p.name}>{p.name}</span>
+      </span>
+      <span className="store-project-footprint" title={storage?.partial ? 'Compressed content from recorded history only. Excludes Init, main layers, earlier history and Store overhead.' : storage ? 'Reported compressed project content; excludes Store overhead.' : 'LayerFS has not reported a project storage footprint.'}>
+        {storage ? `${bytes(storage.stored)} ${storage.partial ? 'in saved history' : 'stored'}` : 'Storage · —'}
+      </span>
+    </span>
+    <span className="store-project-branches" title={branches.error || branches.data?.count === null ? 'Branch count unavailable' : 'Includes main'}>
+      <GitBranch aria-hidden="true" className="size-3.5 shrink-0" />
+      {branches.data?.count != null ? `${branches.data.count} ${branches.data.count === 1 ? 'branch' : 'branches'}` : '— branches'}
+    </span>
+    <span className="store-project-counts">
+      <span>{count(p.row?.sandboxCount, 'sandbox', 'sandboxes')}</span>
+      <span>{count(p.row?.workspaceCount, 'workspace', 'workspaces')}</span>
+    </span>
+    {!!machines?.length && <span className="store-project-machines" title={`Sandbox machines: ${machines.join(', ')}`}>{machines.join(' · ')}</span>}
+  </button>
 }
 
 /** A sqlite Store's backups in one line, a menu of the backup moves. */

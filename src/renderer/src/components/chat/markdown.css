@@ -19,7 +19,7 @@
 .chat-markdown p { white-space: pre-wrap; }
 .chat-markdown strong { font-weight: 600; }
 .chat-markdown a {
-  color: var(--primary);
+  color: var(--link);
   text-decoration: underline;
   text-decoration-color: color-mix(in oklab, var(--primary) 30%, transparent);
   text-underline-offset: 3px;
@@ -66,7 +66,7 @@
   overflow: hidden;
   border: 1px solid color-mix(in oklab, var(--foreground) 8%, transparent);
   border-radius: 8px;
-  background: color-mix(in oklab, var(--background) 58%, transparent);
+  background: var(--code-background);
 }
 .chat-md-code-header {
   display: flex;

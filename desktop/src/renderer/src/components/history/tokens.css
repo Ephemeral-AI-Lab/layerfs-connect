@@ -1,0 +1,19 @@
+/* Plain Git-style history; UI surfaces inherit the shared Connect theme. */
+:root {
+  --history-trunk: var(--text-secondary);
+  --history-trunk-ink: var(--text-primary);
+  --history-bough-0: oklch(53% 0.10 245);
+  --history-bough-1: oklch(53% 0.09 305);
+  --history-bough-2: oklch(55% 0.10 50);
+  --history-bough-3: oklch(51% 0.07 195);
+  --history-bough-4: oklch(53% 0.10 355);
+  --history-bough-5: oklch(52% 0.08 150);
+  --history-paper: var(--card);
+  --history-rule: var(--border-default);
+  --history-ink: var(--text-primary);
+  --history-muted: var(--text-secondary);
+  --history-wash: var(--card);
+  --history-selection: var(--ring);
+  --history-control-shadow: 0 2px 6px rgb(35 39 29 / 4%);
+  --history-shadow: 0 5px 22px rgb(35 39 29 / 8%);
+}

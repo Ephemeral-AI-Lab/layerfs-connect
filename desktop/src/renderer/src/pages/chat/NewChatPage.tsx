@@ -1,3 +1,4 @@
+import { readDraft, saveDraft } from '@/layerfs/chat-drafts'
 // The app's start page: a new chat. The composer picks the chat's LayerFS
 // project (or none), where it works (a new scratch folder by default) and its
 // model; sending makes the chat, sends the first message and opens it.
@@ -13,6 +14,7 @@ import { upsertChat } from '@/layerfs/use-chats'
 import { useProjects } from '@/layerfs/use-projects'
 import { useLayout } from '@/components/shell/layout-context'
 import { CHROME_CLUSTER_PX, macChrome, TRAFFIC_LIGHTS_PX } from '@/lib/platform'
+import { EXAMPLE_CHAT_PATH } from '@/layerfs/chat-sim'
 
 const MODEL_KEY = 'lfs.chat.model'
 type ModelChoice = { provider: string; modelId: string; thinkingLevel: string }
@@ -38,7 +40,8 @@ export function NewChatPage() {
   const [params] = useSearchParams()
   const catalog = useProjects()
   const { sidebarOpen } = useLayout()
-  const [text, setText] = useState('')
+  const [text, setText] = useState(() => readDraft('new'))
+  useEffect(() => saveDraft('new', text), [text])
   const [project, setProject] = useState(params.get('project') ?? '')
   const [workspace, setWorkspace] = useState<WorkspaceChoice>({ kind: 'scratch' })
   const [catalogModels, setCatalogModels] = useState<ChatModels | null>(null)
@@ -53,9 +56,13 @@ export function NewChatPage() {
     void chatHost.models().then(
       (snapshot) => {
         setCatalogModels(snapshot)
-        setModel((current) => current ?? snapshot.selected)
+        setModel((current) => {
+          const ready = snapshot.models.filter((m) => snapshot.providers.some((p) => p.id === m.provider && p.hasKey))
+          const valid = (choice: ModelChoice | null) => choice && ready.some((m) => m.provider === choice.provider && m.id === choice.modelId)
+          return valid(current) ? current : valid(snapshot.selected) ? snapshot.selected : ready[0] ? { provider: ready[0].provider, modelId: ready[0].id, thinkingLevel: 'off' } : null
+        })
       },
-      () => setCatalogModels({ models: [], selected: null, providers: [] }),
+      (cause: Error) => { setError(`Could not load Pi models: ${cause.message}`); setCatalogModels({ models: [], selected: null, providers: [] }) },
     )
   }, [])
 
@@ -114,6 +121,10 @@ export function NewChatPage() {
       <div className="drag h-[46px] shrink-0" style={{ marginLeft: lead }} />
       <div className="mx-auto flex w-full max-w-[760px] flex-1 flex-col px-5 pb-16 pt-[14vh]">
         <h1 className="mb-6 text-center text-20 font-medium leading-7 text-[var(--text-primary)]">What should we work on?</h1>
+        {catalogModels && !models.length && <div className="mb-4 flex items-center justify-between gap-3 rounded-xs border border-[var(--border-default)] px-4 py-3 text-13">
+          <div><p className="font-medium">Connect a model to start</p><p className="mt-1 text-12 text-[var(--text-secondary)]">Sign in to a provider or add an API key. Pi will run your chat and tools.</p></div>
+          <button type="button" onClick={() => navigate('/settings')} className="shrink-0 rounded-full bg-primary px-3 py-2 text-primary-foreground">Connect model</button>
+        </div>}
         <Composer
           value={text}
           onChange={setText}
@@ -135,6 +146,13 @@ export function NewChatPage() {
           end={<ModelPicker value={model} models={models} onChange={chooseModel} />}
         />
         <p className="mt-2.5 px-1 text-12 text-[var(--text-tertiary)]">{where}</p>
+        {model && <p className="mt-1 px-1 text-12 text-[var(--text-tertiary)]">Pi agent · {model.provider} / {model.modelId}</p>}
+        <div className="mt-5 px-1 text-center text-13 text-[var(--text-secondary)]">
+          <button type="button" onClick={() => navigate(EXAMPLE_CHAT_PATH)} className="underline underline-offset-4 hover:text-[var(--text-primary)]">
+            Explore an example chat
+          </button>
+          <p className="mt-1.5 text-12 text-[var(--text-tertiary)]">Simulated conversation, Trace, and Subagents. No model needed.</p>
+        </div>
         {error && <p role="alert" className="mt-2 px-1 text-12 text-destructive">{error}</p>}
       </div>
     </div>

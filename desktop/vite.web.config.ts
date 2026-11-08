@@ -1,5 +1,5 @@
 // The renderer alone in a browser, for quick layout checks and headless
-// screenshots: `pnpm web`, then http://localhost:5288/#/machines (?mac=1 for
+// screenshots: `pnpm web`, then http://127.0.0.1:1025/#/machines (?mac=1 for
 // macOS spacing). It starts a simulated LayerFS host of its own (../host, in a
 // temporary state folder) and hands the page its address in <meta name="lfs-host">.
 import { spawn } from 'node:child_process'
@@ -54,7 +54,8 @@ export default defineConfig({
   resolve: { alias: { '@': resolve(import.meta.dirname, 'src/renderer/src') } },
   plugins: [react(), tailwindcss(), simulatedHost()],
   server: {
-    port: 5288,
+    host: '127.0.0.1',
+    port: 1025,
     strictPort: true,
     // WALLPAPER_DIR lets ?wallpaper=/@fs/<dir>/<file> preview a local image.
     fs: { allow: [import.meta.dirname, ...(process.env.WALLPAPER_DIR ? [process.env.WALLPAPER_DIR] : [])] },

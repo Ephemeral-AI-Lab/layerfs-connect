@@ -96,7 +96,7 @@ export interface HostStatus {
 }
 
 /** A Sandbox's platform as sandbox.create records it (`mac` for a native macOS Sandbox). */
-export type SandboxPlatform = 'docker' | 'mac' | 'linux' | 'apple-container' | 'microsandbox' | 'lima' | 'firecracker' | 'ssh'
+export type SandboxPlatform = 'docker' | 'mac' | 'linux' | 'apple-container' | 'microsandbox' | 'lima'
 
 /** How a Sandbox runs: a Docker container, a host process (native), or Linux namespaces in a machine's VM. */
 export type SandboxRuntime = 'docker' | 'native' | 'namespaces'
@@ -105,9 +105,10 @@ export type SandboxRuntime = 'docker' | 'native' | 'namespaces'
 
 /**
  * A machine's kind. `native` and `docker` are built in; the VM kinds are
- * created; `ssh` hosts are connected.
+ * created. LayerFS's `ssh` and `firecracker` are turned off in Connect: the
+ * host offers neither, and a machine of either kind shows by its raw name.
  */
-export type MachinePlatform = 'native' | 'docker' | 'apple-container' | 'microsandbox' | 'lima' | 'firecracker' | 'ssh'
+export type MachinePlatform = 'native' | 'docker' | 'apple-container' | 'microsandbox' | 'lima'
 
 /** One entry of machine.list().machines (2.0's machine/calls.rs). */
 export interface MachineInfo {
@@ -129,16 +130,11 @@ export interface MachineInfo {
   sandboxes: string[]
   /** Its Sandbox image (a digest, or an archive path). */
   image?: string
-  /** firecracker: the nested lima machine it runs in. */
-  host?: string
-  /** lima: made able to host Firecracker machines. */
-  nested?: boolean
   /** docker: the Docker socket. */
   docker?: string
   /** docker on Windows: the WSL distribution. */
   wsl?: string
   error?: string
-  ssh?: { host: string; user: string; port: number; identity: string | null; root: string | null }
 }
 
 /** A sqlite Store on a machine (store.list()). */
@@ -179,7 +175,7 @@ export interface MachineSandbox {
   workspaces: number | null
 }
 
-/** machine.status(name) for a VM or ssh machine (built-ins are not asked). */
+/** machine.status(name) for a VM (built-ins are not asked). */
 export interface MachineLive {
   op?: SdkOperation | null
   name: string
@@ -213,10 +209,16 @@ export type MachinesView =
       reason: string
     }
 
-/** POST /api/machines: a VM (`platform` a VM kind) or an ssh host (`platform: 'ssh'`). */
-export type NewMachine =
-  | { platform: Exclude<MachinePlatform, 'native' | 'docker' | 'ssh'>; name: string; cpus?: number; memory?: number; disk?: number; image?: string; os_image?: string; host?: string; nested?: boolean }
-  | { platform: 'ssh'; name: string; host: string; user?: string; port?: number; identity?: string; known_hosts?: string; root?: string }
+/** POST /api/machines: a VM (`platform` a VM kind). */
+export interface NewMachine {
+  platform: Exclude<MachinePlatform, 'native' | 'docker'>
+  name: string
+  cpus?: number
+  memory?: number
+  disk?: number
+  image?: string
+  os_image?: string
+}
 
 // ---------- Projects (real LayerFS reads) ----------
 

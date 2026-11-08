@@ -61,8 +61,8 @@ filed as a LayerFS question (§9). A live check on this Mac passes, covering:
   `layerfs.json`, `machine/`, `store/` (projects nested), `backup/`, `trace/` and `log/`.
   The old per-deployment settings (`LAYERFS_DOCKER/IMAGE/DAEMON/VOLUME/STORE_PATH/…`) are ignored.
 - **Machines are compute.**
-  - `native` and `docker` are built in. VM kinds (apple-container, microsandbox, lima, firecracker)
-    are created; ssh hosts are connected.
+  - `native` and `docker` are built in. VM kinds (apple-container, microsandbox, lima) are created.
+    LayerFS also has Firecracker VMs and ssh hosts; Connect turns both off (host/machines.js `OFF`).
   - **Power is manual** (#535 D11). A machine runs between `machine.start` and `machine.stop`; no
     other call starts one, and none stops one when idle. No read starts a machine: Connect's pages
     use list, get, status and `layerfs.doctor()` only, and offer **Start** where a stopped machine is
@@ -394,6 +394,12 @@ filed as a LayerFS question (§9). A live check on this Mac passes, covering:
       at exit (`closeStores()`, `host/layerfs.js`). A process that ends without it (a crash, a
       kill) leaves stale leases, and taking a lease now removes a Store's stale ones under its lock,
       so the Store's next call clears them.
+
+17. **Sandbox resource telemetry.** `sandbox.list` / `sandbox.get` do not report
+    per-Sandbox CPU, memory or disk usage. Machine allocations/free disk are not
+    Sandbox usage. Machine inventory cards show those fields as "Not reported";
+    real measurements need an upstream LayerFS telemetry API. Filesystem kind is
+    available independently as the Sandbox's `route` (`fuse` / `nfs`).
 
 ## 10. Owner decisions
 

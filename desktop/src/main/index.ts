@@ -8,10 +8,15 @@ const isMac = process.platform === 'darwin'
 
 let mainWindow: BrowserWindow | null = null
 
-// The LayerFS host lives in the repository's host/ folder, next to desktop/.
-const host = new LayerfsHost(join(app.getAppPath(), '..', 'host'), (message: LayerfsStreamMessage) => {
+// Packaged apps carry their own host, production dependencies and Node runtime.
+// Development keeps using the repository's host/ folder beside desktop/.
+const hostDir = app.isPackaged
+  ? join(process.resourcesPath, 'backend', 'host')
+  : join(app.getAppPath(), '..', 'host')
+const runtimeBin = app.isPackaged ? join(process.resourcesPath, 'runtime', 'bin') : null
+const host = new LayerfsHost(hostDir, (message: LayerfsStreamMessage) => {
   if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('layerfs:stream', message)
-})
+}, runtimeBin)
 app.once('will-quit', () => host.close())
 
 const fromMainWindow = (event: Electron.IpcMainInvokeEvent) => {
@@ -53,12 +58,12 @@ function createWindow(): void {
     show: false,
     title: isMac ? '' : 'LayerFS Connect',
     // macOS: the sidebar is native vibrancy; the renderer paints the main pane itself.
-    backgroundColor: isMac ? '#00000000' : '#EDF3FA',
+    backgroundColor: isMac ? '#00000000' : '#FFFFFF',
     vibrancy: isMac ? 'sidebar' : undefined,
     visualEffectState: isMac ? 'active' : undefined,
     titleBarStyle: 'hidden',
     trafficLightPosition: isMac ? { x: 16, y: 16 } : undefined,
-    titleBarOverlay: isMac ? false : { color: '#EDF3FA', symbolColor: '#18181b', height: 44 },
+    titleBarOverlay: isMac ? false : { color: '#FFFFFF', symbolColor: '#18181b', height: 44 },
     webPreferences: {
       preload: join(import.meta.dirname, '../preload/index.mjs'),
       sandbox: false,

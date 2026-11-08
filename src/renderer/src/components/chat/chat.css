@@ -1,13 +1,12 @@
-/* Conversation surfaces share the app's matte surfaces and radii.
-   Dialogs, menus and history inherit glass-strong from the shared components. */
+/* Conversation surfaces use neutral theme layers above the shared canvas. */
 .chat-glass-card {
   --hl-comment: var(--muted-foreground);
-  --chat-glass-base: var(--glass-card-bg);
-  background-image: var(--chat-glass-base);
+  --chat-glass-base: var(--card);
+  background: var(--chat-glass-base);
 }
 
-/* The user's own message: the icon tile's powder blue. */
-.chat-user-message { --chat-glass-base: var(--grain), linear-gradient(180deg, #e8f0fa, #e0eaf7); }
+/* A small tonal difference distinguishes the user's message in either theme. */
+.chat-user-message { --chat-glass-base: var(--surface-pressed); }
 
 /* The optical highlight stays underneath text, syntax and action controls. */
 .chat-glass-card.spotlight::after { z-index: 0; }
@@ -15,9 +14,7 @@
 
 .chat-inset,
 .chat-transcript-block {
-  background-image: linear-gradient(145deg,
-    color-mix(in srgb, var(--background) 62%, transparent),
-    color-mix(in srgb, var(--background) 28%, transparent));
+  background: var(--muted);
 }
 
 .chat-message-body { overflow-wrap: anywhere; }
@@ -48,9 +45,7 @@
 }
 
 .chat-approval-log .chat-approval-card {
-  -webkit-backdrop-filter: none;
-  backdrop-filter: none;
-  box-shadow: var(--highlight);
+  box-shadow: none;
 }
 
 /* Workspace context sits above the input; only writing controls sit inside. */
@@ -141,7 +136,7 @@
   max-width: calc(100vw - 32px);
   padding: 6px;
   border-radius: 10px;
-  box-shadow: var(--glass-shadow), 0 8px 28px -8px rgb(25 35 65 / 18%);
+  box-shadow: var(--panel-shadow);
 }
 .chat-choice-menu [data-slot='dropdown-menu-item'],
 .chat-choice-menu [data-slot='dropdown-menu-radio-item'] {
@@ -182,10 +177,10 @@
   min-height: 36px;
   gap: 10px;
   padding: 7px 12px;
-  border: 1px solid var(--glass-border);
+  border: 1px solid var(--border);
   border-radius: 8px;
-  background: var(--glass-card-bg);
-  box-shadow: var(--highlight);
+  background: var(--card);
+  box-shadow: none;
   color: var(--foreground);
   font-size: 13px;
   line-height: 20px;
@@ -199,7 +194,7 @@
 }
 .chat-actions-menu [data-slot='dropdown-menu-item'][data-highlighted] {
   background: var(--accent);
-  border-color: color-mix(in srgb, var(--primary) 24%, var(--glass-border));
+  border-color: color-mix(in srgb, var(--primary) 24%, var(--border));
   color: var(--accent-foreground);
 }
 .chat-actions-menu .chat-actions-archive { margin-top: 4px; }
@@ -218,9 +213,9 @@
   align-items: center;
   justify-content: center;
   padding: 0 5px;
-  border: 1px solid var(--glass-border);
+  border: 1px solid var(--border);
   border-radius: 5px;
-  background: var(--glass-field-bg);
+  background: var(--muted);
   color: var(--muted-foreground);
   font-family: var(--font-sans);
   font-size: 11px;
@@ -234,7 +229,7 @@
   gap: 12px;
   margin-top: 5px;
   padding: 7px 8px 2px;
-  border-top: 1px solid var(--glass-border);
+  border-top: 1px solid var(--border);
   font-size: 11px;
   color: var(--muted-foreground);
 }
@@ -248,4 +243,64 @@
 
 @media (prefers-reduced-motion: reduce) {
   .chat-glass-card.spotlight::after { transition: none; }
+}
+
+/* Cindy's chat rhythm: a small identity and one generous writing surface. */
+.chat-welcome-heading { padding: 0 4px 4px; }
+.chat-welcome-identity {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--foreground);
+  font-size: clamp(21px, 3vw, 28px);
+  font-weight: 550;
+  letter-spacing: -0.025em;
+}
+.chat-welcome-heading h2 { margin: 0; }
+.chat-composer-surface {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--card);
+  box-shadow: none;
+}
+.chat-composer-surface:focus-within {
+  border-color: var(--ring);
+  box-shadow: 0 0 0 1px var(--ring);
+}
+.chat-composer-surface textarea { min-height: 64px; }
+.chat-welcome-composer .chat-composer-surface textarea { min-height: 104px; }
+.chat-composer-tools { align-items: flex-end; gap: 10px; }
+.chat-model-selectors { margin-left: auto; justify-content: flex-end; }
+.chat-composer-meta { margin-bottom: 8px; }
+.chat-composer-toolbar { padding-top: 4px; }
+.chat-actions-menu [data-slot='dropdown-menu-item'] {
+  border-color: transparent;
+  background: transparent;
+}
+.chat-actions-menu [data-slot='dropdown-menu-item'][data-highlighted] {
+  background: var(--surface-hover);
+  border-color: transparent;
+  color: var(--foreground);
+}
+@container workspace (max-width: 32rem) {
+  .chat-welcome-composer { padding-inline: 16px; }
+  .chat-welcome { gap: 16px; }
+}
+@container (max-width: 440px) {
+  .chat-model-selectors { justify-content: flex-start; }
+  .chat-thinking-trigger { height: 26px; }
+}
+
+/* Reading stays on the page; only tool output and the user's message need a surface. */
+.chat-assistant-message.chat-glass-card {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.chat-assistant-message.spotlight::after { display: none; }
+.chat-user-message.chat-glass-card {
+  border-color: transparent;
+  border-radius: 12px;
+  box-shadow: none;
 }

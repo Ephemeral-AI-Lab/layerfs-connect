@@ -17,7 +17,7 @@ export function MainLayout() {
         if ('page' in place) {
           const m = place.focus ? /^(store|machine):(.+?)(?:#\d+)?$/.exec(place.focus) : null
           navigate(m ? `/${place.page}/${encodeURIComponent(m[2])}` : `/${place.page}`)
-        } else navigate(`/storage/${encodeURIComponent(place.project.split('/')[0])}`)
+        } else navigate(`/storage/${place.project.split('/').map(encodeURIComponent).join('/')}/${place.tab ?? 'files'}`)
       }),
     [navigate],
   )
@@ -36,7 +36,7 @@ export function MainLayout() {
     <LayoutContext.Provider value={layout}>
       <div className={cn('relative flex h-screen text-foreground', dragging && 'cursor-col-resize select-none')}>
         <Sidebar width={width} open={sidebarOpen} dragging={dragging} onResizeStart={startDrag} />
-        <ChromeActions />
+        <ChromeActions sidebarWidth={width} dragging={dragging} />
         <main className="bg-content-area relative flex min-w-[400px] flex-1 flex-col overflow-hidden">
           <div key={section} className="flex min-h-0 flex-1 animate-in fade-in-0 duration-150 flex-col">
             <Outlet />

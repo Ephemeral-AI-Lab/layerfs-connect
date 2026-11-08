@@ -20,7 +20,7 @@ Opens from: app launch; the window shows one place at a time.
 
 | [n] | Component | file:line | one line |
 |---|---|---|---|
-| 1 | `AppSidebar` | App.tsx:186 | 16rem; folds to width 0 |
+| 1 | `AppSidebar` | App.tsx:186 | 260px; folds to width 0 |
 | 2 | `SimStrip` | mode-switch.tsx:36 | Sim mode only: 3px stripes over the top edge |
 | 3 | `WindowBar` | window-bar.tsx:15 | Drag handle clear of the window controls |
 | 4 | `main.tab-body` | App.tsx:190 | The page for the current place |
@@ -30,9 +30,9 @@ Opens from: app launch; the window shows one place at a time.
 ## Sidebar
 
 ```text
-+-[1] Brand ------------------------------------+
-| <connect-mark> LayerFS Connect     [<hide>]   |
-| [2 <chat+> New chat                       ]   |
++-[1] Window controls --------------------------+
+|                                  [<hide>]   |
+| [2 <chat+> New                            ]   |
 +-[3] Pages ------------------------------------+
 | ( <project> Projects                      )   |
 |   <cpu>     Machines                          |
@@ -41,7 +41,9 @@ Opens from: app launch; the window shows one place at a time.
 | CHATS                                   [+]   |
 | [6] v <project> api  shop                 3   |
 |   [7]  Add login form                     x   |
-|        Fix failing tests                  x   |
+|        Working                     just now   |
+|        Fix failing tests                      |
+|        Idle                          3m ago   |
 |        ...                                    |
 |   [8]  Show all ( 7 )                         |
 |     > <project> notes  lab                1   |
@@ -59,11 +61,11 @@ Opens from: app launch; the window shows one place at a time.
 |---|---|---|---|
 | 1 | `SidebarHeader` | app-sidebar.tsx:121 | Hide sidebar (Cmd+B / Ctrl+B) |
 | 2 | `.shell-new-chat` | app-sidebar.tsx:129 | A new chat, no project |
-| 3 | pages nav | app-sidebar.tsx:142 | Glass pill on the current page; a project lights Projects |
+| 3 | pages nav | app-sidebar.tsx:142 | Neutral selected row on the current page; a project lights Projects |
 | 4 | Storage job dot | app-sidebar.tsx:167 | Pulsing: "{n} running"; red: "{n} failed" |
 | 5 | `ChatList` | app-sidebar.tsx:212 | Unarchived chats by project, newest group first |
 | 6 | `ChatGroup` | app-sidebar.tsx:356 | Folds; hover: Open project {name}, New chat on {name} |
-| 7 | `ChatRow` | app-sidebar.tsx:625 | Title or "New session"; x: Delete conversation |
+| 7 | `ChatRow` | app-sidebar.tsx:625 | Title, actual status and relative time; x on hover/focus: Delete conversation |
 | 8 | `ShowAll` | app-sidebar.tsx:641 | After 5 chats; "Show all" + count / "Show fewer" |
 | 9 | No project group | app-sidebar.tsx:302 | Local-folder chats; + "New chat on a local folder" |
 | 10 | footer | app-sidebar.tsx:186 | Settings opens the dialog on its last section |
@@ -263,3 +265,76 @@ Cross links      go.store    Store chips and links (project, machine, bucket car
   project), then `<laptop> LOCAL CHATS [+]`; the filter menu is All sessions / Running n.
 - The sidebar passes `newTab` on Cmd/Ctrl-click and middle-click; App's `select()` ignores it.
 - No toasts and no app-wide error boundary.
+
+## Theme and compact layout
+
+```text
+[1] One plain theme canvas across the window
+ +-[2] Sidebar / thin divider---+-[3] Content--------------------+
+ | quiet navigation and chats  | neutral raised composer           |
+ | Settings + Real/Simulated   | opaque technical surfaces       |
+ +-----------------------------+--------------------------------+
+ [4] Menus and dialogs: opaque raised surface, neutral scrim
+```
+
+One fixed light theme; no theme or wallpaper controls. Tokens: `tokens.css`;
+surface adapter: `cindy-theme.css`. The canvas remains continuous when the sidebar folds. At renderer widths below 768px the sidebar starts closed and opens as
+an opaque overlay with a dismiss scrim; the native window keeps its existing
+900px minimum width. Keyboard shortcuts and window dragging remain available.
+
+Color/material: cool neutral light gray main canvas, a milky composer, and native
+macOS sidebar vibrancy under a neutral tint; other platforms use a solid sidebar.
+No grain texture, blue bevels, dark theme, or wallpaper controls.
+
+
+### Desktop palette (`desktop/`)
+
+```text
+[1] White page and title bar
+ +-[2] Light gray sidebar-----+-[3] White content----------------+
+ | white selected row        | white cards and menus           |
+ | neutral hover fills       | light gray fields               |
+ +---------------------------+---------------------------------+
+```
+
+Desktop tokens: `desktop/src/renderer/src/styles/globals.css`; native window
+fill and title bar: `desktop/src/main/index.ts`. Surfaces use neutral white and
+light gray, including the macOS sidebar tint. Blue remains for links and focus;
+status and data colors retain their semantic meaning.
+
+
+## Desktop secondary settings sidebar
+
+Source: desktop/src/renderer/src/components/shell/Sidebar.tsx
+
+```text
++-Workspace sidebar----------+     +-Settings sidebar-----------+
+| [icon] LayerFS Connect [Fold / Unfold] | | [<- Back to workspace] [Fold / Unfold] |
+| New chat                   |     |                             |
+| Example chat               |     | Settings                    |
+| Machines                   |     | ( Models / Tools / Agents / Hooks ) |
+| Storage                    |     |                             |
+| Chats                      |     |                             |
+| ...                        |     |                             |
+|                            |     |                             |
+| User             [Settings]| <-> | User             [Settings] |
++----------------------------+     +-----------------------------+
+                                   Main pane: model connection
+```
+
+The bottom Settings button toggles the sidebar mode. Settings opens Models;
+the same button or Back to workspace restores the previous workspace route.
+Model setup is available only in the secondary navigation. Browser Back and
+Forward keep the sidebar aligned with the route. Both sidebars share their
+width, window controls and footer. Unsent chat text survives the switch.
+
+The main sidebar's first row shows the user-supplied LayerFS mark (`assets/layerfs-logo.png`) and
+"LayerFS Connect" name on the left, with the sidebar fold/unfold icon at the right.
+The name truncates when space is limited, with the full name available on hover.
+The first row keeps only the sidebar fold/unfold icon at the sidebar's right
+edge; the menu and browser history arrow buttons are removed. In Settings,
+Back to workspace sits on the left in that same row. The toggle follows sidebar
+resizing and stays accessible at the top left when folded. At narrow sidebar widths the return label truncates;
+the full label remains available to assistive technology and on hover.
+
+The secondary sidebar also links Tools, Agents and Hooks to their Pi configuration panels.

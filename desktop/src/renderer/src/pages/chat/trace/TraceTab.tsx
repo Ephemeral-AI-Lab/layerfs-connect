@@ -10,9 +10,10 @@ import { useTrace } from '@/layerfs/use-trace'
 import { filterItems, groupTrace, totals } from './rows'
 import { TraceToolbar } from './TraceToolbar'
 import { TraceTurn } from './TraceTurn'
+import { TraceChatPath } from './scope'
 
-export function TraceTab({ chat }: { chat: ChatDetail }) {
-  const { page, records, earlier, loadEarlier, loadingOlder, error } = useTrace(chat.id)
+export function TraceTab({ chat, childId }: { chat: ChatDetail; childId?: string }) {
+  const { page, records, earlier, loadEarlier, loadingOlder, error } = useTrace(chat.id, childId)
   const [params] = useSearchParams()
   const focus = params.get('at')
   const [query, setQuery] = useState('')
@@ -23,7 +24,7 @@ export function TraceTab({ chat }: { chat: ChatDetail }) {
   const groups = useMemo(() => groupTrace(records), [records])
   const sum = useMemo(() => totals(records), [records])
   const filtering = !!query.trim() || failures
-  const focusTurn = focus ? groups.find((g) => g.items.some((i) => i.row.callId === focus))?.turn : undefined
+  const focusTurn = focus ? groups.find((g) => g.items.some((i) => (i.row.callId ?? i.row.id) === focus))?.turn : undefined
   const lastTurn = groups.at(-1)?.turn
 
   // a turn is open when you opened it, else when a filter or the focus needs it, else the last (all when few)
@@ -31,6 +32,11 @@ export function TraceTab({ chat }: { chat: ChatDetail }) {
   const allOpen = groups.every((g) => isOpen(g.turn))
   const toggle = (turn: number) => setOpened((m) => new Map(m).set(turn, !isOpen(turn)))
   const setAll = (open: boolean) => setOpened(new Map(groups.map((g) => [g.turn, open])))
+
+  // A History link may target a step outside the latest page.
+  useEffect(() => {
+    if (focus && focusTurn === undefined && earlier > 0 && !loadingOlder && !error) void loadEarlier()
+  }, [focus, focusTurn, earlier, loadingOlder, error, loadEarlier])
 
   // scroll the focused row into view once it is drawn
   const [scrolled, setScrolled] = useState<string | null>(null)
@@ -55,6 +61,7 @@ export function TraceTab({ chat }: { chat: ChatDetail }) {
   const shown = groups.map((g) => ({ group: g, items: filterItems(g.items, { query, failures }) })).filter((g) => !filtering || g.items.length > 0)
 
   return (
+    <TraceChatPath.Provider value={`/chat/${encodeURIComponent(chat.id)}${childId ? `/subagents/${encodeURIComponent(childId)}` : ''}`}>
     <div className="min-h-0 flex-1 overflow-y-auto">
       <div className="mx-auto w-full max-w-[1040px] px-5 pb-10">
         <div className="sticky top-0 z-10 bg-content-area pt-4">
@@ -72,6 +79,7 @@ export function TraceTab({ chat }: { chat: ChatDetail }) {
             onAll={setAll}
           />
         </div>
+        {focus && focusTurn === undefined && earlier === 0 && <p role="status" className="mb-3 text-12 text-muted-foreground">The linked Trace step is no longer available.</p>}
         {error && <p role="alert" className="mb-2 text-12 text-destructive">{error}</p>}
         {earlier > 0 && (
           <button
@@ -107,5 +115,6 @@ export function TraceTab({ chat }: { chat: ChatDetail }) {
         )}
       </div>
     </div>
+    </TraceChatPath.Provider>
   )
 }

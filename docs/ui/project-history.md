@@ -257,3 +257,9 @@ An empty graph reads "No Commits or Layers yet." (`lineage-graph.tsx:187`).
   `runId` no run is read, so no Commit has an agent: no AgentDot in the tree, no "By" row, no agent
   dots on graph rows or Map labels, and the first focus never picks a busy Branch. Without
   `initialItem` the MissingNote never shows. `tick` would only matter without `state`.
+
+## Current desktop renderer
+
+The Storage project History tab uses `components/history/ProjectHistory.tsx`, shared with chat.
+It shows centered main, branch families, expandable checkpoint groups and changed paths.
+The Lineage/Map description above belongs to the older root renderer.

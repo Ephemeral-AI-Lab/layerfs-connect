@@ -217,7 +217,7 @@ export function Composer({
   return (
     <div className={cn('chat-composer relative w-full', className)} onDragOver={(event) => { if (event.dataTransfer.types.includes('Files')) event.preventDefault() }} onDrop={(event) => { if (event.dataTransfer.files.length) { event.preventDefault(); void addFiles([...event.dataTransfer.files]) } }}>
       {showCommands && (
-        <div className="chat-popover glass-strong absolute right-0 bottom-full left-0 z-30 mb-2 overflow-hidden rounded-2xl border border-foreground/[0.08] p-1.5 shadow-lg">
+        <div className="chat-popover glass-strong absolute right-0 bottom-full left-0 z-30 mb-2 overflow-hidden rounded-2xl border border-foreground/[0.08] p-1.5">
           <div id={commandListId} role="listbox" aria-label={t("Chat commands")} className="max-h-60 overflow-y-auto">
             {matches.map((command, index) => (
               <button
@@ -243,7 +243,7 @@ export function Composer({
         </div>
       )}
       <div
-        className="chat-composer-surface glass-liquid relative flex flex-col gap-1.5 rounded-3xl p-2.5 transition-[border-color,box-shadow] duration-(--dur-base) focus-within:border-primary/25 focus-within:shadow-[0_14px_36px_-10px_rgba(15,23,42,0.08),inset_0_1px_0_rgba(255,255,255,1)]"
+        className="chat-composer-surface relative flex flex-col gap-1.5 rounded-xl p-2.5 transition-[border-color,box-shadow] duration-(--dur-base)"
       >
         {onAttachments && <input ref={picker} type="file" multiple className="hidden" tabIndex={-1} accept="text/*,application/json,application/javascript,application/typescript,application/xml,application/yaml,application/x-yaml,image/png,image/jpeg,image/webp,image/gif,.md,.ts,.tsx,.jsx,.py,.sh,.toml,.log" aria-label={t("Attach files")} onChange={(event) => { void addFiles([...event.target.files ?? []]); event.target.value = '' }} />}
         {!!attachments.length && <div className="px-2 pt-1"><AttachmentList attachments={attachments} disabled={disabled || reading} onRemove={(id) => onAttachments?.(attachments.filter((attachment) => attachment.id !== id))} /></div>}
@@ -310,7 +310,7 @@ export function Composer({
                 disabled={disabled}
                 title={t("Stop agent (Esc)")}
                 aria-label={t("Stop agent")}
-                className="flex size-8 shrink-0 items-center justify-center rounded-full bg-foreground/90 text-background shadow-xs transition-transform hover:bg-foreground hover:scale-105 active:scale-95"
+                className="flex size-8 shrink-0 items-center justify-center rounded-full bg-foreground/90 text-background transition-colors hover:bg-foreground"
               >
                 <Square className="size-3 fill-current" />
               </button>
@@ -325,7 +325,7 @@ export function Composer({
               className={cn(
                 'flex size-8 shrink-0 items-center justify-center rounded-full transition-all duration-(--dur-fast) outline-none focus-visible:ring-2 focus-visible:ring-ring',
                 canSend
-                  ? 'btn-primary bg-primary text-primary-foreground shadow-sm hover:scale-105 active:scale-95'
+                  ? 'chat-send-ready bg-foreground text-background hover:opacity-90 active:scale-95'
                   : 'bg-foreground/[0.06] text-faint/60 cursor-not-allowed',
               )}
             >

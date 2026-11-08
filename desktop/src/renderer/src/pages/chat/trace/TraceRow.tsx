@@ -2,7 +2,9 @@
 // checkpoints, exit code), how long it took and how it ended. Click opens its
 // detail; a tool row's LayerFS calls sit under it, folded to a count.
 import { ChevronRight, Layers, LoaderCircle } from 'lucide-react'
-import { forwardRef, useState } from 'react'
+import { forwardRef, useContext, useState } from 'react'
+import { Link } from 'react-router-dom'
+import { TraceChatPath, historyLink } from './scope'
 import { LfsIcon } from '@/components/layerfs/LfsIcons'
 import { callColor, callIcon, duration } from '@/layerfs/call-labels'
 import type { TraceRecord } from '@/layerfs/trace-api'
@@ -112,7 +114,10 @@ interface RowProps {
 }
 
 export const TraceRow = forwardRef<HTMLDivElement, RowProps>(function TraceRow({ chatId, row, calls, only, showCalls, focused, defaultOpen = false, turnStart }, ref) {
-  const [open, setOpen] = useState(defaultOpen)
+  const [opened, setOpen] = useState(defaultOpen)
+  const open = opened || focused
+  const chatPath = useContext(TraceChatPath) ?? `/chat/${encodeURIComponent(chatId)}`
+  const firstWrite = row.writes?.find(w => w.commit && w.status === 'ok')
   const [callsOpen, setCallsOpen] = useState<boolean | null>(null)
   const head = headline(row)
   const listed = only ?? calls
@@ -145,9 +150,9 @@ export const TraceRow = forwardRef<HTMLDivElement, RowProps>(function TraceRow({
         <span className="flex shrink-0 items-center gap-2 text-12 tabular-nums text-[var(--text-tertiary)]">
           {row.kind === 'system' && row.sections?.length ? <span className="hidden @min-[720px]/chat:inline">{row.sections.length} sections</span> : null}
           {row.checkpoints && row.checkpoints.length > 0 && (
-            <span title="Auto-checkpoints this call made" className="rounded-full bg-[var(--surface-hover)] px-1.5 font-mono text-11 text-[var(--text-secondary)]">
+            <Link to={historyLink(chatPath, firstWrite?.commit, firstWrite?.branch, row.callId ?? row.id)} title="Show this call’s checkpoints in History" className="rounded-full bg-[var(--surface-hover)] px-1.5 font-mono text-11 text-[var(--text-secondary)]">
               {checkpointLabel(row.checkpoints)}
-            </span>
+            </Link>
           )}
           {refused > 0 && <span className="text-destructive">{refused} refused</span>}
           {row.kind === 'tool' && row.exitCode != null && row.exitCode !== 0 && <span className="text-destructive">exit {row.exitCode}</span>}

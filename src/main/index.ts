@@ -191,13 +191,15 @@ function createWindow(bounds?: Electron.Rectangle): BrowserWindow {
     show: false,
     title: isMac ? '' : mode === 'sim' ? 'LayerFS Connect (Simulated)' : 'LayerFS Connect',
     icon: ICON,
-    backgroundColor: '#F6F6F7',
+    backgroundColor: isMac ? '#00000000' : '#F4F4F2',
+    vibrancy: isMac ? 'sidebar' : undefined,
+    visualEffectState: isMac ? 'active' : undefined,
     titleBarStyle: 'hidden',
     trafficLightPosition: isMac ? { x: 16, y: 16 } : undefined,
     titleBarOverlay: isMac
       ? false
       : {
-          color: '#f6f7fa',
+          color: '#F4F4F2',
           symbolColor: '#18181b',
           height: 38,
         },
@@ -212,10 +214,9 @@ function createWindow(bounds?: Electron.Rectangle): BrowserWindow {
   if (!isMac && win.setTitleBarOverlay) {
     const updateOverlay = () => {
       if (win.isDestroyed()) return
-      const dark = nativeTheme.shouldUseDarkColors
       win.setTitleBarOverlay({
-        color: dark ? '#10121a' : '#f6f7fa',
-        symbolColor: dark ? '#ededef' : '#18181b',
+        color: '#F4F4F2',
+        symbolColor: '#18181b',
         height: 38,
       })
     }

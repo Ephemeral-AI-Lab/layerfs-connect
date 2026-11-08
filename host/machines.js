@@ -1,7 +1,9 @@
 // Compute's machines (LayerFS 2.0, layerfs#533): `GET /api/machines` and the
 // calls the Compute page makes. A LayerFS 2.0 home's compute is a set of
-// machines: `native` and `docker` built in, VMs it creates (apple-container,
-// microsandbox, lima, firecracker) and ssh hosts it connects. A machine holds
+// machines: `native` and `docker` built in, and VMs it creates
+// (apple-container, microsandbox, lima). LayerFS's ssh hosts and Firecracker
+// machines are turned off in Connect (OFF): machine.platforms leaves them out
+// and machine.create refuses them. A machine holds
 // sqlite Stores; a project's Sandboxes run on its Store's machine. Power is
 // manual (#535 D11): a machine runs between machine.start and machine.stop,
 // and no call starts one on demand.
@@ -16,7 +18,10 @@
 import { layerfs, linkedVersion, pages, VIEW_WAIT_MS, workspacesOf } from './layerfs.js'
 
 const BUILT_IN = new Set(['native', 'docker'])
-const SSH = 'ssh'
+/** Platforms LayerFS has that Connect turns off: not offered, not created or connected. */
+export const OFF = new Set(['ssh', 'firecracker'])
+/** Create options only Firecracker used (a nested Lima machine hosts it): not offered either. */
+const OFF_OPTIONS = new Set(['nested', 'host'])
 /** States whose machine.status says something the list does not: free disk, or the op that holds it. */
 const ASK_STATUS = new Set(['running', 'creating', 'removing', 'unresolved', 'failed', 'unknown'])
 
@@ -42,12 +47,9 @@ export function machineOf(m) {
     stores: list(m.stores).map(String),
     sandboxes: list(m.sandboxes).map(String),
     ...(text(m.image) ? { image: m.image } : {}),
-    ...(text(m.host) ? { host: m.host } : {}),
-    ...(typeof m.nested === 'boolean' ? { nested: m.nested } : {}),
     ...(text(m.docker) ? { docker: m.docker } : {}),
     ...(text(m.wsl) ? { wsl: m.wsl } : {}),
     ...(text(m.error) ? { error: m.error } : {}),
-    ...(m.ssh && typeof m.ssh === 'object' ? { ssh: { host: String(m.ssh.host ?? ''), user: text(m.ssh.user) ?? 'root', port: num(m.ssh.port) ?? 22, identity: text(m.ssh.identity), root: text(m.ssh.root) } } : {}),
   }
 }
 
@@ -131,10 +133,11 @@ export class Machines {
     return { available: true, layerfs: this.version(), machines, platforms, stores, postgresql, sandboxes, status: Object.fromEntries(statuses.map((s) => [s.name, s])) }
   }
 
-  /** machine.platforms(): each platform on this host; starts nothing (PlatformsView). */
+  /** machine.platforms(): each platform on this host but the ones Connect turns off; starts nothing (PlatformsView). */
   async platforms() {
     const answer = await this.lfs.machine.platforms()
-    return { host: String(answer.host ?? ''), platforms: list(answer.platforms).map(platformOf) }
+    const rows = list(answer.platforms).map(platformOf).filter((p) => !OFF.has(p.platform))
+    return { host: String(answer.host ?? ''), platforms: rows.map((p) => ({ ...p, options: p.options.filter((o) => !OFF_OPTIONS.has(o.name)) })) }
   }
 
   /** machine.start(name): a stopped machine and its worker, waited for; native and a running one answer at once. */
@@ -149,42 +152,37 @@ export class Machines {
     return (await this.need()).machine.stop(name)
   }
 
-  /** The options `platform` declares for machine.create or machine.connect (machine.platforms), or null when unknown. */
+  /** The options `platform` declares for machine.create (machine.platforms), or null when unknown. */
   async declared(platform) {
     const row = (await this.platforms().catch(() => null))?.platforms.find((p) => p.platform === platform)
     return row ? row.options.map((o) => o.name) : null
   }
 
-  /** A VM: { name, platform, cpus?, memory?, disk?, image? (its Sandbox image), os_image?, host?, nested? }. */
+  /** A VM: { name, platform, cpus?, memory?, disk?, image? (its Sandbox image), os_image? }. */
   async create(body) {
     const lfs = await this.need()
     const { name, platform, ...rest } = body ?? {}
     if (!name || !platform) throw refuse('InvalidInput', 'a machine needs a name and a platform')
-    if (platform === SSH) throw refuse('InvalidInput', 'an ssh host is connected, not created')
+    if (OFF.has(platform)) throw refuse('Unsupported', `${platform} machines are turned off in Connect`)
     // the options this platform declares (machine.platforms); one it does not take is refused here, not sent
-    const declared = (await this.declared(platform)) ?? ['cpus', 'memory', 'disk', 'image', 'host', 'nested']
+    const declared = (await this.declared(platform)) ?? ['cpus', 'memory', 'disk', 'image']
     const given = pick(rest, Object.keys(rest))
     const extra = Object.keys(given).filter((k) => !declared.includes(k))
     if (extra.length) throw refuse('InvalidInput', `${platform} takes no ${extra.join(', ')} (its options: ${declared.join(', ') || 'none'})`)
     return lfs.machine.create(name, platform, given)
   }
 
-  /** An ssh host: { name, host, user?, port?, identity?, root? }. */
-  async connect(body) {
-    const lfs = await this.need()
-    const { name, host, ...rest } = body ?? {}
-    if (!name || !host) throw refuse('InvalidInput', 'an ssh machine needs a name and a host')
-    const declared = (await this.declared(SSH)) ?? ['user', 'port', 'identity', 'known_hosts', 'root']
-    return lfs.machine.connect(name, host, pick(rest, declared))
-  }
-
-  /** Removes a VM or disconnects an ssh host; LayerFS refuses InUse while it holds Stores or running Sandboxes. */
+  /**
+   * Removes a VM; LayerFS refuses InUse while it holds Stores or running
+   * Sandboxes. An ssh machine a home already had is disconnected, so it can
+   * still be cleared away.
+   */
   async remove(name) {
     const lfs = await this.need()
     if (BUILT_IN.has(name)) throw refuse('InvalidInput', `${name} is built in and can't be removed`)
     const m = list((await lfs.machine.list()).machines).find((x) => x.name === name)
     if (!m) throw refuse('NotFound', `no machine named ${name}`)
-    return m.platform === SSH ? lfs.machine.disconnect(name) : lfs.machine.remove(name)
+    return m.platform === 'ssh' ? lfs.machine.disconnect(name) : lfs.machine.remove(name)
   }
 
   /** A built-in's settings ({ image, docker, wsl }) or a VM's size ({ cpus, memory }). */

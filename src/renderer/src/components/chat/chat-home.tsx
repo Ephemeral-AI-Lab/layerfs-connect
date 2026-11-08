@@ -653,7 +653,7 @@ export function ChatHome({ projects, initialProject, initialSession, startNew, o
   )
 
   return (
-    <div className="relative flex h-svh min-h-0 flex-col overflow-hidden">
+    <div className="chat-page relative flex h-svh min-h-0 flex-col overflow-hidden">
       {/* the chat's name and project, then its views */}
       <header className={cn('chat-content-gutter w-full shrink-0 pt-1.5', fresh && 'hidden')}>
         <div className="flex min-h-10 min-w-0 flex-wrap items-center gap-x-2 gap-y-1.5 py-1.5">
@@ -667,7 +667,7 @@ export function ChatHome({ projects, initialProject, initialSession, startNew, o
                 title={t("Open {name}", { name: projectLabel(activeProject) })}
                 className="-ml-1.5 inline-flex h-7 min-w-0 max-w-[28%] items-center gap-1.5 rounded-lg px-1.5 text-[15px] font-medium text-muted-foreground outline-none transition-colors hover:bg-foreground/[0.05] hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
               >
-                <LfsProject className="size-4 shrink-0 text-primary/80" />
+                <LfsProject className="size-4 shrink-0 text-muted-foreground" />
                 <span className="min-w-0 truncate">{projectRef(activeProject).name}</span>
               </button>
               <span aria-hidden="true" className="shrink-0 text-[15px] text-faint">/</span>
@@ -680,7 +680,7 @@ export function ChatHome({ projects, initialProject, initialSession, startNew, o
           {session && <SubagentsMenu children={session.children} open={subagentsOpen} onOpenChange={setSubagentsOpen} current={childView} onOpen={(id) => { setChildView(id); setView('chat') }} />}
           {connection !== 'connected' && <span role="status" title={connection === 'reconnecting' ? t("Connection lost. Reconnecting to the host…") : t("Connecting to the host…")} className="order-2 inline-flex max-w-full items-center gap-1 text-[11px] text-muted-foreground @min-[42rem]/workspace:order-none"><WifiOff className="size-3 shrink-0" /><span>{connection === 'reconnecting' ? t("Reconnecting") : t("Connecting")}</span></span>}
           {running && connection === 'connected' && (
-            <span className="order-2 inline-flex max-w-full items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-1 text-[11px] leading-4 font-medium text-primary @min-[42rem]/workspace:order-none">
+            <span className="order-2 inline-flex max-w-full items-center gap-1.5 rounded-full bg-muted px-2.5 py-1 text-[11px] leading-4 font-medium text-muted-foreground @min-[42rem]/workspace:order-none">
               <LoaderCircle className="size-3 shrink-0 animate-spin" />
               {pendingApprovals ? t("Waiting for approval {count}", { count: pendingApprovals }) : reviewingApprovals ? t("Reviewing {count}", { count: reviewingApprovals }) : session?.execution?.phase === 'retrying' ? t("Retrying {count}", { count: session?.execution?.retryAttempt ?? 0 }) : session?.execution?.phase === 'children' ? t("Subagents working") : session?.execution?.phase === 'tool' ? t("Running tool") : session?.execution?.phase === 'stopping' ? t("Stopping") : t("Working")}
             </span>
@@ -770,16 +770,18 @@ export function ChatHome({ projects, initialProject, initialSession, startNew, o
         }}
         className={cn('min-h-0 flex-1 overflow-y-auto pt-3', fresh ? 'flex flex-col px-6 pb-7' : 'chat-content-gutter chat-conversation-scroll', openChild && 'hidden')}
       >
-        <div className={cn('flex w-full min-w-0 flex-col gap-5', fresh && 'mx-auto mt-auto max-w-3xl')}>
+        <div className={cn('flex w-full min-w-0 flex-col gap-5', fresh && 'chat-welcome mx-auto mt-auto max-w-5xl')}>
           {loading ? (
             <div role="status" className="flex items-center justify-center gap-2 py-24 text-sm text-muted-foreground">
               <LoaderCircle className="size-4 animate-spin text-primary" />  {t("Loading…")}
             </div>
           ) : fresh ? (
-            <h2 className="flex items-center justify-center gap-3 text-center text-[26px] font-semibold tracking-[-0.025em] text-foreground">
-              <ConnectMark className="size-10 shrink-0 drop-shadow-[0_1px_2px_rgb(40_70_120/0.18)]" />
-              {t("What would you like to build?")}
-            </h2>
+            <div className="chat-welcome-heading">
+              <h2 className="chat-welcome-identity">
+                <ConnectMark className="size-10 shrink-0" />
+                <span>LayerFS Connect</span>
+              </h2>
+            </div>
           ) : messages.length > 0 ? (
             <ConversationMessages
               key={session?.id}
@@ -852,8 +854,8 @@ export function ChatHome({ projects, initialProject, initialSession, startNew, o
         onBack={() => setChildView(null)}
         onStop={async (runId) => update(await agentHost.stopChild(session.id, runId))}
       />}
-      <div className={cn('shrink-0 pt-1 pb-5', fresh ? 'px-6' : 'chat-content-gutter', openChild && 'hidden')}>
-        <div className={cn('w-full', fresh && 'mx-auto max-w-3xl')}>
+      <div className={cn('shrink-0 pt-1 pb-5', fresh ? 'chat-welcome-composer px-6' : 'chat-content-gutter', openChild && 'hidden')}>
+        <div className={cn('w-full', fresh && 'mx-auto max-w-5xl')}>
           <div className="chat-composer-meta">
             {workspaceMenus()}
             <div className="chat-composer-status">

@@ -4,7 +4,7 @@
 import { CornerDownRight, LoaderCircle, Play, ShieldAlert, Square, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { chatHost, type ChatDetail } from '@/layerfs/agent-api'
+import { chatHost, type ChatDetail, type ChildRun } from '@/layerfs/agent-api'
 import { duration } from '@/layerfs/call-labels'
 
 const PHASE: Record<string, string> = {
@@ -28,7 +28,7 @@ function useElapsed(since: number | null | undefined) {
   return since ? now - since : null
 }
 
-export function ChatDock({ chat, onChange }: { chat: ChatDetail; onChange: (next: ChatDetail) => void }) {
+export function ChatDock({ chat, onChange, child, onStop, onContinue }: { chat: ChatDetail; onChange: (next: ChatDetail) => void; child?: ChildRun; onStop?: () => void; onContinue?: () => void }) {
   const [error, setError] = useState<string | null>(null)
   const run = (action: Promise<ChatDetail>) =>
     void action.then(onChange, (cause: Error) => setError(cause.message))
@@ -39,7 +39,9 @@ export function ChatDock({ chat, onChange }: { chat: ChatDetail; onChange: (next
   const elapsed = useElapsed(working ? chat.execution?.startedAt : null)
   const runningTool = [...chat.messages].reverse().find((m) => m.role === 'tool' && m.status === 'running')
   const toolLine = runningTool?.toolName === 'bash' ? String(runningTool.args?.command ?? '').split('\n').find((l) => l.trim() && !l.trim().startsWith('#')) : runningTool?.toolName
-  const status = phase === 'tool' && toolLine ? `Running ${toolLine.trim().slice(0, 80)}` : (PHASE[phase] ?? (working ? 'Working…' : ''))
+  const retryElapsed = useElapsed(phase === 'retrying' ? chat.execution?.retryAt : null)
+  const retrySeconds = retryElapsed === null ? null : Math.max(0, Math.ceil(-retryElapsed / 1000))
+  const status = phase === 'retrying' ? `Retry ${chat.execution?.retryAttempt ?? 1}${chat.execution?.retryMaxAttempts !== undefined ? ` of ${chat.execution.retryMaxAttempts}` : ''}${retrySeconds ? ` in ${retrySeconds}s` : ' · waiting for provider…'}` : phase === 'tool' && toolLine ? `Running ${toolLine.trim().slice(0, 80)}` : (PHASE[phase] ?? (working ? 'Working…' : ''))
 
   if (!pending.length && !working && !chat.queued.length && !chat.recovery?.required && !error) return null
   return (
@@ -63,11 +65,12 @@ export function ChatDock({ chat, onChange }: { chat: ChatDetail; onChange: (next
           <LoaderCircle className="size-3.5 shrink-0 animate-spin text-[var(--text-tertiary)]" />
           <span className="min-w-0 truncate text-[var(--text-secondary)]">{status}</span>
           {elapsed !== null && <span className="shrink-0 tabular-nums text-12 text-[var(--text-tertiary)]">{duration(elapsed)}</span>}
-          <Button size="sm" variant="outline" className="ml-auto h-7" onClick={() => run(chatHost.stop(chat.id))}>
+          <Button size="sm" variant="outline" className="ml-auto h-7" onClick={() => onStop ? onStop() : run(child ? chatHost.stopChild(chat.id, child.id) : chatHost.stop(chat.id))}>
             <Square className="size-3" /> Stop
           </Button>
         </div>
       )}
+      {working && chat.execution?.reason && <p role="status" className="break-words border-b border-border px-3.5 py-2 text-12 text-muted-foreground">{chat.execution.reason}</p>}
       {chat.queued.map((queued) => (
         <div key={queued.id} className="flex h-9 items-center gap-2 border-b border-[var(--border-default)] px-3.5 last:border-b-0">
           <CornerDownRight className="size-3.5 shrink-0 text-[var(--text-tertiary)]" />
@@ -84,7 +87,7 @@ export function ChatDock({ chat, onChange }: { chat: ChatDetail; onChange: (next
         <div className="flex h-10 items-center gap-2 px-3.5">
           <span className="min-w-0 flex-1 truncate text-[var(--text-secondary)]">The last run stopped part-way.</span>
           {chat.recovery.canContinue && (
-            <Button size="sm" variant="outline" className="h-7" onClick={() => run(chatHost.continue(chat.id))}>
+            <Button size="sm" variant="outline" className="h-7" onClick={() => onContinue ? onContinue() : run(chatHost.continue(chat.id))}>
               <Play className="size-3" /> Continue
             </Button>
           )}

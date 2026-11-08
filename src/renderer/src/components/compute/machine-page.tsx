@@ -6,9 +6,9 @@ import { t, useI18n } from '@/i18n'
 // you, then the Stores its Sandboxes can use (tabs: the sqlite Stores pushed
 // to its disk and the PostgreSQL Stores they reach), then its Sandboxes (from
 // any Store; the page's main part), a grid of cards each with its image and
-// its Workspaces as rows. Then its facts with the danger zone (Remove or
-// Disconnect, refused while it holds anything).
-import { Server, Trash2, Unplug } from 'lucide-react'
+// its Workspaces as rows. Then its facts with the danger zone (Remove,
+// refused while it holds anything).
+import { Server, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 
 import { attentionOf, heldWords, MachineDialogs, MachineFacts, MachineMenu, PowerButton, useMachineRun } from '@/components/compute/machine-card'
@@ -65,7 +65,7 @@ export function MachinePage({ name, view, os, act, ops, chats, open, onToggle, o
       <div className="flex flex-col gap-4">
         {back}
         <Empty icon={Server} title={t('No machine named {name}', { name })} className="glass-liquid rounded-2xl border-solid">
-          {t('It was removed or disconnected, or this home never had it.')}
+          {t('It was removed, or this home never had it.')}
         </Empty>
       </div>
     )
@@ -80,11 +80,10 @@ export function MachinePage({ name, view, os, act, ops, chats, open, onToggle, o
   const workspaces = sandboxes.reduce((n, b) => n + (b.workspaces ?? 0), 0)
   const attention = attentionOf(m, live)
   const held = inUse(m)
-  const ssh = m.platform === 'ssh'
   const disk = m.disk && live?.freeDisk != null ? Math.max(0, m.disk - live.freeDisk) / m.disk : null
   // the disk bar says what is free; the size line leaves it out then
   const size = sizeOf(m, os, disk !== null ? undefined : live)
-  const calls = clearingCall('machine', m.name, state.op, m.platform)
+  const calls = clearingCall('machine', m.name, state.op)
 
   return (
     <div className="flex flex-col gap-6">
@@ -164,8 +163,8 @@ export function MachinePage({ name, view, os, act, ops, chats, open, onToggle, o
             <div className="flex flex-wrap items-center gap-3 border-t border-destructive/15 pt-3 text-xs">
               <span className="font-medium text-destructive">{t('Danger zone')}</span>
               <Button size="sm" variant="outline" className="h-7 rounded-lg border-destructive/30 px-2.5 text-xs text-destructive hover:bg-destructive/10 hover:text-destructive" disabled={!!held || pending !== null} onClick={() => setDialog('remove')}>
-                {ssh ? <Unplug className="size-3.5" /> : <Trash2 className="size-3.5" />}
-                {t(ssh ? 'Disconnect {name}…' : 'Remove {name}…', { name: m.name })}
+                <Trash2 className="size-3.5" />
+                {t('Remove {name}…', { name: m.name })}
               </Button>
               {held && <span className="text-muted-foreground">{heldWords(held)}</span>}
             </div>

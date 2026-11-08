@@ -1,0 +1,446 @@
+{
+  "repository": "Ephemeral-AI-Lab/layerfs-project",
+  "project": 2,
+  "source_commit": "716197c4999fb087aa0fb17bac5ceb48b0b556ae",
+  "issues": {
+    "parent": {
+      "number": 128,
+      "url": "https://github.com/Ephemeral-AI-Lab/layerfs-project/issues/128",
+      "id": 6270559772,
+      "node_id": "I_kwDOVjYGN88AAAABdcEmHA",
+      "title": "Branch and file SDK: saved history, pinned comparisons and attribution",
+      "lane": "API",
+      "task_type": "Feature",
+      "project_item_id": "PVTI_lADOEf99e84BqP0DzhG8xU4"
+    },
+    "contract": {
+      "number": 129,
+      "url": "https://github.com/Ephemeral-AI-Lab/layerfs-project/issues/129",
+      "id": 6270560515,
+      "node_id": "I_kwDOVjYGN88AAAABdcEpAw",
+      "title": "Branch/file: define saved references, page-based queries, coverage and scope",
+      "lane": "API",
+      "task_type": "Decision",
+      "project_item_id": "PVTI_lADOEf99e84BqP0DzhG8xVo"
+    },
+    "branch_history": {
+      "number": 130,
+      "url": "https://github.com/Ephemeral-AI-Lab/layerfs-project/issues/130",
+      "id": 6270561222,
+      "node_id": "I_kwDOVjYGN88AAAABdcErxg",
+      "title": "Branch: expose saved commits and details including main publications",
+      "lane": "API",
+      "task_type": "Feature",
+      "project_item_id": "PVTI_lADOEf99e84BqP0DzhG8xVw"
+    },
+    "branch_diff": {
+      "number": 131,
+      "url": "https://github.com/Ephemeral-AI-Lab/layerfs-project/issues/131",
+      "id": 6270561945,
+      "node_id": "I_kwDOVjYGN88AAAABdcEumQ",
+      "title": "Branch diff: compare pinned Commit/Layer endpoints and discover attribution-only paths",
+      "lane": "Engine",
+      "task_type": "Feature",
+      "project_item_id": "PVTI_lADOEf99e84BqP0DzhG8xV8"
+    },
+    "file_revision": {
+      "number": 132,
+      "url": "https://github.com/Ephemeral-AI-Lab/layerfs-project/issues/132",
+      "id": 6270562622,
+      "node_id": "I_kwDOVjYGN88AAAABdcExPg",
+      "title": "File: add saved path revisions with metadata and identity changes",
+      "lane": "Engine",
+      "task_type": "Feature",
+      "project_item_id": "PVTI_lADOEf99e84BqP0DzhG8xWA"
+    },
+    "file_attribution": {
+      "number": 133,
+      "url": "https://github.com/Ephemeral-AI-Lab/layerfs-project/issues/133",
+      "id": 6270563407,
+      "node_id": "I_kwDOVjYGN88AAAABdcE0Tw",
+      "title": "File diff and blame: return aligned attribution and bounded saved reads",
+      "lane": "Engine",
+      "task_type": "Feature",
+      "project_item_id": "PVTI_lADOEf99e84BqP0DzhG8xWM"
+    },
+    "bindings": {
+      "number": 134,
+      "url": "https://github.com/Ephemeral-AI-Lab/layerfs-project/issues/134",
+      "id": 6270564092,
+      "node_id": "I_kwDOVjYGN88AAAABdcE2_A",
+      "title": "Branch/file: publish SDK/CLI contracts and verify compatibility across Store backends",
+      "lane": "API",
+      "task_type": "Verification",
+      "project_item_id": "PVTI_lADOEf99e84BqP0DzhG8xWY"
+    }
+  },
+  "parent_body": "## Outcome\nExpose saved branch history, main publications, pinned Commit/Layer comparisons, path revisions and attribution through the existing branch/file SDK families. Clients can compare unchanged text whose owning commits differ.\n\n**Lane:** API (with Engine implementation sub-issues). **Status:** proposed work, not implemented. **Target branch:** `layerfs_v2_0_0` (not `layerfs_v_2_0_0`). **Inspected baseline:** `716197c4999fb087aa0fb17bac5ceb48b0b556ae`, verified locally and on GitHub on 2026-11-08.\n\n## Owner design retained\n- main is project core content; side branches are alternate work.\n- Branch commits are checkpoints. No new checkpoint/revision family.\n- Add `branch.commits`, `branch.get_commit`, `file.revision`. Retain `branch.get`, existing short verbs/nouns and the agreed get_commit exception.\n- Public paging uses one-based `page` and `page_size`. Existing calls/options and commit.* remain compatible.\n- Publication Layer, source Commit, parent and base relationships are distinct. Publication does not itself reassign blame ownership.\n\n## API scope\n**Branch:** update list/get/diff; add commits/get_commit; retain fork/merge/publish.\n**File:** add revision; update diff/blame/read/stat/list/glob/grep; retain write/edit/cp/mv/mkdir/rm/apply.\n`branch.diff(include_attribution:true)` discovers ownership-only paths even when content is equal. `file.diff(include_attribution:true)` returns aligned before/after owners with exact/coarse/unknown coverage. Keep independent content/metadata/identity/attribution facts and existing Added/Removed/Modified item kinds.\n\n## Contract gate\nThe shared-contract child must settle matching-result pages versus sparse candidate-window pages, bounded deep-page access, immutable anchors, scope and compatibility before implementation. Candidate-window semantics are a proposal, not an owner-approved decision. Do not silently skip unreturned records, fabricate totals, or add a public cursor requirement. Preserve existing boolean has_more fields; any new tri-state response needs an explicit new contract. A bounded refusal is preferable to a false complete result.\n\n## Delivery and acceptance\n- [ ] Agree and document canonical references, pagination, scope, absent sides and coverage.\n- [ ] Implement branch saved history/details, mixed-version tree comparison and attribution discovery.\n- [ ] Implement path revisions, aligned file attribution and bounded pinned reads.\n- [ ] Regenerate and verify JS/Python/CLI contracts and per-call documentation.\n- [ ] Verify SQLite/PostgreSQL, native/worker reads where applicable, scope and legacy compatibility; retain failures/unrun results.\n\n## Ownership and locations\nProduct SDK/engine and per-call docs land in layerfs. Connect integration is out of scope. Cross-layer qualification harnesses/receipts follow layerfs-benchmark policy. Use existing folders: api/crates/layerfs-api/src/{branch,file,calls}, control/crates/layerfs-store/src, engine/crates/layerfs-store-service/src/{history,read,methods}, and docs/architecture/api/sdk/{branch,file}. No Store format change, blanket index migration, merge/write redesign, human-author model or rename-following feature is authorized by this task.\n\nThe Connect renderer simulation is design evidence only, not proof that the native SDK supports these APIs. This issue tree contains the substantive specifications; no uncommitted local link is required to use it.\n\n## References\n- [Inspected LayerFS source](https://github.com/Ephemeral-AI-Lab/layerfs/tree/716197c4999fb087aa0fb17bac5ceb48b0b556ae)\n- Related existing interface work: Ephemeral-AI-Lab/layerfs-project#30 (this tree scopes the branch/file extension specifically).\n",
+  "organized": true,
+  "verified": true,
+  "verification": {
+    "i128": {
+      "number": 128,
+      "url": "https://github.com/Ephemeral-AI-Lab/layerfs-project/issues/128",
+      "parent": null,
+      "blockedBy": {
+        "nodes": []
+      },
+      "projectItems": {
+        "nodes": [
+          {
+            "project": {
+              "number": 2
+            },
+            "fieldValues": {
+              "nodes": [
+                {},
+                {},
+                {},
+                {
+                  "name": "Todo",
+                  "field": {
+                    "name": "Status"
+                  }
+                },
+                {
+                  "name": "API",
+                  "field": {
+                    "name": "Lane"
+                  }
+                },
+                {
+                  "name": "Feature",
+                  "field": {
+                    "name": "Task type"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "i129": {
+      "number": 129,
+      "url": "https://github.com/Ephemeral-AI-Lab/layerfs-project/issues/129",
+      "parent": {
+        "number": 128
+      },
+      "blockedBy": {
+        "nodes": []
+      },
+      "projectItems": {
+        "nodes": [
+          {
+            "project": {
+              "number": 2
+            },
+            "fieldValues": {
+              "nodes": [
+                {},
+                {},
+                {},
+                {
+                  "name": "Todo",
+                  "field": {
+                    "name": "Status"
+                  }
+                },
+                {
+                  "name": "API",
+                  "field": {
+                    "name": "Lane"
+                  }
+                },
+                {
+                  "name": "Decision",
+                  "field": {
+                    "name": "Task type"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "i130": {
+      "number": 130,
+      "url": "https://github.com/Ephemeral-AI-Lab/layerfs-project/issues/130",
+      "parent": {
+        "number": 128
+      },
+      "blockedBy": {
+        "nodes": [
+          {
+            "number": 129
+          }
+        ]
+      },
+      "projectItems": {
+        "nodes": [
+          {
+            "project": {
+              "number": 2
+            },
+            "fieldValues": {
+              "nodes": [
+                {},
+                {},
+                {},
+                {
+                  "name": "Todo",
+                  "field": {
+                    "name": "Status"
+                  }
+                },
+                {
+                  "name": "API",
+                  "field": {
+                    "name": "Lane"
+                  }
+                },
+                {
+                  "name": "Feature",
+                  "field": {
+                    "name": "Task type"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "i131": {
+      "number": 131,
+      "url": "https://github.com/Ephemeral-AI-Lab/layerfs-project/issues/131",
+      "parent": {
+        "number": 128
+      },
+      "blockedBy": {
+        "nodes": [
+          {
+            "number": 130
+          },
+          {
+            "number": 129
+          }
+        ]
+      },
+      "projectItems": {
+        "nodes": [
+          {
+            "project": {
+              "number": 2
+            },
+            "fieldValues": {
+              "nodes": [
+                {},
+                {},
+                {},
+                {
+                  "name": "Todo",
+                  "field": {
+                    "name": "Status"
+                  }
+                },
+                {
+                  "name": "Engine",
+                  "field": {
+                    "name": "Lane"
+                  }
+                },
+                {
+                  "name": "Feature",
+                  "field": {
+                    "name": "Task type"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "i132": {
+      "number": 132,
+      "url": "https://github.com/Ephemeral-AI-Lab/layerfs-project/issues/132",
+      "parent": {
+        "number": 128
+      },
+      "blockedBy": {
+        "nodes": [
+          {
+            "number": 130
+          },
+          {
+            "number": 129
+          }
+        ]
+      },
+      "projectItems": {
+        "nodes": [
+          {
+            "project": {
+              "number": 2
+            },
+            "fieldValues": {
+              "nodes": [
+                {},
+                {},
+                {},
+                {
+                  "name": "Todo",
+                  "field": {
+                    "name": "Status"
+                  }
+                },
+                {
+                  "name": "Engine",
+                  "field": {
+                    "name": "Lane"
+                  }
+                },
+                {
+                  "name": "Feature",
+                  "field": {
+                    "name": "Task type"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "i133": {
+      "number": 133,
+      "url": "https://github.com/Ephemeral-AI-Lab/layerfs-project/issues/133",
+      "parent": {
+        "number": 128
+      },
+      "blockedBy": {
+        "nodes": [
+          {
+            "number": 131
+          },
+          {
+            "number": 129
+          }
+        ]
+      },
+      "projectItems": {
+        "nodes": [
+          {
+            "project": {
+              "number": 2
+            },
+            "fieldValues": {
+              "nodes": [
+                {},
+                {},
+                {},
+                {
+                  "name": "Todo",
+                  "field": {
+                    "name": "Status"
+                  }
+                },
+                {
+                  "name": "Engine",
+                  "field": {
+                    "name": "Lane"
+                  }
+                },
+                {
+                  "name": "Feature",
+                  "field": {
+                    "name": "Task type"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "i134": {
+      "number": 134,
+      "url": "https://github.com/Ephemeral-AI-Lab/layerfs-project/issues/134",
+      "parent": {
+        "number": 128
+      },
+      "blockedBy": {
+        "nodes": [
+          {
+            "number": 133
+          },
+          {
+            "number": 132
+          },
+          {
+            "number": 131
+          },
+          {
+            "number": 130
+          }
+        ]
+      },
+      "projectItems": {
+        "nodes": [
+          {
+            "project": {
+              "number": 2
+            },
+            "fieldValues": {
+              "nodes": [
+                {},
+                {},
+                {},
+                {
+                  "name": "Todo",
+                  "field": {
+                    "name": "Status"
+                  }
+                },
+                {
+                  "name": "API",
+                  "field": {
+                    "name": "Lane"
+                  }
+                },
+                {
+                  "name": "Verification",
+                  "field": {
+                    "name": "Task type"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  },
+  "withdrawn_issues": {
+    "connect": {
+      "number": 135,
+      "url": "https://github.com/Ephemeral-AI-Lab/layerfs-project/issues/135",
+      "id": 6270564867,
+      "node_id": "I_kwDOVjYGN88AAAABdcE6Aw",
+      "title": "Connect: integrate saved branch/file queries and separate comparison navigation",
+      "lane": "API",
+      "task_type": "Feature",
+      "project_item_id": "PVTI_lADOEf99e84BqP0DzhG8xWo",
+      "reason": "Owner: Connect integration is premature and not needed for this task.",
+      "verification": {
+        "state": "CLOSED",
+        "state_reason": "NOT_PLANNED",
+        "parent": null,
+        "project_items": [],
+        "blocked_by": []
+      }
+    }
+  }
+}

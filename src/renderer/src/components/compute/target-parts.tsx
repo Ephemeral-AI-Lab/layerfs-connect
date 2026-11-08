@@ -2,7 +2,7 @@ import { t, useI18n } from '@/i18n'
 // What the Machines page's parts share: a machine kind's mark, a Sandbox's
 // platform badge, a machine's state pill, a fact, a form field, a command to
 // copy and a section title.
-import { Check, Copy, Monitor, Server } from 'lucide-react'
+import { Check, Copy, Monitor } from 'lucide-react'
 import { useState } from 'react'
 import { siApple, siDocker, siLinux } from 'simple-icons'
 
@@ -16,15 +16,13 @@ import type { SandboxPlatform } from '@shared/host-api'
 const MONOGRAM: Record<string, { text: string; hex: string }> = {
   microsandbox: { text: 'msb', hex: '7C3AED' },
   lima: { text: 'L', hex: '2F80ED' },
-  firecracker: { text: 'FC', hex: 'F05A28' },
 }
 
-/** A Sandbox platform's or machine kind's mark, sized by its parent: the brand's own, a server for SSH, this computer for native, or a monogram. */
+/** A Sandbox platform's or machine kind's mark, sized by its parent: the brand's own, this computer for native, or a monogram. */
 export function PlatformMark({ id, os }: { id: SandboxPlatform | string; os?: Os }) {
   const native = id === 'native' ? (os === 'darwin' ? 'mac' : os === 'linux' ? 'linux' : 'pc') : id
   const mark = native === 'docker' ? siDocker : native === 'mac' || native === 'apple-container' ? siApple : native === 'linux' ? siLinux : undefined
   if (mark) return <Mark icon={mark} />
-  if (native === 'ssh') return <Server aria-hidden="true" className="text-foreground/70" />
   if (native === 'pc') return <Monitor aria-hidden="true" className="text-foreground/70" />
   const mono = MONOGRAM[native] ?? { text: native.slice(0, 2).toUpperCase(), hex: '6B7280' }
   const brand = brandColor(mono.hex)

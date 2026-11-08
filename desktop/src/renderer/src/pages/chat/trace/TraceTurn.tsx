@@ -44,7 +44,7 @@ export function TraceTurn({ chatId, group, items, open, onToggle, showCalls, foc
         <div className="flex flex-col py-1">
           {items.length === 0 && <p className="px-4 py-2 text-12 text-[var(--text-tertiary)]">Nothing here matches.</p>}
           {items.map((item) => {
-            const focused = !!focus && item.row.callId === focus
+            const focused = !!focus && (item.row.callId ?? item.row.id) === focus
             return (
               <TraceRow
                 key={item.row.id}

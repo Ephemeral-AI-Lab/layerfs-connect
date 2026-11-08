@@ -111,11 +111,12 @@ function steps(entries, calls, running) {
  * @param {object} o.record  the chat's record (its scenario, state)
  * @param {object[]} o.entries  Pi's session branch (getBranch())
  * @param {string} o.dir  the chat's folder (its traces/)
+ * @param {string} [o.traceAgent] root or the child's trace-file stem
  */
-export function chatTrace({ record, entries, dir, before = null, limit }) {
+export function chatTrace({ record, entries, dir, before = null, limit, traceAgent = 'root' }) {
   const running = record.state === 'running'
   const s = record.scenario ?? null
-  const rootSteps = steps(entries, chatCalls(join(dir, 'traces')), running)
+  const rootSteps = steps(entries, chatCalls(join(dir, 'traces'), traceAgent), running)
   const run = {
     kind: 'live',
     agents: [{ name: 'root', parent: null }],

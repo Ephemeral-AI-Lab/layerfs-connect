@@ -11,8 +11,8 @@ import { BUILT_IN, GIB, type Os } from '@/data/compute'
 import type { AgentSessionSummary } from '@shared/agent-api'
 import type { MachineInfo, MachineLive, MachinePgStore, MachinePlatformInfo, MachineSandbox, MachinesView, MachineStore, MachineSupports, NewMachine, PlatformOption, SandboxInfo, WorkspaceInfo } from '@shared/host-api'
 
-export type SimId = 'mac-fresh' | 'mac-mixed' | 'mac-nested' | 'mac-busy' | 'windows' | 'older'
-export const SIM_IDS: SimId[] = ['mac-fresh', 'mac-mixed', 'mac-nested', 'mac-busy', 'windows', 'older']
+export type SimId = 'mac-fresh' | 'mac-mixed' | 'mac-busy' | 'windows' | 'older'
+export const SIM_IDS: SimId[] = ['mac-fresh', 'mac-mixed', 'mac-busy', 'windows', 'older']
 export const isSimId = (v: unknown): v is SimId => typeof v === 'string' && (SIM_IDS as string[]).includes(v)
 
 /** A simulated host: its machines view, each Sandbox's Workspaces by Sandbox name, and the chats on them. */
@@ -80,13 +80,11 @@ const VM_OPTIONS: PlatformOption[] = [{ name: 'cpus', kind: 'int' }, { name: 'me
 const OPTIONS: Record<string, PlatformOption[]> = {
   'apple-container': VM_OPTIONS,
   microsandbox: VM_OPTIONS,
-  lima: [...VM_OPTIONS, { name: 'nested', kind: 'bool' }],
-  firecracker: [...VM_OPTIONS, { name: 'host', kind: 'name' }],
-  ssh: [{ name: 'user', kind: 'text' }, { name: 'port', kind: 'int' }, { name: 'identity', kind: 'text' }, { name: 'known_hosts', kind: 'text' }, { name: 'root', kind: 'text' }],
+  lima: VM_OPTIONS,
 }
 const can = (platform: string, version: string | null, missing: string[] = []): MachinePlatformInfo => ({
   platform,
-  how: platform === 'ssh' ? 'connected' : 'created',
+  how: 'created',
   backend: 'namespaces',
   kernel: 'fuse',
   sqlite: 'worker',
@@ -103,8 +101,6 @@ const MAC_CAN = (over: Partial<Record<string, MachinePlatformInfo>> = {}): Machi
     can('apple-container', 'container CLI version 0.6.1'),
     can('microsandbox', 'msb 0.2.6'),
     can('lima', 'limactl version 2.0.1'),
-    can('firecracker', 'firecracker v1.12.1 (in Lima)'),
-    can('ssh', 'OpenSSH_10.0p2'),
   ].map((c) => over[c.platform as string] ?? c)
 
 const view = (machines: MachineInfo[], platforms: MachinePlatformInfo[], stores: MachineStore[], sandboxes: MachineSandbox[], status: MachineLive[], postgresql: MachinePgStore[] = []): Available => ({
@@ -119,13 +115,12 @@ const view = (machines: MachineInfo[], platforms: MachinePlatformInfo[], stores:
 })
 
 // mac-fresh: a new home on an M1 Mac, the built-ins alone; every kind's create state (2.0's
-// machine/probe.rs names): ready, a missing tool, the Linux bundle missing, hardware that can't nest
+// machine/probe.rs names): ready, a missing tool, the Linux bundle missing
 const macFresh = view(
   [native(['default'], []), docker([], [])],
   MAC_CAN({
     microsandbox: can('microsandbox', null, ['tool:msb']),
     lima: can('lima', null, ['tool:limactl']),
-    firecracker: can('firecracker', null, ['host:apple-m3', 'tool:limactl']),
     'apple-container': can('apple-container', 'container CLI version 0.6.1', ['bundle:~/.cache/layerfs/bundle/2.0.0']),
   }),
   [store('default', 'native', 0, 0.001)],
@@ -133,38 +128,27 @@ const macFresh = view(
   [live('docker', 'ready', 51.2, 'Docker 29.5.2')],
 )
 
-// mac-mixed: the mockup's five machines; the ssh host is down
+// mac-mixed: the mockup's five machines; one Lima machine is down
 const macMixed = view(
   [
     native(['shop'], ['1', '2']),
     docker(['team'], ['3', '6']),
     // '6': the PostgreSQL Store's app, also running on docker
-    vm('dev', 'lima', 'running', [4, 8, 40], ['agents'], ['4', '5', '7'], { nested: true }),
+    vm('dev', 'lima', 'running', [4, 8, 40], ['agents'], ['4', '5', '7']),
     vm('scratch', 'microsandbox', 'stopped', [2, 4, 20], ['scratch'], [], { supports: { sqlite: true, postgresql_sandbox: false, reason: 'microsandbox has no network route to a PostgreSQL server' } }),
-    { name: 'gpu-box', platform: 'ssh', backend: 'namespaces', state: 'unresolved', cpus: null, memory: null, disk: null, stores: ['models'], sandboxes: [], ssh: { host: 'gpu-box.lan', user: 'ubuntu', port: 22, identity: '~/.ssh/id_ed25519', root: '/layerfs/data' } },
+    vm('ml', 'lima', 'unresolved', [8, 16, 80], ['models'], []),
   ],
   MAC_CAN(),
-  [store('shop', 'native', ['admin', 'api', 'web'], 2.4), store('team', 'docker', ['todo', 'wiki'], 1.1), store('agents', 'dev', ['crawler', 'evals', 'indexer', 'planner'], 6.8), store('scratch', 'scratch', ['play'], 0.3), store('models', 'gpu-box', ['train', 'serve'], 41.5)],
+  [store('shop', 'native', ['admin', 'api', 'web'], 2.4), store('team', 'docker', ['todo', 'wiki'], 1.1), store('agents', 'dev', ['crawler', 'evals', 'indexer', 'planner'], 6.8), store('scratch', 'scratch', ['play'], 0.3), store('models', 'ml', ['train', 'serve'], 41.5)],
   // a sqlite project runs on its Store's machine; the PostgreSQL Store's app runs on dev and docker
   [box('1', 'native', 'shop/api', 2), box('2', 'native', 'shop/web', 1), box('3', 'docker', 'team/todo', 1), box('4', 'dev', 'agents/crawler', 3, 'running', CUSTOM_IMAGE), box('5', 'dev', 'agents/indexer', 0, 'creating'), box('6', 'docker', 'pg/app', 1), box('7', 'dev', 'pg/app', 1)],
   [
     live('docker', 'ready', 43.7, 'Docker 29.5.2'),
     live('dev', 'running', 31.2, 'limactl version 2.0.1'),
     live('scratch', 'stopped', 18.9, 'msb 0.2.6'),
-    { ...live('gpu-box', 'unresolved', null, null, 'ssh: connect to host gpu-box.lan port 22: Operation timed out'), op: { id: 'op-7', name: 'machine.connect', phase: 'probe', started: null, uncertain: true } },
+    { ...live('ml', 'unresolved', null, 'limactl version 2.0.1', 'lima: instance "ml" did not answer its guest agent'), op: { id: 'op-7', name: 'machine.start', phase: 'boot', started: null, uncertain: true } },
   ],
   [pg('pg', ['app'])],
-)
-
-// mac-nested: an M3 Mac that can nest, whose one Lima machine was made without --nested: Firecracker
-// is ready, and its form makes a nested Lima machine first
-const macNested = view(
-  [native(['shop'], ['1']), docker([], []), vm('dev', 'lima', 'running', [4, 8, 40], ['agents'], ['2'])],
-  MAC_CAN(),
-  [store('shop', 'native', ['api', 'web'], 1.4), store('agents', 'dev', ['crawler', 'evals', 'indexer'], 4.2)],
-  [box('1', 'native', 'shop/api', 1), box('2', 'dev', 'agents/crawler', 2, 'running', '/Users/me/images/crawler-tools.tar')],
-  [live('docker', 'ready', 47.9, 'Docker 29.5.2'), live('dev', 'running', 30.4, 'limactl version 2.0.1')],
-  [pg('crm', ['leads', 'billing'])],
 )
 
 // mac-busy: many Stores on each machine, many Sandboxes
@@ -172,29 +156,29 @@ const busyStores = [
   ...['shop', 'blog', 'docs', 'infra', 'ml-lab', 'mobile', 'site', 'billing'].map((n, i) => store(n, 'native', 1 + (i % 4), 0.4 + i * 0.7)),
   ...['team', 'ci', 'demo'].map((n, i) => store(n, 'docker', 2 + i, 1.2 + i)),
   ...['agents', 'evals', 'crawl', 'search', 'notebooks', 'data'].map((n, i) => store(n, 'build', 1 + i, 3.1 + i * 2.2)),
-  store('fc-runs', 'fc1', 5, 9.4),
+  store('runs', 'msb1', 5, 9.4),
 ]
 // Sandbox names are unique in a home: numbered across the machines
 const busyBoxes = [
   ...['shop/api', 'blog/main', 'docs/site', 'infra/tf', 'ml-lab/nb', 'site/web'].map((p, i) => ['native', p, 1 + (i % 3)] as const),
   ...['team/todo', 'ci/runner', 'ci/runner', 'demo/app'].map((p) => ['docker', p, 1] as const),
   ...['agents/a', 'agents/b', 'evals/x', 'crawl/q', 'search/idx', 'notebooks/n', 'data/etl', 'data/etl', 'evals/y'].map((p, i) => ['build', p, 1 + (i % 4)] as const),
-  ...['fc-runs/job', 'fc-runs/job', 'fc-runs/job'].map((p) => ['fc1', p, 1] as const),
-  // the PostgreSQL Store's app runs on several machines: docker, build and fc1
-  ...([['docker', 'pg/app', 1], ['build', 'pg/app', 2], ['fc1', 'pg/app', 1]] as const),
+  ...['runs/job', 'runs/job', 'runs/job'].map((p) => ['msb1', p, 1] as const),
+  // the PostgreSQL Store's app runs on several machines: docker, build and msb1
+  ...([['docker', 'pg/app', 1], ['build', 'pg/app', 2], ['msb1', 'pg/app', 1]] as const),
 ].map(([machine, project, n], i) => box(String(i + 1), machine, project, n))
 const macBusy = view(
   [
     native(busyStores.filter((s) => s.machine === 'native').map((s) => s.name), busyBoxes.filter((b) => b.machine === 'native').map((b) => b.name)),
     docker(busyStores.filter((s) => s.machine === 'docker').map((s) => s.name), busyBoxes.filter((b) => b.machine === 'docker').map((b) => b.name)),
-    vm('build', 'lima', 'running', [8, 16, 120], busyStores.filter((s) => s.machine === 'build').map((s) => s.name), busyBoxes.filter((b) => b.machine === 'build').map((b) => b.name), { nested: true }),
-    vm('fc1', 'firecracker', 'running', [2, 2, 20], ['fc-runs'], busyBoxes.filter((b) => b.machine === 'fc1').map((b) => b.name), { host: 'build' }),
+    vm('build', 'lima', 'running', [8, 16, 120], busyStores.filter((s) => s.machine === 'build').map((s) => s.name), busyBoxes.filter((b) => b.machine === 'build').map((b) => b.name)),
+    vm('msb1', 'microsandbox', 'running', [2, 2, 20], ['runs'], busyBoxes.filter((b) => b.machine === 'msb1').map((b) => b.name)),
     vm('ac1', 'apple-container', 'starting', [2, 4, 20], [], []),
   ],
   MAC_CAN(),
   busyStores,
   busyBoxes,
-  [live('docker', 'ready', 12.4, 'Docker 29.5.2'), live('build', 'running', 64.2, 'limactl version 2.0.1'), live('fc1', 'running', 8.1, 'firecracker v1.12.1'), live('ac1', 'starting', 20, 'container CLI version 0.6.1')],
+  [live('docker', 'ready', 12.4, 'Docker 29.5.2'), live('build', 'running', 64.2, 'limactl version 2.0.1'), live('msb1', 'running', 8.1, 'msb 0.2.6'), live('ac1', 'starting', 20, 'container CLI version 0.6.1')],
   [pg('pg', ['app']), pg('warehouse', ['etl', 'reports', 'dash'])],
 )
 
@@ -205,8 +189,6 @@ const windows = view(
     can('apple-container', null, ['host:macos']),
     can('microsandbox', null, ['tool:msb']),
     can('lima', null, ['host:macos', 'tool:limactl']),
-    can('firecracker', null, ['host:macos', 'tool:limactl']),
-    can('ssh', 'OpenSSH_for_Windows_9.5p1'),
   ],
   [store('notes', 'native', 1, 0.05), store('shop', 'docker', 2, 2.2)],
   [box('1', 'docker', 'shop/api', 2), box('2', 'docker', 'shop/web', 1)],
@@ -249,7 +231,6 @@ const sim = (label: string, os: Os, v: MachinesView): Simulation => {
 export const SIMULATIONS: Record<SimId, Simulation> = {
   'mac-fresh': sim('Mac, fresh home', 'darwin', macFresh),
   'mac-mixed': sim('Mac, five machines, one down', 'darwin', macMixed),
-  'mac-nested': sim('Mac M3, no nested Lima machine', 'darwin', macNested),
   'mac-busy': sim('Mac, many Stores', 'darwin', macBusy),
   windows: sim('Windows (Docker via WSL2)', 'win32', windows),
   older: sim('Older LayerFS (no machines)', 'darwin', older),
@@ -333,21 +314,14 @@ function simulateView(v: MachinesView, action: Exclude<MachineAction, { kind: 'c
   if (action.kind === 'create') {
     const i = action.input
     if (find(i.name) || BUILT_IN.has(i.name)) throw refuse('Exists', `a machine named ${i.name} exists`)
-    if (i.platform === 'ssh') {
-      const [user, host] = i.host.includes('@') ? i.host.split('@') : [i.user ?? 'root', i.host]
-      machines.push({ name: i.name, platform: 'ssh', backend: 'namespaces', state: 'stopped', cpus: null, memory: null, disk: null, stores: [], sandboxes: [], ssh: { host, user, port: i.port ?? 22, identity: i.identity ?? null, root: i.root ?? '/layerfs/data' } })
-    } else {
-      if (i.platform === 'firecracker' && !machines.some((m) => m.name === i.host && m.platform === 'lima' && m.nested)) throw refuse('InvalidInput', `${i.host} is not a lima machine made with --nested`)
-      machines.push({ name: i.name, platform: i.platform, backend: 'namespaces', state: 'stopped', cpus: i.cpus ?? 2, memory: i.memory ?? 4 * GIB, disk: i.disk ?? 20 * GIB, stores: [], sandboxes: [], image: i.image ?? IMAGE, ...(i.nested ? { nested: true } : {}), ...(i.host ? { host: i.host } : {}) })
-    }
-    return { ...v, machines, status: { ...v.status, [i.name]: { name: i.name, state: 'stopped', freeDisk: i.platform === 'ssh' ? null : (i.disk ?? 20 * GIB), toolVersion: v.platforms.find((c) => c.platform === i.platform)?.version ?? null, down: null } } }
+    machines.push({ name: i.name, platform: i.platform, backend: 'namespaces', state: 'stopped', cpus: i.cpus ?? 2, memory: i.memory ?? 4 * GIB, disk: i.disk ?? 20 * GIB, stores: [], sandboxes: [], image: i.image ?? IMAGE })
+    return { ...v, machines, status: { ...v.status, [i.name]: { name: i.name, state: 'stopped', freeDisk: i.disk ?? 20 * GIB, toolVersion: v.platforms.find((c) => c.platform === i.platform)?.version ?? null, down: null } } }
   }
   if (action.kind === 'remove') {
     const m = find(action.name)
     if (!m) throw refuse('NotFound', `no machine named ${action.name}`)
     if (BUILT_IN.has(m.platform)) throw refuse('InvalidInput', `${m.name} is built in and can't be removed`)
     if (m.stores.length || m.sandboxes.length) throw refuse('InUse', `${m.name} holds ${m.stores.length} Stores; move them first`)
-    if (machines.some((x) => x.host === m.name)) throw refuse('InUse', `${m.name} hosts Firecracker machines`)
     const status = { ...v.status }
     delete status[m.name]
     return { ...v, machines: machines.filter((x) => x !== m), status }

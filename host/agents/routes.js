@@ -39,6 +39,8 @@ export async function agentRoute(manager, method, parts, body, query = new URLSe
   // the Extensions panel: a chat's tools, Pi extensions and Pi slash commands
   if (group === 'capabilities' && !id && method === 'GET') return manager.capabilities(query.get('session') || undefined)
   if (group === 'capabilities' && !id && method === 'POST') return manager.setCapability(body ?? {})
+  if (group === 'pi-policies' && !id && method === 'GET') return manager.piPolicyView()
+  if (group === 'pi-policies' && !id && method === 'POST') return manager.setPiPolicies(body)
   // Settings → Runs: the run limits every chat uses
   if (group === 'run-limits' && !id && method === 'GET') return manager.runSettings()
   if (group === 'run-limits' && !id && method === 'POST') return manager.setRunSettings(body ?? {})
@@ -59,6 +61,7 @@ export async function agentRoute(manager, method, parts, body, query = new URLSe
     if (method === 'POST') return manager.updateQueued(id, requestId, body.mode ?? '')
   }
   if (action === 'children' && requestId && !parts[4] && method === 'GET') return manager.childConversation(id, requestId)
+  if (action === 'children' && requestId && parts[4] === 'trace' && !parts[5] && method === 'GET') return manager.childTrace(id, requestId, { before: query.get('before'), limit: query.get('limit') ?? undefined })
   if (method !== 'POST') return undefined
   if (action === 'message') return manager.message(id, body)
   if (action === 'continue') return manager.continue(id, body)

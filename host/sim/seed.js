@@ -109,7 +109,7 @@ export function seedWorld(w, preset) {
   // trouble
   machine({ name: 'lima1', platform: 'lima', backend: 'namespaces', state: 'running', cpus: 4, memory: 8 * GiB, disk: 50 * GiB, nested: false, free_disk: 2_100_000_000 })
   machine({ name: 'lima2', platform: 'lima', backend: 'namespaces', state: 'failed', cpus: 2, memory: 4 * GiB, disk: 32 * GiB, error: 'the VM did not boot: vz: Virtualization.framework refused the disk image' })
-  machine({ name: 'box', platform: 'ssh', backend: 'namespaces', state: 'unresolved', host: 'box.lan', ssh: { host: 'box.lan', user: 'root', port: 22, identity: null, root: null } })
+  machine({ name: 'msb1', platform: 'microsandbox', backend: 'namespaces', state: 'unresolved', cpus: 2, memory: 4 * GiB, disk: 20 * GiB })
   store({ name: 'shop', machine: 'native' })
   store({ name: 'old', machine: 'lima2' })
   store({ name: 'team', kind: 'postgresql', machine: null, url: 'postgresql://app@db.internal:5432/layerfs', password: 'env:LAYERFS_TEAM_PG', profile: 'durable', reachable: false })

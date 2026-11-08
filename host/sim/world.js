@@ -10,6 +10,8 @@
 // is dropped (its entity stays as it was before the op). A missing file is
 // made from a preset (seed.js; LAYERFS_SIM_PRESET, default `mac`).
 // LAYERFS_SIM_SPEED scales every simulated delay (1 = as written, 0 = none).
+// Its platform table keeps LayerFS's ssh and Firecracker rows and calls, as the
+// real library has them; Connect's host turns them off (host/machines.js OFF).
 //
 // Not simulated yet (refused Unsupported): workspace.exec, file.blame,
 // file.diff, file.apply. A Workspace mounts its Branch but nothing changes it.

@@ -36,7 +36,7 @@ function Mark({ ok, running }: { ok: boolean | null; running?: boolean }) {
 }
 
 export function BashStep({ message }: { message: ChatMessage }) {
-  const { chatId, focus, inChild } = useScope()
+  const { chatId, focus, inChild, childId } = useScope()
   const focused = focus === message.id
   const [open, setOpen] = useState(focused)
   const root = useRef<HTMLDivElement>(null)
@@ -113,9 +113,9 @@ export function BashStep({ message }: { message: ChatMessage }) {
             </div>
           )}
           <ShellOutput chatId={chatId} message={message} />
-          {!inChild && (
+          {(!inChild || childId) && (
             <div className="flex justify-end border-t border-[var(--border-default)] px-3 py-1.5">
-              <Link to={`/chat/${encodeURIComponent(chatId)}/trace?at=${encodeURIComponent(message.id)}`} className="flex items-center gap-1 text-12 text-[var(--text-tertiary)] hover:text-[var(--text-primary)]">
+              <Link to={`/chat/${encodeURIComponent(chatId)}${childId ? `/subagents/${encodeURIComponent(childId)}` : ''}/trace?at=${encodeURIComponent(message.id)}`} className="flex items-center gap-1 text-12 text-[var(--text-tertiary)] hover:text-[var(--text-primary)]">
                 <ListTree className="size-3.5" /> Open in Trace
               </Link>
             </div>

@@ -1,10 +1,10 @@
 import { t, useI18n } from '@/i18n'
 // A machine on the Machines board (docs/ui/machines.md), and what its
 // page shares with it: Start or Stop, the menu (Update settings… for the
-// built-ins, Remove… or Disconnect…, refused while it holds Stores or
+// built-ins, Remove…, refused while it holds Stores or
 // Sandboxes) and its dialogs, a Store chip linking Storage (the Stores' home:
 // pushing, pulling and moving them is done there), and its facts.
-import { ArrowRight, Box, Lock, Plus, Power, Settings2, Trash2, Unplug } from 'lucide-react'
+import { ArrowRight, Box, Lock, Plus, Power, Settings2, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 
 import { go } from '@/components/tabs/go'
@@ -65,13 +65,12 @@ export function PowerButton({ m, pending, run, className }: { m: MachineInfo; pe
   )
 }
 
-/** The `…` menu: Open (on the board), Start or Stop, Update settings… (the built-ins) and Remove… or Disconnect…, refused while it holds anything. */
+/** The `…` menu: Open (on the board), Start or Stop, Update settings… (the built-ins) and Remove…, refused while it holds anything. */
 export function MachineMenu({ m, pending, run, onOpen, onDialog, className }: { m: MachineInfo; pending: string | null; run: Run; onOpen?: () => void; onDialog: (d: 'settings' | 'remove') => void; className?: string }) {
   useI18n()
   const power = powerOf(m)
   const builtIn = BUILT_IN.has(m.platform)
   const held = inUse(m)
-  const ssh = m.platform === 'ssh'
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -106,8 +105,8 @@ export function MachineMenu({ m, pending, run, onOpen, onDialog, className }: { 
           <>
             <DropdownMenuSeparator />
             <DropdownMenuItem variant="destructive" disabled={!!held || pending !== null} onSelect={() => onDialog('remove')}>
-              {ssh ? <Unplug /> : <Trash2 />}
-              {t(ssh ? 'Disconnect…' : 'Remove…')}
+              <Trash2 />
+              {t('Remove…')}
             </DropdownMenuItem>
             {held && <DropdownMenuLabel className="max-w-64 text-xs font-normal text-muted-foreground">{heldWords(held)}</DropdownMenuLabel>}
           </>
@@ -117,7 +116,7 @@ export function MachineMenu({ m, pending, run, onOpen, onDialog, className }: { 
   )
 }
 
-/** The menu's dialogs: a built-in's settings, or removing a VM / disconnecting an ssh host. */
+/** The menu's dialogs: a built-in's settings, or removing a VM. */
 export function MachineDialogs({ m, os, dialog, onClose, pending, run, onRemoved }: { m: MachineInfo; os: Os; dialog: 'settings' | 'remove' | null; onClose: () => void; pending: string | null; run: Run; onRemoved?: () => void }) {
   return BUILT_IN.has(m.platform) ? (
     <SettingsDialog key={String(dialog === 'settings')} m={m} os={os} open={dialog === 'settings'} onClose={onClose} pending={pending} run={run} />
@@ -286,11 +285,11 @@ export function StoreChip({ name, size, className }: { name: string; size: numbe
   )
 }
 
-/** Why Remove or Disconnect is refused (InUse) before it is asked. */
+/** Why Remove is refused (InUse) before it is asked. */
 export const heldWords = (held: { stores: number }) =>
   held.stores > 0 ? t(held.stores === 1 ? 'In use: holds 1 Store. Pull it to native first.' : 'In use: holds {n} Stores. Pull them to native first.', { n: held.stores }) : t('In use: Sandboxes are running on it.')
 
-/** The machine's facts: its tool, free disk, Sandbox image, hosts and paths, and how its Sandboxes run. */
+/** The machine's facts: its tool, free disk, Sandbox image, paths, and how its Sandboxes run. */
 export function MachineFacts({ m, live }: { m: MachineInfo; live?: MachineLive }) {
   useI18n()
   return (
@@ -310,23 +309,6 @@ export function MachineFacts({ m, live }: { m: MachineInfo; live?: MachineLive }
         <Fact label={t('OS image')} mono>
           {(m as { os_image: string }).os_image}
         </Fact>
-      )}
-      {m.host && <Fact label={t('Lima host')}>{m.host}</Fact>}
-      {m.nested && <Fact label={t('Nested')}>{t('Can host Firecracker machines')}</Fact>}
-      {m.ssh && (
-        <>
-          <Fact label={t('SSH host')} mono>
-            {`${m.ssh.user}@${m.ssh.host}${m.ssh.port !== 22 ? `:${m.ssh.port}` : ''}`}
-          </Fact>
-          <Fact label={t('Data root')} mono>
-            {m.ssh.root ?? '/layerfs/data'}
-          </Fact>
-          {m.ssh.identity && (
-            <Fact label={t('Identity')} mono>
-              {m.ssh.identity}
-            </Fact>
-          )}
-        </>
       )}
       {m.docker && (
         <Fact label={t('Docker socket')} mono>
@@ -390,22 +372,21 @@ function SettingsDialog({ m, os, open, onClose, pending, run }: { m: MachineInfo
   )
 }
 
-/** Remove a VM and its disk, or disconnect an ssh host (its data root stays); LayerFS's refusal shows in the card. */
+/** Remove a VM and its disk; LayerFS's refusal shows in the card. */
 function RemoveDialog({ m, open, onClose, pending, run, onRemoved }: { m: MachineInfo; open: boolean; onClose: () => void; pending: string | null; run: Run; onRemoved?: () => void }) {
   useI18n()
-  const ssh = m.platform === 'ssh'
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{ssh ? t('Disconnect {name}? Its data root stays on the host.', { name: m.name }) : t('Remove {name} and its disk?', { name: m.name })}</DialogTitle>
+          <DialogTitle>{t('Remove {name} and its disk?', { name: m.name })}</DialogTitle>
         </DialogHeader>
         <DialogFooter>
           <Button variant="ghost" onClick={onClose}>
             {t('Cancel')}
           </Button>
           <Button variant="destructive" disabled={pending !== null} onClick={() => void run('remove', { kind: 'remove', name: m.name }).then((ok) => (onClose(), ok && onRemoved?.()))}>
-            {pending === 'remove' ? t(ssh ? 'Disconnecting…' : 'Removing…') : t(ssh ? 'Disconnect' : 'Remove')}
+            {pending === 'remove' ? t('Removing…') : t('Remove')}
           </Button>
         </DialogFooter>
       </DialogContent>

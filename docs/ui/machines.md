@@ -5,203 +5,240 @@ machine-data, machine-sandboxes, add-machine, target-parts), `components/state-c
 `data/states.ts`, `data/compute.ts`
 Opens from: sidebar Machines; any machine link (`go.machine`: focus `machine:<name>` shows the
 machine page in the same tab; App passes `back` when it came from another page)
+Model: [../layerfs-model.md](../layerfs-model.md) (machine, Stores, Sandboxes, Workspaces)
 
-## Machines board
+## Machines board (current desktop renderer)
+
+Source: `desktop/src/renderer/src/pages/machines/` (`MachinesPage.tsx`,
+`MachineCard.tsx`, `machines.css`). New machine remains in the page header;
+there is no duplicate New machine tile.
 
 ```text
-+-[1] Header (sticky) ---------------------------------------------------------------------------+
-| Machines                                 [<flask> v Live host]  [+ New machine]*  [<o> Refresh]|
-+------------------------------------------------------------------------------------------------+
++-[1] Header -----------------------------------------------------------------------------+
+| Machines                                              [+ New machine] [Refresh]         |
++-----------------------------------------------------------------------------------------+
  [2] 3 running - 1 stopped - 1 Sandbox - 1 Workspace
- [3] ( a Notice per machine that needs you -- none in `mac`; see States )
 
- +-[4] native ------------------+ +-[4] docker ------------------+ +-[4] lima1 -------------------+
- | <mac> native           [...] | | <whale> docker         [...] | | <L> lima1              [...] |
- | Native - this Mac            | | Docker - Docker's VM - 38.2..| | Lima - 4 CPU - 8 GiB - 50 GiB|
- | <box> 1 Sandbox - 1 Workspace| | <box> No Sandboxes           | | <box> No Sandboxes           |
- | (<store> shop ->)            | | <store> No Stores            | | (<store> lab ->)             |
- |                              | |                              | | ###.......... 35.9 GiB free  |
- |------------------------------| |------------------------------| |------------------------------|
- | ( Running )                  | | ( Running )   [<power> Stop] | | ( Running )   [<power> Stop] |
- +------------------------------+ +------------------------------+ +------------------------------+
- +-[4] lima2 -------------------+ +-[5] - - - - - - - - - - - - -+
- | <L> lima2              [...] | |             [+]              |
- | Lima - 2 CPU - 4 GiB - 32 GiB| |         New machine          |
- | <box> No Sandboxes           | |  Apple Container, Microsand- |
- | <store> No Stores            | |  box, Lima, Firecracker, SSH |
- |------------------------------| |  host                        |
- | ( Stopped )  [<power> Start]*| |                              |
- +------------------------------+ +- - - - - - - - - - - - - - - +
-
- [6] Machine power is manual: a machine runs between Start and Stop, and nothing starts or stops
-     one by itself. Reading this page starts nothing.
+ +-[3] native -------------------------+  +-[3] lima1 --------------------------+
+ | <mac> native                  [...] |  | <L> lima1                      [...] |
+ |       Native - Host processes       |  |     Lima - Linux namespaces         |
+ |                                     |  |                                     |
+ | Uses this computer's resources      |  | CPU          Memory   Disk capacity |
+ |                                     |  | 4 cores      8 GiB    50 GiB        |
+ |-------------------------------------|  |-------------------------------------|
+ | 1             1             1        |  | 0             0             1        |
+ | Sandbox       Workspace     Local   |  | Sandboxes     Workspaces    Local   |
+ |                             Store   |  |                             Store   |
+ | Stores  shop                        |  | Stores  lab                         |
+ |                                     |  |                                     |
+ | Disk       Shared with this computer|  | Disk     35.9 GiB free of 50 GiB    |
+ |                                     |  | ####.........................       |
+ |-------------------------------------|  |-------------------------------------|
+ | ( Running )           This computer |  | ( Running )                 [Stop]  |
+ +-------------------------------------+  +-------------------------------------+
 ```
 
-| [n] | Component | file:line | one line |
+| [n] | Component | Source | Behavior |
 |---|---|---|---|
-| 1 | PageHeader | compute-page.tsx:154 | Dev picker :161; New machine (when available) :163 |
-| 2 | facts line | compute-page.tsx:189 | Zero counts of the optional parts are left out |
-| 3 | Notice | compute-page.tsx:215 | Failed / missing / unresolved machine, [Show] |
-| 4 | MachineTile | compute-page.tsx:243 | Grid min 17.5rem; order RANK :65, see below |
-| 5 | NewMachineTile | machine-card.tsx:253 | Dashed; the ready addable kinds; opens Add |
-| 6 | footer note | compute-page.tsx:248 | Fixed text |
+| 1 | PageHeader | MachinesPage.tsx | New machine, Refresh, existing development simulation picker |
+| 2 | Facts | MachinesPage.tsx | Running/stopped, Sandbox and Workspace totals; attention counts |
+| 3 | MachineTile | MachineCard.tsx | Whole-card open; identity, allocations, inventory, Stores, disk and manual power |
 
-```text
-[2] parts, in order:   N running - N stopped - N creating or removing* - N unknown* - N Sandboxes
-                       - N Workspaces - (red dot) N need you* - N operations in flight*
-                       (* only when > 0)
-[4] order:             needs you, creating/removing, running, stopped, unknown;
-                       within each: native, docker, then by name
-```
+Grid: 340px minimum / 400px maximum tracks, 20px gaps, left aligned, capped at
+1600px. Tracks shrink to available width below 340px. Cards have a 300px minimum
+height and stretch equally within each row; notices can increase row height.
+Native / Docker allocation sentences reserve the same band as the VM's three
+allocation columns. Those columns show configured capacity, not live usage.
+
+Order remains: needs attention, creating/removing, running, stopped, unknown;
+then native, Docker, other machines by name. Loading, unavailable host and
+unsupported older LayerFS still use the existing page states. The footer note
+retains manual power behavior. Reading the page starts nothing.
 
 ## Machine card
 
-Composite: every optional part at once (lima1 with Sandboxes, chats and many Stores).
-
 ```text
-+-[0] card (whole card opens the page; Cmd/Ctrl- or middle-click: new tab) ------+
-| [1]<L>  [2] lima1                                                     [4][...] |
-|         [3] Lima - 4 CPU - 8 GiB - 50 GiB                                      |
-| [5] the VM did not boot: vz: Virtualization.framework refused the disk image   |
-| [6] <box> 2 Sandboxes - 3 Workspaces                                           |
-| [7]   * 1 chat working                                                         |
-| [8] (<store> lab ->) (<store> a ->) (<store> b ->) +2 more                     |
-| [9] ##################............................................ 35.9 GiB free |
-|--------------------------------------------------------------------------------|
-| [10]( Running - machine.stop - stop )  [11] Unavailable: ...  [12][<power> Stop] |
-+--------------------------------------------------------------------------------+
++-[1] lima1 -------------------------------------------------------------------+
+| <kind> lima1                                                            [...] |
+|        Lima - Linux namespaces                                                |
+|                                                                               |
+| [2] CPU                    Memory                       Disk capacity         |
+|     4 cores                8 GiB                        50 GiB                |
+|-------------------------------------------------------------------------------|
+| [3] 2                      3                            5                     |
+|     Sandboxes              Workspaces                   Local Stores          |
+| [4] Stores  lab  a  b  +2 more                                                 |
+|                                                                               |
+| [5] Disk                                            35.9 GiB free of 50 GiB  |
+|     ######.................................................................   |
+|-------------------------------------------------------------------------------|
+| [6] ( Running )                                                       [Stop]  |
++-------------------------------------------------------------------------------+
 ```
 
-| [n] | Component | file:line | one line |
+| [n] | Region | Behavior |
+|---|---|---|
+| 1 | Identity | Platform mark, machine name, one platform/runtime subtitle, existing menu |
+| 2 | Allocations | Known CPU, memory, disk values; native shares host resources; Docker manages unspecified allocations |
+| 3 | Inventory | Recorded Sandbox count, mounted Workspaces, local SQLite Stores; zeroes stay visible |
+| 4 | Store links | Up to three quiet links, then +N more; open Storage independently of the card |
+| 5 | Disk status | Free/capacity and bar only with reported values; native/shared and unavailable states use text |
+| 6 | Footer | SDK-derived state/operation, Start/Stop; native shows This computer without power controls |
+
+Unknown workspace counts show a dash or `N+` when only some counts are known,
+with a title explaining that some reads failed. PostgreSQL Stores are external
+and are not counted as local Stores. Machine allocations never stand in for
+CPU/memory utilization. Disk bars indicate used share and label free bytes;
+without capacity, Docker shows only reported free disk and no invented bar.
+
+Whole-card click, keyboard activation, Cmd/Ctrl-click and middle click retain
+existing machine navigation. Menu, Store and power controls sit above the card's
+stretched target and never also open the card. Focus outlines the entire card.
+Windows native says Records only; its workloads run on Docker.
+
+Attention/refusal states live inside the affected card, without duplicate board
+banners:
+
+```text
+ [Danger border] Failed / missing / unresolved
+ +---------------------------------------------------------------------------+
+ | <short SDK reason, up to two lines; full text in title>                     |
+ | Inspect: layerfs machine status <name>                 (when unresolved)   |
+ | View details ->                                                           |
+ +---------------------------------------------------------------------------+
+ [Warning border] Stopped machine with local Stores
+ | Start to use its local Store(s).                      [View details ->]    |
+ [Action refused] SDK refusal text remains visible inside the card.
+```
+
+The existing settings, removal guards, refusal recovery and explicit power
+calls remain. Start/Stop show their existing pending/disabled states. New
+machine opens the existing Add machine dialog from the header.
+
+## Machine page (current desktop renderer)
+
+Source: `desktop/src/renderer/src/pages/machines/` (`MachinePage.tsx`,
+`MachineSandboxes.tsx`, `MachineDetails.tsx`, `machines.css`).
+Sandboxes is the default, including when the machine has Stores and no Sandboxes.
+
+```text
++-[1] Machine console --------------------------------------------------------------------+
+| [< Machines]                                                    [Settings] [Power]* [...]|
+|                                                                                         |
+| <kind> native                                                               ( Running ) |
+|        Native - this Mac                                                                |
+|                                                                                         |
+| [2] Resources: Shared with this computer    Free disk <only when reported>           |
+| [3] [>] Technical details                                                               |
++-----------------------------------------------------------------------------------------+
+
+ [4] SANDBOXES / 03     3 Workspaces                                      [Stores / 02 ->]
+
+ +-[5] --------------------------------+  +-[5] --------------------------------+
+ | api-dev - shop/api            [...] |  | web-preview - shop/web        [...] |
+ | Image: None - host processes        |  | Image: ubuntu:24.04                 |
+ | * Running              Kernel NFS   |  | * Running              Kernel FUSE  |
+ |                                     |  |                                     |
+ | CPU        Memory       Disk        |  | CPU        Memory       Disk        |
+ | --         --           --          |  | --         --           --          |
+ | Usage not reported by LayerFS       |  | Usage not reported by LayerFS       |
+ |                                     |  |                                     |
+ | Workspaces                   2 / 16 |  | Workspaces                   1 / 16 |
+ | Workspace          Branch           |  | Workspace          Branch           |
+ | login           -> feature-login    |  | preview         -> preview          |
+ | review          -> fix-validation   |  |                                     |
+ |                                     |  |                                     |
+ |-------------------------------------|  |-------------------------------------|
+ | Open sandbox                     -> |  | Open sandbox                     -> |
+ +-------------------------------------+  +-------------------------------------+
+```
+
+| [n] | Component | Source | Behavior |
 |---|---|---|---|
-| 0 | Card ring | machine-card.tsx:176 | Amber: stopped with Stores; red: needs you (:130) |
-| 1 | KindLabel | machine-card.tsx:179 | Mark only: logo, server, monitor or monogram |
-| 2 | name button | machine-card.tsx:182 | Stretched link over the card |
-| 3 | size line | machine-card.tsx:187 | `<Kind> - <size>`, sizes below |
-| 4 | MachineMenu | machine-card.tsx:192 | See Menus and dialogs |
-| 5 | down reason | machine-card.tsx:197 | Red, 2 lines; status reason or record error |
-| 6 | Sandboxes line | machine-card.tsx:202 | `No Sandboxes`; `Records only` (native, Windows) |
-| 7 | chats working | machine-card.tsx:213 | Live chats in its Sandboxes; pulsing dot |
-| 8 | StoreChip | machine-card.tsx:272 | 3 chips then `+N more`; else `No Stores`; a size only when store.list gives one |
-| 9 | disk Bar | machine-card.tsx:232 | With disk size and free disk; >75% / >90% tone |
-| 10 | StateChip | machine-card.tsx:241 | See States |
-| 11 | Refusal compact | machine-card.tsx:242 | `<Code>: <message>` of the last action |
-| 12 | PowerButton | machine-card.tsx:56 | Non-native only; `Starting...` / `Stopping...` |
+| 1 | Machine console | MachinePage.tsx | Identity, state, manual power, settings and existing menu |
+| 2 | Hardware strip | MachinePage.tsx | Allocations and reported free disk; native resources are shared |
+| 3 | Technical disclosure | MachineDetails.tsx | Existing facts, versions, capabilities, connection and removal rules |
+| 4 | View heading and switch | MachinePage.tsx | Sandboxes by default; Stores replaces the inventory below the header |
+| 5 | Square SandboxBox | MachineSandboxes.tsx | Name/project/menu, image subtitle, status/kernel, usage availability, workspace bindings |
+
+Card data above is illustrative. Actual cards use the current host or selected simulation.
+CSS Grid uses auto-fill with a 360px minimum track, a 20px gap and a 400px card
+maximum, shrinking only when the available width is below 360px. The machine
+workbench is capped at 1760px. Each card keeps `aspect-ratio: 1`; rows wrap without stretching to content.
+Unknown workspace counts show a dash, never zero. No chat activity
+is inferred from project identity. Long names/project paths truncate with full titles.
+
+The card's stretched native Link opens the existing
+`/machines/:name/sandboxes/:sandbox` route and its existing shared Sandbox detail
+component. Cmd/Ctrl-click and keyboard focus work as links. The separate menu stays
+above that link; menu clicks do not navigate. A Sandbox is bound to one project,
+shown as Store/project beside its name. Branches belong to individual mounted
+workspaces, shown in up to three `Workspace -> Branch` rows under their own
+headers; additional rows show "+N more in sandbox details". A native Sandbox's
+image says "Image: None - host processes"; digests/archive names are shortened with the full
+reference in the title. The image is a quiet single-line subtitle immediately
+below the name/project heading, with an explicit Image label. The reported Kernel (FUSE/NFS) shares the subtitle line; status lives in
+the footer beside Open sandbox. It has no panel,
+border, fill, or large padding. No workspace slot graphic remains.
+
+Workspace bindings are read with `sandbox.get` at mount, after count/state
+changes, and every 15 seconds while a nonempty Sandbox is running and the window
+is visible. Loading, unknown counts, unread/refused workspace data, no details
+reported, and zero workspaces remain distinct. Full workspace management stays
+in the existing detail component. Sandbox resource readings are omitted unless
+usage data is supplied. No historical CPU/memory sparklines or empty metrics
+panels remain. Configured Machine resources stay in the header.
+
+Development builds offer Preview sample readings / Hide sample readings. Only
+explicit `?metrics=sample` enables the labelled current-value fixture; simulated
+mode no longer enables it automatically. The sample has CPU percentage,
+memory used/limit and disk used/total with a capacity bar. Production never
+shows fixtures. No Machine allocation is substituted for Sandbox usage.
+
+Kernel uses the Sandbox's reported `route` (`fuse` / `nfs`), falling back to its
+detail read, with "Not reported" when neither reports it.
+
+Closing retains the refusal / Force close flow, and unresolved/unknown-outcome
+messages remain readable in a scrollable card notice.
+Returning from detail restores the machine route and saved scroll position.
+
+Stores view:
 
 ```text
-[3] sizes:  native   this Mac | this PC | this host
-            docker   Docker's VM [- N free]          (Linux: this host's Docker)
-            ssh      host's own [- N free]
-            VM       4 CPU - 8 GiB - 50 GiB [- N free]   (free left out when [9] shows)
-[12]        running -> [<power> Stop] (outline)   stopped -> [<power> Start]* (primary)
+ [4] STORES / 02   Local SQLite and supported PostgreSQL Stores       [<- Sandboxes / 03]
+ +-[6] shop ------------------------------------------------------------------------------+
+ | SQLite - on this machine                                                               |
+ | api                                                         web                       |
+ +-----------------------------------------------------------------------------------------+
+ +-[6] team ------------------------------------------------------------------------------+
+ | PostgreSQL - external database                                                         |
+ | crm                                                                                   |
+ +-----------------------------------------------------------------------------------------+
 ```
 
-## Machine page
+[6] uses existing MachineData / StoreSection components. PostgreSQL availability
+comes from the platform capability flag, not a verified network probe.
+`?view=stores` deep-links to Stores; `?view=sandboxes` and the bare machine route
+open Sandboxes. Legacy `?view=details` opens Sandboxes with Technical details expanded.
+The switch preserves other URL parameters and leaves the hardware header in place.
+The native disclosure retains its open state while switching views. Native
+resources use one shared-resource sentence, avoiding three repeated Shared
+values. The machine status sits beside its name; technical details aligns with
+the resource line.
 
-`native`, its Sandbox panel open (open at first: those with Workspaces, while 12 or fewer).
-
-```text
-+-[1] Header -----------------------------------------------------------------------------------+
-| [<] Machines / <mac> native  Native  ( Running )                                         [...]|
-| this Mac                                                                                      |
-+-----------------------------------------------------------------------------------------------+
- [2] ( attention box: only with a down reason, a refusal or unresolved -- none here )
-
- [3] Stores  |SQLite 1| PostgreSQL 1                                           pushed to this disk
-+-----------------------------------------------------------------------------------------------+
-| +-[4] Store tile -------------+                                                               |
-| | <store> shop  ->            |                                                               |
-| |   [5] (*api) web            |                                                               |
-| +-----------------------------+                                                               |
-+-----------------------------------------------------------------------------------------------+
-
- Sandboxes  1 Sandbox - 1 Workspace
- +-[6] Sandbox panel (expanded) ----------------------------------------+
- | <sbx> Sandbox api-dev                           (* Running )   [...] |
- |       <proj> api (<store> shop)                                      |
- |       <disc> No image - host processes                               |
- |----------------------------------------------------------------------|
- | [7] [v] 1 Workspace                                 #.......  1 of 16|
- |  [8] <ws> feature-login /workspaces/feature-login  <br> feature-login x |
- |           -- not used by a chat                                      |
- +----------------------------------------------------------------------+
-
- Details
-+-[9] ------------------------------------------------------------------------------------------+
-| Platform          Free disk         Sandboxes run as                                          |
-| Native            38.2 GiB          Processes, not isolated                                   |
-|-----------------------------------------------------------------------------------------------|
-| [10] [Update settings...]  Built in - can't be removed                                        |
-+-----------------------------------------------------------------------------------------------+
-```
-
-`lima1`: header with power and disk bar, Details with the danger zone.
-
-```text
-| [<] Machines / <L> lima1  Lima  ( Running )                             [<power> Stop] [...] |
-| 4 CPU - 8 GiB - 50 GiB - limactl version 2.2.1        #####........ 35.9 GiB free of 50 GiB |
-
-| Platform   Tool                   CPUs   Memory   Disk     Free disk   Sandboxes run as     |
-| Lima       limactl version 2.2.1  4      8 GiB    50 GiB   35.9 GiB    Linux namespaces     |
-|---------------------------------------------------------------------------------------------|
-| [11] Danger zone  [<trash> Remove lima1...] (disabled)                                      |
-|      In use: holds 1 Store. Pull it to native first.                                        |
-```
-
-Closed panel, and a Workspace a chat uses (its x asks again):
-
-```text
- | [>] 1 Workspace                                     #.......  1 of 16 |
- |  (0 Workspaces and closed: "No Workspace mounted", no toggle)        |
-
- |  <ws> feature-login /workspaces/feature-login  <br> feature-login [Close anyway] |
- |       <chat> Add a login route   * working        (or: idle; <people> for a scenario chat)
- |  <Code>: <message>                                (a refused unmount)
-```
-
-| [n] | Component | file:line | one line |
-|---|---|---|---|
-| 1 | header | machine-page.tsx:93 | `[<]` only with `back`; power :104, menu :105 |
-| 2 | attention box | machine-page.tsx:127 | Red when it needs you; text below |
-| 3 | MachineData | machine-data.tsx:42 | Starts on PG when no SQLite Store and some PG |
-| 4 | StoreTile | machine-data.tsx:100 | Name opens Storage (arrow on hover); JobChip :112; a size only when store.list gives one (2.0 does not) |
-| 5 | project names | machine-data.tsx:113 | Open the project; `*` dot: a Sandbox runs here |
-| 6 | SandboxPanel | machine-sandboxes.tsx:92 | Grid min 19rem, by project; menu :183 |
-| 7 | toggle, capacity | machine-sandboxes.tsx:139 | Bar of 16: >75% warning, full danger |
-| 8 | WorkspaceRow | machine-sandboxes.tsx:245 | x (hover) unmounts; chat links :286 |
-| 9 | MachineFacts | machine-card.tsx:294 | Only the facts it knows, list below |
-| 10 | built-in row | machine-page.tsx:156 | native and docker |
-| 11 | danger zone | machine-page.tsx:164 | Disabled while it holds anything (:290) |
-
-```text
-[1] facts line  <size> - <tool version> - default image <digest or file>   [disk bar] N free of D
-[2] lines       <down reason>
-                see layerfs machine status <m> - clear: layerfs machine remove <m>  (unresolved;
-                                                                       disconnect for ssh)
-                Its Store can't be used until it answers.        (needs you, holds Stores)
-                <Code>: <message>                                (a refused action)
-[3] aside       SQLite: pushed to this disk     PostgreSQL: reachable from its Sandboxes
-                PostgreSQL count only when the machine says it reaches PostgreSQL
-[4] JobChip     ##.. pushing... | pulling... | backing up... | restoring...
-[6] head        Sandbox <name> (title adds backend - route); project link opens its Sandboxes
-                tab, or "No project"; image: <digest | file> (machine default) | (custom),
-                No image - host processes (native), Image not reported
-[7] toggle      N Workspaces | Workspaces unknown; bar pulses while running with Workspaces
-[9] facts       Platform, Tool, CPUs, Memory, Disk, Free disk, Sandbox image, OS image,
-                Lima host, Nested, SSH host, Data root, Identity, Docker socket,
-                WSL distribution, Sandboxes run as (Containers | Processes, not isolated |
-                Linux namespaces)
-[11]            ssh: [<unplug> Disconnect <name>...]; held: In use: holds N Stores. Pull them
-                to native first. | In use: Sandboxes are running on it.
-```
+Empty inventory: "Nothing runs here. Open a project's Sandboxes tab to create one
+on this machine." Windows native keeps the existing records-only explanation.
+Machine errors/refusals remain visible below the header, independent of the chosen view.
 
 ## Add a machine dialog
 
-`mac` world: every platform ready. Lima's form open.
+`mac` world: every platform ready. Lima's form open. SSH hosts and Firecracker are turned off
+in Connect: the host leaves them out of `machine.platforms` (host/machines.js `OFF`), so they
+have no row, and lima's `nested` option (only Firecracker used it) has no field.
 
 ```text
 +-[1] Add a machine ----------------------------------------------------------------------- x -+
-| Create a VM on this computer, or connect a Linux host over SSH.                               |
+| Create a VM on this computer.                                                                 |
 | +-[2] platform rows -------------------------------------------------------------------------+ |
 | | <apple> Apple Container                                                          [Create] | |
 | |         A Linux VM from Apple's container tool - container CLI version 1.6.1              | |
@@ -215,51 +252,19 @@ Closed panel, and a Workspace a chat uses (its x asks again):
 | |   | Name            CPUs            Memory          Disk                              |   | |
 | |   | lima3_______    2___________    4G__________    20G_________                      |   | |
 | |   |                                                 Holds its Stores                  |   | |
-| |   | Sandbox image                     [ ] Nested: Firecracker machines can run in it  |   | |
+| |   | Sandbox image                                                                     |   | |
 | |   | [v The bundle's image        ]                                                    |   | |
 | |   | [Create]*  [Cancel]   Check the fields marked above.                              |   | |
 | |   +-----------------------------------------------------------------------------------+   | |
-| |-------------------------------------------------------------------------------------------| |
-| | <FC>    Firecracker                                                              [Create] | |
-| |         A Firecracker microVM inside a nested Lima machine - limactl version 2.2.1        | |
-| |-------------------------------------------------------------------------------------------| |
-| | <srv>   SSH host                                                                [Connect] | |
-| |         A Linux host you reach over SSH with a key - OpenSSH_10.2p1                       | |
 | +-------------------------------------------------------------------------------------------+ |
 +-----------------------------------------------------------------------------------------------+
 ```
 
-Firecracker form (no nested Lima machine yet), with the archive image choice:
+The archive image choice:
 
 ```text
-| Name          CPUs        Memory      Disk                                     |
-| fc1_______    2_______    4G______    20G_____                                 |
 | Sandbox image                         Archive path or digest                   |
 | [v Choose an archive...      ]        ~~~ /path/to/sandbox-image.tar ~~~        |
-| Lima host                             New Lima machine's name                  |
-| [v Create a nested Lima machine...]   lima3___________                         |
-| Firecracker runs inside a Lima machine made with --nested                      |
-| [Create]*  [Cancel]                                                            |
-```
-
-SSH form:
-
-```text
-+-[4] Connect an ssh host -------------------------------------------------------------+
-| Name           Host                                       Port                       |
-| ssh1_______    ~~~ ubuntu@gpu-box.lan ~~~                 22____                     |
-| Identity                                  Known hosts file                           |
-| ~~~ ~/.ssh/id_ed25519 ~~~                 ~~~ ~/.ssh/known_hosts ~~~                 |
-| Left empty, the ssh agent's keys          Left empty, ssh's own; the host key must   |
-|                                           already be known                           |
-| Data root                                                                            |
-| /layerfs/data______                                                                  |
-| Holds its Stores; it stays when disconnected                                         |
-| LayerFS logs in as root by default and turns off user namespaces on that host for    |
-| everyone. Use a host you keep for this.                                    (warning) |
-| [5] [Connect]*  [Cancel]                                                             |
-| <Code>: <message>                                                                    |
-+--------------------------------------------------------------------------------------+
 ```
 
 A platform that is not ready (not in `mac`):
@@ -274,19 +279,18 @@ A platform that is not ready (not in `mac`):
 
 | [n] | Component | file:line | one line |
 |---|---|---|---|
-| 1 | AddMachineDialog | add-machine.tsx:61 | Closing resets the open form |
-| 2 | platform row | add-machine.tsx:91 | Addable platforms, machine.platforms order |
-| 3 | VmMachineForm | add-machine.tsx:159 | Fields only for declared options |
-| 4 | SshMachineForm | add-machine.tsx:284 | Port, Identity, Known hosts, Data root if declared |
-| 5 | FormButtons | add-machine.tsx:353 | `Creating...` / `Connecting...`; Refusal below |
+| 1 | AddMachineDialog | add-machine.tsx:56 | Closing resets the open form |
+| 2 | platform row | add-machine.tsx:85 | Addable platforms, machine.platforms order |
+| 3 | VmMachineForm | add-machine.tsx:150 | Fields only for declared options |
+| 4 | FormButtons | add-machine.tsx:236 | `Creating...`; Refusal below |
 
 ```text
-[2] ready       <blurb> - <version | Ready>   (blurb only in a wide dialog); [Create] | [Connect],
+[2] ready       <blurb> - <version | Ready>   (blurb only in a wide dialog); [Create],
                 |Create| (secondary) while its form is open
     not ready   /!\ <needs joined by " - ">  [How to install v] | [How to get it v]
                 bundle: Needs the LayerFS Linux bundle + 4 `python3 tools/linux_bundle.py ...`
                 hardware / OS (M3, macOS 15, Apple silicon, WSL2, root, ...): no button
-[3] name        prefilled <short><n>: ac1, msb1, lima3, fc1, ssh1 (lowest free)
+[3] name        prefilled <short><n>: ac1, msb1, lima3 (lowest free)
 ```
 
 Field errors replace the hint under a field (shown after the first submit):
@@ -299,11 +303,6 @@ Field errors replace the hint under a field (shown after the first submit):
 | CPUs | `A whole number from 1 to 64` |
 | Memory / Disk | `At least 512M, such as 4G` - `At least 2G, such as 20G` |
 | Sandbox image | `A sha256: digest, or an archive's absolute path` |
-| Lima host | `Choose the Lima machine it runs in` |
-| Lima host | `<name> is not a Lima machine made with --nested` |
-| Host / Port | `user@host, or a host name` - `A port from 1 to 65535` |
-| Identity | `A key file's path, such as ~/.ssh/id_ed25519` |
-| Data root | `An absolute path on the host` |
 
 ## States
 
@@ -320,15 +319,11 @@ Older LayerFS      +------------------------------------------------------------
                    |  fills in once Connect links LayerFS 2.0.                     |
                    +---------------------------------------------------------------+
 Simulated (dev)    (<flask> Simulated) Mac, fresh home: sample data, not this machine.
-Needs-you Notice   +-------------------------------------------------------------+
-                   | /!\ lima2 is failed                                  [Show] |
-                   |     the VM did not boot: vz: ...                            |
-                   |     Its Store can't be used until it answers.               |
-                   +-------------------------------------------------------------+
-                   unresolved: title "<machine>: unresolved <op>", plus mono
-                   see layerfs machine status <m> - clear: layerfs machine remove <m>
+Needs attention    In-card reason / refusal and View details; no duplicate board Notice.
+                   Unresolved: Inspect: layerfs machine status <name>.
+                   Full status and clearing calls remain on the machine page.
 No such machine    [<] Machines / <name>   then   <server> No machine named <name>
-                   It was removed or disconnected, or this home never had it.
+                   It was removed, or this home never had it.
 Page, no Sandbox   Nothing runs here. A project's Sandboxes tab starts one on any machine.
                    native on Windows: Native on Windows keeps records only; Sandboxes run
                    on docker.
@@ -351,9 +346,9 @@ Machine state chip (`StateChip entity="machine"`, data/states.ts:22):
 | running, ready | `( Running )` | success | | running (native is `ready`) |
 | stopped | `( Stopped )` | neutral | | stopped |
 | removing | `(* Removing)` | warning | pulses | creating or removing |
-| failed | `( Failed )` | danger | | needs you: Notice, red ring |
-| missing | `( Missing )` | danger | | needs you: Notice, red ring |
-| unresolved | `( Unresolved )` | danger | | needs you: Notice + clearing call |
+| failed | `( Failed )` | danger | | needs you: in-card notice, danger border |
+| missing | `( Missing )` | danger | | needs you: in-card notice, danger border |
+| unresolved | `( Unresolved )` | danger | | needs you: in-card inspection call |
 | unknown / empty | `( Unknown )` | neutral | dashed | unknown |
 | any other word | `( <word> )` | neutral | | unknown |
 
@@ -366,20 +361,19 @@ Sandbox     Creating*, Running*, Closing*, Gone, Unresolved, Unknown (dashed)   
 ## Menus and dialogs
 
 ```text
-Machine [...] on the board    built-in (native, docker)          others (VM, ssh)
+Machine [...] on the board    built-in (native, docker)          others (VMs)
 +------------------------+    +-----------------------------+    +------------------------------+
 | -> Open                |    | -> Open                     |    | -> Open                      |
 | <power> Stop | Start   |    | <power> Stop    (docker)    |    | <power> Start                |
 | ...                    |    | <gear> Update settings...   |    |------------------------------|
 +------------------------+    |-----------------------------|    | <trash> Remove...      (red) |
-                              | <lock> Built in - can't be  |    |  ssh: <unplug> Disconnect... |
-                              |        removed              |    | In use: holds 1 Store. Pull  |
-                              +-----------------------------+    | it to native first.          |
-                                                                 +------------------------------+
+                              | <lock> Built in - can't be  |    | In use: holds 1 Store. Pull  |
+                              |        removed              |    | it to native first.          |
+                              +-----------------------------+    +------------------------------+
 ```
 
 On the machine page the same menu has no Open. Start / Stop: non-native, running or stopped.
-Remove / Disconnect: disabled while it holds Stores or Sandboxes, the reason under it.
+Remove: disabled while it holds Stores or Sandboxes, the reason under it.
 
 ```text
 +-[1] Update settings ------------------------- x -+   +-[2] ---------------------------------+
@@ -387,9 +381,9 @@ Remove / Disconnect: disabled while it holds Stores or Sandboxes, the reason und
 | Sandbox image                                    |   |                                      |
 | ~~~ sha256:... ~~~                               |   |                [Cancel]  [Remove]!   |
 | Docker socket                       (docker)     |   +--------------------------------------+
-| ~~~ /var/run/docker.sock ~~~                     |   ssh: Disconnect <name>? Its data root
-| WSL distribution             (docker, Windows)   |   stays on the host.   [Disconnect]!
-| ~~~ Ubuntu-24.04 ~~~                             |   busy: Removing... / Disconnecting...
+| ~~~ /var/run/docker.sock ~~~                     |   busy: Removing...
+| WSL distribution             (docker, Windows)   |
+| ~~~ Ubuntu-24.04 ~~~                             |
 |                              [Cancel]  [Save]*   |
 +--------------------------------------------------+
 
@@ -403,8 +397,8 @@ Remove / Disconnect: disabled while it holds Stores or Sandboxes, the reason und
 
 | [n] | Component | file:line | one line |
 |---|---|---|---|
-| 1 | SettingsDialog | machine-card.tsx:343 | Built-ins; bad image disables Save; `Saving...` |
-| 2 | RemoveDialog | machine-card.tsx:394 | On the page a removal returns to the board |
+| 1 | SettingsDialog | machine-card.tsx:325 | Built-ins; bad image disables Save; `Saving...` |
+| 2 | RemoveDialog | machine-card.tsx:376 | On the page a removal returns to the board |
 | 3 | SandboxMenu | machine-sandboxes.tsx:183 | Open project: its Sandboxes tab |
 
 `[Remove]!` is the destructive button.
@@ -418,3 +412,32 @@ Remove / Disconnect: disabled while it holds Stores or Sandboxes, the reason und
   `AddMachine`, `PlatformMark`, `SANDBOX_CAPACITY`, `KIND_SHORT`, `VM_KINDS` are used only in
   their own file.
 - Stores are only linked here: pushing, pulling and moving them is on Storage.
+
+## Shared Sandbox detail route
+
+```text
+Machines / native                 SANDBOXES / 01     [Stores / 02 ->]
+  Sandbox api-dev ->  /machines/native/sandboxes/api-dev
+
+< native / api-dev                                (Simulation)
+Parent machine: native ->
+[Overview] Workspaces Scratch Activity Diagnostics
+  Shared components/sandbox/SandboxDetail and its panels
+```
+
+Sandbox names on machine cards open the shared resource detail. Breadcrumb Back restores the
+machine's selected `?view=` tab and scroll position. Direct detail URLs fall back to the parent
+machine's Sandboxes view. The conversation embeds the same component with Project activity as
+its back label. See [sandbox.md](sandbox.md) for layout, states, ownership and verification.
+
+The new detail route is simulation-only. It preserves recorded project, machine, branch and
+mount paths, while unavailable scratch/log/runtime/agent data stays explicitly unrecorded.
+
+## Resource readings simplification
+
+Sandbox cards omit the resource block when LayerFS reports no usage. No empty
+CPU/memory/disk placeholders or historical sparklines are shown. In development,
+Preview sample readings explicitly enables `?metrics=sample`; samples are never
+enabled automatically by simulated mode. The sample shows current values and a
+disk capacity bar, labelled design preview. Hide sample readings restores the
+ordinary card. Configured Machine resources remain in the Machine header.
