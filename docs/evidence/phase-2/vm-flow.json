@@ -1,0 +1,591 @@
+{
+  "phase": "flow",
+  "context": "/private/tmp/connect137-vm-proof-context.json",
+  "identity": {
+    "version": "2.0.0",
+    "commit": "833d04cf44e8e747929d50ab1170a48260d9381c",
+    "dirty": false,
+    "features": [
+      "machine",
+      "postgresql"
+    ]
+  },
+  "started": "2026-11-08T21:48:53.804Z",
+  "calls": [
+    {
+      "argv": [
+        "machine",
+        "status",
+        "connect137-d7e88de8a2"
+      ],
+      "result": {
+        "name": "connect137-d7e88de8a2",
+        "platform": "lima",
+        "state": "running",
+        "free_disk": 4909146112,
+        "tool_version": "limactl version 2.2.1",
+        "down_reason": null,
+        "stores": []
+      }
+    },
+    {
+      "argv": [
+        "store",
+        "create",
+        "proof"
+      ],
+      "result": {
+        "name": "proof",
+        "kind": "sqlite",
+        "machine": "native",
+        "profile": "disposable",
+        "created": 1794174534004,
+        "sqlite": "3.53.2",
+        "projects": []
+      }
+    },
+    {
+      "argv": [
+        "project",
+        "init",
+        "proof/p",
+        "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/connect-phase2-vm-hHWW4n/input"
+      ],
+      "result": {
+        "project": "proof/p",
+        "store": "proof",
+        "name": "p",
+        "kind": "sqlite",
+        "machine": "native",
+        "created": 1794174534049,
+        "layer": "32e92a48817f53ed2f5401a091175a892376ad0227e360baa75278aa577cc698a1",
+        "root": "33789e25010f07bde1d7b6a8d9448c1b9caeb331413bea8d3384d6255e5884dc"
+      }
+    },
+    {
+      "argv": [
+        "store",
+        "push",
+        "proof",
+        "connect137-d7e88de8a2"
+      ],
+      "result": {
+        "store": "proof",
+        "from": "native",
+        "to": "connect137-d7e88de8a2",
+        "bytes": 217088,
+        "heads": "4523f37e10a7eadc1dbc74e92b9e7dc13e700282b38ffbd2e0304405c6dc14b6"
+      }
+    },
+    {
+      "argv": [
+        "branch",
+        "fork",
+        "proof/p",
+        "work",
+        "main"
+      ],
+      "result": {
+        "kind": "Forked",
+        "branch": "work",
+        "base": "32e92a48817f53ed2f5401a091175a892376ad0227e360baa75278aa577cc698a1",
+        "head": null
+      }
+    },
+    {
+      "argv": [
+        "sandbox",
+        "create",
+        "proof/p",
+        "vm-proof",
+        "connect137-d7e88de8a2"
+      ],
+      "result": {
+        "name": "vm-proof",
+        "project": "proof/p",
+        "machine": "connect137-d7e88de8a2",
+        "created": 1794174534134,
+        "id": "vm-proof",
+        "platform": "linux",
+        "runtime": "namespaces",
+        "image": "sha256:1d91885de27a20805af0d1b99602ace066f0514983613e391ee1f73ac8e7c2e9",
+        "backend": "namespaces",
+        "route": "fuse",
+        "state": "running"
+      }
+    },
+    {
+      "argv": [
+        "workspace",
+        "mount",
+        "vm-proof",
+        "work",
+        "--name",
+        "proof"
+      ],
+      "result": {
+        "kind": "Mounted",
+        "path": "/layerfs/data/machine/native/run/lfs-02a31b4e-vm-proof/workspaces/1",
+        "workspace": "ceab3ab124b580193e46124df8025a8e83d09607f112bcca7d901e45b342e504",
+        "namespace": 1,
+        "branch": "work",
+        "base": null,
+        "base_layer": "32e92a48817f53ed2f5401a091175a892376ad0227e360baa75278aa577cc698a1",
+        "root": "33789e25010f07bde1d7b6a8d9448c1b9caeb331413bea8d3384d6255e5884dc",
+        "sandbox": "vm-proof",
+        "container": "lfs-02a31b4e-vm-proof",
+        "image": "sha256:1d91885de27a20805af0d1b99602ace066f0514983613e391ee1f73ac8e7c2e9",
+        "platform": "linux",
+        "runtime": "namespaces",
+        "name": "proof",
+        "ws": "vm-proof:proof"
+      }
+    },
+    {
+      "argv": [
+        "workspace",
+        "exec",
+        "vm-proof:proof",
+        "printf vm > proof.txt",
+        "--exec-id",
+        "vm-proof-write",
+        "--events"
+      ],
+      "result": {
+        "kind": "exit:0",
+        "exit_code": 0,
+        "stdout": "",
+        "stderr": "",
+        "message": null,
+        "truncated": false,
+        "exec_id": "vm-proof-write",
+        "stop": "cgroup"
+      }
+    },
+    {
+      "argv": [
+        "workspace",
+        "commit",
+        "vm-proof:proof",
+        "--message",
+        "VM mounted write"
+      ],
+      "result": {
+        "kind": "Committed",
+        "head": "12afd7a71353dfe6f864f3bf067bc155ab74e0efd8e51f18f601a077d9be41ef69",
+        "commit": {
+          "id": "12afd7a71353dfe6f864f3bf067bc155ab74e0efd8e51f18f601a077d9be41ef69",
+          "branch": null,
+          "parent": null,
+          "second_parent": null,
+          "base": "32e92a48817f53ed2f5401a091175a892376ad0227e360baa75278aa577cc698a1",
+          "root": "e83e9ad9333e26d6827812853a57f2a608361422938f755aaee5344d76195ab9",
+          "via": "exec",
+          "message": "VM mounted write",
+          "merged_from": null,
+          "time": 1794174539914,
+          "logical": 11,
+          "new_canonical": 520,
+          "new_stored": 339,
+          "new_metadata": 300,
+          "displaced": null,
+          "lww": [],
+          "lww_truncated": false
+        },
+        "displaced_head": null,
+        "merged": null,
+        "lww": [],
+        "lww_truncated": false
+      }
+    },
+    {
+      "argv": [
+        "doctor",
+        "sandbox",
+        "vm-proof",
+        "--timeout",
+        "10s"
+      ],
+      "result": {
+        "ok": true,
+        "complete": true,
+        "target": {
+          "kind": "sandbox",
+          "name": "vm-proof"
+        },
+        "checks": [
+          {
+            "id": "sandbox.record",
+            "code": "sandbox.record",
+            "outcome": "pass",
+            "severity": null,
+            "entity": {
+              "kind": "sandbox",
+              "name": "vm-proof"
+            },
+            "message": "Sandbox record parses with a supported version",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 0,
+            "duration_ms": null
+          },
+          {
+            "id": "sandbox.store_reference",
+            "code": "sandbox.store_reference",
+            "outcome": "pass",
+            "severity": null,
+            "entity": {
+              "kind": "sandbox",
+              "name": "vm-proof"
+            },
+            "message": "Referenced record exists and has a supported version",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 0,
+            "duration_ms": null
+          },
+          {
+            "id": "sandbox.store_placement",
+            "code": "sandbox.store_placement",
+            "outcome": "pass",
+            "severity": null,
+            "entity": {
+              "kind": "sandbox",
+              "name": "vm-proof"
+            },
+            "message": "SQLite Store and sandbox share the same machine",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 0,
+            "duration_ms": null
+          },
+          {
+            "id": "sandbox.project_reference",
+            "code": "sandbox.project_reference",
+            "outcome": "pass",
+            "severity": null,
+            "entity": {
+              "kind": "sandbox",
+              "name": "vm-proof"
+            },
+            "message": "Referenced record exists and has a supported version",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 0,
+            "duration_ms": null
+          },
+          {
+            "id": "sandbox.machine_reference",
+            "code": "sandbox.machine_reference",
+            "outcome": "pass",
+            "severity": null,
+            "entity": {
+              "kind": "sandbox",
+              "name": "vm-proof"
+            },
+            "message": "Machine record exists with a supported version",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 0,
+            "duration_ms": null
+          },
+          {
+            "id": "sandbox.operation",
+            "code": "sandbox.operation",
+            "outcome": "pass",
+            "severity": null,
+            "entity": {
+              "kind": "sandbox",
+              "name": "vm-proof"
+            },
+            "message": "No sandbox lifecycle operation is recorded",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 0,
+            "duration_ms": null
+          },
+          {
+            "id": "sandbox.forward_process",
+            "code": "sandbox.forward_process",
+            "outcome": "pass",
+            "severity": null,
+            "entity": {
+              "kind": "sandbox",
+              "name": "vm-proof"
+            },
+            "message": "Forward process matches saved PID, start time and boot",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 2,
+            "duration_ms": null
+          },
+          {
+            "id": "sandbox.route",
+            "code": "sandbox.route",
+            "outcome": "pass",
+            "severity": null,
+            "entity": {
+              "kind": "sandbox",
+              "name": "vm-proof"
+            },
+            "message": "Saved direct-forward prerequisites are present; no worker RPC or replacement forward used",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 2,
+            "duration_ms": null
+          },
+          {
+            "id": "sandbox.daemon_keys",
+            "code": "sandbox.daemon_keys",
+            "outcome": "pass",
+            "severity": null,
+            "entity": {
+              "kind": "sandbox",
+              "name": "vm-proof"
+            },
+            "message": "Saved loopback endpoint and fixed-size authentication identities are valid",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 2,
+            "duration_ms": null
+          },
+          {
+            "id": "sandbox.daemon_connect",
+            "code": "sandbox.daemon_connect",
+            "outcome": "pass",
+            "severity": null,
+            "entity": {
+              "kind": "sandbox",
+              "name": "vm-proof"
+            },
+            "message": "Saved daemon endpoint accepted a connection",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 3,
+            "duration_ms": null
+          },
+          {
+            "id": "sandbox.daemon_auth",
+            "code": "sandbox.daemon_auth",
+            "outcome": "pass",
+            "severity": null,
+            "entity": {
+              "kind": "sandbox",
+              "name": "vm-proof"
+            },
+            "message": "Daemon peer authenticated with saved control identities",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 8,
+            "duration_ms": null
+          },
+          {
+            "id": "sandbox.daemon_instance",
+            "code": "sandbox.daemon_instance",
+            "outcome": "pass",
+            "severity": null,
+            "entity": {
+              "kind": "sandbox",
+              "name": "vm-proof"
+            },
+            "message": "Daemon incarnation matches the saved sandbox",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 8,
+            "duration_ms": null
+          },
+          {
+            "id": "sandbox.daemon_ready",
+            "code": "sandbox.daemon_ready",
+            "outcome": "pass",
+            "severity": null,
+            "entity": {
+              "kind": "sandbox",
+              "name": "vm-proof"
+            },
+            "message": "Daemon reports ControlReady without waiting for startup",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 8,
+            "duration_ms": null
+          },
+          {
+            "id": "sandbox.workspaces",
+            "code": "sandbox.workspaces",
+            "outcome": "pass",
+            "severity": null,
+            "entity": {
+              "kind": "sandbox",
+              "name": "vm-proof"
+            },
+            "message": "Inspected all 1 registry workspace records across bounded pages",
+            "evidence": {
+              "count": 1,
+              "mounted": 1,
+              "retained_examples": [],
+              "retained_examples_truncated": false,
+              "activities": {
+                "idle": 1
+              }
+            },
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 9,
+            "duration_ms": null
+          },
+          {
+            "id": "sandbox.overlay_state",
+            "code": "sandbox.overlay_state",
+            "outcome": "skipped",
+            "severity": null,
+            "entity": {
+              "kind": "sandbox",
+              "name": "vm-proof"
+            },
+            "message": "Dirty counts and pending merges are not read by the registry-only diagnostic; no overlay or Store integrity claim",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 9,
+            "duration_ms": null
+          },
+          {
+            "id": "sandbox.filesystem_serving",
+            "code": "sandbox.filesystem_serving",
+            "outcome": "skipped",
+            "severity": null,
+            "entity": {
+              "kind": "sandbox",
+              "name": "vm-proof"
+            },
+            "message": "Control observations do not verify application FUSE/NFS reads, overlay integrity or Store integrity",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 9,
+            "duration_ms": null
+          },
+          {
+            "id": "sandbox.session",
+            "code": "sandbox.session",
+            "outcome": "pass",
+            "severity": null,
+            "entity": {
+              "kind": "sandbox",
+              "name": "vm-proof"
+            },
+            "message": "Own diagnostic control session ended and its socket was fenced",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 9,
+            "duration_ms": null
+          },
+          {
+            "id": "sandbox.runtime_placement",
+            "code": "sandbox.runtime_placement",
+            "outcome": "skipped",
+            "severity": null,
+            "entity": {
+              "kind": "sandbox",
+              "name": "vm-proof"
+            },
+            "message": "Guest runtime containment is not separately inspected; daemon connection/identity results provide available presence evidence without a worker RPC",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 9,
+            "duration_ms": null
+          }
+        ],
+        "findings": [],
+        "truncated": false,
+        "observed_at_ms": 1794174539845,
+        "duration_ms": 11,
+        "counts": {
+          "pass": 15,
+          "skipped": 3
+        },
+        "home": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/connect-phase2-vm-hHWW4n/home",
+        "operation": "diagnose",
+        "mode": "observation"
+      }
+    },
+    {
+      "argv": [
+        "workspace",
+        "unmount",
+        "vm-proof:proof"
+      ],
+      "result": {
+        "kind": "Unmounted"
+      }
+    },
+    {
+      "argv": [
+        "sandbox",
+        "close",
+        "vm-proof"
+      ],
+      "result": {
+        "kind": "Closed",
+        "sandbox": "vm-proof",
+        "unknown": [],
+        "closed": "vm-proof"
+      }
+    },
+    {
+      "argv": [
+        "store",
+        "pull",
+        "proof"
+      ],
+      "result": {
+        "store": "proof",
+        "from": "connect137-d7e88de8a2",
+        "to": "native",
+        "bytes": 217088,
+        "heads": "62251c54f6a4acf7ed9a872c7afb6d05ac91903b321958f5184467d1c5b05291"
+      }
+    },
+    {
+      "argv": [
+        "store",
+        "status",
+        "proof"
+      ],
+      "result": {
+        "name": "proof",
+        "kind": "sqlite",
+        "state": "idle",
+        "holders": [],
+        "op": null,
+        "down_reason": null,
+        "machine": "native",
+        "file": {
+          "exists": true,
+          "free": 325901258752,
+          "bytes": 217088,
+          "wal_bytes": 0,
+          "incoming_bytes": 0
+        }
+      }
+    }
+  ],
+  "cleanup": [],
+  "verdict": "PASS",
+  "ended": "2026-11-08T21:49:00.306Z"
+}

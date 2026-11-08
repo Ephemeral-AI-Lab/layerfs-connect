@@ -31,8 +31,10 @@ retry counts apply to the main Pi session; command defaults and the overall
 deadline cover its child agents as well.
 
 The runtime ceiling includes still-running background children. Reaching it
-uses the normal stop path: abort Pi and children, confirm remote processes
-have stopped, save LayerFS changes and release its workspace. A stopped or
+uses the normal Stop path: abort Pi and children and request mounted command
+cancellation by its persisted exec ID. Unknown cancellation remains unconfirmed;
+killing a CLI client never proves the remote command ended. Mounted Workspaces
+and Sandboxes stay open on Stop. Explicit deletion and host shutdown release them. A stopped or
 failed task can continue with the existing context instead of replaying the
 last user prompt and completed commands.
 

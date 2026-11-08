@@ -1,50 +1,19 @@
-// The one LayerFS 2.0 client of Connect's home (docs/layerfs-2.0-integration.md
-// §4): `client({ home })`, made once per process. There is no open and no
-// per-project client; every call names its project (`<store>/<project>`).
-// Every call is one attempt; a refusal throws LayerFSError { code, message,
-// detail } and passes through with its code. `closeStores()` at exit closes
-// the Stores the process holds open, so it leaves no stale lease.
-//
-// Which LayerFS answers is the process's mode (config.js modeOf,
-// LAYERFS_CONNECT_MODE), read once as this module loads: `real` loads the
-// linked `layerfs` package, `sim` the simulator (sim/index.js), which has the
-// same calls, answers and refusals. Nothing above this module knows which
-// one runs; a host never switches mode while it runs (the app restarts it).
-import { execFile } from 'node:child_process'
-import { existsSync, readFileSync } from 'node:fs'
-import { join } from 'node:path'
-import { modeOf, packageDir } from './config.js'
-
-/** The mode's package: `{ mode, client, close, doctor, table, LayerFSError, version }`. */
+// Host calls use one CLI process per attempt, for real and simulated modes.
+import { existsSync } from 'node:fs'
+import { modeOf } from './config.js'
+import { client } from './cli/calls.js'
+import { execute } from './cli/spawn.js'
+import { discover, lastIdentity } from './cli/capabilities.js'
+export const backend = { mode: modeOf() }
 export async function loadBackend(mode = modeOf()) {
-  const lib = mode === 'sim' ? await import('./sim/index.js') : await import('layerfs')
-  return { mode, client: lib.client, close: lib.close, doctor: lib.doctor, table: lib.table, LayerFSError: lib.LayerFSError, version: mode === 'sim' ? lib.VERSION : packageVersion() }
+  return { mode, client: (spec) => client({ ...spec, mode }), close: () => 0 }
 }
-
-/** This process's LayerFS. */
-export const backend = await loadBackend()
-
-/**
- * `layerfs doctor` on the home (#536 H7): report-only, starts no machine and
- * changes nothing. `{ ok, findings: [{ severity, entity, message, fix }] }`.
- */
-export const doctorOf = (spec) => backend.doctor({ home: spec.home })
-
-/**
- * Closes every Store this process holds open with no call running, dropping
- * its leases (`layerfs.close()`); answers how many. The host's last step at
- * exit: a lease of a process that ended shows as stale until the Store's next call.
- */
-export const closeStores = () => backend.close()
+export const doctorOf = async (spec) => { await discover(spec); return execute(spec, ['doctor'], { read: true }) }
+export const closeStores = () => 0 // Each CLI closes its Store before returning.
+export function layerfs(spec) { return spec.lfs ??= client(spec) }
 
 /** The largest page a list call takes. */
 export const PAGE = 1000
-
-/** The client of `spec.home`, made on first use. */
-export function layerfs(spec) {
-  spec.lfs ??= backend.client({ home: spec.home })
-  return spec.lfs
-}
 
 /**
  * Every item of a paged list: `read({ page_size, page_pos })` until
@@ -74,7 +43,7 @@ const reads = new WeakMap()
  * `wait` (ms) the caller gives up first, refused `Timeout`; the read goes on
  * and the next caller shares it.
  */
-export function workspacesOf(lfs, sandbox, { wait = null } = {}) {
+export function sandboxObservation(lfs, sandbox, { wait = null } = {}) {
   if (!reads.has(lfs)) reads.set(lfs, { flying: new Map(), busy: new Map() })
   const { flying, busy } = reads.get(lfs)
   const refused = busy.get(sandbox)
@@ -83,12 +52,14 @@ export function workspacesOf(lfs, sandbox, { wait = null } = {}) {
   if (!read) {
     read = (async () => {
       const all = []
+      let observation
       for (let pos = 0; pos !== null; ) {
         const page = await lfs.sandbox.get(sandbox, { page_size: PAGE, page_pos: pos })
+        observation ??= page
         all.push(...(page.workspaces ?? []))
         pos = page.next_page_pos ?? null
       }
-      return all
+      return { ...observation, workspaces: all }
     })().then(
       (all) => (busy.delete(sandbox), all),
       (error) => {
@@ -109,20 +80,13 @@ export function workspacesOf(lfs, sandbox, { wait = null } = {}) {
   return Promise.race([read, late]).finally(() => clearTimeout(timer))
 }
 
+export const workspacesOf = (lfs, sandbox, options) => sandboxObservation(lfs, sandbox, options).then((observation) => { if (observation.down_reason) throw Object.assign(new Error(observation.down_reason), { code: 'Unavailable' }); return observation.workspaces })
+
 /** How long a page's view waits for one Sandbox's Workspaces before showing it unread. */
 export const VIEW_WAIT_MS = 5000
 
-/** The running LayerFS's version: the linked package's, or the simulator's. */
-export const linkedVersion = () => backend.version
-
-/** The linked `layerfs` package's version, or null. */
-function packageVersion() {
-  try {
-    return JSON.parse(readFileSync(join(packageDir(), 'package.json'), 'utf8')).version ?? null
-  } catch {
-    return null
-  }
-}
+/** The most recently discovered binary identity, shown without a capability claim. */
+export const linkedVersion = () => lastIdentity?.version ?? (backend.mode === 'sim' ? '2.0.0 (simulated)' : null)
 
 /**
  * On macOS, records the native daemon (spec.daemon) on the home's `native`
@@ -148,19 +112,12 @@ export async function recordNativeDaemon(spec) {
 }
 
 /** `import-env` of spec.daemon: what it wrote or kept, or why it did neither. */
-function importDaemon(spec) {
-  if (process.platform !== 'darwin') return Promise.resolve({ recorded: false, why: 'not macOS' })
-  if (!spec.cli || !spec.daemon) return Promise.resolve({ recorded: false, why: `no ${spec.cli ? 'daemon' : 'layerfs CLI'} found (LAYERFS_CONNECT_${spec.cli ? 'DAEMON' : 'CLI'})` })
-  return new Promise((resolve) => {
-    const env = { PATH: process.env.PATH ?? '', HOME: process.env.HOME ?? '', LAYERFS_HOME: spec.home, LAYERFS_DAEMON: spec.daemon }
-    execFile(spec.cli, ['import-env'], { env, timeout: 30_000 }, (error, stdout, stderr) => {
-      if (error) return resolve({ recorded: false, why: String(stderr || error.message).trim().split('\n')[0] })
-      try {
-        const report = JSON.parse(stdout)
-        resolve({ recorded: (report.written ?? []).some((w) => w.setting === 'LAYERFS_DAEMON'), kept: (report.kept ?? []).some((w) => w.setting === 'LAYERFS_DAEMON') })
-      } catch {
-        resolve({ recorded: false, why: 'import-env answered no report' })
-      }
-    })
-  })
+async function importDaemon(spec) {
+  if (process.platform !== 'darwin') return { recorded: false, why: 'not macOS' }
+  if (!spec.cli || !spec.daemon) return { recorded: false, why: 'no configured CLI or daemon' }
+  try {
+    await discover(spec)
+    const report = await execute(spec, ['import-env'], { env: { LAYERFS_DAEMON: spec.daemon }, timeout: 30000 })
+    return { recorded: (report.written ?? []).some((w) => w.setting === 'LAYERFS_DAEMON'), kept: (report.kept ?? []).some((w) => w.setting === 'LAYERFS_DAEMON') }
+  } catch { return { recorded: false, why: 'daemon recording failed; inspect the configured binary and home' } }
 }

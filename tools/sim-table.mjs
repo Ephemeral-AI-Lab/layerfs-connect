@@ -1,11 +1,6 @@
-// Writes host/sim/table.json again from the linked LayerFS package's call
-// table, so the simulator takes every call exactly as the real library does.
-// Run it after relinking or upgrading LayerFS:
-//   node tools/sim-table.mjs
-// host/test/sim.test.js fails when the saved table and the library's differ.
+// Regenerate simulated discovery from an explicitly configured pinned CLI.
 import { writeFileSync } from 'node:fs'
-import { table } from 'layerfs'
-
-const file = new URL('../host/sim/table.json', import.meta.url)
-writeFileSync(file, `${JSON.stringify(table, null, 1)}\n`)
-console.log(`wrote ${table.length} calls to host/sim/table.json`)
+import { discover } from '../host/cli/capabilities.js'
+const { identity, ...help } = await discover({ cli: process.env.LAYERFS_CONNECT_CLI })
+for (const [name, data] of [['table', help.calls], ['discovery', help]]) writeFileSync(new URL(`../host/sim/${name}.json`, import.meta.url), `${JSON.stringify(data, null, 1)}\n`)
+console.log(`wrote ${help.calls.length} calls from ${identity.commit} (dirty:${identity.dirty})`)

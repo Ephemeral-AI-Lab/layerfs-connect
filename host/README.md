@@ -86,19 +86,19 @@ subdirectory work uses `cd` inside the command. The command does not inherit
 the host's model credentials or control environment. There are no extra
 read/write/edit model tools and no implicit child-agent branches.
 
-After a command completes, fails or is interrupted, the host confirms that
-its process group and descendants have stopped before committing changes to
-the conversation branch. Read-only commands return `UpToDate` without adding
-a commit. The host never automatically merges or publishes these commits to
-`main`. Background shell processes do not outlive their command; use foreground
-checks. Pi's large-output `fullOutputPath` may refer to a host log that project
-container bash cannot access. Redirect large output to a workspace file when
-it must be read by a later command.
+Mounted Bash uses `workspace exec --events` with a fresh persisted exec ID.
+Output arrives after completion, assembled only from stream frames; inline
+stdout/stderr in the final result are not appended again. Full output artifacts
+retain bytes beyond Pi's model-facing truncation. Command exit 2 or 125 is a
+command result, not a CLI refusal. Commit errors are reported separately as
+`Not saved: <code>`. An uncertain result is never automatically replayed.
 
-Stop, conversation deletion and graceful host shutdown stop the agent and its
-children, save remaining workspace changes, unmount the workspace and close
-the sandbox. If stop or cleanup cannot be confirmed, the host reports an error
-and retains the workspace for retry rather than reporting successful cleanup.
+Stop sends one `exec-cancel`. A pre-registration `ended` response means the
+command will end at start while its client is alive; `unknown` requires explicit
+inspection and manual cancellation. A killed client does not prove its remote
+command stopped. Partial writes remain. Stop keeps the mounted Workspace and
+Sandbox open (owner decision 2026-11-09); explicit conversation deletion and
+host shutdown save, unmount and close their owned resources.
 Saved branch history remains after conversation deletion. Continuing a stopped
 conversation mounts its existing branch again; it does not fork another branch
 or publish to `main`.

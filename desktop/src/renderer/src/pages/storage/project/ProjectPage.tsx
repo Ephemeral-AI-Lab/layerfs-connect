@@ -16,7 +16,8 @@ export function ProjectPage({ store, project }: { store: string; project: string
   const [params] = useSearchParams()
   const key = `${store}/${project}`
   const base = `/storage/${encodeURIComponent(store)}/${encodeURIComponent(project)}`
-  const query = useHostQuery(() => host.project(key), [key])
+  const details = section === 'storage' || section === 'sandboxes'
+  const query = useHostQuery(() => details ? host.project(key) : Promise.resolve(null), [key, details])
   const storage = useStorageView()
   const [revision, setRevision] = useState(0)
   if (!section) return <Navigate to={`${base}/files${params.size ? `?${params}` : ''}`} replace />
@@ -34,13 +35,13 @@ export function ProjectPage({ store, project }: { store: string; project: string
       <ProjectTabs base={base} current={tab} />
     </header>
     {!PROJECT_TABS.includes(tab) ? <div className="p-5"><p>This project page does not exist.</p><Link to={`${base}/files`} className="underline">Open project files</Link></div> :
-      query.error && !query.data ? <div className="p-5"><LoadError error={query.error} what="this project" onRetry={query.reload} /></div> :
-      !query.data ? <Loading label="Reading project…" /> : <>
+      details && query.error && !query.data ? <div className="p-5"><LoadError error={query.error} what="this project" onRetry={query.reload} /></div> :
+      details && !query.data ? <Loading label="Reading project…" /> : <>
         {query.error && <div role="alert" className="px-5 pt-3 text-sm text-destructive">{query.error.message}</div>}
         {tab === 'files' && <div className="@container/files flex min-h-0 flex-1 flex-col p-5"><ProjectFiles project={key} tick={revision} initialBranch={params.get('branch') ?? undefined} /></div>}
         {tab === 'history' && <ProjectHistory project={key} tick={revision} />}
-        {tab === 'sandboxes' && <ProjectSandboxes project={key} state={query.data} />}
-        {tab === 'storage' && <div className="min-h-0 flex-1 overflow-auto p-5"><ProjectStorageContent state={query.data} store={storeFacts(query.data.project, storage)} /></div>}
+        {tab === 'sandboxes' && query.data && <ProjectSandboxes project={key} state={query.data} />}
+        {tab === 'storage' && query.data && <div className="min-h-0 flex-1 overflow-auto p-5"><ProjectStorageContent state={query.data} store={storeFacts(query.data.project, storage)} /></div>}
       </>}
   </div>
 }

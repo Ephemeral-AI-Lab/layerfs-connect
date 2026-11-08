@@ -401,7 +401,7 @@ test('Stop during native newSession workspace checkpoint cancels the pending rep
   await finished.promise
   assert.equal(f.manager.records.size, 1)
   assert.equal(f.manager.live.get(source.id), active)
-  assert.equal(f.manager.record(source.id).workspace.state, 'closed')
+  assert.equal(f.manager.record(source.id).workspace.state, 'ready')
   assert.deepEqual(f.navigations(), [])
 })
 

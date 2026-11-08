@@ -28,11 +28,14 @@ export function CloseSandbox({ name, onClosed }: { name: string; onClosed?: () =
       setBusy(false)
     }
   }
+  const refusal = error as { code?: string; detail?: { execs?: unknown[] } } | null
+  const forceAllowed = refusal?.code === 'MountsActive' || (refusal?.code === 'Busy' && !!refusal.detail?.execs?.length)
+  const uncertain = refusal?.code === 'Unknown'
   return <span className="flex flex-wrap items-center justify-end gap-1.5">
     {error !== null && <Refusal error={error} compact className="max-w-96 text-xs text-destructive" />}
     {unknown && unknown.length > 0 && <span className="text-xs text-destructive" title={unknown.join('\n')}>{`Closed by force; Workspaces of unknown state: ${unknown.join(', ')}`}</span>}
-    <button type="button" disabled={busy} onClick={() => void close(error !== null)} title={error !== null ? 'Close even with Workspaces whose state LayerFS cannot learn' : 'Close this Sandbox'} className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-sm text-muted-foreground outline-none hover:bg-foreground/[0.05] hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50">
-      {busy ? <LoaderCircle className="size-3.5 animate-spin" /> : <X className="size-3.5" />}{error !== null ? 'Force close' : 'Close'}
+    <button type="button" disabled={busy} onClick={() => { if (forceAllowed && !window.confirm('Running commands receive SIGTERM, then SIGKILL after 5 seconds. Uncommitted changes are lost. Force close?')) return; if (uncertain) { setBusy(true); host.sandbox(name).then(() => setError(null), setError).finally(() => setBusy(false)); return }; void close(forceAllowed) }} title={error !== null ? 'Close even with Workspaces whose state LayerFS cannot learn' : 'Close this Sandbox'} className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-sm text-muted-foreground outline-none hover:bg-foreground/[0.05] hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50">
+      {busy ? <LoaderCircle className="size-3.5 animate-spin" /> : <X className="size-3.5" />}{forceAllowed ? 'Force close' : uncertain ? 'Read Sandbox' : 'Close'}
     </button>
   </span>
 }
@@ -114,15 +117,16 @@ function SandboxTile({ sandbox, branches, reading, unavailable, onBrowseFiles, o
         </button>
       )}
       <StateChip entity="sandbox" state={sandbox.state} op={sandbox.op} />
+      {sandbox.name.startsWith('chat.') && <span className="text-xs text-muted-foreground">Used by chat {sandbox.name.slice(5)}; closing ends its Workspace.</span>}
       {sandbox.state !== 'gone' && <CloseSandbox name={sandbox.name} onClosed={onChanged} />}
     </header>
     <ul className="mt-3 space-y-1" aria-label={'Mounted Workspaces'}>
       {sandbox.state === 'unresolved' && <li className="rounded-md bg-destructive/5 px-3 py-2 font-mono text-xs-plus text-destructive">
         {fill('see {status} · clear: {clear}', clearingCall('sandbox', sandbox.name, sandbox.op))}
       </li>}
-      {refusal ? <li className="rounded-md bg-warning/5 px-3 py-2 text-sm break-words text-warning">
+      {sandbox.downReason ? <li className="py-1 text-sm text-muted-foreground">Workspaces unavailable: {sandbox.downReason}</li> : refusal ? <li className="rounded-md bg-warning/5 px-3 py-2 text-sm break-words text-warning">
         <span className="font-strong">{refusal.code}</span>: {refusal.message}
-      </li> : sandbox.unread ? <li className="py-1 text-sm text-muted-foreground">{'Reading its Workspaces…'}</li> : reading && !sandbox.workspaces.length && sandbox.state === 'running' ? <li className="py-1 text-sm text-muted-foreground">{'Reading its Workspaces…'}</li>
+      </li> : sandbox.unread ? <li className="py-1 text-sm text-muted-foreground">{'Workspace details are read when opened.'}</li> : reading && !sandbox.workspaces.length && sandbox.state === 'running' ? <li className="py-1 text-sm text-muted-foreground">{'Workspace details are read when opened.'}</li>
         : unavailable ? <li className="py-1 text-sm text-muted-foreground">{'Workspace status unavailable.'}</li>
           : !sandbox.workspaces.length ? <li className="py-1 text-sm text-muted-foreground">{'No Workspace mounted'}</li>
           : sandbox.workspaces.map((workspace) => <li key={workspace.ws} className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-2 rounded-md bg-muted/40 px-3 py-2 text-sm">
@@ -164,7 +168,7 @@ export function SandboxTiles({ sandboxes, branches = [], reading, unavailable, o
     {!open.length && <p className="border-t border-border/70 px-5 py-10 text-center text-base text-muted-foreground">{fill(reading ? 'Reading Sandboxes…' : 'No active Sandboxes')}</p>}
     {closed.length > 0 && <details className="group border-t border-border/70 px-5 py-3">
       <summary className="flex cursor-pointer list-none items-center gap-2 rounded-sm py-1 text-sm text-muted-foreground outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
-        {'Closed'}<span className="tabular-nums">{closed.length}</span><ChevronDown className="ml-auto size-3.5 group-open:rotate-180" />
+        {'No runtime recorded'}<span className="tabular-nums">{closed.length}</span><ChevronDown className="ml-auto size-3.5 group-open:rotate-180" />
       </summary>
       <ul className="mt-2 space-y-2 pb-1 text-sm text-muted-foreground">
         {closed.map((sandbox) => <li key={sandbox.id} className="flex min-w-0 items-center gap-2" title={sandbox.id}><LfsSandbox className="size-3.5 shrink-0" /><span className="truncate">{sandbox.name}</span></li>)}

@@ -10,7 +10,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import test from 'node:test'
 import { resolveSpec } from '../config.js'
-import { closeStores, layerfs, recordNativeDaemon } from '../layerfs.js'
+import { layerfs, recordNativeDaemon } from '../layerfs.js'
 
 /** Why these are skipped here, or false: macOS only, with a daemon beside the linked CLI. */
 function skipped() {
@@ -42,26 +42,6 @@ test('a recorded native daemon that is not there is replaced with the one Connec
     // a daemon that is there is kept as it is
     assert.equal((await recordNativeDaemon(spec)).kept, true)
   } finally {
-    rmSync(root, { recursive: true, force: true })
-  }
-})
-
-test('closeStores drops the leases of the Stores this process holds open', { skip }, async () => {
-  const root = mkdtempSync(join(tmpdir(), 'lfc-close-'))
-  try {
-    const spec = resolveSpec(join(root, 'state'))
-    const lfs = layerfs(spec)
-    mkdirSync(join(root, 'src'))
-    writeFileSync(join(root, 'src', 'README.md'), 'close\n')
-    await lfs.store.create('cl')
-    await lfs.project.init('cl/app', join(root, 'src'))
-    await lfs.file.read('cl/app', 'main', '/README.md')
-    const lease = join(spec.home, 'store', 'cl', 'open', String(process.pid))
-    assert.ok(existsSync(lease), 'an open Store holds the lease')
-    assert.ok(closeStores() >= 1)
-    assert.ok(!existsSync(lease), 'the lease stayed')
-  } finally {
-    closeStores()
     rmSync(root, { recursive: true, force: true })
   }
 })

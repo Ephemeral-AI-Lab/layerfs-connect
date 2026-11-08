@@ -1,0 +1,122 @@
+[
+  {
+    "check": "host",
+    "command": [
+      "node",
+      "--test",
+      "host/test/agent-model-headers.test.js",
+      "host/test/jobs-reconcile.test.js",
+      "host/test/agent-pi-policies.test.js",
+      "host/test/agent-sdks.test.js",
+      "host/test/agent-permission-review.test.js",
+      "host/test/scenarios.test.js",
+      "host/test/project-reads.test.js",
+      "host/test/checks.test.js",
+      "host/test/jobs-child-faults.test.js",
+      "host/test/cli-adapter.test.js",
+      "host/test/server.test.js",
+      "host/test/agent-permissions.test.js",
+      "host/test/live.test.js",
+      "host/test/agent-native-input.test.js",
+      "host/test/agent-approval-tool.test.js",
+      "host/test/move-phases.test.js",
+      "host/test/agent-extensions.test.js",
+      "host/test/agent-history.test.js",
+      "host/test/agent-capabilities.test.js",
+      "host/test/doctor.test.js",
+      "host/test/models-login.test.js",
+      "host/test/parse-at.test.js",
+      "host/test/agent-workspace-bash.test.js",
+      "host/test/step-views.test.js",
+      "host/test/chat-trace.test.js",
+      "host/test/scope.test.js",
+      "host/test/scenario-chat.test.js",
+      "host/test/agent-model-discovery.test.js",
+      "host/test/agent-harness-service.test.js",
+      "host/test/native-daemon.test.js",
+      "host/test/agents.test.js",
+      "host/test/sim.test.js",
+      "host/test/exec-cancel.test.js",
+      "host/test/agent-permission-service.test.js",
+      "host/test/agent-model-sync.test.js",
+      "host/test/seed.test.js",
+      "host/test/layerfs2.test.js",
+      "host/test/agent-workspace-lifecycle.test.js",
+      "host/test/agent-models.test.js",
+      "host/test/platform-real.test.js",
+      "host/test/agent-native-context.test.js",
+      "host/test/history.test.js",
+      "host/test/trajectory.test.js",
+      "host/test/runs.test.js",
+      "host/test/agent-harness-content.test.js",
+      "host/test/heavy-queue.test.js",
+      "host/test/parse.test.js",
+      "host/test/agent-runtime.test.js",
+      "host/test/cli-progress.test.js"
+    ],
+    "exit": 0,
+    "seconds": 61.291,
+    "log": "/tmp/connect-phase2-final-host.log"
+  },
+  {
+    "check": "root",
+    "command": [
+      "node",
+      "--test",
+      "test/job-progress.test.mjs",
+      "test/live-data.test.mjs",
+      "test/chat-removal.test.mjs",
+      "test/tabs-forget-session.test.mjs",
+      "test/job-progress-cli.test.mjs",
+      "test/scenario-command.test.mjs",
+      "test/live-model.test.mjs",
+      "test/live-traffic.test.mjs",
+      "test/live-flow.test.mjs",
+      "test/conversation-tasks.test.mjs",
+      "test/saved-query-model.test.mjs",
+      "test/markdown.test.mjs",
+      "test/live-sessions.test.mjs",
+      "test/exact-count.test.mjs"
+    ],
+    "exit": 0,
+    "seconds": 1.175,
+    "log": "/tmp/connect-phase2-final-root.log"
+  },
+  {
+    "check": "typecheck",
+    "command": [
+      "pnpm",
+      "--dir",
+      "desktop",
+      "-s",
+      "typecheck"
+    ],
+    "exit": 0,
+    "seconds": 9.244,
+    "log": "/tmp/connect-phase2-final-typecheck.log"
+  },
+  {
+    "check": "build",
+    "command": [
+      "pnpm",
+      "--dir",
+      "desktop",
+      "-s",
+      "build"
+    ],
+    "exit": 0,
+    "seconds": 2.454,
+    "log": "/tmp/connect-phase2-final-build.log"
+  },
+  {
+    "check": "native-daemon",
+    "command": [
+      "node",
+      "--test",
+      "host/test/native-daemon.test.js"
+    ],
+    "exit": 0,
+    "cli": "833d04cf44e8e747929d50ab1170a48260d9381c",
+    "passed": 1
+  }
+]

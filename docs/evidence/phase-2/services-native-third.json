@@ -1,0 +1,2578 @@
+{
+  "identity": {
+    "version": "2.0.0",
+    "commit": "833d04cf44e8e747929d50ab1170a48260d9381c",
+    "dirty": false,
+    "features": [
+      "machine",
+      "postgresql"
+    ]
+  },
+  "started": "2026-11-08T21:42:33.040Z",
+  "calls": [
+    {
+      "argv": [
+        "machine",
+        "list"
+      ],
+      "result": {
+        "machines": [
+          {
+            "name": "docker",
+            "platform": "docker",
+            "backend": "namespaces",
+            "supports": {
+              "sqlite": true,
+              "postgresql_sandbox": true,
+              "reason": null
+            },
+            "state": "stopped",
+            "cpus": null,
+            "memory": null,
+            "disk": null,
+            "stores": [],
+            "sandboxes": []
+          },
+          {
+            "name": "native",
+            "platform": "native",
+            "backend": "native",
+            "supports": {
+              "sqlite": true,
+              "postgresql_sandbox": true,
+              "reason": null
+            },
+            "state": "ready",
+            "cpus": null,
+            "memory": null,
+            "disk": null,
+            "stores": [],
+            "sandboxes": []
+          }
+        ]
+      }
+    },
+    {
+      "argv": [
+        "store",
+        "connect",
+        "pg-proof",
+        "postgresql://proof@127.0.0.1:55627/proof",
+        "--password",
+        "env:PROOF_PG_PASSWORD",
+        "--synchronous-commit",
+        "off"
+      ],
+      "result": {
+        "name": "pg-proof",
+        "kind": "postgresql",
+        "schema": "layerfs",
+        "synchronous_commit": "off",
+        "projects": []
+      }
+    },
+    {
+      "argv": [
+        "project",
+        "init",
+        "pg-proof/p",
+        "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/connect-phase2-services-wEL8Nc/input"
+      ],
+      "result": {
+        "project": "pg-proof/p",
+        "store": "pg-proof",
+        "name": "p",
+        "kind": "postgresql",
+        "machine": "native",
+        "created": 1794174155357,
+        "layer": "3299afe05b2fb92eff2cd8db892db58b20b5cc3115a98c7535431050820baf48fa",
+        "root": "df66c3855018a265c5b97707b1f8ff83548fdf9ef349ba4d4ea7499a469f69e8"
+      }
+    },
+    {
+      "argv": [
+        "store",
+        "stats",
+        "pg-proof"
+      ],
+      "result": {
+        "name": "pg-proof",
+        "kind": "postgresql",
+        "history_logical": 27,
+        "canonical": 445,
+        "stored": 347,
+        "metadata": 630720,
+        "file": 630784,
+        "free": null,
+        "init": null
+      }
+    },
+    {
+      "argv": [
+        "project",
+        "stats",
+        "pg-proof/p"
+      ],
+      "result": {
+        "project": "p",
+        "at": {
+          "id": "3299afe05b2fb92eff2cd8db892db58b20b5cc3115a98c7535431050820baf48fa",
+          "kind": "Layer",
+          "branch": "main",
+          "root": "df66c3855018a265c5b97707b1f8ff83548fdf9ef349ba4d4ea7499a469f69e8"
+        },
+        "files": 1,
+        "directories": 0,
+        "symlinks": 0,
+        "others": 0,
+        "logical": 27,
+        "complete": true
+      }
+    },
+    {
+      "argv": [
+        "doctor",
+        "store",
+        "connection",
+        "pg-proof",
+        "--timeout",
+        "10s"
+      ],
+      "result": {
+        "ok": true,
+        "complete": true,
+        "target": {
+          "kind": "store",
+          "name": "pg-proof"
+        },
+        "checks": [
+          {
+            "id": "store.record",
+            "code": "store.record",
+            "outcome": "pass",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "Store record, kind and saved authority parsed",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 0,
+            "duration_ms": null
+          },
+          {
+            "id": "store.connection.authentication",
+            "code": "store.connection.authentication",
+            "outcome": "pass",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "PostgreSQL driver established authenticated database session using configured TLS policy; DNS/TCP/TLS were combined by the driver",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 47,
+            "duration_ms": null
+          },
+          {
+            "id": "store.connection.schema",
+            "code": "store.connection.schema",
+            "outcome": "pass",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "configured schema exists and role has USAGE",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 50,
+            "duration_ms": null
+          },
+          {
+            "id": "store.connection.identity",
+            "code": "store.connection.identity",
+            "outcome": "pass",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "configured Store metadata is readable and binding matches the saved Store",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 52,
+            "duration_ms": null
+          },
+          {
+            "id": "store.connection.tls",
+            "code": "store.connection.tls",
+            "outcome": "pass",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "server reports no TLS; connection followed configured driver policy",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 53,
+            "duration_ms": null
+          }
+        ],
+        "findings": [],
+        "truncated": false,
+        "observed_at_ms": 1794174155585,
+        "duration_ms": 53,
+        "counts": {
+          "pass": 5
+        },
+        "home": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/connect-phase2-services-wEL8Nc/home",
+        "operation": "connection",
+        "mode": "observation"
+      }
+    },
+    {
+      "argv": [
+        "doctor",
+        "store",
+        "integrity",
+        "pg-proof",
+        "--timeout",
+        "10s"
+      ],
+      "result": {
+        "ok": true,
+        "complete": false,
+        "target": {
+          "kind": "store",
+          "name": "pg-proof"
+        },
+        "checks": [
+          {
+            "id": "store.record",
+            "code": "store.record",
+            "outcome": "pass",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "Store record, kind and saved authority parsed",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 0,
+            "duration_ms": null
+          },
+          {
+            "id": "store.admission.interval",
+            "code": "store.admission.interval",
+            "outcome": "pass",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "independent read-only connection/authority preflight; logical audit uses a subsequent independently validated pinned snapshot",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 0,
+            "duration_ms": null
+          },
+          {
+            "id": "store.connection.authentication",
+            "code": "store.connection.authentication",
+            "outcome": "pass",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "PostgreSQL driver established authenticated database session using configured TLS policy; DNS/TCP/TLS were combined by the driver",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 49,
+            "duration_ms": null
+          },
+          {
+            "id": "store.connection.schema",
+            "code": "store.connection.schema",
+            "outcome": "pass",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "configured schema exists and role has USAGE",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 51,
+            "duration_ms": null
+          },
+          {
+            "id": "store.connection.identity",
+            "code": "store.connection.identity",
+            "outcome": "pass",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "configured Store metadata is readable and binding matches the saved Store",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 54,
+            "duration_ms": null
+          },
+          {
+            "id": "store.connection.tls",
+            "code": "store.connection.tls",
+            "outcome": "pass",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "server reports no TLS; connection followed configured driver policy",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 56,
+            "duration_ms": null
+          },
+          {
+            "id": "store.snapshot",
+            "code": "store.snapshot",
+            "outcome": "pass",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "PostgreSQL REPEATABLE READ READ ONLY snapshot fingerprint md5 cbcf1742423a6a4e576e36bb50f380f2 (observation label, not authority); catalog incarnation 1; long scans retain MVCC versions",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 118,
+            "duration_ms": null
+          },
+          {
+            "id": "store.schema.objects.summary",
+            "code": "store.schema.objects.summary",
+            "outcome": "pass",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "210 live constraints, indexes, triggers and immutable-pack trigger functions compared independently with the shipped schema-2 contract; 0 differ",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 362,
+            "duration_ms": null
+          },
+          {
+            "id": "store.catalog.authority",
+            "code": "store.catalog.authority",
+            "outcome": "pass",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "0 malformed catalog authority rows",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 366,
+            "duration_ms": null
+          },
+          {
+            "id": "store.catalog.singleton",
+            "code": "store.catalog.singleton",
+            "outcome": "pass",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "0 catalog authority singleton violations",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 369,
+            "duration_ms": null
+          },
+          {
+            "id": "store.catalog.policy",
+            "code": "store.catalog.policy",
+            "outcome": "pass",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "0 malformed allocation policy rows",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 371,
+            "duration_ms": null
+          },
+          {
+            "id": "store.catalog.policy.singleton",
+            "code": "store.catalog.policy.singleton",
+            "outcome": "pass",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "0 allocation policy singleton violations",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 372,
+            "duration_ms": null
+          },
+          {
+            "id": "store.catalog.pack_allocator",
+            "code": "store.catalog.pack_allocator",
+            "outcome": "pass",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "0 pack rows beyond their reserved allocation boundary",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 373,
+            "duration_ms": null
+          },
+          {
+            "id": "store.catalog.ordinal_allocator",
+            "code": "store.catalog.ordinal_allocator",
+            "outcome": "pass",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "0 ordinal blocks beyond their reserved allocation boundary",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 375,
+            "duration_ms": null
+          },
+          {
+            "id": "store.catalog.pack_shape",
+            "code": "store.catalog.pack_shape",
+            "outcome": "pass",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "0 invalid pack descriptor shapes; payload extraction remains bounded by actual length",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 376,
+            "duration_ms": null
+          },
+          {
+            "id": "store.catalog.location_shape",
+            "code": "store.catalog.location_shape",
+            "outcome": "pass",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "0 invalid winning locator shapes",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 377,
+            "duration_ms": null
+          },
+          {
+            "id": "store.catalog.ordinal_shape",
+            "code": "store.catalog.ordinal_shape",
+            "outcome": "pass",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "0 malformed ordinal block key/range/body widths",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 378,
+            "duration_ms": null
+          },
+          {
+            "id": "store.catalog.ordinal_overlap",
+            "code": "store.catalog.ordinal_overlap",
+            "outcome": "pass",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "0 overlapping authoritative ordinal blocks; reservation gaps remain valid",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 380,
+            "duration_ms": null
+          },
+          {
+            "id": "store.advisory.binding_hints.shape",
+            "code": "store.advisory.binding_hints.shape",
+            "outcome": "pass",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "0 malformed hint block key/body widths",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 381,
+            "duration_ms": null
+          },
+          {
+            "id": "store.catalog.lineage_shape",
+            "code": "store.catalog.lineage_shape",
+            "outcome": "pass",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "0 malformed derived lineage key/value shapes",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 383,
+            "duration_ms": null
+          },
+          {
+            "id": "store.catalog.scope",
+            "code": "store.catalog.scope",
+            "outcome": "pass",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "0 invalid scope allocation/authority rows; unused retained scopes are allowed",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 386,
+            "duration_ms": null
+          },
+          {
+            "id": "store.catalog.totals",
+            "code": "store.catalog.totals",
+            "outcome": "pass",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "0 invalid nonnegative accounting rows",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 388,
+            "duration_ms": null
+          },
+          {
+            "id": "store.catalog.totals.singleton",
+            "code": "store.catalog.totals.singleton",
+            "outcome": "pass",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "0 accounting singleton violations",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 389,
+            "duration_ms": null
+          },
+          {
+            "id": "store.catalog.logical_total",
+            "code": "store.catalog.logical_total",
+            "outcome": "pass",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "0 logical accounting totals disagree with retained history rows",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 391,
+            "duration_ms": null
+          },
+          {
+            "id": "store.catalog.canonical_total",
+            "code": "store.catalog.canonical_total",
+            "outcome": "pass",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "0 canonical accounting totals disagree with winning locators",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 392,
+            "duration_ms": null
+          },
+          {
+            "id": "store.catalog.stored_total",
+            "code": "store.catalog.stored_total",
+            "outcome": "pass",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "0 stored accounting totals disagree with retained physical packs",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 393,
+            "duration_ms": null
+          },
+          {
+            "id": "store.catalog.lane",
+            "code": "store.catalog.lane",
+            "outcome": "pass",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "0 malformed PostgreSQL publication-lane singleton; no lane lock taken",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 395,
+            "duration_ms": null
+          },
+          {
+            "id": "store.acquisition.operations",
+            "code": "store.acquisition.operations",
+            "outcome": "pass",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "0 malformed Init owner/phase/identity/accounting rows",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 400,
+            "duration_ms": null
+          },
+          {
+            "id": "store.acquisition.owners",
+            "code": "store.acquisition.owners",
+            "outcome": "pass",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "0 Init entries without their owning operation",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 402,
+            "duration_ms": null
+          },
+          {
+            "id": "store.acquisition.host_owners",
+            "code": "store.acquisition.host_owners",
+            "outcome": "pass",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "0 Init host identities without their owning operation",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 404,
+            "duration_ms": null
+          },
+          {
+            "id": "store.acquisition.entry_shape",
+            "code": "store.acquisition.entry_shape",
+            "outcome": "pass",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "0 malformed Init entry scalar/blob fields",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 408,
+            "duration_ms": null
+          },
+          {
+            "id": "store.acquisition.root_shape",
+            "code": "store.acquisition.root_shape",
+            "outcome": "pass",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "0 invalid Init source-root/name/position shapes",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 410,
+            "duration_ms": null
+          },
+          {
+            "id": "store.acquisition.kind_shape",
+            "code": "store.acquisition.kind_shape",
+            "outcome": "pass",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "0 Init kind/placement/host/root shapes disagree",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 412,
+            "duration_ms": null
+          },
+          {
+            "id": "store.acquisition.host_shape",
+            "code": "store.acquisition.host_shape",
+            "outcome": "pass",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "0 malformed Init canonical host-file rows",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 414,
+            "duration_ms": null
+          },
+          {
+            "id": "store.acquisition.parent",
+            "code": "store.acquisition.parent",
+            "outcome": "pass",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "0 active Init entries have absent/nonpreceding directory parent",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 416,
+            "duration_ms": null
+          },
+          {
+            "id": "store.acquisition.canonical",
+            "code": "store.acquisition.canonical",
+            "outcome": "pass",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "0 active Init positioned files have invalid canonical host identity",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 418,
+            "duration_ms": null
+          },
+          {
+            "id": "store.acquisition.positions",
+            "code": "store.acquisition.positions",
+            "outcome": "pass",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "0 active Init entry positions are reused",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 419,
+            "duration_ms": null
+          },
+          {
+            "id": "store.acquisition.aliases",
+            "code": "store.acquisition.aliases",
+            "outcome": "pass",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "0 active Init alias counts disagree with positioned bindings",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 421,
+            "duration_ms": null
+          },
+          {
+            "id": "store.acquisition.host_identity",
+            "code": "store.acquisition.host_identity",
+            "outcome": "pass",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "0 duplicate Init canonical host identities",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 423,
+            "duration_ms": null
+          },
+          {
+            "id": "store.acquisition.charges",
+            "code": "store.acquisition.charges",
+            "outcome": "pass",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "0 Init held-row/payload charges disagree with actual retained working rows",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 424,
+            "duration_ms": null
+          },
+          {
+            "id": "store.acquisition.metadata.summary",
+            "code": "store.acquisition.metadata.summary",
+            "outcome": "pass",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "0 Init entry metadata/name rows decoded; 0 malformed; oversized names counted structurally without extraction",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 426,
+            "duration_ms": null
+          },
+          {
+            "id": "store.acquisition.roots",
+            "code": "store.acquisition.roots",
+            "outcome": "pass",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "Init roots may precede Save publication or survive interrupted cleanup; no fabricated dangling-object failure; existing winning objects receive the selected canonical audit",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 426,
+            "duration_ms": null
+          },
+          {
+            "id": "store.merge",
+            "code": "store.merge",
+            "outcome": "skipped",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "no persisted merge-working tables in this Store schema; another PostgreSQL session's private temporary tables are outside this Store view",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 428,
+            "duration_ms": null
+          },
+          {
+            "id": "store.ordinal_blocks.summary",
+            "code": "store.ordinal_blocks.summary",
+            "outcome": "pass",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "1 inode value blocks checked, including unused ordinals; 0 failed",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 429,
+            "duration_ms": null
+          },
+          {
+            "id": "store.packs.summary",
+            "code": "store.packs.summary",
+            "outcome": "pass",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "2 packs acquired and length/digest/directory checked; 0 failed",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 436,
+            "duration_ms": null
+          },
+          {
+            "id": "store.objects.summary",
+            "code": "store.objects.summary",
+            "outcome": "pass",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "4 winning stored objects authenticated, locally decoded and reference-checked, including retained unreachable rows; 0 failed",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 455,
+            "duration_ms": null
+          },
+          {
+            "id": "store.advisory.binding_hints.summary",
+            "code": "store.advisory.binding_hints.summary",
+            "outcome": "pass",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "1 standalone binding hint blocks checked, including unused hints; 0 failed",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 458,
+            "duration_ms": null
+          },
+          {
+            "id": "store.advisory.signatures",
+            "code": "store.advisory.signatures",
+            "outcome": "pass",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "1 bounded signature-ring rows decoded; 0 invalid; fixed-width blobs bounded inside SQL",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 459,
+            "duration_ms": null
+          },
+          {
+            "id": "store.advisory.file_digests.shape",
+            "code": "store.advisory.file_digests.shape",
+            "outcome": "pass",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "0 malformed digest-hint key/root/length rows; invalid widths are counted before extraction",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 461,
+            "duration_ms": null
+          },
+          {
+            "id": "store.advisory.file_digests.summary",
+            "code": "store.advisory.file_digests.summary",
+            "outcome": "pass",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "0 digest records fully streamed and compared where root exists; 0 legitimately stale/unsaved roots; 0 damaged hints",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 463,
+            "duration_ms": null
+          },
+          {
+            "id": "store.history.facts.summary",
+            "code": "store.history.facts.summary",
+            "outcome": "pass",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "0 persisted fact blobs streamed using owning codec grammar; 0 malformed; no total text or decision count retained",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 465,
+            "duration_ms": null
+          },
+          {
+            "id": "store.history.summary",
+            "code": "store.history.summary",
+            "outcome": "pass",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "all stored history records, identities, references, stack membership and graph checked; 0 findings",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 483,
+            "duration_ms": null
+          },
+          {
+            "id": "store.namespace.summary",
+            "code": "store.namespace.summary",
+            "outcome": "pass",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "1 historical root/scope/profile contexts qualified; 0 failed",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 488,
+            "duration_ms": null
+          },
+          {
+            "id": "store.history.lineage.graph",
+            "code": "store.history.lineage.graph",
+            "outcome": "pass",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "immutable Layer heights and Commit depths/newest/merge edges independently checked; publication reconstruction pending",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 497,
+            "duration_ms": null
+          },
+          {
+            "id": "store.history.lineage.summary",
+            "code": "store.history.lineage.summary",
+            "outcome": "pass",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "Layer heights/overwrite counts, Commit depths/newest, permitted run partitions, absorption and reach independently checked; 0 findings",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 497,
+            "duration_ms": null
+          },
+          {
+            "id": "store.database.relations",
+            "code": "store.database.relations",
+            "outcome": "unknown",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "relation OID 16386: supported amcheck function unavailable; no extension installed automatically",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 505,
+            "duration_ms": null
+          },
+          {
+            "id": "store.database.relations",
+            "code": "store.database.relations",
+            "outcome": "unknown",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "relation OID 16390: supported amcheck function unavailable; no extension installed automatically",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 508,
+            "duration_ms": null
+          },
+          {
+            "id": "store.database.relations",
+            "code": "store.database.relations",
+            "outcome": "unknown",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "relation OID 16392: supported amcheck function unavailable; no extension installed automatically",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 509,
+            "duration_ms": null
+          },
+          {
+            "id": "store.database.relations",
+            "code": "store.database.relations",
+            "outcome": "unknown",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "relation OID 16406: supported amcheck function unavailable; no extension installed automatically",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 511,
+            "duration_ms": null
+          },
+          {
+            "id": "store.database.relations",
+            "code": "store.database.relations",
+            "outcome": "unknown",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "relation OID 16408: supported amcheck function unavailable; no extension installed automatically",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 513,
+            "duration_ms": null
+          },
+          {
+            "id": "store.database.relations",
+            "code": "store.database.relations",
+            "outcome": "unknown",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "relation OID 16419: supported amcheck function unavailable; no extension installed automatically",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 514,
+            "duration_ms": null
+          },
+          {
+            "id": "store.database.relations",
+            "code": "store.database.relations",
+            "outcome": "unknown",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "relation OID 16423: supported amcheck function unavailable; no extension installed automatically",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 517,
+            "duration_ms": null
+          },
+          {
+            "id": "store.database.relations",
+            "code": "store.database.relations",
+            "outcome": "unknown",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "relation OID 16436: supported amcheck function unavailable; no extension installed automatically",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 518,
+            "duration_ms": null
+          },
+          {
+            "id": "store.database.relations",
+            "code": "store.database.relations",
+            "outcome": "unknown",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "relation OID 16437: supported amcheck function unavailable; no extension installed automatically",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 522,
+            "duration_ms": null
+          },
+          {
+            "id": "store.database.relations",
+            "code": "store.database.relations",
+            "outcome": "unknown",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "relation OID 16443: supported amcheck function unavailable; no extension installed automatically",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 524,
+            "duration_ms": null
+          },
+          {
+            "id": "store.database.relations",
+            "code": "store.database.relations",
+            "outcome": "unknown",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "relation OID 16445: supported amcheck function unavailable; no extension installed automatically",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 526,
+            "duration_ms": null
+          },
+          {
+            "id": "store.database.relations",
+            "code": "store.database.relations",
+            "outcome": "unknown",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "relation OID 16452: supported amcheck function unavailable; no extension installed automatically",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 528,
+            "duration_ms": null
+          },
+          {
+            "id": "store.database.relations",
+            "code": "store.database.relations",
+            "outcome": "unknown",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "relation OID 16454: supported amcheck function unavailable; no extension installed automatically",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 530,
+            "duration_ms": null
+          },
+          {
+            "id": "store.database.relations",
+            "code": "store.database.relations",
+            "outcome": "unknown",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "relation OID 16480: supported amcheck function unavailable; no extension installed automatically",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 532,
+            "duration_ms": null
+          },
+          {
+            "id": "store.database.relations",
+            "code": "store.database.relations",
+            "outcome": "unknown",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "relation OID 16482: supported amcheck function unavailable; no extension installed automatically",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 533,
+            "duration_ms": null
+          },
+          {
+            "id": "store.database.relations",
+            "code": "store.database.relations",
+            "outcome": "unknown",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "relation OID 16493: supported amcheck function unavailable; no extension installed automatically",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 536,
+            "duration_ms": null
+          },
+          {
+            "id": "store.database.relations",
+            "code": "store.database.relations",
+            "outcome": "unknown",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "relation OID 16495: supported amcheck function unavailable; no extension installed automatically",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 541,
+            "duration_ms": null
+          },
+          {
+            "id": "store.database.relations",
+            "code": "store.database.relations",
+            "outcome": "unknown",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "relation OID 16503: supported amcheck function unavailable; no extension installed automatically",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 544,
+            "duration_ms": null
+          },
+          {
+            "id": "store.database.relations",
+            "code": "store.database.relations",
+            "outcome": "unknown",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "relation OID 16505: supported amcheck function unavailable; no extension installed automatically",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 547,
+            "duration_ms": null
+          },
+          {
+            "id": "store.database.relations",
+            "code": "store.database.relations",
+            "outcome": "unknown",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "relation OID 16519: supported amcheck function unavailable; no extension installed automatically",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 548,
+            "duration_ms": null
+          },
+          {
+            "id": "store.database.relations",
+            "code": "store.database.relations",
+            "outcome": "unknown",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "relation OID 16521: supported amcheck function unavailable; no extension installed automatically",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 550,
+            "duration_ms": null
+          },
+          {
+            "id": "store.database.relations",
+            "code": "store.database.relations",
+            "outcome": "unknown",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "relation OID 16523: supported amcheck function unavailable; no extension installed automatically",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 552,
+            "duration_ms": null
+          },
+          {
+            "id": "store.database.relations",
+            "code": "store.database.relations",
+            "outcome": "unknown",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "relation OID 16547: supported amcheck function unavailable; no extension installed automatically",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 554,
+            "duration_ms": null
+          },
+          {
+            "id": "store.database.relations",
+            "code": "store.database.relations",
+            "outcome": "unknown",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "relation OID 16549: supported amcheck function unavailable; no extension installed automatically",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 557,
+            "duration_ms": null
+          },
+          {
+            "id": "store.database.relations",
+            "code": "store.database.relations",
+            "outcome": "unknown",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "relation OID 16551: supported amcheck function unavailable; no extension installed automatically",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 558,
+            "duration_ms": null
+          },
+          {
+            "id": "store.database.relations",
+            "code": "store.database.relations",
+            "outcome": "unknown",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "relation OID 16560: supported amcheck function unavailable; no extension installed automatically",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 559,
+            "duration_ms": null
+          },
+          {
+            "id": "store.database.relations",
+            "code": "store.database.relations",
+            "outcome": "unknown",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "relation OID 16562: supported amcheck function unavailable; no extension installed automatically",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 562,
+            "duration_ms": null
+          },
+          {
+            "id": "store.database.relations",
+            "code": "store.database.relations",
+            "outcome": "unknown",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "relation OID 16564: supported amcheck function unavailable; no extension installed automatically",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 564,
+            "duration_ms": null
+          },
+          {
+            "id": "store.database.relations",
+            "code": "store.database.relations",
+            "outcome": "unknown",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "relation OID 16616: supported amcheck function unavailable; no extension installed automatically",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 566,
+            "duration_ms": null
+          },
+          {
+            "id": "store.database.relations",
+            "code": "store.database.relations",
+            "outcome": "unknown",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "relation OID 16622: supported amcheck function unavailable; no extension installed automatically",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 567,
+            "duration_ms": null
+          },
+          {
+            "id": "store.database.relations",
+            "code": "store.database.relations",
+            "outcome": "unknown",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "relation OID 16624: supported amcheck function unavailable; no extension installed automatically",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 568,
+            "duration_ms": null
+          },
+          {
+            "id": "store.database.relations",
+            "code": "store.database.relations",
+            "outcome": "unknown",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "relation OID 16630: supported amcheck function unavailable; no extension installed automatically",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 571,
+            "duration_ms": null
+          },
+          {
+            "id": "store.database.relations",
+            "code": "store.database.relations",
+            "outcome": "unknown",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "relation OID 16632: supported amcheck function unavailable; no extension installed automatically",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 573,
+            "duration_ms": null
+          },
+          {
+            "id": "store.database.relations",
+            "code": "store.database.relations",
+            "outcome": "unknown",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "relation OID 16633: supported amcheck function unavailable; no extension installed automatically",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 575,
+            "duration_ms": null
+          },
+          {
+            "id": "store.database.relations",
+            "code": "store.database.relations",
+            "outcome": "unknown",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "relation OID 16634: supported amcheck function unavailable; no extension installed automatically",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 577,
+            "duration_ms": null
+          },
+          {
+            "id": "store.database.relations",
+            "code": "store.database.relations",
+            "outcome": "unknown",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "relation OID 16635: supported amcheck function unavailable; no extension installed automatically",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 579,
+            "duration_ms": null
+          },
+          {
+            "id": "store.database.relations",
+            "code": "store.database.relations",
+            "outcome": "unknown",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "relation OID 16639: supported amcheck function unavailable; no extension installed automatically",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 580,
+            "duration_ms": null
+          },
+          {
+            "id": "store.database.relations",
+            "code": "store.database.relations",
+            "outcome": "unknown",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "relation OID 16646: supported amcheck function unavailable; no extension installed automatically",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 582,
+            "duration_ms": null
+          },
+          {
+            "id": "store.database.relations",
+            "code": "store.database.relations",
+            "outcome": "unknown",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "relation OID 16648: supported amcheck function unavailable; no extension installed automatically",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 583,
+            "duration_ms": null
+          },
+          {
+            "id": "store.database.relations",
+            "code": "store.database.relations",
+            "outcome": "unknown",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "relation OID 16656: supported amcheck function unavailable; no extension installed automatically",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 585,
+            "duration_ms": null
+          },
+          {
+            "id": "store.database.relations",
+            "code": "store.database.relations",
+            "outcome": "unknown",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "relation OID 16658: supported amcheck function unavailable; no extension installed automatically",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 586,
+            "duration_ms": null
+          },
+          {
+            "id": "store.database.relations",
+            "code": "store.database.relations",
+            "outcome": "unknown",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "relation OID 16664: supported amcheck function unavailable; no extension installed automatically",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 588,
+            "duration_ms": null
+          },
+          {
+            "id": "store.database.relations",
+            "code": "store.database.relations",
+            "outcome": "unknown",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "relation OID 16666: supported amcheck function unavailable; no extension installed automatically",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 590,
+            "duration_ms": null
+          },
+          {
+            "id": "store.database.relations",
+            "code": "store.database.relations",
+            "outcome": "unknown",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "relation OID 16673: supported amcheck function unavailable; no extension installed automatically",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 591,
+            "duration_ms": null
+          },
+          {
+            "id": "store.database.relations",
+            "code": "store.database.relations",
+            "outcome": "unknown",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "relation OID 16675: supported amcheck function unavailable; no extension installed automatically",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 594,
+            "duration_ms": null
+          },
+          {
+            "id": "store.database.relations",
+            "code": "store.database.relations",
+            "outcome": "unknown",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "relation OID 16676: supported amcheck function unavailable; no extension installed automatically",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 596,
+            "duration_ms": null
+          },
+          {
+            "id": "store.database.relations",
+            "code": "store.database.relations",
+            "outcome": "unknown",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "relation OID 16677: supported amcheck function unavailable; no extension installed automatically",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 599,
+            "duration_ms": null
+          },
+          {
+            "id": "store.database.relations",
+            "code": "store.database.relations",
+            "outcome": "unknown",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "relation OID 16678: supported amcheck function unavailable; no extension installed automatically",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 604,
+            "duration_ms": null
+          },
+          {
+            "id": "store.database.relations",
+            "code": "store.database.relations",
+            "outcome": "unknown",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "relation OID 16679: supported amcheck function unavailable; no extension installed automatically",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 609,
+            "duration_ms": null
+          },
+          {
+            "id": "store.database.relations",
+            "code": "store.database.relations",
+            "outcome": "unknown",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "relation OID 16685: supported amcheck function unavailable; no extension installed automatically",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 610,
+            "duration_ms": null
+          },
+          {
+            "id": "store.database.relations",
+            "code": "store.database.relations",
+            "outcome": "unknown",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "relation OID 16687: supported amcheck function unavailable; no extension installed automatically",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 613,
+            "duration_ms": null
+          },
+          {
+            "id": "store.database.relations",
+            "code": "store.database.relations",
+            "outcome": "unknown",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "relation OID 16688: supported amcheck function unavailable; no extension installed automatically",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 614,
+            "duration_ms": null
+          },
+          {
+            "id": "store.database.relations",
+            "code": "store.database.relations",
+            "outcome": "unknown",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "relation OID 16709: supported amcheck function unavailable; no extension installed automatically",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 615,
+            "duration_ms": null
+          },
+          {
+            "id": "store.database.relations",
+            "code": "store.database.relations",
+            "outcome": "unknown",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "relation OID 16711: supported amcheck function unavailable; no extension installed automatically",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 617,
+            "duration_ms": null
+          },
+          {
+            "id": "store.database.relations",
+            "code": "store.database.relations",
+            "outcome": "unknown",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "relation OID 16723: supported amcheck function unavailable; no extension installed automatically",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 618,
+            "duration_ms": null
+          },
+          {
+            "id": "store.database.relations",
+            "code": "store.database.relations",
+            "outcome": "unknown",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "relation OID 16730: supported amcheck function unavailable; no extension installed automatically",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 622,
+            "duration_ms": null
+          },
+          {
+            "id": "store.database.relations",
+            "code": "store.database.relations",
+            "outcome": "unknown",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "relation OID 16731: supported amcheck function unavailable; no extension installed automatically",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 624,
+            "duration_ms": null
+          },
+          {
+            "id": "store.database.relations",
+            "code": "store.database.relations",
+            "outcome": "unknown",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "relation OID 16742: supported amcheck function unavailable; no extension installed automatically",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 629,
+            "duration_ms": null
+          },
+          {
+            "id": "store.database.relations",
+            "code": "store.database.relations",
+            "outcome": "unknown",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "relation OID 16749: supported amcheck function unavailable; no extension installed automatically",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 631,
+            "duration_ms": null
+          },
+          {
+            "id": "store.database.relations.summary",
+            "code": "store.database.relations.summary",
+            "outcome": "unknown",
+            "severity": null,
+            "entity": {
+              "kind": "store",
+              "name": "pg-proof"
+            },
+            "message": "0 supported online relation checks completed outside the logical inventory snapshot; 0 relations reported corruption; output capped at 100 messages per heap; server-files/checksum/offline verification excluded",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 633,
+            "duration_ms": null
+          }
+        ],
+        "findings": [],
+        "truncated": false,
+        "observed_at_ms": 1794174155646,
+        "duration_ms": 633,
+        "counts": {
+          "pass": 54,
+          "skipped": 1,
+          "unknown": 60
+        },
+        "home": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/connect-phase2-services-wEL8Nc/home",
+        "operation": "integrity",
+        "mode": "full"
+      }
+    },
+    {
+      "argv": [
+        "store",
+        "create",
+        "sqlite-proof"
+      ],
+      "result": {
+        "name": "sqlite-proof",
+        "kind": "sqlite",
+        "machine": "native",
+        "profile": "disposable",
+        "created": 1794174156300,
+        "sqlite": "3.53.2",
+        "projects": []
+      }
+    },
+    {
+      "argv": [
+        "project",
+        "init",
+        "sqlite-proof/p",
+        "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/connect-phase2-services-wEL8Nc/input"
+      ],
+      "result": {
+        "project": "sqlite-proof/p",
+        "store": "sqlite-proof",
+        "name": "p",
+        "kind": "sqlite",
+        "machine": "native",
+        "created": 1794174156328,
+        "layer": "324e34c14b63ddac8f269baad365543bf6ed8b04c31a7fadf9e839d135f730bfd3",
+        "root": "741002efa17c5a8dd98bd7b9eb57090ec1e84c9f79951014e25f1f8dfac1efb4"
+      }
+    },
+    {
+      "argv": [
+        "backup",
+        "connect",
+        "bucket-proof",
+        "http://127.0.0.1:55628/proof-bucket/connect",
+        "--key",
+        "env:LAYERFS_BUCKET_PROOF"
+      ],
+      "result": {
+        "name": "bucket-proof",
+        "provider": "minio",
+        "endpoint": "http://127.0.0.1:55628",
+        "bucket": "proof-bucket",
+        "prefix": "connect",
+        "region": "us-east-1",
+        "key": "env:LAYERFS_BUCKET_PROOF",
+        "part_size": 67108864
+      }
+    },
+    {
+      "argv": [
+        "doctor",
+        "backup",
+        "connection",
+        "bucket-proof",
+        "--timeout",
+        "10s"
+      ],
+      "result": {
+        "ok": true,
+        "complete": true,
+        "target": {
+          "kind": "backup",
+          "name": "bucket-proof"
+        },
+        "checks": [
+          {
+            "id": "backup.configuration",
+            "code": "backup.configuration",
+            "outcome": "pass",
+            "severity": null,
+            "entity": {
+              "kind": "backup",
+              "name": "bucket-proof"
+            },
+            "message": "saved S3 endpoint, region, bucket and prefix configuration is valid",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 0,
+            "duration_ms": null
+          },
+          {
+            "id": "backup.credentials",
+            "code": "backup.credentials",
+            "outcome": "pass",
+            "severity": null,
+            "entity": {
+              "kind": "backup",
+              "name": "bucket-proof"
+            },
+            "message": "saved credential reference resolved; values were not displayed",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 0,
+            "duration_ms": null
+          },
+          {
+            "id": "backup.transport",
+            "code": "backup.transport",
+            "outcome": "pass",
+            "severity": null,
+            "entity": {
+              "kind": "backup",
+              "name": "bucket-proof"
+            },
+            "message": "configured endpoint and HTTP/TLS connection completed a signed request",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 3,
+            "duration_ms": null
+          },
+          {
+            "id": "backup.list",
+            "code": "backup.list",
+            "outcome": "pass",
+            "severity": null,
+            "entity": {
+              "kind": "backup",
+              "name": "bucket-proof"
+            },
+            "message": "one authenticated ListObjectsV2 page succeeded under the saved prefix with max-keys=1",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 3,
+            "duration_ms": 2
+          },
+          {
+            "id": "backup.write_capability",
+            "code": "backup.write_capability",
+            "outcome": "skipped",
+            "severity": null,
+            "entity": {
+              "kind": "backup",
+              "name": "bucket-proof"
+            },
+            "message": "temporary write test was not requested; list does not establish object permissions",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 3,
+            "duration_ms": null
+          },
+          {
+            "id": "backup.put",
+            "code": "backup.put",
+            "outcome": "skipped",
+            "severity": null,
+            "entity": {
+              "kind": "backup",
+              "name": "bucket-proof"
+            },
+            "message": "temporary write test was not requested; list does not establish object permissions",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 3,
+            "duration_ms": null
+          },
+          {
+            "id": "backup.get",
+            "code": "backup.get",
+            "outcome": "skipped",
+            "severity": null,
+            "entity": {
+              "kind": "backup",
+              "name": "bucket-proof"
+            },
+            "message": "temporary write test was not requested; list does not establish object permissions",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 3,
+            "duration_ms": null
+          },
+          {
+            "id": "backup.delete",
+            "code": "backup.delete",
+            "outcome": "skipped",
+            "severity": null,
+            "entity": {
+              "kind": "backup",
+              "name": "bucket-proof"
+            },
+            "message": "temporary write test was not requested; list does not establish object permissions",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 3,
+            "duration_ms": null
+          }
+        ],
+        "findings": [],
+        "truncated": false,
+        "observed_at_ms": 1794174156349,
+        "duration_ms": 3,
+        "counts": {
+          "pass": 4,
+          "skipped": 4
+        },
+        "home": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/connect-phase2-services-wEL8Nc/home",
+        "operation": "connection",
+        "mode": "observation"
+      }
+    },
+    {
+      "argv": [
+        "doctor",
+        "backup",
+        "connection",
+        "bucket-proof",
+        "--write-test",
+        "--timeout",
+        "10s"
+      ],
+      "result": {
+        "ok": true,
+        "complete": true,
+        "target": {
+          "kind": "backup",
+          "name": "bucket-proof"
+        },
+        "checks": [
+          {
+            "id": "backup.configuration",
+            "code": "backup.configuration",
+            "outcome": "pass",
+            "severity": null,
+            "entity": {
+              "kind": "backup",
+              "name": "bucket-proof"
+            },
+            "message": "saved S3 endpoint, region, bucket and prefix configuration is valid",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 0,
+            "duration_ms": null
+          },
+          {
+            "id": "backup.credentials",
+            "code": "backup.credentials",
+            "outcome": "pass",
+            "severity": null,
+            "entity": {
+              "kind": "backup",
+              "name": "bucket-proof"
+            },
+            "message": "saved credential reference resolved; values were not displayed",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 0,
+            "duration_ms": null
+          },
+          {
+            "id": "backup.transport",
+            "code": "backup.transport",
+            "outcome": "pass",
+            "severity": null,
+            "entity": {
+              "kind": "backup",
+              "name": "bucket-proof"
+            },
+            "message": "configured endpoint and HTTP/TLS connection completed a signed request",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 3,
+            "duration_ms": null
+          },
+          {
+            "id": "backup.list",
+            "code": "backup.list",
+            "outcome": "pass",
+            "severity": null,
+            "entity": {
+              "kind": "backup",
+              "name": "bucket-proof"
+            },
+            "message": "one authenticated ListObjectsV2 page succeeded under the saved prefix with max-keys=1",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 3,
+            "duration_ms": 2
+          },
+          {
+            "id": "backup.write_capability",
+            "code": "backup.write_capability",
+            "outcome": "pass",
+            "severity": null,
+            "entity": {
+              "kind": "backup",
+              "name": "bucket-proof"
+            },
+            "message": "bucket reports enabled immutable object versioning; conditional create and version-specific cleanup can be attempted",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 4,
+            "duration_ms": null
+          },
+          {
+            "id": "backup.put",
+            "code": "backup.put",
+            "outcome": "pass",
+            "severity": null,
+            "entity": {
+              "kind": "backup",
+              "name": "bucket-proof"
+            },
+            "message": "single-part If-None-Match:* create returned an immutable owned version",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 9,
+            "duration_ms": 5
+          },
+          {
+            "id": "backup.get",
+            "code": "backup.get",
+            "outcome": "pass",
+            "severity": null,
+            "entity": {
+              "kind": "backup",
+              "name": "bucket-proof"
+            },
+            "message": "owned immutable version returned the exact token and uploaded bytes",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 11,
+            "duration_ms": 2
+          },
+          {
+            "id": "backup.delete",
+            "code": "backup.delete",
+            "outcome": "pass",
+            "severity": null,
+            "entity": {
+              "kind": "backup",
+              "name": "bucket-proof"
+            },
+            "message": "only the owned immutable version was deleted; replacement versions were not targeted",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 12,
+            "duration_ms": 1
+          }
+        ],
+        "findings": [],
+        "truncated": false,
+        "observed_at_ms": 1794174156359,
+        "duration_ms": 12,
+        "counts": {
+          "pass": 8
+        },
+        "home": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/connect-phase2-services-wEL8Nc/home",
+        "operation": "connection",
+        "mode": "write-test"
+      }
+    },
+    {
+      "argv": [
+        "backup",
+        "create",
+        "sqlite-proof",
+        "bucket-proof"
+      ],
+      "result": {
+        "store": "sqlite-proof",
+        "bucket": "bucket-proof",
+        "file": "sqlite-proof",
+        "object": "sqlite-proof/store.sqlite",
+        "bytes": 217088,
+        "pieces": 0,
+        "sha256": "33c0e383e239f9869fb188b80ad706b735c4585ddb97f97e03fd7d6bc0a368aa",
+        "heads": "58499e3db7df29b4f63eca492eca9bd7526acd001d66522f19c35c6b4c59f923"
+      }
+    },
+    {
+      "argv": [
+        "backup",
+        "list",
+        "bucket-proof"
+      ],
+      "result": {
+        "items": [
+          {
+            "bucket": "bucket-proof",
+            "file": "sqlite-proof",
+            "bytes": 217088,
+            "modified": 1794174156418,
+            "heads": "58499e3db7df29b4f63eca492eca9bd7526acd001d66522f19c35c6b4c59f923",
+            "store": "sqlite-proof",
+            "state": "current"
+          }
+        ]
+      }
+    },
+    {
+      "argv": [
+        "backup",
+        "restore",
+        "restored-proof",
+        "bucket-proof",
+        "sqlite-proof"
+      ],
+      "result": {
+        "store": "restored-proof",
+        "bucket": "bucket-proof",
+        "file": "sqlite-proof",
+        "bytes": 217088,
+        "sha256": "33c0e383e239f9869fb188b80ad706b735c4585ddb97f97e03fd7d6bc0a368aa",
+        "heads": "58499e3db7df29b4f63eca492eca9bd7526acd001d66522f19c35c6b4c59f923",
+        "projects": [
+          "p"
+        ]
+      }
+    },
+    {
+      "argv": [
+        "project",
+        "stats",
+        "restored-proof/p"
+      ],
+      "result": {
+        "project": "p",
+        "at": {
+          "id": "324e34c14b63ddac8f269baad365543bf6ed8b04c31a7fadf9e839d135f730bfd3",
+          "kind": "Layer",
+          "branch": "main",
+          "root": "741002efa17c5a8dd98bd7b9eb57090ec1e84c9f79951014e25f1f8dfac1efb4"
+        },
+        "files": 1,
+        "directories": 0,
+        "symlinks": 0,
+        "others": 0,
+        "logical": 27,
+        "complete": true
+      }
+    }
+  ],
+  "containers": [
+    "95d90c431320a633fd055e8b5395ac420fcbe028a2c74e38b9a7a4d67422606c",
+    "773a3fd5298334c5670b7411a981cc81a1c727577b20cb55d259943fc3056f41"
+  ],
+  "cleanup": [
+    "container removed:95d90c431320a633fd055e8b5395ac420fcbe028a2c74e38b9a7a4d67422606c",
+    "container removed:773a3fd5298334c5670b7411a981cc81a1c727577b20cb55d259943fc3056f41",
+    "owned home removed"
+  ],
+  "verdict": "PASS",
+  "ended": "2026-11-08T21:42:37.069Z"
+}

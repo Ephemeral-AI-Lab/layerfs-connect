@@ -1,3 +1,5 @@
+import { useEffect, useState } from 'react'
+import { host } from '@/layerfs/client'
 import { ChevronDown, ChevronRight, CircleAlert, GitBranch, Layers, Users } from 'lucide-react'
 import { CopyValue } from './CopyValue'
 import { clock } from './model'
@@ -8,6 +10,13 @@ export function SandboxWorkspaces() {
   const { s, time, simulation, selectedWorkspace, setSelectedWorkspace, workspaceTab, setWorkspaceTab,
     started, active, completed, mounted, shownWorkspaces, selected, selectedState, commands,
     selectedPath, workspacesKnown, dirty, workspaceLabel, actorName, actorLink } = useSandboxDetail()
+  const [head, setHead] = useState<{ ws: string; value: string } | null>(null)
+  useEffect(() => {
+    if (!selected || !s.recorded) return
+    let active = true
+    host.workspaceStatus(selected.id).then(r => { if (active) setHead({ ws: selected.id, value: r.branch_head ?? 'Not reported' }) }, e => { if (active) setHead({ ws: selected.id, value: `Unavailable: ${e.message}` }) })
+    return () => { active = false }
+  }, [selected?.id, s])
   const showUsers = shownWorkspaces.some(w => w.users.length > 0)
   const currentTab = workspaceTab === 'commands' && commands.length > 0 ? 'commands' : 'details'
   return <>
@@ -35,8 +44,11 @@ export function SandboxWorkspaces() {
           <dt>Mounted</dt><dd>{selectedState.unmounted ? 'No' : selectedState.mounting ? 'Attaching' : 'Yes'}</dd>
           <dt>Filesystem route</dt><dd>{s.recorded ? s.recorded.route ?? 'Not reported' : 'FUSE · Linux (sample)'}</dd>
           <dt>Activity</dt><dd>{workspaceLabel(selected.id)}</dd>
-          <dt>Base commit</dt><dd><code>{s.recorded ? 'Not reported' : completed.filter(e => e.workspace === selected.id && e.method === 'workspace.commit' && e.outcome === 'ok').at(-1)?.result.split('\n')[0].split(' · ')[1] ?? `example-${selected.branch}-base`}</code></dd>
-          <dt>Branch head</dt><dd>{s.recorded ? 'Not reported' : dirty(selected.id).startsWith('Conflict') ? 'Head moved · pending conflict resolution' : 'Matches the recorded base'}</dd>
+          <dt>Base commit</dt><dd><code>{s.recorded ? selected.base ?? 'Not reported' : completed.filter(e => e.workspace === selected.id && e.method === 'workspace.commit' && e.outcome === 'ok').at(-1)?.result.split('\n')[0].split(' · ')[1] ?? `example-${selected.branch}-base`}</code></dd>
+          <dt>Branch head</dt><dd>{s.recorded ? head?.ws === selected.id ? head.value : 'Reading…' : dirty(selected.id).startsWith('Conflict') ? 'Head moved · pending conflict resolution' : 'Matches the recorded base'}</dd>
+          <dt>Base Layer</dt><dd><code>{selected.baseLayer ?? 'Not reported'}</code></dd>
+          <dt>Head moved since mount</dt><dd>{selected.headMovedSinceMount == null ? 'Not reported' : selected.headMovedSinceMount ? 'Yes' : 'No'}</dd>
+          <dt>Pending merge</dt><dd>{selected.pendingMerge == null ? 'Not reported' : selected.pendingMerge ? 'Yes' : 'No'}</dd>
           <dt>Changes</dt><dd>{selectedState.unmounted ? 'Overlay removed · committed history preserved' : dirty(selected.id)}</dd>
         </dl>
         {selected.users.length > 0 && <div className="sd-workspace-users"><h3><Users size={13} />Using this workspace</h3>{selected.users.map(id => <div key={id}>{actorLink(id)}<span>{active.find(e => e.actor === id)?.detail ?? (selectedState.unmounted ? 'Last linked user' : 'Between calls')}</span></div>)}</div>}

@@ -75,7 +75,7 @@ export const opOf = (o) => (o && typeof o === 'object' && typeof o.name === 'str
 export function storeOf(s) {
   const machine = text(s.machine)
   if (!machine) return null
-  return { name: String(s.name), machine, projects: count(s.projects), names: Array.isArray(s.projects) ? s.projects.map(String) : [], size: num(s.size ?? s.bytes), state: text(s.state) ?? 'unknown', op: opOf(s.op) }
+  return { name: String(s.name), machine, projects: count(s.projects), names: Array.isArray(s.projects) ? s.projects.map(String) : [], size: null, state: text(s.state) ?? 'unknown', op: opOf(s.op) }
 }
 
 /** One store.list() item, when it is a PostgreSQL Store (on no machine: Sandboxes reach its database). */
@@ -117,28 +117,42 @@ export class Machines {
     const lfs = this.lfs
     const listed = await lfs.machine.list()
     const machines = list(listed.machines).map(machineOf)
+    const readErrors = {}
+    const failed = (name) => (e) => { readErrors[name] = { error: { code: e?.code ?? 'Unknown', message: e?.message ?? String(e) }, at: Date.now() }; return [] }
     const [platforms, listedStores, sandboxes, statuses] = await Promise.all([
-      this.platforms().then((p) => p.platforms, () => []),
-      lfs.store.list().then(list, () => []),
+      this.platforms().then((p) => p.platforms, failed('platforms')),
+      lfs.store.list().then(list, failed('stores')),
       // sandbox.list items carry no Workspaces: each one's count is its sandbox.get (a record read; null when refused)
-      pages((p) => lfs.sandbox.list(p)).then(
-        (r) => Promise.all(r.map(sandboxOf).map((b) => workspacesOf(lfs, b.name, { wait: VIEW_WAIT_MS }).then((w) => ({ ...b, workspaces: w.length }), () => ({ ...b, workspaces: null })))),
-        () => [],
-      ),
+      pages((p) => lfs.sandbox.list(p)).then((rows) => rows.map(sandboxOf), failed('sandboxes')),
       // starts nothing; asked only where it adds the free disk or the op (a stopped machine's says only that it is stopped)
       Promise.all(machines.filter((m) => m.platform !== 'native' && ASK_STATUS.has(m.state)).map((m) => lfs.machine.status(m.name).then(statusOf, (e) => ({ name: m.name, state: null, freeDisk: null, toolVersion: null, down: e?.message ?? String(e), op: null })))),
     ])
     const stores = listedStores.map(storeOf).filter(Boolean)
     const postgresql = listedStores.map(pgStoreOf).filter(Boolean)
-    return { available: true, layerfs: this.version(), machines, platforms, stores, postgresql, sandboxes, status: Object.fromEntries(statuses.map((s) => [s.name, s])) }
+    const answer = { available: true, readErrors, layerfs: this.version(), machines, platforms, stores, postgresql, sandboxes, status: Object.fromEntries(statuses.map((s) => [s.name, s])) }
+    for (const [part, fields] of Object.entries({ stores: ['stores','postgresql'], sandboxes: ['sandboxes'], platforms: ['platforms'] })) {
+      if (readErrors[part] && this.lastView) for (const field of fields) answer[field] = this.lastView[field]
+    }
+    this.lastView = answer
+    return answer
   }
 
   /** machine.platforms(): each platform on this host but the ones Connect turns off; starts nothing (PlatformsView). */
   async platforms() {
+    const now = Date.now()
+    if (this.platformAnswer && now - this.platformAnswer.at < 30000) return this.platformAnswer.value
+    if (this.platformRead) return this.platformRead
+    this.platformRead = this.readPlatforms().then((value) => { this.platformAnswer = { at: Date.now(), value }; return value }).finally(() => { this.platformRead = null })
+    return this.platformRead
+  }
+
+  async readPlatforms() {
     const answer = await this.lfs.machine.platforms()
     const rows = list(answer.platforms).map(platformOf).filter((p) => !OFF.has(p.platform))
     return { host: String(answer.host ?? ''), platforms: rows.map((p) => ({ ...p, options: p.options.filter((o) => !OFF_OPTIONS.has(o.name)) })) }
   }
+
+  async inspect(name) { return { ...(await this.lfs.machine.get(name)), ...(await this.lfs.machine.status(name)), observedAt: Date.now() } }
 
   /** machine.start(name): a stopped machine and its worker, waited for; native and a running one answer at once. */
   async start(name) {
@@ -182,7 +196,7 @@ export class Machines {
     if (BUILT_IN.has(name)) throw refuse('InvalidInput', `${name} is built in and can't be removed`)
     const m = list((await lfs.machine.list()).machines).find((x) => x.name === name)
     if (!m) throw refuse('NotFound', `no machine named ${name}`)
-    return m.platform === 'ssh' ? lfs.machine.disconnect(name) : lfs.machine.remove(name)
+    return lfs.machine.remove(name)
   }
 
   /** A built-in's settings ({ image, docker, wsl }) or a VM's size ({ cpus, memory }). */

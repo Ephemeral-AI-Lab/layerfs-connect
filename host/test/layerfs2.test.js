@@ -47,6 +47,7 @@ function fake() {
     },
     branch: {
       list: rec('branch.list', { items: [{ name: 'main', base: LAYER, head: null }, { name: 'work', base: LAYER, head: C2, forked_from: LAYER }], next_page_pos: null }),
+      commits: rec('branch.commits', { items: [{ id: C2, branch: 'work', parent: C1, via: 'fs', message: 'two', time: 2 }, { id: C1, branch: 'work', parent: null, via: 'fs', message: 'one', time: 1 }], has_more: false }),
       get: rec('branch.get', { name: 'work', base: LAYER, head: C2, forked_from: LAYER }),
     },
     commit: {
@@ -76,10 +77,8 @@ test('projects: list, state and Commits read 2.0 calls with the key first', asyn
   const st = await p.state('s1/app')
   assert.deepEqual(st.branches.map((b) => [b.name, b.parent, b.commits]), [['main', null, 0], ['work', 'main', 2]])
   assert.equal(st.store.bytes, 120)
-  // no Store totals in 2.0: summed from the Commits read, oldest first, marked partial
-  const { commits: added, ...totals } = st.storage
-  assert.deepEqual(totals, { partial: true, logical: 1900, canonical: 100, stored: 25, metadata: 10, file: 100, free: 0, dedupe: 19, compression: 4, init: null, main: null })
-  assert.deepEqual(added.map((c) => [c.message, c.kind, c.logical, c.canonical, c.stored]), [['one', 'fs', 900, 60, 15], ['two', 'fs', 1000, 40, 10]])
+  // Project state never invents Store totals from a bounded Commit page.
+  assert.equal(st.storage, null)
   const commits = await p.commits('s1/app', 'work')
   assert.deepEqual(commits.map((c) => [c.message, c.changes?.length ?? null]), [['two', 1], ['one', null]])
   assert.deepEqual(lfs.calls.find((c) => c[0] === 'commit.diff').slice(1, 4), ['s1/app', C1, C2])
@@ -230,7 +229,7 @@ test('states come from the SDK: no machine, Store or Sandbox state is guessed (#
 test('a PostgreSQL Store row says where its database is, without a password, and whether its server answered', async () => {
   const lfs = fake()
   lfs.store.list = async () => ({ items: [{ name: 'pg', kind: 'postgresql', url: 'postgresql://app:secret@db.internal:5432/layerfs?sslmode=require', password: 'env:LAYERFS_PG', projects: ['api'], state: 'idle' }, { name: 'off', kind: 'postgresql', url: 'postgresql://db2/x', projects: [], state: 'idle' }, { name: 's1', kind: 'sqlite', machine: 'native', projects: [], state: 'idle' }] })
-  lfs.store.status = async (name) => (name === 'pg' ? { state: 'idle', holders: [], server: { reachable: true, serverVersion: '16.4', latencyMs: 3 } } : name === 'off' ? { state: 'idle', holders: [], server: { reachable: false, error: { code: 'Unavailable', message: 'connection refused' } } } : { state: 'idle', holders: [], file: { exists: true, bytes: 1, wal_bytes: 0 } })
+  lfs.store.status = async (name) => (name === 'pg' ? { state: 'idle', holders: [], server: { reachable: true, server_version: '16.4', latency_ms: 3 } } : name === 'off' ? { state: 'idle', holders: [], server: { reachable: false, error: { code: 'Unavailable', message: 'connection refused' } } } : { state: 'idle', holders: [], file: { exists: true, bytes: 1, wal_bytes: 0 } })
   const st = await new Storage({ spec: spec(), client: lfs, log: () => {} }).view()
   assert.deepEqual(st.stores[0].postgresql, { target: 'app@db.internal:5432/layerfs', reachable: true, version: '16.4', latencyMs: 3, error: null })
   assert.deepEqual(st.stores[1].postgresql, { target: 'db2/x', reachable: false, version: null, latencyMs: null, error: 'connection refused' })
@@ -254,18 +253,29 @@ test('a busy Store: the project page gets its records, state, op and the refusal
   await assert.rejects(p.state('s1/app'), /no such project/)
 })
 
-test('a Sandbox whose Workspaces cannot be read carries the refusal; named Workspaces keep their names', async () => {
+test('Sandbox lists remain recorded; details read actual state and preserved Workspace fields on demand', async () => {
   const lfs = fake()
-  lfs.sandbox.list = async () => ({ items: [{ name: 'a1', project: 's1/app', machine: 'native', state: 'unresolved' }, { name: 'a2', project: 's1/app', machine: 'native', state: 'running' }], next_page_pos: null })
-  lfs.sandbox.get = async (name) => {
-    if (name === 'a1') throw Object.assign(new Error('sandbox a1 is unresolved: see `layerfs sandbox get a1`; clear it with `layerfs sandbox close a1`'), { code: 'Unresolved' })
-    return { workspaces: [{ directory: '/w/1', branch: 'chat-1', name: 'chat-1', ws: 'a2:chat-1' }], next_page_pos: null }
-  }
+  let gets = 0
+  lfs.sandbox.list = async () => ({ items: [{ name: 'a1', state: 'running' }], next_page_pos: null })
+  lfs.sandbox.get = async () => { gets++; return { id: 'runtime-1', created: 123, state: 'lost', down_reason: 'worker unavailable', workspaces: [], next_page_pos: null } }
   const p = new Projects({ spec: spec(), client: lfs, log: () => {} })
-  const [a1, a2] = await p.sandboxes('s1/app')
-  assert.deepEqual([a1.state, a1.refusal.code], ['unresolved', 'Unresolved'])
-  assert.match(a1.refusal.message, /sandbox close a1/)
-  assert.deepEqual(a2.workspaces, [{ ws: 'a2:chat-1', name: 'chat-1', branch: 'chat-1', path: '/w/1', activity: null }])
+  const [record] = await p.sandboxes('s1/app')
+  assert.equal(record.state, 'running')
+  assert.equal(record.unread, true)
+  assert.equal(gets, 0)
+  const detail = await p.sandbox('a1')
+  assert.equal(detail.state, 'lost')
+  assert.equal(detail.downReason, 'worker unavailable')
+  assert.equal(detail.runtimeId, 'runtime-1')
+  assert.equal(detail.created, 123)
+  assert.equal(gets, 1)
+  lfs.sandbox.get = async () => ({ workspaces: [{ ws: 'a1:named', name: 'named', directory: '/w/1', branch: 'fix', base: C1, base_layer: LAYER, head_moved_since_mount: true, dirty: { inodes: 2, entries: 3 }, pending_merge: true, activity: 'Uncertain' }], next_page_pos: null })
+  const ws = (await p.sandbox('a1')).workspaces[0]
+  assert.equal(ws.base, C1)
+  assert.equal(ws.baseLayer, LAYER)
+  assert.deepEqual(ws.dirty, { inodes: 2, entries: 3 })
+  assert.equal(ws.pendingMerge, true)
+  assert.equal(ws.activity, 'Uncertain')
 })
 
 test('platforms, start and stop: the SDK answers; create sends only the options the platform declares; ssh and Firecracker are off', async () => {
@@ -381,7 +391,7 @@ test('a pull names the machine the Store came from (the job row reads "<store> �
   rmSync(s.state, { recursive: true, force: true })
 })
 
-test('Compute’s Sandboxes carry their Workspace count from sandbox.get, which sandbox.list does not give', async () => {
+test('Compute polling leaves unobserved Workspace counts unknown without sandbox.get', async () => {
   const lfs = fake()
   lfs.sandbox.list = async () => ({ items: [{ name: 'a1', project: 's1/app', machine: 'box', state: 'running' }, { name: 'a2', project: 's1/app', machine: 'box', state: 'running' }], next_page_pos: null })
   lfs.sandbox.get = async (name) => {
@@ -389,30 +399,20 @@ test('Compute’s Sandboxes carry their Workspace count from sandbox.get, which 
     return { name, workspaces: [{ directory: '/w/1', branch: 'fix', name: 'fix', ws: 'a1:fix' }], next_page_pos: null }
   }
   const view = await new Machines({ spec: spec(), client: lfs, calls: [] }).view()
-  assert.deepEqual(view.sandboxes.map((b) => [b.name, b.workspaces]), [['a1', 1], ['a2', null]])
+  assert.deepEqual(view.sandboxes.map((b) => [b.name, b.workspaces]), [['a1', null], ['a2', null]])
 })
 
-test('a Sandbox whose daemon admits no connection fails the view fast: one read at a time, its Busy remembered', async () => {
+test('on-demand Sandbox reads coalesce and remember Busy without poll fan-out', async () => {
   const lfs = fake()
   let gets = 0
-  let answer
-  lfs.sandbox.list = async () => ({ items: [{ name: 'stuck', project: 's1/app', machine: 'box', state: 'running' }], next_page_pos: null })
-  // LayerFS waits 60 s for the daemon to admit a connection, then refuses Busy
-  lfs.sandbox.get = () => (gets++, new Promise((_, reject) => (answer = () => reject(Object.assign(new Error('admitted no connection'), { code: 'Busy' })))))
-  const machines = new Machines({ spec: spec(), client: lfs, calls: [] })
-  const started = Date.now()
-  const [a, b] = await Promise.all([machines.view(), machines.view()])
-  assert.ok(Date.now() - started < 8000)
-  assert.deepEqual([a.sandboxes[0].workspaces, b.sandboxes[0].workspaces, gets], [null, null, 1])
-  // the read still in flight is past the wait: the next view does not wait for it again
-  const again = Date.now()
-  assert.equal((await machines.view()).sandboxes[0].workspaces, null)
-  assert.ok(Date.now() - again < 1000)
-  answer()
-  await new Promise((r) => setTimeout(r, 5))
-  // the refusal answers the next reads without another call
-  assert.equal((await workspacesOf(lfs, 'stuck').catch((e) => e.code)), 'Busy')
-  assert.equal((await new Projects({ spec: spec(), client: lfs, log: () => {} }).sandboxes('s1/app'))[0].refusal.code, 'Busy')
+  let rejectRead
+  lfs.sandbox.get = () => (gets++, new Promise((_, reject) => { rejectRead = reject }))
+  const first = workspacesOf(lfs, 'stuck').catch((e) => e.code)
+  const second = workspacesOf(lfs, 'stuck').catch((e) => e.code)
+  assert.equal(gets, 1)
+  rejectRead(Object.assign(new Error('admitted no connection'), { code: 'Busy' }))
+  assert.deepEqual(await Promise.all([first, second]), ['Busy', 'Busy'])
+  assert.equal(await workspacesOf(lfs, 'stuck').catch((e) => e.code), 'Busy')
   assert.equal(gets, 1)
 })
 

@@ -1,0 +1,850 @@
+{
+  "identity": {
+    "version": "2.0.0",
+    "commit": "833d04cf44e8e747929d50ab1170a48260d9381c",
+    "dirty": false,
+    "features": [
+      "machine",
+      "postgresql"
+    ]
+  },
+  "started": "2026-11-08T21:45:49.192Z",
+  "calls": [
+    {
+      "argv": [
+        "machine",
+        "list"
+      ],
+      "result": {
+        "machines": [
+          {
+            "name": "docker",
+            "platform": "docker",
+            "backend": "namespaces",
+            "supports": {
+              "sqlite": true,
+              "postgresql_sandbox": true,
+              "reason": null
+            },
+            "state": "stopped",
+            "cpus": null,
+            "memory": null,
+            "disk": null,
+            "stores": [],
+            "sandboxes": []
+          },
+          {
+            "name": "native",
+            "platform": "native",
+            "backend": "native",
+            "supports": {
+              "sqlite": true,
+              "postgresql_sandbox": true,
+              "reason": null
+            },
+            "state": "ready",
+            "cpus": null,
+            "memory": null,
+            "disk": null,
+            "stores": [],
+            "sandboxes": []
+          }
+        ]
+      }
+    },
+    {
+      "argv": [
+        "machine",
+        "platforms"
+      ],
+      "result": {
+        "host": "macos",
+        "platforms": [
+          {
+            "platform": "native",
+            "how": "built_in",
+            "backend": "native",
+            "kernel": "nfs",
+            "sqlite": "in_process",
+            "postgresql": {
+              "store_calls": "in_process",
+              "sandbox": true,
+              "reason": null
+            },
+            "ready": true,
+            "missing": [],
+            "version": null,
+            "options": [],
+            "description": "this host; Sandboxes run as this user's processes, served over loopback NFS"
+          },
+          {
+            "platform": "docker",
+            "how": "built_in",
+            "backend": "namespaces",
+            "kernel": "fuse",
+            "sqlite": "worker",
+            "postgresql": {
+              "store_calls": "in_process",
+              "sandbox": true,
+              "reason": null
+            },
+            "ready": true,
+            "missing": [],
+            "version": "29.5.2",
+            "options": [],
+            "description": "Docker's kernel (Docker Desktop's VM, or the Linux host); Sandboxes run in Linux namespaces and a cgroup"
+          },
+          {
+            "platform": "apple-container",
+            "how": "created",
+            "backend": "namespaces",
+            "kernel": "fuse",
+            "sqlite": "worker",
+            "postgresql": {
+              "store_calls": "in_process",
+              "sandbox": true,
+              "reason": null
+            },
+            "ready": true,
+            "missing": [],
+            "version": "container CLI version 1.6.1 (build: release, commit: unspeci)",
+            "options": [
+              {
+                "name": "cpus",
+                "kind": "int"
+              },
+              {
+                "name": "memory",
+                "kind": "size"
+              },
+              {
+                "name": "disk",
+                "kind": "size"
+              },
+              {
+                "name": "image",
+                "kind": "text"
+              }
+            ],
+            "description": "an Apple container VM (Apple silicon); Sandboxes run in Linux namespaces and a cgroup"
+          },
+          {
+            "platform": "lima",
+            "how": "created",
+            "backend": "namespaces",
+            "kernel": "fuse",
+            "sqlite": "worker",
+            "postgresql": {
+              "store_calls": "in_process",
+              "sandbox": true,
+              "reason": null
+            },
+            "ready": true,
+            "missing": [],
+            "version": "limactl version 2.2.1",
+            "options": [
+              {
+                "name": "cpus",
+                "kind": "int"
+              },
+              {
+                "name": "memory",
+                "kind": "size"
+              },
+              {
+                "name": "disk",
+                "kind": "size"
+              },
+              {
+                "name": "image",
+                "kind": "text"
+              }
+            ],
+            "description": "a Lima VM (vz); Sandboxes run in Linux namespaces and a cgroup"
+          }
+        ]
+      }
+    },
+    {
+      "argv": [
+        "machine",
+        "update",
+        "docker",
+        "--daemon",
+        "/private/tmp/connect137-linux-bundle/2.0.0/linux-aarch64/layerfs-daemon",
+        "--image",
+        "layerfs-352-runtime:node24-https-apt-20261024"
+      ],
+      "result": {
+        "name": "docker",
+        "platform": "docker",
+        "backend": "namespaces",
+        "supports": {
+          "sqlite": true,
+          "postgresql_sandbox": true,
+          "reason": null
+        },
+        "state": "ready",
+        "cpus": null,
+        "memory": null,
+        "disk": null,
+        "stores": [],
+        "sandboxes": [],
+        "image": "layerfs-352-runtime:node24-https-apt-20261024",
+        "daemon": "/private/tmp/connect137-linux-bundle/2.0.0/linux-aarch64/layerfs-daemon"
+      }
+    },
+    {
+      "argv": [
+        "machine",
+        "start",
+        "docker"
+      ],
+      "result": {
+        "name": "docker",
+        "platform": "docker",
+        "backend": "namespaces",
+        "supports": {
+          "sqlite": true,
+          "postgresql_sandbox": true,
+          "reason": null
+        },
+        "state": "running",
+        "cpus": null,
+        "memory": null,
+        "disk": null,
+        "stores": [],
+        "sandboxes": [],
+        "image": "layerfs-352-runtime:node24-https-apt-20261024",
+        "daemon": "/private/tmp/connect137-linux-bundle/2.0.0/linux-aarch64/layerfs-daemon"
+      }
+    },
+    {
+      "argv": [
+        "store",
+        "create",
+        "proof"
+      ],
+      "result": {
+        "name": "proof",
+        "kind": "sqlite",
+        "machine": "native",
+        "profile": "disposable",
+        "created": 1794174350110,
+        "sqlite": "3.53.2",
+        "projects": []
+      }
+    },
+    {
+      "argv": [
+        "project",
+        "init",
+        "proof/p",
+        "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/connect-phase2-docker-iMrB0f/input"
+      ],
+      "result": {
+        "project": "proof/p",
+        "store": "proof",
+        "name": "p",
+        "kind": "sqlite",
+        "machine": "native",
+        "created": 1794174350154,
+        "layer": "32aeb00326a943c5edb895d0670d89b122c20e36236c9695b30f84ddff7ed007cf",
+        "root": "8668d87a571d5bb988605cc7f90f1cc86ba14e4c71a89015ce9c16f853b704c7"
+      }
+    },
+    {
+      "argv": [
+        "store",
+        "push",
+        "proof",
+        "docker"
+      ],
+      "result": {
+        "store": "proof",
+        "from": "native",
+        "to": "docker",
+        "bytes": 217088,
+        "heads": "d696e7b7a9501caeeee68d5f6e4fb762f2c61d8486b38958e323aed708ad3031"
+      }
+    },
+    {
+      "argv": [
+        "branch",
+        "fork",
+        "proof/p",
+        "work",
+        "main"
+      ],
+      "result": {
+        "kind": "Forked",
+        "branch": "work",
+        "base": "32aeb00326a943c5edb895d0670d89b122c20e36236c9695b30f84ddff7ed007cf",
+        "head": null
+      }
+    },
+    {
+      "argv": [
+        "sandbox",
+        "create",
+        "proof/p",
+        "docker-proof",
+        "docker"
+      ],
+      "result": {
+        "name": "docker-proof",
+        "project": "proof/p",
+        "machine": "docker",
+        "created": 1794174350243,
+        "id": "docker-proof",
+        "platform": "docker",
+        "runtime": "namespaces",
+        "image": "sha256:1d91885de27a20805af0d1b99602ace066f0514983613e391ee1f73ac8e7c2e9",
+        "backend": "namespaces",
+        "route": "fuse",
+        "state": "running"
+      }
+    },
+    {
+      "argv": [
+        "workspace",
+        "mount",
+        "docker-proof",
+        "work",
+        "--name",
+        "proof"
+      ],
+      "result": {
+        "kind": "Mounted",
+        "path": "/layerfs/data/machine/native/run/lfs-f5d87316-docker-proof/workspaces/1",
+        "workspace": "c9695dd82179347f95052aa8afda982bab2c917ac28b8c486973af37a0277f09",
+        "namespace": 1,
+        "branch": "work",
+        "base": null,
+        "base_layer": "32aeb00326a943c5edb895d0670d89b122c20e36236c9695b30f84ddff7ed007cf",
+        "root": "8668d87a571d5bb988605cc7f90f1cc86ba14e4c71a89015ce9c16f853b704c7",
+        "sandbox": "docker-proof",
+        "container": "lfs-f5d87316-docker-proof",
+        "image": "sha256:1d91885de27a20805af0d1b99602ace066f0514983613e391ee1f73ac8e7c2e9",
+        "platform": "docker",
+        "runtime": "namespaces",
+        "name": "proof",
+        "ws": "docker-proof:proof"
+      }
+    },
+    {
+      "argv": [
+        "workspace",
+        "exec",
+        "docker-proof:proof",
+        "printf docker > proof.txt; cat proof.txt",
+        "--exec-id",
+        "docker-proof-write",
+        "--events"
+      ],
+      "result": {
+        "kind": "exit:0",
+        "exit_code": 0,
+        "stdout": "docker",
+        "stderr": "",
+        "message": null,
+        "truncated": false,
+        "exec_id": "docker-proof-write",
+        "stop": "cgroup"
+      }
+    },
+    {
+      "argv": [
+        "workspace",
+        "commit",
+        "docker-proof:proof",
+        "--message",
+        "Docker mounted write"
+      ],
+      "result": {
+        "kind": "Committed",
+        "head": "12a5da7db9f71933abc35e14b122864aee46a62221ab8d6f0b10c7193dccaf60d9",
+        "commit": {
+          "id": "12a5da7db9f71933abc35e14b122864aee46a62221ab8d6f0b10c7193dccaf60d9",
+          "branch": null,
+          "parent": null,
+          "second_parent": null,
+          "base": "32aeb00326a943c5edb895d0670d89b122c20e36236c9695b30f84ddff7ed007cf",
+          "root": "7650b6def82fd07b301096de444df5a5e0b80df90e2712c91c19f4312e589de0",
+          "via": "exec",
+          "message": "Docker mounted write",
+          "merged_from": null,
+          "time": 1794174356450,
+          "logical": 19,
+          "new_canonical": 524,
+          "new_stored": 343,
+          "new_metadata": 300,
+          "displaced": null,
+          "lww": [],
+          "lww_truncated": false
+        },
+        "displaced_head": null,
+        "merged": null,
+        "lww": [],
+        "lww_truncated": false
+      }
+    },
+    {
+      "argv": [
+        "project",
+        "stats",
+        "proof/p",
+        "work"
+      ],
+      "result": {
+        "project": "p",
+        "at": {
+          "id": "12a5da7db9f71933abc35e14b122864aee46a62221ab8d6f0b10c7193dccaf60d9",
+          "kind": "Commit",
+          "branch": "work",
+          "root": "7650b6def82fd07b301096de444df5a5e0b80df90e2712c91c19f4312e589de0"
+        },
+        "files": 2,
+        "directories": 0,
+        "symlinks": 0,
+        "others": 0,
+        "logical": 19,
+        "complete": true
+      }
+    },
+    {
+      "argv": [
+        "doctor",
+        "sandbox",
+        "docker-proof",
+        "--timeout",
+        "10s"
+      ],
+      "result": {
+        "ok": true,
+        "complete": true,
+        "target": {
+          "kind": "sandbox",
+          "name": "docker-proof"
+        },
+        "checks": [
+          {
+            "id": "sandbox.record",
+            "code": "sandbox.record",
+            "outcome": "pass",
+            "severity": null,
+            "entity": {
+              "kind": "sandbox",
+              "name": "docker-proof"
+            },
+            "message": "Sandbox record parses with a supported version",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 0,
+            "duration_ms": null
+          },
+          {
+            "id": "sandbox.store_reference",
+            "code": "sandbox.store_reference",
+            "outcome": "pass",
+            "severity": null,
+            "entity": {
+              "kind": "sandbox",
+              "name": "docker-proof"
+            },
+            "message": "Referenced record exists and has a supported version",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 1,
+            "duration_ms": null
+          },
+          {
+            "id": "sandbox.store_placement",
+            "code": "sandbox.store_placement",
+            "outcome": "pass",
+            "severity": null,
+            "entity": {
+              "kind": "sandbox",
+              "name": "docker-proof"
+            },
+            "message": "SQLite Store and sandbox share the same machine",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 1,
+            "duration_ms": null
+          },
+          {
+            "id": "sandbox.project_reference",
+            "code": "sandbox.project_reference",
+            "outcome": "pass",
+            "severity": null,
+            "entity": {
+              "kind": "sandbox",
+              "name": "docker-proof"
+            },
+            "message": "Referenced record exists and has a supported version",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 1,
+            "duration_ms": null
+          },
+          {
+            "id": "sandbox.machine_reference",
+            "code": "sandbox.machine_reference",
+            "outcome": "pass",
+            "severity": null,
+            "entity": {
+              "kind": "sandbox",
+              "name": "docker-proof"
+            },
+            "message": "Sandbox references a built-in machine",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 1,
+            "duration_ms": null
+          },
+          {
+            "id": "sandbox.operation",
+            "code": "sandbox.operation",
+            "outcome": "pass",
+            "severity": null,
+            "entity": {
+              "kind": "sandbox",
+              "name": "docker-proof"
+            },
+            "message": "No sandbox lifecycle operation is recorded",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 1,
+            "duration_ms": null
+          },
+          {
+            "id": "sandbox.route",
+            "code": "sandbox.route",
+            "outcome": "pass",
+            "severity": null,
+            "entity": {
+              "kind": "sandbox",
+              "name": "docker-proof"
+            },
+            "message": "Authenticated compatible worker served the observational sandbox route",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 9,
+            "duration_ms": null
+          },
+          {
+            "id": "sandbox.record",
+            "code": "sandbox.record",
+            "outcome": "pass",
+            "severity": null,
+            "entity": {
+              "kind": "sandbox",
+              "name": "docker-proof"
+            },
+            "message": "Sandbox record parses with a supported version",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 9,
+            "duration_ms": null
+          },
+          {
+            "id": "sandbox.runtime",
+            "code": "sandbox.runtime",
+            "outcome": "pass",
+            "severity": null,
+            "entity": {
+              "kind": "sandbox",
+              "name": "docker-proof"
+            },
+            "message": "Recorded daemon/init process is live with the saved start time and boot",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 9,
+            "duration_ms": null
+          },
+          {
+            "id": "sandbox.runtime_containment",
+            "code": "sandbox.runtime_containment",
+            "outcome": "skipped",
+            "severity": null,
+            "entity": {
+              "kind": "sandbox",
+              "name": "docker-proof"
+            },
+            "message": "Process presence is observed; namespace isolation and application filesystem serving are not exercised",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 9,
+            "duration_ms": null
+          },
+          {
+            "id": "sandbox.daemon_keys",
+            "code": "sandbox.daemon_keys",
+            "outcome": "pass",
+            "severity": null,
+            "entity": {
+              "kind": "sandbox",
+              "name": "docker-proof"
+            },
+            "message": "Saved loopback endpoint and fixed-size authentication identities are valid",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 9,
+            "duration_ms": null
+          },
+          {
+            "id": "sandbox.daemon_connect",
+            "code": "sandbox.daemon_connect",
+            "outcome": "pass",
+            "severity": null,
+            "entity": {
+              "kind": "sandbox",
+              "name": "docker-proof"
+            },
+            "message": "Saved daemon endpoint accepted a connection",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 9,
+            "duration_ms": null
+          },
+          {
+            "id": "sandbox.daemon_auth",
+            "code": "sandbox.daemon_auth",
+            "outcome": "pass",
+            "severity": null,
+            "entity": {
+              "kind": "sandbox",
+              "name": "docker-proof"
+            },
+            "message": "Daemon peer authenticated with saved control identities",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 9,
+            "duration_ms": null
+          },
+          {
+            "id": "sandbox.daemon_instance",
+            "code": "sandbox.daemon_instance",
+            "outcome": "pass",
+            "severity": null,
+            "entity": {
+              "kind": "sandbox",
+              "name": "docker-proof"
+            },
+            "message": "Daemon incarnation matches the saved sandbox",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 9,
+            "duration_ms": null
+          },
+          {
+            "id": "sandbox.daemon_ready",
+            "code": "sandbox.daemon_ready",
+            "outcome": "pass",
+            "severity": null,
+            "entity": {
+              "kind": "sandbox",
+              "name": "docker-proof"
+            },
+            "message": "Daemon reports ControlReady without waiting for startup",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 9,
+            "duration_ms": null
+          },
+          {
+            "id": "sandbox.workspaces",
+            "code": "sandbox.workspaces",
+            "outcome": "pass",
+            "severity": null,
+            "entity": {
+              "kind": "sandbox",
+              "name": "docker-proof"
+            },
+            "message": "Inspected all 1 registry workspace records across bounded pages",
+            "evidence": {
+              "count": 1,
+              "mounted": 1,
+              "retained_examples": [],
+              "retained_examples_truncated": false,
+              "activities": {
+                "idle": 1
+              }
+            },
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 9,
+            "duration_ms": null
+          },
+          {
+            "id": "sandbox.overlay_state",
+            "code": "sandbox.overlay_state",
+            "outcome": "skipped",
+            "severity": null,
+            "entity": {
+              "kind": "sandbox",
+              "name": "docker-proof"
+            },
+            "message": "Dirty counts and pending merges are not read by the registry-only diagnostic; no overlay or Store integrity claim",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 9,
+            "duration_ms": null
+          },
+          {
+            "id": "sandbox.filesystem_serving",
+            "code": "sandbox.filesystem_serving",
+            "outcome": "skipped",
+            "severity": null,
+            "entity": {
+              "kind": "sandbox",
+              "name": "docker-proof"
+            },
+            "message": "Control observations do not verify application FUSE/NFS reads, overlay integrity or Store integrity",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 9,
+            "duration_ms": null
+          },
+          {
+            "id": "sandbox.session",
+            "code": "sandbox.session",
+            "outcome": "pass",
+            "severity": null,
+            "entity": {
+              "kind": "sandbox",
+              "name": "docker-proof"
+            },
+            "message": "Own diagnostic control session ended and its socket was fenced",
+            "evidence": null,
+            "fix": "",
+            "blocked_by": [],
+            "observed_ms": 9,
+            "duration_ms": null
+          }
+        ],
+        "findings": [],
+        "truncated": false,
+        "observed_at_ms": 1794174356484,
+        "duration_ms": 11,
+        "counts": {
+          "pass": 16,
+          "skipped": 3
+        },
+        "home": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/connect-phase2-docker-iMrB0f/home",
+        "operation": "diagnose",
+        "mode": "observation"
+      }
+    },
+    {
+      "argv": [
+        "workspace",
+        "unmount",
+        "docker-proof:proof"
+      ],
+      "result": {
+        "kind": "Unmounted"
+      }
+    },
+    {
+      "argv": [
+        "sandbox",
+        "close",
+        "docker-proof"
+      ],
+      "result": {
+        "kind": "Closed",
+        "sandbox": "docker-proof",
+        "unknown": [],
+        "closed": "docker-proof"
+      }
+    },
+    {
+      "argv": [
+        "store",
+        "pull",
+        "proof"
+      ],
+      "result": {
+        "store": "proof",
+        "from": "docker",
+        "to": "native",
+        "bytes": 217088,
+        "heads": "f2ffc8c5e4a753905b0569c687ff370b0119561a5315a021682e8067d700f649"
+      }
+    },
+    {
+      "argv": [
+        "store",
+        "status",
+        "proof"
+      ],
+      "result": {
+        "name": "proof",
+        "kind": "sqlite",
+        "state": "idle",
+        "holders": [],
+        "op": null,
+        "down_reason": null,
+        "machine": "native",
+        "file": {
+          "exists": true,
+          "free": 332082565120,
+          "bytes": 217088,
+          "wal_bytes": 0,
+          "incoming_bytes": 0
+        }
+      }
+    },
+    {
+      "argv": [
+        "machine",
+        "stop",
+        "docker"
+      ],
+      "result": {
+        "name": "docker",
+        "platform": "docker",
+        "backend": "namespaces",
+        "supports": {
+          "sqlite": true,
+          "postgresql_sandbox": true,
+          "reason": null
+        },
+        "state": "stopped",
+        "cpus": null,
+        "memory": null,
+        "disk": null,
+        "stores": [],
+        "sandboxes": [],
+        "image": "layerfs-352-runtime:node24-https-apt-20261024",
+        "daemon": "/private/tmp/connect137-linux-bundle/2.0.0/linux-aarch64/layerfs-daemon"
+      }
+    }
+  ],
+  "cleanup": [
+    "owned Docker machine stopped",
+    "owned home removed"
+  ],
+  "bundle": "/private/tmp/connect137-linux-bundle/2.0.0/linux-aarch64",
+  "verdict": "PASS",
+  "ended": "2026-11-08T21:45:57.994Z"
+}

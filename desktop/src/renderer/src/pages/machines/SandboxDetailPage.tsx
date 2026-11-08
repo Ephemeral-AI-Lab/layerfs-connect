@@ -20,7 +20,7 @@ export function SandboxDetailPage() {
   const picked = useSimulation()
   const sample = exampleSandbox(name,sandbox)
   const query = useHostQuery(async () => {
-    if (!picked && connectBridge.mode === 'real') return null
+    if (!picked) return null
     if (sample) return sample
     if (!picked && connectBridge.mode !== 'sim') return null
     const simulation = picked ? SIMULATIONS[picked] : null
@@ -35,7 +35,7 @@ export function SandboxDetailPage() {
   }, [name,sandbox,picked])
   const matching = query.data?.name === sandbox && query.data.machine.name === name ? query.data : null
   const back = () => location.state?.fromMachine ? navigate(-1) : navigate(`/machines/${encodeURIComponent(name)}?view=sandboxes`)
-  if (!picked && connectBridge.mode === 'real') return <div className="sandbox-page" data-standalone-sandbox><HostSandboxDetail key={`${name}:${sandbox}`} name={sandbox} machine={name} navigation={{ backLabel: name, onBack: back }} /></div>
+  if (!picked) return <div className="sandbox-page" data-standalone-sandbox><HostSandboxDetail key={`${name}:${sandbox}`} name={sandbox} machine={name} navigation={{ backLabel: name, onBack: back }} /></div>
   return <div className="sandbox-page" data-standalone-sandbox>
     {query.error ? <LoadError error={query.error} what="the simulated sandbox" onRetry={query.reload} />
       : query.loading && !matching ? <Loading label="Reading simulated sandbox…" />

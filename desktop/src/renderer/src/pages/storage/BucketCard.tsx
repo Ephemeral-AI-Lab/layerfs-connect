@@ -1,3 +1,4 @@
+import { DoctorAction } from '@/components/doctor/DoctorPanel'
 // Storage's Backups tab: one card per bucket, with the files of its last
 // listing (backup.list), each against its Store, and Restore (always a new
 // Store on native).
@@ -41,6 +42,7 @@ export function BucketCard({ bucket: b, index, listing, onList, onRestore, onDis
         {b.provider && <span className="text-sm text-muted-foreground">{PROVIDER[b.provider] ?? b.provider}</span>}
         <span className="text-sm text-muted-foreground">· {b.listed ? `listed ${ago(b.listed)}` : 'not listed yet'}</span>
         <div className="ml-auto flex items-center gap-1.5">
+          <DoctorAction target="backup.connection" name={b.name} label="Test connection" />
           <Button size="sm" variant="outline" className="h-7 rounded-lg-plus px-2.5 text-sm" onClick={onList} disabled={listing}>
             <ListRestart className={listing ? 'motion-safe:animate-spin' : ''} />
             {'List files'}

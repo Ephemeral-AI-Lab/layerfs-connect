@@ -1,0 +1,43 @@
+{
+  "identity": {
+    "version": "2.0.0",
+    "commit": "833d04cf44e8e747929d50ab1170a48260d9381c",
+    "dirty": false,
+    "features": [
+      "machine",
+      "postgresql"
+    ]
+  },
+  "started": "2026-11-08T21:58:10.571Z",
+  "checks": [
+    {
+      "name": "AgentWorkspaces.run real proxy, exit125, no duplicate output, Commit",
+      "result": {
+        "exitCode": 125,
+        "kind": "exit:125",
+        "stop": "group",
+        "saveError": null
+      },
+      "bytes": 5
+    },
+    {
+      "name": "real proxy cancel preserves mount/Sandbox and commits partial writes",
+      "result": {
+        "exitCode": 143,
+        "kind": "cancelled",
+        "stop": "group",
+        "saveError": null
+      },
+      "cancel": {
+        "outcome": "cancelled",
+        "signal": "SIGTERM"
+      }
+    }
+  ],
+  "cleanup": [
+    "owned Workspace unmounted and Sandbox closed",
+    "owned home removed"
+  ],
+  "verdict": "PASS",
+  "ended": "2026-11-08T21:58:11.802Z"
+}

@@ -1,0 +1,85 @@
+{
+  "identity": {
+    "version": "2.0.0",
+    "commit": "833d04cf44e8e747929d50ab1170a48260d9381c",
+    "dirty": false,
+    "features": [
+      "machine",
+      "postgresql"
+    ]
+  },
+  "started": "2026-11-08T21:41:50.781Z",
+  "calls": [
+    {
+      "argv": [
+        "machine",
+        "list"
+      ],
+      "result": {
+        "machines": [
+          {
+            "name": "docker",
+            "platform": "docker",
+            "backend": "namespaces",
+            "supports": {
+              "sqlite": true,
+              "postgresql_sandbox": true,
+              "reason": null
+            },
+            "state": "stopped",
+            "cpus": null,
+            "memory": null,
+            "disk": null,
+            "stores": [],
+            "sandboxes": []
+          },
+          {
+            "name": "native",
+            "platform": "native",
+            "backend": "native",
+            "supports": {
+              "sqlite": true,
+              "postgresql_sandbox": true,
+              "reason": null
+            },
+            "state": "ready",
+            "cpus": null,
+            "memory": null,
+            "disk": null,
+            "stores": [],
+            "sandboxes": []
+          }
+        ]
+      }
+    },
+    {
+      "argv": [
+        "store",
+        "connect",
+        "pg-proof",
+        "postgresql://proof@127.0.0.1:55452/proof",
+        "--password",
+        "env:PROOF_PG_PASSWORD",
+        "--synchronous-commit",
+        "off"
+      ],
+      "refusal": {
+        "code": "Unavailable",
+        "message": "no connection to the server was made (it refused the connection, did not answer, or closed it)",
+        "transport": "refusal"
+      }
+    }
+  ],
+  "containers": [
+    "b21a7d25b30258827ab4d23d86aca1603f609573b62399d79d24a9aba2789e96",
+    "01ff5ad4361efa503c8bb5d79a927a791d252775d98215fa4cd7d711e0410bba"
+  ],
+  "cleanup": [
+    "container removed:b21a7d25b30258827ab4d23d86aca1603f609573b62399d79d24a9aba2789e96",
+    "container removed:01ff5ad4361efa503c8bb5d79a927a791d252775d98215fa4cd7d711e0410bba",
+    "owned home removed"
+  ],
+  "verdict": "FAIL",
+  "error": "no connection to the server was made (it refused the connection, did not answer, or closed it)",
+  "ended": "2026-11-08T21:41:52.405Z"
+}

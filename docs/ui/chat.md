@@ -48,7 +48,7 @@ Directories expand on demand; files open in closeable tabs with line numbers
 and syntax highlighting. The example defaults to `search`; switching to
 `main` shows the earlier filter. On narrow layouts the tree stacks above the
 file. `#/chat/:id/sandboxes` opens the project-wide Sandbox simulation described in
-[sandbox.md](sandbox.md). Sandbox headings open the shared detail view with Overview, Workspaces, Scratch, Activity and Diagnostics. It never reads or creates real LayerFS resources.
+[sandbox.md](sandbox.md). Sandbox headings open the shared detail view with Overview and Workspaces. It never reads or creates real LayerFS resources.
 Chat drafts remain mounted across tabs.
 
 ## Desktop agent navigation
@@ -826,3 +826,24 @@ controls live inside host-backed details. Map headers retain New Sandbox and Ref
 `HostSandboxDetail.tsx` reads the selected Sandbox and verifies its project/machine identity;
 Refresh rereads that record. Unknown workspace reads and unreported files/activity stay
 explicitly unavailable. Real observations do not carry simulation playback or labels.
+
+## CLI phase 2: shared Doctor and Stop (2026-11-09)
+
+```text
+Resource header                         [Diagnose / Check integrity / Test connection]
++ Doctor · saved resource ---------------------------------------------------+
+| Target / operation    Full by default; optional Quick or explicit write test |
+| Optional time budget                                            [Run diagnosis] |
+| Queued / Running · elapsed (no progress percentage, no Stop)                 |
+| Findings: N                Coverage: complete / incomplete                    |
+| > failed / blocked / unknown checks first                                   |
+| > evidence · dependencies · advisory suggestion                             |
+| Previous dated reports (potentially stale)                                  |
++----------------------------------------------------------------------------+
+```
+
+Actions open setup only. Navigation and Refresh never launch targeted audits.
+Sandbox uses the header action and its existing Overview/Workspaces tabs.
+Connection observations do not prove integrity. Simulated reports say so.
+Mounted chat Stop disables while stopping and retains Workspace/Sandbox; output
+appears after command completion. Cancellation unknown offers explicit retry.

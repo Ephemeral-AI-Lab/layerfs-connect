@@ -1,3 +1,4 @@
+import { DoctorAction } from '@/components/doctor/DoctorPanel'
 // One Store workspace: projects, backup destinations and explicit Store details.
 import { Archive, FolderPlus, HardDrive, Power, Search, Trash2, Unplug } from 'lucide-react'
 import { useState } from 'react'
@@ -52,6 +53,8 @@ export function StorePage({ name, view, job, jobs, sandboxes, catalog, actions, 
         <div className="store-workspace-location"><Location store={s} machine={machine} showState={false} />{pg && <span>Shared across machines</span>}</div>
       </div>
       {!pg && <span className="store-workspace-size">{s.size ? bytes(s.size.bytes) : 'Size unavailable'}</span>}
+      <DoctorAction target="store.integrity" name={s.name} label="Check integrity" />
+      {pg && <DoctorAction target="store.connection" name={s.name} label="Test connection" />}
       <Button size="sm" variant="outline" onClick={on.addProject} disabled={!canAddProject(s, on)}><FolderPlus /> Add project</Button>
     </header>
 
@@ -61,7 +64,7 @@ export function StorePage({ name, view, job, jobs, sandboxes, catalog, actions, 
     </div>}
     {job ? <JobSteps job={job} onRetry={on.retry && (() => on.retry!(job))} /> : s.state === 'busy' && s.op ? <OpPanel store={s} /> : null}
 
-    <StoreBreakdown postgresql={pg} />
+    <StoreBreakdown name={s.name} postgresql={pg} tick={job?.ended} />
 
     <section aria-label={`Projects in ${s.name}`} className="store-workspace-projects">
       <div className="store-section-heading"><h2>Projects <span>· {s.projects.length}</span></h2>

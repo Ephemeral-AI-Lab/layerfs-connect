@@ -35,14 +35,10 @@ const refusal = async (promise) => {
   assert.fail('expected a refusal')
 }
 
-test('the saved call table is the linked library\'s', async (t) => {
-  let real
-  try {
-    real = await import('layerfs')
-  } catch {
-    return t.skip('the native LayerFS library is not built here')
-  }
-  assert.deepEqual(sim.table, real.table, 'run `node tools/sim-table.mjs` after upgrading LayerFS')
+test('the saved simulator table is the pinned CLI discovery table', async () => {
+  const { table } = await import('../cli/table.js')
+  assert.deepEqual(sim.table, table)
+  assert.equal(table.length, 66)
 })
 
 test('mode: unset is real, sim is sim, anything else is refused; each has its own state folder', () => {
@@ -76,7 +72,7 @@ test('Compute, Storage and Projects read the simulated home as they read a real 
   const { lfs, spec } = fresh()
   const machines = await new Machines({ spec, client: lfs }).view()
   assert.deepEqual(machines.machines.map((m) => [m.name, m.state]), [['docker', 'running'], ['lima1', 'running'], ['lima2', 'stopped'], ['native', 'ready']])
-  assert.equal(machines.sandboxes[0].workspaces, 1)
+  assert.equal(machines.sandboxes[0].workspaces, null)
   assert.deepEqual(machines.postgresql.map((s) => s.name), ['team'])
   assert.ok(machines.platforms.some((p) => p.platform === 'lima' && p.ready))
 
@@ -92,7 +88,7 @@ test('Compute, Storage and Projects read the simulated home as they read a real 
   assert.deepEqual(state.branches.map((b) => [b.name, b.commits]), [['feature-login', 3], ['fix-orders', 1], ['main', 0]])
   const commits = await projects.commits('shop/api', 'feature-login')
   assert.deepEqual(commits[0].changes, [{ path: '/test/login.test.js', kind: 'added' }])
-  assert.deepEqual((await projects.listDir('shop/api', 'feature-login', '/src')).map((e) => e.name), ['auth.js', 'routes', 'server.js'])
+  assert.deepEqual((await projects.listDir('shop/api', 'feature-login', '/src')).items.map((e) => e.name), ['auth.js', 'routes', 'server.js'])
   assert.match((await projects.file('shop/api', 'main', '/README.md')).text, /HTTP API/)
 })
 
@@ -104,7 +100,7 @@ test('a push runs as the Store\'s op with progress, and lands the Store on the m
   const push = lfs.store.push('lab', 'lima2', { on_progress: (p) => phases.push(p.phase) }).catch((e) => e)
   // lab is on lima1: a push needs it on native first
   assert.equal((await push).code, 'InvalidInput')
-  await lfs.sandbox.close('api-dev')
+  await lfs.sandbox.close('api-dev', { force: true })
   const done = lfs.store.push('shop', 'lima2', {
     on_progress: async (p) => {
       phases.push(p.phase)
@@ -139,7 +135,10 @@ test('refusals carry the real codes', async () => {
   assert.equal((await refusal(lfs.sandbox.create('lab/notes', 'n1', 'native'))).code, 'Unsupported')
   const trouble = fresh('trouble').lfs
   assert.equal((await refusal(trouble.machine.start('lima2'))).code, 'Unavailable')
-  assert.equal((await refusal(trouble.sandbox.get('api-stuck'))).code, 'Unresolved')
+  const stuck = await trouble.sandbox.get('api-stuck')
+  assert.equal(stuck.state, 'unresolved')
+  assert.ok(stuck.op?.uncertain)
+  assert.ok(Array.isArray(stuck.workspaces))
   assert.equal((await sim.doctor({ home: join(trouble.home) })).ok, false)
 })
 

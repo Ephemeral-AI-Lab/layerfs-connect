@@ -14,6 +14,7 @@ export class HostError extends Error {
     readonly detail: RefusalDetail | null = null,
     /** A layout 2 home's conversion refusal: the app shows the upgrade screen. */
     readonly conversion = false,
+    readonly transport?: string,
   ) {
     super(message)
   }
@@ -93,9 +94,9 @@ async function send<T>(method: string, path: string, body?: unknown): Promise<T>
   } catch (error) {
     throw new HostError('no-host', error instanceof Error ? error.message : String(error), 0)
   }
-  const value = (reply.body ?? {}) as { code?: string; message?: string; detail?: RefusalDetail; conversion?: boolean }
+  const value = (reply.body ?? {}) as { code?: string; message?: string; detail?: RefusalDetail; conversion?: boolean; transport?: string }
   if (reply.status < 200 || reply.status >= 300) {
-    const error = new HostError(value.code ?? 'failed', value.message ?? `${method} ${path}: ${reply.status}`, reply.status, value.detail ?? null, value.conversion === true)
+    const error = new HostError(value.code ?? 'failed', value.message ?? `${method} ${path}: ${reply.status}`, reply.status, value.detail ?? null, value.conversion === true, value.transport)
     if (error.conversion) setConversion(error)
     throw error
   }
@@ -124,6 +125,7 @@ const projectsChanged = <T>(value: T): T => {
 export const host = {
   status: () => call<HostStatus>('GET', '/api/status'),
   /** Compute's machines (layerfs#533); `available: false` on a LayerFS with none. */
+  inspectMachine: (name: string) => call<{ state?: string; observedAt: number }>('GET', `/api/machines/${enc(name)}/inspect`),
   machines: () => call<MachinesView>('GET', '/api/machines'),
   /** A VM. */
   createMachine: (input: NewMachine) => call<unknown>('POST', '/api/machines', input),
@@ -142,7 +144,7 @@ export const host = {
     call<ProjectInitJob>('GET', `/api/project-inits/${enc(id)}`).then((job) => (job.ended ? projectsChanged(job) : job)),
   // `project` below is a project key (ProjectSummary.key, else its name): `store/name` sends ?store= (layerfs#506)
   project: (project: string) => call<ProjectState>('GET', `${at(project)}`),
-  /** The project's Sandboxes with their mounted Workspaces: the one project read that asks Sandbox daemons. */
+  /** The project's recorded Sandboxes; opening detail reads Workspaces on demand. */
   projectSandboxes: (project: string) => call<SandboxInfo[]>('GET', `${at(project)}/sandboxes`),
   /** A new Sandbox on `platform` (layerfs#529 sandbox.create({ platform })); left out, the home's default. */
   createSandbox: (project: string, input: { name: string; image?: string; machine?: string }) => call<SandboxRecord>('POST', `${at(project)}/sandboxes`, input),
@@ -164,12 +166,12 @@ export const host = {
       'GET',
       `${at(project)}/branch-commits?${new URLSearchParams(branches.map((b) => ['branch', b])).toString()}`,
     ),
-  list: (project: string, branch: string, path: string) =>
-    call<FsEntry[]>('GET', `${at(project)}/fs${q({ branch, path })}`),
-  file: (project: string, branch: string, path: string) =>
-    call<{ path: string; size: number; binary: boolean; text: string | null }>(
+  list: (project: string, branch: string, path: string, pin?: string, pos = 0) =>
+    call<{ items: FsEntry[]; next: number | null; at: { id: string } }>('GET', `${at(project)}/fs${q({ branch, path, pin, pos })}`),
+  file: (project: string, branch: string, path: string, pin?: string, line = 1) =>
+    call<{ path: string; size: number; binary: boolean; text: string | null; next_line?: number | null; truncated?: boolean; line_truncated?: boolean; at?: { id: string; kind?: string } }>(
       'GET',
-      `${at(project)}/file${q({ branch, path })}`,
+      `${at(project)}/file${q({ branch, path, pin, line })}`,
     ),
   removeProject: (project: string) =>
     call<{ removed: true }>('DELETE', `${at(project)}`).then(projectsChanged),
@@ -230,6 +232,9 @@ export const host = {
   checkStorage: (bucket?: string) => call<StorageView>('POST', '/api/storage/check', bucket ? { bucket } : {}),
   /** Restores `file` (default `store`) of `bucket` as the new Store `store`, on native: a job. */
   restoreBackup: (bucket: string, store: string, file?: string) => call<StorageJob>('POST', `/api/buckets/${enc(bucket)}/restore`, { store, ...(file ? { file } : {}) }),
+  storageJobInspect: (id: string) => call<StorageJob>('POST', `/api/storage-jobs/${enc(id)}/inspect`),
+  storageJobRetry: (id: string) => call<StorageJob>('POST', `/api/storage-jobs/${enc(id)}/retry`),
+  workspaceStatus: (id: string) => call<{ branch_head: string | null }>('GET', `/api/workspaces/${enc(id)}/status`),
   storageJob: (id: string) => call<StorageJob>('GET', `/api/storage-jobs/${enc(id)}`).then((job) => (job.ended ? projectsChanged(job) : job)),
 }
 

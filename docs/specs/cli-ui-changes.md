@@ -151,3 +151,66 @@ values". No mutation controls were clicked.
 After the 2026-11-09 Sandbox simplification: `api-dev` shows only Overview and
 Workspaces; opening `feature-login` shows Details with Base commit and Branch head
 "Not reported" and Changes "Not recorded" (the binding gap in the Workspace row).
+
+### Phase-2 implementation update (#146 / #147)
+
+Observed transfer phases replace fixed progress assumptions where available. Repeated
+phases retain separate steps; indeterminate totals remain indeterminate. Persisted unknown
+and interrupted outcomes require Inspect; recovery rereads the exact operation identity
+and target state before proceeding. Sandbox list polling no longer dials every daemon;
+open/Refresh preserves actual `sandbox get` fields and uses `workspace status` for head.
+Overview labels Sandbox ID/Created and unavailable Workspace counts; gone means no runtime
+recorded. Force close is limited to MountsActive or Busy with execs and explains signal/data
+loss semantics. Stop policy was decided by the owner: keep Workspace and Sandbox open.
+
+## Phase-2 implemented exec and Doctor update (2026-11-09)
+
+Authority: clean CLI `833d04cf44e8e747929d50ab1170a48260d9381c`, with
+`machine,postgresql`. JSON discovery gates targeted Doctor commands. Mounted
+execution uses `--events`, fresh persisted IDs and stream-frame bytes only;
+final inline output is not duplicated. Phase-1 pre-registration cancellation
+removes the former resend loop. Cancellation answers `outcome`, not `kind`.
+Stop preserves Workspace and Sandbox. Unknown cancellation is visible and only
+explicit manual cancellation can retry. Commit refusal is separate from command
+exit. Folder Bash CLI shims retain mounted launch custody after transport loss.
+
+Doctor uses explicit host-owned jobs, idempotent launches, bounded concurrency,
+one integrity audit per Store, bounded dated reports and restart interruption
+without replay. Shared contextual launch/report panels cover Host, Machine,
+Sandbox, Store integrity, PostgreSQL connection and Backup connection. Full is
+the default integrity mode; write tests require the explicit upload/cleanup
+checkbox. Coverage and findings remain separate, including repeated check IDs,
+blocked checks and truncated counts. No progress percentage or Stop is exposed.
+Simulated reports are labelled. Full/Quick/connection/write-test reports remain
+separate historical jobs; past reports are potentially stale observations.
+
+Verification: `docs/evidence/phase-2/exec-native-second.json` records real native
+exit125, pre-registration and running cancellation, retained partial changes,
+and1048587 output bytes. The first failed assertion receipt is retained alongside
+it. All fresh owned resources were closed and removed. Doctor and cancellation
+host lifecycle tests distinguish real and simulated evidence. Browser and final
+renderer build receipts are tracked in `phase-2-record.md`.
+
+## Implemented saved views — phase 2, 2026-11-09
+
+Files and History default to the real adapter in every mode. Code, revisions,
+blame, content comparison and attribution comparison consume pinned saved queries.
+Folder pages expose Show more entries; file/blame windows expose next-line reads.
+Page labels are Page N without a total. Null owners, clipped lines, partial query
+coverage and omitted comparisons remain explicit. Main publication parent/source
+edges and absent publication times remain distinct. Store and project statistics
+show separate scopes, with no mixed-scope ratio or inferred per-project disk use.
+
+
+## Phase-2 baseline and adapter states — 2026-11-09
+
+Owner approved preserving existing work in baseline 7c02313, then creating
+phase-2-cli-integration. Machine power/create calls show elapsed indeterminate
+state. A failed mutation exposes explicit current-state inspection; creation
+uncertainty keeps removal options behind the selected Machine's detail. Failed
+refreshes keep previous data and show a dated Stale banner. Sub-read failures
+remain distinct from empty inventory. Free guest space is labelled separately
+from allocation; allocation-minus-free usage bars are removed.
+
+Owner selected Stop = cancel the mounted command and retain its Workspace and
+Sandbox. Explicit deletion/shutdown retain their separate release paths.

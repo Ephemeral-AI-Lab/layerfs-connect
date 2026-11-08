@@ -494,3 +494,83 @@ failure semantic above.
 **Not verified at runtime:** any exec/cancel/mount/commit, progress framing of real
 transfers, kill-mid-transfer behavior, PostgreSQL and bucket calls, targeted Doctor,
 `branch commits`/`get-commit` results on real data, desktop/Electron behavior.
+
+### Phase-2 implementation note: slices #146 / #147
+
+The host now persists transfer jobs under Connect state, records observed phases (repeats
+included), distinguishes succeeded/failed/interrupted/unknown, reconciles interrupted
+records by reads, and gates explicit recovery on a fresh observation. Machine removal
+uses the actual `machine remove` call. Init maps phase/done/total and retains refusal detail.
+Sandbox inventories now use records only; the shared on-demand observation preserves live
+state, runtime ID, created, down reason, operation and all retained Workspace detail fields.
+Workspace inspection reads `workspace status` for the current branch head. These changes
+use the CLI adapter selected by phase 2; tests against injected clients are simulation evidence.
+
+## Phase-2 implemented exec and Doctor update (2026-11-09)
+
+Authority: clean CLI `833d04cf44e8e747929d50ab1170a48260d9381c`, with
+`machine,postgresql`. JSON discovery gates targeted Doctor commands. Mounted
+execution uses `--events`, fresh persisted IDs and stream-frame bytes only;
+final inline output is not duplicated. Phase-1 pre-registration cancellation
+removes the former resend loop. Cancellation answers `outcome`, not `kind`.
+Stop preserves Workspace and Sandbox. Unknown cancellation is visible and only
+explicit manual cancellation can retry. Commit refusal is separate from command
+exit. Folder Bash CLI shims retain mounted launch custody after transport loss.
+
+Doctor uses explicit host-owned jobs, idempotent launches, bounded concurrency,
+one integrity audit per Store, bounded dated reports and restart interruption
+without replay. Shared contextual launch/report panels cover Host, Machine,
+Sandbox, Store integrity, PostgreSQL connection and Backup connection. Full is
+the default integrity mode; write tests require the explicit upload/cleanup
+checkbox. Coverage and findings remain separate, including repeated check IDs,
+blocked checks and truncated counts. No progress percentage or Stop is exposed.
+Simulated reports are labelled. Full/Quick/connection/write-test reports remain
+separate historical jobs; past reports are potentially stale observations.
+
+Verification: `docs/evidence/phase-2/exec-native-second.json` records real native
+exit125, pre-registration and running cancellation, retained partial changes,
+and1048587 output bytes. The first failed assertion receipt is retained alongside
+it. All fresh owned resources were closed and removed. Doctor and cancellation
+host lifecycle tests distinguish real and simulated evidence. Browser and final
+renderer build receipts are tracked in `phase-2-record.md`.
+
+## Implemented Files/History/statistics delta — phase 2, 2026-11-09
+
+This section supersedes the earlier inventory's retired saved-query workarounds.
+`host/project-reads.js` is the shared CLI-facing saved-read boundary. Files uses
+lightweight Branch pages, one immutable full-id pin, bounded directory pages and
+text windows, with no eager per-entry stat. Main History uses branch.commits;
+branch.get-commit supplies inspector facts. Every inspector changed-path read uses
+commit.diff and next_cursor, including Layer/first-Commit endpoints. Attribution
+comparison alone uses pinned branch.diff; it resumes with continuation, identical
+endpoints/options/page size and no numbered page. file.revision follows the same
+continuation rule; file.diff uses numbered pages and server attribution rows.
+
+store.stats and project.stats are separate observed scopes. Approximate summed
+Commit storage charts are retired. Project results are keyed by request, not the
+bare project field. history_logical is never a dedupe numerator.
+
+
+## Implemented shared adapter — phase 2, 2026-11-09
+
+The adapter now gates the selected absolute binary on `--version --json` and
+`help --json`; it never resolves LayerFS from PATH. The fake simulator CLI uses
+the identical process/parser boundary. Capabilities, parser/shim metadata and
+sim-table generation use the CLI discovery table, and the Node package link is
+removed. Four normal children and four reserved cancellation children bound
+admission; a stopped queued exec is checked again immediately before spawning.
+Bool options use `--option=true|false`, matching the real CLI parser.
+
+Unsafe i64 output is parsed as bigint, and HTTP/persistence retains
+`{"$layerfs":"i64-v1","decimal":"…"}`. Readers format exact decimal values;
+ratios require safe numeric inputs. Real reads require an existing layerfs.json.
+Child secret references are inherited environment or owner-only file references;
+raw secrets never become CLI argv. Transport loss retains uncertainty and never
+replays a mutation. Management read failures retain last good data with dated
+errors; platform discovery is cached briefly and Sandbox details are on demand.
+
+The scoped JavaScript compatibility facade delegates to this same adapter. It
+is Connect-owned compatibility code, not the removed linked Node addon.
+Packaging accepts explicit clean CLI/daemon resources and records build identity.
+See phase-2-record.md and docs/evidence/phase-2 for checks, gaps and retained
+initial failures. Electron verification remains NOT_RUN (not requested).

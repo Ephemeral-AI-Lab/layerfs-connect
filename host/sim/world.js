@@ -18,6 +18,7 @@
 import { createHash, randomBytes, randomUUID } from 'node:crypto'
 import { existsSync, lstatSync, mkdirSync, readFileSync, readdirSync, renameSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
+import { SAVED_HANDLERS } from './saved-handlers.js'
 import { PRESETS, seedWorld } from './seed.js'
 
 export { PRESETS }
@@ -47,8 +48,8 @@ const FILE_MODE = 0o644
 const DEFAULT_MESSAGE = 'Apply filesystem changes'
 
 const hex = (bytes) => randomBytes(bytes).toString('hex')
-const commitId = () => `12${hex(33)}`
-const layerId = () => `32${hex(33)}`
+const commitId = () => `12${hex(32)}`
+const layerId = () => `32${hex(32)}`
 const branchId = () => `11${hex(16)}`
 const rootId = () => hex(32)
 const now = () => Date.now()
@@ -167,7 +168,7 @@ export class World {
     const d = this.data
     for (const group of [d.machines, d.stores, d.sandboxes]) {
       for (const [name, rec] of Object.entries(group)) {
-        if (!rec.op) continue
+        if (!rec.op || rec.op.uncertain) continue
         if (rec.op.name === 'machine.create' || rec.op.name === 'machine.connect' || rec.op.name === 'sandbox.create') delete group[name]
         else rec.op = null
       }
@@ -195,7 +196,7 @@ export class World {
 
   /** Runs `name`'s handler; answers a copy, so a caller never holds the world's records. */
   async call(name, args, on) {
-    const handler = HANDLERS[name]
+    const handler = SAVED_HANDLERS[name] ?? HANDLERS[name]
     if (!handler) throw refuse('Unsupported', `${name} is not simulated yet: switch Connect to Real LayerFS for it`, { call: name })
     const answer = await handler(this, args, on ?? {})
     this.save()
@@ -634,7 +635,7 @@ const HANDLERS = {
     const s = w.store(a.name)
     const state = w.storeState(s)
     const holders = w.storeSandboxes(s.name).filter((b) => b.state === 'running').map((b) => ({ kind: 'sandbox', name: b.name }))
-    if (s.kind === 'postgresql') return { name: s.name, kind: s.kind, state, holders, op: s.op ?? null, down_reason: null, server: { reachable: s.reachable !== false, serverVersion: '16.4', latencyMs: 3, ...(s.reachable === false ? { unavailable: 'connection refused' } : {}) } }
+    if (s.kind === 'postgresql') return { name: s.name, kind: s.kind, state, holders, op: s.op ?? null, down_reason: null, server: { reachable: s.reachable !== false, server_version: '16.4', latency_ms: 3, ...(s.reachable === false ? { unavailable: 'connection refused' } : {}) } }
     const m = w.data.machines[s.machine]
     return { name: s.name, kind: s.kind, state, holders, op: s.op ?? null, down_reason: state === 'down' ? `machine ${s.machine} is ${m?.state ?? 'missing'}` : null, machine: s.machine, file: { exists: true, free: 378_000_000_000, bytes: w.storeBytes(s), wal_bytes: 0 } }
   },
@@ -650,7 +651,7 @@ const HANDLERS = {
     if (w.data.stores[a.name]) throw refuse('Exists', `a Store named ${a.name} exists`)
     if (!/^postgres(ql)?:\/\//.test(a.url)) throw refuse('InvalidInput', 'a PostgreSQL Store\'s URL is postgresql://user@host:port/database')
     await w.wait(600)
-    const s = { name: a.name, kind: 'postgresql', machine: null, url: a.url, password: a.password ?? null, synchronous_commit: a.synchronous_commit ?? null, profile: 'durable', created: now(), backups: {}, op: null }
+    const s = { name: a.name, kind: 'postgresql', machine: null, url: a.url, password: a.password ?? null, synchronous_commit: a.synchronous_commit ?? null, profile: 'disposable', created: now(), backups: {}, op: null }
     w.data.stores[a.name] = s
     return w.storeRecord(s)
   },
@@ -874,7 +875,7 @@ const HANDLERS = {
     const p = w.projectData(a.project)
     const from = w.snapshot(p, a.from_branch)
     const to = w.snapshot(p, a.to_branch)
-    return { kind: 'ok', from: { ref: a.from_branch, label: from.label, root: from.root }, to: { ref: a.to_branch, label: to.label, root: to.root }, ...paged(diffTrees(from.tree, to.tree), a), next_cursor: null }
+    return { kind: 'ok', from: { ref: a.from_branch, label: from.label, root: from.root }, to: { ref: a.to_branch, label: to.label, root: to.root }, ...(() => { const all = diffTrees(from.tree, to.tree).filter(i => !a.cursor || i.path > a.cursor); const page = paged(all, { ...a, page_pos: 0 }); return { ...page, next_cursor: page.has_more ? page.items.at(-1).path : null } })() }
   },
 
   // ----- Commits -----
@@ -898,7 +899,7 @@ const HANDLERS = {
     const to = tree(a.to_commit)
     if (!from) throw refuse('NoSuchCommit', `no Commit ${a.from_commit} in ${p.key}`)
     if (!to) throw refuse('NoSuchCommit', `no Commit ${a.to_commit} in ${p.key}`)
-    return { kind: 'ok', from: { commit: a.from_commit, root: from.root }, to: { commit: a.to_commit, root: to.root }, ...paged(diffTrees(from.tree, to.tree), a), next_cursor: null }
+    return { kind: 'ok', from: { commit: a.from_commit, root: from.root }, to: { commit: a.to_commit, root: to.root }, ...(() => { const all = diffTrees(from.tree, to.tree).filter(i => !a.cursor || i.path > a.cursor); const page = paged(all, { ...a, page_pos: 0 }); return { ...page, next_cursor: page.has_more ? page.items.at(-1).path : null } })() }
   },
 
   // ----- files -----
@@ -934,7 +935,7 @@ const HANDLERS = {
     const start = Math.max(1, Number(a.start_line) || 1)
     const end = Math.min(lines.length, a.end_line ? Number(a.end_line) : start + READ_LINES - 1)
     const window = lines.slice(start - 1, end)
-    const next = end < lines.length && !a.end_line ? end + 1 : null
+    const next = end < lines.length ? end + 1 : null
     return { kind: 'ok', snapshot: snap.label, root: snap.root, path, text: window.join(''), start_line: start, end_line: end, line_truncated: false, truncated: next !== null, next_line: next, size: bytes.length }
   },
   'file.glob': (w, a) => {
@@ -1037,14 +1038,17 @@ const HANDLERS = {
   },
   'sandbox.get': (w, a) => {
     const b = w.sandbox(a.name)
-    if (b.state === 'unresolved') throw refuse('Unresolved', `sandbox ${b.name} is unresolved: see \`layerfs sandbox get ${b.name}\`; clear it with \`layerfs sandbox close ${b.name}\``)
-    const view = w.sandboxView(b)
-    const workspaces = view.state === 'gone' ? [] : Object.values(b.workspaces).map((ws) => ({ name: ws.name, ws: ws.ws, branch: ws.branch, directory: ws.directory, mounted: true, activity: null }))
+    const view = { ...w.sandboxView(b), id: b.id ?? (b.state === 'gone' ? null : `sim-${b.name}`), created: b.created ?? w.data.created, down_reason: b.down_reason ?? null }
+    const workspaces = ['gone', 'lost'].includes(view.state) || view.down_reason ? [] : Object.values(b.workspaces).map((ws) => {
+      const p = w.projectData(b.project), branch = w.branch(p, ws.branch)
+      return { name: ws.name, ws: ws.ws, branch: ws.branch, directory: ws.directory, path: ws.directory, mounted: true, activity: ws.activity ?? 'Idle', base: ws.base ?? branch.head ?? null, base_layer: ws.base_layer ?? branch.base ?? null, root: ws.root ?? null, head_moved_since_mount: ws.head_moved_since_mount ?? false, dirty: ws.dirty ?? { inodes: 0, entries: 0 }, pending_merge: ws.pending_merge ?? false }
+    })
     const { has_more, ...page } = paged(workspaces, a)
     return { ...view, workspaces: page.items, next_page_pos: page.next_page_pos }
   },
   'sandbox.close': async (w, a) => {
     const b = w.sandbox(a.name)
+    if (!a.force && Object.keys(b.workspaces ?? {}).length) throw refuse('MountsActive', `Sandbox ${b.name} has mounted Workspaces`, { entity: { kind: 'sandbox', name: b.name } })
     await w.runOp('sandbox', b, 'sandbox.close', [{ phase: 'stop', ms: b.state === 'running' ? 1000 : 200 }])
     delete w.data.sandboxes[b.name]
     return { name: b.name, closed: true, unknown: [] }
@@ -1062,7 +1066,8 @@ const HANDLERS = {
   },
   'workspace.status': (w, a) => {
     const { b, ws } = workspaceOf(w, a.ws)
-    return { ws: ws.ws, sandbox: b.name, branch: ws.branch, directory: ws.directory, changes: [], dirty: false }
+    const p = w.projectData(b.project), branch = w.branch(p, ws.branch)
+    return { kind: 'ok', base: ws.base ?? branch.head ?? null, base_layer: ws.base_layer ?? branch.base ?? null, branch: ws.branch, branch_head: branch.head ?? null, head_moved_since_mount: ws.head_moved_since_mount ?? false, activity: ws.activity ?? 'Idle', overlay: { ...(ws.dirty ?? { inodes: 0, entries: 0 }), pending_merge: ws.pending_merge ?? false } }
   },
   'workspace.commit': (w, a) => {
     const { ws } = workspaceOf(w, a.ws)

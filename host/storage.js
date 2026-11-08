@@ -14,16 +14,16 @@
 //                     reference (env:LAYERFS_… or file:/absolute/path)
 //   disconnectBucket  backup.disconnect(name): every Store's link to it goes
 //   listBucket        backup.list(bucket): one call per bucket, its seven states
-//   push              store.push(store, machine, { on_progress }) as a job: a
+//   push              store.push(store, machine, { on_progress, on_spawn }) as a job: a
 //                     sqlite Store on native to a machine
-//   pull              store.pull(store, { on_progress }) as a job: back to native
+//   pull              store.pull(store, { on_progress, on_spawn }) as a job: back to native
 //   move              between two machines: pull, then push, as one job with
 //                     two halves (#537 U5); a push that fails leaves the Store
 //                     on native and the job says so
 //   place             the one of push, pull or move that puts a Store on a
 //                     machine (Compute's "move a Store here", runs)
-//   backup            backup.create(store, bucket, file?, { on_progress }) as a job
-//   restore           backup.restore(store, bucket, file?, { on_progress }) as a
+//   backup            backup.create(store, bucket, file?, { on_progress, on_spawn }) as a job
+//   restore           backup.restore(store, bucket, file?, { on_progress, on_spawn }) as a
 //                     job: it installs a new Store on native
 // Secrets never pass through Connect: buckets and PostgreSQL Stores take
 // env:/file: references, which LayerFS resolves. Connect keeps no secret and
@@ -36,6 +36,9 @@ import { EventEmitter } from 'node:events'
 import { chmodSync, existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { doctorOf, layerfs } from './layerfs.js'
+import { JobStore } from './jobs/store.js'
+import { failureOutcome, transferSummary } from './jobs/move.js'
+import { inspectJob } from './jobs/reconcile.js'
 
 const refuse = (status, code, message) => Object.assign(new Error(message), { status, code })
 
@@ -45,13 +48,13 @@ const KEEP_JOBS = 30
 const JOIN_MS = 15_000
 
 /** A reference LayerFS resolves: env:LAYERFS_… or file:/absolute/path. */
-const REFERENCE = /^(env:LAYERFS_[A-Z0-9_]+|file:\/.+)$/
+const REFERENCE = /^(env:[A-Za-z_][A-Za-z0-9_]*|file:\/.+)$/
 
 function checkReference(value, what) {
   if (typeof value !== 'string' || !REFERENCE.test(value)) throw refuse(400, 'InvalidInput', `${what} must be a reference: env:LAYERFS_<NAME> or file:/absolute/path (Connect never takes the secret itself)`)
 }
 function checkName(value, what) {
-  if (typeof value !== 'string' || !value) throw refuse(400, 'InvalidInput', `${what} needs a name`)
+  if (typeof value !== 'string' || !/^[a-z0-9](?:[a-z0-9_.-]{0,61}[a-z0-9])?$/.test(value)) throw refuse(400, 'InvalidInput', `${what} needs a lowercase name (maximum 63 characters), starting and ending with a letter or number`)
 }
 
 /** A URL with no password in it (and, for a bucket, no user either). */
@@ -96,8 +99,8 @@ function pgServer(s, server) {
   return {
     target: typeof s.url === 'string' ? pgTarget(s.url) : null,
     reachable: reached,
-    version: reached ? (server.serverVersion ?? null) : null,
-    latencyMs: reached ? (server.latencyMs ?? null) : null,
+    version: reached ? (server.server_version ?? null) : null,
+    latencyMs: reached ? (server.latency_ms ?? null) : null,
     error: server?.unavailable ?? server?.error?.message ?? null,
   }
 }
@@ -139,11 +142,17 @@ export class Storage extends EventEmitter {
     this.lfs = client ?? layerfs(spec)
     this.doctorCall = doctor ?? (() => doctorOf(spec))
     /** job id -> StorageJob */
-    this.jobs = new Map()
+    this.jobStore = new JobStore(spec.state)
+    this.jobs = this.jobStore.jobs
     /** bucket name -> { at, items, error } (its last backup.list) */
     this.listings = new Map()
     this.lastView = null
     this.bucketsFile = join(spec.state, 'buckets.json')
+    this.reconciled = Promise.resolve().then(async () => {
+      for (const job of this.jobs.values()) if (job.outcome === 'interrupted') {
+        try { await this.inspect(job.id) } catch (error) { job.reconcileError = { code: error.code ?? 'Failed', message: error.message }; this.jobStore.save() }
+      }
+    })
   }
 
   /**
@@ -197,7 +206,7 @@ export class Storage extends EventEmitter {
     const names = new Set([...this.knownBuckets(), ...stores.flatMap((s) => s.links.map((l) => l.bucket))])
     const buckets = [...names].sort().map((name) => {
       const listing = this.listings.get(name)
-      return { name, provider: this.bucketRecords().find((b) => b.name === name)?.provider ?? null, listed: listing?.at ?? null, files: listing?.items ?? null, error: listing?.error ?? null, stores: stores.filter((s) => s.links.some((l) => l.bucket === name)).map((s) => s.name) }
+      return { name, keys: this.bucketRecords().find((b) => b.name === name)?.keys ?? null, key: this.bucketRecords().find((b) => b.name === name)?.key ?? null, url: this.bucketRecords().find((b) => b.name === name)?.url ?? null, region: this.bucketRecords().find((b) => b.name === name)?.region ?? null, provider: this.bucketRecords().find((b) => b.name === name)?.provider ?? null, listed: listing?.at ?? null, files: listing?.items ?? null, error: listing?.error ?? null, stores: stores.filter((s) => s.links.some((l) => l.bucket === name)).map((s) => s.name) }
     })
     const view = {
       machines: (machines.machines ?? []).map((m) => ({ name: m.name, platform: m.platform, state: m.state ?? null, supports: m.supports ?? null })),
@@ -276,6 +285,7 @@ export class Storage extends EventEmitter {
       const [access, secret] = [input.accessKey, input.secretKey].map((v) => (typeof v === 'string' ? v.trim() : ''))
       if (!access || !secret || /\s/.test(access + secret)) throw refuse(400, 'InvalidInput', 'Give both the access key and the secret key (no spaces)')
       written = this.keyFile(name)
+      if (existsSync(written)) throw refuse(409, 'Exists', 'Saved keys already exist for this bucket; use Replace keys')
       mkdirSync(join(this.spec.state, 'secrets'), { recursive: true, mode: 0o700 })
       chmodSync(join(this.spec.state, 'secrets'), 0o700)
       writeFileSync(written, `access_key=${access}\nsecret_key=${secret}\n`, { mode: 0o600 })
@@ -284,12 +294,13 @@ export class Storage extends EventEmitter {
     }
     checkReference(key, 'The key')
     try {
-      await this.lfs.backup.connect(name, url, { key, ...(region ? { region } : {}) })
+      const answer = await this.lfs.backup.connect(name, url, { key, ...(region ? { region } : {}) })
+      input.connected = { url: answer.url ?? url, region: answer.region ?? region ?? null }
     } catch (error) {
       if (written) rmSync(written, { force: true })
       throw error
     }
-    this.saveBuckets([...this.bucketRecords(), { name, provider: input.provider ?? (url.startsWith('r2://') ? 'r2' : 'minio') }])
+    this.saveBuckets([...this.bucketRecords(), { name, provider: input.provider ?? (url.startsWith('r2://') ? 'r2' : 'minio'), keys: written ? 'saved' : 'reference', key: written ? null : key, url: input.connected?.url ?? url, region: input.connected?.region ?? null }])
     this.changed()
     return this.view()
   }
@@ -346,18 +357,19 @@ export class Storage extends EventEmitter {
    */
   start(kind, store, target, file, run, from = null) {
     if ([...this.jobs.values()].some((j) => j.store === store && !j.ended)) throw refuse(409, 'ConnectBusy', `this Connect is already running a job on ${store}; wait for it to end`)
-    const job = { id: randomUUID(), kind, store, target, from, file: file ?? null, started: Date.now(), ended: null, half: null, phase: null, done: null, total: null, error: null, result: null }
+    const job = { id: randomUUID(), kind, store, target, from, file: file ?? null, started: Date.now(), ended: null, half: null, phase: null, phases: [], outcome: null, pid: null, observation: null, summary: null, done: null, total: null, error: null, result: null }
     this.jobs.set(job.id, job)
     while (this.jobs.size > KEEP_JOBS) {
       const oldest = [...this.jobs.values()].find((j) => j.ended)
       if (!oldest) break
       this.jobs.delete(oldest.id)
     }
-    const emit = () => this.emit('event', { type: 'storage-job', job: { ...job } })
+    const emit = () => { this.jobStore.save(); this.emit('event', { type: 'storage-job', job: { ...job } }) }
     const on_progress = (p) => {
       // a new phase changes the Store's op in store.list: the view is read again (not on every byte step)
       if (typeof p?.phase === 'string' && p.phase !== job.phase) {
         job.phase = p.phase
+        job.phases.push({ phase: p.phase, half: job.half, at: Date.now() })
         this.changed()
       }
       // push and pull give bytes only while sending (#536 §10b), in 8 MiB steps
@@ -365,23 +377,30 @@ export class Storage extends EventEmitter {
       job.total = typeof p?.total === 'number' && p.total > 0 ? p.total : null
       emit()
     }
-    const step = (half) => {
+    const step = (half, from = undefined) => {
+      if (from !== undefined) job.from = from
       Object.assign(job, { half, phase: null, done: null, total: null })
       emit()
       // between a move's halves the Store is on native: the view follows
       this.changed()
     }
-    run(on_progress, step)
+    this.jobStore.save()
+    let running
+    try { running = run(on_progress, step, (pid) => { job.pid = pid; emit() }) } catch (error) { running = Promise.reject(error) }
+    Promise.resolve(running)
       .then(
-        (result) => (job.result = result ?? null),
+        (result) => { job.result = result ?? null; job.outcome = 'succeeded' },
         (error) => {
           // the SDK's refusal as it came: its code and text, the phase it stopped in, and its detail (entity, op, related)
-          job.error = { code: error?.code ?? 'Failed', message: error?.message ?? String(error), phase: error?.detail?.phase ?? job.phase, detail: error?.detail ?? null, ...(error?.note ? { note: error.note } : {}) }
+          job.phase = error?.detail?.phase ?? job.phase
+          job.outcome = failureOutcome(error, job.phase)
+          job.error = { transport: error?.transport ?? null, code: error?.code ?? 'Failed', message: error?.message ?? String(error), phase: error?.detail?.phase ?? job.phase, detail: error?.detail ?? null, ...(error?.note ? { note: error.note } : {}) }
           this.log(`[storage] ${kind} ${store}: ${error?.code ?? ''} ${error?.message ?? error}`)
         },
       )
       .finally(() => {
         job.ended = Date.now()
+        job.summary = transferSummary(job)
         emit()
         // the bucket's listing changed with a backup or restore
         if (kind === 'backup' || kind === 'restore') void this.listBucket(target).catch(() => {})
@@ -396,15 +415,15 @@ export class Storage extends EventEmitter {
   push(store, machine) {
     checkName(store, 'A push')
     checkName(machine, 'A push')
-    return this.start('push', store, machine, null, (on_progress) => this.lfs.store.push(store, machine, { on_progress }))
+    return this.start('push', store, machine, null, (on_progress, step, on_spawn) => this.lfs.store.push(store, machine, { on_progress, on_spawn }))
   }
 
   /** store.pull(store): a sqlite Store on a machine back to native. */
   async pull(store) {
     checkName(store, 'A pull')
     // the machine it comes from (store.get reads the record; it starts nothing): the job row reads "<store> ← <machine>"
-    const from = (await this.lfs.store.get(store).catch(() => null))?.machine ?? null
-    return this.start('pull', store, 'native', null, (on_progress) => this.lfs.store.pull(store, { on_progress }), from)
+    const from = (await this.lfs.store.get(store))?.machine ?? null
+    return this.start('pull', store, 'native', null, (on_progress, step, on_spawn) => this.lfs.store.pull(store, { on_progress, on_spawn }), from)
   }
 
   /**
@@ -415,14 +434,16 @@ export class Storage extends EventEmitter {
   move(store, machine) {
     checkName(store, 'A move')
     checkName(machine, 'A move')
-    return this.start('move', store, machine, null, async (on_progress, step) => {
-      step('pull')
-      await this.lfs.store.pull(store, { on_progress })
+    return this.start('move', store, machine, null, async (on_progress, step, on_spawn) => {
+      const source = await this.lfs.store.get(store)
+      step('pull', source.machine ?? null)
+      await this.lfs.store.pull(store, { on_progress, on_spawn })
       step('push')
       try {
-        return await this.lfs.store.push(store, machine, { on_progress })
+        return await this.lfs.store.push(store, machine, { on_progress, on_spawn })
       } catch (error) {
-        throw Object.assign(error, { note: 'pulled' })
+        if (failureOutcome(error, error?.detail?.phase) === 'failed' && error?.detail?.phase !== 'retire') error.note = 'pulled'
+        throw error
       }
     })
   }
@@ -432,7 +453,7 @@ export class Storage extends EventEmitter {
     checkName(store, 'A Store')
     checkName(machine, 'A machine')
     const record = await this.lfs.store.get(store)
-    if (record.kind && record.kind !== 'sqlite') throw refuse(400, 'InvalidInput', `${store} is a PostgreSQL Store: it is usable from every machine and is never pushed or pulled`)
+    if (record.kind && record.kind !== 'sqlite') throw refuse(400, 'InvalidInput', `${store} is a PostgreSQL Store; it is never pushed or pulled`)
     if (record.machine === machine) throw refuse(400, 'InvalidInput', `${store} is on ${machine} already`)
     if (machine === 'native') return this.pull(store)
     if (record.machine === 'native') return this.push(store, machine)
@@ -443,15 +464,48 @@ export class Storage extends EventEmitter {
   backup(store, { bucket, file } = {}) {
     checkName(store, 'A backup')
     checkName(bucket, 'A backup')
-    return this.start('backup', store, bucket, file, (on_progress) => this.lfs.backup.create(store, bucket, file || undefined, { on_progress }))
+    return this.start('backup', store, bucket, file, (on_progress, step, on_spawn) => this.lfs.backup.create(store, bucket, file || undefined, { on_progress, on_spawn }))
   }
 
   /** backup.restore(store, bucket, file?): a new Store `store` on native. */
   restore({ store, bucket, file } = {}) {
     checkName(store, 'A restore')
     checkName(bucket, 'A restore')
-    return this.start('restore', store, bucket, file, (on_progress) => this.lfs.backup.restore(store, bucket, file || undefined, { on_progress }))
+    return this.start('restore', store, bucket, file, (on_progress, step, on_spawn) => this.lfs.backup.restore(store, bucket, file || undefined, { on_progress, on_spawn }))
   }
 
-  close() {}
+  async inspect(id) {
+    const job = this.jobs.get(id)
+    if (!job || !job.ended) throw refuse(409, 'ConnectBusy', 'Wait for a completed job before inspecting recovery')
+    job.observation = await inspectJob(this.lfs, job)
+    if (job.observation.value?.state === 'unresolved') job.outcome = 'unknown'
+    else if (job.observation.value?.state === 'idle' && job.error?.transport === 'transport-unknown' && !['install', 'record'].includes(job.phase)) job.outcome = 'interrupted'
+    job.summary = transferSummary(job)
+    this.jobStore.save()
+    return { ...job }
+  }
+
+  async retry(id) {
+    const old = this.jobs.get(id)
+    if (!old?.observation?.action) throw refuse(409, 'InspectRequired', 'Inspect the current Store before choosing recovery')
+    const job = await this.inspect(id)
+    if (!job.observation.action) throw refuse(409, 'RecoveryUnavailable', 'The fresh observation does not permit this recovery')
+    if (job.observation.direction === 'pull') return this.pull(job.store)
+    return this.push(job.store, job.target)
+  }
+
+  async replaceBucketKeys(name, input) {
+    const record = this.bucketRecords().find(b => b.name === name)
+    if (!record) throw refuse(404, 'NotFound', 'No saved bucket with this name')
+    if (record.keys !== 'saved') throw refuse(400, 'InvalidInput', 'This bucket uses an external secret reference; update that reference instead')
+    const access = input?.accessKey?.trim(), secret = input?.secretKey?.trim()
+    if (!access || !secret || /\s/.test(access + secret)) throw refuse(400, 'InvalidInput', 'Give both keys without spaces')
+    mkdirSync(join(this.spec.state, 'secrets'), { recursive: true, mode: 0o700 })
+    writeFileSync(this.keyFile(name), `access_key=${access}\nsecret_key=${secret}\n`, { mode: 0o600 })
+    chmodSync(this.keyFile(name), 0o600)
+    await this.listBucket(name)
+    return this.view()
+  }
+
+  close() { this.jobStore.save() }
 }

@@ -4,7 +4,11 @@
 // node_modules/layerfs, which re-exports this module (shim.js). The call
 // table names each positional, so the scope sees named arguments and the
 // real call gets its positionals back in the table's order.
-import * as real from 'layerfs'
+import { client as cliClient } from '../cli/calls.js'
+import { table as cliTable } from '../cli/table.js'
+import { CliError } from '../cli/outcome.js'
+const real = { client: (options = {}) => cliClient({ ...options, cli: process.env.LAYERFS_CONNECT_CLI, home: options.home ?? process.env.LAYERFS_HOME }), table: cliTable, families: [...new Set(cliTable.map(c => c.family))], LayerFSError: CliError }
+real.default = real.client()
 import { Scope, SCOPE_ENV } from './scope.js'
 import { traced } from './trace-line.js'
 
@@ -16,7 +20,7 @@ function scoped(client) {
   if (!scope && !process.env.LAYERFS_TRACE) return client
   const out = { ...client }
   for (const spec of real.table) {
-    out[spec.family] = out[spec.family] === client[spec.family] ? { ...client[spec.family] } : out[spec.family]
+    out[spec.family] ??= { ...client[spec.family] }
     out[spec.family][spec.call] = async (...given) => {
       const options = given.length > spec.args.length || (given.length && typeof given.at(-1) === 'object' && given.at(-1) !== null && !Array.isArray(given.at(-1)) && spec.args[given.length - 1]?.kind !== 'json') ? given.pop() : {}
       const named = Object.fromEntries(spec.args.map((a, i) => [a.name, given[i]]).filter(([, v]) => v !== undefined))

@@ -133,7 +133,7 @@ The compact ribbon follows the project-storage flow's visual structure. Its
 thickness uses one linear scale; badges explain each transition. Detailed file
 composition is collapsed by default in a native disclosure.
 Encoded packs include metadata packs; composition
-does not add those twice. WAL is separate from the SQLite file. PostgreSQL shows
+does not add those twice. File allocation includes database pages and WAL from the SQLite file. PostgreSQL shows
 only payload/metadata pack composition (1.125 GiB), with database overhead
 explicitly unmodeled. It never shows SQLite free-page stats.
 Store headers use 20px titles with a 4px location gap; section spacing is 18px,
@@ -751,3 +751,67 @@ Sandboxes and Storage; see [project.md](project.md). Store links remain on `/sto
 The Add bucket provider picker shows only entries with a supported connection
 request. Disabled Later LayerFS provider tiles are hidden. StoreBreakdown and
 Project statistics previews remain planned UI and are preserved by this cleanup.
+
+## CLI job custody and explicit recovery (phase 2, #146)
+
+```text
++-[1] Operation -------------------------------------------------------+
+| Moving app to docker - observed phases (including repeats)           |
+| check -> snapshot -> check -> hash -> upload                         |
+| Outcome unknown - Inspect / Interrupted - Final result unavailable   |
++-[2] Recovery --------------------------------------------------------+
+| [Inspect current state]                                              |
+| idle + certain failure: [Try again]                                  |
+| matching unresolved op + running target:                             |
+| [Resolve: clear the extra copy and push again]                        |
++---------------------------------------------------------------------+
+```
+
+1. Host job records persist before launch and after every phase, including child PID.
+   Restart marks unfinished records Interrupted, observes the resource, and never replays.
+   Only busy/unresolved Store operations appear as active external Operations.
+2. Recovery rereads state again before mutation. Install/record/lost replies never assert
+   rollback. Retire failures report the retained source copy. No recovery on stale reads.
+
+Project names use lowercase ASCII names up to 63 characters. Init refusals retain code
+and detail; Failed/Unknown may have created the project. PostgreSQL connect defaults off.
+Bucket configuration retains only nonsecret URL/region and secret references. Saved key
+replacement rewrites its owner-only file then observes backup list; no implicit reconnect.
+
+## CLI phase 2: shared Doctor and Stop (2026-11-09)
+
+```text
+Resource header                         [Diagnose / Check integrity / Test connection]
++ Doctor · saved resource ---------------------------------------------------+
+| Target / operation    Full by default; optional Quick or explicit write test |
+| Optional time budget                                            [Run diagnosis] |
+| Queued / Running · elapsed (no progress percentage, no Stop)                 |
+| Findings: N                Coverage: complete / incomplete                    |
+| > failed / blocked / unknown checks first                                   |
+| > evidence · dependencies · advisory suggestion                             |
+| Previous dated reports (potentially stale)                                  |
++----------------------------------------------------------------------------+
+```
+
+Actions open setup only. Navigation and Refresh never launch targeted audits.
+Sandbox uses the header action and its existing Overview/Workspaces tabs.
+Connection observations do not prove integrity. Simulated reports say so.
+Mounted chat Stop disables while stopping and retains Workspace/Sandbox; output
+appears after command completion. Cancellation unknown offers explicit retry.
+
+## Phase 2 observed statistics (2026-11-09)
+
+```text
+[Project saved tree · main ‹pin› · complete/incomplete]
+Files | Directories | Symlinks | Other | Logical file bytes
+[Store-wide storage breakdown]                         [Refresh]
+History logical | Canonical | Stored | Metadata | File | Free
+Canonical / stored encoding ratio
+```
+
+Project facts come from project.stats, keyed by the requested Store/project even
+when the CLI returns the bare project name. Root is excluded; hard links count
+per path and symlinks are not followed. Allocation comes from store.stats and
+includes all projects/history. history_logical counts Commit and Layer records;
+it never drives a dedupe ratio or savings ring. Counters have distinct definitions and are not additive.
+File allocation includes database pages and WAL, PostgreSQL free is unavailable, and null Init hides its pill.

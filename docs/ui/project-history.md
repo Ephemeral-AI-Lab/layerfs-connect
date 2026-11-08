@@ -263,3 +263,25 @@ An empty graph reads "No Commits or Layers yet." (`lineage-graph.tsx:187`).
 The Storage project History tab uses `components/history/ProjectHistory.tsx`, shared with chat.
 It shows centered main, branch families, expandable checkpoint groups and changed paths.
 The Lineage/Map description above belongs to the older root renderer.
+
+## CLI saved History (phase 2, 2026-11-09)
+
+```text
+[History · main ‹id›]                   [Branches ▼] [Now] [Refresh]
+[1 main Layer chain and side Commit graph] [2 inspector]
+                                            parent / base / source
+                                            saved tree size / time
+                                            changed paths [More]
+                                            [Compare saved versions]
+[3 Back to History] [From full id] [To full id]
+[changed paths · attribution flags]       Page N [Previous] [Next]
+[selected path: Code | Compare | Attribution | Blame | Revisions]
+```
+
+1. branch.commits lists Layers and Commits; pages resume at the last immutable
+   parent with page 1. Publication source is separate from the Layer parent.
+2. branch.get-commit reads full facts; publication time may be absent. All
+   inspector changed paths use commit.diff, including Layer endpoints, with a cursor.
+3. The attribution comparison uses pinned branch.diff and its opaque continuation.
+   File comparison uses pinned file.diff rows and displays omission and coverage.
+   No fabricated empty-project endpoint, total page count or provenance inference.

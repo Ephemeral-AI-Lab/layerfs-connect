@@ -15,7 +15,7 @@ export function useSandboxDetailModel({ snapshot: s, time, playing, observedAt: 
   const started = events.filter(e => e.start <= time)
   const active = started.filter(e => time < e.end)
   const completed = started.filter(e => e.end <= time)
-  const closed = s.recorded?.state === 'gone' || completed.some(e => e.method === 'sandbox.close' && e.outcome === 'ok')
+  const closed = completed.some(e => e.method === 'sandbox.close' && e.outcome === 'ok')
   const creating = active.some(e => e.method === 'sandbox.create')
   const closing = active.some(e => e.method === 'sandbox.close')
   const state = s.recorded ? s.recorded.state[0].toUpperCase() + s.recorded.state.slice(1) : closed ? 'Closed' : creating ? 'Creating' : closing ? 'Closing' : 'Running'
@@ -27,7 +27,10 @@ export function useSandboxDetailModel({ snapshot: s, time, playing, observedAt: 
   const commands = selected ? started.filter(e => e.workspace === selected.id && e.method === 'workspace.exec') : []
   const selectedPath = selected?.path ?? `/workspaces/${selected?.name ?? ''}`
   const dirty = (id: string) => {
-    if (s.recorded) return 'Not recorded'
+    if (s.recorded) {
+      const w = workspaces.find(w => w.id === id)
+      return w?.dirty ? `${w.dirty.inodes} changed inodes · ${w.dirty.entries} changed entries` : 'Change counts unavailable'
+    }
     const writes = completed.filter(e => e.workspace === id && (e.id === 'edit' || e.method === 'workspace.commit'))
     const last = writes.at(-1)
     return last?.outcome === 'error' ? 'Conflict markers · pending resolution' : last?.method === 'workspace.exec' ? 'Uncommitted changes' : last?.method === 'workspace.commit' ? 'Clean · changes committed' : 'Clean · no recorded changes'

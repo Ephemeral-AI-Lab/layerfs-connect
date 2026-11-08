@@ -116,3 +116,21 @@ controls live inside host-backed details. Map headers retain New Sandbox and Ref
 `HostSandboxDetail.tsx` reads the selected Sandbox and verifies its project/machine identity;
 Refresh rereads that record. Unknown workspace reads and unreported files/activity stay
 explicitly unavailable. Real observations do not carry simulation playback or labels.
+
+## CLI saved Files (phase 2, 2026-11-09)
+
+```text
+[1 Branch ▼]          [2 opened file tabs]
+Saved ‹id›           path · size · saved ‹id›
+[Find in opened       [Code | Compare | Attribution | Blame | Revisions]
+ folders]            [3 bounded saved query]
+[folder tree]        [Previous] Page N [Next]
+[Show more entries]  [Load next text/blame window when next_line exists]
+```
+
+1. Lightweight branch pages; no eager per-Branch history scan or file stat fan-out.
+2. Every list/stat/read uses the same full saved pin. A refresh checks branch.get;
+   a historical selection stays pinned and shows when a newer version exists.
+3. Binary and absent paths are file states. Clipped/partial/omitted data stays visible.
+   Revision continuation repeats pin, traversal and page size, omitting page.
+   Comparison and attribution use server rows; unknown owners remain Unknown.

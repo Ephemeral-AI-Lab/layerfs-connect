@@ -190,6 +190,7 @@ export interface MachineLive {
 export type MachinesView =
   | {
       available: true
+      readErrors?: Record<string, { error: { code: string; message: string }; at: number }>
       /** The linked LayerFS's version. */
       layerfs: string | null
       machines: MachineInfo[]
@@ -267,9 +268,12 @@ export interface NewProjectInput {
 }
 
 export interface ProjectInitCounts {
-  entries: number
-  files: number
-  bytes: number
+  entries?: number
+  files?: number
+  bytes?: number
+  phase?: string | null
+  done?: number | null
+  total?: number | null
 }
 
 /** One Init this host started (2.0 keeps no job registry; Connect keeps its own, fed by on_progress). */
@@ -284,7 +288,7 @@ export interface ProjectInitJob {
   step: string
   progress: ProjectInitCounts | null
   project: ProjectSummary | null
-  error: { code: string; message: string } | null
+  error: (SdkRefusal & { transport?: string }) | null
 }
 
 /** main-additions' name for a project's Init job. */
@@ -367,6 +371,11 @@ export interface BucketRow {
 
 /** A push, pull, move, backup or restore this host started, fed by its calls' on_progress. */
 export interface StorageJob {
+  outcome?: 'succeeded' | 'failed' | 'interrupted' | 'unknown' | null
+  phases?: { phase: string; half: string | null; at: number }[]
+  pid?: number | null
+  summary?: string | null
+  observation?: { at: number; kind: string; direction?: string; value: unknown; action: 'retry' | 'resolve' | null } | null
   id: string
   /** `move` is a pull then a push (two operations, #537 U5). */
   kind: 'push' | 'pull' | 'move' | 'backup' | 'restore'
@@ -424,6 +433,11 @@ export interface BranchInfo {
 }
 
 export interface CommitInfo {
+  base?: string | null
+  sourceCommit?: string | null
+  sourceBranch?: string | null
+  sourceTime?: number | null
+  logical?: number | null
   id: string
   branch: string
   message: string
@@ -472,10 +486,20 @@ export interface WorkspaceInfo {
   branch: string
   path: string
   activity?: string | null
+  base?: string | null
+  baseLayer?: string | null
+  root?: string | null
+  headMovedSinceMount?: boolean | null
+  dirty?: { inodes: number; entries: number } | null
+  pendingMerge?: boolean | null
+  revision?: number | null
 }
 
 /** A Sandbox of a project: its record, and its Workspaces when read (GET /api/projects/<key>/sandboxes). */
 export interface SandboxInfo {
+  runtimeId?: string | null
+  created?: number | null
+  downReason?: string | null
   /** Its name (unique in the home): what every call names it by. */
   id: string
   name: string

@@ -1,0 +1,377 @@
+{
+  "identity": {
+    "version": "2.0.0",
+    "commit": "833d04cf44e8e747929d50ab1170a48260d9381c",
+    "dirty": false,
+    "features": [
+      "machine",
+      "postgresql"
+    ]
+  },
+  "started": "2026-11-08T21:32:58.654Z",
+  "calls": [
+    {
+      "argv": [
+        "machine",
+        "list"
+      ],
+      "result": {
+        "machines": [
+          {
+            "name": "docker",
+            "platform": "docker",
+            "backend": "namespaces",
+            "supports": {
+              "sqlite": true,
+              "postgresql_sandbox": true,
+              "reason": null
+            },
+            "state": "stopped",
+            "cpus": null,
+            "memory": null,
+            "disk": null,
+            "stores": [],
+            "sandboxes": []
+          },
+          {
+            "name": "native",
+            "platform": "native",
+            "backend": "native",
+            "supports": {
+              "sqlite": true,
+              "postgresql_sandbox": true,
+              "reason": null
+            },
+            "state": "ready",
+            "cpus": null,
+            "memory": null,
+            "disk": null,
+            "stores": [],
+            "sandboxes": []
+          }
+        ]
+      }
+    },
+    {
+      "argv": [
+        "machine",
+        "update",
+        "native",
+        "--daemon",
+        "/Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect-cli-137/target/debug/layerfs-daemon"
+      ],
+      "result": {
+        "name": "native",
+        "platform": "native",
+        "backend": "native",
+        "supports": {
+          "sqlite": true,
+          "postgresql_sandbox": true,
+          "reason": null
+        },
+        "state": "ready",
+        "cpus": null,
+        "memory": null,
+        "disk": null,
+        "stores": [],
+        "sandboxes": [],
+        "daemon": "/Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect-cli-137/target/debug/layerfs-daemon"
+      }
+    },
+    {
+      "argv": [
+        "store",
+        "create",
+        "test"
+      ],
+      "result": {
+        "name": "test",
+        "kind": "sqlite",
+        "machine": "native",
+        "profile": "disposable",
+        "created": 1794173578942,
+        "sqlite": "3.53.2",
+        "projects": []
+      }
+    },
+    {
+      "argv": [
+        "project",
+        "init",
+        "test/p",
+        "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/connect-phase2-exec-aIyYXa/input"
+      ],
+      "result": {
+        "project": "test/p",
+        "store": "test",
+        "name": "p",
+        "kind": "sqlite",
+        "machine": "native",
+        "created": 1794173579092,
+        "layer": "3229c2297f67ae9baabc79937dfb784e0d6c39d7ca05e0f3b82a83ef15441b9e55",
+        "root": "7e8ec031f0702bbecf5440566a38d3e5f9619842db7fd9d5715c90ab8666b109"
+      }
+    },
+    {
+      "argv": [
+        "branch",
+        "fork",
+        "test/p",
+        "work",
+        "main"
+      ],
+      "result": {
+        "kind": "Forked",
+        "branch": "work",
+        "base": "3229c2297f67ae9baabc79937dfb784e0d6c39d7ca05e0f3b82a83ef15441b9e55",
+        "head": null
+      }
+    },
+    {
+      "argv": [
+        "sandbox",
+        "create",
+        "test/p",
+        "exec-proof",
+        "native"
+      ],
+      "result": {
+        "name": "exec-proof",
+        "project": "test/p",
+        "machine": "native",
+        "created": 1794173579239,
+        "backend": "native",
+        "route": "nfs",
+        "id": "exec-proof",
+        "platform": "mac",
+        "runtime": "native",
+        "image": "local",
+        "state": "running"
+      }
+    },
+    {
+      "argv": [
+        "workspace",
+        "mount",
+        "exec-proof",
+        "work",
+        "--name",
+        "proof"
+      ],
+      "result": {
+        "kind": "Mounted",
+        "path": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/connect-phase2-exec-aIyYXa/home/machine/native/run/lfs-5bc20006-exec-proof/workspaces/1",
+        "workspace": "66293bbfc39cacdc0a982b305764baf9f89db1b67bd4a09d2184c35a0018260a",
+        "namespace": 1,
+        "branch": "work",
+        "base": null,
+        "base_layer": "3229c2297f67ae9baabc79937dfb784e0d6c39d7ca05e0f3b82a83ef15441b9e55",
+        "root": "7e8ec031f0702bbecf5440566a38d3e5f9619842db7fd9d5715c90ab8666b109",
+        "sandbox": "exec-proof",
+        "container": "lfs-5bc20006-exec-proof",
+        "image": "local",
+        "platform": "mac",
+        "runtime": "native",
+        "name": "proof",
+        "ws": "exec-proof:proof"
+      }
+    },
+    {
+      "argv": [
+        "workspace",
+        "exec",
+        "exec-proof:proof",
+        "printf hello; printf error >&2; exit 125",
+        "--exec-id",
+        "proof-exit-125",
+        "--events"
+      ],
+      "result": {
+        "kind": "exit:125",
+        "exit_code": 125,
+        "stdout": "hello",
+        "stderr": "error",
+        "message": null,
+        "truncated": false,
+        "exec_id": "proof-exit-125",
+        "stop": "group"
+      }
+    },
+    {
+      "argv": [
+        "workspace",
+        "exec-cancel",
+        "exec-proof:proof",
+        "proof-before-start"
+      ],
+      "result": {
+        "outcome": "ended"
+      }
+    },
+    {
+      "argv": [
+        "workspace",
+        "exec",
+        "exec-proof:proof",
+        "printf should-not-run > no-start",
+        "--exec-id",
+        "proof-before-start",
+        "--events"
+      ],
+      "result": {
+        "kind": "cancelled",
+        "exit_code": 137,
+        "stdout": "",
+        "stderr": "",
+        "message": null,
+        "truncated": false,
+        "exec_id": "proof-before-start",
+        "stop": "group"
+      }
+    },
+    {
+      "argv": [
+        "workspace",
+        "exec",
+        "exec-proof:proof",
+        "test -f partial",
+        "--exec-id",
+        "proof-observe-0",
+        "--events"
+      ],
+      "result": {
+        "kind": "exit:0",
+        "exit_code": 0,
+        "stdout": "",
+        "stderr": "",
+        "message": null,
+        "truncated": false,
+        "exec_id": "proof-observe-0",
+        "stop": "group"
+      }
+    },
+    {
+      "argv": [
+        "workspace",
+        "exec-cancel",
+        "exec-proof:proof",
+        "proof-running"
+      ],
+      "result": {
+        "outcome": "cancelled",
+        "signal": "SIGTERM"
+      }
+    },
+    {
+      "argv": [
+        "workspace",
+        "exec",
+        "exec-proof:proof",
+        "printf partial > partial; sleep 30",
+        "--exec-id",
+        "proof-running",
+        "--events"
+      ],
+      "result": {
+        "kind": "cancelled",
+        "exit_code": 143,
+        "stdout": "",
+        "stderr": "",
+        "message": null,
+        "truncated": false,
+        "exec_id": "proof-running",
+        "stop": "group"
+      }
+    },
+    {
+      "argv": [
+        "workspace",
+        "commit",
+        "exec-proof:proof",
+        "--message",
+        "Partial writes after explicit cancel"
+      ],
+      "result": {
+        "kind": "Committed",
+        "head": "1258d90f5a76bca2471b5cf3ca54f1cfc2f7937b4a2e797dce433b027df330e9c5",
+        "commit": {
+          "id": "1258d90f5a76bca2471b5cf3ca54f1cfc2f7937b4a2e797dce433b027df330e9c5",
+          "branch": null,
+          "parent": null,
+          "second_parent": null,
+          "base": "3229c2297f67ae9baabc79937dfb784e0d6c39d7ca05e0f3b82a83ef15441b9e55",
+          "root": "56fff18299237c2c621f2ae4791af7465aaa642f467f4beb9e9093b474e96af9",
+          "via": "exec",
+          "message": "Partial writes after explicit cancel",
+          "merged_from": null,
+          "time": 1794173579732,
+          "logical": 12,
+          "new_canonical": 521,
+          "new_stored": 340,
+          "new_metadata": 296,
+          "displaced": null,
+          "lww": [],
+          "lww_truncated": false
+        },
+        "displaced_head": null,
+        "merged": null,
+        "lww": [],
+        "lww_truncated": false
+      }
+    },
+    {
+      "argv": [
+        "workspace",
+        "exec",
+        "exec-proof:proof",
+        "head -c 1048587 /dev/zero",
+        "--exec-id",
+        "proof-large-binary",
+        "--events"
+      ],
+      "result": {
+        "kind": "exit:0",
+        "exit_code": 0,
+        "stdout": null,
+        "stderr": "",
+        "message": null,
+        "truncated": false,
+        "stdout_bytes": 1048587,
+        "stderr_bytes": 0,
+        "exec_id": "proof-large-binary",
+        "stop": "group",
+        "streamed": true
+      }
+    },
+    {
+      "argv": [
+        "workspace",
+        "unmount",
+        "exec-proof:proof"
+      ],
+      "result": {
+        "kind": "Unmounted"
+      }
+    },
+    {
+      "argv": [
+        "sandbox",
+        "close",
+        "exec-proof"
+      ],
+      "result": {
+        "kind": "Closed",
+        "sandbox": "exec-proof",
+        "unknown": [],
+        "closed": "exec-proof"
+      }
+    }
+  ],
+  "cleanup": [
+    "unmounted",
+    "sandbox closed",
+    "owned home removed"
+  ],
+  "verdict": "PASS",
+  "ended": "2026-11-08T21:33:00.133Z"
+}

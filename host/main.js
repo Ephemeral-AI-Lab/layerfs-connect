@@ -23,6 +23,7 @@ import { AgentWorkspaces } from './agents/workspaces.js'
 import { createHostServer, listen, newToken } from './server.js'
 import { Machines } from './machines.js'
 import { Storage } from './storage.js'
+import { DoctorManager } from './doctor/manager.js'
 
 /** How long shutdown may take before the process exits anyway. */
 const CLOSE_MS = 30_000
@@ -91,8 +92,9 @@ async function main() {
       return null
     })
   // agents' shells get the home, the trace settings and the project key only (§8 step 8), and the native CLI on PATH
-  const shellEnv = (key) => ({ ...layerfsEnv(spec), LAYERFS_CONNECT_PROJECT: key, ...(spec.cli ? { PATH: `${dirname(spec.cli)}:${process.env.PATH ?? ''}` } : {}) })
+  const shellEnv = (key) => ({ ...layerfsEnv(spec), LAYERFS_CONNECT_PROJECT: key, ...(spec.cli ? { LAYERFS_CONNECT_CLI: spec.cli, PATH: `${dirname(spec.cli)}:${process.env.PATH ?? ''}` } : {}) })
   const agents = await AgentManager.create({ state: spec.state, projectEnvironment: (key) => projects.recordOf(key), shellEnv, projectWorkspaces: new AgentWorkspaces({ projects }), scenarios })
+  const doctor = new DoctorManager({ spec })
   const token = newToken()
   // Compute's "Move to…" starts a job in Storage's table, so its progress shows there
   const machines = new Machines({ spec, place: (store, machine) => storage.place(store, machine) })
@@ -107,7 +109,7 @@ async function main() {
         },
       }))
     : null
-  const server = createHostServer({ token, projects, storage, machines, sim, agents: () => agents, runs: () => engine.runs, runsError: () => engine.error, log })
+  const server = createHostServer({ token, projects, storage, machines, doctor, sim, agents: () => agents, runs: () => engine.runs, runsError: () => engine.error, log })
 
   const endpoint = join(spec.state, 'host.json')
   let owned = false

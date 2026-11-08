@@ -3,7 +3,7 @@
 // rather than written down here: the nine families' 57 calls, each a
 // `layerfs <family> <call>` command and a `layerfs.<family>.<call>(…)`
 // function, with each command's positional names and option kinds.
-import { table } from 'layerfs'
+import { table } from '../cli/table.js'
 
 /** What each family's call is: the kind the UI shows. Setup families (machine, store, backup) show as project-level calls. */
 export const KIND = { workspace: 'workspace', file: 'fs', branch: 'branch', commit: 'branch', sandbox: 'sandbox', project: 'project', machine: 'project', store: 'project', backup: 'project' }

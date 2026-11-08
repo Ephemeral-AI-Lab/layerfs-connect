@@ -1,33 +1,19 @@
 # LayerFS Connect on LayerFS 2.0: integration spec
 
-> **Status:** Ready, 2026-11-02. This is the work order for the Connect session that ports Connect to
-> LayerFS 2.0. Its source is four read-only reviews of the LayerFS #533 branch against Connect's code,
-> each checked by the parent session. Nothing here is built yet. The base is LayerFS
-> `origin/layerfs_v2_0_0` at `0b8ae8af5f` (#533 complete; final product commit `e9c0e793d3`), checked
-> out in the local worktree `../layerfs-issue533-v2` (branch `issue533-v2`, same commit).
->
-> **In the repository from 2026-11-02.** This copy is the one the port follows and updates. Where
-> it and the LayerFS source disagree, the source wins and this copy is corrected in the same commit.
->
-> **Port status (2026-11-02):** steps 1–11 are done on `feat/connect-ui-polish`; receipts in
-> `docs/live/`. Hidden behind their line: Store totals, live Sandbox state, a first Commit's
-> changes, chat background bash/live output/Stop, `expect` checks, and the blocked scenarios.
->
-> **LayerFS commit Connect links:** `0b8ae8af5f` (`origin/layerfs_v2_0_0`; product source as of
-> `e9c0e793d3`).
->
-> **Updated 2026-11-04 for #535/#536 (Connect #537, steps 1–8 on `main`).** Connect now links
-> `link:../layerfs-v2-merge/api/node` (LayerFS `layerfs_v2_0_0` at `d046e7e2c1`, product as
-> `5d13a1f62f`). That build removed `store.move` and automatic machine power. §3, §4, §7 and §9 are
-> corrected below; §1, §5, §6 and §8 are kept as the record of the first port. The UI is described in
-> `docs/ui/` ([storage.md](ui/storage.md), [machines.md](ui/machines.md),
-> [projects.md](ui/projects.md)).
+> **Current transport, 2026-11-09:** Connect runs through an explicit pinned LayerFS
+> CLI and matching daemon. `host/cli/` owns process launch, JSON discovery, lossless
+> values and exit classification; the linked Node package has been removed.
+> Binary: `833d04cf44e8e747929d50ab1170a48260d9381c`, clean, machine/postgresql.
+> Current implementation and verification: [phase-2-record.md](specs/phase-2-record.md).
+> The numbered sections below retain the first port's historical design; where
+> those sections describe the Node transport or older limitations, the phase-2
+> record and current CLI design documents supersede them. Source wins.
 
 ## 1. Outcome
 
 Connect runs on LayerFS 2.0 alone:
 
-- one `layerfs` package and one LayerFS home;
+- one pinned LayerFS CLI adapter and one explicit LayerFS home;
 - every page reads 2.0 calls;
 - none of Connect's copies of LayerFS logic remain.
 

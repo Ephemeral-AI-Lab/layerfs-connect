@@ -67,6 +67,58 @@
  },
  {
   "family": "project",
+  "call": "stats",
+  "args": [
+   {
+    "name": "project",
+    "kind": "project",
+    "optional": false
+   },
+   {
+    "name": "branch",
+    "kind": "name",
+    "optional": true
+   },
+   {
+    "name": "commit",
+    "kind": "name",
+    "optional": true
+   }
+  ],
+  "options": [],
+  "help": "entry counts of one pinned saved tree"
+ },
+ {
+  "family": "project",
+  "call": "export",
+  "args": [
+   {
+    "name": "project",
+    "kind": "project",
+    "optional": false
+   },
+   {
+    "name": "destination",
+    "kind": "text",
+    "optional": false
+   }
+  ],
+  "options": [
+   {
+    "name": "branch",
+    "kind": "name",
+    "optional": true
+   },
+   {
+    "name": "on_progress",
+    "kind": "function",
+    "optional": true
+   }
+  ],
+  "help": "export a project's snapshot from its Store to a local folder"
+ },
+ {
+  "family": "project",
   "call": "remove",
   "args": [
    {
@@ -98,6 +150,11 @@
     "name": "page_pos",
     "kind": "int",
     "optional": true
+   },
+   {
+    "name": "page",
+    "kind": "int",
+    "optional": true
    }
   ],
   "help": "a project's Branches"
@@ -119,6 +176,63 @@
   ],
   "options": [],
   "help": "one Branch and its head Commit"
+ },
+ {
+  "family": "branch",
+  "call": "commits",
+  "args": [
+   {
+    "name": "project",
+    "kind": "project",
+    "optional": false
+   },
+   {
+    "name": "branch",
+    "kind": "name",
+    "optional": false
+   }
+  ],
+  "options": [
+   {
+    "name": "page",
+    "kind": "int",
+    "optional": true
+   },
+   {
+    "name": "page_size",
+    "kind": "int",
+    "optional": true
+   },
+   {
+    "name": "at_commit",
+    "kind": "text",
+    "optional": true
+   }
+  ],
+  "help": "saved branch commits or main publications, newest first"
+ },
+ {
+  "family": "branch",
+  "call": "get_commit",
+  "args": [
+   {
+    "name": "project",
+    "kind": "project",
+    "optional": false
+   },
+   {
+    "name": "branch",
+    "kind": "name",
+    "optional": false
+   },
+   {
+    "name": "commit",
+    "kind": "name",
+    "optional": false
+   }
+  ],
+  "options": [],
+  "help": "one saved Commit or main publication"
  },
  {
   "family": "branch",
@@ -248,6 +362,36 @@
    },
    {
     "name": "cursor",
+    "kind": "text",
+    "optional": true
+   },
+   {
+    "name": "page",
+    "kind": "int",
+    "optional": true
+   },
+   {
+    "name": "from_commit",
+    "kind": "text",
+    "optional": true
+   },
+   {
+    "name": "to_commit",
+    "kind": "text",
+    "optional": true
+   },
+   {
+    "name": "path_prefix",
+    "kind": "text",
+    "optional": true
+   },
+   {
+    "name": "include_attribution",
+    "kind": "bool",
+    "optional": true
+   },
+   {
+    "name": "continuation",
     "kind": "text",
     "optional": true
    }
@@ -449,6 +593,11 @@
     "optional": true
    },
    {
+    "name": "page",
+    "kind": "int",
+    "optional": true
+   },
+   {
     "name": "page_pos",
     "kind": "int",
     "optional": true
@@ -489,6 +638,11 @@
   "options": [
    {
     "name": "page_size",
+    "kind": "int",
+    "optional": true
+   },
+   {
+    "name": "page",
     "kind": "int",
     "optional": true
    },
@@ -537,12 +691,66 @@
     "optional": true
    },
    {
+    "name": "page",
+    "kind": "int",
+    "optional": true
+   },
+   {
     "name": "page_pos",
     "kind": "int",
     "optional": true
    }
   ],
   "help": "lines under `path` matching a regular expression"
+ },
+ {
+  "family": "file",
+  "call": "revision",
+  "args": [
+   {
+    "name": "project",
+    "kind": "project",
+    "optional": false
+   },
+   {
+    "name": "branch",
+    "kind": "name",
+    "optional": false
+   },
+   {
+    "name": "path",
+    "kind": "text",
+    "optional": false
+   }
+  ],
+  "options": [
+   {
+    "name": "at_commit",
+    "kind": "name",
+    "optional": true
+   },
+   {
+    "name": "traversal",
+    "kind": "text",
+    "optional": true
+   },
+   {
+    "name": "page",
+    "kind": "int",
+    "optional": true
+   },
+   {
+    "name": "page_size",
+    "kind": "int",
+    "optional": true
+   },
+   {
+    "name": "continuation",
+    "kind": "text",
+    "optional": true
+   }
+  ],
+  "help": "saved changes to a literal path"
  },
  {
   "family": "file",
@@ -572,6 +780,11 @@
   "options": [
    {
     "name": "from_line",
+    "kind": "int",
+    "optional": true
+   },
+   {
+    "name": "line_count",
     "kind": "int",
     "optional": true
    }
@@ -617,6 +830,26 @@
    {
     "name": "right_commit",
     "kind": "name",
+    "optional": true
+   },
+   {
+    "name": "include_attribution",
+    "kind": "bool",
+    "optional": true
+   },
+   {
+    "name": "allow_missing",
+    "kind": "bool",
+    "optional": true
+   },
+   {
+    "name": "page",
+    "kind": "int",
+    "optional": true
+   },
+   {
+    "name": "page_size",
+    "kind": "int",
     "optional": true
    }
   ],
@@ -1015,9 +1248,43 @@
     "name": "stderr",
     "kind": "function",
     "optional": true
+   },
+   {
+    "name": "exec_id",
+    "kind": "text",
+    "optional": true
+   },
+   {
+    "name": "on_progress",
+    "kind": "function",
+    "optional": true
    }
   ],
   "help": "run one bash command in a Workspace"
+ },
+ {
+  "family": "workspace",
+  "call": "exec_cancel",
+  "args": [
+   {
+    "name": "ws",
+    "kind": "text",
+    "optional": false
+   },
+   {
+    "name": "exec_id",
+    "kind": "text",
+    "optional": false
+   }
+  ],
+  "options": [
+   {
+    "name": "grace_ms",
+    "kind": "int",
+    "optional": true
+   }
+  ],
+  "help": "end a running command: SIGTERM, then SIGKILL after grace_ms"
  },
  {
   "family": "workspace",
@@ -1181,63 +1448,9 @@
     "name": "image",
     "kind": "text",
     "optional": true
-   },
-   {
-    "name": "nested",
-    "kind": "bool",
-    "optional": true
-   },
-   {
-    "name": "host",
-    "kind": "name",
-    "optional": true
    }
   ],
-  "help": "create a VM machine"
- },
- {
-  "family": "machine",
-  "call": "connect",
-  "args": [
-   {
-    "name": "name",
-    "kind": "name",
-    "optional": false
-   },
-   {
-    "name": "host",
-    "kind": "text",
-    "optional": false
-   }
-  ],
-  "options": [
-   {
-    "name": "user",
-    "kind": "text",
-    "optional": true
-   },
-   {
-    "name": "port",
-    "kind": "int",
-    "optional": true
-   },
-   {
-    "name": "identity",
-    "kind": "text",
-    "optional": true
-   },
-   {
-    "name": "known_hosts",
-    "kind": "text",
-    "optional": true
-   },
-   {
-    "name": "root",
-    "kind": "text",
-    "optional": true
-   }
-  ],
-  "help": "connect an ssh host as a machine"
+  "help": "create an enabled VM machine (apple-container, lima)"
  },
  {
   "family": "machine",
@@ -1250,20 +1463,7 @@
    }
   ],
   "options": [],
-  "help": "delete a VM machine and its disk"
- },
- {
-  "family": "machine",
-  "call": "disconnect",
-  "args": [
-   {
-    "name": "name",
-    "kind": "name",
-    "optional": false
-   }
-  ],
-  "options": [],
-  "help": "forget an ssh machine; its data root stays"
+  "help": "delete a VM machine and its disk; one of a removed platform is only forgotten"
  },
  {
   "family": "machine",
@@ -1341,6 +1541,19 @@
   ],
   "options": [],
   "help": "a Store's live state"
+ },
+ {
+  "family": "store",
+  "call": "stats",
+  "args": [
+   {
+    "name": "name",
+    "kind": "name",
+    "optional": false
+   }
+  ],
+  "options": [],
+  "help": "Store-wide publication and allocation counters"
  },
  {
   "family": "store",

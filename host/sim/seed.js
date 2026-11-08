@@ -81,7 +81,7 @@ export function seedWorld(w, preset) {
 
     store({ name: 'shop', machine: 'native' })
     store({ name: 'lab', machine: 'lima1' })
-    store({ name: 'team', kind: 'postgresql', machine: null, url: 'postgresql://app@db.internal:5432/layerfs', password: 'env:LAYERFS_TEAM_PG', profile: 'durable' })
+    store({ name: 'team', kind: 'postgresql', machine: null, url: 'postgresql://app@db.internal:5432/layerfs', password: 'env:LAYERFS_TEAM_PG', profile: 'disposable' })
 
     const api = project('shop', 'api', API_FILES, 72)
     history(api, 'feature-login', [
@@ -112,11 +112,11 @@ export function seedWorld(w, preset) {
   machine({ name: 'msb1', platform: 'microsandbox', backend: 'namespaces', state: 'unresolved', cpus: 2, memory: 4 * GiB, disk: 20 * GiB })
   store({ name: 'shop', machine: 'native' })
   store({ name: 'old', machine: 'lima2' })
-  store({ name: 'team', kind: 'postgresql', machine: null, url: 'postgresql://app@db.internal:5432/layerfs', password: 'env:LAYERFS_TEAM_PG', profile: 'durable', reachable: false })
+  store({ name: 'team', kind: 'postgresql', machine: null, url: 'postgresql://app@db.internal:5432/layerfs', password: 'env:LAYERFS_TEAM_PG', profile: 'disposable', reachable: false })
   const api = project('shop', 'api', API_FILES, 72)
   history(api, 'feature-login', [['Add a login route', 30, { '/src/routes/login.js': "export function login(req, res) {\n  res.writeHead(204).end()\n}\n" }]])
   project('old', 'archive', NOTES_FILES, 900)
   project('team', 'crm', CRM_FILES, 400)
-  d.sandboxes['api-stuck'] = { name: 'api-stuck', project: 'shop/api', machine: 'native', state: 'unresolved', backend: 'native', route: 'nfs', image: null, runtime: null, created: t - 5 * HOUR, op: null, workspaces: {} }
+  d.sandboxes['api-stuck'] = { name: 'api-stuck', project: 'shop/api', machine: 'native', state: 'unresolved', backend: 'native', route: 'nfs', image: null, runtime: null, created: t - 5 * HOUR, op: { id: 'sim-api-stuck', name: 'sandbox.create', phase: 'record', started: t - 5 * HOUR, uncertain: true }, workspaces: {} }
   d.sandboxes['archive-1'] = { name: 'archive-1', project: 'old/archive', machine: 'lima2', state: 'running', backend: 'namespaces', route: 'fuse', image: 'layerfs/sandbox:latest', runtime: null, created: t - 50 * HOUR, op: null, workspaces: {} }
 }

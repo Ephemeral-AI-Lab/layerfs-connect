@@ -1,0 +1,91 @@
+{
+  "phase": "setup",
+  "context": "/private/tmp/connect137-vm-proof-context.json",
+  "identity": {
+    "version": "2.0.0",
+    "commit": "833d04cf44e8e747929d50ab1170a48260d9381c",
+    "dirty": false,
+    "features": [
+      "machine",
+      "postgresql"
+    ]
+  },
+  "started": "2026-11-08T21:47:25.339Z",
+  "calls": [
+    {
+      "argv": [
+        "machine",
+        "list"
+      ],
+      "result": {
+        "machines": [
+          {
+            "name": "docker",
+            "platform": "docker",
+            "backend": "namespaces",
+            "supports": {
+              "sqlite": true,
+              "postgresql_sandbox": true,
+              "reason": null
+            },
+            "state": "stopped",
+            "cpus": null,
+            "memory": null,
+            "disk": null,
+            "stores": [],
+            "sandboxes": []
+          },
+          {
+            "name": "native",
+            "platform": "native",
+            "backend": "native",
+            "supports": {
+              "sqlite": true,
+              "postgresql_sandbox": true,
+              "reason": null
+            },
+            "state": "ready",
+            "cpus": null,
+            "memory": null,
+            "disk": null,
+            "stores": [],
+            "sandboxes": []
+          }
+        ]
+      }
+    },
+    {
+      "argv": [
+        "machine",
+        "create",
+        "connect137-d7e88de8a2",
+        "lima",
+        "--cpus",
+        "2",
+        "--memory",
+        "2G",
+        "--disk",
+        "5G"
+      ],
+      "result": {
+        "name": "connect137-d7e88de8a2",
+        "platform": "lima",
+        "backend": "namespaces",
+        "supports": {
+          "sqlite": true,
+          "postgresql_sandbox": true,
+          "reason": null
+        },
+        "state": "running",
+        "cpus": 2,
+        "memory": 2147483648,
+        "disk": 5368709120,
+        "stores": [],
+        "sandboxes": []
+      }
+    }
+  ],
+  "cleanup": [],
+  "verdict": "PASS",
+  "ended": "2026-11-08T21:47:53.922Z"
+}

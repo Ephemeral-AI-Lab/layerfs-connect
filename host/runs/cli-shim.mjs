@@ -6,25 +6,25 @@
 // native binary with the rewritten arguments, passing on its output and exit
 // code. Answers keep the real names (the scope takes them back as they are).
 // Either way each call of the table writes its trace lines (trace-line.js).
-import { spawnSync } from 'node:child_process'
-import { mkdtempSync, readFileSync, writeFileSync, writeSync } from 'node:fs'
+import { existsSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { table } from 'layerfs'
+import { table } from '../cli/table.js'
+import { execute } from '../cli/spawn.js'
+import { bytes, stringify } from '../cli/json.js'
+import { registerExec } from '../agents/exec-cancel.js'
+import { randomUUID } from 'node:crypto'
 import { Scope, SCOPE_ENV } from './scope.js'
 import { traced } from './trace-line.js'
 
 const [native, ...argv] = process.argv.slice(2)
 const spec = table.find((c) => c.family === argv[0] && c.call === argv[1]?.replaceAll('-', '_'))
-if (!spec) process.exit(spawnSync(native, argv, { stdio: 'inherit' }).status ?? 1)
-
-const lastJson = (buffer) => {
-  try {
-    return JSON.parse(String(buffer ?? '').trim().split('\n').at(-1) || '{}')
-  } catch {
-    return {}
-  }
+if (!spec) {
+  const discovery = ['help', '--version', '--help', '-h'].includes(argv[0]) || argv.includes('--help') || argv.includes('-h')
+  const done = await execute({ cli: native, home: process.env.LAYERFS_HOME }, argv, { passthrough: true, discovery })
+  process.exit(done.exit_code ?? 1)
 }
+
 /** The exit code this command ends with: a streamed exec's is its command's. */
 let exitCode = 0
 /**
@@ -35,22 +35,48 @@ let exitCode = 0
  * A streamed `workspace exec` passes its output on as it comes and answers
  * its command's exit code.
  */
-function exec(args, op) {
-  const stream = op === 'workspace.exec' && args.includes('--stream')
-  const io = stream ? 'inherit' : 'pipe'
-  const done = spawnSync(native, args, { stdio: ['inherit', io, io], maxBuffer: 1 << 30 })
-  for (const [fd, buffer] of [[1, done.stdout], [2, done.stderr]]) for (let k = 0; buffer && k < buffer.length; ) k += writeSync(fd, buffer, k)
-  const status = done.status ?? 1
-  // 2: a wrong command line, 125: LayerFS refused the call (main.rs)
-  if (stream && done.status !== null && status !== 2 && status !== 125) {
-    exitCode = status
-    return { exit_code: status }
+async function exec(args, op) {
+  const mounted = op === 'workspace.exec'
+  const stream = mounted && args.includes('--stream')
+  const requestedEvents = mounted && args.includes('--events')
+  const words = [...args]
+  let unregister = () => {}
+  if (mounted) {
+    // Fresh identity overrides caller/tool IDs so a recent cancellation mark
+    // can never cancel a subsequent launch that reused an ID.
+    for (let i = words.length - 1; i >= 2; i--) {
+      if (words[i].startsWith('--exec-id=')) words.splice(i, 1)
+      else if (words[i] === '--exec-id') words.splice(i, 2)
+    }
+    const exec_id = `connect-${randomUUID()}`
+    words.push('--exec-id', exec_id)
+    for (const flag of ['--stream', '--events']) {
+      const at = words.indexOf(flag)
+      if (at >= 0) words.splice(at, 1)
+    }
+    words.push('--events')
+    unregister = registerExec(process.env.LAYERFS_CONNECT_EXECS, { ws: words[2], exec_id, home: process.env.LAYERFS_HOME, cli: native, pid: process.pid })
   }
-  if (status !== 0) {
-    const refusal = lastJson(done.stderr)
-    throw Object.assign(new Error(refusal.message ?? `layerfs exited ${status}`), { status, code: refusal.code ?? null })
-  }
-  return lastJson(done.stdout)
+  let certain = false, spawned = false
+  try {
+    const result = await execute({ cli: native, home: process.env.LAYERFS_HOME }, words, { events: mounted, onSpawn: child => { spawned = !!child.pid }, beforeSpawn: () => { if (mounted && process.env.LAYERFS_CONNECT_EXECS && existsSync(join(process.env.LAYERFS_CONNECT_EXECS, 'stopping'))) throw new Error('Queued command was stopped before launch.') }, input: process.stdin.isTTY ? undefined : await readInput(op), onFrame: (frame) => {
+      if (requestedEvents) process.stdout.write(`${stringify(frame)}\n`)
+      else if (stream && frame.stream) (frame.stream === 'stderr' ? process.stderr : process.stdout).write(bytes(frame.bytes))
+    } })
+    certain = true
+    if (!requestedEvents && !stream) process.stdout.write(`${stringify(result)}\n`)
+    if (stream) exitCode = result.exit_code ?? 1
+    return result
+  } catch (error) {
+    if (error.transport === 'refusal' || error.transport === 'usage-incompatible') certain = true
+    throw error
+  } finally { if (certain || !spawned) unregister() }
+}
+async function readInput(op) {
+  if (!table.find(c => `${c.family}.${c.call}` === op)?.args.some(a => ['content', 'json'].includes(a.kind))) return undefined
+  const chunks = []
+  for await (const chunk of process.stdin) chunks.push(chunk)
+  return Buffer.concat(chunks)
 }
 
 const kinds = Object.fromEntries(spec.options.map((o) => [o.name.replaceAll('_', '-'), o.kind]))
@@ -71,7 +97,7 @@ for (let i = 2; i < argv.length; i++) {
 }
 const named = Object.fromEntries(spec.args.map((a, k) => [a.name, argv[at[k]]]).filter(([, v]) => v !== undefined))
 const op = `${spec.family}.${spec.call}`
-const finish = (call) => call.then(() => exitCode, (error) => error.status ?? (console.error(`layerfs: ${error.message}`), 1))
+const finish = (call) => call.then(() => exitCode, (error) => { console.error(stringify({ code: error.code ?? 'Unknown', message: error.message, detail: error.detail ?? null })); return error.transport === 'usage-incompatible' ? 2 : 125 })
 if (!process.env[SCOPE_ENV]) process.exit(await finish(traced(op, named, async () => exec(argv, op))))
 
 const scope = Scope.open(process.env[SCOPE_ENV])

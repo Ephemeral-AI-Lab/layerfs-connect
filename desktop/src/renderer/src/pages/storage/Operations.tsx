@@ -2,17 +2,13 @@ import { fill } from '@/lib/text'
 // Storage's operations tray: the moves, backups and restores this host started
 // (live, or ended in the last minutes) and the operations LayerFS records on
 // Stores this host is not running a job on (the CLI's too).
-import { HardDriveUpload } from 'lucide-react'
-import { useState } from 'react'
 
 import { Refusal } from '@/components/layerfs/Refusal'
 import { StateChip } from '@/components/layerfs/StateChip'
 import { Chip } from '@/components/layerfs/Chips'
 import { Bar } from '@/pages/storage/Meters'
-import { Button } from '@/components/ui/button'
 import { ago, bytes } from '@/layerfs/format'
 import { clearingCall, opWords } from '@/layerfs/states'
-import { host } from '@/layerfs/client'
 import type { StorageJob, StoreRow } from '@/layerfs/host-api'
 
 /** How long an ended job stays in the tray. */
@@ -25,7 +21,7 @@ export const trayJobs = (jobs: StorageJob[], now = Date.now()) => jobs.filter((j
 export const jobShare = (j: StorageJob) => (j.total && !j.ended ? Math.min(1, (j.done ?? 0) / j.total) : null)
 
 export function Operations({ jobs, stores }: { jobs: StorageJob[]; stores: StoreRow[] }) {
-  const recorded = stores.filter((s) => s.op && !jobs.some((j) => j.store === s.name && !j.ended))
+  const recorded = stores.filter((s) => s.op && ['busy', 'unresolved'].includes(s.state) && !jobs.some((j) => j.store === s.name && !j.ended))
   if (!jobs.length && !recorded.length) return null
   return (
     <section aria-label={'Operations'} className="glass-liquid reveal flex flex-col divide-y divide-foreground/[0.05] rounded-2xl text-sm shadow-xs">
@@ -61,7 +57,6 @@ export const jobRoute = (j: StorageJob) => `${j.store} ${j.kind === 'restore' ||
 
 /** A job this host started: its phase, done/total where the call gives it, and how it ended. */
 function JobRow({ job: j }: { job: StorageJob }) {
-  const [again, setAgain] = useState<string | null>(null)
   const running = !j.ended
   const share = jobShare(j)
   return (
@@ -81,15 +76,7 @@ function JobRow({ job: j }: { job: StorageJob }) {
         )}
       </div>
       {j.error && <Refusal error={j.error} className="text-destructive" />}
-      {j.error?.note === 'pulled' && (
-        <p className="flex flex-wrap items-center gap-2 text-muted-foreground">
-          {`The pull finished: ${j.store} is in the home now.`}
-          <Button size="sm" variant="outline" className="h-6 rounded-md px-2 text-xs" disabled={again !== null} onClick={() => { setAgain('…'); host.pushStore(j.store, j.target).then(() => setAgain(null), (e: unknown) => setAgain(e instanceof Error ? e.message : String(e))) }}>
-            <HardDriveUpload className="size-3" /> {`Push to ${j.target} again`}
-          </Button>
-          {again && again !== '…' && <span className="text-destructive">{again}</span>}
-        </p>
-      )}
+
     </div>
   )
 }

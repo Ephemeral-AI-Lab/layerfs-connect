@@ -441,3 +441,32 @@ Preview sample readings explicitly enables `?metrics=sample`; samples are never
 enabled automatically by simulated mode. The sample shows current values and a
 disk capacity bar, labelled design preview. Hide sample readings restores the
 ordinary card. Configured Machine resources remain in the Machine header.
+
+## CLI phase 2: shared Doctor and Stop (2026-11-09)
+
+```text
+Resource header                         [Diagnose / Check integrity / Test connection]
++ Doctor · saved resource ---------------------------------------------------+
+| Target / operation    Full by default; optional Quick or explicit write test |
+| Optional time budget                                            [Run diagnosis] |
+| Queued / Running · elapsed (no progress percentage, no Stop)                 |
+| Findings: N                Coverage: complete / incomplete                    |
+| > failed / blocked / unknown checks first                                   |
+| > evidence · dependencies · advisory suggestion                             |
+| Previous dated reports (potentially stale)                                  |
++----------------------------------------------------------------------------+
+```
+
+Actions open setup only. Navigation and Refresh never launch targeted audits.
+Sandbox uses the header action and its existing Overview/Workspaces tabs.
+Connection observations do not prove integrity. Simulated reports say so.
+Mounted chat Stop disables while stopping and retains Workspace/Sandbox; output
+appears after command completion. Cancellation unknown offers explicit retry.
+
+
+Phase 2: inventory refresh failures retain the last successful rows with a dated
+Stale notice. Failed sub-reads are labelled unavailable, never empty. Starting,
+stopping and creating display elapsed time with no percentage. Mutation failures
+expose an explicit fresh-state inspection. Guest free space and configured
+allocation are labelled separately. Sandbox Workspace counts remain unknown until
+an on-demand detail read. Technical details contains the shared Doctor action.

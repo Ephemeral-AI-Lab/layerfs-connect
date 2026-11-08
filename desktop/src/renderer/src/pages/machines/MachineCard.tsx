@@ -1,3 +1,5 @@
+import { useElapsed } from '@/layerfs/use-elapsed'
+import { host } from '@/layerfs/client'
 import { fill } from '@/lib/text'
 // A machine on the Machines board (docs/ui/machines.md), and what its
 // page shares with it: Start or Stop, the menu (Update settings… for the
@@ -12,7 +14,6 @@ import { Fact, Field, KindLabel } from '@/pages/machines/TargetParts'
 import { LfsStore } from '@/components/layerfs/LfsIcons'
 import { Refusal } from '@/components/layerfs/Refusal'
 import { StateChip } from '@/components/layerfs/StateChip'
-import { Bar } from '@/pages/storage/Meters'
 import { MoreButton } from '@/pages/storage/RowParts'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -54,11 +55,12 @@ export const powerOf = (m: MachineInfo) => (m.platform !== 'native' && (m.state 
 /** A Start or Stop button. */
 export function PowerButton({ m, pending, run, className }: { m: MachineInfo; pending: string | null; run: Run; className?: string }) {
   const power = powerOf(m)
+  const elapsed = useElapsed(pending !== null)
   if (!power) return null
   return (
     <Button size="sm" variant={power === 'stop' ? 'outline' : 'default'} className={cn('h-7 rounded-md px-2.5 text-sm', className)} disabled={pending !== null} title={fill(power === 'stop' ? '{name} is running.' : '{name} is stopped: its Stores and Sandboxes can’t be used until it starts.', { name: m.name })} onClick={() => void run(power, { kind: power, name: m.name })}>
       <Power className="size-3.5" />
-      {pending === 'start' ? 'Starting…' : pending === 'stop' ? 'Stopping…' : fill(power === 'stop' ? 'Stop' : 'Start')}
+      {pending === 'start' ? `Starting… ${elapsed}s` : pending === 'stop' ? `Stopping… ${elapsed}s` : fill(power === 'stop' ? 'Stop' : 'Start')}
     </Button>
   )
 }
@@ -151,8 +153,9 @@ export function MachineTile({ m, view, os, act, onOpen }: TileProps) {
   const knownWorkspaces = boxes.reduce((n, b) => n + (b.workspaces ?? 0), 0)
   const workspaces = boxes.some(b => b.workspaces === null) ? knownWorkspaces > 0 ? `${knownWorkspaces}+` : '—' : knownWorkspaces
   const attention = attentionOf(m, live)
-  const disk = m.disk && live?.freeDisk != null ? { used: Math.max(0, Math.min(1, (m.disk - live.freeDisk) / m.disk)), free: live.freeDisk } : null
   const { run, pending, error } = useMachineRun(act)
+  const [inspection, setInspection] = useState<string | null>(null)
+  const inspect = async () => { try { const answer = await host.inspectMachine(m.name); setInspection(`Observed ${new Date().toLocaleTimeString()}: ${answer.state ?? 'unknown'}`) } catch (e) { setInspection(e instanceof Error ? e.message : String(e)) } }
   const [dialog, setDialog] = useState<'settings' | 'remove' | null>(null)
   const open = (e: React.MouseEvent) => onOpen(e.metaKey || e.ctrlKey)
   const runtime = m.platform === 'native' && os === 'win32' ? 'Records only' : m.backend === 'native' ? 'Host processes' : m.backend === 'docker' ? 'Containers' : m.backend === 'namespaces' ? 'Linux namespaces' : m.backend || 'Runtime not reported'
@@ -182,7 +185,7 @@ export function MachineTile({ m, view, os, act, onOpen }: TileProps) {
       <dl className="machine-board-inventory" aria-label="Machine inventory">
         <div><dt>{boxes.length === 1 ? 'Sandbox' : 'Sandboxes'}</dt><dd>{boxes.length}</dd></div>
         <div title={typeof workspaces === 'string' ? 'Some workspace counts could not be read' : undefined}><dt>{workspaces === 1 ? 'Workspace' : 'Workspaces'}</dt><dd>{workspaces}</dd></div>
-        <div><dt>{stores.length === 1 ? 'Local Store' : 'Local Stores'}</dt><dd>{stores.length}</dd></div>
+        <div><dt>{stores.length === 1 ? 'Local Store' : 'Local Stores'}</dt><dd>{view.readErrors?.stores ? 'Unknown' : stores.length}</dd></div>
       </dl>
 
       <div className="machine-board-stores">
@@ -190,19 +193,18 @@ export function MachineTile({ m, view, os, act, onOpen }: TileProps) {
         <div>{stores.length ? <>
           {stores.slice(0, STORES_SHOWN).map(store => <button key={store.name} type="button" className="machine-board-store-link" onClick={() => go.store(store.name)} title={`Open ${store.name} in Storage${store.size != null ? ` · ${bytes(store.size)}` : ''}`}>{store.name}</button>)}
           {stores.length > STORES_SHOWN && <span className="text-muted-foreground">+{stores.length - STORES_SHOWN} more</span>}
-        </> : <span className="text-faint">None on this machine</span>}</div>
+        </> : <span className="text-faint">{view.readErrors?.stores ? 'Stores could not be read' : 'None on this machine'}</span>}</div>
       </div>
 
       {(reason || attention || error !== null) && <div className="machine-board-notice" data-tone={attention === 'warning' ? 'warning' : 'danger'}>
         {(reason || attention) && <p title={reason ?? undefined}>{reason || (attention === 'warning' ? `Start to use ${stores.length === 1 ? 'its local Store' : 'its local Stores'}.` : `${state.label}. Open details to inspect the machine.`)}</p>}
         {calls && <p className="font-mono" title={`${calls.status} · ${calls.clear}`}>{`Inspect: ${calls.status}`}</p>}
-        {error !== null && <Refusal error={error} compact />}
+        {error !== null && <><Refusal error={error} compact /><button type="button" onClick={() => void inspect()}>Inspect current state</button>{inspection && <p>{inspection}</p>}</>}
         {attention && <button type="button" className="machine-board-control" onClick={() => onOpen(false)}>View details <ArrowRight className="size-3" /></button>}
       </div>}
 
       <div className="machine-board-disk" aria-label="Machine disk status">
-        <div><span>Disk</span><span>{live?.freeDisk != null ? `${gib(live.freeDisk)} free${m.disk != null ? ` of ${gib(m.disk)}` : ''}` : m.platform === 'native' ? 'Shared with this computer' : 'Free space not reported'}</span></div>
-        {disk && <Bar share={disk.used} tone={disk.used > .9 ? 'danger' : disk.used > .75 ? 'warning' : 'brand'} className="w-full" />}
+        <div><span>Disk</span><span>{live?.freeDisk != null ? `${gib(live.freeDisk)} free (guest)${m.disk != null ? ` · ${gib(m.disk)} allocated` : ''}` : m.platform === 'native' ? 'Shared with this computer' : 'Free space not reported'}</span></div>
       </div>
 
       <footer className="machine-board-footer">

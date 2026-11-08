@@ -177,8 +177,8 @@ export function HistoryGraph({ nodes, lanes, branches, selected, linked, focus, 
             <path className="history-branch-path" d={`M${firstNode.x},${head.y} H${head.x}`} />
           </g>
         })}
-        {layout.positioned.filter(n => n.second || n.kind === 'layer' && n.parent).map(n => {
-          const from = layout.points.get(n.second ?? n.parent ?? '')
+        {layout.positioned.filter(n => n.second || n.source).map(n => {
+          const from = layout.points.get(n.source ?? n.second ?? '')
           if (!from) return null
           return <path key={`merge:${n.id}`} className={n.kind === 'layer' ? 'history-publish-path' : 'history-merge-path'} style={{ '--bough': branchColor(from.branch) } as CSSProperties} d={graft(from, n)} />
         })}

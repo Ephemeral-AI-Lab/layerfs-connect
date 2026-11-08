@@ -200,3 +200,14 @@
 .fa-label { color: var(--warning); font-family: var(--font-sans); font-size: 9px; white-space: nowrap; padding-right: 8px; }
 .fa-content-change { color: var(--muted-foreground); }
 .fa-explanation { padding: 10px 14px; color: var(--muted-foreground); font-size: 10px; line-height: 1.6; }
+
+/* Real CLI saved views share the existing inspector typography and controls. */
+.fp-explorer.fp-saved { overflow: auto; }
+.fp-saved > :not(.cm-editor) { flex-shrink: 0; }
+.fp-saved > .fp-context { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.fp-saved .fp-context button { padding: 4px 7px; border: 1px solid var(--border); border-radius: 5px; color: var(--foreground); }
+.fp-saved .fp-context button:hover { background: var(--surface-hover); }
+.fp-context input { width: min(26rem, 100%); min-width: 0; border: 1px solid var(--border); border-radius: 5px; padding: 5px 7px; background: var(--card); color: var(--foreground); }
+
+.fp-saved .fp-revisions { min-height: 0; }
+.fp-saved .fp-revision button { display: inline-flex; margin-top: 8px; margin-right: 8px; padding: 4px 7px; border: 1px solid var(--border); border-radius: 5px; }

@@ -7,7 +7,7 @@
   "license": "Apache-2.0",
   "main": "./out/main/index.js",
   "engines": {
-    "node": ">=22.15"
+    "node": ">=24"
   },
   "scripts": {
     "dev": "electron-vite dev",

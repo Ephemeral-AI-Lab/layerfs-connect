@@ -43,7 +43,10 @@ export function ChatDock({ chat, onChange, child, onStop, onContinue }: { chat: 
   const retrySeconds = retryElapsed === null ? null : Math.max(0, Math.ceil(-retryElapsed / 1000))
   const status = phase === 'retrying' ? `Retry ${chat.execution?.retryAttempt ?? 1}${chat.execution?.retryMaxAttempts !== undefined ? ` of ${chat.execution.retryMaxAttempts}` : ''}${retrySeconds ? ` in ${retrySeconds}s` : ' · waiting for provider…'}` : phase === 'tool' && toolLine ? `Running ${toolLine.trim().slice(0, 80)}` : (PHASE[phase] ?? (working ? 'Working…' : ''))
 
-  if (!pending.length && !working && !chat.queued.length && !chat.recovery?.required && !error) return null
+  const exec = chat.workspace?.execution
+  const cancel = exec?.cancel
+  const cancelUnknown = cancel?.outcome === 'unknown'
+  if (!exec?.cancelRequested && !pending.length && !working && !chat.queued.length && !chat.recovery?.required && !error) return null
   return (
     <div className="mb-2 flex flex-col overflow-hidden rounded-md border border-[var(--border-default)] bg-[var(--card)] text-13">
       {pending.map((approval) => (
@@ -65,11 +68,12 @@ export function ChatDock({ chat, onChange, child, onStop, onContinue }: { chat: 
           <LoaderCircle className="size-3.5 shrink-0 animate-spin text-[var(--text-tertiary)]" />
           <span className="min-w-0 truncate text-[var(--text-secondary)]">{status}</span>
           {elapsed !== null && <span className="shrink-0 tabular-nums text-12 text-[var(--text-tertiary)]">{duration(elapsed)}</span>}
-          <Button size="sm" variant="outline" className="ml-auto h-7" onClick={() => onStop ? onStop() : run(child ? chatHost.stopChild(chat.id, child.id) : chatHost.stop(chat.id))}>
+          <Button size="sm" variant="outline" className="ml-auto h-7" disabled={phase === 'stopping'} title="Stop command execution; mounted Workspace and Sandbox stay open." onClick={() => onStop ? onStop() : run(child ? chatHost.stopChild(chat.id, child.id) : chatHost.stop(chat.id))}>
             <Square className="size-3" /> Stop
           </Button>
         </div>
       )}
+      {working && chat.workspace && <p className="px-3.5 py-1 text-12 text-muted-foreground">Output appears when the command ends. Stop keeps the Workspace and Sandbox open.</p>}
       {working && chat.execution?.reason && <p role="status" className="break-words border-b border-border px-3.5 py-2 text-12 text-muted-foreground">{chat.execution.reason}</p>}
       {chat.queued.map((queued) => (
         <div key={queued.id} className="flex h-9 items-center gap-2 border-b border-[var(--border-default)] px-3.5 last:border-b-0">
@@ -93,6 +97,11 @@ export function ChatDock({ chat, onChange, child, onStop, onContinue }: { chat: 
           )}
         </div>
       )}
+      {exec?.cancelRequested && <div role="status" className="border-t px-3.5 py-2 text-12 text-muted-foreground">
+        {exec.result?.kind === 'cancelled' ? `Cancelled (${cancel?.signal ?? `exit ${exec.result.exit_code}`}); partial changes remain.` : exec.finished ? 'Command finished before it could be stopped.' : cancelUnknown ? 'Cancellation not confirmed. The command may still be running.' : cancel?.outcome === 'ended' ? 'Cancellation recorded; command will end at start.' : 'Stopping command…'}
+        {cancelUnknown && <Button size="sm" variant="outline" disabled={working} className="ml-2" onClick={() => run(chatHost.stop(chat.id))}>Try cancellation again</Button>}
+        {chat.workspace?.error && <p className="mt-1 text-destructive">{chat.workspace.error}</p>}
+      </div>}
       {error && (
         <div className="flex items-center gap-2 px-3.5 py-2 text-12 text-destructive">
           <span className="min-w-0 flex-1">{error}</span>

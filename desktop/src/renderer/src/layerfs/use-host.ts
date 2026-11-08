@@ -7,6 +7,7 @@ export interface Loaded<T> {
   data: T | undefined
   error: Error | undefined
   loading: boolean
+  observedAt?: number
   reload: () => void
 }
 
@@ -29,6 +30,7 @@ export function useHostQuery<T>(load: () => Promise<T>, deps: unknown[], key?: s
   const [data, setData] = useState<T | undefined>(() => (key ? (answers.get(key) as T | undefined) : undefined))
   const [error, setError] = useState<Error>()
   const [loading, setLoading] = useState(true)
+  const [observedAt, setObservedAt] = useState<number>()
   const loader = useRef(load)
   loader.current = load
   const keyRef = useRef(key)
@@ -49,7 +51,7 @@ export function useHostQuery<T>(load: () => Promise<T>, deps: unknown[], key?: s
     loader.current().then(
       (value) => {
         if (k) answers.set(k, value)
-        if (g === generation.current) setData(value), setError(undefined)
+        if (g === generation.current) setData(value), setError(undefined), setObservedAt(Date.now())
       },
       (e: unknown) => g === generation.current && setError(e instanceof Error ? e : new Error(String(e))),
     ).finally(() => {
@@ -73,7 +75,7 @@ export function useHostQuery<T>(load: () => Promise<T>, deps: unknown[], key?: s
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [...deps, key])
-  return { data, error, loading, reload: run }
+  return { data, error, loading, observedAt, reload: run }
 }
 
 /** Calls `listener` for every RunEvent while mounted (Storage's `storage-job` and `storage` events and `chat` go to onHostEvent's listeners only). */

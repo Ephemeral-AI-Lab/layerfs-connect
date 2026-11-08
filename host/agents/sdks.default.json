@@ -3,15 +3,13 @@
     {
       "id": "layerfs",
       "title": "LayerFS",
-      "description": "Projects, Branches, Commits, files, Sandboxes and Workspaces through the one `layerfs` package (Node: import layerfs from \"layerfs\") or the native `layerfs` command. Every call names its project as <store>/<project>; LAYERFS_HOME is set; the project key is in LAYERFS_CONNECT_PROJECT.",
+      "description": "Projects, Branches, Commits, files, Sandboxes and Workspaces through the pinned LayerFS CLI. The scoped JavaScript compatibility facade delegates to the same CLI adapter. Every call names <store>/<project>; LAYERFS_HOME and LAYERFS_CONNECT_CLI are explicit.",
       "enabled": true,
-      "root": "../layerfs-v2-merge/api",
-      "packages": [
-        "layerfs"
-      ],
+      "root": ".",
+      "packages": [],
       "command": "layerfs",
       "docs": [
-        "README.md"
+        "host/README.md"
       ],
       "agents": [
         "main",
@@ -35,19 +33,39 @@
           "description": "a project's record: its Store, kind and machine"
         },
         {
+          "name": "project.stats",
+          "signature": "layerfs.project.stats(project, branch?, commit?)",
+          "description": "entry counts of one pinned saved tree"
+        },
+        {
+          "name": "project.export",
+          "signature": "layerfs.project.export(project, destination, { branch, on_progress })",
+          "description": "export a project's snapshot from its Store to a local folder"
+        },
+        {
           "name": "project.remove",
           "signature": "layerfs.project.remove(project)",
           "description": "remove one project from its Store"
         },
         {
           "name": "branch.list",
-          "signature": "layerfs.branch.list(project, { page_size, page_pos })",
+          "signature": "layerfs.branch.list(project, { page_size, page_pos, page })",
           "description": "a project's Branches"
         },
         {
           "name": "branch.get",
           "signature": "layerfs.branch.get(project, branch)",
           "description": "one Branch and its head Commit"
+        },
+        {
+          "name": "branch.commits",
+          "signature": "layerfs.branch.commits(project, branch, { page, page_size, at_commit })",
+          "description": "saved branch commits or main publications, newest first"
+        },
+        {
+          "name": "branch.get_commit",
+          "signature": "layerfs.branch.get_commit(project, branch, commit)",
+          "description": "one saved Commit or main publication"
         },
         {
           "name": "branch.fork",
@@ -66,7 +84,7 @@
         },
         {
           "name": "branch.diff",
-          "signature": "layerfs.branch.diff(project, from_branch, to_branch, { paths_only, page_size, page_pos, cursor })",
+          "signature": "layerfs.branch.diff(project, from_branch, to_branch, { paths_only, page_size, page_pos, cursor, page, from_commit, to_commit, path_prefix, include_attribution, continuation })",
           "description": "files that differ between two Branches' heads"
         },
         {
@@ -96,27 +114,32 @@
         },
         {
           "name": "file.list",
-          "signature": "layerfs.file.list(project, branch, path, commit?, { page_size, page_pos })",
+          "signature": "layerfs.file.list(project, branch, path, commit?, { page_size, page, page_pos })",
           "description": "a folder's entries"
         },
         {
           "name": "file.glob",
-          "signature": "layerfs.file.glob(project, branch, path, pattern, commit?, { page_size, page_pos })",
+          "signature": "layerfs.file.glob(project, branch, path, pattern, commit?, { page_size, page, page_pos })",
           "description": "paths under `path` matching a glob"
         },
         {
           "name": "file.grep",
-          "signature": "layerfs.file.grep(project, branch, path, pattern, commit?, { page_size, page_pos })",
+          "signature": "layerfs.file.grep(project, branch, path, pattern, commit?, { page_size, page, page_pos })",
           "description": "lines under `path` matching a regular expression"
         },
         {
+          "name": "file.revision",
+          "signature": "layerfs.file.revision(project, branch, path, { at_commit, traversal, page, page_size, continuation })",
+          "description": "saved changes to a literal path"
+        },
+        {
           "name": "file.blame",
-          "signature": "layerfs.file.blame(project, branch, path, commit?, { from_line })",
+          "signature": "layerfs.file.blame(project, branch, path, commit?, { from_line, line_count })",
           "description": "the Commit of each line"
         },
         {
           "name": "file.diff",
-          "signature": "layerfs.file.diff(project, left_branch, left_path, right_branch, right_path, { left_commit, right_commit })",
+          "signature": "layerfs.file.diff(project, left_branch, left_path, right_branch, right_path, { left_commit, right_commit, include_attribution, allow_missing, page, page_size })",
           "description": "the difference between two files"
         },
         {
@@ -157,7 +180,7 @@
         {
           "name": "sandbox.create",
           "signature": "layerfs.sandbox.create(project, name, machine?, { image })",
-          "description": "start a named Sandbox of a project; a sqlite project's runs on its Store's machine"
+          "description": "start a named Sandbox of a project on a machine (default: its sqlite Store's, or native)"
         },
         {
           "name": "sandbox.list",
@@ -177,12 +200,17 @@
         {
           "name": "workspace.mount",
           "signature": "layerfs.workspace.mount(sandbox, branch, { name })",
-          "description": "mount a side Branch in a Sandbox (main is refused: fork a Branch first); name gives the Workspace a handle <sandbox>:<name>"
+          "description": "mount a Branch in a Sandbox"
         },
         {
           "name": "workspace.exec",
-          "signature": "layerfs.workspace.exec(ws, command, { message, stream, stdout, stderr })",
+          "signature": "layerfs.workspace.exec(ws, command, { message, stream, stdout, stderr, exec_id, on_progress })",
           "description": "run one bash command in a Workspace"
+        },
+        {
+          "name": "workspace.exec_cancel",
+          "signature": "layerfs.workspace.exec_cancel(ws, exec_id, { grace_ms })",
+          "description": "end a running command: SIGTERM, then SIGKILL after grace_ms"
         },
         {
           "name": "workspace.commit",
@@ -202,12 +230,12 @@
         {
           "name": "machine.list",
           "signature": "layerfs.machine.list()",
-          "description": "every machine with its state, supports and the Stores and Sandboxes on it; starts none"
+          "description": "every machine, with what it supports"
         },
         {
           "name": "machine.platforms",
           "signature": "layerfs.machine.platforms()",
-          "description": "each platform on this host: backend, kernel route, readiness, missing tools and create options"
+          "description": "the platforms this host and build support, and what each is missing"
         },
         {
           "name": "machine.get",
@@ -222,37 +250,27 @@
         {
           "name": "machine.start",
           "signature": "layerfs.machine.start(name)",
-          "description": "start a stopped machine and its worker; nothing starts one on demand"
+          "description": "start a stopped machine and its worker; a running one answers at once"
         },
         {
           "name": "machine.stop",
           "signature": "layerfs.machine.stop(name)",
-          "description": "stop a machine; InUse while Sandboxes run on it"
+          "description": "stop a machine's worker and VM; its disks stay"
         },
         {
           "name": "machine.create",
-          "signature": "layerfs.machine.create(name, platform, { cpus, memory, disk, image, nested, host })",
-          "description": "create a VM machine"
-        },
-        {
-          "name": "machine.connect",
-          "signature": "layerfs.machine.connect(name, host, { user, port, identity, known_hosts, root })",
-          "description": "connect an ssh host as a machine"
+          "signature": "layerfs.machine.create(name, platform, { cpus, memory, disk, image })",
+          "description": "create an enabled VM machine (apple-container, lima)"
         },
         {
           "name": "machine.remove",
           "signature": "layerfs.machine.remove(name)",
-          "description": "delete a VM machine and its disk"
-        },
-        {
-          "name": "machine.disconnect",
-          "signature": "layerfs.machine.disconnect(name)",
-          "description": "forget an ssh machine; its data root stays"
+          "description": "delete a VM machine and its disk; one of a removed platform is only forgotten"
         },
         {
           "name": "machine.update",
-          "signature": "layerfs.machine.update(name, { image, docker, wsl })",
-          "description": "set a built-in machine's image, Docker socket or WSL distribution"
+          "signature": "layerfs.machine.update(name, { cpus, memory, image, docker, wsl, daemon })",
+          "description": "resize a VM, or set a built-in machine's image, Docker socket and daemon"
         },
         {
           "name": "store.list",
@@ -268,6 +286,11 @@
           "name": "store.status",
           "signature": "layerfs.store.status(name)",
           "description": "a Store's live state"
+        },
+        {
+          "name": "store.stats",
+          "signature": "layerfs.store.stats(name)",
+          "description": "Store-wide publication and allocation counters"
         },
         {
           "name": "store.create",
@@ -287,7 +310,7 @@
         {
           "name": "store.pull",
           "signature": "layerfs.store.pull(name, { on_progress })",
-          "description": "bring a sqlite Store from its machine back to native"
+          "description": "bring a sqlite Store from its machine to native"
         },
         {
           "name": "store.remove",

@@ -1,12 +1,8 @@
-// A mounted chat's LayerFS Workspace on 2.0: its own Branch, a Sandbox named
-// after the chat on the project's Store's machine (a PostgreSQL project's on
-// native), and one Workspace (`ws` handle `<sandbox>:<path>`). Bash runs in
-// the foreground with workspace.exec: its output arrives when the command
-// ends, and it cannot be stopped mid-way. Background start, list and cancel
-// and live output come with a later LayerFS (§9 Q2); a command's timeout is
-// the shell's `timeout` where the machine has it.
+// Mounted commands use CLI event frames and explicit exec-cancel.
+// Stop preserves the Workspace and Sandbox; partial writes remain.
 import { randomUUID } from 'node:crypto'
 import { workspacesOf } from '../layerfs.js'
+import { stringify } from '../cli/json.js'
 import { INSTRUCTION_FILES, MAX_INSTRUCTION_BYTES } from './context.js'
 
 const quote = (value) => `'${String(value).replaceAll("'", "'\\''")}'`
@@ -30,6 +26,7 @@ export class AgentWorkspaces {
   constructor({ projects }) {
     this.projects = projects
     this.queues = new Map()
+    this.cancellations = new Map()
   }
 
   get lfs() {
@@ -185,32 +182,65 @@ export class AgentWorkspaces {
     return this.serial(record, () => this.checked(record, options.onChange, () => this.run(record, input, options)))
   }
 
-  /**
-   * One foreground bash command: workspace.exec, its output passed on when it
-   * ends (inline up to 1 MiB a stream, through the sinks above that), then a
-   * Commit. An abort before it starts stops it; one after cannot (a call is
-   * not cancelled; §9 Q2), so the command finishes and is saved.
-   */
+  /** Cancel once: phase 1 records pre-registration cancellation for 30 s. */
+  async cancel(record, onChange, retry = false) {
+    const execution = record.workspace?.execution
+    if (!execution || execution.finished) return execution?.cancel
+    if (retry && execution.cancel?.outcome === 'unknown') this.cancellations.delete(execution.exec_id)
+    if (this.cancellations.has(execution.exec_id)) return this.cancellations.get(execution.exec_id)
+    const task = Promise.resolve().then(async () => {
+      execution.cancelRequested = true
+      await onChange?.()
+      try {
+        if (retry && execution.cancel?.outcome === 'unknown') execution.observation = JSON.parse(stringify(await this.lfs.workspace.status(execution.ws)))
+        execution.cancel = await this.lfs.workspace.exec_cancel(execution.ws, execution.exec_id)
+      }
+      catch (error) { execution.cancel = { outcome: 'unknown', message: error.message, code: error.code } }
+      await onChange?.()
+      return execution.cancel
+    })
+    this.cancellations.set(execution.exec_id, task)
+    return task
+  }
+
+  /** Frames supply output exactly once. Command completion and Save are separate. */
   async run(record, { command, agent, toolCallId, timeout }, { signal, onData, onChange }) {
     signal?.throwIfAborted()
     await this.open(record, onChange)
     signal?.throwIfAborted()
     const ws = record.workspace
-    await this.change(record, { state: 'running', error: null }, onChange)
-    const wrapped = timeout > 0 ? `if command -v timeout >/dev/null 2>&1; then timeout ${Math.ceil(timeout)} bash -c ${quote(command)}; else bash -c ${quote(command)}; fi 2>&1` : `bash -c ${quote(command)} 2>&1`
-    let streamed = false
-    const sink = (bytes) => {
-      streamed = true
-      void onData?.(Buffer.from(bytes))
+    const execution = { ws: ws.handle, exec_id: `connect-${randomUUID()}`, finished: false, cancelRequested: false }
+    await this.change(record, { state: 'running', error: null, execution }, onChange)
+    if (signal?.aborted) {
+      execution.finished = true
+      await this.change(record, { state: 'ready' }, onChange)
+      signal.throwIfAborted()
     }
-    const result = await this.lfs.workspace.exec(ws.handle, wrapped, { stdout: sink, stderr: sink })
-    if (!streamed) {
-      const text = `${result.stdout ?? ''}${result.stderr ?? ''}`
-      if (text) await onData?.(Buffer.from(text))
+    const abort = () => { void this.cancel(record, onChange) }
+    signal?.addEventListener('abort', abort, { once: true })
+    const wrapped = timeout > 0 ? `if command -v timeout >/dev/null 2>&1; then timeout ${Math.ceil(timeout)} bash -c ${quote(command)}; else bash -c ${quote(command)}; fi` : `bash -c ${quote(command)}`
+    let result, spawned = false
+    try {
+      const sink = (bytes) => { void onData?.(Buffer.from(bytes)) }
+      result = await this.lfs.workspace.exec(ws.handle, wrapped, { exec_id: execution.exec_id, before_spawn: () => signal?.throwIfAborted(), on_spawn: pid => { spawned = !!pid; execution.pid = pid; void onChange?.() }, stdout: sink, stderr: sink })
+      execution.result = JSON.parse(stringify({ kind: result.kind, exit_code: result.exit_code, stop: result.stop, stdout_bytes: result.stdout_bytes, stderr_bytes: result.stderr_bytes }))
+    } finally {
+      execution.finished = !!result || !spawned
+      if (!result && spawned) execution.error = 'Command completion unavailable; remote execution may still be running.'
+      if (!result && signal?.aborted) ws.state = 'ready'
+      this.cancellations.delete(execution.exec_id)
+      signal?.removeEventListener('abort', abort)
+      await onChange?.()
     }
     const exitCode = typeof result.exit_code === 'number' ? result.exit_code : null
-    await this.save(record, `Bash ${agent || 'root'} ${toolCallId || ''}${exitCode === null ? ' (no exit code)' : ` (exit ${exitCode})`}`, onChange)
-    return { exitCode }
+    let saveError = null
+    try { await this.save(record, `Bash ${agent || 'root'} ${toolCallId || ''} (exit ${exitCode})`, onChange) }
+    catch (error) {
+      saveError = { code: error.code ?? 'Unknown', message: error.message }
+      await this.change(record, { state: 'ready', error: `Not saved: ${saveError.code}: ${saveError.message}` }, onChange)
+      await onData?.(Buffer.from(`\nNot saved: ${saveError.code}: ${saveError.message}\n`))
+    }
+    return { exitCode, kind: result.kind, stop: result.stop, saveError }
   }
 
   release(record, onChange) {

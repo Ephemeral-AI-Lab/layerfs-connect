@@ -1,3 +1,4 @@
+import { StaleRead } from '@/components/layerfs/StaleRead'
 import { fill } from '@/lib/text'
 // The Storage page (docs/connect README, "Storage and projects"): every Store
 // as a wide card that holds its projects (store-section.tsx), no tabs. A Store
@@ -326,6 +327,7 @@ export function StoragePage({ catalog, onOpenProject, onAddProject, onOpenStore,
         }
       />
       <div className="mx-auto flex min-w-0 flex-col gap-3 px-4 pt-0 pb-12 @min-[480px]/storage:px-5">
+        {view && <StaleRead error={storage.error} observedAt={storage.observedAt} />}
         {!view ? (
           storage.error ? <LoadError error={storage.error} what={'the storage'} onRetry={storage.reload} /> : <Loading label={'Reading the Stores'} />
         ) : (

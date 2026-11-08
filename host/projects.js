@@ -16,21 +16,17 @@
 //   listDir/file  file.list, file.stat and file.read
 //   remove        project.remove (InUse while any Sandbox record exists)
 // Every LayerFS call is made once; a refusal passes through with its code.
-// What 2.0 cannot answer yet is left out and named (§9): main's Layers (only
-// its newest is known), a first Commit's changes, and the Store's totals
-// (summed from the Commits read instead, marked partial).
+// Saved reads are pinned and paged through project-reads.js. Store allocation
+// and project tree statistics are independent queries with separate scopes.
+import { projectReads } from './project-reads.js'
 import { randomUUID } from 'node:crypto'
 import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync } from 'node:fs'
 import { isAbsolute, join } from 'node:path'
 import { keyOf, projectRef } from './config.js'
-import { layerfs, linkedVersion, pages, PAGE, VIEW_WAIT_MS, workspacesOf } from './layerfs.js'
+import { layerfs, linkedVersion, pages, PAGE, VIEW_WAIT_MS, workspacesOf, sandboxObservation } from './layerfs.js'
 
 export { keyOf }
 
-/** A file larger than this is answered without its text. */
-const FILE_MAX = 1024 * 1024
-/** A folder with at most this many files gets each file's size (one file.stat each). */
-const STAT_MAX = 200
 /** Calls in flight at once for one answer (stats, diffs). */
 const WIDTH = 4
 /** Commits whose changed paths are kept: a Commit never changes. */
@@ -76,12 +72,17 @@ function keep(map, key, value, most) {
 /** A 2.0 Commit record -> CommitInfo. */
 export const commitInfo = (c, branch) => ({
   id: c.id,
-  branch: c.branch ?? branch ?? '',
+  branch: c.branch ?? c.ref?.branch ?? branch ?? '',
   message: c.message ?? '',
   at: typeof c.time === 'number' ? c.time : null,
   parent: c.parent ?? null,
   merged: c.second_parent ?? null,
   kind: c.via ?? null,
+  base: c.base ?? null,
+  sourceCommit: c.source_commit ?? null,
+  sourceBranch: c.source_branch ?? null,
+  sourceTime: c.source_time ?? null,
+  logical: c.logical ?? null,
 })
 
 /** An SDK `op` ({ id, name, phase, started, uncertain }), or null. */
@@ -106,10 +107,11 @@ export function sandboxInfo(s, workspaces = null) {
     image: s.image ?? null,
     machine: s.machine ?? null,
     runtime: s.runtime ?? null,
+    runtimeId: s.id ?? null, created: s.created ?? null, downReason: s.down_reason ?? null,
     ...(s.platform ? { platform: s.platform } : {}),
     workspaces: (workspaces ?? [])
-      .filter((w) => w.mounted !== false && w.directory)
-      .map((w) => ({ ws: w.ws ?? `${s.name}:${w.name ?? w.directory}`, name: w.name ?? null, branch: w.branch ?? '', path: w.directory, activity: w.activity ?? null })),
+      .filter((w) => w.mounted !== false && (w.directory || w.path))
+      .map((w) => ({ ws: w.ws ?? `${s.name}:${w.name ?? w.directory}`, name: w.name ?? null, branch: w.branch ?? '', path: w.directory ?? w.path, activity: w.activity ?? null, base: w.base ?? null, baseLayer: w.base_layer ?? null, root: w.root ?? null, headMovedSinceMount: w.head_moved_since_mount ?? null, dirty: w.dirty ?? null, pendingMerge: w.pending_merge ?? null, revision: w.revision ?? null })),
     ...(workspaces ? {} : { unread: true }),
   }
 }
@@ -210,6 +212,7 @@ export class Projects {
   async create(input) {
     const { name, source, store } = input ?? {}
     if (typeof store !== 'string' || !store) throw refuse(400, 'InvalidInput', 'Choose the Store the project goes into.')
+    if (typeof name !== 'string' || !/^[a-z0-9](?:[a-z0-9_.-]{0,61}[a-z0-9])?$/.test(name)) throw refuse(400, 'InvalidInput', 'Project names use lowercase letters, numbers, dots, underscores and hyphens, with a letter or number at each end (maximum 63 characters).')
     const { key } = projectRef(`${store}/${name}`)
     if ([...this.inits.values()].some((j) => j.name === key && !j.ended)) throw refuse(409, 'Exists', `${key} is being created`)
     if (source !== undefined && (typeof source !== 'string' || !isAbsolute(source) || source.includes('\0') || !statSync(source, { throwIfNoEntry: false })?.isDirectory())) {
@@ -223,15 +226,15 @@ export class Projects {
     const job = { id: randomUUID(), name: key, source: source ?? null, started: Date.now(), ended: null, step: 'scan', progress: null, project: null, error: null }
     keep(this.inits, job.id, job, KEEP_INITS)
     const on_progress = (p) => {
-      if (typeof p?.step === 'string') job.step = p.step
-      job.progress = { entries: p?.entries ?? 0, files: p?.files ?? 0, bytes: p?.bytes ?? 0 }
+      if (typeof p?.phase === 'string') job.step = p.phase
+      job.progress = { phase: p?.phase ?? null, done: p?.done ?? null, total: p?.total ?? null }
     }
     const completion = this.lfs.project
       .init(key, source ?? emptySource, { on_progress })
       .then(
         (made) => Object.assign(job, { step: 'done', project: this.summary(made, new Map()) }),
         (error) => {
-          Object.assign(job, { step: 'failed', error: { code: error?.code ?? 'Failed', message: error?.message ?? String(error) } })
+          Object.assign(job, { step: 'failed', error: { ...refusalOf(error), ...(error?.transport ? { transport: error.transport } : {}) } })
           this.log(`[host] creating ${key}: ${error?.message ?? error}`)
         },
       )
@@ -330,7 +333,7 @@ export class Projects {
       commits: byId.size,
       store: { path: null, bytes: file?.exists ? (file.bytes ?? 0) + (file.wal_bytes ?? 0) : null },
       // the Store's totals have no 2.0 call (§9 Q4): summed from the Commits read
-      storage: commitStats(byId, file),
+      storage: null,
     }
   }
 
@@ -338,16 +341,7 @@ export class Projects {
   async sandboxes(key) {
     const { key: project } = projectRef(key)
     const listed = await pages((p) => this.lfs.sandbox.list(project, p))
-    return Promise.all(
-      listed.map(async (s) => {
-        // a Sandbox its machine no longer runs answers `state: "gone"` with no Workspaces; a refusal is shown as it came
-        try {
-          return sandboxInfo(s, await workspacesOf(this.lfs, s.name, { wait: VIEW_WAIT_MS }))
-        } catch (error) {
-          return { ...sandboxInfo(s), refusal: refusalOf(error) }
-        }
-      }),
-    )
+    return listed.map((s) => sandboxInfo(s))
   }
 
   /**
@@ -368,9 +362,8 @@ export class Projects {
   /** One Sandbox with its Workspaces (sandbox.get): the top-level Sandboxes table's opened row. */
   async sandbox(name) {
     if (typeof name !== 'string' || !name) throw refuse(400, 'InvalidInput', 'Name the Sandbox.')
-    const workspaces = await workspacesOf(this.lfs, name)
-    const record = await this.lfs.sandbox.get(name, { page_size: 1, page_pos: 0 })
-    return sandboxInfo({ ...record, name }, workspaces)
+    const record = await sandboxObservation(this.lfs, name)
+    return sandboxInfo({ ...record, name }, record.workspaces)
   }
 
   /**
@@ -404,39 +397,11 @@ export class Projects {
 
   /** CommitInfo[] of `branch`, newest first, each with its changed paths when LayerFS can compare it with its parent. */
   /** Bounded History reads: metadata only, no eager diffs or full-history scan. */
-  async history(key, query) {
-    const project = projectRef(key).key
-    const pos = Number(query.get('pos') ?? 0)
-    if (!Number.isSafeInteger(pos) || pos < 0) throw refuse(400, 'InvalidInput', 'pos must be a nonnegative integer')
-    const branch = query.get('branch')
-    if (!branch) {
-      const page = await this.lfs.branch.list(project, { page_size: 100, page_pos: pos })
-      if (pos === 0 && !page.items.some(b => b.name === 'main')) page.items.unshift(await this.lfs.branch.get(project, 'main'))
-      return { branches: page.items.map(b => ({ name: b.name, head: b.name === 'main' ? b.base : b.head,
-        base: b.base, forkedFrom: b.forked_from ?? null })), next: page.next_page_pos ?? null }
-    }
-    checkBranch(branch)
-    const b = await this.lfs.branch.get(project, branch)
-    if (branch === 'main') return { items: [], next: null, head: b.base }
-    const expected = query.get('head')
-    if (expected && expected !== b.head) throw refuse(409, 'HeadMoved', 'This branch changed. Refresh History before loading earlier checkpoints.')
-    const commit = query.get('commit')
-    if (commit) {
-      const c = await this.lfs.commit.get(project, branch, commit)
-      const from = query.get('from') ?? c.parent
-      if (!from || isLayer(from)) return { item: commitInfo(c), changes: null, nextChanges: null }
-      const diff = await this.lfs.commit.diff(project, from, c.id, { paths_only: true, page_size: 100, page_pos: pos })
-      return { item: commitInfo(c), changes: diff.items ?? [], nextChanges: diff.next_page_pos ?? null }
-    }
-    const page = await this.lfs.commit.list(project, branch, { page_size: 100, page_pos: pos })
-    const own = []
-    let reachedFork = false
-    for (const c of page.items) {
-      if (c.id === b.forked_from || c.branch !== branch) { reachedFork = true; break }
-      own.push(commitInfo(c))
-    }
-    return { items: own, head: b.head, next: reachedFork ? null : page.next_page_pos ?? null }
-  }
+  async history(key, query) { return projectReads.history.call(this, key, query) }
+  async branches(key, query) { return projectReads.branches.call(this, key, query) }
+  async fileQuery(key, query) { return projectReads.fileQuery.call(this, key, query) }
+  async projectStats(key, query) { return projectReads.projectStats.call(this, key, query) }
+  async storeStats(name) { return this.lfs.store.stats(name) }
 
   async commits(key, branch, limitText) {
     checkBranch(branch)
@@ -470,16 +435,10 @@ export class Projects {
 
   /** A Branch's own Commits (records), newest first: commit.list stops at the fork. */
   async ownCommits(project, branch, limit) {
-    const own = []
-    for (let pos = 0; pos !== null && own.length < limit; ) {
-      const page = await this.lfs.commit.list(project, branch.name, { page_size: Math.min(PAGE, limit), page_pos: pos })
-      for (const c of page.items) {
-        if (c.id === branch.forked_from || own.length >= limit) return own
-        own.push(c)
-      }
-      pos = page.next_page_pos ?? null
-    }
-    return own
+    const result = await this.lfs.branch.commits(project, branch.name, { page: 1, page_size: Math.min(PAGE, limit) })
+    const items = (result.items ?? []).map(c => ({ ...c, branch: c.branch ?? c.ref?.branch ?? branch.name }))
+    const boundary = items.findIndex(c => c.id === branch.forked_from)
+    return boundary < 0 ? items : items.slice(0, boundary)
   }
 
   /** CommitInfo[] of records, each with its changed paths. */
@@ -503,10 +462,9 @@ export class Projects {
     try {
       const items = []
       for (let cursor = null, pos = 0; ; ) {
-        const page = await this.lfs.commit.diff(project, c.parent, c.id, { paths_only: true, page_size: PAGE, ...(cursor ? { cursor } : { page_pos: pos }) })
+        const page = await this.lfs.commit.diff(project, c.parent, c.id, { paths_only: true, page_size: PAGE, ...(cursor ? { cursor } : {}) })
         items.push(...page.items.map(({ path, kind }) => ({ path, kind: String(kind).toLowerCase() })))
         if (page.next_cursor) cursor = page.next_cursor
-        else if (page.next_page_pos != null) pos = page.next_page_pos
         else break
       }
       keep(this.changes, c.id, items, KEEP_CHANGES)
@@ -517,48 +475,9 @@ export class Projects {
     }
   }
 
-  /** FsEntry[] of one folder; files get their size when the folder has at most STAT_MAX. */
-  async listDir(key, branch, path) {
-    checkBranch(branch)
-    checkPath(path)
-    const { key: project } = projectRef(key)
-    const items = await pages((p) => this.lfs.file.list(project, branch, path, p))
-    const entries = items.map((i) => ({ name: i.name, path: i.path, kind: i.type ?? 'file', size: typeof i.size === 'number' ? i.size : null, mode: i.mode ?? null }))
-    const files = entries.filter((e) => e.kind === 'file' && e.size === null)
-    if (files.length <= STAT_MAX) {
-      await each(files, WIDTH, async (e) => {
-        const stat = await this.lfs.file.stat(project, branch, e.path)
-        e.size = typeof stat.size === 'number' ? stat.size : null
-        if (typeof stat.mode === 'number') e.mode = stat.mode
-      })
-    }
-    return entries
-  }
-
-  /** `{ path, size, binary, text }`: text null when binary or over FILE_MAX; `truncated` when a line was too long to read whole. */
-  async file(key, branch, path) {
-    checkBranch(branch)
-    checkPath(path)
-    const { key: project } = projectRef(key)
-    const stat = await this.lfs.file.stat(project, branch, path)
-    if (stat.type === 'dir') throw refuse(400, 'IsDirectory', `${path} is a folder`)
-    const size = typeof stat.size === 'number' ? stat.size : null
-    if (size !== null && size > FILE_MAX) return { path, size, binary: false, text: null }
-    let text = ''
-    let truncated = false
-    try {
-      for (let line = 1; line !== null; ) {
-        const window = await this.lfs.file.read(project, branch, path, { start_line: line })
-        text += window.text ?? ''
-        truncated ||= !!window.line_truncated
-        line = window.next_line ?? null
-      }
-    } catch (error) {
-      if (error?.code === 'Binary') return { path, size, binary: true, text: null }
-      throw error
-    }
-    return { path, size: size ?? Buffer.byteLength(text), binary: false, text, ...(truncated ? { truncated } : {}) }
-  }
+  /** One bounded immutable directory page; metadata is read only for opened files. */
+  async listDir(key, branch, path, pin, pos) { return projectReads.listDir.call(this, key, branch, path, pin, pos) }
+  async file(key, branch, path, pin, line) { return projectReads.file.call(this, key, branch, path, pin, line) }
 
   /**
    * project.remove: refused InUse while any of its Sandbox records exists
@@ -582,36 +501,6 @@ export class Projects {
   /** Lets active Inits finish. */
   async close() {
     await Promise.all(this.creations.values())
-  }
-}
-
-const bytesOf = (n) => (typeof n === 'number' && n > 0 ? n : 0)
-
-/**
- * StoreStats summed over the Commits read (each record's logical, new_canonical,
- * new_stored, new_metadata), marked partial: 2.0 has no Store totals, so Init,
- * main's Layers and history before these Commits are not counted. Null with no Commit.
- */
-export function commitStats(byId, file) {
-  const commits = [...byId.values()]
-    .map((c) => ({ ...commitInfo(c), logical: bytesOf(c.logical), canonical: bytesOf(c.new_canonical), stored: bytesOf(c.new_stored), metadata: bytesOf(c.new_metadata) }))
-    .sort((a, b) => (a.at ?? 0) - (b.at ?? 0))
-  if (!commits.length) return null
-  const sum = (key) => commits.reduce((a, c) => a + c[key], 0)
-  const [logical, canonical, stored] = [sum('logical'), sum('canonical'), sum('stored')]
-  return {
-    partial: true,
-    logical,
-    canonical,
-    stored,
-    metadata: sum('metadata'),
-    file: file?.exists ? bytesOf(file.bytes) : 0,
-    free: 0,
-    dedupe: canonical > 0 ? logical / canonical : null,
-    compression: stored > 0 ? canonical / stored : null,
-    init: null,
-    main: null,
-    commits: commits.map(({ id, branch, message, at, kind, logical, canonical, stored }) => ({ id, branch, message, at, kind, logical, canonical, stored })),
   }
 }
 

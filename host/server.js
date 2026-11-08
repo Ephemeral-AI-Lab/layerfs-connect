@@ -8,6 +8,7 @@
 // preset and the presets it can start from) and /api/sim/reset.
 import { createHash, randomBytes, timingSafeEqual } from 'node:crypto'
 import { createServer } from 'node:http'
+import { stringify } from './cli/json.js'
 import { agentRoute } from './agents/routes.js'
 
 /** A comment line on every event stream this often, so idle proxies and sockets stay open. */
@@ -70,7 +71,7 @@ const CORS = {
 }
 
 function send(res, status, value) {
-  const body = JSON.stringify(value)
+  const body = stringify(value)
   res.writeHead(status, { ...CORS, 'content-type': 'application/json; charset=utf-8', 'content-length': Buffer.byteLength(body) })
   res.end(body)
 }
@@ -92,7 +93,7 @@ export function errorAnswer(error) {
   const code = typeof error?.code === 'string' ? error.code : 'failed'
   const status = Number.isInteger(error?.status) ? error.status : (STATUS[code] ?? 500)
   const detail = error?.detail && typeof error.detail === 'object' ? error.detail : null
-  return { status, body: { code, message: error?.message ?? String(error), ...(detail ? { detail } : {}), ...(isConversion(code, detail) ? { conversion: true } : {}) } }
+  return { status, body: { code, ...(error?.transport ? { transport: error.transport } : {}), message: error?.message ?? String(error), ...(detail ? { detail } : {}), ...(isConversion(code, detail) ? { conversion: true } : {}) } }
 }
 
 /**
@@ -110,7 +111,7 @@ export function errorAnswer(error) {
  * @param {(line: string) => void} [deps.log]
  */
 export function createHandler(deps) {
-  const { token, projects, storage = null, machines = null, sim = null, runs = () => null, agents = () => null, runsError = () => null, heartbeatMs = HEARTBEAT_MS, log = (line) => process.stderr.write(`${line}\n`) } = deps
+  const { token, projects, storage = null, machines = null, doctor = null, sim = null, runs = () => null, agents = () => null, runsError = () => null, heartbeatMs = HEARTBEAT_MS, log = (line) => process.stderr.write(`${line}\n`) } = deps
   const streams = new Set()
 
   /** The RunManager, or a 503 naming why it is not there. */
@@ -133,6 +134,11 @@ export function createHandler(deps) {
       return agentRoute(manager, method, parts.slice(2), body, query)
     }
     if (api !== 'api' || rest.length) return undefined
+    if (doctor && group === 'doctor-jobs' && !sub) {
+      if (!id && method === 'POST') return doctor.launch(body ?? {})
+      if (!id && method === 'GET') return doctor.list()
+      if (id && method === 'GET') return doctor.get(id)
+    }
     // Stores, buckets and the moves, backups and restores this host started (storage.js)
     if (storage) {
       if (group === 'storage' && !id && method === 'GET') return storage.view()
@@ -142,6 +148,7 @@ export function createHandler(deps) {
         if (!id && method === 'POST') return storage.createStore(body ?? {})
         // a PostgreSQL database: { name, url, password (a reference), synchronousCommit? }
         if (id === 'postgresql' && !sub && method === 'POST') return storage.connectPostgresql(body ?? {})
+        if (id && sub === 'stats' && method === 'GET') return projects.storeStats(id)
         if (id && !sub && method === 'DELETE') return storage.removeStore(id, { confirm: query.get('confirm') })
         if (id && sub === 'disconnect' && method === 'POST') return storage.disconnectStore(id)
         // a sqlite Store on native to a machine: { machine }
@@ -159,11 +166,14 @@ export function createHandler(deps) {
         if (!id && method === 'POST') return storage.connectBucket(body ?? {})
         if (id && !sub && method === 'DELETE') return storage.disconnectBucket(id)
         if (id && sub === 'files' && method === 'GET') return storage.listBucket(id)
+        if (id && sub === 'keys' && method === 'POST') return storage.replaceBucketKeys(id, body)
         // { store (the new Store's name), file? }: installs on native
         if (id && sub === 'restore' && method === 'POST') return storage.restore({ ...(body ?? {}), bucket: id })
         return undefined
       }
       if (group === 'storage-jobs' && id && !sub && method === 'GET') return storage.job(id)
+      if (group === 'storage-jobs' && id && sub === 'inspect' && method === 'POST') return storage.inspect(id)
+      if (group === 'storage-jobs' && id && sub === 'retry' && method === 'POST') return storage.retry(id)
       // layerfs doctor: report-only, starts nothing (#537 §8.7)
       if (group === 'doctor' && !id && method === 'GET') return storage.doctor()
     }
@@ -171,6 +181,7 @@ export function createHandler(deps) {
     if (machines && group === 'platforms' && !id && method === 'GET') return machines.platforms()
     if (machines && group === 'machines') {
       if (!id && !sub && method === 'GET') return machines.view()
+      if (id && sub === 'inspect' && method === 'GET') return machines.inspect(id)
       if (id && sub === 'start' && method === 'POST') return machines.start(id)
       if (id && sub === 'stop' && method === 'POST') return machines.stop(id)
       if (!id && !sub && method === 'POST') return machines.create(body)
@@ -202,13 +213,16 @@ export function createHandler(deps) {
       if (method !== 'GET') return undefined
       const branch = query.get('branch') ?? 'main'
       if (sub === 'history') return projects.history(id, query)
+      if (sub === 'branches') return projects.branches(id, query)
+      if (sub === 'file-query') return projects.fileQuery(id, query)
+      if (sub === 'stats') return projects.projectStats(id, query)
       if (sub === 'commits') return projects.commits(id, branch, query.get('limit'))
       // several Branches' Commits in one call: ?branch=a&branch=b
       if (sub === 'branch-commits') return projects.branchCommits(id, query.getAll('branch'))
       // the Sandboxes with their Workspaces (sandbox.get each)
       if (sub === 'sandboxes') return projects.sandboxes(id)
-      if (sub === 'fs') return projects.listDir(id, branch, query.get('path') ?? '/')
-      if (sub === 'file') return projects.file(id, branch, query.get('path'))
+      if (sub === 'fs') return projects.listDir(id, branch, query.get('path') ?? '/', query.get('pin'), query.get('pos') ?? 0)
+      if (sub === 'file') return projects.file(id, branch, query.get('path'), query.get('pin'), query.get('line') ?? 1)
       return undefined
     }
     // sandbox.close(name, { force }): ?force=1
@@ -218,6 +232,7 @@ export function createHandler(deps) {
     // a Workspace in it: { branch, fork?, name? } (only side Branches are mounted, D14)
     if (group === 'sandboxes' && id && sub === 'workspaces' && method === 'POST') return projects.mount(id, body ?? {})
     // workspace.unmount: ?discard=1
+    if (group === 'workspaces' && id && sub === 'status' && method === 'GET') return projects.lfs.workspace.status(id)
     if (group === 'workspaces' && id && !sub && method === 'DELETE') return projects.unmount(id, { discard: query.get('discard') === '1' })
     if (group === 'project-inits' && !id && method === 'GET') return projects.initJobs()
     if (group === 'project-inits' && id && !sub && method === 'GET') return projects.init(id)
@@ -252,10 +267,11 @@ export function createHandler(deps) {
     res.write(': connected\n\n')
     const manager = runs()
     const agentManager = agents()
-    const forward = (event) => res.write(`data: ${JSON.stringify(event)}\n\n`)
+    const forward = (event) => res.write(`data: ${stringify(event)}\n\n`)
     manager?.on('event', forward)
     agentManager?.on('event', forward)
     storage?.on?.('event', forward)
+    doctor?.on?.('event', forward)
     const beat = setInterval(() => res.write(': heartbeat\n\n'), heartbeatMs)
     const stream = { res, close: () => res.end() }
     streams.add(stream)
@@ -264,6 +280,7 @@ export function createHandler(deps) {
       manager?.off('event', forward)
       agentManager?.off('event', forward)
       storage?.off?.('event', forward)
+      doctor?.off?.('event', forward)
       streams.delete(stream)
     }
     req.on('close', done)

@@ -240,3 +240,50 @@ controls live inside host-backed details. Map headers retain New Sandbox and Ref
 `HostSandboxDetail.tsx` reads the selected Sandbox and verifies its project/machine identity;
 Refresh rereads that record. Unknown workspace reads and unreported files/activity stay
 explicitly unavailable. Real observations do not carry simulation playback or labels.
+
+## CLI resource observations (phase 2, #147)
+
+```text
++-[1] Sandbox ---------------------------------------------------------+
+| api-dev - Recorded state on lists; current state on open / Refresh    |
+| sandbox.create - record - Outcome unknown (when op.uncertain)         |
++-[2] Overview --------------------------------------------------------+
+| Sandbox ID  <id>                 Created  <created>                  |
+| Workspaces unavailable: <down_reason>  (no zero count)                |
+| No runtime recorded (gone); lost remains Lost                        |
++-[3] Workspace Details -----------------------------------------------+
+| Base commit <base>               Base Layer <base_layer>             |
+| Branch head <workspace status>   Head moved since mount Yes / No / ?  |
+| Changes 2 changed inodes - 3 changed entries                          |
+| Pending merge Yes / No / ?       Activity Uncertain / LocalFailure   |
++---------------------------------------------------------------------+
+```
+
+1. Lists poll records only; opening detail/Refresh reads the daemon with shared Busy backoff.
+2. Down reason, lost, and gone retain their distinct meanings; a missing observation is unknown.
+3. Counts describe overlay changes, never per-file patches. Removed tabs stay removed.
+
+Force close appears only after MountsActive or Busy with execs, with explicit SIGTERM,
+SIGKILL after 5 seconds and loss of uncommitted changes confirmation. Chat-owned names
+warn that closing ends the chat Workspace. Unknown requires a fresh Sandbox read.
+
+## CLI phase 2: shared Doctor and Stop (2026-11-09)
+
+```text
+Resource header                         [Diagnose / Check integrity / Test connection]
++ Doctor · saved resource ---------------------------------------------------+
+| Target / operation    Full by default; optional Quick or explicit write test |
+| Optional time budget                                            [Run diagnosis] |
+| Queued / Running · elapsed (no progress percentage, no Stop)                 |
+| Findings: N                Coverage: complete / incomplete                    |
+| > failed / blocked / unknown checks first                                   |
+| > evidence · dependencies · advisory suggestion                             |
+| Previous dated reports (potentially stale)                                  |
++----------------------------------------------------------------------------+
+```
+
+Actions open setup only. Navigation and Refresh never launch targeted audits.
+Sandbox uses the header action and its existing Overview/Workspaces tabs.
+Connection observations do not prove integrity. Simulated reports say so.
+Mounted chat Stop disables while stopping and retains Workspace/Sandbox; output
+appears after command completion. Cancellation unknown offers explicit retry.

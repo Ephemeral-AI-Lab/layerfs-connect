@@ -56,9 +56,6 @@ importers:
       entities:
         specifier: 9.0.0
         version: 9.0.0
-      layerfs:
-        specifier: link:../layerfs-v2-merge/api/node
-        version: link:../layerfs-v2-merge/api/node
       lucide-react:
         specifier: 1.61.0
         version: 1.61.0(@types/react@19.3.0)(react@19.3.1)

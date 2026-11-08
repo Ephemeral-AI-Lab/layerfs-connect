@@ -1,13 +1,15 @@
 import { ArrowUpRight, ChevronDown, ChevronRight, GitBranch, LoaderCircle, RefreshCw, Search, X } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { Link, useLocation, useSearchParams } from 'react-router-dom'
+import { exactBytes } from '@/layerfs/exact-count'
 import type { CommitInfo } from '@/layerfs/host-api'
 import { historyApi } from '@/layerfs/history-api'
 import { branchLanes, graphNodes, layoutNodes, type BranchPage, type HistoryBranch, type Source } from './model'
+import { HistoryPreview } from './HistoryPreview'
+import { connectBridge } from '@/layerfs/bridge'
+import { HistoryComparison } from './HistoryComparison'
 import { HistoryGraph } from './HistoryGraph'
 import './history.css'
-import { connectBridge } from '@/layerfs/bridge'
-import { HistoryPreview } from './HistoryPreview'
 
 type View = { query: string; branch: string; selected: string | null; expanded: Set<string>; families: Set<string>; sides: Map<string, number>; top: number; left: number }
 const saved = new Map<string, View>()
@@ -31,10 +33,11 @@ interface ProjectHistoryProps {
   project: string; viewKey?: string; trace?: HistoryTrace; example?: boolean; tick?: number
 }
 export function ProjectHistory(props: ProjectHistoryProps) {
+  const location = useLocation()
+  const [sample, setSample] = useState(false)
   const available = import.meta.env.DEV && connectBridge.mode === 'sim' && props.project === 'shop/api' && !props.trace
-  const [preview, setPreview] = useState(true)
-  if (available && preview) return <HistoryPreview project={props.project} onExit={() => setPreview(false)} />
-  return <>{available && <div className="hc-host-notice fp-preview-notice"><span>Browsing simulated host history</span><button type="button" onClick={() => setPreview(true)}>Preview history comparisons ↗</button></div>}<HostProjectHistory {...props} /></>
+  if (available && sample) return <HistoryPreview project={props.project} onExit={() => setSample(false)} />
+  return <>{available && <div className="fp-preview-notice"><span>Browsing simulated CLI history</span><button onClick={() => setSample(true)}>Open labelled design preview</button></div>}{location.pathname.endsWith('/diff') ? <HistoryComparison project={props.project} /> : <HostProjectHistory {...props} />}</>
 }
 
 function HostProjectHistory({ project, viewKey = project, trace, example = false, tick = 0 }: ProjectHistoryProps) {
@@ -53,7 +56,7 @@ function HostProjectHistory({ project, viewKey = project, trace, example = false
   const [busy, setBusy] = useState<string | null>('initial')
   const [error, setError] = useState<string | null>(null)
   const [revision, setRevision] = useState(0)
-  const [detail, setDetail] = useState<{ item: CommitInfo; changes: CommitInfo['changes'] | null; nextChanges: number | null } | null>(null)
+  const [detail, setDetail] = useState<{ item: CommitInfo; changes: CommitInfo['changes'] | null; nextChanges: string | null } | null>(null)
   const [detailError, setDetailError] = useState<string | null>(null)
   const [linkedSources, setLinkedSources] = useState(new Map<string, Source>())
   const [finding, setFinding] = useState(false)
@@ -85,7 +88,7 @@ function HostProjectHistory({ project, viewKey = project, trace, example = false
         result.branches.push(...more.branches); result.next = more.next
       }
       setBranches(result.branches); setBranchNext(result.next)
-      const names = result.branches.filter(b => b.name !== 'main').slice(0, 8)
+      const names = result.branches.slice(0, 8)
       const loaded: Record<string, BranchPage> = {}
       // Bound concurrent Store reads, irrespective of the number of forks.
       for (let i = 0; i < names.length; i += 4) {
@@ -101,7 +104,7 @@ function HostProjectHistory({ project, viewKey = project, trace, example = false
   }, [project, revision, tick])
 
   async function loadBranch(name: string, more = false) {
-    if (busy || name === 'main') return
+    if (busy) return
     setBusy(name); setError(null)
     try {
       const previous = pages[name]
@@ -195,12 +198,18 @@ function HostProjectHistory({ project, viewKey = project, trace, example = false
           {trace && !source && selected.kind !== 'group' && <p>{finding ? 'Finding the producing Trace step…' : 'No linked trace in this chat or its agents.'}</p>}
           {sourceError && <p role="alert" className="history-error">Trace lookup failed: {sourceError}</p>}
           {selected.parent && !layout.points.has(selected.parent) && <p>Earlier parent is not loaded: <code>{short(selected.parent)}</code></p>}
+          {selectedCommit?.sourceBranch && <p>Source Branch: {selectedCommit.sourceBranch}</p>}
+          {selectedCommit?.sourceCommit && <p>Source Commit: <code>{short(selectedCommit.sourceCommit)}</code></p>}
+          {selectedCommit?.base && <p>Base Layer: <code>{short(selectedCommit.base)}</code></p>}
+          {selectedCommit?.logical != null && <p>Saved tree size: {exactBytes(selectedCommit.logical)}</p>}
+          {selected.kind === 'layer' && <p>Publication time not recorded{selectedCommit?.sourceTime ? ` · source saved ${new Date(selectedCommit.sourceTime).toLocaleString()}` : ''}</p>}
+          {selectedCommit && <Link className="history-trace-link" to={`/storage/${project}/history/diff?branch=${encodeURIComponent(selectedCommit.branch)}&commit=${selectedCommit.id}${selectedCommit.parent ?? selectedCommit.base ? `&from=${selectedCommit.parent ?? selectedCommit.base}` : ''}`}>Compare saved versions</Link>}
           {selected.second && <p>Merge parent: <code>{short(selected.second)}</code></p>}
           {detailError && <p role="alert" className="history-error">Changes could not load: {detailError}</p>}
           {selectedCommit && selected.kind !== 'group' && !detail && !detailError && <p>Reading changed paths…</p>}
-          {detail && <><h4>{selected.kind === 'group' ? 'Net changed paths' : 'Changed paths'}</h4>{detail.changes == null ? <p>Changes unavailable. LayerFS cannot compare a first checkpoint with its base Layer.</p> : detail.changes.length === 0 ? <p>No file changes.</p> : <ul className="history-paths">{detail.changes.map((c,i) => <li key={`${c.path}:${i}`}><span>{c.kind}</span><code>{c.path}</code></li>)}</ul>}{detail.nextChanges != null && <button disabled={!!busy} onClick={() => { setBusy('changes'); void historyApi.detail(project, detail.item.branch, detail.item.id, selected.kind === 'group' ? selected.commits[0].parent ?? undefined : undefined, detail.nextChanges!).then(next => setDetail(d => d ? { ...next, changes: [...(d.changes ?? []), ...(next.changes ?? [])] } : next)).catch(e => setDetailError(e.message)).finally(() => setBusy(null)) }}>Load more changed paths</button>}</>}
+          {detail && <><h4>{selected.kind === 'group' ? 'Net changed paths' : 'Changed paths'}</h4>{detail.changes == null ? <p>No comparison endpoint is available.</p> : detail.changes.length === 0 ? <p>{selected.kind === 'layer' && !selectedCommit?.parent && !selectedCommit?.base ? 'Initial import.' : 'No file changes.'}</p> : <ul className="history-paths">{detail.changes.map((c,i) => <li key={`${c.path}:${i}`}><span>{c.kind}</span><code>{c.path}</code></li>)}</ul>}{detail.nextChanges != null && <button disabled={!!busy} onClick={() => { setBusy('changes'); void historyApi.detail(project, detail.item.branch, detail.item.id, selected.kind === 'group' ? selected.commits[0].parent ?? undefined : undefined, detail.nextChanges!).then(next => setDetail(d => d ? { ...next, changes: [...(d.changes ?? []), ...(next.changes ?? [])] } : next)).catch(e => setDetailError(e.message)).finally(() => setBusy(null)) }}>Load more changed paths</button>}</>}
         </>}
-        {selected && view.branch && view.branch !== 'main' && <div className="history-pagination">
+        {selected && view.branch && <div className="history-pagination">
           {pages[view.branch]?.next != null ? <button disabled={!!busy} onClick={() => void loadBranch(view.branch, true)}>Load earlier checkpoints</button> : !pages[view.branch] ? <button disabled={!!busy} onClick={() => void loadBranch(view.branch)}>Load checkpoints</button> : <p>All available checkpoints on this branch loaded.</p>}
         </div>}
       </aside>
@@ -237,6 +246,6 @@ function HostProjectHistory({ project, viewKey = project, trace, example = false
       <span><i className="legend-bough" />Branch</span><span><i className="legend-merge" />Merge</span><span><i className="legend-publish" />Publish</span>
       <span className="history-legend-hint">Drag to pan · ⌘/Ctrl + scroll to zoom</span>
     </div>
-    <div className="history-footer"><span>{example ? 'Read-only sample · ' : ''}Latest main Layer only · earlier Layers are not exposed by the SDK.</span>{trace && trace.earlier > 0 && <button disabled={trace.loadingOlder} onClick={() => void trace.loadEarlier()}>Load earlier Trace links</button>}{(trace?.error || sourceError) && <span role="alert">{trace?.error ?? sourceError}</span>}</div>
+    <div className="history-footer"><span>{example ? 'Read-only sample · ' : ''}Saved Commit and Layer history · pinned pages</span>{trace && trace.earlier > 0 && <button disabled={trace.loadingOlder} onClick={() => void trace.loadEarlier()}>Load earlier Trace links</button>}{(trace?.error || sourceError) && <span role="alert">{trace?.error ?? sourceError}</span>}</div>
   </div>
 }

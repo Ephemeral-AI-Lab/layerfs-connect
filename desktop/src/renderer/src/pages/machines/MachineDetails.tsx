@@ -1,3 +1,4 @@
+import { DoctorAction } from '@/components/doctor/DoctorPanel'
 import { fill } from '@/lib/text'
 // The machine page's Details tab (docs/connect/README.md, "Machine page"):
 // everything LayerFS says about one machine, in cards. Overview (its platform
@@ -65,6 +66,7 @@ export function MachineDetails({ m, live, platform: p, layerfs, sandboxes, store
 
   return (
     <div className="flex flex-col gap-4">
+      <div><DoctorAction target="machine" name={m.name} label="Run diagnostics" /></div>
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <Section icon={Info} title={'Overview'}>
           <Row label={'Platform'}>
@@ -143,7 +145,7 @@ export function MachineDetails({ m, live, platform: p, layerfs, sandboxes, store
           {p?.sqlite && <Row label={'SQLite calls run in'}>{fill(CALLS[p.sqlite] ?? p.sqlite)}</Row>}
           <Row label={'PostgreSQL Sandboxes'} tone={m.supports?.postgresql_sandbox === false ? 'muted' : undefined}>
             {m.supports?.postgresql_sandbox
-              ? fill(postgresql === 1 ? 'Yes · reach 1 PostgreSQL Store' : 'Yes · reach {n} PostgreSQL Stores', { n: postgresql })
+              ? fill(postgresql === 1 ? 'Supported · 1 Store configured' : 'Supported · {n} Stores configured', { n: postgresql })
               : m.supports?.postgresql_sandbox === false
                 ? (m.supports.reason ?? 'No')
                 : 'Not said by this LayerFS'}

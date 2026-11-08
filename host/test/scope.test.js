@@ -34,9 +34,11 @@ async function call(s, op, args, answer = () => ({})) {
 /** Runs the `layerfs` command a scoped run's bash finds (cli-shim.mjs) over a stand-in native binary that prints `answer`. */
 function shim(s, args, { answer = '{"kind":"Forked"}', status = 0, stderr = '', env = {} } = {}) {
   const native = join(s.dir, `native-${++n}`)
-  writeFileSync(native, `#!/bin/sh\necho "$@" >> ${JSON.stringify(join(s.dir, 'native.log'))}\necho '${answer}'\n${stderr ? `echo '${stderr}' >&2\n` : ''}exit ${status}\n`)
+  const output = args[0] === 'workspace' && args[1] === 'exec' ? JSON.stringify({stream:'stdout',bytes:answer})+'\n'+JSON.stringify({result:{exit_code:status,kind:`exit:${status}`,stdout:answer,stderr:''}}) : answer
+  const cliStatus = args[0] === 'workspace' && args[1] === 'exec' ? 0 : status
+  writeFileSync(native, `#!/bin/sh\necho "$@" >> ${JSON.stringify(join(s.dir, 'native.log'))}\necho '${output}'\n${stderr ? `echo '${stderr}' >&2\n` : ''}exit ${cliStatus}\n`)
   chmodSync(native, 0o755)
-  const done = spawnSync(process.execPath, [fileURLToPath(new URL('../runs/cli-shim.mjs', import.meta.url)), native, ...args], { encoding: 'utf8', env: { ...process.env, [SCOPE_ENV]: s.dir, ...env } })
+  const done = spawnSync(process.execPath, [fileURLToPath(new URL('../runs/cli-shim.mjs', import.meta.url)), native, ...args], { encoding: 'utf8', env: { ...process.env, [SCOPE_ENV]: s.dir, LAYERFS_HOME: s.dir, ...env } })
   return { status: done.status, stdout: done.stdout, calls: readFileSync(join(s.dir, 'native.log'), 'utf8').trim().split('\n') }
 }
 
@@ -52,8 +54,8 @@ test('the command: a publish moves the trunk, so the next fork from main starts 
 
 test('the command: a refused publish keeps the trunk and passes on its exit code', () => {
   const s = scope()
-  const refused = shim(s, ['branch', 'publish', 'p', 'skeleton'], { answer: '{"code":"NotFound"}', status: 3 })
-  assert.equal(refused.status, 3)
+  const refused = shim(s, ['branch', 'publish', 'p', 'skeleton'], { answer: '', stderr: '{"code":"NotFound","message":"not found"}', status: 125 })
+  assert.equal(refused.status, 125)
   assert.deepEqual(s.trunk(), { k: 0, branch: 'tour_1.main' })
   assert.deepEqual(s.trunks(), [{ k: 0, branch: 'tour_1.main' }])
 })
@@ -133,7 +135,7 @@ test('the command: a `file apply --from` keeps a root /.lww and adds its copy un
   const native = join(s.dir, 'native-apply')
   writeFileSync(native, `#!/bin/sh\nwhile [ "$1" != --from ]; do shift; done\ncat "$2" > ${JSON.stringify(join(s.dir, 'sent.json'))}\necho '{"kind":"Committed"}'\n`)
   chmodSync(native, 0o755)
-  const done = spawnSync(process.execPath, [fileURLToPath(new URL('../runs/cli-shim.mjs', import.meta.url)), native, 'file', 'apply', 'p', 'b', '-m', 'm', '--from', from], { encoding: 'utf8', env: { ...process.env, [SCOPE_ENV]: s.dir } })
+  const done = spawnSync(process.execPath, [fileURLToPath(new URL('../runs/cli-shim.mjs', import.meta.url)), native, 'file', 'apply', 'p', 'b', '-m', 'm', '--from', from], { encoding: 'utf8', env: { ...process.env, [SCOPE_ENV]: s.dir, LAYERFS_HOME: s.dir } })
   assert.equal(done.status, 0, done.stderr)
   const sent = JSON.parse(readFileSync(join(s.dir, 'sent.json'), 'utf8'))
   const expected = s.args('file.apply', { changes: JSON.parse(readFileSync(from, 'utf8')) }).changes

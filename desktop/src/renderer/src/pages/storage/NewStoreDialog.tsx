@@ -175,7 +175,7 @@ export function NewDialog({ open, onOpenChange, view, onChanged, onNewBucket, in
           <Section title={'Store'}>
             <div className="flex flex-col gap-x-4 gap-y-3.5 sm:flex-row">
               <div className="min-w-0 flex-1"><TextField label={'Name'} value={f.name ?? ''} onChange={set('name')} placeholder="team" autoFocus mono /></div>
-              <div className="shrink-0 sm:min-w-44"><Choice label="synchronous_commit" value={f.sync ?? ''} onChange={set('sync')} options={['off', 'local', 'remote_write', 'on', 'remote_apply'].map((v) => ({ value: v, label: v }))} hint={'Left out: the database’s own setting.'} /></div>
+              <div className="shrink-0 sm:min-w-44"><Choice label="synchronous_commit" value={f.sync ?? ''} onChange={set('sync')} options={['off', 'local', 'remote_write', 'on', 'remote_apply'].map((v) => ({ value: v, label: v }))} hint={'Default: off.'} /></div>
             </div>
           </Section>
           <Section title={'Database'}>

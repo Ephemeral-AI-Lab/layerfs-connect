@@ -12,7 +12,6 @@ import { MoreButton } from '@/pages/storage/RowParts'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { clearingCall, opWords, stateLook } from '@/layerfs/states'
 import { shortDigest } from '@/layerfs/format'
-import { useHostQuery, usePoll } from '@/layerfs/use-host'
 import { type MachineSandbox, projectRef, type SandboxInfo } from '@/layerfs/host-api'
 
 export const SANDBOX_CAPACITY = 16
@@ -41,8 +40,8 @@ function SandboxBox({ b, ops, onOpenProject, sampleMetrics }: { b: MachineSandbo
   const closing = useClose(b, ops)
   const ref = b.project ? projectRef(b.project) : null
   const used = b.workspaces
-  const preview = useHostQuery(() => used === 0 ? Promise.resolve(null) : ops.read(b.name), [b.name, used, b.state])
-  usePoll(preview.reload, 15000, used !== 0 && b.state === 'running')
+  const preview: { data: SandboxInfo | null; error: Error | null } = { data: null, error: null }
+  // Sandbox detail performs live daemon reads on open and Refresh; cards show recorded inventory.
   const workspaces = preview.data?.workspaces ?? []
   const imageRef = b.image || preview.data?.image
   const backend = b.backend || preview.data?.backend
@@ -77,8 +76,8 @@ function SandboxBox({ b, ops, onOpenProject, sampleMetrics }: { b: MachineSandbo
     <section className="machine-card-workspaces" aria-label={`Workspaces in ${b.name}`}>
       <h4>Workspaces <span aria-label={used === null ? 'Workspace count unknown' : `${used} of ${SANDBOX_CAPACITY} workspaces`}>{used ?? '—'} <span className="text-faint">/ {SANDBOX_CAPACITY}</span></span></h4>
       {used === 0 ? <p className="machine-card-empty">No workspaces mounted</p>
-        : preview.error || preview.data?.refusal || preview.data?.unread ? <p className="machine-card-empty" title={preview.error?.message || preview.data?.refusal?.message}>Workspace details unavailable</p>
-        : !preview.data ? <p className="machine-card-empty">Reading workspaces…</p>
+        : preview.error || preview.data?.refusal || preview.data?.unread || preview.data?.downReason ? <p className="machine-card-empty" title={preview.error?.message || preview.data?.refusal?.message}>Workspace details unavailable</p>
+        : !preview.data ? <p className="machine-card-empty">Open Sandbox to read Workspace details.</p>
         : workspaces.length === 0 ? <p className="machine-card-empty">No workspace details reported</p>
         : <>
           <div className="machine-workspace-head" aria-hidden="true"><span>Workspace</span><span>Branch</span></div>
@@ -93,7 +92,7 @@ function SandboxBox({ b, ops, onOpenProject, sampleMetrics }: { b: MachineSandbo
     <footer className="machine-sandbox-box-footer">
       <span className="machine-module-status" title={operation ?? undefined}>
         <span aria-hidden="true" className="machine-module-dot" data-tone={look.tone} />
-        <span className="truncate">{look.label}{operation ? ` · ${operation}` : ''}</span>
+        <span className="truncate">Recorded: {look.label}{operation ? ` · ${operation}` : ''}</span>
       </span>
       <span className="machine-card-open">Open sandbox <ArrowUpRight aria-hidden="true" className="size-4" /></span>
     </footer>
@@ -111,6 +110,11 @@ function useClose(b: MachineSandbox, ops: SandboxOps) {
   const [error, setError] = useState<unknown>(null)
   const [unknown, setUnknown] = useState<string[] | null>(null)
   const close = async (force: boolean) => {
+    if ((error as { code?: string } | null)?.code === 'Unknown') {
+      setBusy(true)
+      try { await ops.read(b.name); setError(null) } catch (e) { setError(e) } finally { setBusy(false) }
+      return
+    }
     setBusy(true)
     setError(null)
     try {
@@ -121,12 +125,14 @@ function useClose(b: MachineSandbox, ops: SandboxOps) {
       setBusy(false)
     }
   }
-  return { busy, error, unknown, close }
+  const refusal = error as { code?: string; detail?: { execs?: unknown[] } } | null
+  const forceAllowed = refusal?.code === 'MountsActive' || (refusal?.code === 'Busy' && !!refusal.detail?.execs?.length)
+  return { busy, error, unknown, close, forceAllowed, uncertain: refusal?.code === 'Unknown' }
 }
 
 /** The card's menu: its project, and Close (Force close once a close was refused). */
 function SandboxMenu({ b, closing, onOpenProject }: { b: MachineSandbox; closing: ReturnType<typeof useClose>; onOpenProject?: Props['onOpenProject'] }) {
-  const { busy, error, close } = closing
+  const { busy, close, forceAllowed, uncertain } = closing
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -134,9 +140,9 @@ function SandboxMenu({ b, closing, onOpenProject }: { b: MachineSandbox; closing
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="min-w-48">
         {b.project && onOpenProject && <DropdownMenuItem onSelect={() => onOpenProject(b.project!, 'sandboxes')}>{'Open project'}</DropdownMenuItem>}
-        <DropdownMenuItem variant="destructive" disabled={busy || b.state === 'gone'} onSelect={() => void close(error !== null)} title={error !== null ? 'Close even with Workspaces whose state LayerFS cannot learn' : 'Close this Sandbox'}>
+        <DropdownMenuItem variant="destructive" disabled={busy || b.state === 'gone'} onSelect={() => { if (forceAllowed && !window.confirm('Running commands receive SIGTERM, then SIGKILL after 5 seconds. Uncommitted changes are lost. Force close?')) return; if (b.name.startsWith('chat.') && !window.confirm(`Used by chat ${b.name.slice(5)}; closing ends its Workspace. Close?`)) return; void close(forceAllowed) }} title={forceAllowed ? 'Close even with Workspaces whose state LayerFS cannot learn' : 'Close this Sandbox'}>
           <X />
-          {error !== null ? 'Force close' : 'Close Sandbox'}
+          {forceAllowed ? 'Force close' : uncertain ? 'Read Sandbox' : 'Close Sandbox'}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

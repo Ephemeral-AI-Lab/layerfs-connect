@@ -2,11 +2,11 @@ import type { CommitInfo } from '@/layerfs/host-api'
 import type { TraceRecord } from '@/layerfs/trace-api'
 
 export interface HistoryBranch { name: string; head: string | null; base: string; forkedFrom: string | null }
-export interface BranchPage { items: CommitInfo[]; next: number | null; head: string | null }
+export interface BranchPage { items: CommitInfo[]; next: string | null; head: string | null }
 export interface Source { row: TraceRecord; child?: string; checkpoint: number | null }
 export interface GraphNode {
   id: string; branch: string; label: string; commits: CommitInfo[]; parent: string | null;
-  second: string | null; kind: 'layer' | 'checkpoint' | 'group' | 'fork'; at: number | null
+  second: string | null; source?: string | null; kind: 'layer' | 'checkpoint' | 'group' | 'fork'; at: number | null
 }
 
 export function sourcesOf(records: TraceRecord[], child?: string) {
@@ -31,8 +31,9 @@ export function graphNodes(branches: HistoryBranch[], pages: Record<string, Bran
   const nodes: GraphNode[] = []
   const main = branches.find(b => b.name === 'main')
   const publish = main?.head ? sources.get(main.head)?.row.writes?.find(w => w.kind === 'publish' && w.layer === main.head && w.status === 'ok') : undefined
-  if (main?.head) nodes.push({ id: main.head, branch: 'main', label: 'Latest Layer', commits: [], parent: publish?.commit ?? null, second: null, kind: 'layer', at: null })
-  const layerIds = new Set(main?.head ? [main.head] : [])
+  if (main?.head && !pages.main?.items.length) nodes.push({ id: main.head, branch: 'main', label: 'Latest Layer', commits: [], parent: null, source: publish?.commit ?? null, second: null, kind: 'layer', at: null })
+  for (const c of pages.main?.items ?? []) nodes.push({ id: c.id, branch: 'main', label: c.message || 'Layer', commits: [c], parent: c.parent, second: null, source: c.sourceCommit, kind: 'layer', at: c.at })
+  const layerIds = new Set([...(main?.head ? [main.head] : []), ...(pages.main?.items ?? []).map(c => c.id)])
   for (const b of branches) if (b.forkedFrom?.startsWith('32') && !layerIds.has(b.forkedFrom)) {
     layerIds.add(b.forkedFrom)
     nodes.push({ id: b.forkedFrom, branch: 'main', label: 'Earlier base Layer', commits: [], parent: null, second: null, kind: 'layer', at: null })
@@ -126,7 +127,7 @@ export function branchLanes(branches: HistoryBranch[], pages: Record<string, Bra
 export function layoutNodes(nodes: GraphNode[], lanes: Map<string, number>, availableWidth = 1000, availableHeight = 500) {
   const byCommit = new Map<string, GraphNode>()
   for (const n of nodes) { byCommit.set(n.id, n); for (const c of n.commits) byCommit.set(c.id, n) }
-  const ordered = topological([...nodes].sort((a,b) => (a.at ?? 0) - (b.at ?? 0)), n => [n.parent, n.second].flatMap(id => {
+  const ordered = topological([...nodes].sort((a,b) => (a.at ?? 0) - (b.at ?? 0)), n => [n.parent, n.second, n.source].flatMap(id => {
     const p = id && byCommit.get(id)
     return p && p !== n ? [p] : []
   }))

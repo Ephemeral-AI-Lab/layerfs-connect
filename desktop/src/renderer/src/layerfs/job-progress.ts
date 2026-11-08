@@ -17,8 +17,8 @@ export const STEPS: Record<Kind, readonly string[]> = {
   push: ['check', 'snapshot', 'send', 'verify', 'install', 'record', 'retire'],
   pull: ['check', 'snapshot', 'send', 'verify', 'install', 'record', 'retire'],
   move: ['check', 'snapshot', 'send', 'verify', 'install', 'record', 'retire'],
-  backup: ['snapshot', 'send', 'upload'],
-  restore: ['download', 'install'],
+  backup: ['check', 'snapshot', 'send', 'check', 'hash', 'upload'],
+  restore: ['check', 'download', 'verify', 'install'],
 }
 
 /** The steps that move the Store's bytes: drawn wide. */
@@ -42,9 +42,10 @@ export const stepShare = (j: StorageJob) => (j.total && !j.ended ? Math.min(1, M
 
 /** The bar's segments for one run of a call's steps (a move's half is one run). */
 export function segmentsOf(j: StorageJob): Segment[] {
-  const steps = STEPS[j.kind]
+  const seen = j.phases?.filter(p => p.half === (j.half ?? null)).map(p => p.phase)
+  const steps = seen?.length ? seen : [...STEPS[j.kind], ...(!STEPS[j.kind].includes(j.phase ?? '') && j.phase ? [j.phase] : [])]
   const ok = j.ended !== null && j.error === null
-  const at = j.error ? steps.indexOf(j.error.phase ?? '') : j.phase ? steps.indexOf(j.phase) : j.ended ? -1 : 0
+  const at = j.error ? steps.lastIndexOf(j.error.phase ?? '') : j.phase ? steps.lastIndexOf(j.phase) : j.ended ? -1 : 0
   return steps.map((step, i) => {
     const state: StepState = ok || i < at ? 'done' : i === at ? (j.error ? 'failed' : 'now') : 'todo'
     return { step, weight: weightOf(step), state, share: state === 'now' ? stepShare(j) : null }
@@ -65,8 +66,8 @@ export function barOf(j: StorageJob): Segment[][] {
 
 /** Where a running job is: "step 4 of 7", from its segments. */
 export function stepCount(j: StorageJob) {
-  const steps = STEPS[j.kind]
-  return { at: Math.max(0, steps.indexOf(j.phase ?? '')) + 1, of: steps.length }
+  const steps = segmentsOf(j)
+  return { at: Math.max(0, steps.findIndex(s => s.state === 'now' || s.state === 'failed')) + 1, of: steps.length }
 }
 
 /** A step as words: "sending", "verifying". */
@@ -99,6 +100,9 @@ export function doingWords(j: StorageJob): string {
 
 /** How it ended, in words: "Pushed to docker", "Push to docker failed in verify". */
 export function endedWords(j: StorageJob): string {
+  if (j.summary) return j.summary
+  if (j.outcome === 'unknown') return 'Outcome unknown · Inspect'
+  if (j.outcome === 'interrupted') return 'Interrupted · Final result unavailable'
   const to = j.kind === 'pull' ? place(j.from) : j.kind === 'backup' || j.kind === 'restore' ? j.target : place(j.target)
   if (j.error) {
     const what = { push: 'Push to {place}', pull: 'Pull from {place}', move: 'Move to {place}', backup: 'Backup to {place}', restore: 'Restore from {place}' }[j.kind]

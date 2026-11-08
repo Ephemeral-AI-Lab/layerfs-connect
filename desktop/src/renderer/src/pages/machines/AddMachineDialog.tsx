@@ -1,3 +1,5 @@
+import { useElapsed } from '@/layerfs/use-elapsed'
+import { host } from '@/layerfs/client'
 import { fill } from '@/lib/text'
 // Add a machine (docs/ui/machines.md), the dialog New machine opens:
 // one row per platform this host creates (machine.platforms), with its
@@ -156,6 +158,9 @@ function VmMachineForm({ kind, machines, platforms, act, onDone, onCancel }: { k
   const [tried, setTried] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<unknown>(null)
+  const elapsed = useElapsed(busy)
+  const [inspection, setInspection] = useState<string | null>(null)
+  const inspect = async () => { try { const answer = await host.inspectMachine(f.name.trim()); setInspection(`Observed ${new Date().toLocaleTimeString()}: ${answer.state ?? 'unknown'}`) } catch (e) { setInspection(e instanceof Error ? e.message : String(e)) } }
   const errors = vmErrors(f, machines)
   const shown: FormErrors<VmForm> = tried ? errors : {}
   const set = (key: keyof VmForm) => (e: React.ChangeEvent<HTMLInputElement>) => setF({ ...f, [key]: e.target.value })
@@ -225,7 +230,8 @@ function VmMachineForm({ kind, machines, platforms, act, onDone, onCancel }: { k
         )}
       </div>
 
-      <FormButtons busy={busy} label={'Create'} busyLabel={'Creating…'} onCancel={onCancel} error={error} invalid={tried && Object.keys(errors).length > 0} />
+      {error !== null && <div className="flex flex-wrap gap-2 text-sm"><Button type="button" variant="outline" onClick={() => void inspect()}>Inspect current state</Button>{(error as { code?: string }).code === 'Unknown' && <Button type="button" variant="outline" onClick={() => { onCancel(); onDone(f.name.trim()) }}>View machine and removal options</Button>}{inspection && <p role="status">{inspection}</p>}</div>}
+      <FormButtons busy={busy} label={'Create'} busyLabel={`Creating… ${elapsed}s`} onCancel={onCancel} error={error} invalid={tried && Object.keys(errors).length > 0} />
     </form>
   )
 }

@@ -17,12 +17,13 @@ node tools/smoke-package.mjs 'dist/mac-arm64/LayerFS Connect.app'
 node tools/smoke-settings.mjs 'dist/mac-arm64/LayerFS Connect.app'
 ```
 
-Root and desktop dependencies must already be installed. The linked LayerFS
-checkout must have its native addon, CLI and daemon built. Set
-`LAYERFS_CONNECT_CLI` and `LAYERFS_CONNECT_DAEMON` to select other native binaries.
+Root and desktop dependencies must already be installed. Set absolute
+`LAYERFS_CONNECT_CLI` and `LAYERFS_CONNECT_DAEMON` paths to the matching pinned
+builds before packaging. The CLI must report `dirty:false` and the `postgresql`
+feature through `--version --json`; its identity ships in `runtime/layerfs-build.json`.
 
 The app includes Electron, a private Node runtime, the host, its installed Pi
-dependency graph, the LayerFS addon/CLI/daemon, and scenario resources. Backend
+dependency graph, the pinned LayerFS CLI/daemon, and scenario resources. Backend
 dependency links remain inside the app. It needs neither a source checkout nor
 system Node. The host runs as a child process and exits when the desktop quits.
 

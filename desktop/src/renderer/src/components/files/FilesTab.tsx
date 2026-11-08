@@ -1,18 +1,17 @@
 import { fill as t } from '@/lib/text'
 import './files.css'
 
-import { ChevronRight, FileQuestion, FileText, Folder, FolderOpen, Link2, X } from 'lucide-react'
+import { ChevronRight, FileText, Folder, FolderOpen, Link2, X } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
-import { CodeView } from './CodeView'
+import { SavedFileExplorer } from './SavedFileExplorer'
 import { FileExplorerPreview } from './FileExplorerPreview'
 import { previewEntries } from './file-preview-data'
 import { SearchField } from './SearchField'
-import { LoadError, Loading, explain } from '@/components/layerfs/States'
+import { explain } from '@/components/layerfs/States'
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { bytes, shortId } from '@/layerfs/format'
-import { host } from '@/layerfs/client'
-import { useHostQuery } from '@/layerfs/use-host'
+import { call, host } from '@/layerfs/client'
 import { cn } from '@/lib/utils'
 import type { BranchInfo, FsEntry } from '@/layerfs/host-api'
 
@@ -139,53 +138,6 @@ function Tree({ path, depth, dirs, open, selected, onToggle, onOpenFile }: TreeP
   )
 }
 
-function FileBody({ project, branch, path, tick }: { project: string; branch: string; path: string; tick: number }) {
-  const q = useHostQuery(() => host.file(project, branch, path), [project, branch, path, tick])
-  // A file read for another ref or path is not this one's.
-  const data = q.data?.path === path ? q.data : undefined
-  return (
-    <>
-      <div className="flex h-9 shrink-0 items-center gap-3 border-b px-4">
-        <span className="min-w-0 truncate font-mono text-xs" title={path}>
-          {path
-            .split('/')
-            .filter(Boolean)
-            .map((part, i, all) => (
-              <span key={i} className={i === all.length - 1 ? 'text-foreground' : 'text-faint'}>
-                {i > 0 && <span className="px-1 text-faint/70">/</span>}
-                {part}
-              </span>
-            ))}
-        </span>
-        <span className="ml-auto shrink-0 text-xs text-faint tabular-nums">
-          {data &&
-            (data.text !== null ? `${data.text.split('\n').length - (data.text.endsWith('\n') ? 1 : 0)} lines · ` : '')}
-          {data && `${bytes(data.size)} · `}{t("at ")}{branch}
-        </span>
-      </div>
-      <div key={path} className="min-h-0 flex-1">
-        {!data ? (
-          q.error ? (
-            <LoadError error={q.error} what={path} onRetry={q.reload} className="m-6" />
-          ) : (
-            <Loading label={t("Reading the file")} />
-          )
-        ) : data.text !== null ? (
-          <CodeView path={path} text={data.text} />
-        ) : (
-          <div className="flex h-full flex-col items-center justify-center gap-2 text-center">
-            <EmptyMark icon={FileQuestion} />
-            <p className="text-sm font-medium">{data.binary ? t("A binary file") : t("Too large to show")}</p>
-            <p className="text-xs text-muted-foreground">
-              {bytes(data.size)}
-              {data.binary ? t("; only text files open here.") : t("; files over 1 MiB open only their size.")}
-            </p>
-          </div>
-        )}
-      </div>
-    </>
-  )
-}
 
 interface FilesTabProps {
   /** The LayerFS project. */
@@ -201,9 +153,12 @@ interface FilesTabProps {
 
 export function FilesTab({ project, branches, tick = 0, initialBranch, preview = false }: FilesTabProps) {
   const [ref, setRef] = useState(() => (initialBranch && branches.some((b) => b.name === initialBranch) ? initialBranch : branches.find((b) => b.name === 'main')?.name ?? branches[0]?.name ?? 'main'))
+  const [latest, setLatest] = useState<string | undefined>()
+  const [more, setMore] = useState<Record<string, number | null>>({})
   const [dirs, setDirs] = useState<Map<string, Dir>>(new Map())
   const [open, setOpen] = useState<Set<string>>(() => preview ? new Set(['/src', '/src/routes']) : new Set())
   const [snapshot, setSnapshot] = useState('latest')
+  const pin = snapshot === 'latest' ? latest ?? branches.find(b => b.name === ref)?.head ?? undefined : snapshot
   const [tabs, setTabs] = useState<string[]>([])
   const [active, setActive] = useState<string | undefined>()
   const [query, setQuery] = useState('')
@@ -212,16 +167,16 @@ export function FilesTab({ project, branches, tick = 0, initialBranch, preview =
   openRef.current = open
 
   const load = useCallback(
-    (path: string, keep = false) => {
+    (path: string, keep = false, pos = 0) => {
       const version = generation.current
       if (!keep) setDirs((all) => new Map(all).set(path, 'loading'))
-      const entriesRead = preview ? Promise.resolve(previewEntries(ref, snapshot, path)) : host.list(project, ref, path)
+      const entriesRead = preview ? Promise.resolve(previewEntries(ref, snapshot, path)) : host.list(project, ref, path, pin, pos).then(p => { setMore(m => ({ ...m, [path]: p.next })); return p.items })
       entriesRead.then(
-        (entries) => { if (version === generation.current) setDirs((all) => new Map(all).set(path, entries)) },
+        (entries) => { if (version === generation.current) setDirs((all) => new Map(all).set(path, pos ? [...(Array.isArray(all.get(path)) ? all.get(path) as FsEntry[] : []), ...entries] : entries)) },
         (e: unknown) => { if (version === generation.current) setDirs((all) => new Map(all).set(path, e instanceof Error ? e : new Error(String(e)))) },
       )
     },
-    [project, ref, preview, snapshot],
+    [project, ref, preview, snapshot, pin],
   )
   // A new ref starts from its root; the folders open stay open there.
   useEffect(() => {
@@ -230,12 +185,12 @@ export function FilesTab({ project, branches, tick = 0, initialBranch, preview =
     for (const path of ['/', ...openRef.current]) load(path)
     return () => { generation.current++ }
   }, [load])
-  // As the run moves on, reread what is on screen in place.
+  // A tick costs one branch.get; pinned browsing keeps its immutable roots.
   const firstTick = useRef(tick)
   useEffect(() => {
     if (tick === firstTick.current) return
-    for (const path of ['/', ...openRef.current]) load(path, true)
-  }, [tick, load])
+    void call<{ saved_head?: { id: string }; head?: string; base: string }>('GET', `/api/projects/${encodeURIComponent(project)}/branches?branch=${encodeURIComponent(ref)}`).then(b => setLatest(b.saved_head?.id ?? b.head ?? b.base))
+  }, [tick, project, ref])
 
   // The first time the root is read, open its README, the way a repository page does.
   const root = dirs.get('/')
@@ -279,7 +234,7 @@ export function FilesTab({ project, branches, tick = 0, initialBranch, preview =
     <div className="files-frame grid min-h-0 flex-1 grid-cols-1 grid-rows-[minmax(8rem,30%)_minmax(0,1fr)] overflow-hidden rounded-xl @min-[600px]/files:grid-cols-[13rem_minmax(0,1fr)] @min-[600px]/files:grid-rows-1">
       <aside aria-label={t("Files")} className="files-side flex min-h-0 flex-col border-b @min-[600px]/files:border-b-0 @min-[600px]/files:border-r">
         <div className="flex flex-col gap-2 border-b p-3">
-          <Select value={ref} onValueChange={name => { setRef(name); setSnapshot('latest') }}>
+          <Select value={ref} onValueChange={name => { setRef(name); setLatest(undefined); setSnapshot('latest') }}>
             <SelectTrigger aria-label={t("Branch")} title={branch?.head ?? undefined} className="w-full">
               <SelectValue>
                 {ref}
@@ -302,7 +257,7 @@ export function FilesTab({ project, branches, tick = 0, initialBranch, preview =
                     <SelectItem key={b.name} value={b.name}>
                       <span className={cn('font-medium', b.state === 'merged' && 'text-muted-foreground')}>{b.name}</span>
                       <span className="text-xs text-muted-foreground tabular-nums">
-                        {b.state === 'open' ? t("+{value1}", {value1: b.commits}) : t(b.state)}
+                        {shortId(b.head)}
                       </span>
                     </SelectItem>
                   ))}
@@ -310,6 +265,7 @@ export function FilesTab({ project, branches, tick = 0, initialBranch, preview =
               )}
             </SelectContent>
           </Select>
+          {!preview && <p className="fp-branch-context">Saved {shortId(pin)}{snapshot !== 'latest' && latest && latest !== snapshot ? ' · Newer version available' : ''}</p>}
           {preview && <p className="fp-branch-context">{ref === 'main' ? 'Project core content' : 'Working branch · based on main'}</p>}
           <SearchField label={t("Find in opened folders")} value={query} onChange={setQuery} size="sm" />
         </div>
@@ -339,7 +295,7 @@ export function FilesTab({ project, branches, tick = 0, initialBranch, preview =
                 </ul>
               )
             ) : (
-              <Tree path="/" depth={0} dirs={dirs} open={open} selected={active} onToggle={toggle} onOpenFile={openFile} />
+              <><Tree path="/" depth={0} dirs={dirs} open={open} selected={active} onToggle={toggle} onOpenFile={openFile} />{Object.entries(more).filter(([path, pos]) => pos != null && (path === '/' || open.has(path))).map(([path, pos]) => <button key={path} className="fp-context" onClick={() => load(path, true, pos!)}>Show more entries in {path}</button>)}</>
             )}
           </div>
         </div>
@@ -392,7 +348,7 @@ export function FilesTab({ project, branches, tick = 0, initialBranch, preview =
         </div>
 
         {active ? (
-          preview ? <FileExplorerPreview key={`${project}:${ref}:${active}`} project={project} branch={ref} path={active} snapshot={snapshot} onSnapshot={setSnapshot} onOpenFile={path => openFile({ path, name: path.split('/').at(-1)!, kind: 'file', size: null })} /> : <FileBody key={`${project}:${ref}:${active}`} project={project} branch={ref} path={active} tick={tick} />
+          preview ? <FileExplorerPreview key={`${project}:${ref}:${active}`} project={project} branch={ref} path={active} snapshot={snapshot} onSnapshot={setSnapshot} onOpenFile={path => openFile({ path, name: path.split('/').at(-1)!, kind: 'file', size: null })} /> : <SavedFileExplorer key={`${project}:${ref}:${active}:${pin}`} project={project} branch={ref} path={active} pin={pin} onPin={setSnapshot} />
         ) : (
           <div className="flex flex-1 flex-col items-center justify-center gap-2 px-4 text-center">
             <EmptyMark icon={FileText} />

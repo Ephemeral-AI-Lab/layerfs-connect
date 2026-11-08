@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { mkdtemp, rm, writeFile } from 'node:fs/promises'
+import { mkdtemp, mkdir, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { AgentManager } from '../agents/index.js'
@@ -25,6 +25,7 @@ async function fixture(t, { prepare, release, validate } = {}) {
     },
     exec: () => assert.fail('No command should execute in a lifecycle test'),
   }
+  await mkdir(join(state, 'pi'))
   const manager = new AgentManager({
     state, agentDir: join(state, 'pi'), defaultCwd: state,
     projectEnvironment: validate ?? (async () => {}), projectWorkspaces: workspaces,
@@ -53,7 +54,7 @@ async function fixture(t, { prepare, release, validate } = {}) {
   return { state, manager, calls, workspaces, create }
 }
 
-test('stop cleans up a new workspace when its first preparation fails during opening', async (t) => {
+test('stop preserves a new workspace when its first preparation fails during opening', async (t) => {
   const entered = Promise.withResolvers()
   const preparation = Promise.withResolvers()
   const f = await fixture(t, { prepare: async (record) => {
@@ -68,8 +69,8 @@ test('stop cleans up a new workspace when its first preparation fails during ope
   preparation.reject(new Error('Mount failed'))
   await message
   assert.equal((await stopping).state, 'idle')
-  assert.deepEqual(f.calls.released, [chat.id])
-  assert.equal(f.manager.record(chat.id).workspace.state, 'closed')
+  assert.deepEqual(f.calls.released, [])
+  assert.equal(f.manager.record(chat.id).workspace.sandbox, '1')
   assert.equal(f.manager.record(chat.id).needsStop, undefined)
 })
 
@@ -133,7 +134,7 @@ test('a conversation being created prevents deleting its project', async (t) => 
   assert.equal(f.manager.creatingProjects.size, 0)
 })
 
-test('pending workspace preparation blocks project deletion and is drained before stop releases it', async (t) => {
+test('pending workspace preparation blocks project deletion and is drained while stop preserves it', async (t) => {
   const entered = Promise.withResolvers()
   const preparation = Promise.withResolvers()
   const f = await fixture(t, { prepare: async () => { entered.resolve(); await preparation.promise } })
@@ -147,9 +148,9 @@ test('pending workspace preparation blocks project deletion and is drained befor
   preparation.resolve()
   await preparing
   await stopping
-  assert.deepEqual(f.calls.released, [chat.id])
+  assert.deepEqual(f.calls.released, [])
   assert.equal(f.manager.workspacePreparations.size, 0)
-  assert.equal(f.manager.record(chat.id).workspace.state, 'closed')
+  assert.equal(f.manager.record(chat.id).workspace.state, 'ready')
 })
 
 test('close waits for every workspace cleanup before closing permissions and reporting failures', async (t) => {
@@ -179,3 +180,17 @@ test('close waits for every workspace cleanup before closing permissions and rep
   assert.equal(f.calls.permissionsClosed, true)
 })
 
+
+
+test('persisted mounted command cancellation precedes unavailable Pi recovery', { timeout: 3000 }, async t => {
+  const f = await fixture(t)
+  const chat = await f.create()
+  const record = f.manager.record(chat.id)
+  record.workspace.execution = { ws: 'box:chat', exec_id: 'persisted-launch', finished: false }
+  record.sessionFile = join(f.state, 'previous-session.jsonl')
+  const calls = []
+  f.workspaces.cancel = async (given) => { calls.push(given.workspace.execution.exec_id); return { outcome: 'cancelled', signal: 'SIGTERM' } }
+  f.manager.open = async () => { assert.deepEqual(calls, ['persisted-launch']); throw new Error('Pi recovery unavailable') }
+  await assert.rejects(f.manager.stop(chat.id), /Pi recovery unavailable/)
+  assert.deepEqual(calls, ['persisted-launch'])
+})

@@ -5,7 +5,7 @@ import { fill } from '@/lib/text'
 // no machine and changes nothing. Each finding names its entity and the call
 // that fixes it, in LayerFS's words; Connect runs none of them for you. Read
 // when the page loads or is refreshed, never on a timer.
-import { ChevronRight, CircleCheck, LoaderCircle, Stethoscope } from 'lucide-react'
+import { ChevronRight, Info, LoaderCircle, Stethoscope } from 'lucide-react'
 
 import { Refusal } from '@/components/layerfs/Refusal'
 import { Chip } from '@/components/layerfs/Chips'
@@ -23,7 +23,7 @@ export const useDoctor = (tick: number) => useHostQuery(() => host.doctor(), [ti
 export function DoctorBadge({ read, open, onToggle }: { read: Loaded<DoctorReport>; open: boolean; onToggle: () => void }) {
   const findings = read.data?.findings ?? []
   const errors = findings.filter((f) => f.severity === 'error').length
-  const words = read.error ? 'Doctor did not answer' : !read.data ? 'Doctor: checking…' : findings.length === 0 ? 'Doctor: nothing found' : fill(findings.length === 1 ? 'Doctor: 1 finding' : 'Doctor: {count} findings', { count: findings.length })
+  const words = read.error ? 'Doctor did not answer' : !read.data ? 'Doctor: checking…' : findings.length === 0 ? `Home checks: no findings · ${ago(read.data.at)}` : fill(findings.length === 1 ? 'Doctor: 1 finding' : 'Doctor: {count} findings', { count: findings.length })
   const openable = !!read.error || findings.length > 0
   return (
     <button
@@ -34,7 +34,7 @@ export function DoctorBadge({ read, open, onToggle }: { read: Loaded<DoctorRepor
       title={read.data ? `layerfs doctor · checked ${ago(read.data.at)}` : 'layerfs doctor'}
       className={cn('inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-sm whitespace-nowrap transition-colors', openable ? 'hover:bg-foreground/[0.05]' : 'cursor-default', errors || read.error ? 'text-destructive' : findings.length ? 'text-amber-600' : 'text-muted-foreground')}
     >
-      {!read.data && !read.error ? <LoaderCircle className="size-3.5 animate-spin" /> : findings.length === 0 && !read.error ? <CircleCheck className="size-3.5 text-success" /> : <Stethoscope className="size-3.5" />}
+      {!read.data && !read.error ? <LoaderCircle className="size-3.5 animate-spin" /> : findings.length === 0 && !read.error ? <Info className="size-3.5" /> : <Stethoscope className="size-3.5" />}
       {words}
       {openable && <ChevronRight className={cn('size-3.5 transition-transform', open && 'rotate-90')} />}
     </button>

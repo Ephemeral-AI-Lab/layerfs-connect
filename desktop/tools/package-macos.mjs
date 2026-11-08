@@ -66,8 +66,6 @@ function linkPackage(name, source, into) {
   mkdirSync(dirname(link), { recursive: true })
   if (!existsSync(link)) symlinkSync(relative(dirname(link), target), link)
 }
-let layerfsSource
-let layerfsTarget
 function copyPackage(source) {
   if (copied.has(source)) return copied.get(source)
   const pkg = readJSON(join(source, 'package.json'))
@@ -89,40 +87,26 @@ function copyPackage(source) {
       throw new Error(`Missing installed dependency ${name} of ${pkg.name}`)
     }
   }
-  if (pkg.name === 'layerfs') { layerfsSource = source; layerfsTarget = target }
   return target
 }
 for (const name of [
   '@earendil-works/pi-coding-agent', '@earendil-works/pi-agent-core',
-  '@earendil-works/pi-ai', '@earendil-works/pi-tui', 'pi-subagents', 'typebox', 'layerfs',
+  '@earendil-works/pi-ai', '@earendil-works/pi-tui', 'pi-subagents', 'typebox',
 ]) {
   const source = locate(name, root)
   if (!source) throw new Error(`Install root dependencies first: missing ${name}`)
   linkPackage(name, source, modules)
 }
 
-// A linked LayerFS development package keeps its addon outside the package.
-// Ship it beside src/, where its installed-package loader already looks.
-const native = [
-  join(layerfsSource, 'layerfs.node'),
-  join(layerfsSource, '..', '..', 'layerfs.node'),
-  join(layerfsSource, '..', 'crates', 'layerfs-node', 'layerfs.node'),
-].find(existsSync)
-if (!native) throw new Error('The LayerFS native addon is missing; build it before packaging.')
-cpSync(native, join(layerfsTarget, 'layerfs.node'))
-const checkout = resolve(layerfsSource, '../..')
+// Ship only the explicit pinned CLI and its matching daemon; no Node addon.
 for (const name of ['layerfs', 'layerfs-daemon']) {
-  const override = name === 'layerfs' ? process.env.LAYERFS_CONNECT_CLI : process.env.LAYERFS_CONNECT_DAEMON
-  const source = override ?? [join(checkout, 'target', 'debug', name), join(checkout, 'target', 'release', name)].find(existsSync)
-  if (!source || !existsSync(source)) throw new Error(`Missing ${name}; set its LAYERFS_CONNECT override before packaging.`)
+  const source = name === 'layerfs' ? process.env.LAYERFS_CONNECT_CLI : process.env.LAYERFS_CONNECT_DAEMON
+  if (!source || !source.startsWith('/') || !existsSync(source)) throw new Error(`Set an absolute LAYERFS_CONNECT_${name === 'layerfs' ? 'CLI' : 'DAEMON'} before packaging.`)
   cpSync(source, join(bin, name))
 }
-const apiDocs = join(layerfsSource, '..', 'README.md')
-if (existsSync(apiDocs)) cpSync(apiDocs, join(layerfsTarget, 'README.md'))
-const defaultsPath = join(backend, 'host', 'agents', 'sdks.default.json')
-const defaults = readJSON(defaultsPath)
-for (const sdk of defaults.sdks) if (sdk.id === 'layerfs') sdk.root = 'node_modules/layerfs'
-writeFileSync(defaultsPath, JSON.stringify(defaults, null, 2) + '\n')
+const identity = JSON.parse(execFileSync(join(bin, 'layerfs'), ['--version', '--json'], { encoding: 'utf8' }))
+if (identity.dirty !== false || !identity.features?.includes('postgresql')) throw new Error('Packaging requires a clean pinned CLI with the postgresql feature.')
+writeFileSync(join(resources, 'runtime', 'layerfs-build.json'), JSON.stringify(identity, null, 2)+'\n')
 
 // Reject a package that silently relies on the source tree or package store.
 function validateLinks(dir) {

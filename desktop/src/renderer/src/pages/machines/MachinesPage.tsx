@@ -1,3 +1,5 @@
+import { DoctorAction } from '@/components/doctor/DoctorPanel'
+import { StaleRead } from '@/components/layerfs/StaleRead'
 import { fill } from '@/lib/text'
 // Machines (docs/ui/machines.md): the machines this Connect's LayerFS
 // home runs on, the home of machines, Sandboxes and Workspaces. The board: a
@@ -137,7 +139,7 @@ export function ComputePage({ simulate: given, onOpenProject, focus, onOpenMachi
         title={'Machines'}
         actions={
           <div className="flex items-center gap-2">
-            {!given && <SimulationPicker />}
+            {!given && <><DoctorAction target="host" label="Diagnose this host" /><SimulationPicker /></>}
             {available && (
               <Button size="sm" className="rounded-full px-3.5" onClick={() => setAdding(true)}>
                 <Plus />
@@ -153,6 +155,8 @@ export function ComputePage({ simulate: given, onOpenProject, focus, onOpenMachi
       />
       <div className="mx-auto flex min-w-0 flex-col gap-4 px-4 pt-2 pb-12 @min-[480px]/workspace:px-5">
         {simulated && <SimulatedNote sim={simulated} />}
+        {view && !simulated && <StaleRead error={live.error} observedAt={live.observedAt} />}
+        {available && Object.entries(available.readErrors ?? {}).map(([name, read]) => <p key={name} role="status" className="text-sm text-destructive">{name} could not be read ({new Date(read.at).toLocaleTimeString()}): {read.error.code}</p>)}
         {!view ? (
           live.error ? (
             <LoadError error={live.error} what={'the machines'} onRetry={live.reload} />
@@ -172,7 +176,7 @@ export function ComputePage({ simulate: given, onOpenProject, focus, onOpenMachi
                 facts!.busy > 0 && <span>{`${facts!.busy} creating or removing`}</span>,
                 facts!.unknown > 0 && <span>{`${facts!.unknown} unknown`}</span>,
                 <span>{fill(facts!.sandboxes === 1 ? '1 Sandbox' : '{n} Sandboxes', { n: facts!.sandboxes })}</span>,
-                <span>{fill(facts!.workspaces === 1 ? '1 Workspace' : '{n} Workspaces', { n: facts!.workspaces })}</span>,
+                <span>{available.sandboxes.some((b) => b.workspaces == null) ? 'Workspace count unknown' : fill(facts!.workspaces === 1 ? '1 Workspace' : '{n} Workspaces', { n: facts!.workspaces })}</span>,
                 facts!.needs > 0 && (
                   <span className="inline-flex items-center gap-1.5 font-medium text-destructive">
                     <span aria-hidden="true" className="size-1.5 rounded-full bg-destructive" />

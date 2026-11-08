@@ -1,3 +1,4 @@
+import { cancelExecs, resumeExecs } from './exec-cancel.js'
 import { EventEmitter } from 'node:events'
 import { randomUUID } from 'node:crypto'
 import { existsSync, mkdirSync, readdirSync, readFileSync, renameSync, rmSync, statSync, writeFileSync } from 'node:fs'
@@ -26,9 +27,9 @@ import { assertNativeControl, bindNativeInput, cancelNativeControls, currentNati
 import { commandContextActions, commandForkTarget } from './command-context.js'
 
 const fail = (status, message) => Object.assign(new Error(message), { status })
-const needsRecovery = (record) => record.needsStop || record.workspace?.process || record.children.some((child) => ['running', 'pending', 'queued', 'paused'].includes(child.state))
+const needsRecovery = (record) => record.needsStop || record.workspace?.process || (record.workspace?.execution && !record.workspace.execution.finished) || record.children.some((child) => ['running', 'pending', 'queued', 'paused'].includes(child.state))
 const workspaceSummary = (workspace) => workspace ? Object.fromEntries(
-  ['branch', 'state', 'sandbox', 'path', 'head', 'commitCount', 'lastSaved', 'error'].map((key) => [key, workspace[key] ?? null]),
+  ['branch', 'state', 'sandbox', 'path', 'head', 'commitCount', 'lastSaved', 'error', 'execution'].map((key) => [key, workspace[key] ?? null]),
 ) : null
 
 // Pi exposes a priority peek and whole-queue clearing, but no per-item removal.
@@ -865,6 +866,7 @@ export class AgentManager extends EventEmitter {
       record.error = null
       active.checkpointError = null
       active.startError = null
+      resumeExecs(join(this.dir, id, 'exec-launches'))
       this.permissions.resume(id)
       const model = this.models.resolve(record)
       await active.session.setModel(model)
@@ -1005,6 +1007,8 @@ export class AgentManager extends EventEmitter {
   async stopWorkspaceExecutions(id) {
     const executions = [...(this.workspaceExecutions.get(id) ?? [])]
     for (const execution of executions) execution.controller.abort()
+    const cancelled = await this.projectWorkspaces?.cancel?.(this.record(id), () => this.changed(id, true), true)
+    if (cancelled?.outcome === 'unknown') throw fail(409, 'Workspace command cancellation not confirmed. Inspect the Workspace and try cancellation again explicitly.')
     await Promise.allSettled(executions.map((execution) => execution.task))
   }
 
@@ -1031,7 +1035,7 @@ export class AgentManager extends EventEmitter {
     }
     this.deletingProjects.add(name)
     try {
-      for (const record of sessions) await this.stop(record.id)
+      for (const record of sessions) await this.stop(record.id, { releaseWorkspace: true })
       return await remove()
     } finally { this.deletingProjects.delete(name) }
   }
@@ -1183,7 +1187,7 @@ export class AgentManager extends EventEmitter {
     })
   }
 
-  stop(id, { history = false, reason } = {}) {
+  stop(id, { history = false, reason, releaseWorkspace = false } = {}) {
     this.checkHistoryAvailable(id, history, true)
     const record = this.record(id)
     const previousStop = this.stopping.get(id)
@@ -1200,8 +1204,15 @@ export class AgentManager extends EventEmitter {
     const wasRunning = record.state === 'running'
     record.execution.phase = 'stopping'
     if (reason) record.execution.reason = reason
+    const registeredCancellation = cancelExecs(join(this.dir, id, 'exec-launches'))
     this.permissions.cancelSession(id)
     stopping.task = Promise.resolve().then(async () => {
+      // Persisted remote ownership must be cancellable even when Pi/model
+      // recovery fails. This never launches or replays the interrupted command.
+      if (record.workspace?.execution && !record.workspace.execution.finished) {
+        const cancelled = await this.projectWorkspaces?.cancel?.(record, () => this.changed(id, true), true)
+        if (cancelled?.outcome === 'unknown') throw fail(409, 'Workspace command cancellation not confirmed. Inspect the Workspace and try cancellation again explicitly.')
+      }
       let active = this.live.get(id) ?? this.controlMutations.get(id)?.active
       if (active || needsRecovery(record)) record.needsStop = true
       if (!active && needsRecovery(record) && !this.canSkipSessionRecovery(record)) active = await this.open(id, { history })
@@ -1233,9 +1244,11 @@ export class AgentManager extends EventEmitter {
         await this.stopWorkspaceExecutions(id)
         record.error = null
       }
+      const registered = await registeredCancellation
+      if (registered.some(result => result.outcome === 'unknown')) throw fail(409, 'Workspace command cancellation not confirmed. Inspect the Workspace before trying again.')
       await this.workspacePreparations.get(id)?.catch(() => {})
       if (record.error) throw fail(409, record.error)
-      if (mounted(record) && this.projectWorkspaces) await this.projectWorkspaces.release(record, () => this.changed(id, true))
+      if (releaseWorkspace && mounted(record) && this.projectWorkspaces) await this.projectWorkspaces.release(record, () => this.changed(id, true))
       if (record.scenario && this.scenarios) await this.scenarios.release(record, 'stopped')
       delete record.needsStop
       record.state = 'idle'
@@ -1286,6 +1299,7 @@ export class AgentManager extends EventEmitter {
       const active = await this.open(id)
       await active.task
       checkStopping()
+      resumeExecs(join(this.dir, id, 'exec-launches'))
       this.permissions.resume(id)
       await active.session.setModel(model)
       checkStopping()
@@ -1334,7 +1348,7 @@ export class AgentManager extends EventEmitter {
   async remove(id) {
     this.checkHistoryAvailable(id)
     if (this.stopping.get(id)?.removing) throw fail(409, 'The session is being deleted.')
-    const stopped = this.stop(id)
+    const stopped = this.stop(id, { releaseWorkspace: true })
     const stopping = this.stopping.get(id)
     // Keep the stop barrier active through asynchronous extension shutdown.
     stopping.removing = true
@@ -1363,7 +1377,7 @@ export class AgentManager extends EventEmitter {
     const ids = new Set([...this.live.keys(), ...[...this.records.values()].filter((r) => needsRecovery(r) || r.workspace?.sandbox).map((r) => r.id)])
     try {
       const results = await Promise.allSettled([...ids].map(async (id) => {
-        await this.stop(id)
+        await this.stop(id, { releaseWorkspace: true })
         if (this.record(id).error) throw new Error(this.record(id).error)
         const active = this.live.get(id)
         if (!active) return

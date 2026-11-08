@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "protected_paths": [
+    "/Users/yifanxu/.cache/layerfs-worktrees/layerfs-connect-cli-137-d7e0e8c2472a",
+    "/Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect-cli-137/target",
+    "/private/tmp/connect137-linux-bundle"
+  ],
+  "protected_volumes": [],
+  "scan_roots": [],
+  "actions": [
+    {
+      "owner": "connect-phase2-137",
+      "reason": "Connect phase 2 verified; release idle Linux build caches only after filtering this export; native target remains pinned",
+      "released": true,
+      "kind": "docker-volume",
+      "name": "lfs-dev-layerfs-connect-cli-137-d7e0e8c2472a-target"
+    },
+    {
+      "owner": "connect-phase2-137",
+      "reason": "Connect phase 2 verified; release idle Linux build caches only after filtering this export; native target remains pinned",
+      "released": true,
+      "kind": "docker-volume",
+      "name": "lfs-dev-layerfs-connect-cli-137-d7e0e8c2472a-cargo"
+    }
+  ]
+}

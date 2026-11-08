@@ -122,6 +122,7 @@ export interface QueuedMessage {
 }
 
 export interface ChatDetail extends ChatSummary {
+  workspace?: { state: string; error?: string | null; execution?: { finished: boolean; cancelRequested: boolean; cancel?: { outcome?: string; signal?: string; message?: string }; result?: { kind: string; exit_code: number; stop?: unknown } } } | null
   messages: ChatMessage[]
   queued: QueuedMessage[]
   children: ChildRun[]

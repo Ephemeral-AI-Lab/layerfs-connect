@@ -26,15 +26,20 @@ export function Refusal({ error, className, compact }: { error: unknown; classNa
   const r = refusalOf(error)
   const d = r.detail ?? null
   const related = d?.related ?? []
+  const transport = (error as { transport?: string })?.transport
+  const category = transport === 'usage-incompatible' ? 'Usage / incompatible CLI' : transport === 'unavailable' ? 'CLI unavailable' : transport === 'transport-unknown' ? 'Final result unavailable' : 'LayerFS refusal'
+  const extra = d ? Object.entries(d).filter(([key]) => ['authority', 'source', 'retired', 'needed', 'free', 'missing', 'vm_exists', 'execs'].includes(key)) : []
   const where = [d?.entity && `${fill(KIND[d.entity.kind] ?? d.entity.kind)} ${d.entity.name}`, d?.phase && `phase ${d.phase}`, typeof d?.op === 'string' && `operation ${d.op}`].filter(Boolean)
   return (
     <div role="alert" className={cn('min-w-0 break-words text-sm leading-relaxed', className)}>
+      {!compact && <p className="text-xs text-muted-foreground">{category}</p>}
       <p>
         <span className="font-strong">{r.code}</span>
         {': '}
         {r.message}
       </p>
       {!compact && where.length > 0 && <p className="mt-0.5 text-muted-foreground">{where.join(' · ')}</p>}
+      {!compact && extra.map(([key, value]) => <p key={key} className="text-xs text-muted-foreground">{key}: {typeof value === 'object' ? JSON.stringify(value) : String(value)}</p>)}
       {related.length > 0 && (
         <div className="mt-1">
           <span className="text-muted-foreground">{'In the way:'}</span>

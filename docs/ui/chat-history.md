@@ -191,3 +191,11 @@ requested plain Git history styling on 2026-11-08.
 
 Verification: `node --test desktop/tools/history-model.test.mjs host/test/history.test.js`,
 `node desktop/tools/smoke-history.mjs`, desktop typecheck and build.
+
+## Phase 2 CLI reads (2026-11-09)
+
+Chat History shares the saved-history graph and inspector with Storage. Main
+Layers and side Commits use branch.commits; immutable parent pins resume paging.
+Changed paths use commit.diff cursors for every endpoint kind. Source Commit and
+source save time remain distinct from Layer parent and nullable publication time.
+Chat Files uses the same pinned saved-file browser as Storage.

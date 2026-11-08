@@ -14,7 +14,6 @@ import { Button } from '@/components/ui/button'
 import { Empty } from '@/components/layerfs/States'
 import { Refusal } from '@/components/layerfs/Refusal'
 import { StateChip } from '@/components/layerfs/StateChip'
-import { Bar } from '@/pages/storage/Meters'
 import { Card } from '@/pages/storage/RowParts'
 import { Crumbs } from '@/components/layerfs/Crumbs'
 import { downReason, gib, kindLabel, machineState, type Os, sizeOf, storesOn } from '@/layerfs/compute'
@@ -68,14 +67,14 @@ export function MachinePage({ name, view, os, act, ops, onBack, back: backTo, on
   // a sandbox.list() that omits one still shows its name from the machine
   const sandboxes = byProject(m.sandboxes.map((b) => view.sandboxes.find((x) => x.name === b) ?? { name: b, machine: m.name, project: null, workspaces: null }))
   const running = new Set(sandboxes.flatMap((b) => (b.project ? [b.project] : [])))
-  const workspaces = sandboxes.reduce((n, b) => n + (b.workspaces ?? 0), 0)
+  const knownWorkspaces = sandboxes.reduce((n, b) => n + (b.workspaces ?? 0), 0)
+  const workspaces = sandboxes.some((b) => b.workspaces == null) ? 'Unknown' : knownWorkspaces
   const storeCount = machineStoreCount(m, stores, view.postgresql ?? [])
   const part: Part = requested === 'stores' ? 'stores' : 'sandboxes'
   const setPart = (next: Part) => setTabParams(prev => { const params = new URLSearchParams(prev); params.set('view',next); return params }, { replace: true })
   const attention = attentionOf(m, live)
-  const disk = m.disk && live?.freeDisk != null ? Math.max(0, m.disk - live.freeDisk) / m.disk : null
   // the disk bar says what is free; the size line leaves it out then
-  const size = sizeOf(m, os, disk !== null ? undefined : live)
+  const size = sizeOf(m, os, live)
   const calls = clearingCall('machine', m.name, state.op)
 
   return (
@@ -106,8 +105,7 @@ export function MachinePage({ name, view, os, act, ops, onBack, back: backTo, on
               <div><dt>Memory</dt><dd>{m.memory != null ? gib(m.memory) : 'Not reported'}</dd></div>
               <div><dt>Disk</dt><dd>{m.disk != null ? gib(m.disk) : 'Not reported'}</dd></div>
             </>}
-            {live?.freeDisk != null && <div><dt>Free disk</dt><dd className="flex items-center gap-2">
-              {disk !== null && <Bar share={disk} tone={disk > 0.9 ? 'danger' : disk > 0.75 ? 'warning' : 'brand'} className="w-16" />}
+            {live?.freeDisk != null && <div><dt>Free disk (guest)</dt><dd className="flex items-center gap-2">
               {gib(live.freeDisk)}
             </dd></div>}
           </dl>

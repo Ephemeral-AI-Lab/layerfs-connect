@@ -1,3 +1,4 @@
+import { writeShims } from '../runs/shim.js'
 import { mkdirSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { createBashToolDefinition, createLocalBashOperations } from '@earendil-works/pi-coding-agent'
@@ -13,6 +14,7 @@ export const LEAD_MARK = 'You are a team lead in LayerFS Connect.'
 export function createConnectBashExtension({ cwd, env, traceDir, runDir = dirname(traceDir), agent = null, approvalFile, workspace = false, instructions = '', defaultBashTimeoutSeconds = 120, projectInstructions = { main: true, worker: true, lead: true }, sdk = {} }) {
   return (pi) => {
     mkdirSync(traceDir, { recursive: true })
+    if (!workspace && env?.LAYERFS_CONNECT_CLI) writeShims({ cli: env.LAYERFS_CONNECT_CLI }, runDir)
     // which agent this is, known once its first run starts: Settings → SDKs gives each kind its own
     let kind = agent === 'root' ? 'main' : 'worker'
     pi.on('before_agent_start', async (event, ctx) => {
@@ -64,6 +66,8 @@ export function createConnectBashExtension({ cwd, env, traceDir, runDir = dirnam
             env: {
               ...Object.fromEntries(Object.entries(spawn.env).filter(([key]) => !key.startsWith('LAYERFS_'))),
               ...env,
+              ...(env?.LAYERFS_CONNECT_CLI ? { PATH: `${join(runDir, 'bin')}:${spawn.env.PATH ?? process.env.PATH ?? ''}` } : {}),
+              LAYERFS_CONNECT_EXECS: join(dirname(traceDir), 'exec-launches'),
               LAYERFS_TRACE: join(traceDir, `${name}.jsonl`),
               LAYERFS_TRACE_STEP: `${name}:${toolCallId}`,
               LAYERFS_TRACE_START: '1',

@@ -3,7 +3,7 @@ import type { ReactNode } from 'react'
 // View data only. Resource inspection and execution stay outside these components.
 export type Outcome = 'ok' | 'error' | 'unknown'
 export interface Actor { id: string; name: string; task: string; parent: string | null; branch: string; workspace?: string }
-export interface Workspace { id: string; name: string; branch: string; sandbox: string; users: string[]; path?: string; activity?: string }
+export interface Workspace { id: string; name: string; branch: string; sandbox: string; users: string[]; path?: string; activity?: string; base?: string | null; baseLayer?: string | null; headMovedSinceMount?: boolean | null; dirty?: { inodes: number; entries: number } | null; pendingMerge?: boolean | null }
 export interface Activity {
   id: string; start: number; end: number; actor: string; method: string; branch: string
   workspace?: string; sandbox?: string; detail: string; result: string; outcome: Outcome
@@ -20,7 +20,7 @@ export interface SandboxSnapshot {
   workspaceFiles: SandboxFile[]
   links: Record<string, string>
   duration: number
-  recorded?: { state: string; route: string | null; downReason?: string; workspacesKnown?: boolean }
+  recorded?: { state: string; route: string | null; created?: number | null; op?: { name: string; phase: string; uncertain: boolean } | null; downReason?: string; workspacesKnown?: boolean }
 }
 
 export type SandboxTab = 'overview' | 'workspaces'

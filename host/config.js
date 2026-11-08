@@ -23,10 +23,9 @@
 //                           target/debug/layerfs
 //   LAYERFS_CONNECT_DAEMON  the macOS native daemon, recorded once on the
 //                           home's `native` machine; default: beside the CLI
-import { chmodSync, existsSync, mkdirSync, readdirSync, realpathSync } from 'node:fs'
+import { chmodSync, existsSync, mkdirSync, readdirSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { dirname, join } from 'node:path'
-import { createRequire } from 'node:module'
 import { fileURLToPath } from 'node:url'
 
 /** apps/connect */
@@ -61,21 +60,6 @@ export const defaultState = (mode) => join(homedir(), mode === 'sim' ? '.layerfs
  * @property {string | null} daemon the macOS native daemon to record, when found
  */
 
-/** The linked `layerfs` package's folder (api/node), by its real path. */
-export function packageDir() {
-  try {
-    return dirname(dirname(realpathSync(createRequire(import.meta.url).resolve('layerfs'))))
-  } catch {
-    return null
-  }
-}
-
-/** The package's checkout: api/node, two folders up. */
-const checkout = () => {
-  const dir = packageDir()
-  return dir && dirname(dirname(dir))
-}
-
 const file = (path) => (path && existsSync(path) ? path : null)
 
 /** Resolves Connect's settings once; makes the state folder and a private home. */
@@ -96,8 +80,7 @@ export function resolveSpec(state = process.env.LAYERFS_CONNECT_STATE || default
   mkdirSync(runs, { recursive: true })
   // the native binaries are the real library's: the simulator has none
   if (mode === 'sim') return { mode, state, home, runs, cli: null, daemon: null }
-  const root = checkout()
-  const cli = process.env.LAYERFS_CONNECT_CLI || file(root && join(root, 'target', 'debug', 'layerfs'))
+  const cli = process.env.LAYERFS_CONNECT_CLI || file(join(APP, 'runtime', 'bin', 'layerfs'))
   const daemon = process.env.LAYERFS_CONNECT_DAEMON || file(cli && join(dirname(cli), 'layerfs-daemon'))
   return { mode, state, home, runs, cli: cli || null, daemon: daemon || null }
 }

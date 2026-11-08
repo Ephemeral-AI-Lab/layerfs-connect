@@ -1,3 +1,4 @@
+import { exactCount } from '@/layerfs/exact-count'
 import { GitCommitHorizontal, Info } from 'lucide-react'
 import { shortId } from '@/layerfs/format'
 import type { BlameOrigin } from './FileBlame'
@@ -14,9 +15,9 @@ export function FileAttributionDiff({ lines, unavailable, onInspect }: { lines: 
     <div className="fa-table" role="table" aria-label="Line attribution comparison">
       <div className="fa-row fa-table-head" role="row"><span role="columnheader">Before owner</span><span role="columnheader">After owner</span><span role="columnheader">Line</span><span role="columnheader">Content / attribution</span></div>
       {lines.map((line, index) => <div className={`fa-row ${line.ownerChanged ? 'fa-owner-changed' : ''}`} role="row" key={index}>
-        <span role="cell">{line.before ? <button type="button" aria-label={`Inspect before owner ${shortId(line.before.id)} for line ${line.left}`} title={`${line.before.branch}: ${line.before.message}`} onClick={() => onInspect(line.before!)}>{shortId(line.before.id)}</button> : line.left === null ? '—' : 'Unknown'}</span>
-        <span role="cell">{line.after ? <button type="button" aria-label={`Inspect after owner ${shortId(line.after.id)} for line ${line.right}`} title={`${line.after.branch}: ${line.after.message}`} onClick={() => onInspect(line.after!)}>{shortId(line.after.id)}</button> : line.right === null ? '—' : 'Unknown'}</span>
-        <span role="cell" className="fa-number">{line.right ?? line.left}</span>
+        <span role="cell">{line.before ? <button type="button" disabled={!line.before.branch} aria-label={`Inspect before owner ${shortId(line.before.id)} for line ${line.left}`} title={`${line.before.branch}: ${line.before.message}`} onClick={() => onInspect(line.before!)}>{shortId(line.before.id)}</button> : line.left === null ? '—' : 'Unknown'}</span>
+        <span role="cell">{line.after ? <button type="button" disabled={!line.after.branch} aria-label={`Inspect after owner ${shortId(line.after.id)} for line ${line.right}`} title={`${line.after.branch}: ${line.after.message}`} onClick={() => onInspect(line.after!)}>{shortId(line.after.id)}</button> : line.right === null ? '—' : 'Unknown'}</span>
+        <span role="cell" className="fa-number">{line.right == null && line.left == null ? '—' : exactCount(line.right ?? line.left)}</span>
         <span role="cell"><code>{line.text || ' '}</code>{line.ownerChanged ? <span className="fa-label">Owner changed</span> : line.ownerChanged === null ? <span className="fa-label">Ownership unknown</span> : line.op !== ' ' ? <span className="fa-label fa-content-change">{line.op === '+' ? 'Content added' : 'Content removed'}</span> : null}</span>
       </div>)}
     </div>

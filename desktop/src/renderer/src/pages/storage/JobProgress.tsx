@@ -8,6 +8,7 @@ import { fill } from '@/lib/text'
 import { Check, ChevronDown, LoaderCircle, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
+import { host } from '@/layerfs/client'
 import { Refusal } from '@/components/layerfs/Refusal'
 import { Button } from '@/components/ui/button'
 import { ago, bytes } from '@/layerfs/format'
@@ -46,8 +47,8 @@ export function JobBar({ job, className }: { job: StorageJob; className?: string
     <span aria-hidden="true" className={cn('flex min-w-0 items-center gap-1.5', className)}>
       {barOf(job).map((group, g) => (
         <span key={g} className="flex min-w-0 flex-1 items-center gap-[3px]">
-          {group.map((s) => (
-            <SegmentBar key={s.step} s={s} />
+          {group.map((s, i) => (
+            <SegmentBar key={`${i}:${s.step}`} s={s} />
           ))}
         </span>
       ))}
@@ -98,7 +99,7 @@ interface PanelProps {
 }
 
 /** A card's footer while a job runs or just ended. */
-export function JobPanel({ job: j, onRetry, onDetails }: PanelProps) {
+export function JobPanel({ job: j, onDetails }: PanelProps) {
   useNow(5000)
   if (!j.ended)
     return (
@@ -124,7 +125,7 @@ export function JobPanel({ job: j, onRetry, onDetails }: PanelProps) {
         <span className="pl-5 text-xs text-muted-foreground">{`took ${tookWords(j.ended - j.started)}`}</span>
       </div>
     )
-  const pulled = j.error.note === 'pulled'
+  const pulled = j.outcome === 'failed' && j.error.note === 'pulled'
   return (
     <div role="alert" className="flex min-w-0 flex-col gap-1 text-sm">
       {pulled && (
@@ -144,11 +145,7 @@ export function JobPanel({ job: j, onRetry, onDetails }: PanelProps) {
         <span className="font-strong text-foreground/80">{j.error.code}</span>: {j.error.message}
       </p>
       <span className="relative z-10 flex flex-wrap items-center gap-1.5 pt-1 pl-5">
-        {onRetry && (
-          <Button size="xs" variant="outline" className="rounded-md" onClick={onRetry}>
-            {pulled ? `Push to ${place(j.target)} again` : 'Try again'}
-          </Button>
-        )}
+        <Recovery job={j} />
         {onDetails && (
           <Button size="xs" variant="ghost" className="rounded-md" onClick={onDetails}>
             {'Details'}
@@ -177,7 +174,7 @@ export function OpPanel({ store: s }: { store: StoreRow }) {
 }
 
 /** A Store page's view of its job: each step with its state and how long it took (as this window saw it). */
-export function JobSteps({ job: j, onRetry }: PanelProps) {
+export function JobSteps({ job: j }: PanelProps) {
   const now = useNow(1000)
   const halves = j.kind === 'move' ? ([0, 1] as const) : ([null] as const)
   const groups = barOf(j)
@@ -205,7 +202,7 @@ export function JobSteps({ job: j, onRetry }: PanelProps) {
               const next = groups[g][i + 1]
               const ended = next && (h === null || h === halfOf(j)) ? stepSeen(j, next.step) : undefined
               return (
-                <li key={s.step} className="grid min-h-6 grid-cols-[16px_96px_minmax(0,1fr)_auto] items-center gap-2">
+                <li key={`${i}:${s.step}`} className="grid min-h-6 grid-cols-[16px_96px_minmax(0,1fr)_auto] items-center gap-2">
                   <StepMark state={s.state} />
                   <span className={cn(s.state === 'todo' ? 'text-muted-foreground' : 'text-foreground/85', s.state === 'failed' && 'text-destructive')}>{s.step}</span>
                   {s.state === 'now' && s.share !== null ? (
@@ -228,11 +225,7 @@ export function JobSteps({ job: j, onRetry }: PanelProps) {
         <div className="flex flex-col gap-2 border-t border-foreground/[0.06] pt-3">
           <Refusal error={j.error} className="text-destructive" />
           <span className="flex items-center gap-1.5">
-            {onRetry && (
-              <Button size="xs" variant="outline" className="rounded-md" onClick={onRetry}>
-                {j.error.note === 'pulled' ? `Push to ${place(j.target)} again` : 'Try again'}
-              </Button>
-            )}
+            <Recovery job={j} />
             <Button size="xs" variant="ghost" className="rounded-md text-muted-foreground" onClick={() => dismissJob(j.id)}>
               {'Dismiss'}
             </Button>
@@ -345,4 +338,24 @@ export function JobChip({ job: j, className }: { job: StorageJob; className?: st
       {verb}
     </span>
   )
+}
+
+/** Recovery always starts with a fresh read, and the mutation rechecks it. */
+function Recovery({ job }: { job: StorageJob }) {
+  const [inspected, setInspected] = useState<StorageJob | null>(null)
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<unknown>(null)
+  const act = async (retry: boolean) => {
+    setBusy(true); setError(null)
+    try { const result = retry ? await host.storageJobRetry(job.id) : await host.storageJobInspect(job.id); setInspected(result) }
+    catch (e) { setError(e) }
+    finally { setBusy(false) }
+  }
+  return <span className="flex flex-wrap items-center gap-2">
+    <Button size="xs" variant="outline" disabled={busy} onClick={() => void act(false)}>Inspect current state</Button>
+    {inspected?.observation?.action && <Button size="xs" variant="outline" disabled={busy} onClick={() => void act(true)}>{inspected.observation.action === 'resolve' ? 'Resolve: clear the extra copy and push again' : 'Try again'}</Button>}
+    {inspected?.observation?.action === 'resolve' && <small>LayerFS deletes the copy its record does not name and restarts the transfer.</small>}
+    {inspected && !inspected.observation?.action && <small>No recovery is permitted by this observation.</small>}
+    {error != null && <Refusal error={error} compact />}
+  </span>
 }

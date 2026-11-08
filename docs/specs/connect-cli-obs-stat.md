@@ -204,3 +204,42 @@ detail, Sandbox `api-dev` tabs, Storage, `shop`, `team` and the project Storage 
 No real Store scan, mutation or UI change was made. Not runtime-verified:
 `branch get-commit` Layer records on real data (the default binary lacks the call),
 PostgreSQL status, StoreStatistics counters.
+
+## Phase-2 implemented exec and Doctor update (2026-11-09)
+
+Authority: clean CLI `833d04cf44e8e747929d50ab1170a48260d9381c`, with
+`machine,postgresql`. JSON discovery gates targeted Doctor commands. Mounted
+execution uses `--events`, fresh persisted IDs and stream-frame bytes only;
+final inline output is not duplicated. Phase-1 pre-registration cancellation
+removes the former resend loop. Cancellation answers `outcome`, not `kind`.
+Stop preserves Workspace and Sandbox. Unknown cancellation is visible and only
+explicit manual cancellation can retry. Commit refusal is separate from command
+exit. Folder Bash CLI shims retain mounted launch custody after transport loss.
+
+Doctor uses explicit host-owned jobs, idempotent launches, bounded concurrency,
+one integrity audit per Store, bounded dated reports and restart interruption
+without replay. Shared contextual launch/report panels cover Host, Machine,
+Sandbox, Store integrity, PostgreSQL connection and Backup connection. Full is
+the default integrity mode; write tests require the explicit upload/cleanup
+checkbox. Coverage and findings remain separate, including repeated check IDs,
+blocked checks and truncated counts. No progress percentage or Stop is exposed.
+Simulated reports are labelled. Full/Quick/connection/write-test reports remain
+separate historical jobs; past reports are potentially stale observations.
+
+Verification: `docs/evidence/phase-2/exec-native-second.json` records real native
+exit125, pre-registration and running cancellation, retained partial changes,
+and1048587 output bytes. The first failed assertion receipt is retained alongside
+it. All fresh owned resources were closed and removed. Doctor and cancellation
+host lifecycle tests distinguish real and simulated evidence. Browser and final
+renderer build receipts are tracked in `phase-2-record.md`.
+
+## Implemented statistics consumers — phase 2, 2026-11-09
+
+StoreBreakdown reads store.stats once per view/refresh, displaying history_logical,
+canonical, stored, metadata, file and nullable free. Only canonical/stored supplies
+an encoding ratio. history_logical is never used for deduplication. Null Init
+hides its pill, including Init into an existing Store. Project Storage requests
+project.stats at the full main saved pin; the requested project key owns the result
+even though project is a bare name. It shows entry counts, logical bytes and
+complete/reason. Old cumulative Commit allocation charts and savings rings are
+removed from this view. PostgreSQL free is unavailable and file allocation includes database pages and WAL.

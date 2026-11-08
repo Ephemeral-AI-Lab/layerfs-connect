@@ -1,0 +1,103 @@
+{
+  "phase": "cleanup",
+  "context": "/private/tmp/connect137-vm-proof-context.json",
+  "identity": {
+    "version": "2.0.0",
+    "commit": "833d04cf44e8e747929d50ab1170a48260d9381c",
+    "dirty": false,
+    "features": [
+      "machine",
+      "postgresql"
+    ]
+  },
+  "started": "2026-11-08T21:49:50.988Z",
+  "calls": [
+    {
+      "argv": [
+        "machine",
+        "status",
+        "connect137-d7e88de8a2"
+      ],
+      "result": {
+        "name": "connect137-d7e88de8a2",
+        "platform": "lima",
+        "state": "running",
+        "free_disk": 2096291840,
+        "tool_version": "limactl version 2.2.1",
+        "down_reason": null,
+        "stores": []
+      }
+    },
+    {
+      "argv": [
+        "store",
+        "list"
+      ],
+      "result": {
+        "items": [
+          {
+            "name": "proof",
+            "kind": "sqlite",
+            "machine": "native",
+            "profile": "disposable",
+            "created": 1794174534004,
+            "sqlite": "3.53.2",
+            "last_transfer": {
+              "call": "store.pull",
+              "from": "connect137-d7e88de8a2",
+              "to": "native",
+              "at": 1794174540290,
+              "bytes": 217088,
+              "sha256": "36864f466acc34810b0d3b1a0f0d078ee29a06ae2b882295133397bb87a05079",
+              "heads": "62251c54f6a4acf7ed9a872c7afb6d05ac91903b321958f5184467d1c5b05291",
+              "retired": true
+            },
+            "projects": [
+              "p"
+            ],
+            "state": "idle"
+          }
+        ]
+      }
+    },
+    {
+      "argv": [
+        "machine",
+        "stop",
+        "connect137-d7e88de8a2"
+      ],
+      "result": {
+        "name": "connect137-d7e88de8a2",
+        "platform": "lima",
+        "backend": "namespaces",
+        "supports": {
+          "sqlite": true,
+          "postgresql_sandbox": true,
+          "reason": null
+        },
+        "state": "stopped",
+        "cpus": 2,
+        "memory": 2147483648,
+        "disk": 5368709120,
+        "stores": [],
+        "sandboxes": []
+      }
+    },
+    {
+      "argv": [
+        "machine",
+        "remove",
+        "connect137-d7e88de8a2"
+      ],
+      "result": {
+        "name": "connect137-d7e88de8a2",
+        "removed": true
+      }
+    }
+  ],
+  "cleanup": [
+    "owned VM, home and context removed"
+  ],
+  "verdict": "PASS",
+  "ended": "2026-11-08T21:49:53.698Z"
+}
