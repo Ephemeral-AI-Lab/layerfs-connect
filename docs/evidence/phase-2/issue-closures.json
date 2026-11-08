@@ -38,5 +38,16 @@
     "issue": 152,
     "comment": "https://github.com/Ephemeral-AI-Lab/layerfs-project/issues/152#issuecomment-6727853665",
     "closed": true
+  },
+  {
+    "issue": 153,
+    "comment": "https://github.com/Ephemeral-AI-Lab/layerfs-project/issues/153#issuecomment-6727900709",
+    "closed": true
+  },
+  {
+    "issue": 137,
+    "url": "https://github.com/Ephemeral-AI-Lab/layerfs-project/issues/137",
+    "closed": true,
+    "checklist_updated": true
   }
 ]

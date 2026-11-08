@@ -148,3 +148,20 @@ Host and Machine launch; full Store integrity; exit-0 issues; incomplete coverag
 truncated retained rows with repeated IDs; PostgreSQL connection action. A fresh
 final browser tab's console errors were empty, and the 900×600 Doctor dialog had
 no horizontal overflow. Navigation/opening panels did not launch diagnoses.
+
+## Final closure receipts
+
+Verification commit: `a3f134f7db06dd43c5b27401851a59091b28964d`.
+#153 closed last among the phase-2 sub-issues, with
+[final verification evidence](https://github.com/Ephemeral-AI-Lab/layerfs-project/issues/153#issuecomment-6727900709).
+A fresh read confirmed all #138–#153 closed. The
+[parent #137](https://github.com/Ephemeral-AI-Lab/layerfs-project/issues/137)
+checklist is complete and the parent is closed. The parent explicitly distinguishes
+merged phase-1 changes from locally committed phase-2 changes; no publication was
+requested or implied. Machine-readable receipts are retained beside this record.
+
+No new LayerFS defect issue was required by the final Connect implementation.
+Known upstream limitations above remain visible. Handoff host free space was
+332.26 GB; cleanup was not required. Only the two pre-existing untracked local
+cache directories remain outside commits. Product code is unchanged from the
+verified implementation commit.
