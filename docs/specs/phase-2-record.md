@@ -126,3 +126,25 @@ Method: `tools/connect-production-loc.py` applies the same pinned LayerFS
 `67310175ebba2b84efefb4df76f875a43487cf50:tools/production_loc.py` JavaScript
 comment scanner to both exact Git trees. This is source size, not performance.
 The final verification/documentation commit has unchanged product LOC.
+
+
+## Local delivery and issue state
+
+Baseline: `7c02313`. Implementation: `f058e71126179bca62a584eb6fb2be1866037b94`
+(`feat(connect): complete CLI integration slices 1–8 (#145–#152)`). All eight
+slices share this atomic integration commit because they use one CLI adapter,
+facade, simulation and host/renderer contracts. The exact committed product-source
+comparison matches the final staged comparison (+648).
+
+Slice issues #145–#152 are closed with per-slice browser flows, real binary
+identity, checks and NOT_RUN outcomes. Comment receipts are in
+`docs/evidence/phase-2/issue-closures.json`. A remote commit link is unavailable
+because the work order limits delivery to local commits unless the owner asks
+for a push/PR; closing comments identify the full local commit and include their
+verification evidence inline, without implying unpublished code is accessible.
+
+Final Doctor browser checks used the actual simulated adapter at both sizes:
+Host and Machine launch; full Store integrity; exit-0 issues; incomplete coverage;
+truncated retained rows with repeated IDs; PostgreSQL connection action. A fresh
+final browser tab's console errors were empty, and the 900×600 Doctor dialog had
+no horizontal overflow. Navigation/opening panels did not launch diagnoses.
