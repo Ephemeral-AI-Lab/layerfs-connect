@@ -1,0 +1,99 @@
+{
+  "mutations": 0,
+  "jobs": [
+    {
+      "id": "a47dd58a-8fd9-4cb8-8e59-8d45eb4837ed",
+      "kind": "move",
+      "store": "live-host-move-push-snapshot",
+      "target": "live-move-vm",
+      "from": "docker",
+      "file": null,
+      "started": 1794179161465,
+      "ended": 1794179165579,
+      "half": "push",
+      "phase": "snapshot",
+      "phases": [
+        {
+          "phase": "check",
+          "half": "pull",
+          "at": 1794179161503
+        },
+        {
+          "phase": "snapshot",
+          "half": "pull",
+          "at": 1794179161509
+        },
+        {
+          "phase": "send",
+          "half": "pull",
+          "at": 1794179161515
+        },
+        {
+          "phase": "verify",
+          "half": "pull",
+          "at": 1794179161520
+        },
+        {
+          "phase": "install",
+          "half": "pull",
+          "at": 1794179161524
+        },
+        {
+          "phase": "record",
+          "half": "pull",
+          "at": 1794179161525
+        },
+        {
+          "phase": "retire",
+          "half": "pull",
+          "at": 1794179161526
+        },
+        {
+          "phase": "check",
+          "half": "push",
+          "at": 1794179165408
+        },
+        {
+          "phase": "snapshot",
+          "half": "push",
+          "at": 1794179165416
+        }
+      ],
+      "outcome": "interrupted",
+      "pid": 71843,
+      "observation": {
+        "at": 1794179165580,
+        "kind": "transfer",
+        "value": {
+          "name": "live-host-move-push-snapshot",
+          "kind": "sqlite",
+          "state": "idle",
+          "holders": [],
+          "op": null,
+          "down_reason": null,
+          "machine": "live-move-vm",
+          "file": {
+            "exists": true,
+            "free": 7901777920,
+            "bytes": 217088,
+            "wal_bytes": 0,
+            "incoming_bytes": 0
+          }
+        },
+        "direction": "push",
+        "action": null
+      },
+      "summary": "Interrupted · Final result unavailable",
+      "done": null,
+      "total": null,
+      "error": {
+        "code": "Interrupted",
+        "message": "Host restarted; final result unavailable. Remote work may still finish.",
+        "phase": "snapshot",
+        "detail": null
+      },
+      "result": null,
+      "recovery": null
+    }
+  ]
+}

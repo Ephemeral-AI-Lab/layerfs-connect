@@ -1,0 +1,37 @@
+(lldb) process attach --pid 71651
+Process 71651 stopped
+* thread #1, stop reason = signal SIGSTOP
+    frame #0: 0x0000000107a46358 dyld`std::__1::pair<std::byte const*, std::__1::back_insert_iterator<lsl::Vector<std::byte>>> std::__1::__copy_impl::operator()[abi:nqn210106]<std::byte const*, std::byte const*, std::__1::back_insert_iterator<lsl::Vector<std::byte>>>(std::byte const*, std::byte const*, std::__1::back_insert_iterator<lsl::Vector<std::byte>>) const + 76
+dyld`std::__1::__copy_impl::operator()[abi:nqn210106]<std::byte const*, std::byte const*, std::__1::back_insert_iterator<lsl::Vector<std::byte>>>:
+->  0x107a46358 <+76>: mov    x17, x16
+    0x107a4635c <+80>: xpacd  x17
+    0x107a46360 <+84>: cmp    x16, x17
+    0x107a46364 <+88>: b.eq   0x107a4636c               ; <+96>
+Target 0: (layerfs) stopped.
+Executable module set to "/Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect-cli-137/target/debug/layerfs".
+Architecture set to: arm64-apple-macosx-.
+(lldb) breakpoint set --file phases.rs --line 253
+Breakpoint 1: where = layerfs`layerfs_store::sqlite::transfer::phases::phases::h52da2a2112a76a44 + 932 at phases.rs:253:9, address = 0x0000000104421b74
+(lldb) process continue
+Process 71651 resuming
+Process 71651 stopped
+* thread #1, name = 'main', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+    frame #0: 0x0000000104421b74 layerfs`layerfs_store::sqlite::transfer::phases::phases::h52da2a2112a76a44(home=&std::path::Path @ 0x000000016bc7a180, events=0x000000016bc7c7c0, op=0x000000016bc7b9d8, name=(data_ptr = "live-host-move-pull-snapshot", length = 28), (null)=<unavailable>, (null)=<unavailable>) at phases.rs:253:9
+   250 	    enter(&home, events, op, name, "snapshot", None)?;
+   251 	    let snapshot = at(
+   252 	        "snapshot",
+-> 253 	        step_observed(
+    	        ^
+   254 	            &home,
+   255 	            events,
+   256 	            "snapshot",
+Target 0: (layerfs) stopped.
+(lldb) thread backtrace -c 3
+* thread #1, name = 'main', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+  * frame #0: 0x0000000104421b74 layerfs`layerfs_store::sqlite::transfer::phases::phases::h52da2a2112a76a44(home=&std::path::Path @ 0x000000016bc7a180, events=0x000000016bc7c7c0, op=0x000000016bc7b9d8, name=(data_ptr = "live-host-move-pull-snapshot", length = 28), (null)=<unavailable>, (null)=<unavailable>) at phases.rs:253:9
+    frame #1: 0x0000000104420874 layerfs`layerfs_store::sqlite::transfer::phases::run::hed64c04274a7208a(home=&std::path::Path @ 0x000000016bc7b830, events=0x000000016bc7c7c0, name=(data_ptr = "live-host-move-pull-snapshot", length = 28), target=Option<&str> @ 0x000000016bc7a3d8, call=(data_ptr = "store.pullstore.pushretireUnknownrecordverifyinstallto checkexistsbyteswal_bytes has  bytes free; Store  needs  ( bytes and  of headroom)neededUnsupported's worker does not report its free disk (an older bundle)Exists already holds a Store file named sha256headsatretireduncertainstore/rustc/4eb161250e340c8f48f66e2b929ef4a5bed7c181/library/core/src/iter/traits/iterator.rs", length = 10), written=0x000000016bc7b9d8, related=Related @ 0x000000016bc7b860) at phases.rs:152:5
+    frame #2: 0x000000010441f95c layerfs`layerfs_store::sqlite::transfer::phases::transfer::h1fdf86f778ba367e(home=&std::path::Path @ 0x000000016bc7bb70, events=0x000000016bc7c7c0, name=(data_ptr = "live-host-move-pull-snapshot", length = 28), target=Option<&str> @ 0x000000016bc7b9a0, related=Related @ 0x000000016bc7bb88) at phases.rs:67:18
+(lldb) script import os; os.kill(71647,9)
+(lldb) process continue
+Process 71651 resuming
+Process 71651 exited with status = 125 (0x0000007d)

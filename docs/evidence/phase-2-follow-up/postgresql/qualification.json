@@ -1,0 +1,125 @@
+{
+  "started": "2026-11-08T22:56:18.493Z",
+  "root": "/private/tmp/connect-follow-up-pg-djQKPP",
+  "source": "833d04cf44e8e747929d50ab1170a48260d9381c",
+  "node": "v24.21.0",
+  "calls": [
+    {
+      "argv": [
+        "machine",
+        "list"
+      ],
+      "exit": 0,
+      "duration_ms": 64,
+      "result": {
+        "machines": [
+          {
+            "name": "docker",
+            "platform": "docker",
+            "backend": "namespaces",
+            "supports": {
+              "sqlite": true,
+              "postgresql_sandbox": true,
+              "reason": null
+            },
+            "state": "stopped",
+            "cpus": null,
+            "memory": null,
+            "disk": null,
+            "stores": [],
+            "sandboxes": []
+          },
+          {
+            "name": "native",
+            "platform": "native",
+            "backend": "native",
+            "supports": {
+              "sqlite": true,
+              "postgresql_sandbox": true,
+              "reason": null
+            },
+            "state": "ready",
+            "cpus": null,
+            "memory": null,
+            "disk": null,
+            "stores": [],
+            "sandboxes": []
+          }
+        ]
+      }
+    },
+    {
+      "argv": [
+        "store",
+        "connect",
+        "pg-proof",
+        "postgresql://proof@127.0.0.1:55022/proof",
+        "--password",
+        "env:CONNECT_PROOF_PG_PASSWORD",
+        "--synchronous-commit",
+        "off"
+      ],
+      "exit": 0,
+      "duration_ms": 207,
+      "result": {
+        "name": "pg-proof",
+        "kind": "postgresql",
+        "schema": "layerfs",
+        "synchronous_commit": "off",
+        "projects": []
+      }
+    },
+    {
+      "argv": [
+        "project",
+        "init",
+        "pg-proof/p",
+        "/private/tmp/connect-follow-up-pg-djQKPP/input"
+      ],
+      "exit": 0,
+      "duration_ms": 211,
+      "result": {
+        "project": "pg-proof/p",
+        "store": "pg-proof",
+        "name": "p",
+        "kind": "postgresql",
+        "machine": "native",
+        "created": 1794178580460,
+        "layer": "32412c3a3bad6c599523f329d74848dd40a565b3ff2cf1e2340860b33ffd8b289f",
+        "root": "5338f16068201056cd83d708afb9364a0277f13ace752d261faecc7f8ca42ec3"
+      }
+    }
+  ],
+  "cleanup": [
+    {
+      "container": "949abba0f42e557d97f2b0583e3fccb4ad0f9a5347ba0137826b329ef327280e",
+      "removed": true
+    }
+  ],
+  "identity": {
+    "version": "2.0.0",
+    "commit": "833d04cf44e8e747929d50ab1170a48260d9381c",
+    "dirty": false,
+    "features": [
+      "machine",
+      "postgresql"
+    ]
+  },
+  "binaries": [
+    {
+      "name": "layerfs",
+      "sha256": "7d7a5b507eeb2abc914a0e151c63eb12bd49bcbb69a06083d08f0b4430a3619c"
+    },
+    {
+      "name": "layerfs-daemon",
+      "sha256": "664c991face739375b9c147c757575d4f12edbf84f64773eedd5a08c789d10c2"
+    }
+  ],
+  "container": "949abba0f42e557d97f2b0583e3fccb4ad0f9a5347ba0137826b329ef327280e",
+  "image": "sha256:639ab7ceb90e13123085b741fb31ef493fba25463002f6da665352e7b534b652",
+  "server": "PostgreSQL 17.11 (Debian 17.11-1.pgdg12+2) on aarch64-unknown-linux-gnu, compiled by gcc (Debian 12.2.0-14+deb12u1) 12.2.0, 64-bit\nt",
+  "extension": "CREATE EXTENSION\namcheck|1.4\nbt_index_check|regclass|t\nbt_index_check|regclass, boolean|t\nbt_index_check|regclass, boolean, boolean|t\nverify_heapam|regclass, boolean, boolean, text, bigint, bigint|t",
+  "verdict": "FAIL",
+  "error": "Expected values to be strictly equal:\n\nundefined !== 0\n",
+  "ended": "2026-11-08T22:56:22.581Z"
+}

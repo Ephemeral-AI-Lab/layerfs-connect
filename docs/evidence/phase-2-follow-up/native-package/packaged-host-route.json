@@ -1,0 +1,40 @@
+{
+  "scope": "packaged",
+  "started": "2026-11-08T23:03:16.403Z",
+  "checks": [
+    {
+      "name": "real production ApprovalService /execute, mounted command exit125",
+      "frames": "{\"type\":\"data\",\"data\":\"ZXhhY3Q=\"}\n{\"type\":\"exit\",\"exitCode\":125}\n",
+      "workspace": {
+        "branch": "chat-41bf9686-3e11-4b73-bc69-879248b53e3e",
+        "state": "ready",
+        "sandbox": "chat.41bf9686-3e11-4b73-bc69-879248b53e3e",
+        "handle": "chat.41bf9686-3e11-4b73-bc69-879248b53e3e:chat-41bf9686-3e11-4b73-bc69-879248b53e3e",
+        "path": "/tmp/connect-followup-package-20261109/state/home-2/machine/native/run/lfs-95724424-chat.41bf9686-3e11-4b73-bc69-879248b53e3e/workspaces/1",
+        "head": "120e06497506bc804cbaff42b8c2d48deaaae8b4ea8b5c2eb860fe875679f19b05",
+        "commitCount": 1,
+        "lastSaved": 1794178997929,
+        "error": null,
+        "branchReady": true,
+        "baseLayer": "32c9016eab8eaa4f4a385c9b4a2fd8e361db725cbcc95febadd7bbb4c69bbb47d8",
+        "execution": {
+          "ws": "chat.41bf9686-3e11-4b73-bc69-879248b53e3e:chat-41bf9686-3e11-4b73-bc69-879248b53e3e",
+          "exec_id": "connect-5f4cb89b-0d91-4dd4-99db-e5ba00590447",
+          "finished": true,
+          "cancelRequested": false,
+          "pid": 69936,
+          "result": {
+            "kind": "exit:125",
+            "exit_code": 125,
+            "stop": "group"
+          }
+        }
+      }
+    }
+  ],
+  "cleanup": [
+    "manager closed after failure"
+  ],
+  "verdict": "FAIL",
+  "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n+ actual - expected\n\n+ 'ended'\n- 'cancelled'\n\n    at file:///private/tmp/connect-host-route-probe.mjs:3:2561\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)"
+}

@@ -1,0 +1,127 @@
+Debugger listening on ws://127.0.0.1:19326/b51b454b-86cc-4550-b905-3a4bd98c9c11
+For help, see: https://nodejs.org/learn/getting-started/debugging
+
+DevTools listening on ws://127.0.0.1:19325/devtools/browser/2e7e51c6-1461-4cfa-bb5c-8c3f3f2025f3
+Debugger attached.
+[layerfs/host] ready on http://127.0.0.1:58491 (real)
+[layerfs/host] listening on http://127.0.0.1:58491 (state /tmp/connect-followup-package-20261109/state, LayerFS home /tmp/connect-followup-package-20261109/state/home-2)
+[layerfs/host] POST /api/agent/sessions/e0da13cf-3378-4519-bb46-a2a4c6485e4b/message: Error: Unknown model: no-credit-driver/not-a-model
+[layerfs/host]     at AgentModels.resolve (file:///Users/yifanxu/Applications/LayerFS%20Connect%20Follow-up%2020261109-137.app/Contents/Resources/backend/host/agents/models.js:254:23)
+[layerfs/host]     at file:///Users/yifanxu/Applications/LayerFS%20Connect%20Follow-up%2020261109-137.app/Contents/Resources/backend/host/agents/index.js:650:33
+[layerfs/host]     at async AgentManager.message (file:///Users/yifanxu/Applications/LayerFS%20Connect%20Follow-up%2020261109-137.app/Contents/Resources/backend/host/agents/index.js:858:22)
+[layerfs/host]     at async handle (file:///Users/yifanxu/Applications/LayerFS%20Connect%20Follow-up%2020261109-137.app/Contents/Resources/backend/host/server.js:326:22)
+[layerfs/host] node:internal/per_context/domexception:76
+[layerfs/host]     const self = new Error();
+[layerfs/host]                  ^
+[layerfs/host] 
+[layerfs/host] DOMException [AbortError]: This operation was aborted
+[layerfs/host]     at new DOMException (node:internal/per_context/domexception:76:18)
+[layerfs/host]     at AbortController.abort (node:internal/abort_controller:572:18)
+[layerfs/host]     at ApprovalService.cancelSession (file:///Users/yifanxu/Applications/LayerFS%20Connect%20Follow-up%2020261109-137.app/Contents/Resources/backend/host/agents/permissions.js:197:87)
+[layerfs/host]     at AgentManager.stop (file:///Users/yifanxu/Applications/LayerFS%20Connect%20Follow-up%2020261109-137.app/Contents/Resources/backend/host/agents/index.js:1208:22)
+[layerfs/host]     at agentRoute (file:///Users/yifanxu/Applications/LayerFS%20Connect%20Follow-up%2020261109-137.app/Contents/Resources/backend/host/agents/routes.js:74:41)
+[layerfs/host]     at route (file:///Users/yifanxu/Applications/LayerFS%20Connect%20Follow-up%2020261109-137.app/Contents/Resources/backend/host/server.js:134:14)
+[layerfs/host]     at handle (file:///Users/yifanxu/Applications/LayerFS%20Connect%20Follow-up%2020261109-137.app/Contents/Resources/backend/host/server.js:326:28)
+[layerfs/host]     at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+[layerfs/host] 
+[layerfs/host] Node.js v24.21.0
+[layerfs/host] exited (1)
+Error occurred in handler for 'layerfs:request': [TypeError: fetch failed] {
+  [cause]: SocketError: other side closed
+      at Socket.onHttpSocketEnd (node:internal/deps/undici/undici:7833:26)
+      at Socket.emit (node:events:526:24)
+      at endReadableNT (node:internal/streams/readable:1783:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+    code: 'UND_ERR_SOCKET',
+    socket: {
+      localAddress: '127.0.0.1',
+      localPort: 58493,
+      remoteAddress: '127.0.0.1',
+      remotePort: 58491,
+      remoteFamily: 'IPv4',
+      timeout: undefined,
+      bytesWritten: 2914,
+      bytesRead: 19889
+    }
+  }
+}
+Debugger ending on ws://127.0.0.1:19326/b51b454b-86cc-4550-b905-3a4bd98c9c11
+For help, see: https://nodejs.org/learn/getting-started/debugging
+Debugger listening on ws://127.0.0.1:19326/1b1c2181-2852-4635-abe4-26662cd267c7
+For help, see: https://nodejs.org/learn/getting-started/debugging
+
+DevTools listening on ws://127.0.0.1:19325/devtools/browser/5cd3e6e5-7ee1-48d7-b9a8-5c8aa2e74b16
+Debugger attached.
+[layerfs/host] ready on http://127.0.0.1:59620 (real)
+[layerfs/host] listening on http://127.0.0.1:59620 (state /tmp/connect-followup-native-20261109/state, LayerFS home /tmp/connect-followup-native-20261109/state/home-2)
+[layerfs/host] POST /api/agent/sessions/125f626b-4eb1-4f1e-a26a-6286811b23d9/message: Error: Unknown model: no-credit-driver/not-a-model
+[layerfs/host]     at AgentModels.resolve (file:///Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect/host/agents/models.js:254:23)
+[layerfs/host]     at file:///Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect/host/agents/index.js:650:33
+[layerfs/host]     at async AgentManager.message (file:///Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect/host/agents/index.js:858:22)
+[layerfs/host]     at async handle (file:///Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect/host/server.js:326:22)
+Debugger ending on ws://127.0.0.1:19326/1b1c2181-2852-4635-abe4-26662cd267c7
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[layerfs/host] closing (stdin closed)
+Debugger listening on ws://127.0.0.1:19326/f62471cf-892c-4f11-a459-356242da4c33
+For help, see: https://nodejs.org/learn/getting-started/debugging
+
+DevTools listening on ws://127.0.0.1:19325/devtools/browser/3bbbb4a1-fa3d-4ed7-86d5-aecdb0dff912
+Debugger attached.
+[layerfs/host] ready on http://127.0.0.1:60465 (real)
+[layerfs/host] listening on http://127.0.0.1:60465 (state /tmp/connect-followup-package-final-20261109/state, LayerFS home /tmp/connect-followup-package-final-20261109/state/home-2)
+[layerfs/host] POST /api/agent/sessions/b4c2a7d3-d443-4bbf-aa30-a9296f93668a/message: Error: Unknown model: no-credit-driver/not-a-model
+[layerfs/host]     at AgentModels.resolve (file:///Users/yifanxu/Applications/LayerFS%20Connect%20Follow-up%20Final%2020261109-137.app/Contents/Resources/backend/host/agents/models.js:254:23)
+[layerfs/host]     at file:///Users/yifanxu/Applications/LayerFS%20Connect%20Follow-up%20Final%2020261109-137.app/Contents/Resources/backend/host/agents/index.js:650:33
+[layerfs/host]     at async AgentManager.message (file:///Users/yifanxu/Applications/LayerFS%20Connect%20Follow-up%20Final%2020261109-137.app/Contents/Resources/backend/host/agents/index.js:858:22)
+[layerfs/host]     at async handle (file:///Users/yifanxu/Applications/LayerFS%20Connect%20Follow-up%20Final%2020261109-137.app/Contents/Resources/backend/host/server.js:326:22)
+Debugger ending on ws://127.0.0.1:19326/f62471cf-892c-4f11-a459-356242da4c33
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[layerfs/host] closing (stdin closed)
+Debugger listening on ws://127.0.0.1:19326/b867bc3d-9c59-4296-a39f-e871f856b69b
+For help, see: https://nodejs.org/learn/getting-started/debugging
+
+DevTools listening on ws://127.0.0.1:19325/devtools/browser/f10e7eff-fc3a-4e4b-a4ad-e5bbb2bb349e
+Debugger attached.
+[layerfs/host] ready on http://127.0.0.1:60695 (real)
+[layerfs/host] listening on http://127.0.0.1:60695 (state /tmp/connect-followup-package-final-20261109/state, LayerFS home /tmp/connect-followup-package-final-20261109/state/home-2)
+[layerfs/host] POST /api/agent/sessions/c49633d4-291f-4cc8-8b88-ed934e4a3700/message: Error: Unknown model: no-credit-driver/not-a-model
+[layerfs/host]     at AgentModels.resolve (file:///Users/yifanxu/Applications/LayerFS%20Connect%20Follow-up%20Final%2020261109-137.app/Contents/Resources/backend/host/agents/models.js:254:23)
+[layerfs/host]     at file:///Users/yifanxu/Applications/LayerFS%20Connect%20Follow-up%20Final%2020261109-137.app/Contents/Resources/backend/host/agents/index.js:650:33
+[layerfs/host]     at async AgentManager.message (file:///Users/yifanxu/Applications/LayerFS%20Connect%20Follow-up%20Final%2020261109-137.app/Contents/Resources/backend/host/agents/index.js:858:22)
+[layerfs/host]     at async handle (file:///Users/yifanxu/Applications/LayerFS%20Connect%20Follow-up%20Final%2020261109-137.app/Contents/Resources/backend/host/server.js:326:22)
+Debugger ending on ws://127.0.0.1:19326/b867bc3d-9c59-4296-a39f-e871f856b69b
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[layerfs/host] closing (stdin closed)
+Debugger listening on ws://127.0.0.1:19326/297e5c07-3b2f-451b-900e-47b717e1dfee
+For help, see: https://nodejs.org/learn/getting-started/debugging
+
+DevTools listening on ws://127.0.0.1:19325/devtools/browser/d89be1d1-de5b-4fd8-ac88-4c949f12f55f
+Debugger attached.
+[layerfs/host] ready on http://127.0.0.1:61220 (real)
+[layerfs/host] listening on http://127.0.0.1:61220 (state /tmp/connect-followup-native-20261109/state, LayerFS home /tmp/connect-followup-native-20261109/state/home-2)
+[layerfs/host] POST /api/agent/sessions/16528102-1575-40f6-a746-409df6e834e4/message: Error: Unknown model: no-credit-driver/not-a-model
+[layerfs/host]     at AgentModels.resolve (file:///Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect/host/agents/models.js:254:23)
+[layerfs/host]     at file:///Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect/host/agents/index.js:650:33
+[layerfs/host]     at async AgentManager.message (file:///Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect/host/agents/index.js:858:22)
+[layerfs/host]     at async handle (file:///Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect/host/server.js:326:22)
+[layerfs/host] exited (SIGKILL)
+[layerfs/host] ready on http://127.0.0.1:61249 (real)
+[layerfs/host] listening on http://127.0.0.1:61249 (state /tmp/connect-followup-native-20261109/state, LayerFS home /tmp/connect-followup-native-20261109/state/home-2)
+Debugger ending on ws://127.0.0.1:19326/297e5c07-3b2f-451b-900e-47b717e1dfee
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[layerfs/host] closing (stdin closed)
+Debugger listening on ws://127.0.0.1:19326/17573978-6ed0-4c25-a5d3-5174283877b7
+For help, see: https://nodejs.org/learn/getting-started/debugging
+
+DevTools listening on ws://127.0.0.1:19325/devtools/browser/d737b4b5-d496-4a7e-aa47-0c68d6fb1bfb
+Debugger attached.
+[layerfs/host] ready on http://127.0.0.1:62551 (real)
+[layerfs/host] listening on http://127.0.0.1:62551 (state /tmp/connect-followup-package-outside-20261109/state, LayerFS home /tmp/connect-followup-package-outside-20261109/state/home-2)
+[layerfs/host] POST /api/agent/sessions/b56d4688-fd8b-4f41-bf05-2bdd5433ea32/message: Error: Unknown model: no-credit-driver/not-a-model
+[layerfs/host]     at AgentModels.resolve (file:///Users/yifanxu/Applications/LayerFS%20Connect%20Follow-up%20Final%2020261109-137.app/Contents/Resources/backend/host/agents/models.js:254:23)
+[layerfs/host]     at file:///Users/yifanxu/Applications/LayerFS%20Connect%20Follow-up%20Final%2020261109-137.app/Contents/Resources/backend/host/agents/index.js:650:33
+[layerfs/host]     at async AgentManager.message (file:///Users/yifanxu/Applications/LayerFS%20Connect%20Follow-up%20Final%2020261109-137.app/Contents/Resources/backend/host/agents/index.js:858:22)
+[layerfs/host]     at async handle (file:///Users/yifanxu/Applications/LayerFS%20Connect%20Follow-up%20Final%2020261109-137.app/Contents/Resources/backend/host/server.js:326:22)
+Debugger ending on ws://127.0.0.1:19326/17573978-6ed0-4c25-a5d3-5174283877b7
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[layerfs/host] closing (stdin closed)

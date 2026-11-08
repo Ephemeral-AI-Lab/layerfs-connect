@@ -1,0 +1,40 @@
+(lldb) process attach --pid 70329
+Process 70329 stopped
+* thread #1, stop reason = signal SIGSTOP
+    frame #0: 0x00000001831e1f50 dyld`__open + 8
+dyld`__open:
+->  0x1831e1f50 <+8>:  b.lo   0x1831e1f70               ; <+40>
+    0x1831e1f54 <+12>: pacibsp 
+    0x1831e1f58 <+16>: stp    x29, x30, [sp, #-0x10]!
+    0x1831e1f5c <+20>: mov    x29, sp
+Target 0: (layerfs) stopped.
+Executable module set to "/Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect-cli-137/target/debug/layerfs".
+Architecture set to: arm64-apple-macosx-.
+(lldb) breakpoint set --file /Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect-cli-137/control/crates/layerfs-store/src/backup/restore.rs --line 119
+Breakpoint 1: 2 locations.
+(lldb) process continue
+Process 70329 resuming
+Process 70329 stopped
+* thread #1, name = 'main', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+    frame #0: 0x00000001050d82e8 layerfs`layerfs_store::backup::restore::restore::h936d6b3d4fbdc023(home=&std::path::Path @ 0x000000016aefb608, events=0x000000016aefc2b0, request=0x000000016aefb720, related=Related @ 0x000000016aefb628) at restore.rs:119:26
+   116 	            home::private_dir(&paths::store_dir(&home, store))?;
+   117 	            // a link never replaces a Store that appeared meanwhile
+   118 	            std::fs::hard_link(&staged, &destination).map_err(failed)?;
+-> 119 	            record.write(&home)?;
+    	                         ^
+   120 	        }
+   121 	        (None, _) => {
+   122 	            return Err(refused(
+Target 0: (layerfs) stopped.
+(lldb) thread backtrace -c 8
+* thread #1, name = 'main', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+  * frame #0: 0x00000001050d82e8 layerfs`layerfs_store::backup::restore::restore::h936d6b3d4fbdc023(home=&std::path::Path @ 0x000000016aefb608, events=0x000000016aefc2b0, request=0x000000016aefb720, related=Related @ 0x000000016aefb628) at restore.rs:119:26
+    frame #1: 0x0000000104f88cc8 layerfs`layerfs_control::backup::restore::hca225a21daa4e0bf(home=&std::path::Path @ 0x000000016aefb6c0, events=0x000000016aefc2b0, request=0x000000016aefb720) at backup.rs:11:5
+    frame #2: 0x0000000104f4b9d0 layerfs`layerfs_api::backup::restore::run::h00294f7061800556(context=0x000000016aefc298, args=0x000000016aefba90) at restore.rs:28:5
+    frame #3: 0x0000000104f40040 layerfs`layerfs_api::calls::dispatch::scoped::h8c81f440be28ea1c(families=&[layerfs_api::calls::table::Family] @ 0x000000016aefc590, home_path=Option<&std::path::Path> @ 0x000000016aefc5a0, scope=Option<&layerfs_api::calls::scope::Scope> @ 0x000000016aefb988, name=(data_ptr = "backup.restore", length = 14), args=SdkValue @ 0x000000016aefc630, events=&mut dyn core::ops::function::FnMut<(layerfs_bridge::control_sdk::SdkValue), Output=()> @ 0x000000016aefc5b0) at dispatch.rs:95:17
+    frame #4: 0x0000000104f4b72c layerfs`layerfs_api::calls::dispatch::call_scoped::_$u7b$$u7b$closure$u7d$$u7d$::h71aadc14d9a2f013 at dispatch.rs:61:9
+    frame #5: 0x0000000104f4b168 layerfs`layerfs_home::trace::stepped::h964b636a39c629fb(op=(data_ptr = "backup.restore", length = 14), work={closure_env#0} @ 0x000000016aefc850) at trace.rs:101:16
+    frame #6: 0x0000000104f3f968 layerfs`layerfs_api::calls::dispatch::call_scoped::ha8228fa7e16207b6(families=&[layerfs_api::calls::table::Family] @ 0x000000016aefc828, home_path=Option<&std::path::Path> @ 0x000000016aefc838, scope=Option<&layerfs_api::calls::scope::Scope> @ 0x000000016aefc848, name=(data_ptr = "backup.restore", length = 14), args=<unavailable>, events=&mut dyn core::ops::function::FnMut<(layerfs_bridge::control_sdk::SdkValue), Output=()> @ 0x000000016aefc8c0) at dispatch.rs:60:5
+    frame #7: 0x0000000104f4bb7c layerfs`layerfs_api::call_scoped::hbc0e9d4c3a82e850(home=Option<&std::path::Path> @ 0x000000016aefc978, scope=Option<&layerfs_api::calls::scope::Scope> @ 0x000000016aefc988, name=(data_ptr = "backup.restore", length = 14), args=SdkValue @ 0x000000016aefcf40, events=&mut dyn core::ops::function::FnMut<(layerfs_bridge::control_sdk::SdkValue), Output=()> @ 0x000000016aefc9a0) at lib.rs:150:5
+(lldb) process kill
+Process 70329 exited with status = 9 (0x00000009) killed

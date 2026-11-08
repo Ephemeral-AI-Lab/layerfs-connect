@@ -1,0 +1,36 @@
+{
+  "Connect_HEAD_at_verification": "d25585db1152bdcb58fda492b8b18c586325f1ac",
+  "selected_files_unchanged_during_live_campaign": true,
+  "files": [
+    {
+      "file": "host/storage.js",
+      "sha256": "f2b0be38371b6b67ff6108b5aebf3d540e4ff99d90e2129d4cfc06e2a14e56a5"
+    },
+    {
+      "file": "host/jobs/move.js",
+      "sha256": "a11212bdce92d0aba396acd6c99e11fd24ba92f5a2d398f6a9421ab82174c538"
+    },
+    {
+      "file": "host/jobs/reconcile.js",
+      "sha256": "8f4e956e03de31aef5c72af64a9f2060caf0da7ab81a1ad55725711a01510ab0"
+    },
+    {
+      "file": "host/jobs/store.js",
+      "sha256": "c4c9aa711671be6291f4e554b2092e0fb651e011022c3875b3dbb0bf85dbdbef"
+    },
+    {
+      "file": "host/cli/calls.js",
+      "sha256": "1c3e7d7f3ac6935efa19dd0b9ef5954e7020f66c3444ba5cc0868770d7d2dfb8"
+    },
+    {
+      "file": "host/cli/spawn.js",
+      "sha256": "8d541538d7bbc7e60ecb5a4751e7ef856c5caac4e8ef856717e3bd3df7d74a40"
+    }
+  ],
+  "LayerFS": "833d04cf44e8e747929d50ab1170a48260d9381c",
+  "cli_sha256": "7d7a5b507eeb2abc914a0e151c63eb12bd49bcbb69a06083d08f0b4430a3619c",
+  "daemon_sha256": "664c991face739375b9c147c757575d4f12edbf84f64773eedd5a08c789d10c2",
+  "bundle": "/private/tmp/connect137-linux-bundle/2.0.0/linux-aarch64",
+  "Node": "v24.21.0",
+  "profile": "disposable"
+}

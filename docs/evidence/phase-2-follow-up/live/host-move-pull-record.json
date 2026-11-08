@@ -1,0 +1,84 @@
+{
+  "mutations": 0,
+  "jobs": [
+    {
+      "id": "9cb4eec1-35a0-4633-a8d7-c7fb42593034",
+      "kind": "move",
+      "store": "live-host-move-pull-record",
+      "target": "live-move-vm",
+      "from": "docker",
+      "file": null,
+      "started": 1794179152786,
+      "ended": 1794179156985,
+      "half": "pull",
+      "phase": "record",
+      "phases": [
+        {
+          "phase": "check",
+          "half": "pull",
+          "at": 1794179156782
+        },
+        {
+          "phase": "snapshot",
+          "half": "pull",
+          "at": 1794179156792
+        },
+        {
+          "phase": "send",
+          "half": "pull",
+          "at": 1794179156804
+        },
+        {
+          "phase": "verify",
+          "half": "pull",
+          "at": 1794179156808
+        },
+        {
+          "phase": "install",
+          "half": "pull",
+          "at": 1794179156814
+        },
+        {
+          "phase": "record",
+          "half": "pull",
+          "at": 1794179156814
+        }
+      ],
+      "outcome": "interrupted",
+      "pid": 71696,
+      "observation": {
+        "at": 1794179156986,
+        "kind": "transfer",
+        "value": {
+          "name": "live-host-move-pull-record",
+          "kind": "sqlite",
+          "state": "idle",
+          "holders": [],
+          "op": null,
+          "down_reason": null,
+          "machine": "native",
+          "file": {
+            "exists": true,
+            "free": 328001126400,
+            "bytes": 217088,
+            "wal_bytes": 0,
+            "incoming_bytes": 0
+          }
+        },
+        "direction": "pull",
+        "action": null
+      },
+      "summary": "Interrupted · Final result unavailable",
+      "done": null,
+      "total": null,
+      "error": {
+        "code": "Interrupted",
+        "message": "Host restarted; final result unavailable. Remote work may still finish.",
+        "phase": "record",
+        "detail": null
+      },
+      "result": null,
+      "recovery": null
+    }
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "started": "2026-11-08T22:55:58.848811+00:00",
+  "connect_head": "d25585db1152bdcb58fda492b8b18c586325f1ac",
+  "branch": "phase-2-cli-integration",
+  "initial_status": "?? .hallmark/\n?? .pnpm-store/\n?? docs/specs/phase-2-follow-up-agent-prompt.md\n?? docs/specs/phase-2-remaining-checklist.md\n",
+  "host_free_bytes": 332226072576,
+  "cli": {
+    "path": "/Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect-cli-137/target/debug/layerfs",
+    "version": "2.0.0",
+    "commit": "833d04cf44e8e747929d50ab1170a48260d9381c",
+    "dirty": false,
+    "features": [
+      "machine",
+      "postgresql"
+    ],
+    "sha256": "7d7a5b507eeb2abc914a0e151c63eb12bd49bcbb69a06083d08f0b4430a3619c",
+    "daemon_sha256": "664c991face739375b9c147c757575d4f12edbf84f64773eedd5a08c789d10c2"
+  },
+  "scope": [
+    "native desktop",
+    "macOS arm64 local app",
+    "live failure recovery",
+    "PostgreSQL full integrity"
+  ],
+  "excluded": [
+    "Doctor progress/cancellation",
+    "push",
+    "PR",
+    "merge",
+    "distribution",
+    "Developer ID signing",
+    "notarization",
+    "other platforms"
+  ],
+  "persistence": "Disposable only"
+}

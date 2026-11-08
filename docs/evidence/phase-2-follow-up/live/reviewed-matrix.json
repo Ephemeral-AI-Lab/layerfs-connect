@@ -1,0 +1,493 @@
+{
+  "source": "833d04cf44e8e747929d50ab1170a48260d9381c",
+  "pre_injection_review": "Lead explicitly reviewed and approved this phase matrix in collaboration message before first transfer injection. Expected authority/custody was discussed against phases.rs source.",
+  "mechanism": "Unmodified pinned CLI under external LLDB source breakpoint; actual stop frame and SIGKILL result retained. Connect host-kill rows separately cover preinstall/installed-prerecord/postrecord custody; child permitted to finish, then fresh reads and no replay.",
+  "important": "Progress is not a synchronization gate: transfer progress precedes persisted op and backup progress can be buffered. The debugger supplies exact boundary evidence.",
+  "rows": [
+    {
+      "id": "push-check",
+      "operation": "push",
+      "phase": "check",
+      "authority": "source until record publication; destination after record",
+      "custody": "source retained before install; install/record uncertain copies retained; retire destination authority with source pending retirement",
+      "fresh_reads": [
+        "store.status",
+        "store.get"
+      ],
+      "recovery": "one explicit same-direction call only after fresh read; never automatic replay",
+      "cleanup_owner": "live recovery agent"
+    },
+    {
+      "id": "push-snapshot",
+      "operation": "push",
+      "phase": "snapshot",
+      "authority": "source until record publication; destination after record",
+      "custody": "source retained before install; install/record uncertain copies retained; retire destination authority with source pending retirement",
+      "fresh_reads": [
+        "store.status",
+        "store.get"
+      ],
+      "recovery": "one explicit same-direction call only after fresh read; never automatic replay",
+      "cleanup_owner": "live recovery agent"
+    },
+    {
+      "id": "push-send",
+      "operation": "push",
+      "phase": "send",
+      "authority": "source until record publication; destination after record",
+      "custody": "source retained before install; install/record uncertain copies retained; retire destination authority with source pending retirement",
+      "fresh_reads": [
+        "store.status",
+        "store.get"
+      ],
+      "recovery": "one explicit same-direction call only after fresh read; never automatic replay",
+      "cleanup_owner": "live recovery agent"
+    },
+    {
+      "id": "push-verify",
+      "operation": "push",
+      "phase": "verify",
+      "authority": "source until record publication; destination after record",
+      "custody": "source retained before install; install/record uncertain copies retained; retire destination authority with source pending retirement",
+      "fresh_reads": [
+        "store.status",
+        "store.get"
+      ],
+      "recovery": "one explicit same-direction call only after fresh read; never automatic replay",
+      "cleanup_owner": "live recovery agent"
+    },
+    {
+      "id": "push-install",
+      "operation": "push",
+      "phase": "install",
+      "authority": "source until record publication; destination after record",
+      "custody": "source retained before install; install/record uncertain copies retained; retire destination authority with source pending retirement",
+      "fresh_reads": [
+        "store.status",
+        "store.get"
+      ],
+      "recovery": "one explicit same-direction call only after fresh read; never automatic replay",
+      "cleanup_owner": "live recovery agent"
+    },
+    {
+      "id": "push-record",
+      "operation": "push",
+      "phase": "record",
+      "authority": "source until record publication; destination after record",
+      "custody": "source retained before install; install/record uncertain copies retained; retire destination authority with source pending retirement",
+      "fresh_reads": [
+        "store.status",
+        "store.get"
+      ],
+      "recovery": "one explicit same-direction call only after fresh read; never automatic replay",
+      "cleanup_owner": "live recovery agent"
+    },
+    {
+      "id": "push-retire",
+      "operation": "push",
+      "phase": "retire",
+      "authority": "source until record publication; destination after record",
+      "custody": "source retained before install; install/record uncertain copies retained; retire destination authority with source pending retirement",
+      "fresh_reads": [
+        "store.status",
+        "store.get"
+      ],
+      "recovery": "one explicit same-direction call only after fresh read; never automatic replay",
+      "cleanup_owner": "live recovery agent"
+    },
+    {
+      "id": "pull-check",
+      "operation": "pull",
+      "phase": "check",
+      "authority": "source until record publication; destination after record",
+      "custody": "source retained before install; install/record uncertain copies retained; retire destination authority with source pending retirement",
+      "fresh_reads": [
+        "store.status",
+        "store.get"
+      ],
+      "recovery": "one explicit same-direction call only after fresh read; never automatic replay",
+      "cleanup_owner": "live recovery agent"
+    },
+    {
+      "id": "pull-snapshot",
+      "operation": "pull",
+      "phase": "snapshot",
+      "authority": "source until record publication; destination after record",
+      "custody": "source retained before install; install/record uncertain copies retained; retire destination authority with source pending retirement",
+      "fresh_reads": [
+        "store.status",
+        "store.get"
+      ],
+      "recovery": "one explicit same-direction call only after fresh read; never automatic replay",
+      "cleanup_owner": "live recovery agent"
+    },
+    {
+      "id": "pull-send",
+      "operation": "pull",
+      "phase": "send",
+      "authority": "source until record publication; destination after record",
+      "custody": "source retained before install; install/record uncertain copies retained; retire destination authority with source pending retirement",
+      "fresh_reads": [
+        "store.status",
+        "store.get"
+      ],
+      "recovery": "one explicit same-direction call only after fresh read; never automatic replay",
+      "cleanup_owner": "live recovery agent"
+    },
+    {
+      "id": "pull-verify",
+      "operation": "pull",
+      "phase": "verify",
+      "authority": "source until record publication; destination after record",
+      "custody": "source retained before install; install/record uncertain copies retained; retire destination authority with source pending retirement",
+      "fresh_reads": [
+        "store.status",
+        "store.get"
+      ],
+      "recovery": "one explicit same-direction call only after fresh read; never automatic replay",
+      "cleanup_owner": "live recovery agent"
+    },
+    {
+      "id": "pull-install",
+      "operation": "pull",
+      "phase": "install",
+      "authority": "source until record publication; destination after record",
+      "custody": "source retained before install; install/record uncertain copies retained; retire destination authority with source pending retirement",
+      "fresh_reads": [
+        "store.status",
+        "store.get"
+      ],
+      "recovery": "one explicit same-direction call only after fresh read; never automatic replay",
+      "cleanup_owner": "live recovery agent"
+    },
+    {
+      "id": "pull-record",
+      "operation": "pull",
+      "phase": "record",
+      "authority": "source until record publication; destination after record",
+      "custody": "source retained before install; install/record uncertain copies retained; retire destination authority with source pending retirement",
+      "fresh_reads": [
+        "store.status",
+        "store.get"
+      ],
+      "recovery": "one explicit same-direction call only after fresh read; never automatic replay",
+      "cleanup_owner": "live recovery agent"
+    },
+    {
+      "id": "pull-retire",
+      "operation": "pull",
+      "phase": "retire",
+      "authority": "source until record publication; destination after record",
+      "custody": "source retained before install; install/record uncertain copies retained; retire destination authority with source pending retirement",
+      "fresh_reads": [
+        "store.status",
+        "store.get"
+      ],
+      "recovery": "one explicit same-direction call only after fresh read; never automatic replay",
+      "cleanup_owner": "live recovery agent"
+    },
+    {
+      "id": "move-pull-check",
+      "operation": "move.pull",
+      "phase": "check",
+      "authority": "source until record publication; destination after record",
+      "custody": "source retained before install; install/record uncertain copies retained; retire destination authority with source pending retirement",
+      "fresh_reads": [
+        "store.status",
+        "store.get"
+      ],
+      "recovery": "one explicit same-direction call only after fresh read; never automatic replay",
+      "cleanup_owner": "live recovery agent"
+    },
+    {
+      "id": "move-pull-snapshot",
+      "operation": "move.pull",
+      "phase": "snapshot",
+      "authority": "source until record publication; destination after record",
+      "custody": "source retained before install; install/record uncertain copies retained; retire destination authority with source pending retirement",
+      "fresh_reads": [
+        "store.status",
+        "store.get"
+      ],
+      "recovery": "one explicit same-direction call only after fresh read; never automatic replay",
+      "cleanup_owner": "live recovery agent"
+    },
+    {
+      "id": "move-pull-send",
+      "operation": "move.pull",
+      "phase": "send",
+      "authority": "source until record publication; destination after record",
+      "custody": "source retained before install; install/record uncertain copies retained; retire destination authority with source pending retirement",
+      "fresh_reads": [
+        "store.status",
+        "store.get"
+      ],
+      "recovery": "one explicit same-direction call only after fresh read; never automatic replay",
+      "cleanup_owner": "live recovery agent"
+    },
+    {
+      "id": "move-pull-verify",
+      "operation": "move.pull",
+      "phase": "verify",
+      "authority": "source until record publication; destination after record",
+      "custody": "source retained before install; install/record uncertain copies retained; retire destination authority with source pending retirement",
+      "fresh_reads": [
+        "store.status",
+        "store.get"
+      ],
+      "recovery": "one explicit same-direction call only after fresh read; never automatic replay",
+      "cleanup_owner": "live recovery agent"
+    },
+    {
+      "id": "move-pull-install",
+      "operation": "move.pull",
+      "phase": "install",
+      "authority": "source until record publication; destination after record",
+      "custody": "source retained before install; install/record uncertain copies retained; retire destination authority with source pending retirement",
+      "fresh_reads": [
+        "store.status",
+        "store.get"
+      ],
+      "recovery": "one explicit same-direction call only after fresh read; never automatic replay",
+      "cleanup_owner": "live recovery agent"
+    },
+    {
+      "id": "move-pull-record",
+      "operation": "move.pull",
+      "phase": "record",
+      "authority": "source until record publication; destination after record",
+      "custody": "source retained before install; install/record uncertain copies retained; retire destination authority with source pending retirement",
+      "fresh_reads": [
+        "store.status",
+        "store.get"
+      ],
+      "recovery": "one explicit same-direction call only after fresh read; never automatic replay",
+      "cleanup_owner": "live recovery agent"
+    },
+    {
+      "id": "move-pull-retire",
+      "operation": "move.pull",
+      "phase": "retire",
+      "authority": "source until record publication; destination after record",
+      "custody": "source retained before install; install/record uncertain copies retained; retire destination authority with source pending retirement",
+      "fresh_reads": [
+        "store.status",
+        "store.get"
+      ],
+      "recovery": "one explicit same-direction call only after fresh read; never automatic replay",
+      "cleanup_owner": "live recovery agent"
+    },
+    {
+      "id": "move-push-check",
+      "operation": "move.push",
+      "phase": "check",
+      "authority": "source until record publication; destination after record",
+      "custody": "source retained before install; install/record uncertain copies retained; retire destination authority with source pending retirement",
+      "fresh_reads": [
+        "store.status",
+        "store.get"
+      ],
+      "recovery": "one explicit same-direction call only after fresh read; never automatic replay",
+      "cleanup_owner": "live recovery agent"
+    },
+    {
+      "id": "move-push-snapshot",
+      "operation": "move.push",
+      "phase": "snapshot",
+      "authority": "source until record publication; destination after record",
+      "custody": "source retained before install; install/record uncertain copies retained; retire destination authority with source pending retirement",
+      "fresh_reads": [
+        "store.status",
+        "store.get"
+      ],
+      "recovery": "one explicit same-direction call only after fresh read; never automatic replay",
+      "cleanup_owner": "live recovery agent"
+    },
+    {
+      "id": "move-push-send",
+      "operation": "move.push",
+      "phase": "send",
+      "authority": "source until record publication; destination after record",
+      "custody": "source retained before install; install/record uncertain copies retained; retire destination authority with source pending retirement",
+      "fresh_reads": [
+        "store.status",
+        "store.get"
+      ],
+      "recovery": "one explicit same-direction call only after fresh read; never automatic replay",
+      "cleanup_owner": "live recovery agent"
+    },
+    {
+      "id": "move-push-verify",
+      "operation": "move.push",
+      "phase": "verify",
+      "authority": "source until record publication; destination after record",
+      "custody": "source retained before install; install/record uncertain copies retained; retire destination authority with source pending retirement",
+      "fresh_reads": [
+        "store.status",
+        "store.get"
+      ],
+      "recovery": "one explicit same-direction call only after fresh read; never automatic replay",
+      "cleanup_owner": "live recovery agent"
+    },
+    {
+      "id": "move-push-install",
+      "operation": "move.push",
+      "phase": "install",
+      "authority": "source until record publication; destination after record",
+      "custody": "source retained before install; install/record uncertain copies retained; retire destination authority with source pending retirement",
+      "fresh_reads": [
+        "store.status",
+        "store.get"
+      ],
+      "recovery": "one explicit same-direction call only after fresh read; never automatic replay",
+      "cleanup_owner": "live recovery agent"
+    },
+    {
+      "id": "move-push-record",
+      "operation": "move.push",
+      "phase": "record",
+      "authority": "source until record publication; destination after record",
+      "custody": "source retained before install; install/record uncertain copies retained; retire destination authority with source pending retirement",
+      "fresh_reads": [
+        "store.status",
+        "store.get"
+      ],
+      "recovery": "one explicit same-direction call only after fresh read; never automatic replay",
+      "cleanup_owner": "live recovery agent"
+    },
+    {
+      "id": "move-push-retire",
+      "operation": "move.push",
+      "phase": "retire",
+      "authority": "source until record publication; destination after record",
+      "custody": "source retained before install; install/record uncertain copies retained; retire destination authority with source pending retirement",
+      "fresh_reads": [
+        "store.status",
+        "store.get"
+      ],
+      "recovery": "one explicit same-direction call only after fresh read; never automatic replay",
+      "cleanup_owner": "live recovery agent"
+    },
+    {
+      "id": "backup.create.native-check#1",
+      "operation": "backup.create.native",
+      "phase": "check#1",
+      "owner": "postgresql agent after delegation",
+      "fresh_reads": [
+        "backup.list",
+        "store.get"
+      ],
+      "custody": "retain uncertain remote copy or installed Store until reads establish state"
+    },
+    {
+      "id": "backup.create.native-snapshot",
+      "operation": "backup.create.native",
+      "phase": "snapshot",
+      "owner": "postgresql agent after delegation",
+      "fresh_reads": [
+        "backup.list",
+        "store.get"
+      ],
+      "custody": "retain uncertain remote copy or installed Store until reads establish state"
+    },
+    {
+      "id": "backup.create.native-check#2",
+      "operation": "backup.create.native",
+      "phase": "check#2",
+      "owner": "postgresql agent after delegation",
+      "fresh_reads": [
+        "backup.list",
+        "store.get"
+      ],
+      "custody": "retain uncertain remote copy or installed Store until reads establish state"
+    },
+    {
+      "id": "backup.create.native-hash",
+      "operation": "backup.create.native",
+      "phase": "hash",
+      "owner": "postgresql agent after delegation",
+      "fresh_reads": [
+        "backup.list",
+        "store.get"
+      ],
+      "custody": "retain uncertain remote copy or installed Store until reads establish state"
+    },
+    {
+      "id": "backup.create.native-upload",
+      "operation": "backup.create.native",
+      "phase": "upload",
+      "owner": "postgresql agent after delegation",
+      "fresh_reads": [
+        "backup.list",
+        "store.get"
+      ],
+      "custody": "retain uncertain remote copy or installed Store until reads establish state"
+    },
+    {
+      "id": "backup.create.remote-send",
+      "operation": "backup.create.remote",
+      "phase": "send",
+      "owner": "postgresql agent after delegation",
+      "fresh_reads": [
+        "backup.list",
+        "store.get"
+      ],
+      "custody": "retain uncertain remote copy or installed Store until reads establish state"
+    },
+    {
+      "id": "backup.restore-check",
+      "operation": "backup.restore",
+      "phase": "check",
+      "owner": "postgresql agent after delegation",
+      "fresh_reads": [
+        "backup.list",
+        "store.get"
+      ],
+      "custody": "retain uncertain remote copy or installed Store until reads establish state"
+    },
+    {
+      "id": "backup.restore-download",
+      "operation": "backup.restore",
+      "phase": "download",
+      "owner": "postgresql agent after delegation",
+      "fresh_reads": [
+        "backup.list",
+        "store.get"
+      ],
+      "custody": "retain uncertain remote copy or installed Store until reads establish state"
+    },
+    {
+      "id": "backup.restore-verify",
+      "operation": "backup.restore",
+      "phase": "verify",
+      "owner": "postgresql agent after delegation",
+      "fresh_reads": [
+        "backup.list",
+        "store.get"
+      ],
+      "custody": "retain uncertain remote copy or installed Store until reads establish state"
+    },
+    {
+      "id": "backup.restore-install#1-staging",
+      "operation": "backup.restore",
+      "phase": "install#1-staging",
+      "owner": "postgresql agent after delegation",
+      "fresh_reads": [
+        "backup.list",
+        "store.get"
+      ],
+      "custody": "retain uncertain remote copy or installed Store until reads establish state"
+    },
+    {
+      "id": "backup.restore-install#2-destination",
+      "operation": "backup.restore",
+      "phase": "install#2-destination",
+      "owner": "postgresql agent after delegation",
+      "fresh_reads": [
+        "backup.list",
+        "store.get"
+      ],
+      "custody": "retain uncertain remote copy or installed Store until reads establish state"
+    }
+  ]
+}

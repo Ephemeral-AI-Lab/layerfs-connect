@@ -1,0 +1,32 @@
+{
+  "reviewer": "live-recovery owner, independent of native/package author",
+  "verdict": "PASS",
+  "scope": "Final native/package core IPC, mounted execution/cancellation, retained custody, pinned reads, footer, missing/incompatible CLI errors. Native dialog real controls, restart and cleanup are separate acceptance rows pending aggregate evidence.",
+  "observations": [
+    "Production Electron-owned host route exercised without model API credits. Actual published mounted-file plus persisted active PID observed before Stop. Raw development receipt old check name mentions READY frame; source driver uses file/PID boundary, so no READY frame observation is claimed here.",
+    "Cancellation143 and successful partial-change Save remain separate from HTTP stream AbortError; host remains alive.",
+    "Packaged boundary uses stripped shell PATH and embedded runtime; final receipt real preload/CLI flows pass. Missing/incompatible errors use controlled actionable strings, with incompatible test explicitly synthetic."
+  ],
+  "files": [
+    {
+      "file": "development-probefinal.json",
+      "sha256": "f8a8ff67584a5b39e557450d3fa5e64a55a722296b0c5b7aa824712444edd854",
+      "verdict": "PASS"
+    },
+    {
+      "file": "packaged-probefinal.json",
+      "sha256": "dc5a1ffd941e50e6e3f5d172c82cf44370573b495a8ccff5da227a495e5ac30e",
+      "verdict": "PASS"
+    },
+    {
+      "file": "packaged-probemissing-final.json",
+      "sha256": "8f3ba4ee823f4157b450bc90d11e28500807d798d5345cda7701f14ff4e9095f",
+      "verdict": "PASS"
+    },
+    {
+      "file": "packaged-probeincompatible-final.json",
+      "sha256": "e8d999518103ca8e9ad82dcef29d091550f66e4828655fa9df24337489cf33ce",
+      "verdict": "PASS"
+    }
+  ]
+}

@@ -1,0 +1,58 @@
+{
+  "verdict": "PASS",
+  "actions": [
+    {
+      "fresh_read": [
+        "sandbox",
+        "list"
+      ],
+      "value": {
+        "items": [],
+        "next_page_pos": null
+      }
+    },
+    {
+      "fresh_read": [
+        "store",
+        "list"
+      ],
+      "value": {
+        "items": []
+      }
+    },
+    {
+      "removed_owned_state": "/tmp/connect-followup-native-window-20261109"
+    },
+    {
+      "removed_owned_state": "/tmp/connect-followup-pg-ui-20261109"
+    },
+    {
+      "removed_owned_state": "/tmp/connect-followup-package-missing-20261109"
+    },
+    {
+      "removed_owned_state": "/tmp/connect-followup-package-incompatible-20261109"
+    },
+    {
+      "removed_owned_installation": "/Users/yifanxu/Applications/LayerFS Connect Follow-up 20261109-137.app"
+    },
+    {
+      "removed_owned_installation": "/Users/yifanxu/Applications/LayerFS Connect Follow-up Final 20261109-137.app"
+    },
+    {
+      "removed_synthetic_incompatible_binary": "/tmp/connect-owned-incompatible-cli"
+    }
+  ],
+  "other_custody_receipts": [
+    "cleanup-old-package.json",
+    "cleanup-old-package-finalize.json",
+    "cleanup-native.json",
+    "cleanup-final-package.json"
+  ],
+  "protected": [
+    "/Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect/desktop/dist/mac-arm64/LayerFS Connect.app",
+    "/Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect-cli-137/target/debug/layerfs",
+    "/Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect-cli-137/target/debug/layerfs-daemon",
+    "All append-only verification evidence, unrelated owner state, .hallmark, .pnpm-store"
+  ],
+  "native_selection": "BLOCKED; cancellation qualified, owner manual selection/OS authorization required; no app left open"
+}

@@ -1,0 +1,56 @@
+{
+  "started": "2026-11-08T23:23:07.499Z",
+  "checks": [
+    {
+      "name": "main identity/userData isolation",
+      "result": {
+        "userData": "/private/tmp/connect-followup-native-20261109/electron-data",
+        "platform": "darwin",
+        "versions": {
+          "node": "24.22.0",
+          "acorn": "8.18.0",
+          "ada": "4.0.0",
+          "amaro": "1.1.11",
+          "ares": "1.34.8",
+          "brotli": "1.2.0",
+          "cldr": "48.0",
+          "icu": "78.2",
+          "llhttp": "9.4.3",
+          "merve": "1.2.2",
+          "modules": "150",
+          "napi": "10",
+          "nbytes": "0.1.4",
+          "ncrypto": "0.0.1",
+          "nghttp2": "1.70.0",
+          "nghttp3": "",
+          "ngtcp2": "",
+          "openssl": "0.0.0",
+          "simdjson": "4.6.11",
+          "simdutf": "7.7.0",
+          "sqlite": "3.53.4",
+          "tz": "2026e",
+          "undici": "7.29.1",
+          "unicode": "17.0",
+          "uv": "1.52.1",
+          "uvwasi": "0.0.23",
+          "v8": "15.6.75.19-electron.0",
+          "zlib": "1.3.2.1-motley",
+          "zstd": "1.6.0",
+          "electron": "45.0.0",
+          "chrome": "156.0.8078.48"
+        },
+        "isPackaged": false
+      }
+    },
+    {
+      "name": "actual native NSOpenPanel cancellation via owned LLDB",
+      "status": 0,
+      "signal": null,
+      "stdout": "(lldb) process attach --pid 91132\nProcess 91132 stopped\n* thread #1, name = 'CrBrowserMain', queue = 'com.apple.main-thread', stop reason = signal SIGSTOP\n    frame #0: 0x0000000183573c34 libsystem_kernel.dylib`mach_msg2_trap + 8\nlibsystem_kernel.dylib`mach_msg2_trap:\n->  0x183573c34 <+8>: ret    \n\nlibsystem_kernel.dylib`macx_swapon:\n    0x183573c38 <+0>: mov    x16, #-0x30               ; =-48 \n    0x183573c3c <+4>: svc    #0x80\n    0x183573c40 <+8>: ret    \nTarget 0: (Electron) stopped.\nExecutable module set to \"/Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect/desktop/node_modules/.pnpm/electron@45.0.0/node_modules/electron/dist/Electron.app/Contents/MacOS/Electron\".\nArchitecture set to: arm64-apple-macosx-.\n(lldb) settings set target.auto-import-clang-modules false\n(lldb) expression --top-level --language objc++ -- extern \"C\" void* objc_getClass(const char*); extern \"C\" void* sel_registerName(const char*); extern \"C\" void* objc_msgSend(void*,void*,...);\n(lldb) expr -l objc++ -- ({ void* app=objc_msgSend(objc_getClass(\"NSApplication\"),sel_registerName(\"sharedApplication\")); void* panel=objc_msgSend(app,sel_registerName(\"keyWindow\")); void* msg=(void*)(void*(*)(void*,void*,...))&objc_msgSend; bool found=((bool(*)(void*,void*,void*))msg)(panel,sel_registerName(\"isKindOfClass:\"),objc_getClass(\"NSOpenPanel\")); if(found)((void(*)(void*,void*,void*))msg)(panel,sel_registerName(\"cancel:\"),(void*)0); found; })\n(bool) $0 = false\n(lldb) detach\nProcess 91132 detached\n",
+      "stderr": ""
+    }
+  ],
+  "scope": "development",
+  "error": "Native Cocoa control unavailable: (lldb) process attach --pid 91132\nProcess 91132 stopped\n* thread #1, name = 'CrBrowserMain', queue = 'com.apple.main-thread', stop reason = signal SIGSTOP\n    frame #0: 0x0000000183573c34 libsystem_kernel.dylib`mach_msg2_trap + 8\nlibsystem_kernel.dylib`mach_msg2_trap:\n->  0x183573c34 <+8>: ret    \n\nlibsystem_kernel.dylib`macx_swapon:\n    0x183573c38 <+0>: mov    x16, #-0x30               ; =-48 \n    0x183573c3c <+4>: svc    #0x80\n    0x183573c40 <+8>: ret    \nTarget 0: (Electron) stopped.\nExecutable module set to \"/Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect/desktop/node_modules/.pnpm/electron@45.0.0/node_modules/electron/dist/Electron.app/Contents/MacOS/Electron\".\nArchitecture set to: arm64-apple-macosx-.\n(lldb) settings set target.auto-import-clang-modules false\n(lldb) expression --top-level --language objc++ -- extern \"C\" void* objc_getClass(const char*); extern \"C\" void* sel_registerName(const char*); extern \"C\" void* objc_msgSend(void*,void*,...);\n(lldb) expr -l objc++ -- ({ void* app=objc_msgSend(objc_getClass(\"NSApplication\"),sel_registerName(\"sharedApplication\")); void* panel=objc_msgSend(app,sel_registerName(\"keyWindow\")); void* msg=(void*)(void*(*)(void*,void*,...))&objc_msgSend; bool found=((bool(*)(void*,void*,void*))msg)(panel,sel_registerName(\"isKindOfClass:\"),objc_getClass(\"NSOpenPanel\")); if(found)((void(*)(void*,void*,void*))msg)(panel,sel_registerName(\"cancel:\"),(void*)0); found; })\n(bool) $0 = false\n(lldb) detach\nProcess 91132 detached\n",
+  "verdict": "FAIL"
+}

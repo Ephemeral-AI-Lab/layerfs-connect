@@ -1,0 +1,64 @@
+{
+  "mutations": 0,
+  "jobs": [
+    {
+      "id": "b8a85005-f3d3-433c-a581-7ddfa88e8758",
+      "kind": "move",
+      "store": "live-host-move-pull-snapshot",
+      "target": "live-move-vm",
+      "from": "docker",
+      "file": null,
+      "started": 1794179148499,
+      "ended": 1794179152596,
+      "half": "pull",
+      "phase": "snapshot",
+      "phases": [
+        {
+          "phase": "check",
+          "half": "pull",
+          "at": 1794179152429
+        },
+        {
+          "phase": "snapshot",
+          "half": "pull",
+          "at": 1794179152438
+        }
+      ],
+      "outcome": "interrupted",
+      "pid": 71651,
+      "observation": {
+        "at": 1794179152596,
+        "kind": "transfer",
+        "value": {
+          "name": "live-host-move-pull-snapshot",
+          "kind": "sqlite",
+          "state": "idle",
+          "holders": [],
+          "op": null,
+          "down_reason": null,
+          "machine": "native",
+          "file": {
+            "exists": true,
+            "free": 328000835584,
+            "bytes": 217088,
+            "wal_bytes": 0,
+            "incoming_bytes": 0
+          }
+        },
+        "direction": "pull",
+        "action": null
+      },
+      "summary": "Interrupted · Final result unavailable",
+      "done": null,
+      "total": null,
+      "error": {
+        "code": "Interrupted",
+        "message": "Host restarted; final result unavailable. Remote work may still finish.",
+        "phase": "snapshot",
+        "detail": null
+      },
+      "result": null,
+      "recovery": null
+    }
+  ]
+}

@@ -1,0 +1,36 @@
+✔ approval belongs to one session and one immutable request, never to a matching command later (1.628ms)
+✔ human rejection during automatic review cannot be overwritten by a late model approval (2.196958ms)
+✔ downgrading from automatic review to ask invalidates in-flight review; full releases only current requests (0.627333ms)
+✔ failed automatic review awaits a human, cancellation resolves it and stop denies later requests (0.771916ms)
+✔ full is the default and invalid permission modes leave session policy unchanged (0.206417ms)
+✔ workspace execution waits for approval at the actual mount and passes only command inputs (29.7205ms)
+✔ rejection, wrong session, invalid timeout and invalid token never dispatch a workspace command (10.619584ms)
+✔ stopping a session waits for the executor to settle and sends an error instead of a successful exit (3.440833ms)
+✔ an HTTP disconnect aborts the actual execution signal (4.442584ms)
+✔ stopping one conversation leaves another conversation workspace command running (4.673167ms)
+✔ parent and generated child use the workspace transport and never run the command locally (119.972667ms)
+✔ workspace transport decodes split frames and refuses a stream without terminal proof (3.198417ms)
+✔ stop preserves a new workspace when its first preparation fails during opening (12.365416ms)
+✔ failure of an already opening recovery cannot clear the child-stop obligation (3.529042ms)
+✔ project deletion blocks new work through the actual removal callback (5.593584ms)
+✔ a failed project deletion releases its barrier for a retry (4.88375ms)
+✔ a conversation being created prevents deleting its project (2.514667ms)
+✔ pending workspace preparation blocks project deletion and is drained while stop preserves it (3.544084ms)
+✔ close waits for every workspace cleanup before closing permissions and reporting failures (5.002417ms)
+✔ persisted mounted command cancellation precedes unavailable Pi recovery (2.806625ms)
+✔ fresh exec IDs are persisted before launch and frames above 1MiB are retained once (2.088625ms)
+✔ pre-registration cancel is sent once even after ended and double Stop (0.41275ms)
+✔ Stop pending before launch never spawns, and Commit refusal preserves command outcome (1.031125ms)
+✔ unknown cancellation is not replayed; explicit retry requires fresh Workspace status (0.538083ms)
+✔ lost CLI transport retains unfinished remote launch custody for explicit Stop (0.272791ms)
+✔ folder launch retry observes fresh status and never resends when that read fails (2.613208ms)
+✔ Stop drains rejected output delivery without losing cancellation or partial Save facts (2.7335ms)
+✔ an output consumer failure is handled after preserving the completed command and Save (0.29925ms)
+ℹ tests 28
+ℹ suites 0
+ℹ pass 28
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 920.86125

@@ -1,0 +1,42 @@
+{
+  "reviewer": "live-recovery owner; independent of PostgreSQL and backup evidence author",
+  "verdict": "PASS",
+  "PostgreSQL": {
+    "reports": {
+      "connection-job.json": {
+        "pass": 5
+      },
+      "incomplete-job.json": {
+        "pass": 54,
+        "unknown": 60,
+        "skipped": 1
+      },
+      "complete-job.json": {
+        "pass": 114,
+        "skipped": 1
+      }
+    },
+    "review": "Compared actual checks/coverage against sparse counts, exact clean identity and extension/privileges evidence. Original failed zero-valued-count assertion is retained; reports themselves passed. Allowed merge skip remains explicit."
+  },
+  "backup": {
+    "reviewed_rows": 15,
+    "review": "Checked exact source frames and exit9 for13 CLI kills, host exit-9/child125 for2 host-only rows, Unknown/Interrupted custody and zero replay. Raised orphan-installed-file concern at restore.rs119; final fresh inventory/checksum against baseline and separate-name explicit recovery resolve it before owned fixture cleanup."
+  },
+  "sidebar_fix": {
+    "review": "Existing connectBridge derives mode from preload for native and defaults sim for browser. One conditional label removes hardcoded Simulated/0.0.0; matching documentation separates backend mode from success/coverage. No concerns."
+  },
+  "files": [
+    {
+      "path": "docs/evidence/phase-2-follow-up/postgresql/validation.json",
+      "sha256": "910ad482d153c1983d2540a3fe4bf9e8d7122943c529fef7e281ff4da9df7488"
+    },
+    {
+      "path": "docs/evidence/phase-2-follow-up/live-backup/custody-recovery-cleanup.json",
+      "sha256": "13fbf45198eec33e6305edc9e88a8bc08c5574858af016580947757b46495844"
+    },
+    {
+      "path": "desktop/src/renderer/src/components/shell/Sidebar.tsx",
+      "sha256": "8ed88bb32499d9cacfc491f71dce379a2b991fdf1dbf077129e758767f40028d"
+    }
+  ]
+}

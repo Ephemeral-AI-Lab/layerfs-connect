@@ -1,0 +1,64 @@
+{
+  "mutations": 0,
+  "jobs": [
+    {
+      "id": "2389fa36-e427-4a0b-8101-ba8c650b992f",
+      "kind": "push",
+      "store": "live-host-push-snapshot",
+      "target": "docker",
+      "from": null,
+      "file": null,
+      "started": 1794178999615,
+      "ended": 1794179023629,
+      "half": null,
+      "phase": "snapshot",
+      "phases": [
+        {
+          "phase": "check",
+          "half": null,
+          "at": 1794179003506
+        },
+        {
+          "phase": "snapshot",
+          "half": null,
+          "at": 1794179003516
+        }
+      ],
+      "outcome": "interrupted",
+      "pid": 69973,
+      "observation": {
+        "at": 1794179023630,
+        "kind": "transfer",
+        "value": {
+          "name": "live-host-push-snapshot",
+          "kind": "sqlite",
+          "state": "idle",
+          "holders": [],
+          "op": null,
+          "down_reason": null,
+          "machine": "docker",
+          "file": {
+            "exists": true,
+            "free": 190692601856,
+            "bytes": 217088,
+            "wal_bytes": 0,
+            "incoming_bytes": 0
+          }
+        },
+        "direction": "push",
+        "action": null
+      },
+      "summary": "Interrupted · Final result unavailable",
+      "done": null,
+      "total": null,
+      "error": {
+        "code": "Interrupted",
+        "message": "Host restarted; final result unavailable. Remote work may still finish.",
+        "phase": "snapshot",
+        "detail": null
+      },
+      "result": null,
+      "recovery": null
+    }
+  ]
+}

@@ -1,0 +1,180 @@
+{
+  "id": "host-restore-install",
+  "hostExit": -9,
+  "control": {
+    "host": 72256,
+    "cli": 72259,
+    "debugger": 72273,
+    "state": "/private/tmp/connect-followup-live-backup-20261109/state-host-restore-install",
+    "home": "/private/tmp/connect-followup-live-backup-20261109/home",
+    "kind": "restore",
+    "store": "restore-host-restore-install"
+  },
+  "before": [
+    {
+      "id": "0f9c2480-17b0-425b-b0f3-ed4dee0808ba",
+      "kind": "restore",
+      "store": "restore-host-restore-install",
+      "target": "bucket",
+      "from": null,
+      "file": "baseline",
+      "started": 1794179201313,
+      "ended": null,
+      "half": null,
+      "phase": "install",
+      "phases": [
+        {
+          "phase": "check",
+          "half": null,
+          "at": 1794179205242
+        },
+        {
+          "phase": "download",
+          "half": null,
+          "at": 1794179205265
+        },
+        {
+          "phase": "verify",
+          "half": null,
+          "at": 1794179205266
+        },
+        {
+          "phase": "install",
+          "half": null,
+          "at": 1794179205266
+        }
+      ],
+      "outcome": null,
+      "pid": 72259,
+      "observation": null,
+      "summary": null,
+      "done": null,
+      "total": null,
+      "error": null,
+      "result": null
+    }
+  ],
+  "restarted": [
+    {
+      "id": "0f9c2480-17b0-425b-b0f3-ed4dee0808ba",
+      "kind": "restore",
+      "store": "restore-host-restore-install",
+      "target": "bucket",
+      "from": null,
+      "file": "baseline",
+      "started": 1794179201313,
+      "ended": 1794179205445,
+      "half": null,
+      "phase": "install",
+      "phases": [
+        {
+          "phase": "check",
+          "half": null,
+          "at": 1794179205242
+        },
+        {
+          "phase": "download",
+          "half": null,
+          "at": 1794179205265
+        },
+        {
+          "phase": "verify",
+          "half": null,
+          "at": 1794179205266
+        },
+        {
+          "phase": "install",
+          "half": null,
+          "at": 1794179205266
+        }
+      ],
+      "outcome": "interrupted",
+      "pid": 72259,
+      "observation": {
+        "at": 1794179205445,
+        "kind": "restore",
+        "value": {
+          "name": "restore-host-restore-install",
+          "kind": "sqlite",
+          "machine": "native",
+          "profile": "disposable",
+          "created": 1794179205265,
+          "backups": {
+            "bucket": {
+              "file": "baseline",
+              "heads": "ee782173a943402d6cbf9cff2a791640c13ecaa0bd08dac897ccf6cdb04c2fb8",
+              "last": {
+                "op": "restore",
+                "at": 1794179205342,
+                "bytes": 217088,
+                "sha256": "cf6e19ae9e5323024f33d478553023bfb4bb3f88a755fe0ae671198c31b9be38"
+              }
+            }
+          },
+          "projects": [
+            "p"
+          ]
+        },
+        "action": null
+      },
+      "summary": "Interrupted · Final result unavailable",
+      "done": null,
+      "total": null,
+      "error": {
+        "code": "Interrupted",
+        "message": "Host restarted; final result unavailable. Remote work may still finish.",
+        "phase": "install",
+        "detail": null
+      },
+      "result": null,
+      "recovery": null
+    }
+  ],
+  "freshBackup": {
+    "items": [
+      {
+        "bucket": "bucket",
+        "file": "baseline",
+        "bytes": 217088,
+        "modified": 1794178900607,
+        "heads": "ee782173a943402d6cbf9cff2a791640c13ecaa0bd08dac897ccf6cdb04c2fb8",
+        "store": "restore-host-restore-install",
+        "state": "current"
+      },
+      {
+        "bucket": "bucket",
+        "file": "host-create-upload",
+        "bytes": 217088,
+        "modified": 1794179166922,
+        "heads": "ee782173a943402d6cbf9cff2a791640c13ecaa0bd08dac897ccf6cdb04c2fb8",
+        "store": "source",
+        "state": "current"
+      }
+    ]
+  },
+  "freshStore": {
+    "name": "restore-host-restore-install",
+    "kind": "sqlite",
+    "machine": "native",
+    "profile": "disposable",
+    "created": 1794179205265,
+    "backups": {
+      "bucket": {
+        "file": "baseline",
+        "heads": "ee782173a943402d6cbf9cff2a791640c13ecaa0bd08dac897ccf6cdb04c2fb8",
+        "last": {
+          "op": "restore",
+          "at": 1794179205342,
+          "bytes": 217088,
+          "sha256": "cf6e19ae9e5323024f33d478553023bfb4bb3f88a755fe0ae671198c31b9be38"
+        }
+      }
+    },
+    "projects": [
+      "p"
+    ]
+  },
+  "verdict": "PASS",
+  "mutationsAfterRestart": 0,
+  "note": "Host killed at exact source breakpoint; real CLI was resumed and permitted to finish. Remote/local effects reconciled by fresh reads; no mutation replay."
+}

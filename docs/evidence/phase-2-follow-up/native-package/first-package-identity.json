@@ -1,0 +1,27 @@
+{
+  "scope": "first package before footer/Stop fixes; unchanged runtime binary proof only",
+  "installation": "/Users/yifanxu/Applications/LayerFS Connect Follow-up 20261109-137.app",
+  "signing": "ad-hoc local only; no Developer ID signing/notarization",
+  "hashes": {
+    "Contents/MacOS/LayerFS Connect": "3ebe67707a6faf3e884914aa56fe240b6459f6cbe7baf3ad1e5a8bb91e128023",
+    "Contents/Resources/runtime/bin/node": "e4b5a3af0e05c75de2eae013904145f40fe7fc2a6e6f17510128bf45cca4e79b",
+    "Contents/Resources/runtime/bin/layerfs": "7d7a5b507eeb2abc914a0e151c63eb12bd49bcbb69a06083d08f0b4430a3619c",
+    "Contents/Resources/runtime/bin/layerfs-daemon": "664c991face739375b9c147c757575d4f12edbf84f64773eedd5a08c789d10c2",
+    "Contents/Resources/runtime/layerfs-build.json": "cb81b843f43945fb9ccfec6e8b5a5f26c5596049c8486275c2dda36005c32856",
+    "Contents/Resources/app/out/main/index.js": "f0ce4434624162608503f5b43897599399caa2d36848954ff4d1ee0dc1b14313"
+  },
+  "binary_identity": {
+    "version": "2.0.0",
+    "commit": "833d04cf44e8e747929d50ab1170a48260d9381c",
+    "dirty": false,
+    "features": [
+      "machine",
+      "postgresql"
+    ]
+  },
+  "accessibility": {
+    "AXIsProcessTrusted": false,
+    "observed_at": "2026-11-09T07:06:00+08:00",
+    "native_dialog_selection_cancellation": "BLOCKED; macOS Accessibility not granted; System Events read hung and owned osascript interrupted"
+  }
+}

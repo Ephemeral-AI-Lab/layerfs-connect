@@ -1,0 +1,196 @@
+{
+  "id": "create-check-1",
+  "kind": "create",
+  "store": "source",
+  "spec": {
+    "home": "/private/tmp/connect-followup-live-backup-20261109/home",
+    "state": "/private/tmp/connect-followup-live-backup-20261109/state-create-check-1",
+    "mode": "real",
+    "cli": "/Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect-cli-137/target/debug/layerfs"
+  },
+  "expectedBreakpoint": {
+    "file": "/Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect-cli-137/control/crates/layerfs-store/src/backup/create.rs",
+    "line": 83
+  },
+  "started": "2026-11-08T23:03:03.299Z",
+  "ended": {
+    "id": "aa67929c-26ab-46e7-ae51-3400a4943d2d",
+    "kind": "backup",
+    "store": "source",
+    "target": "bucket",
+    "from": null,
+    "file": "create-check-1",
+    "started": 1794178983295,
+    "ended": 1794178987244,
+    "half": null,
+    "phase": "check",
+    "phases": [
+      {
+        "phase": "check",
+        "half": null,
+        "at": 1794178987179
+      }
+    ],
+    "outcome": "unknown",
+    "pid": 69815,
+    "observation": null,
+    "summary": "Outcome unknown · Inspect",
+    "done": null,
+    "total": null,
+    "error": {
+      "transport": "transport-unknown",
+      "code": "Unknown",
+      "message": "LayerFS ended without a complete result; inspect state before another action",
+      "phase": "check",
+      "detail": {
+        "signal": "SIGKILL"
+      }
+    },
+    "result": null
+  },
+  "starts": 1,
+  "debuggerHit": true,
+  "debuggerKilled": true,
+  "freshBackup": {
+    "items": [
+      {
+        "bucket": "bucket",
+        "file": "baseline",
+        "bytes": 217088,
+        "modified": 1794178900607,
+        "heads": "ee782173a943402d6cbf9cff2a791640c13ecaa0bd08dac897ccf6cdb04c2fb8",
+        "store": "source",
+        "state": "current"
+      }
+    ]
+  },
+  "freshStore": {
+    "name": "source",
+    "kind": "sqlite",
+    "machine": "native",
+    "profile": "disposable",
+    "created": 1794178900517,
+    "sqlite": "3.53.2",
+    "backups": {
+      "bucket": {
+        "file": "baseline",
+        "heads": "ee782173a943402d6cbf9cff2a791640c13ecaa0bd08dac897ccf6cdb04c2fb8",
+        "last": {
+          "op": "create",
+          "at": 1794178900610,
+          "bytes": 217088,
+          "sha256": "cf6e19ae9e5323024f33d478553023bfb4bb3f88a755fe0ae671198c31b9be38"
+        }
+      }
+    },
+    "projects": [
+      "p"
+    ]
+  },
+  "inspected": {
+    "id": "aa67929c-26ab-46e7-ae51-3400a4943d2d",
+    "kind": "backup",
+    "store": "source",
+    "target": "bucket",
+    "from": null,
+    "file": "create-check-1",
+    "started": 1794178983295,
+    "ended": 1794178987244,
+    "half": null,
+    "phase": "check",
+    "phases": [
+      {
+        "phase": "check",
+        "half": null,
+        "at": 1794178987179
+      }
+    ],
+    "outcome": "unknown",
+    "pid": 69815,
+    "observation": {
+      "at": 1794178987300,
+      "kind": "backup",
+      "value": {
+        "items": [
+          {
+            "bucket": "bucket",
+            "file": "baseline",
+            "bytes": 217088,
+            "modified": 1794178900607,
+            "heads": "ee782173a943402d6cbf9cff2a791640c13ecaa0bd08dac897ccf6cdb04c2fb8",
+            "store": "source",
+            "state": "current"
+          }
+        ]
+      },
+      "action": null
+    },
+    "summary": "Outcome unknown · Inspect",
+    "done": null,
+    "total": null,
+    "error": {
+      "transport": "transport-unknown",
+      "code": "Unknown",
+      "message": "LayerFS ended without a complete result; inspect state before another action",
+      "phase": "check",
+      "detail": {
+        "signal": "SIGKILL"
+      }
+    },
+    "result": null
+  },
+  "restarted": {
+    "id": "aa67929c-26ab-46e7-ae51-3400a4943d2d",
+    "kind": "backup",
+    "store": "source",
+    "target": "bucket",
+    "from": null,
+    "file": "create-check-1",
+    "started": 1794178983295,
+    "ended": 1794178987244,
+    "half": null,
+    "phase": "check",
+    "phases": [
+      {
+        "phase": "check",
+        "half": null,
+        "at": 1794178987179
+      }
+    ],
+    "outcome": "unknown",
+    "pid": 69815,
+    "observation": {
+      "at": 1794178987300,
+      "kind": "backup",
+      "value": {
+        "items": [
+          {
+            "bucket": "bucket",
+            "file": "baseline",
+            "bytes": 217088,
+            "modified": 1794178900607,
+            "heads": "ee782173a943402d6cbf9cff2a791640c13ecaa0bd08dac897ccf6cdb04c2fb8",
+            "store": "source",
+            "state": "current"
+          }
+        ]
+      },
+      "action": null
+    },
+    "summary": "Outcome unknown · Inspect",
+    "done": null,
+    "total": null,
+    "error": {
+      "transport": "transport-unknown",
+      "code": "Unknown",
+      "message": "LayerFS ended without a complete result; inspect state before another action",
+      "phase": "check",
+      "detail": {
+        "signal": "SIGKILL"
+      }
+    },
+    "result": null
+  },
+  "verdict": "PASS",
+  "finished": "2026-11-08T23:03:07.320Z"
+}

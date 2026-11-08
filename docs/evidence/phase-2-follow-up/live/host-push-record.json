@@ -1,0 +1,84 @@
+{
+  "mutations": 0,
+  "jobs": [
+    {
+      "id": "760b9a3b-297d-4e2b-881b-79db2e915de0",
+      "kind": "push",
+      "store": "live-host-push-record",
+      "target": "docker",
+      "from": null,
+      "file": null,
+      "started": 1794179023795,
+      "ended": 1794179047841,
+      "half": null,
+      "phase": "record",
+      "phases": [
+        {
+          "phase": "check",
+          "half": null,
+          "at": 1794179027669
+        },
+        {
+          "phase": "snapshot",
+          "half": null,
+          "at": 1794179027678
+        },
+        {
+          "phase": "send",
+          "half": null,
+          "at": 1794179027683
+        },
+        {
+          "phase": "verify",
+          "half": null,
+          "at": 1794179027691
+        },
+        {
+          "phase": "install",
+          "half": null,
+          "at": 1794179027699
+        },
+        {
+          "phase": "record",
+          "half": null,
+          "at": 1794179027701
+        }
+      ],
+      "outcome": "interrupted",
+      "pid": 70179,
+      "observation": {
+        "at": 1794179047843,
+        "kind": "transfer",
+        "value": {
+          "name": "live-host-push-record",
+          "kind": "sqlite",
+          "state": "idle",
+          "holders": [],
+          "op": null,
+          "down_reason": null,
+          "machine": "docker",
+          "file": {
+            "exists": true,
+            "free": 190692552704,
+            "bytes": 217088,
+            "wal_bytes": 0,
+            "incoming_bytes": 0
+          }
+        },
+        "direction": "push",
+        "action": null
+      },
+      "summary": "Interrupted · Final result unavailable",
+      "done": null,
+      "total": null,
+      "error": {
+        "code": "Interrupted",
+        "message": "Host restarted; final result unavailable. Remote work may still finish.",
+        "phase": "record",
+        "detail": null
+      },
+      "result": null,
+      "recovery": null
+    }
+  ]
+}

@@ -1,0 +1,89 @@
+{
+  "mutations": 0,
+  "jobs": [
+    {
+      "id": "83b883e5-ceaa-424c-abd5-dd5429258b93",
+      "kind": "pull",
+      "store": "live-host-pull-retire",
+      "target": "native",
+      "from": "docker",
+      "file": null,
+      "started": 1794179121002,
+      "ended": 1794179144973,
+      "half": null,
+      "phase": "retire",
+      "phases": [
+        {
+          "phase": "check",
+          "half": null,
+          "at": 1794179124807
+        },
+        {
+          "phase": "snapshot",
+          "half": null,
+          "at": 1794179124815
+        },
+        {
+          "phase": "send",
+          "half": null,
+          "at": 1794179124827
+        },
+        {
+          "phase": "verify",
+          "half": null,
+          "at": 1794179124843
+        },
+        {
+          "phase": "install",
+          "half": null,
+          "at": 1794179124846
+        },
+        {
+          "phase": "record",
+          "half": null,
+          "at": 1794179124846
+        },
+        {
+          "phase": "retire",
+          "half": null,
+          "at": 1794179124848
+        }
+      ],
+      "outcome": "interrupted",
+      "pid": 71290,
+      "observation": {
+        "at": 1794179144974,
+        "kind": "transfer",
+        "value": {
+          "name": "live-host-pull-retire",
+          "kind": "sqlite",
+          "state": "idle",
+          "holders": [],
+          "op": null,
+          "down_reason": null,
+          "machine": "native",
+          "file": {
+            "exists": true,
+            "free": 328001163264,
+            "bytes": 217088,
+            "wal_bytes": 0,
+            "incoming_bytes": 0
+          }
+        },
+        "direction": "pull",
+        "action": null
+      },
+      "summary": "Interrupted · Final result unavailable",
+      "done": null,
+      "total": null,
+      "error": {
+        "code": "Interrupted",
+        "message": "Host restarted; final result unavailable. Remote work may still finish.",
+        "phase": "retire",
+        "detail": null
+      },
+      "result": null,
+      "recovery": null
+    }
+  ]
+}

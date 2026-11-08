@@ -1,0 +1,25 @@
+{
+  "reviewer": "live-recovery owner, independent of fix authors",
+  "verdict": "PASS",
+  "scope": "Source review of consequential Stop output-delivery and native startup-error fixes; final native/package runtime receipt assessed separately.",
+  "findings": [],
+  "assessment": [
+    "Output callback invocation remains immediate and ordered; both thrown errors and rejected Promises receive immediate handlers. A pending counter and single current drain Promise avoid retained output-frame chains. Final command result is persisted before independent Save; cancellation and partial Save errors remain separate.",
+    "Two focused regression tests cover Stop with rejected output delivery and failed Save, plus non-cancelled output rejection after successful command/Save. Required custody and original result assertions remain strict.",
+    "Native host close event follows stderr drainage; final code-only CliUnavailable/CliIncompatible parsing therefore survives process-exit ordering. UI failure uses controlled actionable wording without raw stderr. Existing timeout/spawn error handling remains."
+  ],
+  "files": [
+    {
+      "file": "host/agents/workspaces.js",
+      "sha256": "d1d367dcb2c216e56252939a4525074c5034ff879aa0c3906ba8eff3f5ea3262"
+    },
+    {
+      "file": "host/test/exec-cancel.test.js",
+      "sha256": "b3751c1ab83bad2edc0219154202c34d6952d4de06c559ce1a2ce356d4bc7672"
+    },
+    {
+      "file": "desktop/src/main/layerfs-host.ts",
+      "sha256": "8424f63ca7678f001bfa889ff72e8d1fcbd86dc4b3b3c1f35f47d507be27298c"
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "argv": [
+    "/Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect-cli-137/target/debug/layerfs",
+    "machine",
+    "create",
+    "live-move-vm",
+    "lima",
+    "--cpus",
+    "2",
+    "--memory",
+    "2G",
+    "--disk",
+    "8G"
+  ],
+  "exit": 0,
+  "stdout": "{\"name\":\"live-move-vm\",\"platform\":\"lima\",\"backend\":\"namespaces\",\"supports\":{\"sqlite\":true,\"postgresql_sandbox\":true,\"reason\":null},\"state\":\"running\",\"cpus\":2,\"memory\":2147483648,\"disk\":8589934592,\"stores\":[],\"sandboxes\":[]}\n",
+  "stderr": ""
+}

@@ -1,0 +1,3016 @@
+{
+  "started": 1794178700.935776,
+  "fixture": "/private/tmp/connect-followup-live-1c2f5bjz",
+  "identity": {
+    "source": "833d04cf44e8e747929d50ab1170a48260d9381c",
+    "cli_sha256": "7d7a5b507eeb2abc914a0e151c63eb12bd49bcbb69a06083d08f0b4430a3619c"
+  },
+  "calls": [
+    {
+      "argv": [
+        "machine",
+        "list"
+      ],
+      "exit": 0,
+      "stdout": "{\"machines\":[{\"name\":\"docker\",\"platform\":\"docker\",\"backend\":\"namespaces\",\"supports\":{\"sqlite\":true,\"postgresql_sandbox\":true,\"reason\":null},\"state\":\"stopped\",\"cpus\":null,\"memory\":null,\"disk\":null,\"stores\":[],\"sandboxes\":[]},{\"name\":\"native\",\"platform\":\"native\",\"backend\":\"native\",\"supports\":{\"sqlite\":true,\"postgresql_sandbox\":true,\"reason\":null},\"state\":\"ready\",\"cpus\":null,\"memory\":null,\"disk\":null,\"stores\":[],\"sandboxes\":[]}]}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "machine",
+        "update",
+        "docker",
+        "--daemon",
+        "/private/tmp/connect137-linux-bundle/2.0.0/linux-aarch64/layerfs-daemon",
+        "--image",
+        "layerfs-352-runtime:node24-https-apt-20261024"
+      ],
+      "exit": 0,
+      "stdout": "{\"name\":\"docker\",\"platform\":\"docker\",\"backend\":\"namespaces\",\"supports\":{\"sqlite\":true,\"postgresql_sandbox\":true,\"reason\":null},\"state\":\"ready\",\"cpus\":null,\"memory\":null,\"disk\":null,\"stores\":[],\"sandboxes\":[],\"image\":\"layerfs-352-runtime:node24-https-apt-20261024\",\"daemon\":\"/private/tmp/connect137-linux-bundle/2.0.0/linux-aarch64/layerfs-daemon\"}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "machine",
+        "start",
+        "docker"
+      ],
+      "exit": 125,
+      "stdout": "",
+      "stderr": "{\"code\":\"Unavailable\",\"message\":\"machine docker started, but its worker at 127.0.0.1:55464 is of another build (protocol 2, bundle 73a895c077d5e6cb323de94650ab217b25a56727294d5eb4bf6b1105deae60d8; this build: protocol 3, bundle 73a895c077d5e6cb323de94650ab217b25a56727294d5eb4bf6b1105deae60d8) because the Linux bundle at /Users/yifanxu/.cache/layerfs/bundle/2.0.0/linux-aarch64 was sealed before this build; rebuild it (`python3 tools/linux_bundle.py`), then `layerfs machine stop docker`, then `layerfs machine start docker`\",\"detail\":{\"worker\":{\"protocol\":2,\"bundle\":\"73a895c077d5e6cb323de94650ab217b25a56727294d5eb4bf6b1105deae60d8\"},\"expected\":{\"protocol\":3,\"bundle\":\"73a895c077d5e6cb323de94650ab217b25a56727294d5eb4bf6b1105deae60d8\"},\"bundle\":\"/Users/yifanxu/.cache/layerfs/bundle/2.0.0/linux-aarch64\"}}\n"
+    },
+    {
+      "argv": [
+        "machine",
+        "status",
+        "docker"
+      ],
+      "exit": 0,
+      "stdout": "{\"name\":\"docker\",\"platform\":\"docker\",\"state\":\"running\",\"free_disk\":190693597184,\"tool_version\":\"29.5.2\",\"down_reason\":null,\"stores\":[]}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "machine",
+        "stop",
+        "docker"
+      ],
+      "exit": 0,
+      "stdout": "{\"name\":\"docker\",\"platform\":\"docker\",\"backend\":\"namespaces\",\"supports\":{\"sqlite\":true,\"postgresql_sandbox\":true,\"reason\":null},\"state\":\"stopped\",\"cpus\":null,\"memory\":null,\"disk\":null,\"stores\":[],\"sandboxes\":[],\"image\":\"layerfs-352-runtime:node24-https-apt-20261024\",\"daemon\":\"/private/tmp/connect137-linux-bundle/2.0.0/linux-aarch64/layerfs-daemon\"}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "machine",
+        "start",
+        "docker"
+      ],
+      "exit": 0,
+      "stdout": "{\"name\":\"docker\",\"platform\":\"docker\",\"backend\":\"namespaces\",\"supports\":{\"sqlite\":true,\"postgresql_sandbox\":true,\"reason\":null},\"state\":\"running\",\"cpus\":null,\"memory\":null,\"disk\":null,\"stores\":[],\"sandboxes\":[],\"image\":\"layerfs-352-runtime:node24-https-apt-20261024\",\"daemon\":\"/private/tmp/connect137-linux-bundle/2.0.0/linux-aarch64/layerfs-daemon\"}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "create",
+        "probe"
+      ],
+      "exit": 0,
+      "stdout": "{\"name\":\"probe\",\"kind\":\"sqlite\",\"machine\":\"native\",\"profile\":\"disposable\",\"created\":1794178733184,\"sqlite\":\"3.53.2\",\"projects\":[]}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "project",
+        "init",
+        "probe/p",
+        "/private/tmp/connect-followup-live-1c2f5bjz/input"
+      ],
+      "exit": 0,
+      "stdout": "{\"project\":\"probe/p\",\"store\":\"probe\",\"name\":\"p\",\"kind\":\"sqlite\",\"machine\":\"native\",\"created\":1794178733227,\"layer\":\"3224b2d795415250ef62e5a4fcc7ce4474376e1acac94e9a5fad30091c897eb0e3\",\"root\":\"60db9a01b48ef55793e5875ace4c85d5c0129973e92f785c274830e86bb394b8\"}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "status",
+        "probe"
+      ],
+      "exit": 0,
+      "stdout": "{\"name\":\"probe\",\"kind\":\"sqlite\",\"state\":\"idle\",\"holders\":[],\"op\":{\"id\":\"op-ad057485d33e2f0b\",\"name\":\"store.push\",\"phase\":\"snapshot\",\"started\":1794178738272,\"uncertain\":false},\"down_reason\":null,\"machine\":\"native\",\"file\":{\"exists\":true,\"free\":332037242880,\"bytes\":217088,\"wal_bytes\":0,\"incoming_bytes\":0}}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "push",
+        "probe",
+        "docker"
+      ],
+      "exit": 0,
+      "stdout": "{\"store\":\"probe\",\"from\":\"native\",\"to\":\"docker\",\"bytes\":217088,\"heads\":\"6a7b76fcc81fb56f0a668d533a34e0fe1ae923e82c4decdd5db50feaba95447d\"}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "create",
+        "live-push-check"
+      ],
+      "exit": 0,
+      "stdout": "{\"name\":\"live-push-check\",\"kind\":\"sqlite\",\"machine\":\"native\",\"profile\":\"disposable\",\"created\":1794178860907,\"sqlite\":\"3.53.2\",\"projects\":[]}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "project",
+        "init",
+        "live-push-check/p",
+        "/private/tmp/connect-followup-live-1c2f5bjz/input"
+      ],
+      "exit": 0,
+      "stdout": "{\"project\":\"live-push-check/p\",\"store\":\"live-push-check\",\"name\":\"p\",\"kind\":\"sqlite\",\"machine\":\"native\",\"created\":1794178860941,\"layer\":\"32cc19d783463eb77146eef85fde24da0bea10cbf2abf5fcac5a7a891e9c7f0002\",\"root\":\"4691e87fe5ac40ab92272be2f843dabc8cadfb8a9571d41d8c282872432fc285\"}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "status",
+        "live-push-check"
+      ],
+      "exit": 0,
+      "stdout": "{\"name\":\"live-push-check\",\"kind\":\"sqlite\",\"state\":\"idle\",\"holders\":[],\"op\":null,\"down_reason\":null,\"machine\":\"native\",\"file\":{\"exists\":true,\"free\":332069269504,\"bytes\":217088,\"wal_bytes\":0,\"incoming_bytes\":0}}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "status",
+        "live-push-check"
+      ],
+      "exit": 0,
+      "stdout": "{\"name\":\"live-push-check\",\"kind\":\"sqlite\",\"state\":\"idle\",\"holders\":[],\"op\":null,\"down_reason\":null,\"machine\":\"native\",\"file\":{\"exists\":true,\"free\":332069269504,\"bytes\":217088,\"wal_bytes\":0,\"incoming_bytes\":0}}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "get",
+        "live-push-check"
+      ],
+      "exit": 0,
+      "stdout": "{\"name\":\"live-push-check\",\"kind\":\"sqlite\",\"machine\":\"native\",\"profile\":\"disposable\",\"created\":1794178860907,\"sqlite\":\"3.53.2\",\"projects\":[\"p\"]}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "remove",
+        "live-push-check"
+      ],
+      "exit": 0,
+      "stdout": "{\"removed\":\"live-push-check\"}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "create",
+        "live-push-snapshot"
+      ],
+      "exit": 0,
+      "stdout": "{\"name\":\"live-push-snapshot\",\"kind\":\"sqlite\",\"machine\":\"native\",\"profile\":\"disposable\",\"created\":1794178865656,\"sqlite\":\"3.53.2\",\"projects\":[]}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "project",
+        "init",
+        "live-push-snapshot/p",
+        "/private/tmp/connect-followup-live-1c2f5bjz/input"
+      ],
+      "exit": 0,
+      "stdout": "{\"project\":\"live-push-snapshot/p\",\"store\":\"live-push-snapshot\",\"name\":\"p\",\"kind\":\"sqlite\",\"machine\":\"native\",\"created\":1794178865683,\"layer\":\"3207c0f35a79aa39ce76d731f460d836da6d5c4186edf03e94b85171f3f32cd28d\",\"root\":\"94f43469e3060b10d2b0203d0ccfad3df801b3d7261849283cfb68b58c8f494a\"}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "status",
+        "live-push-snapshot"
+      ],
+      "exit": 0,
+      "stdout": "{\"name\":\"live-push-snapshot\",\"kind\":\"sqlite\",\"state\":\"idle\",\"holders\":[],\"op\":{\"id\":\"op-baf999321837d5f9\",\"name\":\"store.push\",\"phase\":\"snapshot\",\"started\":1794178869548,\"uncertain\":false},\"down_reason\":null,\"machine\":\"native\",\"file\":{\"exists\":true,\"free\":331821801472,\"bytes\":217088,\"wal_bytes\":0,\"incoming_bytes\":0}}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "push",
+        "live-push-snapshot",
+        "docker"
+      ],
+      "exit": 0,
+      "stdout": "{\"store\":\"live-push-snapshot\",\"from\":\"native\",\"to\":\"docker\",\"bytes\":217088,\"heads\":\"f9c13b3d73206d45ac154af2d24cafff6c9dae4e0a24544c593391ff5b0f5782\"}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "status",
+        "live-push-snapshot"
+      ],
+      "exit": 0,
+      "stdout": "{\"name\":\"live-push-snapshot\",\"kind\":\"sqlite\",\"state\":\"idle\",\"holders\":[],\"op\":null,\"down_reason\":null,\"machine\":\"docker\",\"file\":{\"exists\":true,\"free\":190693253120,\"bytes\":217088,\"wal_bytes\":0,\"incoming_bytes\":0}}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "get",
+        "live-push-snapshot"
+      ],
+      "exit": 0,
+      "stdout": "{\"name\":\"live-push-snapshot\",\"kind\":\"sqlite\",\"machine\":\"docker\",\"profile\":\"disposable\",\"created\":1794178865656,\"sqlite\":\"3.53.2\",\"last_transfer\":{\"call\":\"store.push\",\"from\":\"native\",\"to\":\"docker\",\"at\":1794178869703,\"bytes\":217088,\"sha256\":\"913eb272638ac9ac52c3bbbf25cc96aad6cac53ae15e0c1a479160b871c0dd0c\",\"heads\":\"f9c13b3d73206d45ac154af2d24cafff6c9dae4e0a24544c593391ff5b0f5782\",\"retired\":true},\"projects\":[\"p\"]}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "remove",
+        "live-push-snapshot"
+      ],
+      "exit": 0,
+      "stdout": "{\"removed\":\"live-push-snapshot\"}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "create",
+        "live-push-send"
+      ],
+      "exit": 0,
+      "stdout": "{\"name\":\"live-push-send\",\"kind\":\"sqlite\",\"machine\":\"native\",\"profile\":\"disposable\",\"created\":1794178869828,\"sqlite\":\"3.53.2\",\"projects\":[]}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "project",
+        "init",
+        "live-push-send/p",
+        "/private/tmp/connect-followup-live-1c2f5bjz/input"
+      ],
+      "exit": 0,
+      "stdout": "{\"project\":\"live-push-send/p\",\"store\":\"live-push-send\",\"name\":\"p\",\"kind\":\"sqlite\",\"machine\":\"native\",\"created\":1794178869855,\"layer\":\"32eac2e8f8ee8c28b1624bd318f5cfba27c2668cae8da81f8d0acb3f85948910dd\",\"root\":\"751f091b65b12bde64cb508d0a1ee8c4086deb5f650793836498bd1470d5eaae\"}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "status",
+        "live-push-send"
+      ],
+      "exit": 0,
+      "stdout": "{\"name\":\"live-push-send\",\"kind\":\"sqlite\",\"state\":\"idle\",\"holders\":[],\"op\":{\"id\":\"op-01198bf0a742c68f\",\"name\":\"store.push\",\"phase\":\"send\",\"started\":1794178873837,\"uncertain\":false},\"down_reason\":null,\"machine\":\"native\",\"file\":{\"exists\":true,\"free\":331762077696,\"bytes\":217088,\"wal_bytes\":0,\"incoming_bytes\":0}}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "push",
+        "live-push-send",
+        "docker"
+      ],
+      "exit": 0,
+      "stdout": "{\"store\":\"live-push-send\",\"from\":\"native\",\"to\":\"docker\",\"bytes\":217088,\"heads\":\"3e16d2d5855cf89185be080e0ec902b61ffdf6ebfac2fff77afce6cd1d37c72b\"}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "status",
+        "live-push-send"
+      ],
+      "exit": 0,
+      "stdout": "{\"name\":\"live-push-send\",\"kind\":\"sqlite\",\"state\":\"idle\",\"holders\":[],\"op\":null,\"down_reason\":null,\"machine\":\"docker\",\"file\":{\"exists\":true,\"free\":190693253120,\"bytes\":217088,\"wal_bytes\":0,\"incoming_bytes\":0}}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "get",
+        "live-push-send"
+      ],
+      "exit": 0,
+      "stdout": "{\"name\":\"live-push-send\",\"kind\":\"sqlite\",\"machine\":\"docker\",\"profile\":\"disposable\",\"created\":1794178869828,\"sqlite\":\"3.53.2\",\"last_transfer\":{\"call\":\"store.push\",\"from\":\"native\",\"to\":\"docker\",\"at\":1794178874004,\"bytes\":217088,\"sha256\":\"6a9130c4f6f587da0f638028a154e60feb53bfb48b13c79493758b4afbdcd9e8\",\"heads\":\"3e16d2d5855cf89185be080e0ec902b61ffdf6ebfac2fff77afce6cd1d37c72b\",\"retired\":true},\"projects\":[\"p\"]}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "remove",
+        "live-push-send"
+      ],
+      "exit": 0,
+      "stdout": "{\"removed\":\"live-push-send\"}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "create",
+        "live-push-verify"
+      ],
+      "exit": 0,
+      "stdout": "{\"name\":\"live-push-verify\",\"kind\":\"sqlite\",\"machine\":\"native\",\"profile\":\"disposable\",\"created\":1794178874059,\"sqlite\":\"3.53.2\",\"projects\":[]}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "project",
+        "init",
+        "live-push-verify/p",
+        "/private/tmp/connect-followup-live-1c2f5bjz/input"
+      ],
+      "exit": 0,
+      "stdout": "{\"project\":\"live-push-verify/p\",\"store\":\"live-push-verify\",\"name\":\"p\",\"kind\":\"sqlite\",\"machine\":\"native\",\"created\":1794178874085,\"layer\":\"3213c33af5e0034a5ef0aae1e187a88cdc37cd695692b2d08e9aee3a5f122d4ac7\",\"root\":\"a6c3af6e4fb66cd661b03f88086fadfb689f35ae60e0c730bc04e44b509be774\"}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "status",
+        "live-push-verify"
+      ],
+      "exit": 0,
+      "stdout": "{\"name\":\"live-push-verify\",\"kind\":\"sqlite\",\"state\":\"idle\",\"holders\":[],\"op\":{\"id\":\"op-68f0f453bc54840c\",\"name\":\"store.push\",\"phase\":\"verify\",\"started\":1794178877895,\"uncertain\":false},\"down_reason\":null,\"machine\":\"native\",\"file\":{\"exists\":true,\"free\":331684229120,\"bytes\":217088,\"wal_bytes\":0,\"incoming_bytes\":0}}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "push",
+        "live-push-verify",
+        "docker"
+      ],
+      "exit": 0,
+      "stdout": "{\"store\":\"live-push-verify\",\"from\":\"native\",\"to\":\"docker\",\"bytes\":217088,\"heads\":\"4d9da379709516c6cd601938e3b5940d9a36f4a4a24fef4736792335601c7d0e\"}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "status",
+        "live-push-verify"
+      ],
+      "exit": 0,
+      "stdout": "{\"name\":\"live-push-verify\",\"kind\":\"sqlite\",\"state\":\"idle\",\"holders\":[],\"op\":null,\"down_reason\":null,\"machine\":\"docker\",\"file\":{\"exists\":true,\"free\":190693253120,\"bytes\":217088,\"wal_bytes\":0,\"incoming_bytes\":0}}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "get",
+        "live-push-verify"
+      ],
+      "exit": 0,
+      "stdout": "{\"name\":\"live-push-verify\",\"kind\":\"sqlite\",\"machine\":\"docker\",\"profile\":\"disposable\",\"created\":1794178874059,\"sqlite\":\"3.53.2\",\"last_transfer\":{\"call\":\"store.push\",\"from\":\"native\",\"to\":\"docker\",\"at\":1794178878062,\"bytes\":217088,\"sha256\":\"934c9bab1c992bf3722b96e000b57505f1948da4bfcbdb5fae73669e96772930\",\"heads\":\"4d9da379709516c6cd601938e3b5940d9a36f4a4a24fef4736792335601c7d0e\",\"retired\":true},\"projects\":[\"p\"]}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "remove",
+        "live-push-verify"
+      ],
+      "exit": 0,
+      "stdout": "{\"removed\":\"live-push-verify\"}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "create",
+        "live-push-install"
+      ],
+      "exit": 0,
+      "stdout": "{\"name\":\"live-push-install\",\"kind\":\"sqlite\",\"machine\":\"native\",\"profile\":\"disposable\",\"created\":1794178878118,\"sqlite\":\"3.53.2\",\"projects\":[]}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "project",
+        "init",
+        "live-push-install/p",
+        "/private/tmp/connect-followup-live-1c2f5bjz/input"
+      ],
+      "exit": 0,
+      "stdout": "{\"project\":\"live-push-install/p\",\"store\":\"live-push-install\",\"name\":\"p\",\"kind\":\"sqlite\",\"machine\":\"native\",\"created\":1794178878144,\"layer\":\"32311e6d937a9d75d24846a3ccfa3a82124040c9fbe2a9e5f0afbf8abbff3cfb75\",\"root\":\"7792b047368d1bdca49372358f50fc2d95c8975d5e26ebbe19eb55fe971078f6\"}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "status",
+        "live-push-install"
+      ],
+      "exit": 0,
+      "stdout": "{\"name\":\"live-push-install\",\"kind\":\"sqlite\",\"state\":\"unresolved\",\"holders\":[],\"op\":{\"id\":\"op-6144f9fc9f3c6e16\",\"name\":\"store.push\",\"phase\":\"install\",\"started\":1794178882140,\"uncertain\":true},\"down_reason\":null,\"machine\":\"native\",\"file\":{\"exists\":true,\"free\":331308675072,\"bytes\":217088,\"wal_bytes\":0,\"incoming_bytes\":0}}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "push",
+        "live-push-install",
+        "docker"
+      ],
+      "exit": 0,
+      "stdout": "{\"store\":\"live-push-install\",\"from\":\"native\",\"to\":\"docker\",\"bytes\":217088,\"heads\":\"d9897f45f3e4554e03cb3f166d17a2db3996db13c5b3c29ec9c2273ad5cc7c56\"}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "status",
+        "live-push-install"
+      ],
+      "exit": 0,
+      "stdout": "{\"name\":\"live-push-install\",\"kind\":\"sqlite\",\"state\":\"idle\",\"holders\":[],\"op\":null,\"down_reason\":null,\"machine\":\"docker\",\"file\":{\"exists\":true,\"free\":190693253120,\"bytes\":217088,\"wal_bytes\":0,\"incoming_bytes\":0}}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "get",
+        "live-push-install"
+      ],
+      "exit": 0,
+      "stdout": "{\"name\":\"live-push-install\",\"kind\":\"sqlite\",\"machine\":\"docker\",\"profile\":\"disposable\",\"created\":1794178878118,\"sqlite\":\"3.53.2\",\"last_transfer\":{\"call\":\"store.push\",\"from\":\"native\",\"to\":\"docker\",\"at\":1794178882315,\"bytes\":217088,\"sha256\":\"03b9ca40a41e8cd3e6f53c36c6d22f1df36125c36c2f711e197e34cd94b30cf1\",\"heads\":\"d9897f45f3e4554e03cb3f166d17a2db3996db13c5b3c29ec9c2273ad5cc7c56\",\"retired\":true},\"projects\":[\"p\"]}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "remove",
+        "live-push-install"
+      ],
+      "exit": 0,
+      "stdout": "{\"removed\":\"live-push-install\"}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "create",
+        "live-push-record"
+      ],
+      "exit": 0,
+      "stdout": "{\"name\":\"live-push-record\",\"kind\":\"sqlite\",\"machine\":\"native\",\"profile\":\"disposable\",\"created\":1794178882369,\"sqlite\":\"3.53.2\",\"projects\":[]}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "project",
+        "init",
+        "live-push-record/p",
+        "/private/tmp/connect-followup-live-1c2f5bjz/input"
+      ],
+      "exit": 0,
+      "stdout": "{\"project\":\"live-push-record/p\",\"store\":\"live-push-record\",\"name\":\"p\",\"kind\":\"sqlite\",\"machine\":\"native\",\"created\":1794178882394,\"layer\":\"32fb90642dd946f93a05f724c04e0f6d5d6351fef4187b85103be104411df0c9b9\",\"root\":\"28445b11794750849fbe8aa87441f579a0ade491c1f1dbab8c7c1ee6ed8eefdd\"}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "status",
+        "live-push-record"
+      ],
+      "exit": 0,
+      "stdout": "{\"name\":\"live-push-record\",\"kind\":\"sqlite\",\"state\":\"unresolved\",\"holders\":[],\"op\":{\"id\":\"op-9dbed66a3e6b19f7\",\"name\":\"store.push\",\"phase\":\"record\",\"started\":1794178886898,\"uncertain\":true},\"down_reason\":null,\"machine\":\"native\",\"file\":{\"exists\":true,\"free\":331318915072,\"bytes\":217088,\"wal_bytes\":0,\"incoming_bytes\":0}}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "push",
+        "live-push-record",
+        "docker"
+      ],
+      "exit": 0,
+      "stdout": "{\"store\":\"live-push-record\",\"from\":\"native\",\"to\":\"docker\",\"bytes\":217088,\"heads\":\"aadcbce2e5d5f516f458920554b0e8d6e4419b0fa73f24c201c4aec24222ca2e\"}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "status",
+        "live-push-record"
+      ],
+      "exit": 0,
+      "stdout": "{\"name\":\"live-push-record\",\"kind\":\"sqlite\",\"state\":\"idle\",\"holders\":[],\"op\":null,\"down_reason\":null,\"machine\":\"docker\",\"file\":{\"exists\":true,\"free\":190693253120,\"bytes\":217088,\"wal_bytes\":0,\"incoming_bytes\":0}}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "get",
+        "live-push-record"
+      ],
+      "exit": 0,
+      "stdout": "{\"name\":\"live-push-record\",\"kind\":\"sqlite\",\"machine\":\"docker\",\"profile\":\"disposable\",\"created\":1794178882369,\"sqlite\":\"3.53.2\",\"last_transfer\":{\"call\":\"store.push\",\"from\":\"native\",\"to\":\"docker\",\"at\":1794178887072,\"bytes\":217088,\"sha256\":\"e032dc484a37376f713be084c3c76bb082cdeb294c1b0281da4d30de8efd85cd\",\"heads\":\"aadcbce2e5d5f516f458920554b0e8d6e4419b0fa73f24c201c4aec24222ca2e\",\"retired\":true},\"projects\":[\"p\"]}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "remove",
+        "live-push-record"
+      ],
+      "exit": 0,
+      "stdout": "{\"removed\":\"live-push-record\"}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "create",
+        "live-push-retire"
+      ],
+      "exit": 0,
+      "stdout": "{\"name\":\"live-push-retire\",\"kind\":\"sqlite\",\"machine\":\"native\",\"profile\":\"disposable\",\"created\":1794178887126,\"sqlite\":\"3.53.2\",\"projects\":[]}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "project",
+        "init",
+        "live-push-retire/p",
+        "/private/tmp/connect-followup-live-1c2f5bjz/input"
+      ],
+      "exit": 0,
+      "stdout": "{\"project\":\"live-push-retire/p\",\"store\":\"live-push-retire\",\"name\":\"p\",\"kind\":\"sqlite\",\"machine\":\"native\",\"created\":1794178887153,\"layer\":\"32d0efd1cd87c4ab82733ef8c574fce682bd43c44e158e5576c2af05859b3e0476\",\"root\":\"2716eb252654db8a087049a2ac1f07805efc24e58bd416e81fbc8f246625c15a\"}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "status",
+        "live-push-retire"
+      ],
+      "exit": 0,
+      "stdout": "{\"name\":\"live-push-retire\",\"kind\":\"sqlite\",\"state\":\"idle\",\"holders\":[],\"op\":{\"id\":\"op-d5b33f81f89d7fdc\",\"name\":\"store.push\",\"phase\":\"retire\",\"started\":1794178891076,\"uncertain\":false},\"down_reason\":null,\"machine\":\"docker\",\"file\":{\"exists\":true,\"free\":190693253120,\"bytes\":217088,\"wal_bytes\":0,\"incoming_bytes\":0}}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "push",
+        "live-push-retire",
+        "docker"
+      ],
+      "exit": 125,
+      "stdout": "",
+      "stderr": "{\"code\":\"InvalidInput\",\"message\":\"store push, check: Store live-push-retire is on machine docker; `layerfs store pull live-push-retire` brings it to native first\",\"detail\":{\"phase\":\"check\"}}\n"
+    },
+    {
+      "argv": [
+        "store",
+        "status",
+        "live-push-retire"
+      ],
+      "exit": 0,
+      "stdout": "{\"name\":\"live-push-retire\",\"kind\":\"sqlite\",\"state\":\"idle\",\"holders\":[],\"op\":null,\"down_reason\":null,\"machine\":\"docker\",\"file\":{\"exists\":true,\"free\":190692749312,\"bytes\":217088,\"wal_bytes\":0,\"incoming_bytes\":0}}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "get",
+        "live-push-retire"
+      ],
+      "exit": 0,
+      "stdout": "{\"name\":\"live-push-retire\",\"kind\":\"sqlite\",\"machine\":\"docker\",\"profile\":\"disposable\",\"created\":1794178887126,\"sqlite\":\"3.53.2\",\"last_transfer\":{\"call\":\"store.push\",\"from\":\"native\",\"to\":\"docker\",\"at\":1794178891110,\"bytes\":217088,\"sha256\":\"9ace3f228b4f690824fbe8258935e35227712672f4c0a1d30d329a256e29cca2\",\"heads\":\"2cc40deea7c07a733db68e550fb99d015d740c4c19189508d875be985243345c\",\"retired\":true},\"projects\":[\"p\"]}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "pull",
+        "live-push-retire"
+      ],
+      "exit": 0,
+      "stdout": "{\"store\":\"live-push-retire\",\"from\":\"docker\",\"to\":\"native\",\"bytes\":217088,\"heads\":\"2cc40deea7c07a733db68e550fb99d015d740c4c19189508d875be985243345c\"}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "status",
+        "live-push-retire"
+      ],
+      "exit": 0,
+      "stdout": "{\"name\":\"live-push-retire\",\"kind\":\"sqlite\",\"state\":\"idle\",\"holders\":[],\"op\":null,\"down_reason\":null,\"machine\":\"native\",\"file\":{\"exists\":true,\"free\":329124708352,\"bytes\":217088,\"wal_bytes\":0,\"incoming_bytes\":0}}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "remove",
+        "live-push-retire"
+      ],
+      "exit": 0,
+      "stdout": "{\"removed\":\"live-push-retire\"}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "create",
+        "live-pull-check"
+      ],
+      "exit": 0,
+      "stdout": "{\"name\":\"live-pull-check\",\"kind\":\"sqlite\",\"machine\":\"native\",\"profile\":\"disposable\",\"created\":1794178938049,\"sqlite\":\"3.53.2\",\"projects\":[]}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "project",
+        "init",
+        "live-pull-check/p",
+        "/private/tmp/connect-followup-live-1c2f5bjz/input"
+      ],
+      "exit": 0,
+      "stdout": "{\"project\":\"live-pull-check/p\",\"store\":\"live-pull-check\",\"name\":\"p\",\"kind\":\"sqlite\",\"machine\":\"native\",\"created\":1794178938082,\"layer\":\"3297c943dd60adf638309839417bb6208910a3b485f08184387f487bb75b4acc61\",\"root\":\"90cd2fa4573f0283554d4dc7abfa09c7208ea531af77a15ec26750535fac761d\"}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "push",
+        "live-pull-check",
+        "docker"
+      ],
+      "exit": 0,
+      "stdout": "{\"store\":\"live-pull-check\",\"from\":\"native\",\"to\":\"docker\",\"bytes\":217088,\"heads\":\"658672dacab2aec812e806002d8ac809770dd7714e4b8ec48034c120ce4b8b50\"}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "status",
+        "live-pull-check"
+      ],
+      "exit": 0,
+      "stdout": "{\"name\":\"live-pull-check\",\"kind\":\"sqlite\",\"state\":\"idle\",\"holders\":[],\"op\":null,\"down_reason\":null,\"machine\":\"docker\",\"file\":{\"exists\":true,\"free\":190692749312,\"bytes\":217088,\"wal_bytes\":0,\"incoming_bytes\":0}}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "status",
+        "live-pull-check"
+      ],
+      "exit": 0,
+      "stdout": "{\"name\":\"live-pull-check\",\"kind\":\"sqlite\",\"state\":\"idle\",\"holders\":[],\"op\":null,\"down_reason\":null,\"machine\":\"docker\",\"file\":{\"exists\":true,\"free\":190692749312,\"bytes\":217088,\"wal_bytes\":0,\"incoming_bytes\":0}}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "get",
+        "live-pull-check"
+      ],
+      "exit": 0,
+      "stdout": "{\"name\":\"live-pull-check\",\"kind\":\"sqlite\",\"machine\":\"docker\",\"profile\":\"disposable\",\"created\":1794178938049,\"sqlite\":\"3.53.2\",\"last_transfer\":{\"call\":\"store.push\",\"from\":\"native\",\"to\":\"docker\",\"at\":1794178938121,\"bytes\":217088,\"sha256\":\"452feaddab111883176214529c4970cf1abb95e5c134ae154d29c863b6fe225e\",\"heads\":\"658672dacab2aec812e806002d8ac809770dd7714e4b8ec48034c120ce4b8b50\",\"retired\":true},\"projects\":[\"p\"]}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "remove",
+        "live-pull-check"
+      ],
+      "exit": 0,
+      "stdout": "{\"removed\":\"live-pull-check\"}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "create",
+        "live-pull-snapshot"
+      ],
+      "exit": 0,
+      "stdout": "{\"name\":\"live-pull-snapshot\",\"kind\":\"sqlite\",\"machine\":\"native\",\"profile\":\"disposable\",\"created\":1794178943916,\"sqlite\":\"3.53.2\",\"projects\":[]}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "project",
+        "init",
+        "live-pull-snapshot/p",
+        "/private/tmp/connect-followup-live-1c2f5bjz/input"
+      ],
+      "exit": 0,
+      "stdout": "{\"project\":\"live-pull-snapshot/p\",\"store\":\"live-pull-snapshot\",\"name\":\"p\",\"kind\":\"sqlite\",\"machine\":\"native\",\"created\":1794178943946,\"layer\":\"328371f15477bb608f8e800c0d7beff51000225c249b7e6596e576812d6fbc8215\",\"root\":\"b61d2a9f3b9d149d6640ee92636762e1ccc416dc38ca0adf70a5e7328b4c1af0\"}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "push",
+        "live-pull-snapshot",
+        "docker"
+      ],
+      "exit": 0,
+      "stdout": "{\"store\":\"live-pull-snapshot\",\"from\":\"native\",\"to\":\"docker\",\"bytes\":217088,\"heads\":\"1510056b8b357777cbd6256f8d36fa301cf09df3b169e0696983b5bec0ab1582\"}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "status",
+        "live-pull-snapshot"
+      ],
+      "exit": 0,
+      "stdout": "{\"name\":\"live-pull-snapshot\",\"kind\":\"sqlite\",\"state\":\"idle\",\"holders\":[],\"op\":{\"id\":\"op-2203c999783a42e9\",\"name\":\"store.pull\",\"phase\":\"snapshot\",\"started\":1794178947898,\"uncertain\":false},\"down_reason\":null,\"machine\":\"docker\",\"file\":{\"exists\":true,\"free\":190692749312,\"bytes\":217088,\"wal_bytes\":0,\"incoming_bytes\":0}}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "pull",
+        "live-pull-snapshot"
+      ],
+      "exit": 0,
+      "stdout": "{\"store\":\"live-pull-snapshot\",\"from\":\"docker\",\"to\":\"native\",\"bytes\":217088,\"heads\":\"1510056b8b357777cbd6256f8d36fa301cf09df3b169e0696983b5bec0ab1582\"}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "status",
+        "live-pull-snapshot"
+      ],
+      "exit": 0,
+      "stdout": "{\"name\":\"live-pull-snapshot\",\"kind\":\"sqlite\",\"state\":\"idle\",\"holders\":[],\"op\":null,\"down_reason\":null,\"machine\":\"native\",\"file\":{\"exists\":true,\"free\":328008908800,\"bytes\":217088,\"wal_bytes\":0,\"incoming_bytes\":0}}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "get",
+        "live-pull-snapshot"
+      ],
+      "exit": 0,
+      "stdout": "{\"name\":\"live-pull-snapshot\",\"kind\":\"sqlite\",\"machine\":\"native\",\"profile\":\"disposable\",\"created\":1794178943916,\"sqlite\":\"3.53.2\",\"last_transfer\":{\"call\":\"store.pull\",\"from\":\"docker\",\"to\":\"native\",\"at\":1794178948084,\"bytes\":217088,\"sha256\":\"fa5cd73a7214fff99fb1961af4d13778d8108628d941629cc02b369bd2687567\",\"heads\":\"1510056b8b357777cbd6256f8d36fa301cf09df3b169e0696983b5bec0ab1582\",\"retired\":true},\"projects\":[\"p\"]}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "remove",
+        "live-pull-snapshot"
+      ],
+      "exit": 0,
+      "stdout": "{\"removed\":\"live-pull-snapshot\"}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "create",
+        "live-pull-send"
+      ],
+      "exit": 0,
+      "stdout": "{\"name\":\"live-pull-send\",\"kind\":\"sqlite\",\"machine\":\"native\",\"profile\":\"disposable\",\"created\":1794178948147,\"sqlite\":\"3.53.2\",\"projects\":[]}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "project",
+        "init",
+        "live-pull-send/p",
+        "/private/tmp/connect-followup-live-1c2f5bjz/input"
+      ],
+      "exit": 0,
+      "stdout": "{\"project\":\"live-pull-send/p\",\"store\":\"live-pull-send\",\"name\":\"p\",\"kind\":\"sqlite\",\"machine\":\"native\",\"created\":1794178948179,\"layer\":\"32d6271df5c6e25ddcd2faa7fe5f10bfaa2dcb76a24ffff57c874c6d8280ef23e5\",\"root\":\"28c30f2eed7bc7287a7cb7cbdfd962662a7a77942ea63f113396d98df9abe1f3\"}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "push",
+        "live-pull-send",
+        "docker"
+      ],
+      "exit": 0,
+      "stdout": "{\"store\":\"live-pull-send\",\"from\":\"native\",\"to\":\"docker\",\"bytes\":217088,\"heads\":\"a07182287fb43d698670ee423ff1840b15fcda56b4f3954ad35a32a17567e252\"}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "status",
+        "live-pull-send"
+      ],
+      "exit": 0,
+      "stdout": "{\"name\":\"live-pull-send\",\"kind\":\"sqlite\",\"state\":\"idle\",\"holders\":[],\"op\":{\"id\":\"op-64092daff4bb0092\",\"name\":\"store.pull\",\"phase\":\"send\",\"started\":1794178952154,\"uncertain\":false},\"down_reason\":null,\"machine\":\"docker\",\"file\":{\"exists\":true,\"free\":190692749312,\"bytes\":217088,\"wal_bytes\":0,\"incoming_bytes\":0}}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "pull",
+        "live-pull-send"
+      ],
+      "exit": 0,
+      "stdout": "{\"store\":\"live-pull-send\",\"from\":\"docker\",\"to\":\"native\",\"bytes\":217088,\"heads\":\"a07182287fb43d698670ee423ff1840b15fcda56b4f3954ad35a32a17567e252\"}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "status",
+        "live-pull-send"
+      ],
+      "exit": 0,
+      "stdout": "{\"name\":\"live-pull-send\",\"kind\":\"sqlite\",\"state\":\"idle\",\"holders\":[],\"op\":null,\"down_reason\":null,\"machine\":\"native\",\"file\":{\"exists\":true,\"free\":328008470528,\"bytes\":217088,\"wal_bytes\":0,\"incoming_bytes\":0}}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "get",
+        "live-pull-send"
+      ],
+      "exit": 0,
+      "stdout": "{\"name\":\"live-pull-send\",\"kind\":\"sqlite\",\"machine\":\"native\",\"profile\":\"disposable\",\"created\":1794178948147,\"sqlite\":\"3.53.2\",\"last_transfer\":{\"call\":\"store.pull\",\"from\":\"docker\",\"to\":\"native\",\"at\":1794178952368,\"bytes\":217088,\"sha256\":\"a2313b26d73100ed3a7e8f563be7d197a30fd3a69c2b8eb2316491a64a8e3e0e\",\"heads\":\"a07182287fb43d698670ee423ff1840b15fcda56b4f3954ad35a32a17567e252\",\"retired\":true},\"projects\":[\"p\"]}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "remove",
+        "live-pull-send"
+      ],
+      "exit": 0,
+      "stdout": "{\"removed\":\"live-pull-send\"}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "create",
+        "live-pull-verify"
+      ],
+      "exit": 0,
+      "stdout": "{\"name\":\"live-pull-verify\",\"kind\":\"sqlite\",\"machine\":\"native\",\"profile\":\"disposable\",\"created\":1794178952434,\"sqlite\":\"3.53.2\",\"projects\":[]}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "project",
+        "init",
+        "live-pull-verify/p",
+        "/private/tmp/connect-followup-live-1c2f5bjz/input"
+      ],
+      "exit": 0,
+      "stdout": "{\"project\":\"live-pull-verify/p\",\"store\":\"live-pull-verify\",\"name\":\"p\",\"kind\":\"sqlite\",\"machine\":\"native\",\"created\":1794178952466,\"layer\":\"3209ef95392b572613b805f1de0e64a376c3866d1f0a61b49b2726ddaf89f77268\",\"root\":\"b6860ce1ad052a0bc60bf50d909dd951e94e7106df6ef2cba10f55b0ce80197e\"}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "push",
+        "live-pull-verify",
+        "docker"
+      ],
+      "exit": 0,
+      "stdout": "{\"store\":\"live-pull-verify\",\"from\":\"native\",\"to\":\"docker\",\"bytes\":217088,\"heads\":\"ed2a738486dffccd73b7592534a3a266c7a199d0f3f47986c6c88347b62d2759\"}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "status",
+        "live-pull-verify"
+      ],
+      "exit": 0,
+      "stdout": "{\"name\":\"live-pull-verify\",\"kind\":\"sqlite\",\"state\":\"idle\",\"holders\":[],\"op\":{\"id\":\"op-5ee33fb237bf78db\",\"name\":\"store.pull\",\"phase\":\"verify\",\"started\":1794178956481,\"uncertain\":false},\"down_reason\":null,\"machine\":\"docker\",\"file\":{\"exists\":true,\"free\":190692749312,\"bytes\":217088,\"wal_bytes\":0,\"incoming_bytes\":0}}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "pull",
+        "live-pull-verify"
+      ],
+      "exit": 0,
+      "stdout": "{\"store\":\"live-pull-verify\",\"from\":\"docker\",\"to\":\"native\",\"bytes\":217088,\"heads\":\"ed2a738486dffccd73b7592534a3a266c7a199d0f3f47986c6c88347b62d2759\"}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "status",
+        "live-pull-verify"
+      ],
+      "exit": 0,
+      "stdout": "{\"name\":\"live-pull-verify\",\"kind\":\"sqlite\",\"state\":\"idle\",\"holders\":[],\"op\":null,\"down_reason\":null,\"machine\":\"native\",\"file\":{\"exists\":true,\"free\":328008626176,\"bytes\":217088,\"wal_bytes\":0,\"incoming_bytes\":0}}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "get",
+        "live-pull-verify"
+      ],
+      "exit": 0,
+      "stdout": "{\"name\":\"live-pull-verify\",\"kind\":\"sqlite\",\"machine\":\"native\",\"profile\":\"disposable\",\"created\":1794178952434,\"sqlite\":\"3.53.2\",\"last_transfer\":{\"call\":\"store.pull\",\"from\":\"docker\",\"to\":\"native\",\"at\":1794178956685,\"bytes\":217088,\"sha256\":\"f0bbd640263f741a158d0140f6f7b3b8281166133e3f93a52f1d41aa213aa966\",\"heads\":\"ed2a738486dffccd73b7592534a3a266c7a199d0f3f47986c6c88347b62d2759\",\"retired\":true},\"projects\":[\"p\"]}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "remove",
+        "live-pull-verify"
+      ],
+      "exit": 0,
+      "stdout": "{\"removed\":\"live-pull-verify\"}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "create",
+        "live-pull-install"
+      ],
+      "exit": 0,
+      "stdout": "{\"name\":\"live-pull-install\",\"kind\":\"sqlite\",\"machine\":\"native\",\"profile\":\"disposable\",\"created\":1794178956746,\"sqlite\":\"3.53.2\",\"projects\":[]}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "project",
+        "init",
+        "live-pull-install/p",
+        "/private/tmp/connect-followup-live-1c2f5bjz/input"
+      ],
+      "exit": 0,
+      "stdout": "{\"project\":\"live-pull-install/p\",\"store\":\"live-pull-install\",\"name\":\"p\",\"kind\":\"sqlite\",\"machine\":\"native\",\"created\":1794178956778,\"layer\":\"320e3d3cde15d859e5852e8fafb1edccf19f0b8152aac1714f531f9906317ec61d\",\"root\":\"6df859937e850d3d1e739cba6bdf0ad210c71e5f283bd8e5d957fe58d2144a33\"}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "push",
+        "live-pull-install",
+        "docker"
+      ],
+      "exit": 0,
+      "stdout": "{\"store\":\"live-pull-install\",\"from\":\"native\",\"to\":\"docker\",\"bytes\":217088,\"heads\":\"515335ff64cbac78879bb63cb6d5aaaa2b865c5b8c310c76a966b6995b980236\"}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "status",
+        "live-pull-install"
+      ],
+      "exit": 0,
+      "stdout": "{\"name\":\"live-pull-install\",\"kind\":\"sqlite\",\"state\":\"unresolved\",\"holders\":[],\"op\":{\"id\":\"op-e550b991e8939231\",\"name\":\"store.pull\",\"phase\":\"install\",\"started\":1794178960802,\"uncertain\":true},\"down_reason\":null,\"machine\":\"docker\",\"file\":{\"exists\":true,\"free\":190692700160,\"bytes\":217088,\"wal_bytes\":0,\"incoming_bytes\":0}}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "pull",
+        "live-pull-install"
+      ],
+      "exit": 0,
+      "stdout": "{\"store\":\"live-pull-install\",\"from\":\"docker\",\"to\":\"native\",\"bytes\":217088,\"heads\":\"515335ff64cbac78879bb63cb6d5aaaa2b865c5b8c310c76a966b6995b980236\"}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "status",
+        "live-pull-install"
+      ],
+      "exit": 0,
+      "stdout": "{\"name\":\"live-pull-install\",\"kind\":\"sqlite\",\"state\":\"idle\",\"holders\":[],\"op\":null,\"down_reason\":null,\"machine\":\"native\",\"file\":{\"exists\":true,\"free\":328008306688,\"bytes\":217088,\"wal_bytes\":0,\"incoming_bytes\":0}}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "get",
+        "live-pull-install"
+      ],
+      "exit": 0,
+      "stdout": "{\"name\":\"live-pull-install\",\"kind\":\"sqlite\",\"machine\":\"native\",\"profile\":\"disposable\",\"created\":1794178956746,\"sqlite\":\"3.53.2\",\"last_transfer\":{\"call\":\"store.pull\",\"from\":\"docker\",\"to\":\"native\",\"at\":1794178961015,\"bytes\":217088,\"sha256\":\"79fe98ec89c6c4010d13255fba3c7b862caba24f6647298ffe1a51e33802a962\",\"heads\":\"515335ff64cbac78879bb63cb6d5aaaa2b865c5b8c310c76a966b6995b980236\",\"retired\":true},\"projects\":[\"p\"]}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "remove",
+        "live-pull-install"
+      ],
+      "exit": 0,
+      "stdout": "{\"removed\":\"live-pull-install\"}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "create",
+        "live-pull-record"
+      ],
+      "exit": 0,
+      "stdout": "{\"name\":\"live-pull-record\",\"kind\":\"sqlite\",\"machine\":\"native\",\"profile\":\"disposable\",\"created\":1794178961097,\"sqlite\":\"3.53.2\",\"projects\":[]}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "project",
+        "init",
+        "live-pull-record/p",
+        "/private/tmp/connect-followup-live-1c2f5bjz/input"
+      ],
+      "exit": 0,
+      "stdout": "{\"project\":\"live-pull-record/p\",\"store\":\"live-pull-record\",\"name\":\"p\",\"kind\":\"sqlite\",\"machine\":\"native\",\"created\":1794178961131,\"layer\":\"32e249ff26070a11855d9ec02aca22892cccfa4fcb6214965679d9a2111e47c374\",\"root\":\"c00155cb5b0a0a9340d2ffe5156871405af2b3e4aace55645f97403b6b320807\"}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "push",
+        "live-pull-record",
+        "docker"
+      ],
+      "exit": 0,
+      "stdout": "{\"store\":\"live-pull-record\",\"from\":\"native\",\"to\":\"docker\",\"bytes\":217088,\"heads\":\"7da81016c6448fc9c499dca44c5ba5eb9c286dbcd1ac4ac28f1b331cfba0649e\"}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "status",
+        "live-pull-record"
+      ],
+      "exit": 0,
+      "stdout": "{\"name\":\"live-pull-record\",\"kind\":\"sqlite\",\"state\":\"unresolved\",\"holders\":[],\"op\":{\"id\":\"op-0d2d421007f1d373\",\"name\":\"store.pull\",\"phase\":\"record\",\"started\":1794178965150,\"uncertain\":true},\"down_reason\":null,\"machine\":\"docker\",\"file\":{\"exists\":true,\"free\":190692700160,\"bytes\":217088,\"wal_bytes\":0,\"incoming_bytes\":0}}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "pull",
+        "live-pull-record"
+      ],
+      "exit": 0,
+      "stdout": "{\"store\":\"live-pull-record\",\"from\":\"docker\",\"to\":\"native\",\"bytes\":217088,\"heads\":\"7da81016c6448fc9c499dca44c5ba5eb9c286dbcd1ac4ac28f1b331cfba0649e\"}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "status",
+        "live-pull-record"
+      ],
+      "exit": 0,
+      "stdout": "{\"name\":\"live-pull-record\",\"kind\":\"sqlite\",\"state\":\"idle\",\"holders\":[],\"op\":null,\"down_reason\":null,\"machine\":\"native\",\"file\":{\"exists\":true,\"free\":328008937472,\"bytes\":217088,\"wal_bytes\":0,\"incoming_bytes\":0}}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "get",
+        "live-pull-record"
+      ],
+      "exit": 0,
+      "stdout": "{\"name\":\"live-pull-record\",\"kind\":\"sqlite\",\"machine\":\"native\",\"profile\":\"disposable\",\"created\":1794178961097,\"sqlite\":\"3.53.2\",\"last_transfer\":{\"call\":\"store.pull\",\"from\":\"docker\",\"to\":\"native\",\"at\":1794178965337,\"bytes\":217088,\"sha256\":\"a94d9920017d6498b22d6cdfdc1c5ac80a67e4375b87190e3a566b5fa8102f8b\",\"heads\":\"7da81016c6448fc9c499dca44c5ba5eb9c286dbcd1ac4ac28f1b331cfba0649e\",\"retired\":true},\"projects\":[\"p\"]}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "remove",
+        "live-pull-record"
+      ],
+      "exit": 0,
+      "stdout": "{\"removed\":\"live-pull-record\"}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "create",
+        "live-pull-retire"
+      ],
+      "exit": 0,
+      "stdout": "{\"name\":\"live-pull-retire\",\"kind\":\"sqlite\",\"machine\":\"native\",\"profile\":\"disposable\",\"created\":1794178965399,\"sqlite\":\"3.53.2\",\"projects\":[]}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "project",
+        "init",
+        "live-pull-retire/p",
+        "/private/tmp/connect-followup-live-1c2f5bjz/input"
+      ],
+      "exit": 0,
+      "stdout": "{\"project\":\"live-pull-retire/p\",\"store\":\"live-pull-retire\",\"name\":\"p\",\"kind\":\"sqlite\",\"machine\":\"native\",\"created\":1794178965430,\"layer\":\"32e9f78198b8920fac679c145532768bfdb718d2bf4408e756d1edbba83bf1322d\",\"root\":\"8e3eccb057bac7cdccf51557b21755986d6af78a3ffdd5272d1cafa91e41364c\"}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "push",
+        "live-pull-retire",
+        "docker"
+      ],
+      "exit": 0,
+      "stdout": "{\"store\":\"live-pull-retire\",\"from\":\"native\",\"to\":\"docker\",\"bytes\":217088,\"heads\":\"1f75a51973cc73f5e14323f5f04bd9fa5446ce2693e261acadab3f4425b44871\"}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "status",
+        "live-pull-retire"
+      ],
+      "exit": 0,
+      "stdout": "{\"name\":\"live-pull-retire\",\"kind\":\"sqlite\",\"state\":\"idle\",\"holders\":[],\"op\":{\"id\":\"op-c26a4529634facef\",\"name\":\"store.pull\",\"phase\":\"retire\",\"started\":1794178969388,\"uncertain\":false},\"down_reason\":null,\"machine\":\"native\",\"file\":{\"exists\":true,\"free\":328007835648,\"bytes\":217088,\"wal_bytes\":0,\"incoming_bytes\":0}}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "push",
+        "live-pull-retire",
+        "docker"
+      ],
+      "exit": 0,
+      "stdout": "{\"store\":\"live-pull-retire\",\"from\":\"native\",\"to\":\"docker\",\"bytes\":217088,\"heads\":\"1f75a51973cc73f5e14323f5f04bd9fa5446ce2693e261acadab3f4425b44871\"}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "status",
+        "live-pull-retire"
+      ],
+      "exit": 0,
+      "stdout": "{\"name\":\"live-pull-retire\",\"kind\":\"sqlite\",\"state\":\"idle\",\"holders\":[],\"op\":null,\"down_reason\":null,\"machine\":\"docker\",\"file\":{\"exists\":true,\"free\":190692700160,\"bytes\":217088,\"wal_bytes\":0,\"incoming_bytes\":0}}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "get",
+        "live-pull-retire"
+      ],
+      "exit": 0,
+      "stdout": "{\"name\":\"live-pull-retire\",\"kind\":\"sqlite\",\"machine\":\"docker\",\"profile\":\"disposable\",\"created\":1794178965399,\"sqlite\":\"3.53.2\",\"last_transfer\":{\"call\":\"store.push\",\"from\":\"native\",\"to\":\"docker\",\"at\":1794178969590,\"bytes\":217088,\"sha256\":\"497068401f56c6b08d095533c6b37c63c101721af23dd9caad91c6f0fc433f63\",\"heads\":\"1f75a51973cc73f5e14323f5f04bd9fa5446ce2693e261acadab3f4425b44871\",\"retired\":true},\"projects\":[\"p\"]}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "remove",
+        "live-pull-retire"
+      ],
+      "exit": 0,
+      "stdout": "{\"removed\":\"live-pull-retire\"}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "create",
+        "live-host-push-snapshot"
+      ],
+      "exit": 0,
+      "stdout": "{\"name\":\"live-host-push-snapshot\",\"kind\":\"sqlite\",\"machine\":\"native\",\"profile\":\"disposable\",\"created\":1794178999536,\"sqlite\":\"3.53.2\",\"projects\":[]}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "project",
+        "init",
+        "live-host-push-snapshot/p",
+        "/private/tmp/connect-followup-live-1c2f5bjz/input"
+      ],
+      "exit": 0,
+      "stdout": "{\"project\":\"live-host-push-snapshot/p\",\"store\":\"live-host-push-snapshot\",\"name\":\"p\",\"kind\":\"sqlite\",\"machine\":\"native\",\"created\":1794178999565,\"layer\":\"324a07b6ce2a9f5ee326f86cb55e19d9e93d8c30fcdf59ea117b143284045f67f5\",\"root\":\"c8ea0c91fba9163bdc69e70e7eb42854ecae71859e5a10c466c15802137de150\"}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "status",
+        "live-host-push-snapshot"
+      ],
+      "exit": 0,
+      "stdout": "{\"name\":\"live-host-push-snapshot\",\"kind\":\"sqlite\",\"state\":\"idle\",\"holders\":[],\"op\":null,\"down_reason\":null,\"machine\":\"docker\",\"file\":{\"exists\":true,\"free\":190692601856,\"bytes\":217088,\"wal_bytes\":0,\"incoming_bytes\":0}}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "remove",
+        "live-host-push-snapshot"
+      ],
+      "exit": 0,
+      "stdout": "{\"removed\":\"live-host-push-snapshot\"}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "create",
+        "live-host-push-record"
+      ],
+      "exit": 0,
+      "stdout": "{\"name\":\"live-host-push-record\",\"kind\":\"sqlite\",\"machine\":\"native\",\"profile\":\"disposable\",\"created\":1794179023714,\"sqlite\":\"3.53.2\",\"projects\":[]}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "project",
+        "init",
+        "live-host-push-record/p",
+        "/private/tmp/connect-followup-live-1c2f5bjz/input"
+      ],
+      "exit": 0,
+      "stdout": "{\"project\":\"live-host-push-record/p\",\"store\":\"live-host-push-record\",\"name\":\"p\",\"kind\":\"sqlite\",\"machine\":\"native\",\"created\":1794179023744,\"layer\":\"329a76ce58988abcc00a3eed3dbb610f4587ae7dd704abe8c895d64a2724a3b3f1\",\"root\":\"ac2d3c100d1b97f508e16eedfe89547a65f39c07d074671f710634ba4c476d0b\"}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "status",
+        "live-host-push-record"
+      ],
+      "exit": 0,
+      "stdout": "{\"name\":\"live-host-push-record\",\"kind\":\"sqlite\",\"state\":\"idle\",\"holders\":[],\"op\":null,\"down_reason\":null,\"machine\":\"docker\",\"file\":{\"exists\":true,\"free\":190692552704,\"bytes\":217088,\"wal_bytes\":0,\"incoming_bytes\":0}}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "remove",
+        "live-host-push-record"
+      ],
+      "exit": 0,
+      "stdout": "{\"removed\":\"live-host-push-record\"}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "create",
+        "live-host-push-retire"
+      ],
+      "exit": 0,
+      "stdout": "{\"name\":\"live-host-push-retire\",\"kind\":\"sqlite\",\"machine\":\"native\",\"profile\":\"disposable\",\"created\":1794179047953,\"sqlite\":\"3.53.2\",\"projects\":[]}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "project",
+        "init",
+        "live-host-push-retire/p",
+        "/private/tmp/connect-followup-live-1c2f5bjz/input"
+      ],
+      "exit": 0,
+      "stdout": "{\"project\":\"live-host-push-retire/p\",\"store\":\"live-host-push-retire\",\"name\":\"p\",\"kind\":\"sqlite\",\"machine\":\"native\",\"created\":1794179047987,\"layer\":\"32f27820ce3362034008916b1ae4af674aec5f58f04564828dcd88a44a4f5af6a9\",\"root\":\"dacf86ab18b0bc7781839402f7dcff5382f9930492bc1f1057f7c1529962d98b\"}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "status",
+        "live-host-push-retire"
+      ],
+      "exit": 0,
+      "stdout": "{\"name\":\"live-host-push-retire\",\"kind\":\"sqlite\",\"state\":\"idle\",\"holders\":[],\"op\":null,\"down_reason\":null,\"machine\":\"docker\",\"file\":{\"exists\":true,\"free\":190692331520,\"bytes\":217088,\"wal_bytes\":0,\"incoming_bytes\":0}}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "remove",
+        "live-host-push-retire"
+      ],
+      "exit": 0,
+      "stdout": "{\"removed\":\"live-host-push-retire\"}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "create",
+        "live-host-pull-snapshot"
+      ],
+      "exit": 0,
+      "stdout": "{\"name\":\"live-host-pull-snapshot\",\"kind\":\"sqlite\",\"machine\":\"native\",\"profile\":\"disposable\",\"created\":1794179072311,\"sqlite\":\"3.53.2\",\"projects\":[]}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "project",
+        "init",
+        "live-host-pull-snapshot/p",
+        "/private/tmp/connect-followup-live-1c2f5bjz/input"
+      ],
+      "exit": 0,
+      "stdout": "{\"project\":\"live-host-pull-snapshot/p\",\"store\":\"live-host-pull-snapshot\",\"name\":\"p\",\"kind\":\"sqlite\",\"machine\":\"native\",\"created\":1794179072344,\"layer\":\"32e2bb6a81c40c8bd9dbc4694be8586fb03fd9b5f386dd6576748732deb4a91b48\",\"root\":\"a46c709b4c6db40cd377af8000f436701269fda424d6a085d6f5022af45fa7bd\"}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "push",
+        "live-host-pull-snapshot",
+        "docker"
+      ],
+      "exit": 0,
+      "stdout": "{\"store\":\"live-host-pull-snapshot\",\"from\":\"native\",\"to\":\"docker\",\"bytes\":217088,\"heads\":\"009737d1f58e11fa591b62a3b567153a4f79abf1b7105288de858cef7afc8f9a\"}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "status",
+        "live-host-pull-snapshot"
+      ],
+      "exit": 0,
+      "stdout": "{\"name\":\"live-host-pull-snapshot\",\"kind\":\"sqlite\",\"state\":\"idle\",\"holders\":[],\"op\":null,\"down_reason\":null,\"machine\":\"native\",\"file\":{\"exists\":true,\"free\":328001298432,\"bytes\":217088,\"wal_bytes\":0,\"incoming_bytes\":0}}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "remove",
+        "live-host-pull-snapshot"
+      ],
+      "exit": 0,
+      "stdout": "{\"removed\":\"live-host-pull-snapshot\"}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "create",
+        "live-host-pull-record"
+      ],
+      "exit": 0,
+      "stdout": "{\"name\":\"live-host-pull-record\",\"kind\":\"sqlite\",\"machine\":\"native\",\"profile\":\"disposable\",\"created\":1794179096561,\"sqlite\":\"3.53.2\",\"projects\":[]}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "project",
+        "init",
+        "live-host-pull-record/p",
+        "/private/tmp/connect-followup-live-1c2f5bjz/input"
+      ],
+      "exit": 0,
+      "stdout": "{\"project\":\"live-host-pull-record/p\",\"store\":\"live-host-pull-record\",\"name\":\"p\",\"kind\":\"sqlite\",\"machine\":\"native\",\"created\":1794179096588,\"layer\":\"32781b67f8f20283bfe0c98bbf3d5c6e58b21a358574eada18de58844fa868dcdd\",\"root\":\"ff1592ffe3094a8ac90c83d5d206d14c61da19aa105c9157d449502d7f003cf7\"}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "push",
+        "live-host-pull-record",
+        "docker"
+      ],
+      "exit": 0,
+      "stdout": "{\"store\":\"live-host-pull-record\",\"from\":\"native\",\"to\":\"docker\",\"bytes\":217088,\"heads\":\"19db23edd5b641043cd2d383bc76edd16b709d257c1884c6d5e3b9fd0fc74540\"}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "status",
+        "live-host-pull-record"
+      ],
+      "exit": 0,
+      "stdout": "{\"name\":\"live-host-pull-record\",\"kind\":\"sqlite\",\"state\":\"idle\",\"holders\":[],\"op\":null,\"down_reason\":null,\"machine\":\"native\",\"file\":{\"exists\":true,\"free\":328001458176,\"bytes\":217088,\"wal_bytes\":0,\"incoming_bytes\":0}}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "remove",
+        "live-host-pull-record"
+      ],
+      "exit": 0,
+      "stdout": "{\"removed\":\"live-host-pull-record\"}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "create",
+        "live-host-pull-retire"
+      ],
+      "exit": 0,
+      "stdout": "{\"name\":\"live-host-pull-retire\",\"kind\":\"sqlite\",\"machine\":\"native\",\"profile\":\"disposable\",\"created\":1794179120860,\"sqlite\":\"3.53.2\",\"projects\":[]}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "project",
+        "init",
+        "live-host-pull-retire/p",
+        "/private/tmp/connect-followup-live-1c2f5bjz/input"
+      ],
+      "exit": 0,
+      "stdout": "{\"project\":\"live-host-pull-retire/p\",\"store\":\"live-host-pull-retire\",\"name\":\"p\",\"kind\":\"sqlite\",\"machine\":\"native\",\"created\":1794179120887,\"layer\":\"32052dde622eb7a06222527af519c9f6d8177aebf3b6757cb0dd1c99efbc9a9031\",\"root\":\"0a8c4eb4a135d867fe649de76908848bf1011abbc21cd4f908fa9d97ba49c200\"}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "push",
+        "live-host-pull-retire",
+        "docker"
+      ],
+      "exit": 0,
+      "stdout": "{\"store\":\"live-host-pull-retire\",\"from\":\"native\",\"to\":\"docker\",\"bytes\":217088,\"heads\":\"5d93fe4f0935bfe50eada97cabee3bbe16657309af2fc06551794890ffb2eb8d\"}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "status",
+        "live-host-pull-retire"
+      ],
+      "exit": 0,
+      "stdout": "{\"name\":\"live-host-pull-retire\",\"kind\":\"sqlite\",\"state\":\"idle\",\"holders\":[],\"op\":null,\"down_reason\":null,\"machine\":\"native\",\"file\":{\"exists\":true,\"free\":328001142784,\"bytes\":217088,\"wal_bytes\":0,\"incoming_bytes\":0}}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "remove",
+        "live-host-pull-retire"
+      ],
+      "exit": 0,
+      "stdout": "{\"removed\":\"live-host-pull-retire\"}\n",
+      "stderr": ""
+    }
+  ],
+  "rows": [
+    {
+      "id": "push-check",
+      "kind": "push",
+      "phase": "check",
+      "source_line": 129,
+      "exit": 0,
+      "log": "{\"file\":\"/Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect/docs/evidence/phase-2-follow-up/live/push-check\",\"starts\":1,\"phase\":\"check\",\"outcome\":\"unknown\",\"state\":\"idle\",\"debuggerHit\":true}\n",
+      "status": {
+        "name": "live-push-check",
+        "kind": "sqlite",
+        "state": "idle",
+        "holders": [],
+        "op": null,
+        "down_reason": null,
+        "machine": "native",
+        "file": {
+          "exists": true,
+          "free": 332069269504,
+          "bytes": 217088,
+          "wal_bytes": 0,
+          "incoming_bytes": 0
+        }
+      },
+      "boundary_pass": true,
+      "resolved_status": {
+        "name": "live-push-check",
+        "kind": "sqlite",
+        "state": "idle",
+        "holders": [],
+        "op": null,
+        "down_reason": null,
+        "machine": "native",
+        "file": {
+          "exists": true,
+          "free": 332069269504,
+          "bytes": 217088,
+          "wal_bytes": 0,
+          "incoming_bytes": 0
+        }
+      },
+      "record": {
+        "name": "live-push-check",
+        "kind": "sqlite",
+        "machine": "native",
+        "profile": "disposable",
+        "created": 1794178860907,
+        "sqlite": "3.53.2",
+        "projects": [
+          "p"
+        ]
+      },
+      "cleanup": "owned Store removed after fresh-read explicit recovery"
+    },
+    {
+      "id": "push-snapshot",
+      "kind": "push",
+      "phase": "snapshot",
+      "source_line": 253,
+      "exit": 0,
+      "log": "{\"file\":\"/Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect/docs/evidence/phase-2-follow-up/live/push-snapshot\",\"starts\":1,\"phase\":\"snapshot\",\"outcome\":\"unknown\",\"state\":\"idle\",\"debuggerHit\":true}\n",
+      "status": {
+        "name": "live-push-snapshot",
+        "kind": "sqlite",
+        "state": "idle",
+        "holders": [],
+        "op": {
+          "id": "op-baf999321837d5f9",
+          "name": "store.push",
+          "phase": "snapshot",
+          "started": 1794178869548,
+          "uncertain": false
+        },
+        "down_reason": null,
+        "machine": "native",
+        "file": {
+          "exists": true,
+          "free": 331821801472,
+          "bytes": 217088,
+          "wal_bytes": 0,
+          "incoming_bytes": 0
+        }
+      },
+      "boundary_pass": true,
+      "resolved_status": {
+        "name": "live-push-snapshot",
+        "kind": "sqlite",
+        "state": "idle",
+        "holders": [],
+        "op": null,
+        "down_reason": null,
+        "machine": "docker",
+        "file": {
+          "exists": true,
+          "free": 190693253120,
+          "bytes": 217088,
+          "wal_bytes": 0,
+          "incoming_bytes": 0
+        }
+      },
+      "record": {
+        "name": "live-push-snapshot",
+        "kind": "sqlite",
+        "machine": "docker",
+        "profile": "disposable",
+        "created": 1794178865656,
+        "sqlite": "3.53.2",
+        "last_transfer": {
+          "call": "store.push",
+          "from": "native",
+          "to": "docker",
+          "at": 1794178869703,
+          "bytes": 217088,
+          "sha256": "913eb272638ac9ac52c3bbbf25cc96aad6cac53ae15e0c1a479160b871c0dd0c",
+          "heads": "f9c13b3d73206d45ac154af2d24cafff6c9dae4e0a24544c593391ff5b0f5782",
+          "retired": true
+        },
+        "projects": [
+          "p"
+        ]
+      },
+      "cleanup": "owned Store removed after fresh-read explicit recovery"
+    },
+    {
+      "id": "push-send",
+      "kind": "push",
+      "phase": "send",
+      "source_line": 270,
+      "exit": 0,
+      "log": "{\"file\":\"/Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect/docs/evidence/phase-2-follow-up/live/push-send\",\"starts\":1,\"phase\":\"send\",\"outcome\":\"unknown\",\"state\":\"idle\",\"debuggerHit\":true}\n",
+      "status": {
+        "name": "live-push-send",
+        "kind": "sqlite",
+        "state": "idle",
+        "holders": [],
+        "op": {
+          "id": "op-01198bf0a742c68f",
+          "name": "store.push",
+          "phase": "send",
+          "started": 1794178873837,
+          "uncertain": false
+        },
+        "down_reason": null,
+        "machine": "native",
+        "file": {
+          "exists": true,
+          "free": 331762077696,
+          "bytes": 217088,
+          "wal_bytes": 0,
+          "incoming_bytes": 0
+        }
+      },
+      "boundary_pass": true,
+      "resolved_status": {
+        "name": "live-push-send",
+        "kind": "sqlite",
+        "state": "idle",
+        "holders": [],
+        "op": null,
+        "down_reason": null,
+        "machine": "docker",
+        "file": {
+          "exists": true,
+          "free": 190693253120,
+          "bytes": 217088,
+          "wal_bytes": 0,
+          "incoming_bytes": 0
+        }
+      },
+      "record": {
+        "name": "live-push-send",
+        "kind": "sqlite",
+        "machine": "docker",
+        "profile": "disposable",
+        "created": 1794178869828,
+        "sqlite": "3.53.2",
+        "last_transfer": {
+          "call": "store.push",
+          "from": "native",
+          "to": "docker",
+          "at": 1794178874004,
+          "bytes": 217088,
+          "sha256": "6a9130c4f6f587da0f638028a154e60feb53bfb48b13c79493758b4afbdcd9e8",
+          "heads": "3e16d2d5855cf89185be080e0ec902b61ffdf6ebfac2fff77afce6cd1d37c72b",
+          "retired": true
+        },
+        "projects": [
+          "p"
+        ]
+      },
+      "cleanup": "owned Store removed after fresh-read explicit recovery"
+    },
+    {
+      "id": "push-verify",
+      "kind": "push",
+      "phase": "verify",
+      "source_line": 303,
+      "exit": 0,
+      "log": "{\"file\":\"/Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect/docs/evidence/phase-2-follow-up/live/push-verify\",\"starts\":1,\"phase\":\"verify\",\"outcome\":\"unknown\",\"state\":\"idle\",\"debuggerHit\":true}\n",
+      "status": {
+        "name": "live-push-verify",
+        "kind": "sqlite",
+        "state": "idle",
+        "holders": [],
+        "op": {
+          "id": "op-68f0f453bc54840c",
+          "name": "store.push",
+          "phase": "verify",
+          "started": 1794178877895,
+          "uncertain": false
+        },
+        "down_reason": null,
+        "machine": "native",
+        "file": {
+          "exists": true,
+          "free": 331684229120,
+          "bytes": 217088,
+          "wal_bytes": 0,
+          "incoming_bytes": 0
+        }
+      },
+      "boundary_pass": true,
+      "resolved_status": {
+        "name": "live-push-verify",
+        "kind": "sqlite",
+        "state": "idle",
+        "holders": [],
+        "op": null,
+        "down_reason": null,
+        "machine": "docker",
+        "file": {
+          "exists": true,
+          "free": 190693253120,
+          "bytes": 217088,
+          "wal_bytes": 0,
+          "incoming_bytes": 0
+        }
+      },
+      "record": {
+        "name": "live-push-verify",
+        "kind": "sqlite",
+        "machine": "docker",
+        "profile": "disposable",
+        "created": 1794178874059,
+        "sqlite": "3.53.2",
+        "last_transfer": {
+          "call": "store.push",
+          "from": "native",
+          "to": "docker",
+          "at": 1794178878062,
+          "bytes": 217088,
+          "sha256": "934c9bab1c992bf3722b96e000b57505f1948da4bfcbdb5fae73669e96772930",
+          "heads": "4d9da379709516c6cd601938e3b5940d9a36f4a4a24fef4736792335601c7d0e",
+          "retired": true
+        },
+        "projects": [
+          "p"
+        ]
+      },
+      "cleanup": "owned Store removed after fresh-read explicit recovery"
+    },
+    {
+      "id": "push-install",
+      "kind": "push",
+      "phase": "install",
+      "source_line": 327,
+      "exit": 0,
+      "log": "{\"file\":\"/Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect/docs/evidence/phase-2-follow-up/live/push-install\",\"starts\":1,\"phase\":\"install\",\"outcome\":\"unknown\",\"state\":\"unresolved\",\"debuggerHit\":true}\n",
+      "status": {
+        "name": "live-push-install",
+        "kind": "sqlite",
+        "state": "unresolved",
+        "holders": [],
+        "op": {
+          "id": "op-6144f9fc9f3c6e16",
+          "name": "store.push",
+          "phase": "install",
+          "started": 1794178882140,
+          "uncertain": true
+        },
+        "down_reason": null,
+        "machine": "native",
+        "file": {
+          "exists": true,
+          "free": 331308675072,
+          "bytes": 217088,
+          "wal_bytes": 0,
+          "incoming_bytes": 0
+        }
+      },
+      "boundary_pass": true,
+      "resolved_status": {
+        "name": "live-push-install",
+        "kind": "sqlite",
+        "state": "idle",
+        "holders": [],
+        "op": null,
+        "down_reason": null,
+        "machine": "docker",
+        "file": {
+          "exists": true,
+          "free": 190693253120,
+          "bytes": 217088,
+          "wal_bytes": 0,
+          "incoming_bytes": 0
+        }
+      },
+      "record": {
+        "name": "live-push-install",
+        "kind": "sqlite",
+        "machine": "docker",
+        "profile": "disposable",
+        "created": 1794178878118,
+        "sqlite": "3.53.2",
+        "last_transfer": {
+          "call": "store.push",
+          "from": "native",
+          "to": "docker",
+          "at": 1794178882315,
+          "bytes": 217088,
+          "sha256": "03b9ca40a41e8cd3e6f53c36c6d22f1df36125c36c2f711e197e34cd94b30cf1",
+          "heads": "d9897f45f3e4554e03cb3f166d17a2db3996db13c5b3c29ec9c2273ad5cc7c56",
+          "retired": true
+        },
+        "projects": [
+          "p"
+        ]
+      },
+      "cleanup": "owned Store removed after fresh-read explicit recovery"
+    },
+    {
+      "id": "push-record",
+      "kind": "push",
+      "phase": "record",
+      "source_line": 340,
+      "exit": 0,
+      "log": "{\"file\":\"/Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect/docs/evidence/phase-2-follow-up/live/push-record\",\"starts\":1,\"phase\":\"record\",\"outcome\":\"unknown\",\"state\":\"unresolved\",\"debuggerHit\":true}\n",
+      "status": {
+        "name": "live-push-record",
+        "kind": "sqlite",
+        "state": "unresolved",
+        "holders": [],
+        "op": {
+          "id": "op-9dbed66a3e6b19f7",
+          "name": "store.push",
+          "phase": "record",
+          "started": 1794178886898,
+          "uncertain": true
+        },
+        "down_reason": null,
+        "machine": "native",
+        "file": {
+          "exists": true,
+          "free": 331318915072,
+          "bytes": 217088,
+          "wal_bytes": 0,
+          "incoming_bytes": 0
+        }
+      },
+      "boundary_pass": true,
+      "resolved_status": {
+        "name": "live-push-record",
+        "kind": "sqlite",
+        "state": "idle",
+        "holders": [],
+        "op": null,
+        "down_reason": null,
+        "machine": "docker",
+        "file": {
+          "exists": true,
+          "free": 190693253120,
+          "bytes": 217088,
+          "wal_bytes": 0,
+          "incoming_bytes": 0
+        }
+      },
+      "record": {
+        "name": "live-push-record",
+        "kind": "sqlite",
+        "machine": "docker",
+        "profile": "disposable",
+        "created": 1794178882369,
+        "sqlite": "3.53.2",
+        "last_transfer": {
+          "call": "store.push",
+          "from": "native",
+          "to": "docker",
+          "at": 1794178887072,
+          "bytes": 217088,
+          "sha256": "e032dc484a37376f713be084c3c76bb082cdeb294c1b0281da4d30de8efd85cd",
+          "heads": "aadcbce2e5d5f516f458920554b0e8d6e4419b0fa73f24c201c4aec24222ca2e",
+          "retired": true
+        },
+        "projects": [
+          "p"
+        ]
+      },
+      "cleanup": "owned Store removed after fresh-read explicit recovery"
+    },
+    {
+      "id": "push-retire",
+      "kind": "push",
+      "phase": "retire",
+      "boundary_pass": true,
+      "status": {
+        "name": "live-push-retire",
+        "kind": "sqlite",
+        "state": "idle",
+        "holders": [],
+        "op": null,
+        "down_reason": null,
+        "machine": "docker",
+        "file": {
+          "exists": true,
+          "free": 190692749312,
+          "bytes": 217088,
+          "wal_bytes": 0,
+          "incoming_bytes": 0
+        }
+      },
+      "record": {
+        "name": "live-push-retire",
+        "kind": "sqlite",
+        "machine": "docker",
+        "profile": "disposable",
+        "created": 1794178887126,
+        "sqlite": "3.53.2",
+        "last_transfer": {
+          "call": "store.push",
+          "from": "native",
+          "to": "docker",
+          "at": 1794178891110,
+          "bytes": 217088,
+          "sha256": "9ace3f228b4f690824fbe8258935e35227712672f4c0a1d30d329a256e29cca2",
+          "heads": "2cc40deea7c07a733db68e550fb99d015d740c4c19189508d875be985243345c",
+          "retired": true
+        },
+        "projects": [
+          "p"
+        ]
+      },
+      "resolved_status": {
+        "name": "live-push-retire",
+        "kind": "sqlite",
+        "state": "idle",
+        "holders": [],
+        "op": null,
+        "down_reason": null,
+        "machine": "native",
+        "file": {
+          "exists": true,
+          "free": 329124708352,
+          "bytes": 217088,
+          "wal_bytes": 0,
+          "incoming_bytes": 0
+        }
+      },
+      "retained_initial_recovery_refusal": "InvalidInput: store already on docker; check correctly refused duplicate push",
+      "cleanup": "Store removed after explicit pull"
+    },
+    {
+      "id": "pull-check",
+      "kind": "pull",
+      "phase": "check",
+      "source_line": 129,
+      "exit": 0,
+      "log": "{\"file\":\"/Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect/docs/evidence/phase-2-follow-up/live/pull-check\",\"starts\":1,\"phase\":\"check\",\"outcome\":\"unknown\",\"state\":\"idle\",\"debuggerHit\":true}\n",
+      "status": {
+        "name": "live-pull-check",
+        "kind": "sqlite",
+        "state": "idle",
+        "holders": [],
+        "op": null,
+        "down_reason": null,
+        "machine": "docker",
+        "file": {
+          "exists": true,
+          "free": 190692749312,
+          "bytes": 217088,
+          "wal_bytes": 0,
+          "incoming_bytes": 0
+        }
+      },
+      "boundary_pass": true,
+      "resolved_status": {
+        "name": "live-pull-check",
+        "kind": "sqlite",
+        "state": "idle",
+        "holders": [],
+        "op": null,
+        "down_reason": null,
+        "machine": "docker",
+        "file": {
+          "exists": true,
+          "free": 190692749312,
+          "bytes": 217088,
+          "wal_bytes": 0,
+          "incoming_bytes": 0
+        }
+      },
+      "record": {
+        "name": "live-pull-check",
+        "kind": "sqlite",
+        "machine": "docker",
+        "profile": "disposable",
+        "created": 1794178938049,
+        "sqlite": "3.53.2",
+        "last_transfer": {
+          "call": "store.push",
+          "from": "native",
+          "to": "docker",
+          "at": 1794178938121,
+          "bytes": 217088,
+          "sha256": "452feaddab111883176214529c4970cf1abb95e5c134ae154d29c863b6fe225e",
+          "heads": "658672dacab2aec812e806002d8ac809770dd7714e4b8ec48034c120ce4b8b50",
+          "retired": true
+        },
+        "projects": [
+          "p"
+        ]
+      },
+      "cleanup": "owned Store removed after fresh-read explicit recovery"
+    },
+    {
+      "id": "pull-snapshot",
+      "kind": "pull",
+      "phase": "snapshot",
+      "source_line": 253,
+      "exit": 0,
+      "log": "{\"file\":\"/Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect/docs/evidence/phase-2-follow-up/live/pull-snapshot\",\"starts\":1,\"phase\":\"snapshot\",\"outcome\":\"unknown\",\"state\":\"idle\",\"debuggerHit\":true}\n",
+      "status": {
+        "name": "live-pull-snapshot",
+        "kind": "sqlite",
+        "state": "idle",
+        "holders": [],
+        "op": {
+          "id": "op-2203c999783a42e9",
+          "name": "store.pull",
+          "phase": "snapshot",
+          "started": 1794178947898,
+          "uncertain": false
+        },
+        "down_reason": null,
+        "machine": "docker",
+        "file": {
+          "exists": true,
+          "free": 190692749312,
+          "bytes": 217088,
+          "wal_bytes": 0,
+          "incoming_bytes": 0
+        }
+      },
+      "boundary_pass": true,
+      "resolved_status": {
+        "name": "live-pull-snapshot",
+        "kind": "sqlite",
+        "state": "idle",
+        "holders": [],
+        "op": null,
+        "down_reason": null,
+        "machine": "native",
+        "file": {
+          "exists": true,
+          "free": 328008908800,
+          "bytes": 217088,
+          "wal_bytes": 0,
+          "incoming_bytes": 0
+        }
+      },
+      "record": {
+        "name": "live-pull-snapshot",
+        "kind": "sqlite",
+        "machine": "native",
+        "profile": "disposable",
+        "created": 1794178943916,
+        "sqlite": "3.53.2",
+        "last_transfer": {
+          "call": "store.pull",
+          "from": "docker",
+          "to": "native",
+          "at": 1794178948084,
+          "bytes": 217088,
+          "sha256": "fa5cd73a7214fff99fb1961af4d13778d8108628d941629cc02b369bd2687567",
+          "heads": "1510056b8b357777cbd6256f8d36fa301cf09df3b169e0696983b5bec0ab1582",
+          "retired": true
+        },
+        "projects": [
+          "p"
+        ]
+      },
+      "cleanup": "owned Store removed after fresh-read explicit recovery"
+    },
+    {
+      "id": "pull-send",
+      "kind": "pull",
+      "phase": "send",
+      "source_line": 270,
+      "exit": 0,
+      "log": "{\"file\":\"/Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect/docs/evidence/phase-2-follow-up/live/pull-send\",\"starts\":1,\"phase\":\"send\",\"outcome\":\"unknown\",\"state\":\"idle\",\"debuggerHit\":true}\n",
+      "status": {
+        "name": "live-pull-send",
+        "kind": "sqlite",
+        "state": "idle",
+        "holders": [],
+        "op": {
+          "id": "op-64092daff4bb0092",
+          "name": "store.pull",
+          "phase": "send",
+          "started": 1794178952154,
+          "uncertain": false
+        },
+        "down_reason": null,
+        "machine": "docker",
+        "file": {
+          "exists": true,
+          "free": 190692749312,
+          "bytes": 217088,
+          "wal_bytes": 0,
+          "incoming_bytes": 0
+        }
+      },
+      "boundary_pass": true,
+      "resolved_status": {
+        "name": "live-pull-send",
+        "kind": "sqlite",
+        "state": "idle",
+        "holders": [],
+        "op": null,
+        "down_reason": null,
+        "machine": "native",
+        "file": {
+          "exists": true,
+          "free": 328008470528,
+          "bytes": 217088,
+          "wal_bytes": 0,
+          "incoming_bytes": 0
+        }
+      },
+      "record": {
+        "name": "live-pull-send",
+        "kind": "sqlite",
+        "machine": "native",
+        "profile": "disposable",
+        "created": 1794178948147,
+        "sqlite": "3.53.2",
+        "last_transfer": {
+          "call": "store.pull",
+          "from": "docker",
+          "to": "native",
+          "at": 1794178952368,
+          "bytes": 217088,
+          "sha256": "a2313b26d73100ed3a7e8f563be7d197a30fd3a69c2b8eb2316491a64a8e3e0e",
+          "heads": "a07182287fb43d698670ee423ff1840b15fcda56b4f3954ad35a32a17567e252",
+          "retired": true
+        },
+        "projects": [
+          "p"
+        ]
+      },
+      "cleanup": "owned Store removed after fresh-read explicit recovery"
+    },
+    {
+      "id": "pull-verify",
+      "kind": "pull",
+      "phase": "verify",
+      "source_line": 303,
+      "exit": 0,
+      "log": "{\"file\":\"/Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect/docs/evidence/phase-2-follow-up/live/pull-verify\",\"starts\":1,\"phase\":\"verify\",\"outcome\":\"unknown\",\"state\":\"idle\",\"debuggerHit\":true}\n",
+      "status": {
+        "name": "live-pull-verify",
+        "kind": "sqlite",
+        "state": "idle",
+        "holders": [],
+        "op": {
+          "id": "op-5ee33fb237bf78db",
+          "name": "store.pull",
+          "phase": "verify",
+          "started": 1794178956481,
+          "uncertain": false
+        },
+        "down_reason": null,
+        "machine": "docker",
+        "file": {
+          "exists": true,
+          "free": 190692749312,
+          "bytes": 217088,
+          "wal_bytes": 0,
+          "incoming_bytes": 0
+        }
+      },
+      "boundary_pass": true,
+      "resolved_status": {
+        "name": "live-pull-verify",
+        "kind": "sqlite",
+        "state": "idle",
+        "holders": [],
+        "op": null,
+        "down_reason": null,
+        "machine": "native",
+        "file": {
+          "exists": true,
+          "free": 328008626176,
+          "bytes": 217088,
+          "wal_bytes": 0,
+          "incoming_bytes": 0
+        }
+      },
+      "record": {
+        "name": "live-pull-verify",
+        "kind": "sqlite",
+        "machine": "native",
+        "profile": "disposable",
+        "created": 1794178952434,
+        "sqlite": "3.53.2",
+        "last_transfer": {
+          "call": "store.pull",
+          "from": "docker",
+          "to": "native",
+          "at": 1794178956685,
+          "bytes": 217088,
+          "sha256": "f0bbd640263f741a158d0140f6f7b3b8281166133e3f93a52f1d41aa213aa966",
+          "heads": "ed2a738486dffccd73b7592534a3a266c7a199d0f3f47986c6c88347b62d2759",
+          "retired": true
+        },
+        "projects": [
+          "p"
+        ]
+      },
+      "cleanup": "owned Store removed after fresh-read explicit recovery"
+    },
+    {
+      "id": "pull-install",
+      "kind": "pull",
+      "phase": "install",
+      "source_line": 327,
+      "exit": 0,
+      "log": "{\"file\":\"/Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect/docs/evidence/phase-2-follow-up/live/pull-install\",\"starts\":1,\"phase\":\"install\",\"outcome\":\"unknown\",\"state\":\"unresolved\",\"debuggerHit\":true}\n",
+      "status": {
+        "name": "live-pull-install",
+        "kind": "sqlite",
+        "state": "unresolved",
+        "holders": [],
+        "op": {
+          "id": "op-e550b991e8939231",
+          "name": "store.pull",
+          "phase": "install",
+          "started": 1794178960802,
+          "uncertain": true
+        },
+        "down_reason": null,
+        "machine": "docker",
+        "file": {
+          "exists": true,
+          "free": 190692700160,
+          "bytes": 217088,
+          "wal_bytes": 0,
+          "incoming_bytes": 0
+        }
+      },
+      "boundary_pass": true,
+      "resolved_status": {
+        "name": "live-pull-install",
+        "kind": "sqlite",
+        "state": "idle",
+        "holders": [],
+        "op": null,
+        "down_reason": null,
+        "machine": "native",
+        "file": {
+          "exists": true,
+          "free": 328008306688,
+          "bytes": 217088,
+          "wal_bytes": 0,
+          "incoming_bytes": 0
+        }
+      },
+      "record": {
+        "name": "live-pull-install",
+        "kind": "sqlite",
+        "machine": "native",
+        "profile": "disposable",
+        "created": 1794178956746,
+        "sqlite": "3.53.2",
+        "last_transfer": {
+          "call": "store.pull",
+          "from": "docker",
+          "to": "native",
+          "at": 1794178961015,
+          "bytes": 217088,
+          "sha256": "79fe98ec89c6c4010d13255fba3c7b862caba24f6647298ffe1a51e33802a962",
+          "heads": "515335ff64cbac78879bb63cb6d5aaaa2b865c5b8c310c76a966b6995b980236",
+          "retired": true
+        },
+        "projects": [
+          "p"
+        ]
+      },
+      "cleanup": "owned Store removed after fresh-read explicit recovery"
+    },
+    {
+      "id": "pull-record",
+      "kind": "pull",
+      "phase": "record",
+      "source_line": 340,
+      "exit": 0,
+      "log": "{\"file\":\"/Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect/docs/evidence/phase-2-follow-up/live/pull-record\",\"starts\":1,\"phase\":\"record\",\"outcome\":\"unknown\",\"state\":\"unresolved\",\"debuggerHit\":true}\n",
+      "status": {
+        "name": "live-pull-record",
+        "kind": "sqlite",
+        "state": "unresolved",
+        "holders": [],
+        "op": {
+          "id": "op-0d2d421007f1d373",
+          "name": "store.pull",
+          "phase": "record",
+          "started": 1794178965150,
+          "uncertain": true
+        },
+        "down_reason": null,
+        "machine": "docker",
+        "file": {
+          "exists": true,
+          "free": 190692700160,
+          "bytes": 217088,
+          "wal_bytes": 0,
+          "incoming_bytes": 0
+        }
+      },
+      "boundary_pass": true,
+      "resolved_status": {
+        "name": "live-pull-record",
+        "kind": "sqlite",
+        "state": "idle",
+        "holders": [],
+        "op": null,
+        "down_reason": null,
+        "machine": "native",
+        "file": {
+          "exists": true,
+          "free": 328008937472,
+          "bytes": 217088,
+          "wal_bytes": 0,
+          "incoming_bytes": 0
+        }
+      },
+      "record": {
+        "name": "live-pull-record",
+        "kind": "sqlite",
+        "machine": "native",
+        "profile": "disposable",
+        "created": 1794178961097,
+        "sqlite": "3.53.2",
+        "last_transfer": {
+          "call": "store.pull",
+          "from": "docker",
+          "to": "native",
+          "at": 1794178965337,
+          "bytes": 217088,
+          "sha256": "a94d9920017d6498b22d6cdfdc1c5ac80a67e4375b87190e3a566b5fa8102f8b",
+          "heads": "7da81016c6448fc9c499dca44c5ba5eb9c286dbcd1ac4ac28f1b331cfba0649e",
+          "retired": true
+        },
+        "projects": [
+          "p"
+        ]
+      },
+      "cleanup": "owned Store removed after fresh-read explicit recovery"
+    },
+    {
+      "id": "pull-retire",
+      "kind": "pull",
+      "phase": "retire",
+      "source_line": 368,
+      "exit": 0,
+      "log": "{\"file\":\"/Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect/docs/evidence/phase-2-follow-up/live/pull-retire\",\"starts\":1,\"phase\":\"retire\",\"outcome\":\"unknown\",\"state\":\"idle\",\"debuggerHit\":true}\n",
+      "status": {
+        "name": "live-pull-retire",
+        "kind": "sqlite",
+        "state": "idle",
+        "holders": [],
+        "op": {
+          "id": "op-c26a4529634facef",
+          "name": "store.pull",
+          "phase": "retire",
+          "started": 1794178969388,
+          "uncertain": false
+        },
+        "down_reason": null,
+        "machine": "native",
+        "file": {
+          "exists": true,
+          "free": 328007835648,
+          "bytes": 217088,
+          "wal_bytes": 0,
+          "incoming_bytes": 0
+        }
+      },
+      "boundary_pass": true,
+      "resolved_status": {
+        "name": "live-pull-retire",
+        "kind": "sqlite",
+        "state": "idle",
+        "holders": [],
+        "op": null,
+        "down_reason": null,
+        "machine": "docker",
+        "file": {
+          "exists": true,
+          "free": 190692700160,
+          "bytes": 217088,
+          "wal_bytes": 0,
+          "incoming_bytes": 0
+        }
+      },
+      "record": {
+        "name": "live-pull-retire",
+        "kind": "sqlite",
+        "machine": "docker",
+        "profile": "disposable",
+        "created": 1794178965399,
+        "sqlite": "3.53.2",
+        "last_transfer": {
+          "call": "store.push",
+          "from": "native",
+          "to": "docker",
+          "at": 1794178969590,
+          "bytes": 217088,
+          "sha256": "497068401f56c6b08d095533c6b37c63c101721af23dd9caad91c6f0fc433f63",
+          "heads": "1f75a51973cc73f5e14323f5f04bd9fa5446ce2693e261acadab3f4425b44871",
+          "retired": true
+        },
+        "projects": [
+          "p"
+        ]
+      },
+      "cleanup": "owned Store removed after fresh-read explicit recovery"
+    },
+    {
+      "id": "host-push-snapshot",
+      "host_exit": -9,
+      "debugger_cli_completed": false,
+      "breakpoint_hit": true,
+      "restart_exit": 0,
+      "status": {
+        "name": "live-host-push-snapshot",
+        "kind": "sqlite",
+        "state": "idle",
+        "holders": [],
+        "op": null,
+        "down_reason": null,
+        "machine": "docker",
+        "file": {
+          "exists": true,
+          "free": 190692601856,
+          "bytes": 217088,
+          "wal_bytes": 0,
+          "incoming_bytes": 0
+        }
+      },
+      "no_replay": true,
+      "phase": "snapshot",
+      "job": {
+        "id": "2389fa36-e427-4a0b-8101-ba8c650b992f",
+        "kind": "push",
+        "store": "live-host-push-snapshot",
+        "target": "docker",
+        "from": null,
+        "file": null,
+        "started": 1794178999615,
+        "ended": 1794179023629,
+        "half": null,
+        "phase": "snapshot",
+        "phases": [
+          {
+            "phase": "check",
+            "half": null,
+            "at": 1794179003506
+          },
+          {
+            "phase": "snapshot",
+            "half": null,
+            "at": 1794179003516
+          }
+        ],
+        "outcome": "interrupted",
+        "pid": 69973,
+        "observation": {
+          "at": 1794179023630,
+          "kind": "transfer",
+          "value": {
+            "name": "live-host-push-snapshot",
+            "kind": "sqlite",
+            "state": "idle",
+            "holders": [],
+            "op": null,
+            "down_reason": null,
+            "machine": "docker",
+            "file": {
+              "exists": true,
+              "free": 190692601856,
+              "bytes": 217088,
+              "wal_bytes": 0,
+              "incoming_bytes": 0
+            }
+          },
+          "direction": "push",
+          "action": null
+        },
+        "summary": "Interrupted \u00b7 Final result unavailable",
+        "done": null,
+        "total": null,
+        "error": {
+          "code": "Interrupted",
+          "message": "Host restarted; final result unavailable. Remote work may still finish.",
+          "phase": "snapshot",
+          "detail": null
+        },
+        "result": null,
+        "recovery": null
+      },
+      "pass": false,
+      "cleanup": "owned Store removed after child completed and fresh reads"
+    },
+    {
+      "id": "host-push-record",
+      "host_exit": -9,
+      "debugger_cli_completed": false,
+      "breakpoint_hit": true,
+      "restart_exit": 0,
+      "status": {
+        "name": "live-host-push-record",
+        "kind": "sqlite",
+        "state": "idle",
+        "holders": [],
+        "op": null,
+        "down_reason": null,
+        "machine": "docker",
+        "file": {
+          "exists": true,
+          "free": 190692552704,
+          "bytes": 217088,
+          "wal_bytes": 0,
+          "incoming_bytes": 0
+        }
+      },
+      "no_replay": true,
+      "phase": "record",
+      "job": {
+        "id": "760b9a3b-297d-4e2b-881b-79db2e915de0",
+        "kind": "push",
+        "store": "live-host-push-record",
+        "target": "docker",
+        "from": null,
+        "file": null,
+        "started": 1794179023795,
+        "ended": 1794179047841,
+        "half": null,
+        "phase": "record",
+        "phases": [
+          {
+            "phase": "check",
+            "half": null,
+            "at": 1794179027669
+          },
+          {
+            "phase": "snapshot",
+            "half": null,
+            "at": 1794179027678
+          },
+          {
+            "phase": "send",
+            "half": null,
+            "at": 1794179027683
+          },
+          {
+            "phase": "verify",
+            "half": null,
+            "at": 1794179027691
+          },
+          {
+            "phase": "install",
+            "half": null,
+            "at": 1794179027699
+          },
+          {
+            "phase": "record",
+            "half": null,
+            "at": 1794179027701
+          }
+        ],
+        "outcome": "interrupted",
+        "pid": 70179,
+        "observation": {
+          "at": 1794179047843,
+          "kind": "transfer",
+          "value": {
+            "name": "live-host-push-record",
+            "kind": "sqlite",
+            "state": "idle",
+            "holders": [],
+            "op": null,
+            "down_reason": null,
+            "machine": "docker",
+            "file": {
+              "exists": true,
+              "free": 190692552704,
+              "bytes": 217088,
+              "wal_bytes": 0,
+              "incoming_bytes": 0
+            }
+          },
+          "direction": "push",
+          "action": null
+        },
+        "summary": "Interrupted \u00b7 Final result unavailable",
+        "done": null,
+        "total": null,
+        "error": {
+          "code": "Interrupted",
+          "message": "Host restarted; final result unavailable. Remote work may still finish.",
+          "phase": "record",
+          "detail": null
+        },
+        "result": null,
+        "recovery": null
+      },
+      "pass": false,
+      "cleanup": "owned Store removed after child completed and fresh reads"
+    },
+    {
+      "id": "host-push-retire",
+      "host_exit": -9,
+      "debugger_cli_completed": false,
+      "breakpoint_hit": true,
+      "restart_exit": 0,
+      "status": {
+        "name": "live-host-push-retire",
+        "kind": "sqlite",
+        "state": "idle",
+        "holders": [],
+        "op": null,
+        "down_reason": null,
+        "machine": "docker",
+        "file": {
+          "exists": true,
+          "free": 190692331520,
+          "bytes": 217088,
+          "wal_bytes": 0,
+          "incoming_bytes": 0
+        }
+      },
+      "no_replay": true,
+      "phase": "retire",
+      "job": {
+        "id": "6f3071dd-2afc-4242-b152-374c3023557d",
+        "kind": "push",
+        "store": "live-host-push-retire",
+        "target": "docker",
+        "from": null,
+        "file": null,
+        "started": 1794179048044,
+        "ended": 1794179072217,
+        "half": null,
+        "phase": "retire",
+        "phases": [
+          {
+            "phase": "check",
+            "half": null,
+            "at": 1794179052008
+          },
+          {
+            "phase": "snapshot",
+            "half": null,
+            "at": 1794179052019
+          },
+          {
+            "phase": "send",
+            "half": null,
+            "at": 1794179052025
+          },
+          {
+            "phase": "verify",
+            "half": null,
+            "at": 1794179052038
+          },
+          {
+            "phase": "install",
+            "half": null,
+            "at": 1794179052047
+          },
+          {
+            "phase": "record",
+            "half": null,
+            "at": 1794179052049
+          },
+          {
+            "phase": "retire",
+            "half": null,
+            "at": 1794179052050
+          }
+        ],
+        "outcome": "interrupted",
+        "pid": 70433,
+        "observation": {
+          "at": 1794179072217,
+          "kind": "transfer",
+          "value": {
+            "name": "live-host-push-retire",
+            "kind": "sqlite",
+            "state": "idle",
+            "holders": [],
+            "op": null,
+            "down_reason": null,
+            "machine": "docker",
+            "file": {
+              "exists": true,
+              "free": 190692331520,
+              "bytes": 217088,
+              "wal_bytes": 0,
+              "incoming_bytes": 0
+            }
+          },
+          "direction": "push",
+          "action": null
+        },
+        "summary": "Interrupted \u00b7 Final result unavailable",
+        "done": null,
+        "total": null,
+        "error": {
+          "code": "Interrupted",
+          "message": "Host restarted; final result unavailable. Remote work may still finish.",
+          "phase": "retire",
+          "detail": null
+        },
+        "result": null,
+        "recovery": null
+      },
+      "pass": false,
+      "cleanup": "owned Store removed after child completed and fresh reads"
+    },
+    {
+      "id": "host-pull-snapshot",
+      "host_exit": -9,
+      "debugger_cli_completed": false,
+      "breakpoint_hit": true,
+      "restart_exit": 0,
+      "status": {
+        "name": "live-host-pull-snapshot",
+        "kind": "sqlite",
+        "state": "idle",
+        "holders": [],
+        "op": null,
+        "down_reason": null,
+        "machine": "native",
+        "file": {
+          "exists": true,
+          "free": 328001298432,
+          "bytes": 217088,
+          "wal_bytes": 0,
+          "incoming_bytes": 0
+        }
+      },
+      "no_replay": true,
+      "phase": "snapshot",
+      "job": {
+        "id": "21ca5d06-0c42-4d27-ac75-582d038b0a75",
+        "kind": "pull",
+        "store": "live-host-pull-snapshot",
+        "target": "native",
+        "from": "docker",
+        "file": null,
+        "started": 1794179072470,
+        "ended": 1794179096486,
+        "half": null,
+        "phase": "snapshot",
+        "phases": [
+          {
+            "phase": "check",
+            "half": null,
+            "at": 1794179076315
+          },
+          {
+            "phase": "snapshot",
+            "half": null,
+            "at": 1794179076322
+          }
+        ],
+        "outcome": "interrupted",
+        "pid": 70537,
+        "observation": {
+          "at": 1794179096487,
+          "kind": "transfer",
+          "value": {
+            "name": "live-host-pull-snapshot",
+            "kind": "sqlite",
+            "state": "idle",
+            "holders": [],
+            "op": null,
+            "down_reason": null,
+            "machine": "native",
+            "file": {
+              "exists": true,
+              "free": 328001318912,
+              "bytes": 217088,
+              "wal_bytes": 0,
+              "incoming_bytes": 0
+            }
+          },
+          "direction": "pull",
+          "action": null
+        },
+        "summary": "Interrupted \u00b7 Final result unavailable",
+        "done": null,
+        "total": null,
+        "error": {
+          "code": "Interrupted",
+          "message": "Host restarted; final result unavailable. Remote work may still finish.",
+          "phase": "snapshot",
+          "detail": null
+        },
+        "result": null,
+        "recovery": null
+      },
+      "pass": false,
+      "cleanup": "owned Store removed after child completed and fresh reads"
+    },
+    {
+      "id": "host-pull-record",
+      "host_exit": -9,
+      "debugger_cli_completed": false,
+      "breakpoint_hit": true,
+      "restart_exit": 0,
+      "status": {
+        "name": "live-host-pull-record",
+        "kind": "sqlite",
+        "state": "idle",
+        "holders": [],
+        "op": null,
+        "down_reason": null,
+        "machine": "native",
+        "file": {
+          "exists": true,
+          "free": 328001458176,
+          "bytes": 217088,
+          "wal_bytes": 0,
+          "incoming_bytes": 0
+        }
+      },
+      "no_replay": true,
+      "phase": "record",
+      "job": {
+        "id": "e38a9e7c-2b96-4bb1-a49c-845744ea08bd",
+        "kind": "pull",
+        "store": "live-host-pull-record",
+        "target": "native",
+        "from": "docker",
+        "file": null,
+        "started": 1794179096708,
+        "ended": 1794179120787,
+        "half": null,
+        "phase": "record",
+        "phases": [
+          {
+            "phase": "check",
+            "half": null,
+            "at": 1794179100590
+          },
+          {
+            "phase": "snapshot",
+            "half": null,
+            "at": 1794179100600
+          },
+          {
+            "phase": "send",
+            "half": null,
+            "at": 1794179100611
+          },
+          {
+            "phase": "verify",
+            "half": null,
+            "at": 1794179100616
+          },
+          {
+            "phase": "install",
+            "half": null,
+            "at": 1794179100621
+          },
+          {
+            "phase": "record",
+            "half": null,
+            "at": 1794179100621
+          }
+        ],
+        "outcome": "interrupted",
+        "pid": 70936,
+        "observation": {
+          "at": 1794179120788,
+          "kind": "transfer",
+          "value": {
+            "name": "live-host-pull-record",
+            "kind": "sqlite",
+            "state": "idle",
+            "holders": [],
+            "op": null,
+            "down_reason": null,
+            "machine": "native",
+            "file": {
+              "exists": true,
+              "free": 328001478656,
+              "bytes": 217088,
+              "wal_bytes": 0,
+              "incoming_bytes": 0
+            }
+          },
+          "direction": "pull",
+          "action": null
+        },
+        "summary": "Interrupted \u00b7 Final result unavailable",
+        "done": null,
+        "total": null,
+        "error": {
+          "code": "Interrupted",
+          "message": "Host restarted; final result unavailable. Remote work may still finish.",
+          "phase": "record",
+          "detail": null
+        },
+        "result": null,
+        "recovery": null
+      },
+      "pass": false,
+      "cleanup": "owned Store removed after child completed and fresh reads"
+    },
+    {
+      "id": "host-pull-retire",
+      "host_exit": -9,
+      "debugger_cli_completed": false,
+      "breakpoint_hit": true,
+      "restart_exit": 0,
+      "status": {
+        "name": "live-host-pull-retire",
+        "kind": "sqlite",
+        "state": "idle",
+        "holders": [],
+        "op": null,
+        "down_reason": null,
+        "machine": "native",
+        "file": {
+          "exists": true,
+          "free": 328001142784,
+          "bytes": 217088,
+          "wal_bytes": 0,
+          "incoming_bytes": 0
+        }
+      },
+      "no_replay": true,
+      "phase": "retire",
+      "job": {
+        "id": "83b883e5-ceaa-424c-abd5-dd5429258b93",
+        "kind": "pull",
+        "store": "live-host-pull-retire",
+        "target": "native",
+        "from": "docker",
+        "file": null,
+        "started": 1794179121002,
+        "ended": 1794179144973,
+        "half": null,
+        "phase": "retire",
+        "phases": [
+          {
+            "phase": "check",
+            "half": null,
+            "at": 1794179124807
+          },
+          {
+            "phase": "snapshot",
+            "half": null,
+            "at": 1794179124815
+          },
+          {
+            "phase": "send",
+            "half": null,
+            "at": 1794179124827
+          },
+          {
+            "phase": "verify",
+            "half": null,
+            "at": 1794179124843
+          },
+          {
+            "phase": "install",
+            "half": null,
+            "at": 1794179124846
+          },
+          {
+            "phase": "record",
+            "half": null,
+            "at": 1794179124846
+          },
+          {
+            "phase": "retire",
+            "half": null,
+            "at": 1794179124848
+          }
+        ],
+        "outcome": "interrupted",
+        "pid": 71290,
+        "observation": {
+          "at": 1794179144974,
+          "kind": "transfer",
+          "value": {
+            "name": "live-host-pull-retire",
+            "kind": "sqlite",
+            "state": "idle",
+            "holders": [],
+            "op": null,
+            "down_reason": null,
+            "machine": "native",
+            "file": {
+              "exists": true,
+              "free": 328001163264,
+              "bytes": 217088,
+              "wal_bytes": 0,
+              "incoming_bytes": 0
+            }
+          },
+          "direction": "pull",
+          "action": null
+        },
+        "summary": "Interrupted \u00b7 Final result unavailable",
+        "done": null,
+        "total": null,
+        "error": {
+          "code": "Interrupted",
+          "message": "Host restarted; final result unavailable. Remote work may still finish.",
+          "phase": "retire",
+          "detail": null
+        },
+        "result": null,
+        "recovery": null
+      },
+      "pass": false,
+      "cleanup": "owned Store removed after child completed and fresh reads"
+    }
+  ]
+}

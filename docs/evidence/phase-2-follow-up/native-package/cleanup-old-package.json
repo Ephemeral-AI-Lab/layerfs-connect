@@ -1,0 +1,195 @@
+{
+  "root": "/tmp/connect-followup-package-20261109",
+  "started": "2026-11-08T23:30:47.674Z",
+  "reads": [
+    {
+      "kind": "fresh sandbox.list before cleanup",
+      "value": {
+        "items": [
+          {
+            "name": "chat.caa20257-d0f1-4c6f-a0b2-08b2e650a004",
+            "project": "route-proof/p",
+            "machine": "native",
+            "created": 1794179231724,
+            "backend": "native",
+            "route": "nfs",
+            "id": "chat.caa20257-d0f1-4c6f-a0b2-08b2e650a004",
+            "platform": "mac",
+            "runtime": "native",
+            "image": "local",
+            "state": "running"
+          },
+          {
+            "name": "chat.e0da13cf-3378-4519-bb46-a2a4c6485e4b",
+            "project": "route-proof/p",
+            "machine": "native",
+            "created": 1794179319321,
+            "backend": "native",
+            "route": "nfs",
+            "id": "chat.e0da13cf-3378-4519-bb46-a2a4c6485e4b",
+            "platform": "mac",
+            "runtime": "native",
+            "image": "local",
+            "state": "running"
+          }
+        ],
+        "next_page_pos": null
+      }
+    },
+    {
+      "kind": "fresh Workspace status",
+      "handle": "chat.caa20257-d0f1-4c6f-a0b2-08b2e650a004:chat-caa20257-d0f1-4c6f-a0b2-08b2e650a004",
+      "value": {
+        "kind": "ok",
+        "base": "12b8149f312430739d9f1e980edb717cab28b89e81eff818e66bb42f43eaf36ed8",
+        "base_layer": "32c9016eab8eaa4f4a385c9b4a2fd8e361db725cbcc95febadd7bbb4c69bbb47d8",
+        "branch_head": "12b8149f312430739d9f1e980edb717cab28b89e81eff818e66bb42f43eaf36ed8",
+        "head_moved_since_mount": false,
+        "activity": "Idle",
+        "overlay": {
+          "inodes": 2,
+          "entries": 1,
+          "pending_merge": false
+        },
+        "branch": "chat-caa20257-d0f1-4c6f-a0b2-08b2e650a004"
+      }
+    },
+    {
+      "kind": "fresh Workspace status",
+      "handle": "chat.e0da13cf-3378-4519-bb46-a2a4c6485e4b:chat-e0da13cf-3378-4519-bb46-a2a4c6485e4b",
+      "value": {
+        "kind": "ok",
+        "base": "122a809dfd36da8fc74e0a70afd011ca246e92d75f82acb2e9178be6e2eeac6d55",
+        "base_layer": "32c9016eab8eaa4f4a385c9b4a2fd8e361db725cbcc95febadd7bbb4c69bbb47d8",
+        "branch_head": "122a809dfd36da8fc74e0a70afd011ca246e92d75f82acb2e9178be6e2eeac6d55",
+        "head_moved_since_mount": false,
+        "activity": "Idle",
+        "overlay": {
+          "inodes": 2,
+          "entries": 1,
+          "pending_merge": false
+        },
+        "branch": "chat-e0da13cf-3378-4519-bb46-a2a4c6485e4b"
+      }
+    },
+    {
+      "kind": "fresh Sandbox get before close",
+      "name": "chat.caa20257-d0f1-4c6f-a0b2-08b2e650a004",
+      "value": {
+        "name": "chat.caa20257-d0f1-4c6f-a0b2-08b2e650a004",
+        "project": "route-proof/p",
+        "machine": "native",
+        "created": 1794179231724,
+        "backend": "native",
+        "route": "nfs",
+        "id": "chat.caa20257-d0f1-4c6f-a0b2-08b2e650a004",
+        "platform": "mac",
+        "runtime": "native",
+        "image": "local",
+        "state": "running",
+        "workspaces": [],
+        "next_page_pos": null
+      }
+    },
+    {
+      "kind": "fresh Sandbox get before close",
+      "name": "chat.e0da13cf-3378-4519-bb46-a2a4c6485e4b",
+      "value": {
+        "name": "chat.e0da13cf-3378-4519-bb46-a2a4c6485e4b",
+        "project": "route-proof/p",
+        "machine": "native",
+        "created": 1794179319321,
+        "backend": "native",
+        "route": "nfs",
+        "id": "chat.e0da13cf-3378-4519-bb46-a2a4c6485e4b",
+        "platform": "mac",
+        "runtime": "native",
+        "image": "local",
+        "state": "running",
+        "workspaces": [],
+        "next_page_pos": null
+      }
+    },
+    {
+      "kind": "fresh sandbox.list after cleanup",
+      "value": {
+        "items": [],
+        "next_page_pos": null
+      }
+    }
+  ],
+  "actions": [
+    {
+      "kind": "explicit cancellation only after fresh read",
+      "handle": "chat.caa20257-d0f1-4c6f-a0b2-08b2e650a004:chat-caa20257-d0f1-4c6f-a0b2-08b2e650a004",
+      "execId": "connect-36e02a0b-ce31-44fa-9323-7693555ec5e0",
+      "result": {
+        "outcome": "ended"
+      }
+    },
+    {
+      "kind": "explicit discard known owned test Workspace (including preserved conflict evidence)",
+      "handle": "chat.caa20257-d0f1-4c6f-a0b2-08b2e650a004:chat-caa20257-d0f1-4c6f-a0b2-08b2e650a004",
+      "result": {
+        "kind": "Unmounted"
+      }
+    },
+    {
+      "kind": "explicit cancellation only after fresh read",
+      "handle": "chat.e0da13cf-3378-4519-bb46-a2a4c6485e4b:chat-e0da13cf-3378-4519-bb46-a2a4c6485e4b",
+      "execId": "connect-7c9089ba-0fe0-4970-bdc5-77b31b1a5059",
+      "result": {
+        "outcome": "ended"
+      }
+    },
+    {
+      "kind": "explicit discard known owned test Workspace (including preserved conflict evidence)",
+      "handle": "chat.e0da13cf-3378-4519-bb46-a2a4c6485e4b:chat-e0da13cf-3378-4519-bb46-a2a4c6485e4b",
+      "result": {
+        "kind": "Unmounted"
+      }
+    },
+    {
+      "kind": "close owned empty Sandbox",
+      "name": "chat.caa20257-d0f1-4c6f-a0b2-08b2e650a004",
+      "result": {
+        "kind": "Closed",
+        "sandbox": "chat.caa20257-d0f1-4c6f-a0b2-08b2e650a004",
+        "unknown": [],
+        "closed": "chat.caa20257-d0f1-4c6f-a0b2-08b2e650a004"
+      }
+    },
+    {
+      "kind": "close owned empty Sandbox",
+      "name": "chat.e0da13cf-3378-4519-bb46-a2a4c6485e4b",
+      "result": {
+        "kind": "Closed",
+        "sandbox": "chat.e0da13cf-3378-4519-bb46-a2a4c6485e4b",
+        "unknown": [],
+        "closed": "chat.e0da13cf-3378-4519-bb46-a2a4c6485e4b"
+      }
+    },
+    {
+      "kind": "remove owned project",
+      "result": {
+        "stack": "3172cd116c7e85295d720b7fe8ad4979ba",
+        "packs_kept": true,
+        "project": "route-proof/p"
+      }
+    },
+    {
+      "kind": "remove owned Store",
+      "result": {
+        "removed": "route-proof"
+      }
+    }
+  ],
+  "failures": [
+    {
+      "code": "InvalidInput",
+      "message": "store.list: unknown option page_size",
+      "stack": "LayerFSError: store.list: unknown option page_size\n    at invalid (file:///Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect/host/cli/calls.js:5:30)\n    at Proxy.<anonymous> (file:///Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect/host/cli/calls.js:24:153)\n    at async file:///private/tmp/connect-cleanup-owned.mjs:3:2036"
+    }
+  ],
+  "verdict": "FAIL"
+}

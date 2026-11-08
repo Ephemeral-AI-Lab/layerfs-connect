@@ -1,0 +1,89 @@
+{
+  "mutations": 0,
+  "jobs": [
+    {
+      "id": "d0e3cc61-4421-482b-9ef1-515324bc3515",
+      "kind": "move",
+      "store": "live-host-move-pull-retire",
+      "target": "live-move-vm",
+      "from": "docker",
+      "file": null,
+      "started": 1794179157191,
+      "ended": 1794179161258,
+      "half": "pull",
+      "phase": "retire",
+      "phases": [
+        {
+          "phase": "check",
+          "half": "pull",
+          "at": 1794179161071
+        },
+        {
+          "phase": "snapshot",
+          "half": "pull",
+          "at": 1794179161079
+        },
+        {
+          "phase": "send",
+          "half": "pull",
+          "at": 1794179161091
+        },
+        {
+          "phase": "verify",
+          "half": "pull",
+          "at": 1794179161099
+        },
+        {
+          "phase": "install",
+          "half": "pull",
+          "at": 1794179161104
+        },
+        {
+          "phase": "record",
+          "half": "pull",
+          "at": 1794179161105
+        },
+        {
+          "phase": "retire",
+          "half": "pull",
+          "at": 1794179161106
+        }
+      ],
+      "outcome": "interrupted",
+      "pid": 71757,
+      "observation": {
+        "at": 1794179161259,
+        "kind": "transfer",
+        "value": {
+          "name": "live-host-move-pull-retire",
+          "kind": "sqlite",
+          "state": "idle",
+          "holders": [],
+          "op": null,
+          "down_reason": null,
+          "machine": "native",
+          "file": {
+            "exists": true,
+            "free": 328000708608,
+            "bytes": 217088,
+            "wal_bytes": 0,
+            "incoming_bytes": 0
+          }
+        },
+        "direction": "pull",
+        "action": null
+      },
+      "summary": "Interrupted · Final result unavailable",
+      "done": null,
+      "total": null,
+      "error": {
+        "code": "Interrupted",
+        "message": "Host restarted; final result unavailable. Remote work may still finish.",
+        "phase": "retire",
+        "detail": null
+      },
+      "result": null,
+      "recovery": null
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "verdict": "PASS",
+  "at": "2026-11-08T23:11:35.559680+00:00",
+  "root": "/private/tmp/connect-follow-up-pg-djQKPP",
+  "removed": true,
+  "containerRemoved": "qualification.json",
+  "release": "native-package owner released original PG home after copied historical-report DoctorPanel proof",
+  "independentUiReview": "pg-ui-probe2.json and pg-ui-report-1.png: faithful complete/incomplete verdict/counts, actual native DoctorPanel and preserved dated scope; no additional audit launched."
+}

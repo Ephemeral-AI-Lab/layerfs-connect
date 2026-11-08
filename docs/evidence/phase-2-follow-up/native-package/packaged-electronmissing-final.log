@@ -1,0 +1,97 @@
+Debugger listening on ws://127.0.0.1:19326/7e00fd61-010d-4141-8f1f-0ad649341c20
+For help, see: https://nodejs.org/learn/getting-started/debugging
+
+DevTools listening on ws://127.0.0.1:19325/devtools/browser/2ff4303c-ae01-465c-b868-f612faf88de1
+Debugger attached.
+[layerfs/host] file:///Users/yifanxu/Applications/LayerFS%20Connect%20Follow-up%20Final%2020261109-137.app/Contents/Resources/backend/host/cli/binary.js:8
+[layerfs/host]   if (!path || !isAbsolute(path) || !existsSync(path)) throw new CliError('CliUnavailable', 'Set LAYERFS_CONNECT_CLI to an absolute pinned LayerFS binary path', null, 'unavailable')
+[layerfs/host]                                                              ^
+[layerfs/host] 
+[layerfs/host] CliError [LayerFSError]: Set LAYERFS_CONNECT_CLI to an absolute pinned LayerFS binary path
+[layerfs/host]     at binary (file:///Users/yifanxu/Applications/LayerFS%20Connect%20Follow-up%20Final%2020261109-137.app/Contents/Resources/backend/host/cli/binary.js:8:62)
+[layerfs/host]     at discover (file:///Users/yifanxu/Applications/LayerFS%20Connect%20Follow-up%20Final%2020261109-137.app/Contents/Resources/backend/host/cli/capabilities.js:7:15)
+[layerfs/host]     at file:///Users/yifanxu/Applications/LayerFS%20Connect%20Follow-up%20Final%2020261109-137.app/Contents/Resources/backend/host/cli/table.js:6:12
+[layerfs/host]     at ModuleJob.run (node:internal/modules/esm/module_job:561:25)
+[layerfs/host]     at async node:internal/modules/esm/loader:647:26
+[layerfs/host]     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {
+[layerfs/host]   code: 'CliUnavailable',
+[layerfs/host]   detail: null,
+[layerfs/host]   transport: 'unavailable'
+[layerfs/host] }
+[layerfs/host] 
+[layerfs/host] Node.js v24.21.0
+[layerfs/host] exited (1)
+Error occurred in handler for 'layerfs:request': Error: LayerFS CLI unavailable. Set LAYERFS_CONNECT_CLI to an absolute pinned LayerFS binary path, then restart Connect.
+    at ChildProcess.<anonymous> (file:///Users/yifanxu/Applications/LayerFS%20Connect%20Follow-up%20Final%2020261109-137.app/Contents/Resources/app/out/main/index.js:98:12)
+    at ChildProcess.emit (node:events:514:28)
+    at maybeClose (node:internal/child_process:1172:16)
+    at ChildProcess._handle.onexit (node:internal/child_process:335:5)
+Error occurred in handler for 'layerfs:request': Error: LayerFS CLI unavailable. Set LAYERFS_CONNECT_CLI to an absolute pinned LayerFS binary path, then restart Connect.
+    at ChildProcess.<anonymous> (file:///Users/yifanxu/Applications/LayerFS%20Connect%20Follow-up%20Final%2020261109-137.app/Contents/Resources/app/out/main/index.js:98:12)
+    at ChildProcess.emit (node:events:514:28)
+    at maybeClose (node:internal/child_process:1172:16)
+    at ChildProcess._handle.onexit (node:internal/child_process:335:5)
+Error occurred in handler for 'layerfs:request': Error: LayerFS CLI unavailable. Set LAYERFS_CONNECT_CLI to an absolute pinned LayerFS binary path, then restart Connect.
+    at ChildProcess.<anonymous> (file:///Users/yifanxu/Applications/LayerFS%20Connect%20Follow-up%20Final%2020261109-137.app/Contents/Resources/app/out/main/index.js:98:12)
+    at ChildProcess.emit (node:events:514:28)
+    at maybeClose (node:internal/child_process:1172:16)
+    at ChildProcess._handle.onexit (node:internal/child_process:335:5)
+[layerfs/host] file:///Users/yifanxu/Applications/LayerFS%20Connect%20Follow-up%20Final%2020261109-137.app/Contents/Resources/backend/host/cli/binary.js:8
+[layerfs/host]   if (!path || !isAbsolute(path) || !existsSync(path)) throw new CliError('CliUnavailable', 'Set LAYERFS_CONNECT_CLI to an absolute pinned LayerFS binary path', null, 'unavailable')
+[layerfs/host]                                                              ^
+[layerfs/host] 
+[layerfs/host] CliError [LayerFSError]: Set LAYERFS_CONNECT_CLI to an absolute pinned LayerFS binary path
+[layerfs/host]     at binary (file:///Users/yifanxu/Applications/LayerFS%20Connect%20Follow-up%20Final%2020261109-137.app/Contents/Resources/backend/host/cli/binary.js:8:62)
+[layerfs/host]     at discover (file:///Users/yifanxu/Applications/LayerFS%20Connect%20Follow-up%20Final%2020261109-137.app/Contents/Resources/backend/host/cli/capabilities.js:7:15)
+[layerfs/host]     at file:///Users/yifanxu/Applications/LayerFS%20Connect%20Follow-up%20Final%2020261109-137.app/Contents/Resources/backend/host/cli/table.js:6:12
+[layerfs/host]     at ModuleJob.run (node:internal/modules/esm/module_job:561:25)
+[layerfs/host]     at async node:internal/modules/esm/loader:647:26
+[layerfs/host]     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {
+[layerfs/host]   code: 'CliUnavailable',
+[layerfs/host]   detail: null,
+[layerfs/host]   transport: 'unavailable'
+[layerfs/host] }
+[layerfs/host] 
+[layerfs/host] Node.js v24.21.0
+[layerfs/host] exited (1)
+Error occurred in handler for 'layerfs:request': Error: LayerFS CLI unavailable. Set LAYERFS_CONNECT_CLI to an absolute pinned LayerFS binary path, then restart Connect.
+    at ChildProcess.<anonymous> (file:///Users/yifanxu/Applications/LayerFS%20Connect%20Follow-up%20Final%2020261109-137.app/Contents/Resources/app/out/main/index.js:98:12)
+    at ChildProcess.emit (node:events:514:28)
+    at maybeClose (node:internal/child_process:1172:16)
+    at Socket.<anonymous> (node:internal/child_process:527:11)
+    at Socket.emit (node:events:514:28)
+    at Pipe.<anonymous> (node:net:362:12)
+Error occurred in handler for 'layerfs:request': Error: LayerFS CLI unavailable. Set LAYERFS_CONNECT_CLI to an absolute pinned LayerFS binary path, then restart Connect.
+    at ChildProcess.<anonymous> (file:///Users/yifanxu/Applications/LayerFS%20Connect%20Follow-up%20Final%2020261109-137.app/Contents/Resources/app/out/main/index.js:98:12)
+    at ChildProcess.emit (node:events:514:28)
+    at maybeClose (node:internal/child_process:1172:16)
+    at Socket.<anonymous> (node:internal/child_process:527:11)
+    at Socket.emit (node:events:514:28)
+    at Pipe.<anonymous> (node:net:362:12)
+[layerfs/host] file:///Users/yifanxu/Applications/LayerFS%20Connect%20Follow-up%20Final%2020261109-137.app/Contents/Resources/backend/host/cli/binary.js:8
+[layerfs/host]   if (!path || !isAbsolute(path) || !existsSync(path)) throw new CliError('CliUnavailable', 'Set LAYERFS_CONNECT_CLI to an absolute pinned LayerFS binary path', null, 'unavailable')
+[layerfs/host]                                                              ^
+[layerfs/host] 
+[layerfs/host] CliError [LayerFSError]: Set LAYERFS_CONNECT_CLI to an absolute pinned LayerFS binary path
+[layerfs/host]     at binary (file:///Users/yifanxu/Applications/LayerFS%20Connect%20Follow-up%20Final%2020261109-137.app/Contents/Resources/backend/host/cli/binary.js:8:62)
+[layerfs/host]     at discover (file:///Users/yifanxu/Applications/LayerFS%20Connect%20Follow-up%20Final%2020261109-137.app/Contents/Resources/backend/host/cli/capabilities.js:7:15)
+[layerfs/host]     at file:///Users/yifanxu/Applications/LayerFS%20Connect%20Follow-up%20Final%2020261109-137.app/Contents/Resources/backend/host/cli/table.js:6:12
+[layerfs/host]     at ModuleJob.run (node:internal/modules/esm/module_job:561:25)
+[layerfs/host]     at async node:internal/modules/esm/loader:647:26
+[layerfs/host]     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {
+[layerfs/host]   code: 'CliUnavailable',
+[layerfs/host]   detail: null,
+[layerfs/host]   transport: 'unavailable'
+[layerfs/host] }
+[layerfs/host] 
+[layerfs/host] Node.js v24.21.0
+[layerfs/host] exited (1)
+Error occurred in handler for 'layerfs:request': Error: LayerFS CLI unavailable. Set LAYERFS_CONNECT_CLI to an absolute pinned LayerFS binary path, then restart Connect.
+    at ChildProcess.<anonymous> (file:///Users/yifanxu/Applications/LayerFS%20Connect%20Follow-up%20Final%2020261109-137.app/Contents/Resources/app/out/main/index.js:98:12)
+    at ChildProcess.emit (node:events:514:28)
+    at maybeClose (node:internal/child_process:1172:16)
+    at Socket.<anonymous> (node:internal/child_process:527:11)
+    at Socket.emit (node:events:514:28)
+    at Pipe.<anonymous> (node:net:362:12)
+Debugger ending on ws://127.0.0.1:19326/7e00fd61-010d-4141-8f1f-0ad649341c20
+For help, see: https://nodejs.org/learn/getting-started/debugging

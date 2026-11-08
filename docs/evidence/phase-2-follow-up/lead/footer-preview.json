@@ -1,0 +1,55 @@
+{
+  "verified_at": "2026-11-08T23:07:47.827563+00:00",
+  "scope": "SIMULATED actual web preview, renderer label/navigation only; no real CLI claim",
+  "url": "http://127.0.0.1:1025/?mac=1#/machines",
+  "preview_owner": {
+    "pid": 29039,
+    "cwd": "/Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect/desktop"
+  },
+  "root_cause": "Sidebar.tsx hardcoded Simulated \u00b7 0.0.0 despite preload real mode; native development-900x600.png and development-probe.json prove mismatch.",
+  "change": "Use existing connectBridge.mode; Real LayerFS or Simulated LayerFS, omit placeholder version.",
+  "steps": [
+    {
+      "viewport": [
+        1280,
+        820
+      ],
+      "route": "#/machines",
+      "footer": "Simulated LayerFS",
+      "overflow": false,
+      "action": "Inspect screenshot and sidebar snapshot; Settings click navigated to #/settings/models."
+    },
+    {
+      "viewport": [
+        900,
+        600
+      ],
+      "route": "#/settings/models",
+      "footer": "Simulated LayerFS",
+      "overflow": false,
+      "action": "Inspect screenshot and scoped sidebar snapshot; Back to workspace returned to #/machines."
+    },
+    {
+      "viewport": [
+        1280,
+        820
+      ],
+      "route": "#/machines",
+      "footer": "Simulated LayerFS",
+      "overflow": false,
+      "action": "Read actual innerWidth/innerHeight and footer after return."
+    }
+  ],
+  "console_errors": [],
+  "console_nonerrors": [
+    "Vite connection/HMR debug",
+    "React DevTools informational message",
+    "pre-existing optional username accessibility hint in model API key form"
+  ],
+  "retained_tool_errors": [
+    "Initial browser tab label contained spaces; corrected to connect-followup-footer.",
+    "Settings contains two aside elements; narrowed snapshot to aside[aria-label=Settings sidebar]."
+  ],
+  "outcome": "PASS",
+  "native_real_mode": "Recorded separately by native/package verification against final artifact."
+}

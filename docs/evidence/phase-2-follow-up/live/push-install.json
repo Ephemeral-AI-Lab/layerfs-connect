@@ -1,0 +1,231 @@
+{
+  "spec": {
+    "home": "/private/tmp/connect-followup-live-1c2f5bjz/home",
+    "state": "/private/tmp/connect-followup-live-1c2f5bjz/states/push-install",
+    "mode": "real",
+    "cli": "/Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect-cli-137/target/debug/layerfs"
+  },
+  "starts": 1,
+  "childPid": 68890,
+  "ended": {
+    "id": "29c2e47a-8fa1-49a6-8e95-abf73f967733",
+    "kind": "push",
+    "store": "live-push-install",
+    "target": "docker",
+    "from": null,
+    "file": null,
+    "started": 1794178878189,
+    "ended": 1794178882219,
+    "half": null,
+    "phase": "install",
+    "phases": [
+      {
+        "phase": "check",
+        "half": null,
+        "at": 1794178882137
+      },
+      {
+        "phase": "snapshot",
+        "half": null,
+        "at": 1794178882146
+      },
+      {
+        "phase": "send",
+        "half": null,
+        "at": 1794178882150
+      },
+      {
+        "phase": "verify",
+        "half": null,
+        "at": 1794178882156
+      },
+      {
+        "phase": "install",
+        "half": null,
+        "at": 1794178882166
+      }
+    ],
+    "outcome": "unknown",
+    "pid": 68890,
+    "observation": null,
+    "summary": "Outcome unknown · Inspect",
+    "done": null,
+    "total": null,
+    "error": {
+      "transport": "transport-unknown",
+      "code": "Unknown",
+      "message": "LayerFS ended without a complete result; inspect state before another action",
+      "phase": "install",
+      "detail": {
+        "signal": "SIGKILL"
+      }
+    },
+    "result": null
+  },
+  "inspected": {
+    "id": "29c2e47a-8fa1-49a6-8e95-abf73f967733",
+    "kind": "push",
+    "store": "live-push-install",
+    "target": "docker",
+    "from": null,
+    "file": null,
+    "started": 1794178878189,
+    "ended": 1794178882219,
+    "half": null,
+    "phase": "install",
+    "phases": [
+      {
+        "phase": "check",
+        "half": null,
+        "at": 1794178882137
+      },
+      {
+        "phase": "snapshot",
+        "half": null,
+        "at": 1794178882146
+      },
+      {
+        "phase": "send",
+        "half": null,
+        "at": 1794178882150
+      },
+      {
+        "phase": "verify",
+        "half": null,
+        "at": 1794178882156
+      },
+      {
+        "phase": "install",
+        "half": null,
+        "at": 1794178882166
+      }
+    ],
+    "outcome": "unknown",
+    "pid": 68890,
+    "observation": {
+      "at": 1794178882250,
+      "kind": "transfer",
+      "value": {
+        "name": "live-push-install",
+        "kind": "sqlite",
+        "state": "unresolved",
+        "holders": [],
+        "op": {
+          "id": "op-6144f9fc9f3c6e16",
+          "name": "store.push",
+          "phase": "install",
+          "started": 1794178882140,
+          "uncertain": true
+        },
+        "down_reason": null,
+        "machine": "native",
+        "file": {
+          "exists": true,
+          "free": 331308691456,
+          "bytes": 217088,
+          "wal_bytes": 0,
+          "incoming_bytes": 0
+        }
+      },
+      "direction": "push",
+      "action": null
+    },
+    "summary": "Outcome unknown · Inspect",
+    "done": null,
+    "total": null,
+    "error": {
+      "transport": "transport-unknown",
+      "code": "Unknown",
+      "message": "LayerFS ended without a complete result; inspect state before another action",
+      "phase": "install",
+      "detail": {
+        "signal": "SIGKILL"
+      }
+    },
+    "result": null
+  },
+  "restarted": {
+    "id": "29c2e47a-8fa1-49a6-8e95-abf73f967733",
+    "kind": "push",
+    "store": "live-push-install",
+    "target": "docker",
+    "from": null,
+    "file": null,
+    "started": 1794178878189,
+    "ended": 1794178882219,
+    "half": null,
+    "phase": "install",
+    "phases": [
+      {
+        "phase": "check",
+        "half": null,
+        "at": 1794178882137
+      },
+      {
+        "phase": "snapshot",
+        "half": null,
+        "at": 1794178882146
+      },
+      {
+        "phase": "send",
+        "half": null,
+        "at": 1794178882150
+      },
+      {
+        "phase": "verify",
+        "half": null,
+        "at": 1794178882156
+      },
+      {
+        "phase": "install",
+        "half": null,
+        "at": 1794178882166
+      }
+    ],
+    "outcome": "unknown",
+    "pid": 68890,
+    "observation": {
+      "at": 1794178882250,
+      "kind": "transfer",
+      "value": {
+        "name": "live-push-install",
+        "kind": "sqlite",
+        "state": "unresolved",
+        "holders": [],
+        "op": {
+          "id": "op-6144f9fc9f3c6e16",
+          "name": "store.push",
+          "phase": "install",
+          "started": 1794178882140,
+          "uncertain": true
+        },
+        "down_reason": null,
+        "machine": "native",
+        "file": {
+          "exists": true,
+          "free": 331308691456,
+          "bytes": 217088,
+          "wal_bytes": 0,
+          "incoming_bytes": 0
+        }
+      },
+      "direction": "push",
+      "action": null
+    },
+    "summary": "Outcome unknown · Inspect",
+    "done": null,
+    "total": null,
+    "error": {
+      "transport": "transport-unknown",
+      "code": "Unknown",
+      "message": "LayerFS ended without a complete result; inspect state before another action",
+      "phase": "install",
+      "detail": {
+        "signal": "SIGKILL"
+      }
+    },
+    "result": null
+  },
+  "debuggerHit": true,
+  "debuggerKilled": true
+}

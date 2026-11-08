@@ -1,0 +1,23 @@
+{
+  "verdict": "BLOCKED",
+  "source_commit": "da2986c4771b9edb89db0b6761b3781ae8a1d7fa",
+  "required_remaining": [
+    {
+      "row": "native-directory-selection-with-spaces",
+      "outcome": "BLOCKED",
+      "reason": "Accessibility false; actual local Cocoa cancellation works, but remote native selection controls/action do not yield an accepted real IPC result through available automation; normal-runloop action bounded110s timeout retained",
+      "minimum_next_action": "Run resume-native-directory-selection.mjs with retained package and manually Choose its owned spaced directory, or grant real native UI control; append actual IPC acceptance receipt."
+    }
+  ],
+  "native": "PASS all other selected rows",
+  "package": "PASS scoped local arm64 package flows",
+  "coverage_boundary": "Real CLI/native IPC separate from sample scrolling and synthetic incompatible discovery",
+  "cleanup": "PASS all owned runtime resources removed; exact final artifact restored without launching per lead request",
+  "artifact_sha256": "73b50397a9a13437f9b5c964c2376e9ce6e10dc60c9ca339ef2df4d200acaad0",
+  "deferred": [
+    "Doctor progress/cancellation upstream",
+    "Developer ID signing/notarization",
+    "Other platforms",
+    "Push/PR/merge/distribution"
+  ]
+}

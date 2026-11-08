@@ -1,0 +1,112 @@
+{
+  "id": "restore-install-staging",
+  "kind": "restore",
+  "store": "restore-restore-install-staging",
+  "spec": {
+    "home": "/private/tmp/connect-followup-live-backup-20261109/home",
+    "state": "/private/tmp/connect-followup-live-backup-20261109/state-restore-install-staging",
+    "mode": "real",
+    "cli": "/Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect-cli-137/target/debug/layerfs"
+  },
+  "expectedBreakpoint": {
+    "file": "/Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect-cli-137/control/crates/layerfs-bucket/src/backup/restore.rs",
+    "line": 258
+  },
+  "started": "2026-11-08T23:03:49.563Z",
+  "ended": {
+    "id": "ded8afb0-b781-4471-a2c6-29fb7af8e6e7",
+    "kind": "restore",
+    "store": "restore-restore-install-staging",
+    "target": "bucket",
+    "from": null,
+    "file": "baseline",
+    "started": 1794179029558,
+    "ended": 1794179033562,
+    "half": null,
+    "phase": "check",
+    "phases": [
+      {
+        "phase": "check",
+        "half": null,
+        "at": 1794179033483
+      }
+    ],
+    "outcome": "unknown",
+    "pid": 70264,
+    "observation": null,
+    "summary": "Outcome unknown · Inspect",
+    "done": null,
+    "total": null,
+    "error": {
+      "transport": "transport-unknown",
+      "code": "Unknown",
+      "message": "LayerFS ended without a complete result; inspect state before another action",
+      "phase": "check",
+      "detail": {
+        "signal": "SIGKILL"
+      }
+    },
+    "result": null
+  },
+  "starts": 1,
+  "debuggerHit": true,
+  "debuggerKilled": true,
+  "freshBackup": {
+    "items": [
+      {
+        "bucket": "bucket",
+        "file": "baseline",
+        "bytes": 217088,
+        "modified": 1794178900607,
+        "heads": "ee782173a943402d6cbf9cff2a791640c13ecaa0bd08dac897ccf6cdb04c2fb8",
+        "store": "source",
+        "state": "current"
+      }
+    ]
+  },
+  "freshStoreError": {
+    "code": "NotFound",
+    "message": "no Store named restore-restore-install-staging"
+  },
+  "inspectError": {
+    "code": "NotFound",
+    "message": "no Store named restore-restore-install-staging"
+  },
+  "restarted": {
+    "id": "ded8afb0-b781-4471-a2c6-29fb7af8e6e7",
+    "kind": "restore",
+    "store": "restore-restore-install-staging",
+    "target": "bucket",
+    "from": null,
+    "file": "baseline",
+    "started": 1794179029558,
+    "ended": 1794179033562,
+    "half": null,
+    "phase": "check",
+    "phases": [
+      {
+        "phase": "check",
+        "half": null,
+        "at": 1794179033483
+      }
+    ],
+    "outcome": "unknown",
+    "pid": 70264,
+    "observation": null,
+    "summary": "Outcome unknown · Inspect",
+    "done": null,
+    "total": null,
+    "error": {
+      "transport": "transport-unknown",
+      "code": "Unknown",
+      "message": "LayerFS ended without a complete result; inspect state before another action",
+      "phase": "check",
+      "detail": {
+        "signal": "SIGKILL"
+      }
+    },
+    "result": null
+  },
+  "verdict": "PASS",
+  "finished": "2026-11-08T23:03:53.627Z"
+}

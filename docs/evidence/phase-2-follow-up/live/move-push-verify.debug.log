@@ -1,0 +1,38 @@
+(lldb) process attach --pid 71352
+Process 71352 stopped
+* thread #1, stop reason = signal SIGSTOP
+    frame #0: 0x0000000104534954 dyld`lsl::Allocator::AllocationMetadata::pool(bool) const + 132
+dyld`lsl::Allocator::AllocationMetadata::pool:
+->  0x104534954 <+132>: ldp    x20, x19, [sp], #0x20
+    0x104534958 <+136>: retab  
+
+dyld`lsl::Allocator::free:
+    0x10453495c <+0>:   cbz    x1, 0x10453498c           ; <+48>
+    0x104534960 <+4>:   and    x9, x1, #0xf0ffffffffffffff
+Target 0: (layerfs) stopped.
+Executable module set to "/Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect-cli-137/target/debug/layerfs".
+Architecture set to: arm64-apple-macosx-.
+(lldb) breakpoint set --file phases.rs --line 303
+Breakpoint 1: 2 locations.
+(lldb) process continue
+Process 71352 resuming
+Process 71352 stopped
+* thread #1, name = 'main', queue = 'com.apple.main-thread', stop reason = breakpoint 1.2
+    frame #0: 0x0000000100f02290 layerfs`layerfs_store::sqlite::transfer::phases::phases::h52da2a2112a76a44(home=&std::path::Path @ 0x000000016f199f30, events=0x000000016f19c7b0, op=0x000000016f19b788, name=(data_ptr = "live-move-push-verify", length = 21), (null)=<unavailable>, (null)=<unavailable>) at phases.rs:303:16
+   300 	    }
+   301 	    // verify, install
+   302 	    enter(&home, events, op, name, "verify", None)?;
+-> 303 	    let text = |field| snapshot.get_text(field).map(str::to_owned);
+    	               ^
+   304 	    let digest = StoreStep::Verify {
+   305 	        bytes: snapshot.get_int("bytes"),
+   306 	        sha256: text("sha256"),
+Target 0: (layerfs) stopped.
+(lldb) thread backtrace -c 4
+* thread #1, name = 'main', queue = 'com.apple.main-thread', stop reason = breakpoint 1.2
+  * frame #0: 0x0000000100f02290 layerfs`layerfs_store::sqlite::transfer::phases::phases::h52da2a2112a76a44(home=&std::path::Path @ 0x000000016f199f30, events=0x000000016f19c7b0, op=0x000000016f19b788, name=(data_ptr = "live-move-push-verify", length = 21), (null)=<unavailable>, (null)=<unavailable>) at phases.rs:303:16
+    frame #1: 0x0000000100f00874 layerfs`layerfs_store::sqlite::transfer::phases::run::hed64c04274a7208a(home=&std::path::Path @ 0x000000016f19b5e0, events=0x000000016f19c7b0, name=(data_ptr = "live-move-push-verify", length = 21), target=Option<&str> @ 0x000000016f19a188, call=(data_ptr = "store.pushretireUnknownrecordverifyinstallto checkexistsbyteswal_bytes has  bytes free; Store  needs  ( bytes and  of headroom)neededUnsupported's worker does not report its free disk (an older bundle)Exists already holds a Store file named sha256headsatretireduncertainstore/rustc/4eb161250e340c8f48f66e2b929ef4a5bed7c181/library/core/src/iter/traits/iterator.rs", length = 10), written=0x000000016f19b788, related=Related @ 0x000000016f19b610) at phases.rs:152:5
+    frame #2: 0x0000000100eff95c layerfs`layerfs_store::sqlite::transfer::phases::transfer::h1fdf86f778ba367e(home=&std::path::Path @ 0x000000016f19b920, events=0x000000016f19c7b0, name=(data_ptr = "live-move-push-verify", length = 21), target=Option<&str> @ 0x000000016f19b750, related=Related @ 0x000000016f19b938) at phases.rs:67:18
+    frame #3: 0x0000000100eff500 layerfs`layerfs_store::sqlite::transfer::phases::push::h393d0d0c6d01739f(home=&std::path::Path @ 0x000000016f19bb48, events=0x000000016f19c7b0, name=(data_ptr = "live-move-push-verify", length = 21), to=(data_ptr = "live-move-vm", length = 12), related=Related @ 0x000000016f19bb80) at phases.rs:34:5
+(lldb) process kill
+Process 71352 exited with status = 9 (0x00000009) killed

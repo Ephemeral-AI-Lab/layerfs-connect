@@ -1,0 +1,37 @@
+(lldb) process attach --pid 71757
+Process 71757 stopped
+* thread #1, stop reason = signal SIGSTOP
+    frame #0: 0x00000001831e0a00 dyld`mach_init + 36
+dyld`mach_init:
+->  0x1831e0a00 <+36>: str    w0, [x8, #0x1b0]
+    0x1831e0a04 <+40>: bl     0x1831dd634               ; mach_reply_port
+    0x1831e0a08 <+44>: adrp   x8, 442849
+    0x1831e0a0c <+48>: str    w0, [x8, #0x85c]
+Target 0: (layerfs) stopped.
+Executable module set to "/Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect-cli-137/target/debug/layerfs".
+Architecture set to: arm64-apple-macosx-.
+(lldb) breakpoint set --file phases.rs --line 368
+Breakpoint 1: where = layerfs`layerfs_store::sqlite::transfer::phases::phases::h52da2a2112a76a44 + 6220 at phases.rs:368:24, address = 0x0000000102e0f01c
+(lldb) process continue
+Process 71757 resuming
+Process 71757 stopped
+* thread #1, name = 'main', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+    frame #0: 0x0000000102e0f01c layerfs`layerfs_store::sqlite::transfer::phases::phases::h52da2a2112a76a44(home=&std::path::Path @ 0x000000016d28e180, events=0x000000016d2907c0, op=0x000000016d28f9d8, name=(data_ptr = "live-host-move-pull-retire", length = 26), (null)=<unavailable>, (null)=<unavailable>) at phases.rs:368:24
+   365 	    // home's records), or the Store's whole folder under a worker's root,
+   366 	    // with the project entries a worker keeps there
+   367 	    progress(events, "retire", None);
+-> 368 	    let retire = match source {
+    	                       ^
+   369 	        Executor::Local => StoreStep::Retire,
+   370 	        Executor::Worker(_) => StoreStep::Remove,
+   371 	    };
+Target 0: (layerfs) stopped.
+(lldb) thread backtrace -c 3
+* thread #1, name = 'main', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+  * frame #0: 0x0000000102e0f01c layerfs`layerfs_store::sqlite::transfer::phases::phases::h52da2a2112a76a44(home=&std::path::Path @ 0x000000016d28e180, events=0x000000016d2907c0, op=0x000000016d28f9d8, name=(data_ptr = "live-host-move-pull-retire", length = 26), (null)=<unavailable>, (null)=<unavailable>) at phases.rs:368:24
+    frame #1: 0x0000000102e0c874 layerfs`layerfs_store::sqlite::transfer::phases::run::hed64c04274a7208a(home=&std::path::Path @ 0x000000016d28f830, events=0x000000016d2907c0, name=(data_ptr = "live-host-move-pull-retire", length = 26), target=Option<&str> @ 0x000000016d28e3d8, call=(data_ptr = "store.pullstore.pushretireUnknownrecordverifyinstallto checkexistsbyteswal_bytes has  bytes free; Store  needs  ( bytes and  of headroom)neededUnsupported's worker does not report its free disk (an older bundle)Exists already holds a Store file named sha256headsatretireduncertainstore/rustc/4eb161250e340c8f48f66e2b929ef4a5bed7c181/library/core/src/iter/traits/iterator.rs", length = 10), written=0x000000016d28f9d8, related=Related @ 0x000000016d28f860) at phases.rs:152:5
+    frame #2: 0x0000000102e0b95c layerfs`layerfs_store::sqlite::transfer::phases::transfer::h1fdf86f778ba367e(home=&std::path::Path @ 0x000000016d28fb70, events=0x000000016d2907c0, name=(data_ptr = "live-host-move-pull-retire", length = 26), target=Option<&str> @ 0x000000016d28f9a0, related=Related @ 0x000000016d28fb88) at phases.rs:67:18
+(lldb) script import os; os.kill(71753,9)
+(lldb) process continue
+Process 71757 resuming
+Process 71757 exited with status = 125 (0x0000007d)

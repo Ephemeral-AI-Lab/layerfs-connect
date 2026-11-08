@@ -1,0 +1,7 @@
+{
+  "verdict": "PASS",
+  "reviewer": "live-recovery owner, independent of native package author",
+  "receipt": "docs/evidence/phase-2-follow-up/native-package/packaged-partial-commit.json",
+  "sha256": "8ac590af65eb8233a3978bf80c0762daac6bfac58bc766606940f015b06f6b20",
+  "assessment": "Actual same-path competing Branch Commit after observed active mounted command produces partial Save Conflict/pending_merge and retained conflict-marker bytes while cancelled143 and mount/Sandbox custody remain separate. Host stays alive. Old saved pin /partial404 is expected because failed Save did not publish Workspace partial content; normal final flow separately proves pinned200 saved read."
+}

@@ -1,0 +1,61 @@
+{
+  "verdict": "PASS",
+  "validated": "2026-11-08T22:57:40.092Z",
+  "command": "Node24 node tools/verification/postgresql-follow-up-validate.mjs",
+  "method": "Offline assertions against unchanged retained real reports; no successful audit rerun.",
+  "initialHarnessFailure": "qualification.json retained FAIL: counts omits zero-valued outcome keys. Actual three reports completed successfully; corrected count validation uses exact sparse counts.",
+  "checks": [
+    {
+      "file": "connection-job.json",
+      "sha256": "cba0a5d3c064852ce050b79d45cc046edebddeffdc7f86b6ff8ed065f18cd397",
+      "ok": true,
+      "complete": true,
+      "counts": {
+        "pass": 5
+      },
+      "skip": [],
+      "verdict": "PASS"
+    },
+    {
+      "file": "incomplete-job.json",
+      "sha256": "78d5a7e3e1690c3b1597662dc1d9a74799b84a592bef198dc95031a661d4a30b",
+      "ok": true,
+      "complete": false,
+      "counts": {
+        "pass": 54,
+        "skipped": 1,
+        "unknown": 60
+      },
+      "skip": [
+        {
+          "code": "store.merge",
+          "message": "no persisted merge-working tables in this Store schema; another PostgreSQL session's private temporary tables are outside this Store view"
+        }
+      ],
+      "verdict": "PASS"
+    },
+    {
+      "file": "complete-job.json",
+      "sha256": "bbe75e05ff9e6ccc5a4018e5c61a58a3b8520adfb35871f2c1cae4458fb510f2",
+      "ok": true,
+      "complete": true,
+      "counts": {
+        "pass": 114,
+        "skipped": 1
+      },
+      "skip": [
+        {
+          "code": "store.merge",
+          "message": "no persisted merge-working tables in this Store schema; another PostgreSQL session's private temporary tables are outside this Store view"
+        }
+      ],
+      "verdict": "PASS"
+    }
+  ],
+  "cleanup": [
+    {
+      "container": "949abba0f42e557d97f2b0583e3fccb4ad0f9a5347ba0137826b329ef327280e",
+      "removed": true
+    }
+  ]
+}

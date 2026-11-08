@@ -1,0 +1,18 @@
+{
+  "verdict": "HARNESS_FAILURES_RETAINED",
+  "failures": [
+    {
+      "stage": "first CLI-row driver parse",
+      "result": "SyntaxError: Unexpected token )",
+      "mutationStarted": false,
+      "resolution": "Closed missing callback/object braces; first actual create-check-1 ran once afterward."
+    },
+    {
+      "stage": "host-create-upload reconciliation driver parse",
+      "result": "SyntaxError: Unexpected token ;",
+      "mutationAlreadyRan": true,
+      "resolution": "Host interruption and child completion retained unchanged; corrected missing watched-client object brace. Reconciled same completed operation without replay."
+    }
+  ],
+  "note": "These parse-only harness failures are not relabelled product PASS. Actual product reports and failed harness classification remain distinct."
+}

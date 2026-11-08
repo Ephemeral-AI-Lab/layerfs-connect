@@ -1,0 +1,124 @@
+{
+  "id": "e51604e2-2ee8-40b5-8511-d4edbc94f9f7",
+  "key": "pg-connection",
+  "request": {
+    "target": "store.connection",
+    "name": "pg-proof",
+    "timeout": "20s"
+  },
+  "state": "completed",
+  "created": 1794178580482,
+  "simulated": false,
+  "identity": {
+    "version": "2.0.0",
+    "commit": "833d04cf44e8e747929d50ab1170a48260d9381c",
+    "dirty": false,
+    "features": [
+      "machine",
+      "postgresql"
+    ]
+  },
+  "started": 1794178580482,
+  "pid": 55332,
+  "report": {
+    "ok": true,
+    "complete": true,
+    "target": {
+      "kind": "store",
+      "name": "pg-proof"
+    },
+    "checks": [
+      {
+        "id": "store.record",
+        "code": "store.record",
+        "outcome": "pass",
+        "severity": null,
+        "entity": {
+          "kind": "store",
+          "name": "pg-proof"
+        },
+        "message": "Store record, kind and saved authority parsed",
+        "evidence": null,
+        "fix": "",
+        "blocked_by": [],
+        "observed_ms": 0,
+        "duration_ms": null
+      },
+      {
+        "id": "store.connection.authentication",
+        "code": "store.connection.authentication",
+        "outcome": "pass",
+        "severity": null,
+        "entity": {
+          "kind": "store",
+          "name": "pg-proof"
+        },
+        "message": "PostgreSQL driver established authenticated database session using configured TLS policy; DNS/TCP/TLS were combined by the driver",
+        "evidence": null,
+        "fix": "",
+        "blocked_by": [],
+        "observed_ms": 46,
+        "duration_ms": null
+      },
+      {
+        "id": "store.connection.schema",
+        "code": "store.connection.schema",
+        "outcome": "pass",
+        "severity": null,
+        "entity": {
+          "kind": "store",
+          "name": "pg-proof"
+        },
+        "message": "configured schema exists and role has USAGE",
+        "evidence": null,
+        "fix": "",
+        "blocked_by": [],
+        "observed_ms": 48,
+        "duration_ms": null
+      },
+      {
+        "id": "store.connection.identity",
+        "code": "store.connection.identity",
+        "outcome": "pass",
+        "severity": null,
+        "entity": {
+          "kind": "store",
+          "name": "pg-proof"
+        },
+        "message": "configured Store metadata is readable and binding matches the saved Store",
+        "evidence": null,
+        "fix": "",
+        "blocked_by": [],
+        "observed_ms": 49,
+        "duration_ms": null
+      },
+      {
+        "id": "store.connection.tls",
+        "code": "store.connection.tls",
+        "outcome": "pass",
+        "severity": null,
+        "entity": {
+          "kind": "store",
+          "name": "pg-proof"
+        },
+        "message": "server reports no TLS; connection followed configured driver policy",
+        "evidence": null,
+        "fix": "",
+        "blocked_by": [],
+        "observed_ms": 51,
+        "duration_ms": null
+      }
+    ],
+    "findings": [],
+    "truncated": false,
+    "observed_at_ms": 1794178580489,
+    "duration_ms": 51,
+    "counts": {
+      "pass": 5
+    },
+    "home": "/private/tmp/connect-follow-up-pg-djQKPP/home",
+    "operation": "connection",
+    "mode": "observation"
+  },
+  "ended": 1794178580541
+}

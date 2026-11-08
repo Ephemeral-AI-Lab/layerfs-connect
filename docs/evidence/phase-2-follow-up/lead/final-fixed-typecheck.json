@@ -1,0 +1,16 @@
+{
+  "check": "typecheck",
+  "command": [
+    "pnpm",
+    "--dir",
+    "desktop",
+    "-s",
+    "typecheck"
+  ],
+  "wall_timeout_seconds": 120,
+  "exit": 0,
+  "outcome": "PASS",
+  "seconds": 9.355,
+  "connect_parent": "d25585db1152bdcb58fda492b8b18c586325f1ac",
+  "product_diff_sha256": "8d8a8937a3a7433886b026200ea9064427c0e1efb72d058e6745fd7a5e2a6c44"
+}

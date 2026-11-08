@@ -1,0 +1,27 @@
+{
+  "verdict": "PASS",
+  "earlier_receipt": "cleanup-old-package.json retains actual cleanup actions + final read InvalidInput",
+  "fresh_reads": [
+    {
+      "command": [
+        "sandbox",
+        "list"
+      ],
+      "result": {
+        "items": [],
+        "next_page_pos": null
+      }
+    },
+    {
+      "command": [
+        "store",
+        "list"
+      ],
+      "result": {
+        "items": []
+      }
+    }
+  ],
+  "removed": "/tmp/connect-followup-package-20261109",
+  "no_mutations_replayed": true
+}

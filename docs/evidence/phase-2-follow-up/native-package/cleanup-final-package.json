@@ -1,0 +1,113 @@
+{
+  "root": "/tmp/connect-followup-package-final-20261109",
+  "started": "2026-11-08T23:32:53.897Z",
+  "reads": [
+    {
+      "kind": "fresh sandbox.list before cleanup",
+      "value": {
+        "items": [
+          {
+            "name": "chat.c49633d4-291f-4cc8-8b88-ed934e4a3700",
+            "project": "route-proof/p",
+            "machine": "native",
+            "created": 1794180064808,
+            "backend": "native",
+            "route": "nfs",
+            "id": "chat.c49633d4-291f-4cc8-8b88-ed934e4a3700",
+            "platform": "mac",
+            "runtime": "native",
+            "image": "local",
+            "state": "running"
+          }
+        ],
+        "next_page_pos": null
+      }
+    },
+    {
+      "kind": "fresh Workspace status",
+      "handle": "chat.c49633d4-291f-4cc8-8b88-ed934e4a3700:chat-c49633d4-291f-4cc8-8b88-ed934e4a3700",
+      "value": {
+        "kind": "ok",
+        "base": "125f898d80412158ba378e60703bff4e872925991dfc2d3e121061d10894ae66cd",
+        "base_layer": "32881d0b44ee8981a97d4c3836ef71727593720fed0bf51e2cac37158f181cfe06",
+        "branch_head": "125f898d80412158ba378e60703bff4e872925991dfc2d3e121061d10894ae66cd",
+        "head_moved_since_mount": false,
+        "activity": "Idle",
+        "overlay": {
+          "inodes": 0,
+          "entries": 0,
+          "pending_merge": true
+        },
+        "branch": "chat-c49633d4-291f-4cc8-8b88-ed934e4a3700"
+      }
+    },
+    {
+      "kind": "fresh Sandbox get before close",
+      "name": "chat.c49633d4-291f-4cc8-8b88-ed934e4a3700",
+      "value": {
+        "name": "chat.c49633d4-291f-4cc8-8b88-ed934e4a3700",
+        "project": "route-proof/p",
+        "machine": "native",
+        "created": 1794180064808,
+        "backend": "native",
+        "route": "nfs",
+        "id": "chat.c49633d4-291f-4cc8-8b88-ed934e4a3700",
+        "platform": "mac",
+        "runtime": "native",
+        "image": "local",
+        "state": "running",
+        "workspaces": [],
+        "next_page_pos": null
+      }
+    },
+    {
+      "kind": "fresh sandbox.list after cleanup",
+      "value": {
+        "items": [],
+        "next_page_pos": null
+      }
+    },
+    {
+      "kind": "fresh store.list after cleanup",
+      "value": {
+        "items": []
+      }
+    }
+  ],
+  "actions": [
+    {
+      "kind": "explicit discard known owned test Workspace (including preserved conflict evidence)",
+      "handle": "chat.c49633d4-291f-4cc8-8b88-ed934e4a3700:chat-c49633d4-291f-4cc8-8b88-ed934e4a3700",
+      "result": {
+        "kind": "Unmounted"
+      }
+    },
+    {
+      "kind": "close owned empty Sandbox",
+      "name": "chat.c49633d4-291f-4cc8-8b88-ed934e4a3700",
+      "result": {
+        "kind": "Closed",
+        "sandbox": "chat.c49633d4-291f-4cc8-8b88-ed934e4a3700",
+        "unknown": [],
+        "closed": "chat.c49633d4-291f-4cc8-8b88-ed934e4a3700"
+      }
+    },
+    {
+      "kind": "remove owned project",
+      "result": {
+        "stack": "31e17de9189a0eb4cf9d47add11b6b5375",
+        "packs_kept": true,
+        "project": "route-proof/p"
+      }
+    },
+    {
+      "kind": "remove owned Store",
+      "result": {
+        "removed": "route-proof"
+      }
+    }
+  ],
+  "failures": [],
+  "removed": true,
+  "verdict": "PASS"
+}

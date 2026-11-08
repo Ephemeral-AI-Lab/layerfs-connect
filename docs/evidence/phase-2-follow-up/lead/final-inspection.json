@@ -1,0 +1,22 @@
+{
+  "outcome": "PASS",
+  "wall_timeout_seconds": 120,
+  "secret_scan": {
+    "files": 321,
+    "potential_hits": [],
+    "method": "Literal credential patterns; paths/labels only on a hit, never matching values. Generated secret values were inherited env/owner-only references. Driver synthetic canaries are not owner credentials."
+  },
+  "record_links": {
+    "missing": []
+  },
+  "whitespace": {
+    "command": [
+      "git",
+      "diff",
+      "--cached",
+      "--check"
+    ],
+    "exit": 0,
+    "output": ""
+  }
+}

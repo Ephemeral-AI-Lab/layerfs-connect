@@ -1,0 +1,12 @@
+{
+  "at_utc": "2026-11-08T23:43:20.936419+00:00",
+  "filesystem_path": "/Users/yifanxu/Ephemeral-AI-Lab/layerfs",
+  "free_bytes": 331280986112,
+  "free_GB": 331.280986112,
+  "free_GiB": 308.5294609069824,
+  "min_free_bytes": 100000000000,
+  "reclaim_target_bytes": 300000000000,
+  "units": "GB = 1,000,000,000 bytes; GiB = 1,073,741,824 bytes",
+  "cleanup_required": false,
+  "action": "Headroom threshold satisfied"
+}

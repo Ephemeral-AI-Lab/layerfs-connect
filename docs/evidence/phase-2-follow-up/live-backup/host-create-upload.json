@@ -1,0 +1,171 @@
+{
+  "id": "host-create-upload",
+  "hostExit": -9,
+  "control": {
+    "host": 71888,
+    "cli": 71892,
+    "debugger": 71906,
+    "state": "/private/tmp/connect-followup-live-backup-20261109/state-host-create-upload",
+    "home": "/private/tmp/connect-followup-live-backup-20261109/home",
+    "kind": "create",
+    "store": "source"
+  },
+  "before": [
+    {
+      "id": "009f44a1-6b69-435e-92bb-2b036d3e9ad4",
+      "kind": "backup",
+      "store": "source",
+      "target": "bucket",
+      "from": null,
+      "file": "host-create-upload",
+      "started": 1794179163020,
+      "ended": null,
+      "half": null,
+      "phase": "check",
+      "phases": [
+        {
+          "phase": "check",
+          "half": null,
+          "at": 1794179166819
+        },
+        {
+          "phase": "snapshot",
+          "half": null,
+          "at": 1794179166823
+        },
+        {
+          "phase": "check",
+          "half": null,
+          "at": 1794179166845
+        }
+      ],
+      "outcome": null,
+      "pid": 71892,
+      "observation": null,
+      "summary": null,
+      "done": null,
+      "total": null,
+      "error": null,
+      "result": null
+    }
+  ],
+  "restarted": [
+    {
+      "id": "009f44a1-6b69-435e-92bb-2b036d3e9ad4",
+      "kind": "backup",
+      "store": "source",
+      "target": "bucket",
+      "from": null,
+      "file": "host-create-upload",
+      "started": 1794179163020,
+      "ended": 1794179201160,
+      "half": null,
+      "phase": "check",
+      "phases": [
+        {
+          "phase": "check",
+          "half": null,
+          "at": 1794179166819
+        },
+        {
+          "phase": "snapshot",
+          "half": null,
+          "at": 1794179166823
+        },
+        {
+          "phase": "check",
+          "half": null,
+          "at": 1794179166845
+        }
+      ],
+      "outcome": "interrupted",
+      "pid": 71892,
+      "observation": {
+        "at": 1794179201161,
+        "kind": "backup",
+        "value": {
+          "items": [
+            {
+              "bucket": "bucket",
+              "file": "baseline",
+              "bytes": 217088,
+              "modified": 1794178900607,
+              "heads": "ee782173a943402d6cbf9cff2a791640c13ecaa0bd08dac897ccf6cdb04c2fb8",
+              "store": null,
+              "state": "unlinked"
+            },
+            {
+              "bucket": "bucket",
+              "file": "host-create-upload",
+              "bytes": 217088,
+              "modified": 1794179166922,
+              "heads": "ee782173a943402d6cbf9cff2a791640c13ecaa0bd08dac897ccf6cdb04c2fb8",
+              "store": "source",
+              "state": "current"
+            }
+          ]
+        },
+        "action": null
+      },
+      "summary": "Interrupted · Final result unavailable",
+      "done": null,
+      "total": null,
+      "error": {
+        "code": "Interrupted",
+        "message": "Host restarted; final result unavailable. Remote work may still finish.",
+        "phase": "check",
+        "detail": null
+      },
+      "result": null,
+      "recovery": null
+    }
+  ],
+  "freshBackup": {
+    "items": [
+      {
+        "bucket": "bucket",
+        "file": "baseline",
+        "bytes": 217088,
+        "modified": 1794178900607,
+        "heads": "ee782173a943402d6cbf9cff2a791640c13ecaa0bd08dac897ccf6cdb04c2fb8",
+        "store": null,
+        "state": "unlinked"
+      },
+      {
+        "bucket": "bucket",
+        "file": "host-create-upload",
+        "bytes": 217088,
+        "modified": 1794179166922,
+        "heads": "ee782173a943402d6cbf9cff2a791640c13ecaa0bd08dac897ccf6cdb04c2fb8",
+        "store": "source",
+        "state": "current"
+      }
+    ]
+  },
+  "freshStore": {
+    "name": "source",
+    "kind": "sqlite",
+    "machine": "native",
+    "profile": "disposable",
+    "created": 1794178900517,
+    "sqlite": "3.53.2",
+    "backups": {
+      "bucket": {
+        "file": "host-create-upload",
+        "heads": "ee782173a943402d6cbf9cff2a791640c13ecaa0bd08dac897ccf6cdb04c2fb8",
+        "last": {
+          "op": "create",
+          "at": 1794179166930,
+          "bytes": 217088,
+          "sha256": "cf6e19ae9e5323024f33d478553023bfb4bb3f88a755fe0ae671198c31b9be38"
+        }
+      }
+    },
+    "projects": [
+      "p"
+    ]
+  },
+  "verdict": "PASS",
+  "mutationsAfterRestart": 0,
+  "note": "Host killed at exact source breakpoint; real CLI was resumed and permitted to finish. Remote/local effects reconciled by fresh reads; no mutation replay."
+}

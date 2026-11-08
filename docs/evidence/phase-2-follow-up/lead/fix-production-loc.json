@@ -1,0 +1,18 @@
+{
+  "before_ref": "HEAD",
+  "after_ref": "307af775ca8abebf2fbcbfcf7a49ed91fabc59d8",
+  "counter": "LayerFS 67310175ebba2b84efefb4df76f875a43487cf50:tools/production_loc.py blank_js",
+  "before": {
+    "total": 57832,
+    "host": 10735,
+    "desktop": 18580,
+    "legacy": 28517
+  },
+  "after": {
+    "total": 57853,
+    "host": 10746,
+    "desktop": 18590,
+    "legacy": 28517
+  },
+  "delta": 21
+}

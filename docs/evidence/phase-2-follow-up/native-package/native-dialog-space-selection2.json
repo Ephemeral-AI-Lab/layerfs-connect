@@ -1,0 +1,56 @@
+{
+  "started": "2026-11-08T23:27:27.186Z",
+  "checks": [
+    {
+      "name": "main identity/userData isolation",
+      "result": {
+        "userData": "/private/tmp/connect-followup-native-20261109/electron-data",
+        "platform": "darwin",
+        "versions": {
+          "node": "24.22.0",
+          "acorn": "8.18.0",
+          "ada": "4.0.0",
+          "amaro": "1.1.11",
+          "ares": "1.34.8",
+          "brotli": "1.2.0",
+          "cldr": "48.0",
+          "icu": "78.2",
+          "llhttp": "9.4.3",
+          "merve": "1.2.2",
+          "modules": "150",
+          "napi": "10",
+          "nbytes": "0.1.4",
+          "ncrypto": "0.0.1",
+          "nghttp2": "1.70.0",
+          "nghttp3": "",
+          "ngtcp2": "",
+          "openssl": "0.0.0",
+          "simdjson": "4.6.11",
+          "simdutf": "7.7.0",
+          "sqlite": "3.53.4",
+          "tz": "2026e",
+          "undici": "7.29.1",
+          "unicode": "17.0",
+          "uv": "1.52.1",
+          "uvwasi": "0.0.23",
+          "v8": "15.6.75.19-electron.0",
+          "zlib": "1.3.2.1-motley",
+          "zstd": "1.6.0",
+          "electron": "45.0.0",
+          "chrome": "156.0.8078.48"
+        },
+        "isPackaged": false
+      }
+    },
+    {
+      "name": "actual native NSOpenPanel space-path selection via owned LLDB",
+      "status": 1,
+      "signal": null,
+      "stdout": "(lldb) process attach --pid 91777\nProcess 91777 stopped\n* thread #1, name = 'CrBrowserMain', queue = 'com.apple.main-thread', stop reason = signal SIGSTOP\n    frame #0: 0x0000000183573c34 libsystem_kernel.dylib`mach_msg2_trap + 8\nlibsystem_kernel.dylib`mach_msg2_trap:\n->  0x183573c34 <+8>: ret    \n\nlibsystem_kernel.dylib`macx_swapon:\n    0x183573c38 <+0>: mov    x16, #-0x30               ; =-48 \n    0x183573c3c <+4>: svc    #0x80\n    0x183573c40 <+8>: ret    \nTarget 0: (Electron) stopped.\nExecutable module set to \"/Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect/desktop/node_modules/.pnpm/electron@45.0.0/node_modules/electron/dist/Electron.app/Contents/MacOS/Electron\".\nArchitecture set to: arm64-apple-macosx-.\n(lldb) settings set target.auto-import-clang-modules false\n(lldb) expression --top-level --language objc++ -- extern \"C\" void* objc_getClass(const char*); extern \"C\" void* sel_registerName(const char*); extern \"C\" void* objc_msgSend(void*,void*,...);\n(lldb) expr -l objc++ -- ({ void* msg=(void*)(void*(*)(void*,void*,...))&objc_msgSend; void* app=objc_msgSend(objc_getClass(\"NSApplication\"),sel_registerName(\"sharedApplication\")); void* windows=objc_msgSend(app,sel_registerName(\"windows\")); unsigned long n=((unsigned long(*)(void*,void*))msg)(windows,sel_registerName(\"count\")); bool found=false; for(unsigned long i=0;i<n;i++){void* w=((void*(*)(void*,void*,unsigned long))msg)(windows,sel_registerName(\"objectAtIndex:\"),i); void* sheet=objc_msgSend(w,sel_registerName(\"attachedSheet\")); void* panel=((bool(*)(void*,void*,void*))msg)(w,sel_registerName(\"isKindOfClass:\"),objc_getClass(\"NSOpenPanel\"))?w:sheet;if(panel&&((bool(*)(void*,void*,void*))msg)(panel,sel_registerName(\"isKindOfClass:\"),objc_getClass(\"NSOpenPanel\"))){((void(*)(void*,void*,void*))msg)(panel,sel_registerName(\"ok:\"),(void*)0);found=true;break;}} found; })\n",
+      "stderr": "error: Execution was interrupted, reason: internal ObjC exception breakpoint(-5)..\nThe process has been returned to the state before expression evaluation.\n"
+    }
+  ],
+  "scope": "development",
+  "error": "Native Cocoa control unavailable: error: Execution was interrupted, reason: internal ObjC exception breakpoint(-5)..\nThe process has been returned to the state before expression evaluation.\n",
+  "verdict": "FAIL"
+}

@@ -1,0 +1,8 @@
+{
+  "method": "SHA256 UTF8 compact JSON array sorted by relative POSIX path; entries [relative,type,mode,size,fileSHA256] for files, [relative,type,mode,target] for symlinks, [relative,type,mode] for directories; root excluded; no symlink traversal",
+  "tree_sha256": "73b50397a9a13437f9b5c964c2376e9ce6e10dc60c9ca339ef2df4d200acaad0",
+  "entries": 28191,
+  "source_commit": "da2986c4771b9edb89db0b6761b3781ae8a1d7fa",
+  "original_identity_receipt": "final-package-identity.json",
+  "app": "desktop/dist/mac-arm64/LayerFS Connect.app"
+}

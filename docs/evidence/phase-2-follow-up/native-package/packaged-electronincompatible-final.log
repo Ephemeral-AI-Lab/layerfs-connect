@@ -1,0 +1,69 @@
+Debugger listening on ws://127.0.0.1:19326/a482c12c-fbc0-4830-9957-ffdcf6aa4bd8
+For help, see: https://nodejs.org/learn/getting-started/debugging
+
+DevTools listening on ws://127.0.0.1:19325/devtools/browser/27edb521-4767-4dd2-94f4-6aa2da059791
+Debugger attached.
+[layerfs/host] file:///Users/yifanxu/Applications/LayerFS%20Connect%20Follow-up%20Final%2020261109-137.app/Contents/Resources/backend/host/cli/capabilities.js:13
+[layerfs/host]       if (!help.calls.some((c) => `${c.family}.${c.call}` === name)) throw new CliError('CliIncompatible', `The selected CLI lacks ${name}`, null, 'usage-incompatible')
+[layerfs/host]                                                                            ^
+[layerfs/host] 
+[layerfs/host] CliError [LayerFSError]: The selected CLI lacks workspace.exec_cancel
+[layerfs/host]     at file:///Users/yifanxu/Applications/LayerFS%20Connect%20Follow-up%20Final%2020261109-137.app/Contents/Resources/backend/host/cli/capabilities.js:13:76
+[layerfs/host]     at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+[layerfs/host]     at async file:///Users/yifanxu/Applications/LayerFS%20Connect%20Follow-up%20Final%2020261109-137.app/Contents/Resources/backend/host/cli/table.js:6:6 {
+[layerfs/host]   code: 'CliIncompatible',
+[layerfs/host]   detail: null,
+[layerfs/host]   transport: 'usage-incompatible'
+[layerfs/host] }
+[layerfs/host] 
+[layerfs/host] Node.js v24.21.0
+[layerfs/host] exited (1)
+Error occurred in handler for 'layerfs:request': Error: LayerFS CLI incompatible. Configure a supported pinned LAYERFS_CONNECT_CLI and its matching LAYERFS_CONNECT_DAEMON, then restart Connect.
+    at ChildProcess.<anonymous> (file:///Users/yifanxu/Applications/LayerFS%20Connect%20Follow-up%20Final%2020261109-137.app/Contents/Resources/app/out/main/index.js:98:12)
+    at ChildProcess.emit (node:events:514:28)
+    at maybeClose (node:internal/child_process:1172:16)
+    at ChildProcess._handle.onexit (node:internal/child_process:335:5)
+Error occurred in handler for 'layerfs:request': Error: LayerFS CLI incompatible. Configure a supported pinned LAYERFS_CONNECT_CLI and its matching LAYERFS_CONNECT_DAEMON, then restart Connect.
+    at ChildProcess.<anonymous> (file:///Users/yifanxu/Applications/LayerFS%20Connect%20Follow-up%20Final%2020261109-137.app/Contents/Resources/app/out/main/index.js:98:12)
+    at ChildProcess.emit (node:events:514:28)
+    at maybeClose (node:internal/child_process:1172:16)
+    at ChildProcess._handle.onexit (node:internal/child_process:335:5)
+Error occurred in handler for 'layerfs:request': Error: LayerFS CLI incompatible. Configure a supported pinned LAYERFS_CONNECT_CLI and its matching LAYERFS_CONNECT_DAEMON, then restart Connect.
+    at ChildProcess.<anonymous> (file:///Users/yifanxu/Applications/LayerFS%20Connect%20Follow-up%20Final%2020261109-137.app/Contents/Resources/app/out/main/index.js:98:12)
+    at ChildProcess.emit (node:events:514:28)
+    at maybeClose (node:internal/child_process:1172:16)
+    at ChildProcess._handle.onexit (node:internal/child_process:335:5)
+Error occurred in handler for 'layerfs:request': Error: LayerFS CLI incompatible. Configure a supported pinned LAYERFS_CONNECT_CLI and its matching LAYERFS_CONNECT_DAEMON, then restart Connect.
+    at ChildProcess.<anonymous> (file:///Users/yifanxu/Applications/LayerFS%20Connect%20Follow-up%20Final%2020261109-137.app/Contents/Resources/app/out/main/index.js:98:12)
+    at ChildProcess.emit (node:events:514:28)
+    at maybeClose (node:internal/child_process:1172:16)
+    at ChildProcess._handle.onexit (node:internal/child_process:335:5)
+Error occurred in handler for 'layerfs:request': Error: LayerFS CLI incompatible. Configure a supported pinned LAYERFS_CONNECT_CLI and its matching LAYERFS_CONNECT_DAEMON, then restart Connect.
+    at ChildProcess.<anonymous> (file:///Users/yifanxu/Applications/LayerFS%20Connect%20Follow-up%20Final%2020261109-137.app/Contents/Resources/app/out/main/index.js:98:12)
+    at ChildProcess.emit (node:events:514:28)
+    at maybeClose (node:internal/child_process:1172:16)
+    at ChildProcess._handle.onexit (node:internal/child_process:335:5)
+Debugger ending on ws://127.0.0.1:19326/a482c12c-fbc0-4830-9957-ffdcf6aa4bd8
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[layerfs/host] file:///Users/yifanxu/Applications/LayerFS%20Connect%20Follow-up%20Final%2020261109-137.app/Contents/Resources/backend/host/cli/capabilities.js:13
+[layerfs/host]       if (!help.calls.some((c) => `${c.family}.${c.call}` === name)) throw new CliError('CliIncompatible', `The selected CLI lacks ${name}`, null, 'usage-incompatible')
+[layerfs/host]                                                                            ^
+[layerfs/host] 
+[layerfs/host] CliError [LayerFSError]: The selected CLI lacks workspace.exec_cancel
+[layerfs/host]     at file:///Users/yifanxu/Applications/LayerFS%20Connect%20Follow-up%20Final%2020261109-137.app/Contents/Resources/backend/host/cli/capabilities.js:13:76
+[layerfs/host]     at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+[layerfs/host]     at async file:///Users/yifanxu/Applications/LayerFS%20Connect%20Follow-up%20Final%2020261109-137.app/Contents/Resources/backend/host/cli/table.js:6:6 {
+[layerfs/host]   code: 'CliIncompatible',
+[layerfs/host]   detail: null,
+[layerfs/host]   transport: 'usage-incompatible'
+[layerfs/host] }
+[layerfs/host] 
+[layerfs/host] Node.js v24.21.0
+[layerfs/host] exited (1)
+Error occurred in handler for 'layerfs:request': Error: LayerFS CLI incompatible. Configure a supported pinned LAYERFS_CONNECT_CLI and its matching LAYERFS_CONNECT_DAEMON, then restart Connect.
+    at ChildProcess.<anonymous> (file:///Users/yifanxu/Applications/LayerFS%20Connect%20Follow-up%20Final%2020261109-137.app/Contents/Resources/app/out/main/index.js:98:12)
+    at ChildProcess.emit (node:events:514:28)
+    at maybeClose (node:internal/child_process:1172:16)
+    at Socket.<anonymous> (node:internal/child_process:527:11)
+    at Socket.emit (node:events:514:28)
+    at Pipe.<anonymous> (node:net:362:12)

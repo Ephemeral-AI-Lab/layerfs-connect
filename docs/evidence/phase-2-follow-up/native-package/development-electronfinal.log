@@ -1,0 +1,15 @@
+Debugger listening on ws://127.0.0.1:19326/1b1c2181-2852-4635-abe4-26662cd267c7
+For help, see: https://nodejs.org/learn/getting-started/debugging
+
+DevTools listening on ws://127.0.0.1:19325/devtools/browser/5cd3e6e5-7ee1-48d7-b9a8-5c8aa2e74b16
+Debugger attached.
+[layerfs/host] ready on http://127.0.0.1:59620 (real)
+[layerfs/host] listening on http://127.0.0.1:59620 (state /tmp/connect-followup-native-20261109/state, LayerFS home /tmp/connect-followup-native-20261109/state/home-2)
+[layerfs/host] POST /api/agent/sessions/125f626b-4eb1-4f1e-a26a-6286811b23d9/message: Error: Unknown model: no-credit-driver/not-a-model
+[layerfs/host]     at AgentModels.resolve (file:///Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect/host/agents/models.js:254:23)
+[layerfs/host]     at file:///Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect/host/agents/index.js:650:33
+[layerfs/host]     at async AgentManager.message (file:///Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect/host/agents/index.js:858:22)
+[layerfs/host]     at async handle (file:///Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect/host/server.js:326:22)
+Debugger ending on ws://127.0.0.1:19326/1b1c2181-2852-4635-abe4-26662cd267c7
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[layerfs/host] closing (stdin closed)

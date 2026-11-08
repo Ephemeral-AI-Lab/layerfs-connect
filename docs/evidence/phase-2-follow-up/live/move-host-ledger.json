@@ -1,0 +1,1029 @@
+{
+  "calls": [
+    {
+      "argv": [
+        "store",
+        "create",
+        "live-host-move-pull-snapshot"
+      ],
+      "exit": 0,
+      "stdout": "{\"name\":\"live-host-move-pull-snapshot\",\"kind\":\"sqlite\",\"machine\":\"native\",\"profile\":\"disposable\",\"created\":1794179148371,\"sqlite\":\"3.53.2\",\"projects\":[]}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "project",
+        "init",
+        "live-host-move-pull-snapshot/p",
+        "/private/tmp/connect-followup-live-1c2f5bjz/input"
+      ],
+      "exit": 0,
+      "stdout": "{\"project\":\"live-host-move-pull-snapshot/p\",\"store\":\"live-host-move-pull-snapshot\",\"name\":\"p\",\"kind\":\"sqlite\",\"machine\":\"native\",\"created\":1794179148403,\"layer\":\"321fa0efb840cfe2cd497677d37c2409acbdcbd5b0c91230cf059030176ac29765\",\"root\":\"ff3bac63cb2f73e9ad1b6687d31e427b4489c4fce36905cbcb784060f38fe40a\"}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "push",
+        "live-host-move-pull-snapshot",
+        "docker"
+      ],
+      "exit": 0,
+      "stdout": "{\"store\":\"live-host-move-pull-snapshot\",\"from\":\"native\",\"to\":\"docker\",\"bytes\":217088,\"heads\":\"c9ded4fd7a6a2ce8d3e2298e01d79ec92c8a73f91f5430abfdaccedc65e78e64\"}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "status",
+        "live-host-move-pull-snapshot"
+      ],
+      "exit": 0,
+      "stdout": "{\"name\":\"live-host-move-pull-snapshot\",\"kind\":\"sqlite\",\"state\":\"idle\",\"holders\":[],\"op\":null,\"down_reason\":null,\"machine\":\"native\",\"file\":{\"exists\":true,\"free\":328000819200,\"bytes\":217088,\"wal_bytes\":0,\"incoming_bytes\":0}}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "remove",
+        "live-host-move-pull-snapshot"
+      ],
+      "exit": 0,
+      "stdout": "{\"removed\":\"live-host-move-pull-snapshot\"}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "create",
+        "live-host-move-pull-record"
+      ],
+      "exit": 0,
+      "stdout": "{\"name\":\"live-host-move-pull-record\",\"kind\":\"sqlite\",\"machine\":\"native\",\"profile\":\"disposable\",\"created\":1794179152665,\"sqlite\":\"3.53.2\",\"projects\":[]}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "project",
+        "init",
+        "live-host-move-pull-record/p",
+        "/private/tmp/connect-followup-live-1c2f5bjz/input"
+      ],
+      "exit": 0,
+      "stdout": "{\"project\":\"live-host-move-pull-record/p\",\"store\":\"live-host-move-pull-record\",\"name\":\"p\",\"kind\":\"sqlite\",\"machine\":\"native\",\"created\":1794179152694,\"layer\":\"329271da08f7f382795ca085801992d9fa165972c0ab3541facfffa09974298989\",\"root\":\"3082e290058486174a11eacf751dbca518eb4204973d4b155eb61294fd9f278d\"}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "push",
+        "live-host-move-pull-record",
+        "docker"
+      ],
+      "exit": 0,
+      "stdout": "{\"store\":\"live-host-move-pull-record\",\"from\":\"native\",\"to\":\"docker\",\"bytes\":217088,\"heads\":\"3b7a1a79e2f6df00814cf6c246a92c54fa08298be51ceb253c36ded966dbc98a\"}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "status",
+        "live-host-move-pull-record"
+      ],
+      "exit": 0,
+      "stdout": "{\"name\":\"live-host-move-pull-record\",\"kind\":\"sqlite\",\"state\":\"idle\",\"holders\":[],\"op\":null,\"down_reason\":null,\"machine\":\"native\",\"file\":{\"exists\":true,\"free\":328001105920,\"bytes\":217088,\"wal_bytes\":0,\"incoming_bytes\":0}}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "remove",
+        "live-host-move-pull-record"
+      ],
+      "exit": 0,
+      "stdout": "{\"removed\":\"live-host-move-pull-record\"}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "create",
+        "live-host-move-pull-retire"
+      ],
+      "exit": 0,
+      "stdout": "{\"name\":\"live-host-move-pull-retire\",\"kind\":\"sqlite\",\"machine\":\"native\",\"profile\":\"disposable\",\"created\":1794179157064,\"sqlite\":\"3.53.2\",\"projects\":[]}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "project",
+        "init",
+        "live-host-move-pull-retire/p",
+        "/private/tmp/connect-followup-live-1c2f5bjz/input"
+      ],
+      "exit": 0,
+      "stdout": "{\"project\":\"live-host-move-pull-retire/p\",\"store\":\"live-host-move-pull-retire\",\"name\":\"p\",\"kind\":\"sqlite\",\"machine\":\"native\",\"created\":1794179157095,\"layer\":\"32a3b88258b4e86af1eb42151f84f75b4cf22a6bc485d76ba9ef0710d8c1e4f538\",\"root\":\"b9be8d6d65b9144b47b98225a7b0c9534ab95cb2144ff7ff034494bc8f08d3e4\"}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "push",
+        "live-host-move-pull-retire",
+        "docker"
+      ],
+      "exit": 0,
+      "stdout": "{\"store\":\"live-host-move-pull-retire\",\"from\":\"native\",\"to\":\"docker\",\"bytes\":217088,\"heads\":\"fa0397340911a8b9bb1d2c4ba1f34f02300dbbef944ef1a4bb911d8f9a981f21\"}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "status",
+        "live-host-move-pull-retire"
+      ],
+      "exit": 0,
+      "stdout": "{\"name\":\"live-host-move-pull-retire\",\"kind\":\"sqlite\",\"state\":\"idle\",\"holders\":[],\"op\":null,\"down_reason\":null,\"machine\":\"native\",\"file\":{\"exists\":true,\"free\":328000700416,\"bytes\":217088,\"wal_bytes\":0,\"incoming_bytes\":0}}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "remove",
+        "live-host-move-pull-retire"
+      ],
+      "exit": 0,
+      "stdout": "{\"removed\":\"live-host-move-pull-retire\"}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "create",
+        "live-host-move-push-snapshot"
+      ],
+      "exit": 0,
+      "stdout": "{\"name\":\"live-host-move-push-snapshot\",\"kind\":\"sqlite\",\"machine\":\"native\",\"profile\":\"disposable\",\"created\":1794179161338,\"sqlite\":\"3.53.2\",\"projects\":[]}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "project",
+        "init",
+        "live-host-move-push-snapshot/p",
+        "/private/tmp/connect-followup-live-1c2f5bjz/input"
+      ],
+      "exit": 0,
+      "stdout": "{\"project\":\"live-host-move-push-snapshot/p\",\"store\":\"live-host-move-push-snapshot\",\"name\":\"p\",\"kind\":\"sqlite\",\"machine\":\"native\",\"created\":1794179161367,\"layer\":\"32f158ca2208ed57d6c9c4ed84e555467849022dd6ea53e656bdcd37c00a5815cd\",\"root\":\"ef542eb02435253e9f2f5866998be6a4b11959a77d3f4af0fb20e865e0730bf1\"}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "push",
+        "live-host-move-push-snapshot",
+        "docker"
+      ],
+      "exit": 0,
+      "stdout": "{\"store\":\"live-host-move-push-snapshot\",\"from\":\"native\",\"to\":\"docker\",\"bytes\":217088,\"heads\":\"dbe5d1478f22516c51629ba2e41e97dda5bc13d57338079322f7a048751518ea\"}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "status",
+        "live-host-move-push-snapshot"
+      ],
+      "exit": 0,
+      "stdout": "{\"name\":\"live-host-move-push-snapshot\",\"kind\":\"sqlite\",\"state\":\"idle\",\"holders\":[],\"op\":null,\"down_reason\":null,\"machine\":\"live-move-vm\",\"file\":{\"exists\":true,\"free\":7901777920,\"bytes\":217088,\"wal_bytes\":0,\"incoming_bytes\":0}}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "remove",
+        "live-host-move-push-snapshot"
+      ],
+      "exit": 0,
+      "stdout": "{\"removed\":\"live-host-move-push-snapshot\"}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "create",
+        "live-host-move-push-record"
+      ],
+      "exit": 0,
+      "stdout": "{\"name\":\"live-host-move-push-record\",\"kind\":\"sqlite\",\"machine\":\"native\",\"profile\":\"disposable\",\"created\":1794179165656,\"sqlite\":\"3.53.2\",\"projects\":[]}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "project",
+        "init",
+        "live-host-move-push-record/p",
+        "/private/tmp/connect-followup-live-1c2f5bjz/input"
+      ],
+      "exit": 0,
+      "stdout": "{\"project\":\"live-host-move-push-record/p\",\"store\":\"live-host-move-push-record\",\"name\":\"p\",\"kind\":\"sqlite\",\"machine\":\"native\",\"created\":1794179165682,\"layer\":\"32c96ae21b6af1bcffaf59789a3e2543dad51a261f44bb052a75b5df6226def885\",\"root\":\"74372db5ed0a8b1f3fa22d2507c321251533ad6a2ce50cb82a4692a48b358acb\"}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "push",
+        "live-host-move-push-record",
+        "docker"
+      ],
+      "exit": 0,
+      "stdout": "{\"store\":\"live-host-move-push-record\",\"from\":\"native\",\"to\":\"docker\",\"bytes\":217088,\"heads\":\"b7c045bc248193381f33c8403e487f21bf2c7358d19705c82acd8206cb39f1e0\"}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "status",
+        "live-host-move-push-record"
+      ],
+      "exit": 0,
+      "stdout": "{\"name\":\"live-host-move-push-record\",\"kind\":\"sqlite\",\"state\":\"idle\",\"holders\":[],\"op\":null,\"down_reason\":null,\"machine\":\"live-move-vm\",\"file\":{\"exists\":true,\"free\":7901777920,\"bytes\":217088,\"wal_bytes\":0,\"incoming_bytes\":0}}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "remove",
+        "live-host-move-push-record"
+      ],
+      "exit": 0,
+      "stdout": "{\"removed\":\"live-host-move-push-record\"}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "create",
+        "live-host-move-push-retire"
+      ],
+      "exit": 0,
+      "stdout": "{\"name\":\"live-host-move-push-retire\",\"kind\":\"sqlite\",\"machine\":\"native\",\"profile\":\"disposable\",\"created\":1794179169877,\"sqlite\":\"3.53.2\",\"projects\":[]}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "project",
+        "init",
+        "live-host-move-push-retire/p",
+        "/private/tmp/connect-followup-live-1c2f5bjz/input"
+      ],
+      "exit": 0,
+      "stdout": "{\"project\":\"live-host-move-push-retire/p\",\"store\":\"live-host-move-push-retire\",\"name\":\"p\",\"kind\":\"sqlite\",\"machine\":\"native\",\"created\":1794179169907,\"layer\":\"32f525b433b0337c2f9df64a49afcc0c32044f6673161fe5867650e3f2aee1832b\",\"root\":\"dd37b9d9569308351f8181f22b5001055ccb8654a09df93a9971aefd0c2f4062\"}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "push",
+        "live-host-move-push-retire",
+        "docker"
+      ],
+      "exit": 0,
+      "stdout": "{\"store\":\"live-host-move-push-retire\",\"from\":\"native\",\"to\":\"docker\",\"bytes\":217088,\"heads\":\"4aa99c4ffbfcb757743efbb1af1cd5cc896ec324634d49182e3d8866d615922a\"}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "status",
+        "live-host-move-push-retire"
+      ],
+      "exit": 0,
+      "stdout": "{\"name\":\"live-host-move-push-retire\",\"kind\":\"sqlite\",\"state\":\"idle\",\"holders\":[],\"op\":null,\"down_reason\":null,\"machine\":\"live-move-vm\",\"file\":{\"exists\":true,\"free\":7901777920,\"bytes\":217088,\"wal_bytes\":0,\"incoming_bytes\":0}}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "remove",
+        "live-host-move-push-retire"
+      ],
+      "exit": 0,
+      "stdout": "{\"removed\":\"live-host-move-push-retire\"}\n",
+      "stderr": ""
+    }
+  ],
+  "rows": [
+    {
+      "id": "host-move-pull-snapshot",
+      "host_exit": -9,
+      "debugger_cli_completed": true,
+      "breakpoint_hit": true,
+      "restart_exit": 0,
+      "status": {
+        "name": "live-host-move-pull-snapshot",
+        "kind": "sqlite",
+        "state": "idle",
+        "holders": [],
+        "op": null,
+        "down_reason": null,
+        "machine": "native",
+        "file": {
+          "exists": true,
+          "free": 328000819200,
+          "bytes": 217088,
+          "wal_bytes": 0,
+          "incoming_bytes": 0
+        }
+      },
+      "no_replay": true,
+      "phase": "snapshot",
+      "job": {
+        "id": "b8a85005-f3d3-433c-a581-7ddfa88e8758",
+        "kind": "move",
+        "store": "live-host-move-pull-snapshot",
+        "target": "live-move-vm",
+        "from": "docker",
+        "file": null,
+        "started": 1794179148499,
+        "ended": 1794179152596,
+        "half": "pull",
+        "phase": "snapshot",
+        "phases": [
+          {
+            "phase": "check",
+            "half": "pull",
+            "at": 1794179152429
+          },
+          {
+            "phase": "snapshot",
+            "half": "pull",
+            "at": 1794179152438
+          }
+        ],
+        "outcome": "interrupted",
+        "pid": 71651,
+        "observation": {
+          "at": 1794179152596,
+          "kind": "transfer",
+          "value": {
+            "name": "live-host-move-pull-snapshot",
+            "kind": "sqlite",
+            "state": "idle",
+            "holders": [],
+            "op": null,
+            "down_reason": null,
+            "machine": "native",
+            "file": {
+              "exists": true,
+              "free": 328000835584,
+              "bytes": 217088,
+              "wal_bytes": 0,
+              "incoming_bytes": 0
+            }
+          },
+          "direction": "pull",
+          "action": null
+        },
+        "summary": "Interrupted \u00b7 Final result unavailable",
+        "done": null,
+        "total": null,
+        "error": {
+          "code": "Interrupted",
+          "message": "Host restarted; final result unavailable. Remote work may still finish.",
+          "phase": "snapshot",
+          "detail": null
+        },
+        "result": null,
+        "recovery": null
+      },
+      "pass": true,
+      "cleanup": "owned Store removed after child finished and fresh reads"
+    },
+    {
+      "id": "host-move-pull-record",
+      "host_exit": -9,
+      "debugger_cli_completed": true,
+      "breakpoint_hit": true,
+      "restart_exit": 0,
+      "status": {
+        "name": "live-host-move-pull-record",
+        "kind": "sqlite",
+        "state": "idle",
+        "holders": [],
+        "op": null,
+        "down_reason": null,
+        "machine": "native",
+        "file": {
+          "exists": true,
+          "free": 328001105920,
+          "bytes": 217088,
+          "wal_bytes": 0,
+          "incoming_bytes": 0
+        }
+      },
+      "no_replay": true,
+      "phase": "record",
+      "job": {
+        "id": "9cb4eec1-35a0-4633-a8d7-c7fb42593034",
+        "kind": "move",
+        "store": "live-host-move-pull-record",
+        "target": "live-move-vm",
+        "from": "docker",
+        "file": null,
+        "started": 1794179152786,
+        "ended": 1794179156985,
+        "half": "pull",
+        "phase": "record",
+        "phases": [
+          {
+            "phase": "check",
+            "half": "pull",
+            "at": 1794179156782
+          },
+          {
+            "phase": "snapshot",
+            "half": "pull",
+            "at": 1794179156792
+          },
+          {
+            "phase": "send",
+            "half": "pull",
+            "at": 1794179156804
+          },
+          {
+            "phase": "verify",
+            "half": "pull",
+            "at": 1794179156808
+          },
+          {
+            "phase": "install",
+            "half": "pull",
+            "at": 1794179156814
+          },
+          {
+            "phase": "record",
+            "half": "pull",
+            "at": 1794179156814
+          }
+        ],
+        "outcome": "interrupted",
+        "pid": 71696,
+        "observation": {
+          "at": 1794179156986,
+          "kind": "transfer",
+          "value": {
+            "name": "live-host-move-pull-record",
+            "kind": "sqlite",
+            "state": "idle",
+            "holders": [],
+            "op": null,
+            "down_reason": null,
+            "machine": "native",
+            "file": {
+              "exists": true,
+              "free": 328001126400,
+              "bytes": 217088,
+              "wal_bytes": 0,
+              "incoming_bytes": 0
+            }
+          },
+          "direction": "pull",
+          "action": null
+        },
+        "summary": "Interrupted \u00b7 Final result unavailable",
+        "done": null,
+        "total": null,
+        "error": {
+          "code": "Interrupted",
+          "message": "Host restarted; final result unavailable. Remote work may still finish.",
+          "phase": "record",
+          "detail": null
+        },
+        "result": null,
+        "recovery": null
+      },
+      "pass": true,
+      "cleanup": "owned Store removed after child finished and fresh reads"
+    },
+    {
+      "id": "host-move-pull-retire",
+      "host_exit": -9,
+      "debugger_cli_completed": true,
+      "breakpoint_hit": true,
+      "restart_exit": 0,
+      "status": {
+        "name": "live-host-move-pull-retire",
+        "kind": "sqlite",
+        "state": "idle",
+        "holders": [],
+        "op": null,
+        "down_reason": null,
+        "machine": "native",
+        "file": {
+          "exists": true,
+          "free": 328000700416,
+          "bytes": 217088,
+          "wal_bytes": 0,
+          "incoming_bytes": 0
+        }
+      },
+      "no_replay": true,
+      "phase": "retire",
+      "job": {
+        "id": "d0e3cc61-4421-482b-9ef1-515324bc3515",
+        "kind": "move",
+        "store": "live-host-move-pull-retire",
+        "target": "live-move-vm",
+        "from": "docker",
+        "file": null,
+        "started": 1794179157191,
+        "ended": 1794179161258,
+        "half": "pull",
+        "phase": "retire",
+        "phases": [
+          {
+            "phase": "check",
+            "half": "pull",
+            "at": 1794179161071
+          },
+          {
+            "phase": "snapshot",
+            "half": "pull",
+            "at": 1794179161079
+          },
+          {
+            "phase": "send",
+            "half": "pull",
+            "at": 1794179161091
+          },
+          {
+            "phase": "verify",
+            "half": "pull",
+            "at": 1794179161099
+          },
+          {
+            "phase": "install",
+            "half": "pull",
+            "at": 1794179161104
+          },
+          {
+            "phase": "record",
+            "half": "pull",
+            "at": 1794179161105
+          },
+          {
+            "phase": "retire",
+            "half": "pull",
+            "at": 1794179161106
+          }
+        ],
+        "outcome": "interrupted",
+        "pid": 71757,
+        "observation": {
+          "at": 1794179161259,
+          "kind": "transfer",
+          "value": {
+            "name": "live-host-move-pull-retire",
+            "kind": "sqlite",
+            "state": "idle",
+            "holders": [],
+            "op": null,
+            "down_reason": null,
+            "machine": "native",
+            "file": {
+              "exists": true,
+              "free": 328000708608,
+              "bytes": 217088,
+              "wal_bytes": 0,
+              "incoming_bytes": 0
+            }
+          },
+          "direction": "pull",
+          "action": null
+        },
+        "summary": "Interrupted \u00b7 Final result unavailable",
+        "done": null,
+        "total": null,
+        "error": {
+          "code": "Interrupted",
+          "message": "Host restarted; final result unavailable. Remote work may still finish.",
+          "phase": "retire",
+          "detail": null
+        },
+        "result": null,
+        "recovery": null
+      },
+      "pass": true,
+      "cleanup": "owned Store removed after child finished and fresh reads"
+    },
+    {
+      "id": "host-move-push-snapshot",
+      "host_exit": -9,
+      "debugger_cli_completed": true,
+      "breakpoint_hit": true,
+      "restart_exit": 0,
+      "status": {
+        "name": "live-host-move-push-snapshot",
+        "kind": "sqlite",
+        "state": "idle",
+        "holders": [],
+        "op": null,
+        "down_reason": null,
+        "machine": "live-move-vm",
+        "file": {
+          "exists": true,
+          "free": 7901777920,
+          "bytes": 217088,
+          "wal_bytes": 0,
+          "incoming_bytes": 0
+        }
+      },
+      "no_replay": true,
+      "phase": "snapshot",
+      "job": {
+        "id": "a47dd58a-8fd9-4cb8-8e59-8d45eb4837ed",
+        "kind": "move",
+        "store": "live-host-move-push-snapshot",
+        "target": "live-move-vm",
+        "from": "docker",
+        "file": null,
+        "started": 1794179161465,
+        "ended": 1794179165579,
+        "half": "push",
+        "phase": "snapshot",
+        "phases": [
+          {
+            "phase": "check",
+            "half": "pull",
+            "at": 1794179161503
+          },
+          {
+            "phase": "snapshot",
+            "half": "pull",
+            "at": 1794179161509
+          },
+          {
+            "phase": "send",
+            "half": "pull",
+            "at": 1794179161515
+          },
+          {
+            "phase": "verify",
+            "half": "pull",
+            "at": 1794179161520
+          },
+          {
+            "phase": "install",
+            "half": "pull",
+            "at": 1794179161524
+          },
+          {
+            "phase": "record",
+            "half": "pull",
+            "at": 1794179161525
+          },
+          {
+            "phase": "retire",
+            "half": "pull",
+            "at": 1794179161526
+          },
+          {
+            "phase": "check",
+            "half": "push",
+            "at": 1794179165408
+          },
+          {
+            "phase": "snapshot",
+            "half": "push",
+            "at": 1794179165416
+          }
+        ],
+        "outcome": "interrupted",
+        "pid": 71843,
+        "observation": {
+          "at": 1794179165580,
+          "kind": "transfer",
+          "value": {
+            "name": "live-host-move-push-snapshot",
+            "kind": "sqlite",
+            "state": "idle",
+            "holders": [],
+            "op": null,
+            "down_reason": null,
+            "machine": "live-move-vm",
+            "file": {
+              "exists": true,
+              "free": 7901777920,
+              "bytes": 217088,
+              "wal_bytes": 0,
+              "incoming_bytes": 0
+            }
+          },
+          "direction": "push",
+          "action": null
+        },
+        "summary": "Interrupted \u00b7 Final result unavailable",
+        "done": null,
+        "total": null,
+        "error": {
+          "code": "Interrupted",
+          "message": "Host restarted; final result unavailable. Remote work may still finish.",
+          "phase": "snapshot",
+          "detail": null
+        },
+        "result": null,
+        "recovery": null
+      },
+      "pass": true,
+      "cleanup": "owned Store removed after child finished and fresh reads"
+    },
+    {
+      "id": "host-move-push-record",
+      "host_exit": -9,
+      "debugger_cli_completed": true,
+      "breakpoint_hit": true,
+      "restart_exit": 0,
+      "status": {
+        "name": "live-host-move-push-record",
+        "kind": "sqlite",
+        "state": "idle",
+        "holders": [],
+        "op": null,
+        "down_reason": null,
+        "machine": "live-move-vm",
+        "file": {
+          "exists": true,
+          "free": 7901777920,
+          "bytes": 217088,
+          "wal_bytes": 0,
+          "incoming_bytes": 0
+        }
+      },
+      "no_replay": true,
+      "phase": "record",
+      "job": {
+        "id": "c4ab48fc-f0da-45a3-9f69-6245dba72deb",
+        "kind": "move",
+        "store": "live-host-move-push-record",
+        "target": "live-move-vm",
+        "from": "docker",
+        "file": null,
+        "started": 1794179165770,
+        "ended": 1794179169781,
+        "half": "push",
+        "phase": "record",
+        "phases": [
+          {
+            "phase": "check",
+            "half": "pull",
+            "at": 1794179165803
+          },
+          {
+            "phase": "snapshot",
+            "half": "pull",
+            "at": 1794179165810
+          },
+          {
+            "phase": "send",
+            "half": "pull",
+            "at": 1794179165822
+          },
+          {
+            "phase": "verify",
+            "half": "pull",
+            "at": 1794179165827
+          },
+          {
+            "phase": "install",
+            "half": "pull",
+            "at": 1794179165831
+          },
+          {
+            "phase": "record",
+            "half": "pull",
+            "at": 1794179165832
+          },
+          {
+            "phase": "retire",
+            "half": "pull",
+            "at": 1794179165833
+          },
+          {
+            "phase": "check",
+            "half": "push",
+            "at": 1794179169603
+          },
+          {
+            "phase": "snapshot",
+            "half": "push",
+            "at": 1794179169611
+          },
+          {
+            "phase": "send",
+            "half": "push",
+            "at": 1794179169616
+          },
+          {
+            "phase": "verify",
+            "half": "push",
+            "at": 1794179169620
+          },
+          {
+            "phase": "install",
+            "half": "push",
+            "at": 1794179169625
+          },
+          {
+            "phase": "record",
+            "half": "push",
+            "at": 1794179169627
+          }
+        ],
+        "outcome": "interrupted",
+        "pid": 71935,
+        "observation": {
+          "at": 1794179169783,
+          "kind": "transfer",
+          "value": {
+            "name": "live-host-move-push-record",
+            "kind": "sqlite",
+            "state": "idle",
+            "holders": [],
+            "op": null,
+            "down_reason": null,
+            "machine": "live-move-vm",
+            "file": {
+              "exists": true,
+              "free": 7901777920,
+              "bytes": 217088,
+              "wal_bytes": 0,
+              "incoming_bytes": 0
+            }
+          },
+          "direction": "push",
+          "action": null
+        },
+        "summary": "Interrupted \u00b7 Final result unavailable",
+        "done": null,
+        "total": null,
+        "error": {
+          "code": "Interrupted",
+          "message": "Host restarted; final result unavailable. Remote work may still finish.",
+          "phase": "record",
+          "detail": null
+        },
+        "result": null,
+        "recovery": null
+      },
+      "pass": true,
+      "cleanup": "owned Store removed after child finished and fresh reads"
+    },
+    {
+      "id": "host-move-push-retire",
+      "host_exit": -9,
+      "debugger_cli_completed": true,
+      "breakpoint_hit": true,
+      "restart_exit": 0,
+      "status": {
+        "name": "live-host-move-push-retire",
+        "kind": "sqlite",
+        "state": "idle",
+        "holders": [],
+        "op": null,
+        "down_reason": null,
+        "machine": "live-move-vm",
+        "file": {
+          "exists": true,
+          "free": 7901777920,
+          "bytes": 217088,
+          "wal_bytes": 0,
+          "incoming_bytes": 0
+        }
+      },
+      "no_replay": true,
+      "phase": "retire",
+      "job": {
+        "id": "a92c6f83-4478-4cf0-aa11-c02dcaddcd9d",
+        "kind": "move",
+        "store": "live-host-move-push-retire",
+        "target": "live-move-vm",
+        "from": "docker",
+        "file": null,
+        "started": 1794179170000,
+        "ended": 1794179174104,
+        "half": "push",
+        "phase": "retire",
+        "phases": [
+          {
+            "phase": "check",
+            "half": "pull",
+            "at": 1794179170037
+          },
+          {
+            "phase": "snapshot",
+            "half": "pull",
+            "at": 1794179170045
+          },
+          {
+            "phase": "send",
+            "half": "pull",
+            "at": 1794179170056
+          },
+          {
+            "phase": "verify",
+            "half": "pull",
+            "at": 1794179170060
+          },
+          {
+            "phase": "install",
+            "half": "pull",
+            "at": 1794179170065
+          },
+          {
+            "phase": "record",
+            "half": "pull",
+            "at": 1794179170066
+          },
+          {
+            "phase": "retire",
+            "half": "pull",
+            "at": 1794179170067
+          },
+          {
+            "phase": "check",
+            "half": "push",
+            "at": 1794179173923
+          },
+          {
+            "phase": "snapshot",
+            "half": "push",
+            "at": 1794179173931
+          },
+          {
+            "phase": "send",
+            "half": "push",
+            "at": 1794179173937
+          },
+          {
+            "phase": "verify",
+            "half": "push",
+            "at": 1794179173941
+          },
+          {
+            "phase": "install",
+            "half": "push",
+            "at": 1794179173946
+          },
+          {
+            "phase": "record",
+            "half": "push",
+            "at": 1794179173949
+          },
+          {
+            "phase": "retire",
+            "half": "push",
+            "at": 1794179173950
+          }
+        ],
+        "outcome": "interrupted",
+        "pid": 71975,
+        "observation": {
+          "at": 1794179174105,
+          "kind": "transfer",
+          "value": {
+            "name": "live-host-move-push-retire",
+            "kind": "sqlite",
+            "state": "idle",
+            "holders": [],
+            "op": null,
+            "down_reason": null,
+            "machine": "live-move-vm",
+            "file": {
+              "exists": true,
+              "free": 7901777920,
+              "bytes": 217088,
+              "wal_bytes": 0,
+              "incoming_bytes": 0
+            }
+          },
+          "direction": "push",
+          "action": null
+        },
+        "summary": "Interrupted \u00b7 Final result unavailable",
+        "done": null,
+        "total": null,
+        "error": {
+          "code": "Interrupted",
+          "message": "Host restarted; final result unavailable. Remote work may still finish.",
+          "phase": "retire",
+          "detail": null
+        },
+        "result": null,
+        "recovery": null
+      },
+      "pass": true,
+      "cleanup": "owned Store removed after child finished and fresh reads"
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "command": [
+    "/Users/yifanxu/.nvm/versions/node/v24.21.0/bin/node",
+    "--test",
+    "--test-timeout=10000",
+    "host/test/exec-cancel.test.js",
+    "host/test/agent-workspace-bash.test.js",
+    "host/test/agent-workspace-lifecycle.test.js",
+    "host/test/agent-permission-service.test.js"
+  ],
+  "wall_timeout_seconds": 60,
+  "exit": 0,
+  "seconds": 1.092,
+  "outcome": "PASS"
+}

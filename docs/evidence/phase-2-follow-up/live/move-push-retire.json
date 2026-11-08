@@ -1,0 +1,366 @@
+{
+  "spec": {
+    "home": "/private/tmp/connect-followup-live-1c2f5bjz/home",
+    "state": "/private/tmp/connect-followup-live-1c2f5bjz/states/move-push-retire",
+    "mode": "real",
+    "cli": "/Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect-cli-137/target/debug/layerfs"
+  },
+  "starts": 2,
+  "childPid": 71519,
+  "ended": {
+    "id": "2678db06-ee04-469b-a79d-873ea8e6f4ad",
+    "kind": "move",
+    "store": "live-move-push-retire",
+    "target": "live-move-vm",
+    "from": "docker",
+    "file": null,
+    "started": 1794179135750,
+    "ended": 1794179139776,
+    "half": "push",
+    "phase": "retire",
+    "phases": [
+      {
+        "phase": "check",
+        "half": "pull",
+        "at": 1794179135787
+      },
+      {
+        "phase": "snapshot",
+        "half": "pull",
+        "at": 1794179135793
+      },
+      {
+        "phase": "send",
+        "half": "pull",
+        "at": 1794179135804
+      },
+      {
+        "phase": "verify",
+        "half": "pull",
+        "at": 1794179135810
+      },
+      {
+        "phase": "install",
+        "half": "pull",
+        "at": 1794179135815
+      },
+      {
+        "phase": "record",
+        "half": "pull",
+        "at": 1794179135815
+      },
+      {
+        "phase": "retire",
+        "half": "pull",
+        "at": 1794179135816
+      },
+      {
+        "phase": "check",
+        "half": "push",
+        "at": 1794179139691
+      },
+      {
+        "phase": "snapshot",
+        "half": "push",
+        "at": 1794179139699
+      },
+      {
+        "phase": "send",
+        "half": "push",
+        "at": 1794179139706
+      },
+      {
+        "phase": "verify",
+        "half": "push",
+        "at": 1794179139710
+      },
+      {
+        "phase": "install",
+        "half": "push",
+        "at": 1794179139715
+      },
+      {
+        "phase": "record",
+        "half": "push",
+        "at": 1794179139717
+      },
+      {
+        "phase": "retire",
+        "half": "push",
+        "at": 1794179139718
+      }
+    ],
+    "outcome": "unknown",
+    "pid": 71519,
+    "observation": null,
+    "summary": "Outcome unknown · Inspect",
+    "done": null,
+    "total": null,
+    "error": {
+      "transport": "transport-unknown",
+      "code": "Unknown",
+      "message": "LayerFS ended without a complete result; inspect state before another action",
+      "phase": "retire",
+      "detail": {
+        "signal": "SIGKILL"
+      }
+    },
+    "result": null
+  },
+  "inspected": {
+    "id": "2678db06-ee04-469b-a79d-873ea8e6f4ad",
+    "kind": "move",
+    "store": "live-move-push-retire",
+    "target": "live-move-vm",
+    "from": "docker",
+    "file": null,
+    "started": 1794179135750,
+    "ended": 1794179139776,
+    "half": "push",
+    "phase": "retire",
+    "phases": [
+      {
+        "phase": "check",
+        "half": "pull",
+        "at": 1794179135787
+      },
+      {
+        "phase": "snapshot",
+        "half": "pull",
+        "at": 1794179135793
+      },
+      {
+        "phase": "send",
+        "half": "pull",
+        "at": 1794179135804
+      },
+      {
+        "phase": "verify",
+        "half": "pull",
+        "at": 1794179135810
+      },
+      {
+        "phase": "install",
+        "half": "pull",
+        "at": 1794179135815
+      },
+      {
+        "phase": "record",
+        "half": "pull",
+        "at": 1794179135815
+      },
+      {
+        "phase": "retire",
+        "half": "pull",
+        "at": 1794179135816
+      },
+      {
+        "phase": "check",
+        "half": "push",
+        "at": 1794179139691
+      },
+      {
+        "phase": "snapshot",
+        "half": "push",
+        "at": 1794179139699
+      },
+      {
+        "phase": "send",
+        "half": "push",
+        "at": 1794179139706
+      },
+      {
+        "phase": "verify",
+        "half": "push",
+        "at": 1794179139710
+      },
+      {
+        "phase": "install",
+        "half": "push",
+        "at": 1794179139715
+      },
+      {
+        "phase": "record",
+        "half": "push",
+        "at": 1794179139717
+      },
+      {
+        "phase": "retire",
+        "half": "push",
+        "at": 1794179139718
+      }
+    ],
+    "outcome": "interrupted",
+    "pid": 71519,
+    "observation": {
+      "at": 1794179139810,
+      "kind": "transfer",
+      "value": {
+        "name": "live-move-push-retire",
+        "kind": "sqlite",
+        "state": "idle",
+        "holders": [],
+        "op": {
+          "id": "op-46a4e2c08e8f09ab",
+          "name": "store.push",
+          "phase": "retire",
+          "started": 1794179139693,
+          "uncertain": false
+        },
+        "down_reason": null,
+        "machine": "live-move-vm",
+        "file": {
+          "exists": true,
+          "free": 7901777920,
+          "bytes": 217088,
+          "wal_bytes": 0,
+          "incoming_bytes": 0
+        }
+      },
+      "direction": "push",
+      "action": null
+    },
+    "summary": "Interrupted · Final result unavailable",
+    "done": null,
+    "total": null,
+    "error": {
+      "transport": "transport-unknown",
+      "code": "Unknown",
+      "message": "LayerFS ended without a complete result; inspect state before another action",
+      "phase": "retire",
+      "detail": {
+        "signal": "SIGKILL"
+      }
+    },
+    "result": null
+  },
+  "restarted": {
+    "id": "2678db06-ee04-469b-a79d-873ea8e6f4ad",
+    "kind": "move",
+    "store": "live-move-push-retire",
+    "target": "live-move-vm",
+    "from": "docker",
+    "file": null,
+    "started": 1794179135750,
+    "ended": 1794179139776,
+    "half": "push",
+    "phase": "retire",
+    "phases": [
+      {
+        "phase": "check",
+        "half": "pull",
+        "at": 1794179135787
+      },
+      {
+        "phase": "snapshot",
+        "half": "pull",
+        "at": 1794179135793
+      },
+      {
+        "phase": "send",
+        "half": "pull",
+        "at": 1794179135804
+      },
+      {
+        "phase": "verify",
+        "half": "pull",
+        "at": 1794179135810
+      },
+      {
+        "phase": "install",
+        "half": "pull",
+        "at": 1794179135815
+      },
+      {
+        "phase": "record",
+        "half": "pull",
+        "at": 1794179135815
+      },
+      {
+        "phase": "retire",
+        "half": "pull",
+        "at": 1794179135816
+      },
+      {
+        "phase": "check",
+        "half": "push",
+        "at": 1794179139691
+      },
+      {
+        "phase": "snapshot",
+        "half": "push",
+        "at": 1794179139699
+      },
+      {
+        "phase": "send",
+        "half": "push",
+        "at": 1794179139706
+      },
+      {
+        "phase": "verify",
+        "half": "push",
+        "at": 1794179139710
+      },
+      {
+        "phase": "install",
+        "half": "push",
+        "at": 1794179139715
+      },
+      {
+        "phase": "record",
+        "half": "push",
+        "at": 1794179139717
+      },
+      {
+        "phase": "retire",
+        "half": "push",
+        "at": 1794179139718
+      }
+    ],
+    "outcome": "interrupted",
+    "pid": 71519,
+    "observation": {
+      "at": 1794179139822,
+      "kind": "transfer",
+      "value": {
+        "name": "live-move-push-retire",
+        "kind": "sqlite",
+        "state": "idle",
+        "holders": [],
+        "op": {
+          "id": "op-46a4e2c08e8f09ab",
+          "name": "store.push",
+          "phase": "retire",
+          "started": 1794179139693,
+          "uncertain": false
+        },
+        "down_reason": null,
+        "machine": "live-move-vm",
+        "file": {
+          "exists": true,
+          "free": 7901777920,
+          "bytes": 217088,
+          "wal_bytes": 0,
+          "incoming_bytes": 0
+        }
+      },
+      "direction": "push",
+      "action": null
+    },
+    "summary": "Interrupted · Final result unavailable",
+    "done": null,
+    "total": null,
+    "error": {
+      "transport": "transport-unknown",
+      "code": "Unknown",
+      "message": "LayerFS ended without a complete result; inspect state before another action",
+      "phase": "retire",
+      "detail": {
+        "signal": "SIGKILL"
+      }
+    },
+    "result": null
+  },
+  "debuggerHit": true,
+  "debuggerKilled": true
+}

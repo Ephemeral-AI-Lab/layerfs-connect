@@ -1,0 +1,40 @@
+(lldb) process attach --pid 70264
+Process 70264 stopped
+* thread #1, stop reason = signal SIGSTOP
+    frame #0: 0x00000001831e1f7c dyld`__openat + 8
+dyld`__openat:
+->  0x1831e1f7c <+8>:  b.lo   0x1831e1f9c               ; <+40>
+    0x1831e1f80 <+12>: pacibsp 
+    0x1831e1f84 <+16>: stp    x29, x30, [sp, #-0x10]!
+    0x1831e1f88 <+20>: mov    x29, sp
+Target 0: (layerfs) stopped.
+Executable module set to "/Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect-cli-137/target/debug/layerfs".
+Architecture set to: arm64-apple-macosx-.
+(lldb) breakpoint set --file /Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect-cli-137/control/crates/layerfs-bucket/src/backup/restore.rs --line 258
+Breakpoint 1: where = layerfs`layerfs_bucket::backup::restore::fetch::_$u7b$$u7b$closure$u7d$$u7d$::ha5bf4ee64109b975 + 4720 at restore.rs:258:27, address = 0x00000001009e54c4
+(lldb) process continue
+Process 70264 resuming
+Process 70264 stopped
+* thread #2, stop reason = breakpoint 1.1
+    frame #0: 0x00000001009e54c4 layerfs`layerfs_bucket::backup::restore::fetch::_$u7b$$u7b$closure$u7d$$u7d$::ha5bf4ee64109b975 at restore.rs:258:27
+   255 	            }
+   256 	        }
+   257 	        progress::begin("install", None);
+-> 258 	        let replaced = if cloning {
+    	                          ^
+   259 	            // a link fails if anything appeared at the target: never replaced
+   260 	            fs::hard_link(&temporary, &target).map_err(|error| {
+   261 	                format!(
+Target 0: (layerfs) stopped.
+(lldb) thread backtrace -c 8
+* thread #2, stop reason = breakpoint 1.1
+  * frame #0: 0x00000001009e54c4 layerfs`layerfs_bucket::backup::restore::fetch::_$u7b$$u7b$closure$u7d$$u7d$::ha5bf4ee64109b975 at restore.rs:258:27
+    frame #1: 0x0000000100a4805c layerfs`layerfs_bucket::backup::restore::fetch::h29fca5dce994983f(driver=&dyn layerfs_bucket::bucket::driver::Driver @ 0x000000016f9de320, name=(data_ptr = "baseline", length = 8), destination=&std::path::Path @ 0x000000016f9de330, binding=Option<&[u8]> @ 0x000000016f9de240, cursor_key=<unavailable>) at restore.rs:176:18
+    frame #2: 0x0000000100a47e20 layerfs`layerfs_bucket::backup::restore::load::hab3e0f1f546b50a1(driver=&dyn layerfs_bucket::bucket::driver::Driver @ 0x000000016f9de410, file=(data_ptr = "baseline", length = 8), destination=&std::path::Path @ 0x000000016f9de430, cursor_key=<unavailable>) at restore.rs:144:5
+    frame #3: 0x00000001008821c4 layerfs`layerfs_store::backup::restore::restore::_$u7b$$u7b$closure$u7d$$u7d$::hd8c314eab1804848 at restore.rs:84:13
+    frame #4: 0x0000000100880794 layerfs`layerfs_bucket::bucket::progress::observe::h0d2fb9ec9f82530d(progress=Arc<dyn layerfs_bucket::bucket::progress::Progress, alloc::alloc::Global> @ 0x000000016f9de550, work={closure_env#2} @ 0x000000016f9de590) at progress.rs:123:5
+    frame #5: 0x0000000100859624 layerfs`layerfs_store::backup::progress::Shown::transfer::_$u7b$$u7b$closure$u7d$$u7d$::_$u7b$$u7b$closure$u7d$$u7d$::hb581cecbd6701e14 at progress.rs:165:17
+    frame #6: 0x000000010084efac layerfs`std::sys::backtrace::__rust_begin_short_backtrace::hc88ecba2ecd34432(f=<unavailable>) at backtrace.rs:152:18
+    frame #7: 0x00000001008c4cb0 layerfs`std::thread::Builder::spawn_unchecked_::_$u7b$$u7b$closure$u7d$$u7d$::_$u7b$$u7b$closure$u7d$$u7d$::hb8ae20aa8dd8ce1d at mod.rs:564:17
+(lldb) process kill
+Process 70264 exited with status = 9 (0x00000009) killed

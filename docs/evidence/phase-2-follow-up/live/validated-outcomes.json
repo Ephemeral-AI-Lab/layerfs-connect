@@ -1,0 +1,733 @@
+{
+  "verdict": "PASS",
+  "method": "Offline covering assertions on unchanged real CLI/manager and debugger receipts; no phase re-execution. LLDB all-stop source breakpoint prevents phase-event delivery races.",
+  "retained_failures": [
+    "Initial default worker protocol2 vs pinned protocol3 setup refusal; owned worker stopped, matching sealed bundle selected, successful start recorded.",
+    "Initial explicit same-direction push after retired destination authority correctly refused InvalidInput; fresh reads preceded explicit pull.",
+    "Initial host-only harness required child exit0; documented stdout failure exits125 after effects kept. Original false rows retained; current assessment additionally asserts completed target state, no op, Interrupted job and zero replay."
+  ],
+  "source": "833d04cf44e8e747929d50ab1170a48260d9381c",
+  "counts": {
+    "cli_phase_kill": 28,
+    "host_only_kill": 12,
+    "fresh_gated_explicit_recovery": 2
+  },
+  "rows": [
+    {
+      "id": "push-check",
+      "verdict": "PASS",
+      "receipt": "push-check.json",
+      "debugger": "push-check.debug.log",
+      "meaning": "exact phase reached; SIGKILL custody, fresh reads, explicit resolution and cleanup verified"
+    },
+    {
+      "id": "push-snapshot",
+      "verdict": "PASS",
+      "receipt": "push-snapshot.json",
+      "debugger": "push-snapshot.debug.log",
+      "meaning": "exact phase reached; SIGKILL custody, fresh reads, explicit resolution and cleanup verified"
+    },
+    {
+      "id": "push-send",
+      "verdict": "PASS",
+      "receipt": "push-send.json",
+      "debugger": "push-send.debug.log",
+      "meaning": "exact phase reached; SIGKILL custody, fresh reads, explicit resolution and cleanup verified"
+    },
+    {
+      "id": "push-verify",
+      "verdict": "PASS",
+      "receipt": "push-verify.json",
+      "debugger": "push-verify.debug.log",
+      "meaning": "exact phase reached; SIGKILL custody, fresh reads, explicit resolution and cleanup verified"
+    },
+    {
+      "id": "push-install",
+      "verdict": "PASS",
+      "receipt": "push-install.json",
+      "debugger": "push-install.debug.log",
+      "meaning": "exact phase reached; SIGKILL custody, fresh reads, explicit resolution and cleanup verified"
+    },
+    {
+      "id": "push-record",
+      "verdict": "PASS",
+      "receipt": "push-record.json",
+      "debugger": "push-record.debug.log",
+      "meaning": "exact phase reached; SIGKILL custody, fresh reads, explicit resolution and cleanup verified"
+    },
+    {
+      "id": "push-retire",
+      "verdict": "PASS",
+      "receipt": "push-retire.json",
+      "debugger": "push-retire.debug.log",
+      "meaning": "exact phase reached; SIGKILL custody, fresh reads, explicit resolution and cleanup verified"
+    },
+    {
+      "id": "pull-check",
+      "verdict": "PASS",
+      "receipt": "pull-check.json",
+      "debugger": "pull-check.debug.log",
+      "meaning": "exact phase reached; SIGKILL custody, fresh reads, explicit resolution and cleanup verified"
+    },
+    {
+      "id": "pull-snapshot",
+      "verdict": "PASS",
+      "receipt": "pull-snapshot.json",
+      "debugger": "pull-snapshot.debug.log",
+      "meaning": "exact phase reached; SIGKILL custody, fresh reads, explicit resolution and cleanup verified"
+    },
+    {
+      "id": "pull-send",
+      "verdict": "PASS",
+      "receipt": "pull-send.json",
+      "debugger": "pull-send.debug.log",
+      "meaning": "exact phase reached; SIGKILL custody, fresh reads, explicit resolution and cleanup verified"
+    },
+    {
+      "id": "pull-verify",
+      "verdict": "PASS",
+      "receipt": "pull-verify.json",
+      "debugger": "pull-verify.debug.log",
+      "meaning": "exact phase reached; SIGKILL custody, fresh reads, explicit resolution and cleanup verified"
+    },
+    {
+      "id": "pull-install",
+      "verdict": "PASS",
+      "receipt": "pull-install.json",
+      "debugger": "pull-install.debug.log",
+      "meaning": "exact phase reached; SIGKILL custody, fresh reads, explicit resolution and cleanup verified"
+    },
+    {
+      "id": "pull-record",
+      "verdict": "PASS",
+      "receipt": "pull-record.json",
+      "debugger": "pull-record.debug.log",
+      "meaning": "exact phase reached; SIGKILL custody, fresh reads, explicit resolution and cleanup verified"
+    },
+    {
+      "id": "pull-retire",
+      "verdict": "PASS",
+      "receipt": "pull-retire.json",
+      "debugger": "pull-retire.debug.log",
+      "meaning": "exact phase reached; SIGKILL custody, fresh reads, explicit resolution and cleanup verified"
+    },
+    {
+      "id": "move-pull-check",
+      "verdict": "PASS",
+      "receipt": "move-pull-check.json",
+      "debugger": "move-pull-check.debug.log",
+      "meaning": "exact phase reached; SIGKILL custody, fresh reads, explicit resolution and cleanup verified"
+    },
+    {
+      "id": "move-pull-snapshot",
+      "verdict": "PASS",
+      "receipt": "move-pull-snapshot.json",
+      "debugger": "move-pull-snapshot.debug.log",
+      "meaning": "exact phase reached; SIGKILL custody, fresh reads, explicit resolution and cleanup verified"
+    },
+    {
+      "id": "move-pull-send",
+      "verdict": "PASS",
+      "receipt": "move-pull-send.json",
+      "debugger": "move-pull-send.debug.log",
+      "meaning": "exact phase reached; SIGKILL custody, fresh reads, explicit resolution and cleanup verified"
+    },
+    {
+      "id": "move-pull-verify",
+      "verdict": "PASS",
+      "receipt": "move-pull-verify.json",
+      "debugger": "move-pull-verify.debug.log",
+      "meaning": "exact phase reached; SIGKILL custody, fresh reads, explicit resolution and cleanup verified"
+    },
+    {
+      "id": "move-pull-install",
+      "verdict": "PASS",
+      "receipt": "move-pull-install.json",
+      "debugger": "move-pull-install.debug.log",
+      "meaning": "exact phase reached; SIGKILL custody, fresh reads, explicit resolution and cleanup verified"
+    },
+    {
+      "id": "move-pull-record",
+      "verdict": "PASS",
+      "receipt": "move-pull-record.json",
+      "debugger": "move-pull-record.debug.log",
+      "meaning": "exact phase reached; SIGKILL custody, fresh reads, explicit resolution and cleanup verified"
+    },
+    {
+      "id": "move-pull-retire",
+      "verdict": "PASS",
+      "receipt": "move-pull-retire.json",
+      "debugger": "move-pull-retire.debug.log",
+      "meaning": "exact phase reached; SIGKILL custody, fresh reads, explicit resolution and cleanup verified"
+    },
+    {
+      "id": "move-push-check",
+      "verdict": "PASS",
+      "receipt": "move-push-check.json",
+      "debugger": "move-push-check.debug.log",
+      "meaning": "exact phase reached; SIGKILL custody, fresh reads, explicit resolution and cleanup verified"
+    },
+    {
+      "id": "move-push-snapshot",
+      "verdict": "PASS",
+      "receipt": "move-push-snapshot.json",
+      "debugger": "move-push-snapshot.debug.log",
+      "meaning": "exact phase reached; SIGKILL custody, fresh reads, explicit resolution and cleanup verified"
+    },
+    {
+      "id": "move-push-send",
+      "verdict": "PASS",
+      "receipt": "move-push-send.json",
+      "debugger": "move-push-send.debug.log",
+      "meaning": "exact phase reached; SIGKILL custody, fresh reads, explicit resolution and cleanup verified"
+    },
+    {
+      "id": "move-push-verify",
+      "verdict": "PASS",
+      "receipt": "move-push-verify.json",
+      "debugger": "move-push-verify.debug.log",
+      "meaning": "exact phase reached; SIGKILL custody, fresh reads, explicit resolution and cleanup verified"
+    },
+    {
+      "id": "move-push-install",
+      "verdict": "PASS",
+      "receipt": "move-push-install.json",
+      "debugger": "move-push-install.debug.log",
+      "meaning": "exact phase reached; SIGKILL custody, fresh reads, explicit resolution and cleanup verified"
+    },
+    {
+      "id": "move-push-record",
+      "verdict": "PASS",
+      "receipt": "move-push-record.json",
+      "debugger": "move-push-record.debug.log",
+      "meaning": "exact phase reached; SIGKILL custody, fresh reads, explicit resolution and cleanup verified"
+    },
+    {
+      "id": "move-push-retire",
+      "verdict": "PASS",
+      "receipt": "move-push-retire.json",
+      "debugger": "move-push-retire.debug.log",
+      "meaning": "exact phase reached; SIGKILL custody, fresh reads, explicit resolution and cleanup verified"
+    },
+    {
+      "id": "host-push-snapshot",
+      "verdict": "PASS",
+      "receipt": "host-push-snapshot.json",
+      "meaning": "host SIGKILL before child completion; original child completed mutation then exit125 because host stdout pipe closed; restart fresh reads retain Interrupted/no final result with zero replay",
+      "retained_initial_harness_verdict": false
+    },
+    {
+      "id": "host-push-record",
+      "verdict": "PASS",
+      "receipt": "host-push-record.json",
+      "meaning": "host SIGKILL before child completion; original child completed mutation then exit125 because host stdout pipe closed; restart fresh reads retain Interrupted/no final result with zero replay",
+      "retained_initial_harness_verdict": false
+    },
+    {
+      "id": "host-push-retire",
+      "verdict": "PASS",
+      "receipt": "host-push-retire.json",
+      "meaning": "host SIGKILL before child completion; original child completed mutation then exit125 because host stdout pipe closed; restart fresh reads retain Interrupted/no final result with zero replay",
+      "retained_initial_harness_verdict": false
+    },
+    {
+      "id": "host-pull-snapshot",
+      "verdict": "PASS",
+      "receipt": "host-pull-snapshot.json",
+      "meaning": "host SIGKILL before child completion; original child completed mutation then exit125 because host stdout pipe closed; restart fresh reads retain Interrupted/no final result with zero replay",
+      "retained_initial_harness_verdict": false
+    },
+    {
+      "id": "host-pull-record",
+      "verdict": "PASS",
+      "receipt": "host-pull-record.json",
+      "meaning": "host SIGKILL before child completion; original child completed mutation then exit125 because host stdout pipe closed; restart fresh reads retain Interrupted/no final result with zero replay",
+      "retained_initial_harness_verdict": false
+    },
+    {
+      "id": "host-pull-retire",
+      "verdict": "PASS",
+      "receipt": "host-pull-retire.json",
+      "meaning": "host SIGKILL before child completion; original child completed mutation then exit125 because host stdout pipe closed; restart fresh reads retain Interrupted/no final result with zero replay",
+      "retained_initial_harness_verdict": false
+    },
+    {
+      "id": "host-move-pull-snapshot",
+      "verdict": "PASS",
+      "receipt": "host-move-pull-snapshot.json",
+      "meaning": "host SIGKILL before child completion; original child completed mutation then exit125 because host stdout pipe closed; restart fresh reads retain Interrupted/no final result with zero replay",
+      "retained_initial_harness_verdict": true
+    },
+    {
+      "id": "host-move-pull-record",
+      "verdict": "PASS",
+      "receipt": "host-move-pull-record.json",
+      "meaning": "host SIGKILL before child completion; original child completed mutation then exit125 because host stdout pipe closed; restart fresh reads retain Interrupted/no final result with zero replay",
+      "retained_initial_harness_verdict": true
+    },
+    {
+      "id": "host-move-pull-retire",
+      "verdict": "PASS",
+      "receipt": "host-move-pull-retire.json",
+      "meaning": "host SIGKILL before child completion; original child completed mutation then exit125 because host stdout pipe closed; restart fresh reads retain Interrupted/no final result with zero replay",
+      "retained_initial_harness_verdict": true
+    },
+    {
+      "id": "host-move-push-snapshot",
+      "verdict": "PASS",
+      "receipt": "host-move-push-snapshot.json",
+      "meaning": "host SIGKILL before child completion; original child completed mutation then exit125 because host stdout pipe closed; restart fresh reads retain Interrupted/no final result with zero replay",
+      "retained_initial_harness_verdict": true
+    },
+    {
+      "id": "host-move-push-record",
+      "verdict": "PASS",
+      "receipt": "host-move-push-record.json",
+      "meaning": "host SIGKILL before child completion; original child completed mutation then exit125 because host stdout pipe closed; restart fresh reads retain Interrupted/no final result with zero replay",
+      "retained_initial_harness_verdict": true
+    },
+    {
+      "id": "host-move-push-retire",
+      "verdict": "PASS",
+      "receipt": "host-move-push-retire.json",
+      "meaning": "host SIGKILL before child completion; original child completed mutation then exit125 because host stdout pipe closed; restart fresh reads retain Interrupted/no final result with zero replay",
+      "retained_initial_harness_verdict": true
+    },
+    {
+      "id": "explicit-push-record",
+      "verdict": "PASS",
+      "meaning": "Connect inspect twice establishes matching unresolved op + ready Machine; explicit Storage.retry rechecks gate and launches exactly once, succeeds"
+    },
+    {
+      "id": "explicit-pull-record",
+      "verdict": "PASS",
+      "meaning": "Connect inspect twice establishes matching unresolved op + ready Machine; explicit Storage.retry rechecks gate and launches exactly once, succeeds"
+    }
+  ],
+  "files": [
+    {
+      "file": "debugger-probe.log",
+      "sha256": "404bbe94344c7ecb5a70e1c228b5f7e49d4fc8fade1824bfd87a20b70f412883"
+    },
+    {
+      "file": "explicit-pull-record.debug.log",
+      "sha256": "026a4e053cd556edca3bd27ef0673f4bf9780f01f2df847a3b7c2ba831cfb120"
+    },
+    {
+      "file": "explicit-pull-record.json",
+      "sha256": "f52ba9e5ca07bb78484755d6ed9df8b6bbc1189a8db6101443c201a57e2cd932"
+    },
+    {
+      "file": "explicit-push-record.debug.log",
+      "sha256": "9e879fa1410c1270ba3b4c5410270cb26e3a403c6d24780a4cd3b117e5bfd0a7"
+    },
+    {
+      "file": "explicit-push-record.json",
+      "sha256": "ce6bc153e0b3f6bce30be726e29e0c470465fcce02e2b9cfeeb31f0afdb1edd0"
+    },
+    {
+      "file": "explicit-recovery-ledger.json",
+      "sha256": "0cef0094a776b3914bbf00335d2e297689d9a23e59ed1fd27294a5c163558765"
+    },
+    {
+      "file": "fixture.json",
+      "sha256": "003a62fb97df33117d88f1e72f21e7fe012cac01566e9b968cefabddf8341545"
+    },
+    {
+      "file": "host-move-pull-record.control.json",
+      "sha256": "0393ced20ffa02947686faaebb2501b14f4bf71642069cf2f29feeb28aa9b7ff"
+    },
+    {
+      "file": "host-move-pull-record.debug.log",
+      "sha256": "7580b3c0234dd4d03e695462a8df409fe595c58453221b04b1ead5122e9b162e"
+    },
+    {
+      "file": "host-move-pull-record.json",
+      "sha256": "06635205d9d2bc00bf6fd916b0e0106670f9667b73bc8dd8093f20cbdc286e1a"
+    },
+    {
+      "file": "host-move-pull-retire.control.json",
+      "sha256": "10eeb3a1e9b7f7c8cd50ad3d30507e68544f14aee9597f9cb5d2963095f0315e"
+    },
+    {
+      "file": "host-move-pull-retire.debug.log",
+      "sha256": "a6348b1fcaf698caf5a007954af8edb1303b19c510945df22bfc863c89f8bd2b"
+    },
+    {
+      "file": "host-move-pull-retire.json",
+      "sha256": "664b0d3c7fea60da6ec2343cc9ecdf4ebea519ddf2427a4790ed70ed3a2f3449"
+    },
+    {
+      "file": "host-move-pull-snapshot.control.json",
+      "sha256": "4f2e0fc8c89aa0cfad9d7e2c1524d5a1aa0b2ea915f5da2e85a572f2b09e0590"
+    },
+    {
+      "file": "host-move-pull-snapshot.debug.log",
+      "sha256": "d68aa86eb4b2433d664336ca3f08dfad5cfb45407016c0f16fcd2e83412ce75a"
+    },
+    {
+      "file": "host-move-pull-snapshot.json",
+      "sha256": "92222418323008fee16740796efedea12fc5f9e4a9ce9e3c82db60697971e82b"
+    },
+    {
+      "file": "host-move-push-record.control.json",
+      "sha256": "75421e31e864fe3c7ffc414b679226168c63ed7763666045f614031dd9a187c9"
+    },
+    {
+      "file": "host-move-push-record.debug.log",
+      "sha256": "3326542d174f374742ded6ae3f3ebcb8d2aa4686f5ea46eaa5df213bb232d2fe"
+    },
+    {
+      "file": "host-move-push-record.json",
+      "sha256": "780cef24655150528cc87ab9203fd123e3a32ee8e561fa6cafb8a0018bfc69e6"
+    },
+    {
+      "file": "host-move-push-retire.control.json",
+      "sha256": "0bd7d78e8b325a1a287435fc7d3bc4da5e1b92da70a41506e6010c48e04314f9"
+    },
+    {
+      "file": "host-move-push-retire.debug.log",
+      "sha256": "75e506e7116084fe01acc1141fce6fe1d1b9628512f5d163a29a01340de6c643"
+    },
+    {
+      "file": "host-move-push-retire.json",
+      "sha256": "280c90f8abc7ba4dd18b8983f6659f9766c3d03a8b326f6937ea2dadcbeeacaa"
+    },
+    {
+      "file": "host-move-push-snapshot.control.json",
+      "sha256": "6216a813d79f57432a97b369e14b1c3cf75b675a7319b2662685bf8d5e6c66c0"
+    },
+    {
+      "file": "host-move-push-snapshot.debug.log",
+      "sha256": "35819774a9e12ac016a99c944c111d6f0ca66b917eaf98e8c27f0250f89d3f10"
+    },
+    {
+      "file": "host-move-push-snapshot.json",
+      "sha256": "2242563bd2cfdfd8386f7b780656276eb1ee4c366837f1ed1b3fc21d98992bcb"
+    },
+    {
+      "file": "host-probe.debug.log",
+      "sha256": "9738d0bb71cb4f71b457a65234a30eedbbd038b088d4aa7f0ae2113fc9d2f68d"
+    },
+    {
+      "file": "host-probe.json",
+      "sha256": "6414aec642955589623ad84b3e77a4f9399585da13594e9efdf3a8d76d286261"
+    },
+    {
+      "file": "host-pull-record.control.json",
+      "sha256": "5aac0b20e9b1b88559534588a6ea38ef6fb1a54ac25306468f309c14a9a0af17"
+    },
+    {
+      "file": "host-pull-record.debug.log",
+      "sha256": "a5d2c408018136a69347dabe6b7340e81bd16a2feda3e10d9e6945f2e4e71e77"
+    },
+    {
+      "file": "host-pull-record.json",
+      "sha256": "b2f5f2052c9b5732e4d705cf2161d6393b4ce0a7e55211423c1b18cdc2cec279"
+    },
+    {
+      "file": "host-pull-retire.control.json",
+      "sha256": "950da43dbf3edaf14fc3976bcee45dbd25a97e035eed8f83b14eb259ee94a00e"
+    },
+    {
+      "file": "host-pull-retire.debug.log",
+      "sha256": "5fea9b03460e57e8ce5c3c44640a1b831fd988b5bfbdbdd5c06628555c540a99"
+    },
+    {
+      "file": "host-pull-retire.json",
+      "sha256": "6abcd1ef9ef675194c55feb06e3c7ca1d77282fc0f4e280b7defddebe8ecbb2f"
+    },
+    {
+      "file": "host-pull-snapshot.control.json",
+      "sha256": "3356b95ad6ce3a3e4d3d6cbbb61b6b8aa5524f17fcbb384dc22b61f7b06b2fa5"
+    },
+    {
+      "file": "host-pull-snapshot.debug.log",
+      "sha256": "7520e9030c17f8f96f7b6536599218af34c36446c1658f94b8db3104f42a5bd4"
+    },
+    {
+      "file": "host-pull-snapshot.json",
+      "sha256": "1df8f57a820eec9b44466b39d5f093ff9bfd37f8c0f8af655cc06e4018fa35ca"
+    },
+    {
+      "file": "host-push-record.control.json",
+      "sha256": "475d528a5ab04c8fbff84cf70514b44d92a22983a8197a873afb392e12137124"
+    },
+    {
+      "file": "host-push-record.debug.log",
+      "sha256": "74bf84a8ef20a89e5c1d3d61e831e1e6ed8679d141a03ce2c32b53c21bc03029"
+    },
+    {
+      "file": "host-push-record.json",
+      "sha256": "7870790716e44f5e3b5a88880a88b53a89f7ff5b5af25d98666b590d1799dc15"
+    },
+    {
+      "file": "host-push-retire.control.json",
+      "sha256": "f2e6f5b610f1ea78083edfde2057d84bab64bf1f94c74261324655e5ed6b685f"
+    },
+    {
+      "file": "host-push-retire.debug.log",
+      "sha256": "af6894eb30ed775ab6ff2af842fc5e1da90c080be4fb1add86deb0d104e4b417"
+    },
+    {
+      "file": "host-push-retire.json",
+      "sha256": "9de59bae1b0a6325e4c3bb201a5648a15ccf6dbedf7ba643373ef73ba8aec52c"
+    },
+    {
+      "file": "host-push-snapshot.control.json",
+      "sha256": "b9f4fa84f943ae57b2fa9eff9c71d0475110da8fd9fabf19525721fb13284fe7"
+    },
+    {
+      "file": "host-push-snapshot.debug.log",
+      "sha256": "2a38f1c20ec2cad237bf1607971bb8350b25a88114ad7149a2592c30962cfe79"
+    },
+    {
+      "file": "host-push-snapshot.json",
+      "sha256": "e51bc4f697fddbb35b83eebde7fffbe57c2862a7103db4251f509abb193d5981"
+    },
+    {
+      "file": "live-ledger.json",
+      "sha256": "76816e4334014652c15ad81e0d5824369b0060b8688f400e2e0863f544bd4074"
+    },
+    {
+      "file": "move-host-ledger.json",
+      "sha256": "24fe2a09297f0e2818aab1f3ccfefe2ee024abb15b45e9d649f6b2d89bc9c83f"
+    },
+    {
+      "file": "move-ledger.json",
+      "sha256": "de23ceea09b0d2862992542c1d4a8328022a2ec1b344fdeba8ff87773c0fc162"
+    },
+    {
+      "file": "move-pull-check.debug.log",
+      "sha256": "ad4525ec8f3c68dae3c845fb874dff7071e347122568d4829c3b26c03dfe0826"
+    },
+    {
+      "file": "move-pull-check.json",
+      "sha256": "ebde9bd01be62a86d7cb5ae792828e49b764914ad899331a937442fcceac377d"
+    },
+    {
+      "file": "move-pull-install.debug.log",
+      "sha256": "c92eca1faa26c3a98e1214c8decf7a1b50b0a5236ab6b9aa3ba7b1953c5a34bc"
+    },
+    {
+      "file": "move-pull-install.json",
+      "sha256": "63d9ee7e0f844847339eac7cf966c17b9c1164ae96bf22764559008def75df4c"
+    },
+    {
+      "file": "move-pull-record.debug.log",
+      "sha256": "4ed1959e46b8d545b23ff54e30d8d34316fd50be6699addc37bd9c312f73189d"
+    },
+    {
+      "file": "move-pull-record.json",
+      "sha256": "6d41211ca690e5a4954adc8e2a947b6161b46f48391e37cb53a74c55baf3924e"
+    },
+    {
+      "file": "move-pull-retire.debug.log",
+      "sha256": "3364feb5ed8d89e70da9602ad2df6b9f84ac18bcc07372d75ba8e8c4b69e7f71"
+    },
+    {
+      "file": "move-pull-retire.json",
+      "sha256": "ae98407ac54a0e3a706b04bd45b968e5f0daa5777c652cce7e9d28e25439ec57"
+    },
+    {
+      "file": "move-pull-send.debug.log",
+      "sha256": "3061fc43024847f4d8c9db71ce20496f90843fd76111feb3a0f3a7126ba10ba3"
+    },
+    {
+      "file": "move-pull-send.json",
+      "sha256": "83f11081423c158ee40d62e3e8153b8751c0a9b98d54f03788c8619a0be3fb16"
+    },
+    {
+      "file": "move-pull-snapshot.debug.log",
+      "sha256": "f4d060795062405d87b3df16a05c6aaab55571582fd066b3589b172f49a311ee"
+    },
+    {
+      "file": "move-pull-snapshot.json",
+      "sha256": "f4246037d4446834fc2868d4bf06287fd471eddb56886c0ac8d7d2711c2ae1be"
+    },
+    {
+      "file": "move-pull-verify.debug.log",
+      "sha256": "288d7c20db3faff50ef098bef0b4fbf78ac04ce83b29cb5001d2363fe428f1e3"
+    },
+    {
+      "file": "move-pull-verify.json",
+      "sha256": "c10f6759c6b839826f7bb08952906229ad07ccec5b323198e0d2eedab85673ee"
+    },
+    {
+      "file": "move-push-check.debug.log",
+      "sha256": "344d7226332a08cad38a8ea1adfca9988c0188e02d4943fd5046dbea5cb19a12"
+    },
+    {
+      "file": "move-push-check.json",
+      "sha256": "25e49e963762d550288772d8253fb2edc48aae00611a7472ef9a0dec58763c38"
+    },
+    {
+      "file": "move-push-install.debug.log",
+      "sha256": "ab24d7683bf1d1b0cb4bf4c40a0a007ac417e3cabb4b01938b9ce101bcd2c30e"
+    },
+    {
+      "file": "move-push-install.json",
+      "sha256": "2a1ed05eb226c90872975be417150c994f919d325e03a79089b113f2d13eae05"
+    },
+    {
+      "file": "move-push-record.debug.log",
+      "sha256": "ba030af2d4e04b5359638a5779956ad3008bd5cf2fca9e6591585f6f3d360ce4"
+    },
+    {
+      "file": "move-push-record.json",
+      "sha256": "5de80bbf05695cc132c20e807a782a1daacac9517ee39a0f0831b82c814bd600"
+    },
+    {
+      "file": "move-push-retire.debug.log",
+      "sha256": "6188a521a525d24affe7303204f409d8f7b3bc51ddd93b9d7c16074c8170665d"
+    },
+    {
+      "file": "move-push-retire.json",
+      "sha256": "96379e0b233d6fa77e43c39bb176208dd029c45791ce855fd9b236b2ded7f27e"
+    },
+    {
+      "file": "move-push-send.debug.log",
+      "sha256": "1ceba0fb358e3d0c599b15d4803c351850130fd6280b82adc4c4e0a15f734e77"
+    },
+    {
+      "file": "move-push-send.json",
+      "sha256": "be7863fb1cfb825de12c152e19fa255e8ceba265c2989dc91a6b924ba106eccd"
+    },
+    {
+      "file": "move-push-snapshot.debug.log",
+      "sha256": "85192547f7c6fc866298d00335c461072c0a2535196f2dfa2a27f85a15af0909"
+    },
+    {
+      "file": "move-push-snapshot.json",
+      "sha256": "61f72388ba813a531a9b83f60800d636c8871b032d1841a6954de61056b3350f"
+    },
+    {
+      "file": "move-push-verify.debug.log",
+      "sha256": "008dc8d27024d6a718403ed9866666c302e6f9181b8f01768e8e76134a70928a"
+    },
+    {
+      "file": "move-push-verify.json",
+      "sha256": "7daf7348de3b00265ae23de63914107eb23142c1c7f45d1bd9a139e7841227f2"
+    },
+    {
+      "file": "move-vm-setup.json",
+      "sha256": "d39a7948cc8d3f143dedef95caaeac4cb82b95ea362b7a040c2f48463ed33c9b"
+    },
+    {
+      "file": "pull-check.debug.log",
+      "sha256": "10579cc94bd188d8e6cc26e167add8a0e9b7c81f701ee39ebe6abdee1204484b"
+    },
+    {
+      "file": "pull-check.json",
+      "sha256": "ca7e95af55eabf70aac4a1c273d0364d9cefb7c143c403cf199bd7ce9a6c0fa8"
+    },
+    {
+      "file": "pull-install.debug.log",
+      "sha256": "88686e28e11fb22aea81b919f79daf11efd914bd7ab02bb65158327562b56c1e"
+    },
+    {
+      "file": "pull-install.json",
+      "sha256": "68c51dd1865eb2ef085bbc996a4043cb3a190ec484b6fd19161f7f00c8e6e449"
+    },
+    {
+      "file": "pull-record.debug.log",
+      "sha256": "cce61471ca1ead8f2dfa8401d27f36c78bb59aa276c508df7da861e3621803b8"
+    },
+    {
+      "file": "pull-record.json",
+      "sha256": "59c93533a7ea5394f9c72eb5eb6f7dd2a2083bdc8aa5ced1970c6c4689ed3548"
+    },
+    {
+      "file": "pull-retire.debug.log",
+      "sha256": "65ae4f47986b571fd2a9e48e2b2da6d18486e20d30d0dddcc400718d82979284"
+    },
+    {
+      "file": "pull-retire.json",
+      "sha256": "19cf8e0b759b8c189a2518da2d88faf2b8bb40a165ccbb456d2eaf1f0328cbec"
+    },
+    {
+      "file": "pull-send.debug.log",
+      "sha256": "0731e71f3273a62131455ea172413b6e536cc65314fcb8faa0c33a7dfc2f693a"
+    },
+    {
+      "file": "pull-send.json",
+      "sha256": "c56a07d2568059296fbcc2da9996eddd63d5ff5b9e48c501a0ba5ec91e2df7ef"
+    },
+    {
+      "file": "pull-snapshot.debug.log",
+      "sha256": "e800895e81d743a423a51700ff6f876b20775e318821cc5f45ec3c7c30a78180"
+    },
+    {
+      "file": "pull-snapshot.json",
+      "sha256": "246e1f79bc777785ee407264180c4bfd35396db8598854830992eb69c84c548c"
+    },
+    {
+      "file": "pull-verify.debug.log",
+      "sha256": "c9d17119536ae66d1bed882f7b779cbda9d6c26d42bcb9c93c7712ed726d7be3"
+    },
+    {
+      "file": "pull-verify.json",
+      "sha256": "c188818c31ef26a54e9498adc3b248829ef1af1d2d268188054f463a47add986"
+    },
+    {
+      "file": "push-check.debug.log",
+      "sha256": "a2c9fc75febd7ba63cc9dc29e5d7b32d2ebb4fddb4f8a79516f792b6fb8bf328"
+    },
+    {
+      "file": "push-check.json",
+      "sha256": "653058729f17d4d275b219fefdf140009df45691ebb7e5a02200e0459756cfc5"
+    },
+    {
+      "file": "push-install.debug.log",
+      "sha256": "966144f66e78db0cf667026b803034831ac28e94ca835a54719a1cc06405fd07"
+    },
+    {
+      "file": "push-install.json",
+      "sha256": "58381599a301d0db980fbe58340ca7cf2c4bdfd13b59f2e203a9f0132dd60d1d"
+    },
+    {
+      "file": "push-record.debug.log",
+      "sha256": "8af57582d2e4f3cc4bd13ac4491d21073d1fe8e7b40f1d1def210b56860be784"
+    },
+    {
+      "file": "push-record.json",
+      "sha256": "8406222a4d627a48b5b447e3f9b3856113fdd83f0b3ed73b5e8bb5932bf682cb"
+    },
+    {
+      "file": "push-retire.debug.log",
+      "sha256": "2e788dcb60963d70510740b0bcbee4edd2f6dcc1c8d9f9b63e052097091cbb67"
+    },
+    {
+      "file": "push-retire.json",
+      "sha256": "1df7707034112923749fd3fe007cae38a5c35efa3c6bd17a0a7dfff27623c440"
+    },
+    {
+      "file": "push-send.debug.log",
+      "sha256": "72bc64bfd841d20bf584243f3667cef187df5b6497be161b2a5686ccda1102e4"
+    },
+    {
+      "file": "push-send.json",
+      "sha256": "56c83feec997b850aec2b10f0a941482120c37a6a3993820f4429b599d4d3bb4"
+    },
+    {
+      "file": "push-snapshot.debug.log",
+      "sha256": "8066b34ce7955ed6393992a1440283fb404e5bb31830156726c8e4a1eb35de9f"
+    },
+    {
+      "file": "push-snapshot.json",
+      "sha256": "a71d29d870975efe205523b35bdb5b713dfd805778342680ec1210a26bd87d30"
+    },
+    {
+      "file": "push-verify.debug.log",
+      "sha256": "1e398422d50a56f33466c6d881c4e7df2a9912e3a73aad7d117f08a6bd17ed0e"
+    },
+    {
+      "file": "push-verify.json",
+      "sha256": "b75b1b14a24083e2fe613db2c275114434685229000400bf521609930b547cde"
+    },
+    {
+      "file": "reviewed-matrix.json",
+      "sha256": "2da5f6ff5dc5986b3f51909763d582a25bc68979d48d9cc0cf67d903b7c348e2"
+    }
+  ]
+}

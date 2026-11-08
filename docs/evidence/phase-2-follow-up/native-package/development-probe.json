@@ -1,0 +1,493 @@
+{
+  "started": "2026-11-08T22:59:14.195Z",
+  "checks": [
+    {
+      "name": "main identity/userData isolation",
+      "result": {
+        "userData": "/private/tmp/connect-followup-native-20261109/electron-data",
+        "platform": "darwin",
+        "versions": {
+          "node": "24.22.0",
+          "acorn": "8.18.0",
+          "ada": "4.0.0",
+          "amaro": "1.1.11",
+          "ares": "1.34.8",
+          "brotli": "1.2.0",
+          "cldr": "48.0",
+          "icu": "78.2",
+          "llhttp": "9.4.3",
+          "merve": "1.2.2",
+          "modules": "150",
+          "napi": "10",
+          "nbytes": "0.1.4",
+          "ncrypto": "0.0.1",
+          "nghttp2": "1.70.0",
+          "nghttp3": "",
+          "ngtcp2": "",
+          "openssl": "0.0.0",
+          "simdjson": "4.6.11",
+          "simdutf": "7.7.0",
+          "sqlite": "3.53.4",
+          "tz": "2026e",
+          "undici": "7.29.1",
+          "unicode": "17.0",
+          "uv": "1.52.1",
+          "uvwasi": "0.0.23",
+          "v8": "15.6.75.19-electron.0",
+          "zlib": "1.3.2.1-motley",
+          "zstd": "1.6.0",
+          "electron": "45.0.0",
+          "chrome": "156.0.8078.48"
+        },
+        "isPackaged": false
+      }
+    },
+    {
+      "name": "real preload IPC status/management",
+      "result": [
+        {
+          "status": 200,
+          "body": {
+            "platform": "macos",
+            "mode": "real",
+            "layerfs": "2.0.0",
+            "settings": {
+              "state": "/tmp/connect-followup-native-20261109/state",
+              "home": "/tmp/connect-followup-native-20261109/state/home-2",
+              "cli": "/Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect-cli-137/target/debug/layerfs"
+            },
+            "daemon": {
+              "recorded": true,
+              "why": null
+            },
+            "machines": [
+              {
+                "name": "docker",
+                "platform": "docker",
+                "state": "stopped"
+              },
+              {
+                "name": "native",
+                "platform": "native",
+                "state": "ready"
+              }
+            ],
+            "stores": 0
+          }
+        },
+        {
+          "status": 200,
+          "body": {
+            "available": true,
+            "readErrors": {},
+            "layerfs": "2.0.0",
+            "machines": [
+              {
+                "name": "docker",
+                "platform": "docker",
+                "backend": "namespaces",
+                "state": "stopped",
+                "supports": {
+                  "sqlite": true,
+                  "postgresql_sandbox": true,
+                  "reason": null
+                },
+                "cpus": null,
+                "memory": null,
+                "disk": null,
+                "stores": [],
+                "sandboxes": []
+              },
+              {
+                "name": "native",
+                "platform": "native",
+                "backend": "native",
+                "state": "ready",
+                "supports": {
+                  "sqlite": true,
+                  "postgresql_sandbox": true,
+                  "reason": null
+                },
+                "cpus": null,
+                "memory": null,
+                "disk": null,
+                "stores": [],
+                "sandboxes": []
+              }
+            ],
+            "platforms": [
+              {
+                "platform": "native",
+                "how": "built_in",
+                "backend": "native",
+                "kernel": "nfs",
+                "sqlite": "in_process",
+                "postgresql": {
+                  "store_calls": "in_process",
+                  "sandbox": true,
+                  "reason": null
+                },
+                "ready": true,
+                "missing": [],
+                "version": null,
+                "options": [],
+                "description": "this host; Sandboxes run as this user's processes, served over loopback NFS"
+              },
+              {
+                "platform": "docker",
+                "how": "built_in",
+                "backend": "namespaces",
+                "kernel": "fuse",
+                "sqlite": "worker",
+                "postgresql": {
+                  "store_calls": "in_process",
+                  "sandbox": true,
+                  "reason": null
+                },
+                "ready": true,
+                "missing": [],
+                "version": "29.5.2",
+                "options": [],
+                "description": "Docker's kernel (Docker Desktop's VM, or the Linux host); Sandboxes run in Linux namespaces and a cgroup"
+              },
+              {
+                "platform": "apple-container",
+                "how": "created",
+                "backend": "namespaces",
+                "kernel": "fuse",
+                "sqlite": "worker",
+                "postgresql": {
+                  "store_calls": "in_process",
+                  "sandbox": true,
+                  "reason": null
+                },
+                "ready": true,
+                "missing": [],
+                "version": "container CLI version 1.6.1 (build: release, commit: unspeci)",
+                "options": [
+                  {
+                    "name": "cpus",
+                    "kind": "int"
+                  },
+                  {
+                    "name": "memory",
+                    "kind": "size"
+                  },
+                  {
+                    "name": "disk",
+                    "kind": "size"
+                  },
+                  {
+                    "name": "image",
+                    "kind": "text"
+                  }
+                ],
+                "description": "an Apple container VM (Apple silicon); Sandboxes run in Linux namespaces and a cgroup"
+              },
+              {
+                "platform": "lima",
+                "how": "created",
+                "backend": "namespaces",
+                "kernel": "fuse",
+                "sqlite": "worker",
+                "postgresql": {
+                  "store_calls": "in_process",
+                  "sandbox": true,
+                  "reason": null
+                },
+                "ready": true,
+                "missing": [],
+                "version": "limactl version 2.2.1",
+                "options": [
+                  {
+                    "name": "cpus",
+                    "kind": "int"
+                  },
+                  {
+                    "name": "memory",
+                    "kind": "size"
+                  },
+                  {
+                    "name": "disk",
+                    "kind": "size"
+                  },
+                  {
+                    "name": "image",
+                    "kind": "text"
+                  }
+                ],
+                "description": "a Lima VM (vz); Sandboxes run in Linux namespaces and a cgroup"
+              }
+            ],
+            "stores": [],
+            "postgresql": [],
+            "sandboxes": [],
+            "status": {}
+          }
+        }
+      ]
+    },
+    {
+      "name": "scratch isolation",
+      "result": "/private/tmp/connect-followup-native-20261109/electron-data/scratch/a5f12a0a-8a00-4798-89e0-ff5b85d6febf"
+    },
+    {
+      "name": "window 1280x820",
+      "result": {
+        "size": [
+          1280,
+          820
+        ],
+        "visible": true
+      }
+    },
+    {
+      "name": "window 900x600",
+      "result": {
+        "size": [
+          900,
+          600
+        ],
+        "visible": true
+      }
+    },
+    {
+      "name": "native minimize/restore/focus",
+      "result": {
+        "minimized": false,
+        "restored": true
+      }
+    },
+    {
+      "name": "explicit real Doctor IPC launch",
+      "result": {
+        "status": 200,
+        "body": {
+          "id": "72717002-e071-45ce-b860-ffaba67e922a",
+          "key": "native-followup-explicit-host",
+          "request": {
+            "target": "host"
+          },
+          "state": "running",
+          "created": 1794178757949,
+          "simulated": false,
+          "identity": {
+            "version": "2.0.0",
+            "commit": "833d04cf44e8e747929d50ab1170a48260d9381c",
+            "dirty": false,
+            "features": [
+              "machine",
+              "postgresql"
+            ]
+          },
+          "started": 1794178757950,
+          "pid": 67914
+        }
+      }
+    },
+    {
+      "name": "Doctor final result",
+      "result": {
+        "status": 200,
+        "body": {
+          "id": "72717002-e071-45ce-b860-ffaba67e922a",
+          "key": "native-followup-explicit-host",
+          "request": {
+            "target": "host"
+          },
+          "state": "completed",
+          "created": 1794178757949,
+          "simulated": false,
+          "identity": {
+            "version": "2.0.0",
+            "commit": "833d04cf44e8e747929d50ab1170a48260d9381c",
+            "dirty": false,
+            "features": [
+              "machine",
+              "postgresql"
+            ]
+          },
+          "started": 1794178757950,
+          "pid": 67914,
+          "report": {
+            "ok": true,
+            "complete": true,
+            "target": {
+              "kind": "host",
+              "name": "local"
+            },
+            "checks": [
+              {
+                "id": "host.build",
+                "code": "host.build",
+                "outcome": "pass",
+                "severity": null,
+                "entity": {
+                  "kind": "host",
+                  "name": "local"
+                },
+                "message": "Calling executable exists and is executable",
+                "evidence": {
+                  "home": "/tmp/connect-followup-native-20261109/state/home-2",
+                  "version": "2.0.0",
+                  "os": "macos",
+                  "arch": "aarch64"
+                },
+                "fix": "",
+                "blocked_by": [],
+                "observed_ms": 0,
+                "duration_ms": null
+              },
+              {
+                "id": "host.prerequisites",
+                "code": "host.prerequisites",
+                "outcome": "pass",
+                "severity": null,
+                "entity": {
+                  "kind": "host",
+                  "name": "local"
+                },
+                "message": "Observable native runtime prerequisites are present",
+                "evidence": null,
+                "fix": "",
+                "blocked_by": [],
+                "observed_ms": 0,
+                "duration_ms": null
+              },
+              {
+                "id": "host.capacity",
+                "code": "host.capacity",
+                "outcome": "pass",
+                "severity": null,
+                "entity": {
+                  "kind": "host",
+                  "name": "local"
+                },
+                "message": "Measured local filesystem capacity; no product free-space threshold applied",
+                "evidence": {
+                  "filesystem": "/dev/disk3s5",
+                  "path": "/tmp/connect-followup-native-20261109/state/home-2",
+                  "free_bytes": 332066643968
+                },
+                "fix": "",
+                "blocked_by": [],
+                "observed_ms": 7,
+                "duration_ms": 7
+              },
+              {
+                "id": "host.layout",
+                "code": "host.layout",
+                "outcome": "pass",
+                "severity": null,
+                "entity": {
+                  "kind": "host",
+                  "name": "local"
+                },
+                "message": "Current home layout is readable",
+                "evidence": null,
+                "fix": "",
+                "blocked_by": [],
+                "observed_ms": 7,
+                "duration_ms": null
+              },
+              {
+                "id": "host.records",
+                "code": "host.records",
+                "outcome": "pass",
+                "severity": null,
+                "entity": {
+                  "kind": "host",
+                  "name": "local"
+                },
+                "message": "Local record, permission, reference, intent and lease checks found no problems",
+                "evidence": null,
+                "fix": "",
+                "blocked_by": [],
+                "observed_ms": 9,
+                "duration_ms": null
+              },
+              {
+                "id": "host.artifacts",
+                "code": "host.artifacts",
+                "outcome": "pass",
+                "severity": null,
+                "entity": {
+                  "kind": "host",
+                  "name": "local"
+                },
+                "message": "Machine native configured daemon is executable",
+                "evidence": null,
+                "fix": "",
+                "blocked_by": [],
+                "observed_ms": 9,
+                "duration_ms": null
+              },
+              {
+                "id": "host.bundle",
+                "code": "host.bundle",
+                "outcome": "pass",
+                "severity": null,
+                "entity": {
+                  "kind": "host",
+                  "name": "local"
+                },
+                "message": "Applicable bundle manifest and required executable/image files are present",
+                "evidence": null,
+                "fix": "",
+                "blocked_by": [],
+                "observed_ms": 10,
+                "duration_ms": null
+              },
+              {
+                "id": "host.bundle_hashes",
+                "code": "host.bundle_hashes",
+                "outcome": "skipped",
+                "severity": null,
+                "entity": {
+                  "kind": "host",
+                  "name": "local"
+                },
+                "message": "Artifact content hashes were not recomputed; presence does not authenticate bundle bytes",
+                "evidence": null,
+                "fix": "",
+                "blocked_by": [],
+                "observed_ms": 10,
+                "duration_ms": null
+              },
+              {
+                "id": "host.remote",
+                "code": "host.remote",
+                "outcome": "skipped",
+                "severity": null,
+                "entity": {
+                  "kind": "host",
+                  "name": "local"
+                },
+                "message": "Worker connections and remote transfer files are outside host scope",
+                "evidence": null,
+                "fix": "",
+                "blocked_by": [],
+                "observed_ms": 10,
+                "duration_ms": null
+              }
+            ],
+            "findings": [],
+            "truncated": false,
+            "observed_at_ms": 1794178757961,
+            "duration_ms": 10,
+            "counts": {
+              "pass": 7,
+              "skipped": 2
+            },
+            "home": "/tmp/connect-followup-native-20261109/state/home-2",
+            "operation": "diagnose",
+            "mode": "observation"
+          },
+          "ended": 1794178757973
+        }
+      }
+    }
+  ],
+  "scope": "development",
+  "verdict": "PARTIAL"
+}

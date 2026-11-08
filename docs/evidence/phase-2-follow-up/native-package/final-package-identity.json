@@ -1,0 +1,42 @@
+{
+  "verdict": "PASS",
+  "source_commit": "da2986c4771b9edb89db0b6761b3781ae8a1d7fa",
+  "source_tree": "307af775ca8abebf2fbcbfcf7a49ed91fabc59d8",
+  "production_source_sha256": {
+    "host/agents/workspaces.js": "d1d367dcb2c216e56252939a4525074c5034ff879aa0c3906ba8eff3f5ea3262",
+    "desktop/src/main/layerfs-host.ts": "8424f63ca7678f001bfa889ff72e8d1fcbd86dc4b3b3c1f35f47d507be27298c",
+    "desktop/src/renderer/src/components/shell/Sidebar.tsx": "8ed88bb32499d9cacfc491f71dce379a2b991fdf1dbf077129e758767f40028d"
+  },
+  "installation": "/Users/yifanxu/Applications/LayerFS Connect Follow-up Final 20261109-137.app",
+  "arch": "arm64",
+  "os": "26.4.1",
+  "signing": "ad-hoc local; no Developer ID signing/notarization/distribution",
+  "package_tree_sha256": "20a071e5b25b530f5e75c86cd1e537550ccdd9e7b45d7581b14359dd891cb009",
+  "package_tree_hash_method": "os.walk sorted within each directory, each symlink L relative-path target or file F relative-path SHA256 followed by newline, UTF8; traversal directory entries native os.walk order; package source build scripts included; order captured by this script",
+  "files": 25001,
+  "bytes": 674144542,
+  "runtime_hashes": {
+    "node": "e4b5a3af0e05c75de2eae013904145f40fe7fc2a6e6f17510128bf45cca4e79b",
+    "layerfs": "7d7a5b507eeb2abc914a0e151c63eb12bd49bcbb69a06083d08f0b4430a3619c",
+    "layerfs-daemon": "664c991face739375b9c147c757575d4f12edbf84f64773eedd5a08c789d10c2"
+  },
+  "binary_identity": {
+    "version": "2.0.0",
+    "commit": "833d04cf44e8e747929d50ab1170a48260d9381c",
+    "dirty": false,
+    "features": [
+      "machine",
+      "postgresql"
+    ]
+  },
+  "node_addon_files": [
+    "Contents/Resources/backend/node_modules/.bundled/182-@earendil-works-pi-tui/native/linux/prebuilds/linux-arm64/linux-platform-x11.node",
+    "Contents/Resources/backend/node_modules/.bundled/182-@earendil-works-pi-tui/native/linux/prebuilds/linux-x64/linux-platform-x11.node",
+    "Contents/Resources/backend/node_modules/.bundled/182-@earendil-works-pi-tui/native/darwin/prebuilds/darwin-x64/darwin-platform.node",
+    "Contents/Resources/backend/node_modules/.bundled/182-@earendil-works-pi-tui/native/darwin/prebuilds/darwin-arm64/darwin-platform.node",
+    "Contents/Resources/backend/node_modules/.bundled/182-@earendil-works-pi-tui/native/win32/prebuilds/win32-arm64/win32-platform.node",
+    "Contents/Resources/backend/node_modules/.bundled/182-@earendil-works-pi-tui/native/win32/prebuilds/win32-x64/win32-platform.node"
+  ],
+  "runtime_dependency": "bundled Node24.21.0 and CLI/daemon; native proof PATH=/usr/bin:/bin:/usr/sbin:/sbin with CLI/NODE/DAEMON override values empty; no linked LayerFS Node addon",
+  "built_package_retained": "desktop/dist/mac-arm64/LayerFS Connect.app"
+}

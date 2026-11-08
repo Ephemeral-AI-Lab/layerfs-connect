@@ -1,0 +1,119 @@
+{
+  "calls": [
+    {
+      "argv": [
+        "store",
+        "list"
+      ],
+      "exit": 0,
+      "stdout": "{\"items\":[{\"name\":\"probe\",\"kind\":\"sqlite\",\"machine\":\"docker\",\"profile\":\"disposable\",\"created\":1794178733184,\"sqlite\":\"3.53.2\",\"last_transfer\":{\"call\":\"store.push\",\"from\":\"native\",\"to\":\"docker\",\"at\":1794178801667,\"bytes\":217088,\"sha256\":\"d541236d0be93551b8af29fe69b7e110f2c8ba13683dc38efc60c48958227f82\",\"heads\":\"6a7b76fcc81fb56f0a668d533a34e0fe1ae923e82c4decdd5db50feaba95447d\",\"retired\":true},\"op\":{\"id\":\"op-3137d6ef6d267c9e\",\"name\":\"store.pull\",\"phase\":\"snapshot\",\"started\":1794178806321,\"uncertain\":false},\"projects\":[\"p\"],\"state\":\"idle\"}]}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "status",
+        "probe"
+      ],
+      "exit": 0,
+      "stdout": "{\"name\":\"probe\",\"kind\":\"sqlite\",\"state\":\"idle\",\"holders\":[],\"op\":{\"id\":\"op-3137d6ef6d267c9e\",\"name\":\"store.pull\",\"phase\":\"snapshot\",\"started\":1794178806321,\"uncertain\":false},\"down_reason\":null,\"machine\":\"docker\",\"file\":{\"exists\":true,\"free\":190693470208,\"bytes\":217088,\"wal_bytes\":0,\"incoming_bytes\":0}}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "get",
+        "probe"
+      ],
+      "exit": 0,
+      "stdout": "{\"name\":\"probe\",\"kind\":\"sqlite\",\"machine\":\"docker\",\"profile\":\"disposable\",\"created\":1794178733184,\"sqlite\":\"3.53.2\",\"last_transfer\":{\"call\":\"store.push\",\"from\":\"native\",\"to\":\"docker\",\"at\":1794178801667,\"bytes\":217088,\"sha256\":\"d541236d0be93551b8af29fe69b7e110f2c8ba13683dc38efc60c48958227f82\",\"heads\":\"6a7b76fcc81fb56f0a668d533a34e0fe1ae923e82c4decdd5db50feaba95447d\",\"retired\":true},\"op\":{\"id\":\"op-3137d6ef6d267c9e\",\"name\":\"store.pull\",\"phase\":\"snapshot\",\"started\":1794178806321,\"uncertain\":false},\"projects\":[\"p\"]}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "remove",
+        "probe"
+      ],
+      "exit": 0,
+      "stdout": "{\"removed\":\"probe\"}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "list"
+      ],
+      "exit": 0,
+      "stdout": "{\"items\":[]}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "machine",
+        "status",
+        "live-move-vm"
+      ],
+      "exit": 0,
+      "stdout": "{\"name\":\"live-move-vm\",\"platform\":\"lima\",\"state\":\"running\",\"free_disk\":7901999104,\"tool_version\":\"limactl version 2.2.1\",\"down_reason\":null,\"stores\":[]}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "machine",
+        "stop",
+        "live-move-vm"
+      ],
+      "exit": 0,
+      "stdout": "{\"name\":\"live-move-vm\",\"platform\":\"lima\",\"backend\":\"namespaces\",\"supports\":{\"sqlite\":true,\"postgresql_sandbox\":true,\"reason\":null},\"state\":\"stopped\",\"cpus\":2,\"memory\":2147483648,\"disk\":8589934592,\"stores\":[],\"sandboxes\":[]}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "machine",
+        "remove",
+        "live-move-vm"
+      ],
+      "exit": 0,
+      "stdout": "{\"name\":\"live-move-vm\",\"removed\":true}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "machine",
+        "status",
+        "docker"
+      ],
+      "exit": 0,
+      "stdout": "{\"name\":\"docker\",\"platform\":\"docker\",\"state\":\"running\",\"free_disk\":190693691392,\"tool_version\":\"29.5.2\",\"down_reason\":null,\"stores\":[]}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "machine",
+        "stop",
+        "docker"
+      ],
+      "exit": 0,
+      "stdout": "{\"name\":\"docker\",\"platform\":\"docker\",\"backend\":\"namespaces\",\"supports\":{\"sqlite\":true,\"postgresql_sandbox\":true,\"reason\":null},\"state\":\"stopped\",\"cpus\":null,\"memory\":null,\"disk\":null,\"stores\":[],\"sandboxes\":[],\"image\":\"layerfs-352-runtime:node24-https-apt-20261024\",\"daemon\":\"/private/tmp/connect137-linux-bundle/2.0.0/linux-aarch64/layerfs-daemon\"}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "machine",
+        "list"
+      ],
+      "exit": 0,
+      "stdout": "{\"machines\":[{\"name\":\"docker\",\"platform\":\"docker\",\"backend\":\"namespaces\",\"supports\":{\"sqlite\":true,\"postgresql_sandbox\":true,\"reason\":null},\"state\":\"stopped\",\"cpus\":null,\"memory\":null,\"disk\":null,\"stores\":[],\"sandboxes\":[],\"image\":\"layerfs-352-runtime:node24-https-apt-20261024\",\"daemon\":\"/private/tmp/connect137-linux-bundle/2.0.0/linux-aarch64/layerfs-daemon\"},{\"name\":\"native\",\"platform\":\"native\",\"backend\":\"native\",\"supports\":{\"sqlite\":true,\"postgresql_sandbox\":true,\"reason\":null},\"state\":\"ready\",\"cpus\":null,\"memory\":null,\"disk\":null,\"stores\":[],\"sandboxes\":[]}]}\n",
+      "stderr": ""
+    }
+  ],
+  "fixture": "/private/tmp/connect-followup-live-1c2f5bjz",
+  "retained_evidence": "/Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect/docs/evidence/phase-2-follow-up/live",
+  "fixture_removed": true,
+  "verdict": "PASS",
+  "protected": [
+    "/Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect-cli-137/target/debug/layerfs",
+    "/private/tmp/connect137-linux-bundle"
+  ]
+}

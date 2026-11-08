@@ -1,0 +1,141 @@
+{
+  "calls": [
+    {
+      "argv": [
+        "store",
+        "create",
+        "live-explicit-push-record"
+      ],
+      "exit": 0,
+      "stdout": "{\"name\":\"live-explicit-push-record\",\"kind\":\"sqlite\",\"machine\":\"native\",\"profile\":\"disposable\",\"created\":1794179214976,\"sqlite\":\"3.53.2\",\"projects\":[]}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "project",
+        "init",
+        "live-explicit-push-record/p",
+        "/private/tmp/connect-followup-live-1c2f5bjz/input"
+      ],
+      "exit": 0,
+      "stdout": "{\"project\":\"live-explicit-push-record/p\",\"store\":\"live-explicit-push-record\",\"name\":\"p\",\"kind\":\"sqlite\",\"machine\":\"native\",\"created\":1794179215005,\"layer\":\"3278742b0a90fe002cf54c63ad148375ad8d49dfb5c7f6de1c8f36890972965585\",\"root\":\"aeac4cc5b847ea6ee7c39d30566a1b7a44d4c2ec7760340fb8745a3024c3195e\"}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "status",
+        "live-explicit-push-record"
+      ],
+      "exit": 0,
+      "stdout": "{\"name\":\"live-explicit-push-record\",\"kind\":\"sqlite\",\"state\":\"idle\",\"holders\":[],\"op\":null,\"down_reason\":null,\"machine\":\"docker\",\"file\":{\"exists\":true,\"free\":190691979264,\"bytes\":217088,\"wal_bytes\":0,\"incoming_bytes\":0}}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "remove",
+        "live-explicit-push-record"
+      ],
+      "exit": 0,
+      "stdout": "{\"removed\":\"live-explicit-push-record\"}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "create",
+        "live-explicit-pull-record"
+      ],
+      "exit": 0,
+      "stdout": "{\"name\":\"live-explicit-pull-record\",\"kind\":\"sqlite\",\"machine\":\"native\",\"profile\":\"disposable\",\"created\":1794179219457,\"sqlite\":\"3.53.2\",\"projects\":[]}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "project",
+        "init",
+        "live-explicit-pull-record/p",
+        "/private/tmp/connect-followup-live-1c2f5bjz/input"
+      ],
+      "exit": 0,
+      "stdout": "{\"project\":\"live-explicit-pull-record/p\",\"store\":\"live-explicit-pull-record\",\"name\":\"p\",\"kind\":\"sqlite\",\"machine\":\"native\",\"created\":1794179219485,\"layer\":\"322304e8689d27bd97a0a8524b6f6c59d01ec8ffaeae202148b9b68533c64dfc27\",\"root\":\"449e960557aaedacb174b3f0a8fffd261ce36d4e8c056699bcfe1064dbf07541\"}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "push",
+        "live-explicit-pull-record",
+        "docker"
+      ],
+      "exit": 0,
+      "stdout": "{\"store\":\"live-explicit-pull-record\",\"from\":\"native\",\"to\":\"docker\",\"bytes\":217088,\"heads\":\"9ea2db296668a7ae39b2f027a4d8e054d6e156e9c44ffef45166e5051ff9ba8d\"}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "status",
+        "live-explicit-pull-record"
+      ],
+      "exit": 0,
+      "stdout": "{\"name\":\"live-explicit-pull-record\",\"kind\":\"sqlite\",\"state\":\"idle\",\"holders\":[],\"op\":null,\"down_reason\":null,\"machine\":\"native\",\"file\":{\"exists\":true,\"free\":327995539456,\"bytes\":217088,\"wal_bytes\":0,\"incoming_bytes\":0}}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "store",
+        "remove",
+        "live-explicit-pull-record"
+      ],
+      "exit": 0,
+      "stdout": "{\"removed\":\"live-explicit-pull-record\"}\n",
+      "stderr": ""
+    }
+  ],
+  "rows": [
+    {
+      "id": "explicit-push-record",
+      "pass": true,
+      "status": {
+        "name": "live-explicit-push-record",
+        "kind": "sqlite",
+        "state": "idle",
+        "holders": [],
+        "op": null,
+        "down_reason": null,
+        "machine": "docker",
+        "file": {
+          "exists": true,
+          "free": 190691979264,
+          "bytes": 217088,
+          "wal_bytes": 0,
+          "incoming_bytes": 0
+        }
+      },
+      "cleanup": "owned Store removed"
+    },
+    {
+      "id": "explicit-pull-record",
+      "pass": true,
+      "status": {
+        "name": "live-explicit-pull-record",
+        "kind": "sqlite",
+        "state": "idle",
+        "holders": [],
+        "op": null,
+        "down_reason": null,
+        "machine": "native",
+        "file": {
+          "exists": true,
+          "free": 327995539456,
+          "bytes": 217088,
+          "wal_bytes": 0,
+          "incoming_bytes": 0
+        }
+      },
+      "cleanup": "owned Store removed"
+    }
+  ]
+}

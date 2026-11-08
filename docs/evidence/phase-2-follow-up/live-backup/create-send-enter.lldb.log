@@ -1,0 +1,40 @@
+(lldb) process attach --pid 70593
+Process 70593 stopped
+* thread #1, stop reason = signal SIGSTOP
+    frame #0: 0x00000001831ddf20 dyld`strlen + 64
+dyld`strlen:
+->  0x1831ddf20 <+64>: eor.16b v1, v1, v1
+    0x1831ddf24 <+68>: cmhi.16b v0, v0, v1
+    0x1831ddf28 <+72>: orr.16b v0, v0, v2
+    0x1831ddf2c <+76>: uminv.16b b1, v0
+Target 0: (layerfs) stopped.
+Executable module set to "/Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect-cli-137/target/debug/layerfs".
+Architecture set to: arm64-apple-macosx-.
+(lldb) breakpoint set --file /Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect-cli-137/control/crates/layerfs-store/src/backup/create.rs --line 107
+Breakpoint 1: 3 locations.
+(lldb) process continue
+Process 70593 resuming
+Process 70593 stopped
+* thread #1, name = 'main', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+    frame #0: 0x000000010252a494 layerfs`layerfs_store::backup::create::create::_$u7b$$u7b$closure$u7d$$u7d$::hfb2287fc0f7f6152 at create.rs:107:26
+   104 	        if !local_steps {
+   105 	            let total = staged.get_int("bytes").map(|n| n as u64);
+   106 	            shown.bytes(events, "send", 0, total);
+-> 107 	            fetch_staged(&step, &local, &mut |done| {
+    	                         ^
+   108 	                shown.bytes(events, "send", done, total)
+   109 	            })?;
+   110 	            let (_, sha256) = pieces::sha256_file(&local, None).map_err(remote_error)?;
+Target 0: (layerfs) stopped.
+(lldb) thread backtrace -c 8
+* thread #1, name = 'main', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+  * frame #0: 0x000000010252a494 layerfs`layerfs_store::backup::create::create::_$u7b$$u7b$closure$u7d$$u7d$::hfb2287fc0f7f6152 at create.rs:107:26
+    frame #1: 0x000000010251b1e4 layerfs`layerfs_store::backup::create::create::hec6391ea092fda67(home=&std::path::Path @ 0x000000016dabf608, events=0x000000016dac0280, request=0x000000016dabf6f0) at create.rs:103:18
+    frame #2: 0x000000010236a4a8 layerfs`layerfs_api::backup::create::run::h669ae0c3f85ac6e7(context=0x000000016dac0268, args=0x000000016dabfa60) at create.rs:28:5
+    frame #3: 0x000000010237c040 layerfs`layerfs_api::calls::dispatch::scoped::h8c81f440be28ea1c(families=&[layerfs_api::calls::table::Family] @ 0x000000016dac0560, home_path=Option<&std::path::Path> @ 0x000000016dac0570, scope=Option<&layerfs_api::calls::scope::Scope> @ 0x000000016dabf958, name=(data_ptr = "backup.create", length = 13), args=SdkValue @ 0x000000016dac0600, events=&mut dyn core::ops::function::FnMut<(layerfs_bridge::control_sdk::SdkValue), Output=()> @ 0x000000016dac0580) at dispatch.rs:95:17
+    frame #4: 0x000000010238772c layerfs`layerfs_api::calls::dispatch::call_scoped::_$u7b$$u7b$closure$u7d$$u7d$::h71aadc14d9a2f013 at dispatch.rs:61:9
+    frame #5: 0x0000000102387168 layerfs`layerfs_home::trace::stepped::h964b636a39c629fb(op=(data_ptr = "backup.create", length = 13), work={closure_env#0} @ 0x000000016dac0820) at trace.rs:101:16
+    frame #6: 0x000000010237b968 layerfs`layerfs_api::calls::dispatch::call_scoped::ha8228fa7e16207b6(families=&[layerfs_api::calls::table::Family] @ 0x000000016dac07f8, home_path=Option<&std::path::Path> @ 0x000000016dac0808, scope=Option<&layerfs_api::calls::scope::Scope> @ 0x000000016dac0818, name=(data_ptr = "backup.create", length = 13), args=<unavailable>, events=&mut dyn core::ops::function::FnMut<(layerfs_bridge::control_sdk::SdkValue), Output=()> @ 0x000000016dac0890) at dispatch.rs:60:5
+    frame #7: 0x0000000102387b7c layerfs`layerfs_api::call_scoped::hbc0e9d4c3a82e850(home=Option<&std::path::Path> @ 0x000000016dac0948, scope=Option<&layerfs_api::calls::scope::Scope> @ 0x000000016dac0958, name=(data_ptr = "backup.create", length = 13), args=SdkValue @ 0x000000016dac0f10, events=&mut dyn core::ops::function::FnMut<(layerfs_bridge::control_sdk::SdkValue), Output=()> @ 0x000000016dac0970) at lib.rs:150:5
+(lldb) process kill
+Process 70593 exited with status = 9 (0x00000009) killed

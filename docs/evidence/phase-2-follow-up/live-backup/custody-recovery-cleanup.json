@@ -1,0 +1,173 @@
+{
+  "source": "833d04cf44e8e747929d50ab1170a48260d9381c",
+  "calls": [
+    {
+      "argv": [
+        "backup",
+        "list",
+        "bucket"
+      ],
+      "result": {
+        "items": [
+          {
+            "bucket": "bucket",
+            "file": "baseline",
+            "bytes": 217088,
+            "modified": 1794178900607,
+            "heads": "ee782173a943402d6cbf9cff2a791640c13ecaa0bd08dac897ccf6cdb04c2fb8",
+            "store": "restore-host-restore-install",
+            "state": "current"
+          },
+          {
+            "bucket": "bucket",
+            "file": "host-create-upload",
+            "bytes": 217088,
+            "modified": 1794179166922,
+            "heads": "ee782173a943402d6cbf9cff2a791640c13ecaa0bd08dac897ccf6cdb04c2fb8",
+            "store": "source",
+            "state": "current"
+          }
+        ]
+      }
+    },
+    {
+      "argv": [
+        "store",
+        "list"
+      ],
+      "result": {
+        "items": [
+          {
+            "name": "restore-host-restore-install",
+            "kind": "sqlite",
+            "machine": "native",
+            "profile": "disposable",
+            "created": 1794179205265,
+            "backups": {
+              "bucket": {
+                "file": "baseline",
+                "heads": "ee782173a943402d6cbf9cff2a791640c13ecaa0bd08dac897ccf6cdb04c2fb8",
+                "last": {
+                  "op": "restore",
+                  "at": 1794179205342,
+                  "bytes": 217088,
+                  "sha256": "cf6e19ae9e5323024f33d478553023bfb4bb3f88a755fe0ae671198c31b9be38"
+                }
+              }
+            },
+            "projects": [
+              "p"
+            ],
+            "state": "idle"
+          },
+          {
+            "name": "source",
+            "kind": "sqlite",
+            "machine": "native",
+            "profile": "disposable",
+            "created": 1794178900517,
+            "sqlite": "3.53.2",
+            "backups": {
+              "bucket": {
+                "file": "host-create-upload",
+                "heads": "ee782173a943402d6cbf9cff2a791640c13ecaa0bd08dac897ccf6cdb04c2fb8",
+                "last": {
+                  "op": "create",
+                  "at": 1794179166930,
+                  "bytes": 217088,
+                  "sha256": "cf6e19ae9e5323024f33d478553023bfb4bb3f88a755fe0ae671198c31b9be38"
+                }
+              }
+            },
+            "projects": [
+              "p"
+            ],
+            "state": "idle"
+          }
+        ]
+      }
+    },
+    {
+      "argv": [
+        "backup",
+        "restore",
+        "explicit-recovery",
+        "bucket",
+        "baseline"
+      ],
+      "result": {
+        "store": "explicit-recovery",
+        "bucket": "bucket",
+        "file": "baseline",
+        "bytes": 217088,
+        "sha256": "cf6e19ae9e5323024f33d478553023bfb4bb3f88a755fe0ae671198c31b9be38",
+        "heads": "ee782173a943402d6cbf9cff2a791640c13ecaa0bd08dac897ccf6cdb04c2fb8",
+        "projects": [
+          "p"
+        ]
+      }
+    },
+    {
+      "argv": [
+        "project",
+        "stats",
+        "explicit-recovery/p"
+      ],
+      "result": {
+        "project": "p",
+        "at": {
+          "id": "32d1cd82b0cd8a2dd9a367922b98716faa4c56e8db8ed51055fc87e65b719b9f86",
+          "kind": "Layer",
+          "branch": "main",
+          "root": "8ecef9afb27b4c7fef5887eab8f33dc1a2cd0efac7ceb6b74e4162d178d5637d"
+        },
+        "files": 1,
+        "directories": 0,
+        "symlinks": 0,
+        "others": 0,
+        "logical": 35,
+        "complete": true
+      }
+    }
+  ],
+  "inventory": [
+    {
+      "path": "/private/tmp/connect-followup-live-backup-20261109/home/store/restore-host-restore-install/store.sqlite",
+      "bytes": 217088,
+      "sha256": "cf6e19ae9e5323024f33d478553023bfb4bb3f88a755fe0ae671198c31b9be38",
+      "hasAuthorityRecord": true
+    },
+    {
+      "path": "/private/tmp/connect-followup-live-backup-20261109/home/store/restore-restore-install-record/store.sqlite",
+      "bytes": 217088,
+      "sha256": "cf6e19ae9e5323024f33d478553023bfb4bb3f88a755fe0ae671198c31b9be38",
+      "hasAuthorityRecord": false
+    },
+    {
+      "path": "/private/tmp/connect-followup-live-backup-20261109/home/store/source/store.sqlite",
+      "bytes": 217088,
+      "sha256": "3fc3871b64966c29665ac959b758f7fcd387a8faccea345955eb9e682f0f3fc0",
+      "hasAuthorityRecord": true
+    }
+  ],
+  "cleanup": [
+    {
+      "container": "3fc7c03da782af91de4eb41d27a9f737b0a53367903a27d37372033ee594a348",
+      "removed": true
+    },
+    {
+      "root": "/private/tmp/connect-followup-live-backup-20261109",
+      "removed": true,
+      "reason": "All CLI/LLDB exits observed; original remote backup and orphan copied-byte identity reconciled. Entire explicitly owned disposable fixture deliberately destroyed after proof; no uncertain shared copy deleted."
+    }
+  ],
+  "orphan": {
+    "path": "/private/tmp/connect-followup-live-backup-20261109/home/store/restore-restore-install-record/store.sqlite",
+    "bytes": 217088,
+    "sha256": "cf6e19ae9e5323024f33d478553023bfb4bb3f88a755fe0ae671198c31b9be38",
+    "hasAuthorityRecord": false,
+    "explanation": "CLI killed at store backup/restore.rs119 after line118 hard_link and before record.write. Fresh Store get NotFound does not establish file absence. Installed unrecorded bytes remain, checksum equals original remote snapshot; authority and custody retained until final owned-fixture disposal."
+  },
+  "explicitRecovery": "Fresh backup list and Store inventory preceded one explicit restore into a distinct new name. Original interrupted destination never replayed or overwritten.",
+  "verdict": "PASS"
+}

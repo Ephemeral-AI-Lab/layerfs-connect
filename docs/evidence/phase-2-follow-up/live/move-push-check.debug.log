@@ -1,0 +1,35 @@
+(lldb) process attach --pid 71104
+Process 71104 stopped
+* thread #1, stop reason = signal SIGSTOP
+    frame #0: 0x00000001058615a0
+->  0x1058615a0: ret    
+    0x1058615a4: mov    x16, #-0xd                ; =-13 
+    0x1058615a8: svc    #0x80
+    0x1058615ac: ret    
+Target 0: (layerfs) stopped.
+Executable module set to "/Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect-cli-137/target/debug/layerfs".
+Architecture set to: arm64-apple-macosx-.
+(lldb) breakpoint set --file phases.rs --line 129
+Breakpoint 1: where = layerfs`layerfs_store::sqlite::transfer::phases::run::hed64c04274a7208a + 216 at phases.rs:129:33, address = 0x00000001022fbe40
+(lldb) process continue
+Process 71104 resuming
+Process 71104 stopped
+* thread #1, name = 'main', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+    frame #0: 0x00000001022fbe40 layerfs`layerfs_store::sqlite::transfer::phases::run::hed64c04274a7208a(home=&std::path::Path @ 0x000000016dd9f5e0, events=0x000000016dda07b0, name=(data_ptr = "live-move-push-check", length = 20), target=Option<&str> @ 0x000000016dd9e188, call=(data_ptr = "store.pushretireUnknownrecordverifyinstallto checkexistsbyteswal_bytes has  bytes free; Store  needs  ( bytes and  of headroom)neededUnsupported's worker does not report its free disk (an older bundle)Exists already holds a Store file named sha256headsatretireduncertainstore/rustc/4eb161250e340c8f48f66e2b929ef4a5bed7c181/library/core/src/iter/traits/iterator.rs", length = 10), written=0x000000016dd9f788, related=Related @ 0x000000016dd9f610) at phases.rs:129:33
+   126 	    // first the copy an ended push or pull left, which this call clears
+   127 	    at(
+   128 	        "check",
+-> 129 	        super::resolve::resolve(&home, name, call, target, related),
+    	                                ^
+   130 	    )?;
+   131 	    let record = at("check", record_of(&home, name))?;
+   132 	    at("check", record.unblocked())?;
+Target 0: (layerfs) stopped.
+(lldb) thread backtrace -c 4
+* thread #1, name = 'main', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+  * frame #0: 0x00000001022fbe40 layerfs`layerfs_store::sqlite::transfer::phases::run::hed64c04274a7208a(home=&std::path::Path @ 0x000000016dd9f5e0, events=0x000000016dda07b0, name=(data_ptr = "live-move-push-check", length = 20), target=Option<&str> @ 0x000000016dd9e188, call=(data_ptr = "store.pushretireUnknownrecordverifyinstallto checkexistsbyteswal_bytes has  bytes free; Store  needs  ( bytes and  of headroom)neededUnsupported's worker does not report its free disk (an older bundle)Exists already holds a Store file named sha256headsatretireduncertainstore/rustc/4eb161250e340c8f48f66e2b929ef4a5bed7c181/library/core/src/iter/traits/iterator.rs", length = 10), written=0x000000016dd9f788, related=Related @ 0x000000016dd9f610) at phases.rs:129:33
+    frame #1: 0x00000001022fb95c layerfs`layerfs_store::sqlite::transfer::phases::transfer::h1fdf86f778ba367e(home=&std::path::Path @ 0x000000016dd9f920, events=0x000000016dda07b0, name=(data_ptr = "live-move-push-check", length = 20), target=Option<&str> @ 0x000000016dd9f750, related=Related @ 0x000000016dd9f938) at phases.rs:67:18
+    frame #2: 0x00000001022fb500 layerfs`layerfs_store::sqlite::transfer::phases::push::h393d0d0c6d01739f(home=&std::path::Path @ 0x000000016dd9fb48, events=0x000000016dda07b0, name=(data_ptr = "live-move-push-check", length = 20), to=(data_ptr = "live-move-vm", length = 12), related=Related @ 0x000000016dd9fb80) at phases.rs:34:5
+    frame #3: 0x0000000102215078 layerfs`layerfs_store::sqlite::family::push::h013ee299a961acaa(home=&std::path::Path @ 0x000000016dd9fc00, events=0x000000016dda07b0, request=0x000000016dd9fc90, related=Related @ 0x000000016dd9fc20) at family.rs:91:5
+(lldb) process kill
+Process 71104 exited with status = 9 (0x00000009) killed

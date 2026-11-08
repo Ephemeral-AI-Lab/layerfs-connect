@@ -1,0 +1,57 @@
+{
+  "reviewer": "postgresql subagent (independent of all reviewed product-file owners)",
+  "at": "2026-11-08T23:15:26.726735+00:00",
+  "verdict": "PASS",
+  "files": [
+    {
+      "path": "host/agents/workspaces.js",
+      "sha256": "d1d367dcb2c216e56252939a4525074c5034ff879aa0c3906ba8eff3f5ea3262"
+    },
+    {
+      "path": "host/test/exec-cancel.test.js",
+      "sha256": "b3751c1ab83bad2edc0219154202c34d6952d4de06c559ce1a2ce356d4bc7672"
+    },
+    {
+      "path": "desktop/src/main/layerfs-host.ts",
+      "sha256": "8424f63ca7678f001bfa889ff72e8d1fcbd86dc4b3b3c1f35f47d507be27298c"
+    },
+    {
+      "path": "desktop/src/renderer/src/components/shell/Sidebar.tsx",
+      "sha256": "8ed88bb32499d9cacfc491f71dce379a2b991fdf1dbf077129e758767f40028d"
+    }
+  ],
+  "findings": [
+    {
+      "id": "output-queue-retention",
+      "initial": "Serialized Promise chain retained pending raw frames behind blocked async consumers.",
+      "resolution": "Final sink calls each onData immediately, attaches rejection handler immediately and keeps only pending-completion count plus one drain Promise; no newly retained frame queue. Existing adapter transport behavior preserved. Generalized CLI stdout backpressure is not claimed by this fix.",
+      "verdict": "RESOLVED"
+    },
+    {
+      "id": "stderr-exit-race",
+      "initial": "Child exit may precede stderr drainage, losing final typed startup failure.",
+      "resolution": "Final LayerfsHost close listener derives static CliUnavailable/CliIncompatible guidance only after child stdio closes.",
+      "verdict": "RESOLVED"
+    }
+  ],
+  "checks": [
+    "Cancellation output rejection is synchronously observed by installed promise handler and cannot escape as unhandled rejection.",
+    "Output delivery drains before execution completion is recorded; command result and Save attempt remain retained.",
+    "Partial Save errors stay independent from command/cancellation outcome.",
+    "Cancelled consumer rejection cannot terminate host; noncancelled consumer failure is rethrown only after completed command and Save facts are preserved.",
+    "Synchronous onData throw and asynchronous rejection both decrement pending count and settle current drain Promise.",
+    "Sidebar mode derives from existing preload identity; preview remains simulated; fabricated version removed.",
+    "New startup UI error strings contain configuration instructions and fixed identifiers, never raw stderr or credentials."
+  ],
+  "testsReviewed": [
+    "Two focused regression cases in exec-cancel.test.js cover cancellation+partial Save and unrelated async consumer rejection after Save. Lead reports final focused 28 PASS.",
+    "Native owner reports actual-child startup regression 3 PASS after close-event correction."
+  ],
+  "evidenceReview": [
+    "Actual PostgreSQL DoctorPanel complete/incomplete native evidence independently reviewed against retained real reports, including screenshot and exact counts.",
+    "Backup live receipts independently peer-reviewed by live_recovery agent, with installed-unrecorded file finding resolved by fresh hash/custody receipt."
+  ],
+  "limitations": [
+    "This source review does not substitute for final rebuilt native/package execution. Lead and native owner own final binary checks and restart acceptance."
+  ]
+}

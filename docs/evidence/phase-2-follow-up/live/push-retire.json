@@ -1,0 +1,261 @@
+{
+  "spec": {
+    "home": "/private/tmp/connect-followup-live-1c2f5bjz/home",
+    "state": "/private/tmp/connect-followup-live-1c2f5bjz/states/push-retire",
+    "mode": "real",
+    "cli": "/Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect-cli-137/target/debug/layerfs"
+  },
+  "starts": 1,
+  "childPid": 69013,
+  "ended": {
+    "id": "ef46f228-df16-47c6-96b8-c847b9fa3d7d",
+    "kind": "push",
+    "store": "live-push-retire",
+    "target": "docker",
+    "from": null,
+    "file": null,
+    "started": 1794178887202,
+    "ended": 1794178891171,
+    "half": null,
+    "phase": "retire",
+    "phases": [
+      {
+        "phase": "check",
+        "half": null,
+        "at": 1794178891072
+      },
+      {
+        "phase": "snapshot",
+        "half": null,
+        "at": 1794178891082
+      },
+      {
+        "phase": "send",
+        "half": null,
+        "at": 1794178891087
+      },
+      {
+        "phase": "verify",
+        "half": null,
+        "at": 1794178891098
+      },
+      {
+        "phase": "install",
+        "half": null,
+        "at": 1794178891107
+      },
+      {
+        "phase": "record",
+        "half": null,
+        "at": 1794178891109
+      },
+      {
+        "phase": "retire",
+        "half": null,
+        "at": 1794178891111
+      }
+    ],
+    "outcome": "unknown",
+    "pid": 69013,
+    "observation": null,
+    "summary": "Outcome unknown · Inspect",
+    "done": null,
+    "total": null,
+    "error": {
+      "transport": "transport-unknown",
+      "code": "Unknown",
+      "message": "LayerFS ended without a complete result; inspect state before another action",
+      "phase": "retire",
+      "detail": {
+        "signal": "SIGKILL"
+      }
+    },
+    "result": null
+  },
+  "inspected": {
+    "id": "ef46f228-df16-47c6-96b8-c847b9fa3d7d",
+    "kind": "push",
+    "store": "live-push-retire",
+    "target": "docker",
+    "from": null,
+    "file": null,
+    "started": 1794178887202,
+    "ended": 1794178891171,
+    "half": null,
+    "phase": "retire",
+    "phases": [
+      {
+        "phase": "check",
+        "half": null,
+        "at": 1794178891072
+      },
+      {
+        "phase": "snapshot",
+        "half": null,
+        "at": 1794178891082
+      },
+      {
+        "phase": "send",
+        "half": null,
+        "at": 1794178891087
+      },
+      {
+        "phase": "verify",
+        "half": null,
+        "at": 1794178891098
+      },
+      {
+        "phase": "install",
+        "half": null,
+        "at": 1794178891107
+      },
+      {
+        "phase": "record",
+        "half": null,
+        "at": 1794178891109
+      },
+      {
+        "phase": "retire",
+        "half": null,
+        "at": 1794178891111
+      }
+    ],
+    "outcome": "interrupted",
+    "pid": 69013,
+    "observation": {
+      "at": 1794178891200,
+      "kind": "transfer",
+      "value": {
+        "name": "live-push-retire",
+        "kind": "sqlite",
+        "state": "idle",
+        "holders": [],
+        "op": {
+          "id": "op-d5b33f81f89d7fdc",
+          "name": "store.push",
+          "phase": "retire",
+          "started": 1794178891076,
+          "uncertain": false
+        },
+        "down_reason": null,
+        "machine": "docker",
+        "file": {
+          "exists": true,
+          "free": 190693253120,
+          "bytes": 217088,
+          "wal_bytes": 0,
+          "incoming_bytes": 0
+        }
+      },
+      "direction": "push",
+      "action": null
+    },
+    "summary": "Interrupted · Final result unavailable",
+    "done": null,
+    "total": null,
+    "error": {
+      "transport": "transport-unknown",
+      "code": "Unknown",
+      "message": "LayerFS ended without a complete result; inspect state before another action",
+      "phase": "retire",
+      "detail": {
+        "signal": "SIGKILL"
+      }
+    },
+    "result": null
+  },
+  "restarted": {
+    "id": "ef46f228-df16-47c6-96b8-c847b9fa3d7d",
+    "kind": "push",
+    "store": "live-push-retire",
+    "target": "docker",
+    "from": null,
+    "file": null,
+    "started": 1794178887202,
+    "ended": 1794178891171,
+    "half": null,
+    "phase": "retire",
+    "phases": [
+      {
+        "phase": "check",
+        "half": null,
+        "at": 1794178891072
+      },
+      {
+        "phase": "snapshot",
+        "half": null,
+        "at": 1794178891082
+      },
+      {
+        "phase": "send",
+        "half": null,
+        "at": 1794178891087
+      },
+      {
+        "phase": "verify",
+        "half": null,
+        "at": 1794178891098
+      },
+      {
+        "phase": "install",
+        "half": null,
+        "at": 1794178891107
+      },
+      {
+        "phase": "record",
+        "half": null,
+        "at": 1794178891109
+      },
+      {
+        "phase": "retire",
+        "half": null,
+        "at": 1794178891111
+      }
+    ],
+    "outcome": "interrupted",
+    "pid": 69013,
+    "observation": {
+      "at": 1794178891213,
+      "kind": "transfer",
+      "value": {
+        "name": "live-push-retire",
+        "kind": "sqlite",
+        "state": "idle",
+        "holders": [],
+        "op": {
+          "id": "op-d5b33f81f89d7fdc",
+          "name": "store.push",
+          "phase": "retire",
+          "started": 1794178891076,
+          "uncertain": false
+        },
+        "down_reason": null,
+        "machine": "docker",
+        "file": {
+          "exists": true,
+          "free": 190693253120,
+          "bytes": 217088,
+          "wal_bytes": 0,
+          "incoming_bytes": 0
+        }
+      },
+      "direction": "push",
+      "action": null
+    },
+    "summary": "Interrupted · Final result unavailable",
+    "done": null,
+    "total": null,
+    "error": {
+      "transport": "transport-unknown",
+      "code": "Unknown",
+      "message": "LayerFS ended without a complete result; inspect state before another action",
+      "phase": "retire",
+      "detail": {
+        "signal": "SIGKILL"
+      }
+    },
+    "result": null
+  },
+  "debuggerHit": true,
+  "debuggerKilled": true
+}

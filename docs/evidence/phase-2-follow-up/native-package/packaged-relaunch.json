@@ -1,0 +1,413 @@
+{
+  "started": "2026-11-08T23:28:23.668Z",
+  "checks": [
+    {
+      "name": "main identity/userData isolation",
+      "result": {
+        "userData": "/private/tmp/connect-followup-package-final-20261109/electron-data",
+        "platform": "darwin",
+        "versions": {
+          "node": "24.22.0",
+          "acorn": "8.18.0",
+          "ada": "4.0.0",
+          "amaro": "1.1.11",
+          "ares": "1.34.8",
+          "brotli": "1.2.0",
+          "cldr": "48.0",
+          "icu": "78.2",
+          "llhttp": "9.4.3",
+          "merve": "1.2.2",
+          "modules": "150",
+          "napi": "10",
+          "nbytes": "0.1.4",
+          "ncrypto": "0.0.1",
+          "nghttp2": "1.70.0",
+          "nghttp3": "",
+          "ngtcp2": "",
+          "openssl": "0.0.0",
+          "simdjson": "4.6.11",
+          "simdutf": "7.7.0",
+          "sqlite": "3.53.4",
+          "tz": "2026e",
+          "undici": "7.29.1",
+          "unicode": "17.0",
+          "uv": "1.52.1",
+          "uvwasi": "0.0.23",
+          "v8": "15.6.75.19-electron.0",
+          "zlib": "1.3.2.1-motley",
+          "zstd": "1.6.0",
+          "electron": "45.0.0",
+          "chrome": "156.0.8078.48"
+        },
+        "isPackaged": true
+      }
+    },
+    {
+      "name": "persisted completed and interrupted custody before app restart",
+      "sessions": {
+        "b4c2a7d3-d443-4bbf-aa30-a9296f93668a": {
+          "execution": "connect-f623be2b-b2a6-4350-90eb-c6d34827cb2f",
+          "commitCount": 2,
+          "head": "12722fb99cbba7858b7bee55693820ba1e5510342cd048af88265591db84979456",
+          "state": "idle",
+          "recovery": {
+            "phase": "idle",
+            "startedAt": 1794179945181,
+            "turns": 0,
+            "toolCalls": 0,
+            "retryAttempt": 0,
+            "reason": "Unknown model: no-credit-driver/not-a-model"
+          },
+          "workspace": {
+            "branch": "chat-b4c2a7d3-d443-4bbf-aa30-a9296f93668a",
+            "state": "closed",
+            "sandbox": null,
+            "handle": null,
+            "path": null,
+            "head": "12722fb99cbba7858b7bee55693820ba1e5510342cd048af88265591db84979456",
+            "commitCount": 2,
+            "lastSaved": 1794179946158,
+            "error": null,
+            "branchReady": true,
+            "baseLayer": "32881d0b44ee8981a97d4c3836ef71727593720fed0bf51e2cac37158f181cfe06",
+            "execution": {
+              "ws": "chat.b4c2a7d3-d443-4bbf-aa30-a9296f93668a:chat-b4c2a7d3-d443-4bbf-aa30-a9296f93668a",
+              "exec_id": "connect-f623be2b-b2a6-4350-90eb-c6d34827cb2f",
+              "finished": true,
+              "cancelRequested": true,
+              "pid": 89941,
+              "result": {
+                "kind": "cancelled",
+                "exit_code": 143,
+                "stop": "group"
+              },
+              "cancel": {
+                "outcome": "cancelled",
+                "signal": "SIGTERM"
+              }
+            }
+          },
+          "usage": {
+            "input": 0,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "totalTokens": 0,
+            "cost": 0,
+            "toolCalls": 0
+          }
+        },
+        "c49633d4-291f-4cc8-8b88-ed934e4a3700": {
+          "execution": "connect-f981d8bc-8f47-4557-8e07-becb6b964b77",
+          "commitCount": 1,
+          "head": "122d0b1a91733207aa868a933b96e9b8c42440497ff4f6d22cac4360e4d75556a2",
+          "state": "error",
+          "recovery": {
+            "phase": "error",
+            "startedAt": 1794180064696,
+            "turns": 0,
+            "toolCalls": 0,
+            "retryAttempt": 0,
+            "reason": "Unknown model: no-credit-driver/not-a-model"
+          },
+          "workspace": {
+            "branch": "chat-c49633d4-291f-4cc8-8b88-ed934e4a3700",
+            "state": "error",
+            "sandbox": "chat.c49633d4-291f-4cc8-8b88-ed934e4a3700",
+            "handle": "chat.c49633d4-291f-4cc8-8b88-ed934e4a3700:chat-c49633d4-291f-4cc8-8b88-ed934e4a3700",
+            "path": "/tmp/connect-followup-package-final-20261109/state/home-2/machine/native/run/lfs-4cea57b5-chat.c49633d4-291f-4cc8-8b88-ed934e4a3700/workspaces/1",
+            "head": "122d0b1a91733207aa868a933b96e9b8c42440497ff4f6d22cac4360e4d75556a2",
+            "commitCount": 1,
+            "lastSaved": 1794180065391,
+            "error": "1 file(s) still contain conflict markers; nothing committed",
+            "branchReady": true,
+            "baseLayer": "32881d0b44ee8981a97d4c3836ef71727593720fed0bf51e2cac37158f181cfe06",
+            "execution": {
+              "ws": "chat.c49633d4-291f-4cc8-8b88-ed934e4a3700:chat-c49633d4-291f-4cc8-8b88-ed934e4a3700",
+              "exec_id": "connect-f981d8bc-8f47-4557-8e07-becb6b964b77",
+              "finished": true,
+              "cancelRequested": true,
+              "pid": 90537,
+              "cancel": {
+                "outcome": "cancelled",
+                "signal": "SIGTERM"
+              },
+              "result": {
+                "kind": "cancelled",
+                "exit_code": 143,
+                "stop": "group"
+              }
+            }
+          },
+          "usage": {
+            "input": 0,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "totalTokens": 0,
+            "cost": 0,
+            "toolCalls": 0
+          }
+        }
+      }
+    },
+    {
+      "name": "actual app relaunch read-only IPC; persisted execution IDs/heads/Commit counts unchanged",
+      "status": {
+        "status": 200,
+        "body": {
+          "platform": "macos",
+          "mode": "real",
+          "layerfs": "2.0.0",
+          "settings": {
+            "state": "/tmp/connect-followup-package-final-20261109/state",
+            "home": "/tmp/connect-followup-package-final-20261109/state/home-2",
+            "cli": "/Users/yifanxu/Applications/LayerFS Connect Follow-up Final 20261109-137.app/Contents/Resources/runtime/bin/layerfs"
+          },
+          "daemon": {
+            "recorded": true,
+            "why": null
+          },
+          "machines": [
+            {
+              "name": "docker",
+              "platform": "docker",
+              "state": "stopped"
+            },
+            {
+              "name": "native",
+              "platform": "native",
+              "state": "ready"
+            }
+          ],
+          "stores": 1
+        }
+      },
+      "list": {
+        "status": 200,
+        "body": [
+          {
+            "id": "c49633d4-291f-4cc8-8b88-ed934e4a3700",
+            "title": "Native model-free IPC host route",
+            "cwd": "/tmp/connect-followup-package-final-20261109/input with spaces",
+            "project": "route-proof/p",
+            "runs": "mount",
+            "workspace": {
+              "branch": "chat-c49633d4-291f-4cc8-8b88-ed934e4a3700",
+              "state": "error",
+              "sandbox": "chat.c49633d4-291f-4cc8-8b88-ed934e4a3700",
+              "path": "/tmp/connect-followup-package-final-20261109/state/home-2/machine/native/run/lfs-4cea57b5-chat.c49633d4-291f-4cc8-8b88-ed934e4a3700/workspaces/1",
+              "head": "122d0b1a91733207aa868a933b96e9b8c42440497ff4f6d22cac4360e4d75556a2",
+              "commitCount": 1,
+              "lastSaved": 1794180065391,
+              "error": "1 file(s) still contain conflict markers; nothing committed",
+              "execution": {
+                "ws": "chat.c49633d4-291f-4cc8-8b88-ed934e4a3700:chat-c49633d4-291f-4cc8-8b88-ed934e4a3700",
+                "exec_id": "connect-f981d8bc-8f47-4557-8e07-becb6b964b77",
+                "finished": true,
+                "cancelRequested": true,
+                "pid": 90537,
+                "cancel": {
+                  "outcome": "cancelled",
+                  "signal": "SIGTERM"
+                },
+                "result": {
+                  "kind": "cancelled",
+                  "exit_code": 143,
+                  "stop": "group"
+                }
+              }
+            },
+            "created": 1794180064686,
+            "updated": 1794180066114,
+            "state": "error",
+            "error": "1 file(s) still contain conflict markers; nothing committed",
+            "archived": false,
+            "archivedAt": null,
+            "limits": {
+              "bashTimeoutSeconds": 900,
+              "maxRetries": 2,
+              "instructions": ""
+            },
+            "permissionMode": "full",
+            "provider": "no-credit-driver",
+            "modelId": "not-a-model",
+            "thinkingLevel": "off",
+            "execution": {
+              "phase": "error",
+              "startedAt": 1794180064696,
+              "turns": 0,
+              "toolCalls": 0,
+              "retryAttempt": 0,
+              "reason": "Unknown model: no-credit-driver/not-a-model"
+            }
+          },
+          {
+            "id": "b4c2a7d3-d443-4bbf-aa30-a9296f93668a",
+            "title": "Native model-free IPC host route",
+            "cwd": "/tmp/connect-followup-package-final-20261109/input with spaces",
+            "project": "route-proof/p",
+            "runs": "mount",
+            "workspace": {
+              "branch": "chat-b4c2a7d3-d443-4bbf-aa30-a9296f93668a",
+              "state": "closed",
+              "sandbox": null,
+              "path": null,
+              "head": "12722fb99cbba7858b7bee55693820ba1e5510342cd048af88265591db84979456",
+              "commitCount": 2,
+              "lastSaved": 1794179946158,
+              "error": null,
+              "execution": {
+                "ws": "chat.b4c2a7d3-d443-4bbf-aa30-a9296f93668a:chat-b4c2a7d3-d443-4bbf-aa30-a9296f93668a",
+                "exec_id": "connect-f623be2b-b2a6-4350-90eb-c6d34827cb2f",
+                "finished": true,
+                "cancelRequested": true,
+                "pid": 89941,
+                "result": {
+                  "kind": "cancelled",
+                  "exit_code": 143,
+                  "stop": "group"
+                },
+                "cancel": {
+                  "outcome": "cancelled",
+                  "signal": "SIGTERM"
+                }
+              }
+            },
+            "created": 1794179945170,
+            "updated": 1794179946680,
+            "state": "idle",
+            "error": null,
+            "archived": false,
+            "archivedAt": null,
+            "limits": {
+              "bashTimeoutSeconds": 900,
+              "maxRetries": 2,
+              "instructions": ""
+            },
+            "permissionMode": "full",
+            "provider": "no-credit-driver",
+            "modelId": "not-a-model",
+            "thinkingLevel": "off",
+            "execution": {
+              "phase": "idle",
+              "startedAt": 1794179945181,
+              "turns": 0,
+              "toolCalls": 0,
+              "retryAttempt": 0,
+              "reason": "Unknown model: no-credit-driver/not-a-model"
+            }
+          }
+        ]
+      },
+      "sessions": {
+        "b4c2a7d3-d443-4bbf-aa30-a9296f93668a": {
+          "execution": "connect-f623be2b-b2a6-4350-90eb-c6d34827cb2f",
+          "commitCount": 2,
+          "head": "12722fb99cbba7858b7bee55693820ba1e5510342cd048af88265591db84979456",
+          "state": "idle",
+          "recovery": {
+            "phase": "idle",
+            "startedAt": 1794179945181,
+            "turns": 0,
+            "toolCalls": 0,
+            "retryAttempt": 0,
+            "reason": "Unknown model: no-credit-driver/not-a-model"
+          },
+          "workspace": {
+            "branch": "chat-b4c2a7d3-d443-4bbf-aa30-a9296f93668a",
+            "state": "closed",
+            "sandbox": null,
+            "handle": null,
+            "path": null,
+            "head": "12722fb99cbba7858b7bee55693820ba1e5510342cd048af88265591db84979456",
+            "commitCount": 2,
+            "lastSaved": 1794179946158,
+            "error": null,
+            "branchReady": true,
+            "baseLayer": "32881d0b44ee8981a97d4c3836ef71727593720fed0bf51e2cac37158f181cfe06",
+            "execution": {
+              "ws": "chat.b4c2a7d3-d443-4bbf-aa30-a9296f93668a:chat-b4c2a7d3-d443-4bbf-aa30-a9296f93668a",
+              "exec_id": "connect-f623be2b-b2a6-4350-90eb-c6d34827cb2f",
+              "finished": true,
+              "cancelRequested": true,
+              "pid": 89941,
+              "result": {
+                "kind": "cancelled",
+                "exit_code": 143,
+                "stop": "group"
+              },
+              "cancel": {
+                "outcome": "cancelled",
+                "signal": "SIGTERM"
+              }
+            }
+          },
+          "usage": {
+            "input": 0,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "totalTokens": 0,
+            "cost": 0,
+            "toolCalls": 0
+          }
+        },
+        "c49633d4-291f-4cc8-8b88-ed934e4a3700": {
+          "execution": "connect-f981d8bc-8f47-4557-8e07-becb6b964b77",
+          "commitCount": 1,
+          "head": "122d0b1a91733207aa868a933b96e9b8c42440497ff4f6d22cac4360e4d75556a2",
+          "state": "error",
+          "recovery": {
+            "phase": "error",
+            "startedAt": 1794180064696,
+            "turns": 0,
+            "toolCalls": 0,
+            "retryAttempt": 0,
+            "reason": "Unknown model: no-credit-driver/not-a-model"
+          },
+          "workspace": {
+            "branch": "chat-c49633d4-291f-4cc8-8b88-ed934e4a3700",
+            "state": "error",
+            "sandbox": "chat.c49633d4-291f-4cc8-8b88-ed934e4a3700",
+            "handle": "chat.c49633d4-291f-4cc8-8b88-ed934e4a3700:chat-c49633d4-291f-4cc8-8b88-ed934e4a3700",
+            "path": "/tmp/connect-followup-package-final-20261109/state/home-2/machine/native/run/lfs-4cea57b5-chat.c49633d4-291f-4cc8-8b88-ed934e4a3700/workspaces/1",
+            "head": "122d0b1a91733207aa868a933b96e9b8c42440497ff4f6d22cac4360e4d75556a2",
+            "commitCount": 1,
+            "lastSaved": 1794180065391,
+            "error": "1 file(s) still contain conflict markers; nothing committed",
+            "branchReady": true,
+            "baseLayer": "32881d0b44ee8981a97d4c3836ef71727593720fed0bf51e2cac37158f181cfe06",
+            "execution": {
+              "ws": "chat.c49633d4-291f-4cc8-8b88-ed934e4a3700:chat-c49633d4-291f-4cc8-8b88-ed934e4a3700",
+              "exec_id": "connect-f981d8bc-8f47-4557-8e07-becb6b964b77",
+              "finished": true,
+              "cancelRequested": true,
+              "pid": 90537,
+              "cancel": {
+                "outcome": "cancelled",
+                "signal": "SIGTERM"
+              },
+              "result": {
+                "kind": "cancelled",
+                "exit_code": 143,
+                "stop": "group"
+              }
+            }
+          },
+          "usage": {
+            "input": 0,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "totalTokens": 0,
+            "cost": 0,
+            "toolCalls": 0
+          }
+        }
+      }
+    }
+  ],
+  "scope": "packaged",
+  "verdict": "PASS"
+}

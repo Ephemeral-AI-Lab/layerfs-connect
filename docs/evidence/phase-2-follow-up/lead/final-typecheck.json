@@ -1,0 +1,15 @@
+{
+  "check": "typecheck",
+  "command": [
+    "pnpm",
+    "--dir",
+    "desktop",
+    "-s",
+    "typecheck"
+  ],
+  "wall_timeout_seconds": 120,
+  "exit": 0,
+  "outcome": "PASS",
+  "seconds": 6.141,
+  "connect_commit": "d25585db1152bdcb58fda492b8b18c586325f1ac"
+}

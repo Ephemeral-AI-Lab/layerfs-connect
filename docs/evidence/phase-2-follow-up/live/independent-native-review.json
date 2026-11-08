@@ -1,0 +1,43 @@
+{
+  "reviewer": "native/package agent independently reviewing live receipts",
+  "verdict": "PASS",
+  "source": "833d04cf44e8e747929d50ab1170a48260d9381c",
+  "phase_kill_rows_asserted": [
+    "push-check",
+    "push-snapshot",
+    "push-send",
+    "push-verify",
+    "push-install",
+    "push-record",
+    "push-retire",
+    "pull-check",
+    "pull-snapshot",
+    "pull-send",
+    "pull-verify",
+    "pull-install",
+    "pull-record",
+    "pull-retire",
+    "move-pull-check",
+    "move-pull-snapshot",
+    "move-pull-send",
+    "move-pull-verify",
+    "move-pull-install",
+    "move-pull-record",
+    "move-pull-retire",
+    "move-push-check",
+    "move-push-snapshot",
+    "move-push-send",
+    "move-push-verify",
+    "move-push-install",
+    "move-push-record",
+    "move-push-retire"
+  ],
+  "move_halves": "move-push starts2 is one pull plus one push, not automatic replay; other exact phase rows starts1",
+  "other_review": [
+    "Examined push-retire exact source breakpoint after progress before retirement, destination authority with op retire and preserved source custody",
+    "Examined pull-install lost reply preserves unknown/interrupted and fresh observation before recovery",
+    "Examined host-push-record zero mutations on restarted manager with child effects completed, outcome remains Interrupted",
+    "Reviewed matrix pre-injection authority/custody routing and cleanup evidence owned fixture removed; pinned binaries/bundle retained"
+  ],
+  "scope": "Offline independent review, no unchanged phase operations rerun; source unchanged storage/CLI path unaffected by final native fixes"
+}

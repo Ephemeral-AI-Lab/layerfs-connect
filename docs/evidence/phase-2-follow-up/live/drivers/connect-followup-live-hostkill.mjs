@@ -1,0 +1,7 @@
+import{Storage}from'/Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect/host/storage.js';
+import{client}from'/Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect/host/cli/calls.js';
+import{spawn}from'node:child_process';import{writeFileSync,mkdirSync,openSync}from'node:fs';
+const[home,state,kind,store,target,line,file,half='any']=process.argv.slice(2);mkdirSync(state,{recursive:true});const spec={home,state,mode:'real',cli:process.env.LAYERFS_CONNECT_CLI};const real=client(spec);let childPid;
+const hooked={store:{get:(...a)=>real.store.get(...a),status:(...a)=>real.store.status(...a),push:(s,m,o)=>launch('push',[s,m],o),pull:(s,o)=>launch('pull',[s],o)},machine:real.machine};
+function launch(call,args,o){return real.store[call](...args,{...o,on_spawn:pid=>{o.on_spawn(pid);childPid=pid;if(half!=='any'&&half!==call)return;process.kill(pid,'SIGSTOP');const fd=openSync(file+'.debug.log','w');const dbg=spawn('xcrun',['lldb','--batch','-o',`process attach --pid ${pid}`,'-o',`breakpoint set --file phases.rs --line ${line}`,'-o','process continue','-o','thread backtrace -c 3','-o',`script import os; os.kill(${process.pid},9)`,'-o','process continue'],{stdio:['ignore',fd,fd]});writeFileSync(file+'.control.json',JSON.stringify({host:process.pid,cli:pid,debugger:dbg.pid,state}));}})}
+const manager=new Storage({spec,client:hooked,log:()=>{}});const job=kind==='push'?manager.push(store,target):kind==='pull'?await manager.pull(store):manager.move(store,target);setTimeout(()=>{try{process.kill(childPid,'SIGKILL')}catch{};process.exit(124)},105000);

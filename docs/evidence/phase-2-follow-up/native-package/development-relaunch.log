@@ -1,0 +1,10 @@
+Debugger listening on ws://127.0.0.1:19326/418e5cb4-e19a-462b-b9f6-d51596986531
+For help, see: https://nodejs.org/learn/getting-started/debugging
+
+DevTools listening on ws://127.0.0.1:19325/devtools/browser/00a1ff72-9912-4469-b743-5586ae80a16d
+Debugger attached.
+[layerfs/host] ready on http://127.0.0.1:61574 (real)
+[layerfs/host] listening on http://127.0.0.1:61574 (state /tmp/connect-followup-native-20261109/state, LayerFS home /tmp/connect-followup-native-20261109/state/home-2)
+Debugger ending on ws://127.0.0.1:19326/418e5cb4-e19a-462b-b9f6-d51596986531
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[layerfs/host] closing (stdin closed)

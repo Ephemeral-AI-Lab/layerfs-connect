@@ -1,0 +1,119 @@
+{
+  "mutations": 0,
+  "jobs": [
+    {
+      "id": "c4ab48fc-f0da-45a3-9f69-6245dba72deb",
+      "kind": "move",
+      "store": "live-host-move-push-record",
+      "target": "live-move-vm",
+      "from": "docker",
+      "file": null,
+      "started": 1794179165770,
+      "ended": 1794179169781,
+      "half": "push",
+      "phase": "record",
+      "phases": [
+        {
+          "phase": "check",
+          "half": "pull",
+          "at": 1794179165803
+        },
+        {
+          "phase": "snapshot",
+          "half": "pull",
+          "at": 1794179165810
+        },
+        {
+          "phase": "send",
+          "half": "pull",
+          "at": 1794179165822
+        },
+        {
+          "phase": "verify",
+          "half": "pull",
+          "at": 1794179165827
+        },
+        {
+          "phase": "install",
+          "half": "pull",
+          "at": 1794179165831
+        },
+        {
+          "phase": "record",
+          "half": "pull",
+          "at": 1794179165832
+        },
+        {
+          "phase": "retire",
+          "half": "pull",
+          "at": 1794179165833
+        },
+        {
+          "phase": "check",
+          "half": "push",
+          "at": 1794179169603
+        },
+        {
+          "phase": "snapshot",
+          "half": "push",
+          "at": 1794179169611
+        },
+        {
+          "phase": "send",
+          "half": "push",
+          "at": 1794179169616
+        },
+        {
+          "phase": "verify",
+          "half": "push",
+          "at": 1794179169620
+        },
+        {
+          "phase": "install",
+          "half": "push",
+          "at": 1794179169625
+        },
+        {
+          "phase": "record",
+          "half": "push",
+          "at": 1794179169627
+        }
+      ],
+      "outcome": "interrupted",
+      "pid": 71935,
+      "observation": {
+        "at": 1794179169783,
+        "kind": "transfer",
+        "value": {
+          "name": "live-host-move-push-record",
+          "kind": "sqlite",
+          "state": "idle",
+          "holders": [],
+          "op": null,
+          "down_reason": null,
+          "machine": "live-move-vm",
+          "file": {
+            "exists": true,
+            "free": 7901777920,
+            "bytes": 217088,
+            "wal_bytes": 0,
+            "incoming_bytes": 0
+          }
+        },
+        "direction": "push",
+        "action": null
+      },
+      "summary": "Interrupted · Final result unavailable",
+      "done": null,
+      "total": null,
+      "error": {
+        "code": "Interrupted",
+        "message": "Host restarted; final result unavailable. Remote work may still finish.",
+        "phase": "record",
+        "detail": null
+      },
+      "result": null,
+      "recovery": null
+    }
+  ]
+}

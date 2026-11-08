@@ -1,0 +1,246 @@
+{
+  "spec": {
+    "home": "/private/tmp/connect-followup-live-1c2f5bjz/home",
+    "state": "/private/tmp/connect-followup-live-1c2f5bjz/states/pull-record",
+    "mode": "real",
+    "cli": "/Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect-cli-137/target/debug/layerfs"
+  },
+  "starts": 1,
+  "childPid": 69677,
+  "ended": {
+    "id": "53cae706-130a-47db-98c6-6c2c83ce6480",
+    "kind": "pull",
+    "store": "live-pull-record",
+    "target": "native",
+    "from": "docker",
+    "file": null,
+    "started": 1794178961266,
+    "ended": 1794178965232,
+    "half": null,
+    "phase": "record",
+    "phases": [
+      {
+        "phase": "check",
+        "half": null,
+        "at": 1794178965145
+      },
+      {
+        "phase": "snapshot",
+        "half": null,
+        "at": 1794178965155
+      },
+      {
+        "phase": "send",
+        "half": null,
+        "at": 1794178965166
+      },
+      {
+        "phase": "verify",
+        "half": null,
+        "at": 1794178965171
+      },
+      {
+        "phase": "install",
+        "half": null,
+        "at": 1794178965176
+      },
+      {
+        "phase": "record",
+        "half": null,
+        "at": 1794178965177
+      }
+    ],
+    "outcome": "unknown",
+    "pid": 69677,
+    "observation": null,
+    "summary": "Outcome unknown · Inspect",
+    "done": null,
+    "total": null,
+    "error": {
+      "transport": "transport-unknown",
+      "code": "Unknown",
+      "message": "LayerFS ended without a complete result; inspect state before another action",
+      "phase": "record",
+      "detail": {
+        "signal": "SIGKILL"
+      }
+    },
+    "result": null
+  },
+  "inspected": {
+    "id": "53cae706-130a-47db-98c6-6c2c83ce6480",
+    "kind": "pull",
+    "store": "live-pull-record",
+    "target": "native",
+    "from": "docker",
+    "file": null,
+    "started": 1794178961266,
+    "ended": 1794178965232,
+    "half": null,
+    "phase": "record",
+    "phases": [
+      {
+        "phase": "check",
+        "half": null,
+        "at": 1794178965145
+      },
+      {
+        "phase": "snapshot",
+        "half": null,
+        "at": 1794178965155
+      },
+      {
+        "phase": "send",
+        "half": null,
+        "at": 1794178965166
+      },
+      {
+        "phase": "verify",
+        "half": null,
+        "at": 1794178965171
+      },
+      {
+        "phase": "install",
+        "half": null,
+        "at": 1794178965176
+      },
+      {
+        "phase": "record",
+        "half": null,
+        "at": 1794178965177
+      }
+    ],
+    "outcome": "unknown",
+    "pid": 69677,
+    "observation": {
+      "at": 1794178965267,
+      "kind": "transfer",
+      "value": {
+        "name": "live-pull-record",
+        "kind": "sqlite",
+        "state": "unresolved",
+        "holders": [],
+        "op": {
+          "id": "op-0d2d421007f1d373",
+          "name": "store.pull",
+          "phase": "record",
+          "started": 1794178965150,
+          "uncertain": true
+        },
+        "down_reason": null,
+        "machine": "docker",
+        "file": {
+          "exists": true,
+          "free": 190692700160,
+          "bytes": 217088,
+          "wal_bytes": 0,
+          "incoming_bytes": 0
+        }
+      },
+      "direction": "pull",
+      "action": null
+    },
+    "summary": "Outcome unknown · Inspect",
+    "done": null,
+    "total": null,
+    "error": {
+      "transport": "transport-unknown",
+      "code": "Unknown",
+      "message": "LayerFS ended without a complete result; inspect state before another action",
+      "phase": "record",
+      "detail": {
+        "signal": "SIGKILL"
+      }
+    },
+    "result": null
+  },
+  "restarted": {
+    "id": "53cae706-130a-47db-98c6-6c2c83ce6480",
+    "kind": "pull",
+    "store": "live-pull-record",
+    "target": "native",
+    "from": "docker",
+    "file": null,
+    "started": 1794178961266,
+    "ended": 1794178965232,
+    "half": null,
+    "phase": "record",
+    "phases": [
+      {
+        "phase": "check",
+        "half": null,
+        "at": 1794178965145
+      },
+      {
+        "phase": "snapshot",
+        "half": null,
+        "at": 1794178965155
+      },
+      {
+        "phase": "send",
+        "half": null,
+        "at": 1794178965166
+      },
+      {
+        "phase": "verify",
+        "half": null,
+        "at": 1794178965171
+      },
+      {
+        "phase": "install",
+        "half": null,
+        "at": 1794178965176
+      },
+      {
+        "phase": "record",
+        "half": null,
+        "at": 1794178965177
+      }
+    ],
+    "outcome": "unknown",
+    "pid": 69677,
+    "observation": {
+      "at": 1794178965267,
+      "kind": "transfer",
+      "value": {
+        "name": "live-pull-record",
+        "kind": "sqlite",
+        "state": "unresolved",
+        "holders": [],
+        "op": {
+          "id": "op-0d2d421007f1d373",
+          "name": "store.pull",
+          "phase": "record",
+          "started": 1794178965150,
+          "uncertain": true
+        },
+        "down_reason": null,
+        "machine": "docker",
+        "file": {
+          "exists": true,
+          "free": 190692700160,
+          "bytes": 217088,
+          "wal_bytes": 0,
+          "incoming_bytes": 0
+        }
+      },
+      "direction": "pull",
+      "action": null
+    },
+    "summary": "Outcome unknown · Inspect",
+    "done": null,
+    "total": null,
+    "error": {
+      "transport": "transport-unknown",
+      "code": "Unknown",
+      "message": "LayerFS ended without a complete result; inspect state before another action",
+      "phase": "record",
+      "detail": {
+        "signal": "SIGKILL"
+      }
+    },
+    "result": null
+  },
+  "debuggerHit": true,
+  "debuggerKilled": true
+}

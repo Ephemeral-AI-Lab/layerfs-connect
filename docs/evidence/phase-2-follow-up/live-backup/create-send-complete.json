@@ -1,0 +1,194 @@
+{
+  "id": "create-send-complete",
+  "kind": "create",
+  "store": "backup-send",
+  "spec": {
+    "home": "/private/tmp/connect-followup-live-1c2f5bjz/home",
+    "state": "/private/tmp/connect-followup-live-backup-20261109/state-create-send-complete",
+    "mode": "real",
+    "cli": "/Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect-cli-137/target/debug/layerfs"
+  },
+  "expectedBreakpoint": {
+    "file": "/Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect-cli-137/control/crates/layerfs-store/src/backup/create.rs",
+    "line": 110
+  },
+  "started": "2026-11-08T23:04:38.885Z",
+  "ended": {
+    "id": "08e6dda9-0fb1-4d07-920a-834b8e4054f1",
+    "kind": "backup",
+    "store": "backup-send",
+    "target": "bucket",
+    "from": null,
+    "file": "create-send-complete",
+    "started": 1794179078881,
+    "ended": 1794179082754,
+    "half": null,
+    "phase": "send",
+    "phases": [
+      {
+        "phase": "check",
+        "half": null,
+        "at": 1794179082668
+      },
+      {
+        "phase": "snapshot",
+        "half": null,
+        "at": 1794179082670
+      },
+      {
+        "phase": "send",
+        "half": null,
+        "at": 1794179082695
+      }
+    ],
+    "outcome": "unknown",
+    "pid": 70661,
+    "observation": null,
+    "summary": "Outcome unknown · Inspect",
+    "done": 217088,
+    "total": 217088,
+    "error": {
+      "transport": "transport-unknown",
+      "code": "Unknown",
+      "message": "LayerFS ended without a complete result; inspect state before another action",
+      "phase": "send",
+      "detail": {
+        "signal": "SIGKILL"
+      }
+    },
+    "result": null
+  },
+  "starts": 1,
+  "debuggerHit": true,
+  "debuggerKilled": true,
+  "freshBackup": {
+    "items": []
+  },
+  "freshStore": {
+    "name": "backup-send",
+    "kind": "sqlite",
+    "machine": "docker",
+    "profile": "disposable",
+    "created": 1794179059367,
+    "sqlite": "3.53.2",
+    "last_transfer": {
+      "call": "store.push",
+      "from": "native",
+      "to": "docker",
+      "at": 1794179059443,
+      "bytes": 217088,
+      "sha256": "6aeea564659cebbb04be3940c5d923d26b92385ebe08b9f95714f312d5197888",
+      "heads": "4f2e3e95d6ece291939fe1ef460ca1a9ebfe4cc2f5a565da84a549b31a9e8a34",
+      "retired": true
+    },
+    "projects": [
+      "p"
+    ]
+  },
+  "inspected": {
+    "id": "08e6dda9-0fb1-4d07-920a-834b8e4054f1",
+    "kind": "backup",
+    "store": "backup-send",
+    "target": "bucket",
+    "from": null,
+    "file": "create-send-complete",
+    "started": 1794179078881,
+    "ended": 1794179082754,
+    "half": null,
+    "phase": "send",
+    "phases": [
+      {
+        "phase": "check",
+        "half": null,
+        "at": 1794179082668
+      },
+      {
+        "phase": "snapshot",
+        "half": null,
+        "at": 1794179082670
+      },
+      {
+        "phase": "send",
+        "half": null,
+        "at": 1794179082695
+      }
+    ],
+    "outcome": "unknown",
+    "pid": 70661,
+    "observation": {
+      "at": 1794179082801,
+      "kind": "backup",
+      "value": {
+        "items": []
+      },
+      "action": null
+    },
+    "summary": "Outcome unknown · Inspect",
+    "done": 217088,
+    "total": 217088,
+    "error": {
+      "transport": "transport-unknown",
+      "code": "Unknown",
+      "message": "LayerFS ended without a complete result; inspect state before another action",
+      "phase": "send",
+      "detail": {
+        "signal": "SIGKILL"
+      }
+    },
+    "result": null
+  },
+  "restarted": {
+    "id": "08e6dda9-0fb1-4d07-920a-834b8e4054f1",
+    "kind": "backup",
+    "store": "backup-send",
+    "target": "bucket",
+    "from": null,
+    "file": "create-send-complete",
+    "started": 1794179078881,
+    "ended": 1794179082754,
+    "half": null,
+    "phase": "send",
+    "phases": [
+      {
+        "phase": "check",
+        "half": null,
+        "at": 1794179082668
+      },
+      {
+        "phase": "snapshot",
+        "half": null,
+        "at": 1794179082670
+      },
+      {
+        "phase": "send",
+        "half": null,
+        "at": 1794179082695
+      }
+    ],
+    "outcome": "unknown",
+    "pid": 70661,
+    "observation": {
+      "at": 1794179082801,
+      "kind": "backup",
+      "value": {
+        "items": []
+      },
+      "action": null
+    },
+    "summary": "Outcome unknown · Inspect",
+    "done": 217088,
+    "total": 217088,
+    "error": {
+      "transport": "transport-unknown",
+      "code": "Unknown",
+      "message": "LayerFS ended without a complete result; inspect state before another action",
+      "phase": "send",
+      "detail": {
+        "signal": "SIGKILL"
+      }
+    },
+    "result": null
+  },
+  "verdict": "PASS",
+  "finished": "2026-11-08T23:04:42.813Z"
+}

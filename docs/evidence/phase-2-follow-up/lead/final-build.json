@@ -1,0 +1,15 @@
+{
+  "check": "build",
+  "command": [
+    "pnpm",
+    "--dir",
+    "desktop",
+    "-s",
+    "build"
+  ],
+  "wall_timeout_seconds": 120,
+  "exit": 0,
+  "outcome": "PASS",
+  "seconds": 1.103,
+  "connect_commit": "d25585db1152bdcb58fda492b8b18c586325f1ac"
+}

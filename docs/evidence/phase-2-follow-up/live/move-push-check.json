@@ -1,0 +1,264 @@
+{
+  "spec": {
+    "home": "/private/tmp/connect-followup-live-1c2f5bjz/home",
+    "state": "/private/tmp/connect-followup-live-1c2f5bjz/states/move-push-check",
+    "mode": "real",
+    "cli": "/Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect-cli-137/target/debug/layerfs"
+  },
+  "starts": 2,
+  "childPid": 71104,
+  "ended": {
+    "id": "5f382887-c9b7-4b8f-ae04-74e4c74ff3f5",
+    "kind": "move",
+    "store": "live-move-push-check",
+    "target": "live-move-vm",
+    "from": "docker",
+    "file": null,
+    "started": 1794179110015,
+    "ended": 1794179113949,
+    "half": "push",
+    "phase": "check",
+    "phases": [
+      {
+        "phase": "check",
+        "half": "pull",
+        "at": 1794179110054
+      },
+      {
+        "phase": "snapshot",
+        "half": "pull",
+        "at": 1794179110062
+      },
+      {
+        "phase": "send",
+        "half": "pull",
+        "at": 1794179110072
+      },
+      {
+        "phase": "verify",
+        "half": "pull",
+        "at": 1794179110077
+      },
+      {
+        "phase": "install",
+        "half": "pull",
+        "at": 1794179110082
+      },
+      {
+        "phase": "record",
+        "half": "pull",
+        "at": 1794179110083
+      },
+      {
+        "phase": "retire",
+        "half": "pull",
+        "at": 1794179110084
+      },
+      {
+        "phase": "check",
+        "half": "push",
+        "at": 1794179113897
+      }
+    ],
+    "outcome": "unknown",
+    "pid": 71104,
+    "observation": null,
+    "summary": "Outcome unknown · Inspect",
+    "done": null,
+    "total": null,
+    "error": {
+      "transport": "transport-unknown",
+      "code": "Unknown",
+      "message": "LayerFS ended without a complete result; inspect state before another action",
+      "phase": "check",
+      "detail": {
+        "signal": "SIGKILL"
+      }
+    },
+    "result": null
+  },
+  "inspected": {
+    "id": "5f382887-c9b7-4b8f-ae04-74e4c74ff3f5",
+    "kind": "move",
+    "store": "live-move-push-check",
+    "target": "live-move-vm",
+    "from": "docker",
+    "file": null,
+    "started": 1794179110015,
+    "ended": 1794179113949,
+    "half": "push",
+    "phase": "check",
+    "phases": [
+      {
+        "phase": "check",
+        "half": "pull",
+        "at": 1794179110054
+      },
+      {
+        "phase": "snapshot",
+        "half": "pull",
+        "at": 1794179110062
+      },
+      {
+        "phase": "send",
+        "half": "pull",
+        "at": 1794179110072
+      },
+      {
+        "phase": "verify",
+        "half": "pull",
+        "at": 1794179110077
+      },
+      {
+        "phase": "install",
+        "half": "pull",
+        "at": 1794179110082
+      },
+      {
+        "phase": "record",
+        "half": "pull",
+        "at": 1794179110083
+      },
+      {
+        "phase": "retire",
+        "half": "pull",
+        "at": 1794179110084
+      },
+      {
+        "phase": "check",
+        "half": "push",
+        "at": 1794179113897
+      }
+    ],
+    "outcome": "interrupted",
+    "pid": 71104,
+    "observation": {
+      "at": 1794179113978,
+      "kind": "transfer",
+      "value": {
+        "name": "live-move-push-check",
+        "kind": "sqlite",
+        "state": "idle",
+        "holders": [],
+        "op": null,
+        "down_reason": null,
+        "machine": "native",
+        "file": {
+          "exists": true,
+          "free": 328001945600,
+          "bytes": 217088,
+          "wal_bytes": 0,
+          "incoming_bytes": 0
+        }
+      },
+      "direction": "push",
+      "action": null
+    },
+    "summary": "Interrupted · Final result unavailable",
+    "done": null,
+    "total": null,
+    "error": {
+      "transport": "transport-unknown",
+      "code": "Unknown",
+      "message": "LayerFS ended without a complete result; inspect state before another action",
+      "phase": "check",
+      "detail": {
+        "signal": "SIGKILL"
+      }
+    },
+    "result": null
+  },
+  "restarted": {
+    "id": "5f382887-c9b7-4b8f-ae04-74e4c74ff3f5",
+    "kind": "move",
+    "store": "live-move-push-check",
+    "target": "live-move-vm",
+    "from": "docker",
+    "file": null,
+    "started": 1794179110015,
+    "ended": 1794179113949,
+    "half": "push",
+    "phase": "check",
+    "phases": [
+      {
+        "phase": "check",
+        "half": "pull",
+        "at": 1794179110054
+      },
+      {
+        "phase": "snapshot",
+        "half": "pull",
+        "at": 1794179110062
+      },
+      {
+        "phase": "send",
+        "half": "pull",
+        "at": 1794179110072
+      },
+      {
+        "phase": "verify",
+        "half": "pull",
+        "at": 1794179110077
+      },
+      {
+        "phase": "install",
+        "half": "pull",
+        "at": 1794179110082
+      },
+      {
+        "phase": "record",
+        "half": "pull",
+        "at": 1794179110083
+      },
+      {
+        "phase": "retire",
+        "half": "pull",
+        "at": 1794179110084
+      },
+      {
+        "phase": "check",
+        "half": "push",
+        "at": 1794179113897
+      }
+    ],
+    "outcome": "interrupted",
+    "pid": 71104,
+    "observation": {
+      "at": 1794179113987,
+      "kind": "transfer",
+      "value": {
+        "name": "live-move-push-check",
+        "kind": "sqlite",
+        "state": "idle",
+        "holders": [],
+        "op": null,
+        "down_reason": null,
+        "machine": "native",
+        "file": {
+          "exists": true,
+          "free": 328001937408,
+          "bytes": 217088,
+          "wal_bytes": 0,
+          "incoming_bytes": 0
+        }
+      },
+      "direction": "push",
+      "action": null
+    },
+    "summary": "Interrupted · Final result unavailable",
+    "done": null,
+    "total": null,
+    "error": {
+      "transport": "transport-unknown",
+      "code": "Unknown",
+      "message": "LayerFS ended without a complete result; inspect state before another action",
+      "phase": "check",
+      "detail": {
+        "signal": "SIGKILL"
+      }
+    },
+    "result": null
+  },
+  "debuggerHit": true,
+  "debuggerKilled": true
+}

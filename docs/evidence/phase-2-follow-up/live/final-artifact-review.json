@@ -1,0 +1,68 @@
+{
+  "reviewer": "live-recovery owner, independent of native evidence author",
+  "verdict": "BLOCKED",
+  "remaining_row": "Real native chooser acceptance of an owned directory containing spaces; cancellation is separately PASS.",
+  "approved": [
+    "Actual host SIGKILL/reconstruction preserves ws/exec_id/PID and interrupted unknown completion with no automatic command replay; fresh reads precede explicit Stop.",
+    "Actual development and package relaunch retain execution IDs, heads and Commit counts. Scope distinguishes shutdown release from command Stop retention.",
+    "Final native/package cleanup freshly reads known resources, deliberately discards only preserved owned pending-merge fixture, observes empty Sandbox/Store lists and removes owned roots.",
+    "Real Cocoa NSOpenPanel cancel through typed runtime control resolves actual preload IPC null.",
+    "Retained built package independently rehashed and exactly matches tested installed artifact: canonical SHA25673b50397a9a13437f9b5c964c2376e9ce6e10dc60c9ca339ef2df4d200acaad0 with28191entries."
+  ],
+  "package_locations": {
+    "tested_installation": "/Users/yifanxu/Applications/LayerFS Connect Follow-up Final 20261109-137.app",
+    "tested_installation_removed_observed": true,
+    "retained_identical_artifact": "/Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect/desktop/dist/mac-arm64/LayerFS Connect.app"
+  },
+  "blocker_assessment": "Accessibility unavailable and no host native-control tool. Source/debugger native cancellation succeeded; direct selection probes failed and scheduled selection timed out with no accepted IPC path. These are verification-control failures, not an established Connect chooser defect. No synthetic selection or terminal PASS is credited. Minimum action is native control access or owner acceptance of fresh owned spaced directory while recording actual preload result; no passing campaign rerun required.",
+  "files": [
+    {
+      "file": "docs/evidence/phase-2-follow-up/native-package/development-actual-host-interruption.json",
+      "sha256": "757968e2ecc06c18a638c57c77fdc273bdd0b77d4f9d0e74eaafdee1f147ef6b",
+      "retained_verdict": "PASS"
+    },
+    {
+      "file": "docs/evidence/phase-2-follow-up/native-package/development-relaunch.json",
+      "sha256": "dc5947a951ee2dc4079498b5f44ae3eff4ed1c1f8a032b5ed32abb3e6420bfab",
+      "retained_verdict": "PASS"
+    },
+    {
+      "file": "docs/evidence/phase-2-follow-up/native-package/packaged-relaunch.json",
+      "sha256": "3c57a29f899d6c3c0d84029eb3bd4ab31fa2d4f5a8447326986914350595b709",
+      "retained_verdict": "PASS"
+    },
+    {
+      "file": "docs/evidence/phase-2-follow-up/native-package/cleanup-native.json",
+      "sha256": "0b252d9bbcaff7263cd16464b2c60d543387e4cf4c2148909d7a74b30b7f9c4f",
+      "retained_verdict": "PASS"
+    },
+    {
+      "file": "docs/evidence/phase-2-follow-up/native-package/cleanup-final-package.json",
+      "sha256": "adb695505bfdb1a716d6945691a0148ee3489cc947c704ea4e0cdb58dadc0d34",
+      "retained_verdict": "PASS"
+    },
+    {
+      "file": "docs/evidence/phase-2-follow-up/native-package/native-dialog-runtime3.json",
+      "sha256": "f9fd2e2b3c9080368f7493e4c13936b34576a56512103e4b79e82ed4a7aa7645",
+      "retained_verdict": "PASS"
+    },
+    {
+      "file": "docs/evidence/phase-2-follow-up/native-package/native-dialog-space-runloop-timeout.json",
+      "sha256": "fba9cc2c693b6c23ce6f2f6748cf3f451cc5fe86b0e35900e3d11aacacadf2b2",
+      "retained_verdict": "FAIL"
+    },
+    {
+      "file": "docs/evidence/phase-2-follow-up/native-package/canonical-package-identity.json",
+      "sha256": "0a401795a8df77bb211e3342d741159ba63430b2c4ac9a72acdf20ee5f1f1dbe",
+      "retained_verdict": null
+    }
+  ],
+  "independent_canonical_reproduction": {
+    "command": "python3 docs/evidence/phase-2-follow-up/native-package/canonical-package-hash.py desktop/dist/mac-arm64/LayerFS Connect.app",
+    "explicit_wall_timeout_seconds": 115,
+    "tree_sha256": "73b50397a9a13437f9b5c964c2376e9ce6e10dc60c9ca339ef2df4d200acaad0",
+    "entries": 28191,
+    "matches_tested_installed_receipt": true,
+    "flows_repeated": false
+  }
+}

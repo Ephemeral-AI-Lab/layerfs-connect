@@ -1,0 +1,10 @@
+{
+  "verdict": "FAIL",
+  "required_row": "real native directory selection with spaces",
+  "command": "node /tmp/connect-native-dialog-runloop.mjs",
+  "wall_timeout_ms": 110000,
+  "exit": 1,
+  "observed": "Actual panel found; native ok: scheduled via performSelector:withObject:afterDelay:0 then debugger detached; real preload chooseDirectory promise did not resolve before explicit110s deadline; owned Electron killed by driver. No URL or response fabricated.",
+  "prerequisite": "macOS Accessibility false; actual native input/remote chooser controls not available through this environment. Cancel was separately qualified through actual NSOpenPanel cancel action.",
+  "minimum_next_action": "Enable Accessibility/Automation for the running Cindy tool process or manually choose an owned directory with spaces while capturing actual preload result. Recreate fresh state and directory as described in README.md."
+}

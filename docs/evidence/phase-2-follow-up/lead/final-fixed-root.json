@@ -1,0 +1,29 @@
+{
+  "check": "root",
+  "command": [
+    "/Users/yifanxu/.nvm/versions/node/v24.21.0/bin/node",
+    "--test",
+    "--test-timeout=110000",
+    "test/chat-removal.test.mjs",
+    "test/conversation-tasks.test.mjs",
+    "test/desktop-host-startup.test.mjs",
+    "test/exact-count.test.mjs",
+    "test/job-progress-cli.test.mjs",
+    "test/job-progress.test.mjs",
+    "test/live-data.test.mjs",
+    "test/live-flow.test.mjs",
+    "test/live-model.test.mjs",
+    "test/live-sessions.test.mjs",
+    "test/live-traffic.test.mjs",
+    "test/markdown.test.mjs",
+    "test/saved-query-model.test.mjs",
+    "test/scenario-command.test.mjs",
+    "test/tabs-forget-session.test.mjs"
+  ],
+  "wall_timeout_seconds": 120,
+  "exit": 0,
+  "outcome": "PASS",
+  "seconds": 1.259,
+  "connect_parent": "d25585db1152bdcb58fda492b8b18c586325f1ac",
+  "product_diff_sha256": "8d8a8937a3a7433886b026200ea9064427c0e1efb72d058e6745fd7a5e2a6c44"
+}

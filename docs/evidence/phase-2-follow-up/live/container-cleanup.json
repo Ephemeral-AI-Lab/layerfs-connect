@@ -1,0 +1,81 @@
+{
+  "ownership": "cleanup-ownership.json",
+  "verdict": "PASS",
+  "calls": [
+    {
+      "argv": [
+        "docker",
+        "inspect",
+        "lfs-8808d596-docker",
+        "--format",
+        "{{json .State}}"
+      ],
+      "exit": 0,
+      "stdout": "{\"Status\":\"exited\",\"Running\":false,\"Paused\":false,\"Restarting\":false,\"OOMKilled\":false,\"Dead\":false,\"Pid\":0,\"ExitCode\":143,\"Error\":\"\",\"StartedAt\":\"2026-11-08T22:58:52.776753551Z\",\"FinishedAt\":\"2026-11-08T23:11:11.964573796Z\"}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "docker",
+        "ps",
+        "-a",
+        "--filter",
+        "volume=lfs-8808d596-docker-data",
+        "--format",
+        "{{.Names}}"
+      ],
+      "exit": 0,
+      "stdout": "lfs-8808d596-docker\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "docker",
+        "rm",
+        "lfs-8808d596-docker"
+      ],
+      "exit": 0,
+      "stdout": "lfs-8808d596-docker\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "docker",
+        "volume",
+        "rm",
+        "lfs-8808d596-docker-data"
+      ],
+      "exit": 0,
+      "stdout": "lfs-8808d596-docker-data\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "docker",
+        "ps",
+        "-a",
+        "--filter",
+        "name=lfs-8808d596",
+        "--format",
+        "{{.Names}}"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "docker",
+        "volume",
+        "ls",
+        "--filter",
+        "name=lfs-8808d596",
+        "--format",
+        "{{.Name}}"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    }
+  ]
+}

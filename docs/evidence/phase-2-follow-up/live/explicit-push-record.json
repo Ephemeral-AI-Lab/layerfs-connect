@@ -1,0 +1,396 @@
+{
+  "spec": {
+    "home": "/private/tmp/connect-followup-live-1c2f5bjz/home",
+    "state": "/private/tmp/connect-followup-live-1c2f5bjz/states/explicit-push-record",
+    "mode": "real",
+    "cli": "/Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect-cli-137/target/debug/layerfs"
+  },
+  "starts": 2,
+  "childPid": 72444,
+  "ended": {
+    "id": "866eb4b6-5f7f-4d74-b0b1-fb0abb7d146b",
+    "kind": "push",
+    "store": "live-explicit-push-record",
+    "target": "docker",
+    "from": null,
+    "file": null,
+    "started": 1794179215058,
+    "ended": 1794179219041,
+    "half": null,
+    "phase": "record",
+    "phases": [
+      {
+        "phase": "check",
+        "half": null,
+        "at": 1794179218945
+      },
+      {
+        "phase": "snapshot",
+        "half": null,
+        "at": 1794179218955
+      },
+      {
+        "phase": "send",
+        "half": null,
+        "at": 1794179218961
+      },
+      {
+        "phase": "verify",
+        "half": null,
+        "at": 1794179218969
+      },
+      {
+        "phase": "install",
+        "half": null,
+        "at": 1794179218980
+      },
+      {
+        "phase": "record",
+        "half": null,
+        "at": 1794179218983
+      }
+    ],
+    "outcome": "unknown",
+    "pid": 72390,
+    "observation": null,
+    "summary": "Outcome unknown · Inspect",
+    "done": null,
+    "total": null,
+    "error": {
+      "transport": "transport-unknown",
+      "code": "Unknown",
+      "message": "LayerFS ended without a complete result; inspect state before another action",
+      "phase": "record",
+      "detail": {
+        "signal": "SIGKILL"
+      }
+    },
+    "result": null
+  },
+  "inspected": {
+    "id": "866eb4b6-5f7f-4d74-b0b1-fb0abb7d146b",
+    "kind": "push",
+    "store": "live-explicit-push-record",
+    "target": "docker",
+    "from": null,
+    "file": null,
+    "started": 1794179215058,
+    "ended": 1794179219041,
+    "half": null,
+    "phase": "record",
+    "phases": [
+      {
+        "phase": "check",
+        "half": null,
+        "at": 1794179218945
+      },
+      {
+        "phase": "snapshot",
+        "half": null,
+        "at": 1794179218955
+      },
+      {
+        "phase": "send",
+        "half": null,
+        "at": 1794179218961
+      },
+      {
+        "phase": "verify",
+        "half": null,
+        "at": 1794179218969
+      },
+      {
+        "phase": "install",
+        "half": null,
+        "at": 1794179218980
+      },
+      {
+        "phase": "record",
+        "half": null,
+        "at": 1794179218983
+      }
+    ],
+    "outcome": "unknown",
+    "pid": 72390,
+    "observation": {
+      "at": 1794179219071,
+      "kind": "transfer",
+      "value": {
+        "name": "live-explicit-push-record",
+        "kind": "sqlite",
+        "state": "unresolved",
+        "holders": [],
+        "op": {
+          "id": "op-902dcc2d491f2a1d",
+          "name": "store.push",
+          "phase": "record",
+          "started": 1794179218950,
+          "uncertain": true
+        },
+        "down_reason": null,
+        "machine": "native",
+        "file": {
+          "exists": true,
+          "free": 327996071936,
+          "bytes": 217088,
+          "wal_bytes": 0,
+          "incoming_bytes": 0
+        }
+      },
+      "direction": "push",
+      "action": null
+    },
+    "summary": "Outcome unknown · Inspect",
+    "done": null,
+    "total": null,
+    "error": {
+      "transport": "transport-unknown",
+      "code": "Unknown",
+      "message": "LayerFS ended without a complete result; inspect state before another action",
+      "phase": "record",
+      "detail": {
+        "signal": "SIGKILL"
+      }
+    },
+    "result": null
+  },
+  "second": {
+    "id": "866eb4b6-5f7f-4d74-b0b1-fb0abb7d146b",
+    "kind": "push",
+    "store": "live-explicit-push-record",
+    "target": "docker",
+    "from": null,
+    "file": null,
+    "started": 1794179215058,
+    "ended": 1794179219041,
+    "half": null,
+    "phase": "record",
+    "phases": [
+      {
+        "phase": "check",
+        "half": null,
+        "at": 1794179218945
+      },
+      {
+        "phase": "snapshot",
+        "half": null,
+        "at": 1794179218955
+      },
+      {
+        "phase": "send",
+        "half": null,
+        "at": 1794179218961
+      },
+      {
+        "phase": "verify",
+        "half": null,
+        "at": 1794179218969
+      },
+      {
+        "phase": "install",
+        "half": null,
+        "at": 1794179218980
+      },
+      {
+        "phase": "record",
+        "half": null,
+        "at": 1794179218983
+      }
+    ],
+    "outcome": "unknown",
+    "pid": 72390,
+    "observation": {
+      "at": 1794179219081,
+      "kind": "transfer",
+      "value": {
+        "name": "live-explicit-push-record",
+        "kind": "sqlite",
+        "state": "unresolved",
+        "holders": [],
+        "op": {
+          "id": "op-902dcc2d491f2a1d",
+          "name": "store.push",
+          "phase": "record",
+          "started": 1794179218950,
+          "uncertain": true
+        },
+        "down_reason": null,
+        "machine": "native",
+        "file": {
+          "exists": true,
+          "free": 327996067840,
+          "bytes": 217088,
+          "wal_bytes": 0,
+          "incoming_bytes": 0
+        }
+      },
+      "direction": "push",
+      "action": "resolve"
+    },
+    "summary": "Outcome unknown · Inspect",
+    "done": null,
+    "total": null,
+    "error": {
+      "transport": "transport-unknown",
+      "code": "Unknown",
+      "message": "LayerFS ended without a complete result; inspect state before another action",
+      "phase": "record",
+      "detail": {
+        "signal": "SIGKILL"
+      }
+    },
+    "result": null
+  },
+  "recovered": {
+    "id": "220ff9d4-c283-4cad-aa26-dd802389292f",
+    "kind": "push",
+    "store": "live-explicit-push-record",
+    "target": "docker",
+    "from": null,
+    "file": null,
+    "started": 1794179219358,
+    "ended": 1794179219399,
+    "half": null,
+    "phase": "retire",
+    "phases": [
+      {
+        "phase": "check",
+        "half": null,
+        "at": 1794179219367
+      },
+      {
+        "phase": "snapshot",
+        "half": null,
+        "at": 1794179219378
+      },
+      {
+        "phase": "send",
+        "half": null,
+        "at": 1794179219383
+      },
+      {
+        "phase": "verify",
+        "half": null,
+        "at": 1794179219388
+      },
+      {
+        "phase": "install",
+        "half": null,
+        "at": 1794179219393
+      },
+      {
+        "phase": "record",
+        "half": null,
+        "at": 1794179219396
+      },
+      {
+        "phase": "retire",
+        "half": null,
+        "at": 1794179219397
+      }
+    ],
+    "outcome": "succeeded",
+    "pid": 72444,
+    "observation": null,
+    "summary": null,
+    "done": null,
+    "total": null,
+    "error": null,
+    "result": {
+      "store": "live-explicit-push-record",
+      "from": "native",
+      "to": "docker",
+      "bytes": 217088,
+      "heads": "4c436a01f90e2ce99af8fe2ea6be1a531825eb1456091cf063a343d3b51efead"
+    }
+  },
+  "restarted": {
+    "id": "866eb4b6-5f7f-4d74-b0b1-fb0abb7d146b",
+    "kind": "push",
+    "store": "live-explicit-push-record",
+    "target": "docker",
+    "from": null,
+    "file": null,
+    "started": 1794179215058,
+    "ended": 1794179219041,
+    "half": null,
+    "phase": "record",
+    "phases": [
+      {
+        "phase": "check",
+        "half": null,
+        "at": 1794179218945
+      },
+      {
+        "phase": "snapshot",
+        "half": null,
+        "at": 1794179218955
+      },
+      {
+        "phase": "send",
+        "half": null,
+        "at": 1794179218961
+      },
+      {
+        "phase": "verify",
+        "half": null,
+        "at": 1794179218969
+      },
+      {
+        "phase": "install",
+        "half": null,
+        "at": 1794179218980
+      },
+      {
+        "phase": "record",
+        "half": null,
+        "at": 1794179218983
+      }
+    ],
+    "outcome": "unknown",
+    "pid": 72390,
+    "observation": {
+      "at": 1794179219227,
+      "kind": "transfer",
+      "value": {
+        "name": "live-explicit-push-record",
+        "kind": "sqlite",
+        "state": "unresolved",
+        "holders": [],
+        "op": {
+          "id": "op-902dcc2d491f2a1d",
+          "name": "store.push",
+          "phase": "record",
+          "started": 1794179218950,
+          "uncertain": true
+        },
+        "down_reason": null,
+        "machine": "native",
+        "file": {
+          "exists": true,
+          "free": 327995985920,
+          "bytes": 217088,
+          "wal_bytes": 0,
+          "incoming_bytes": 0
+        }
+      },
+      "direction": "push",
+      "action": "resolve"
+    },
+    "summary": "Outcome unknown · Inspect",
+    "done": null,
+    "total": null,
+    "error": {
+      "transport": "transport-unknown",
+      "code": "Unknown",
+      "message": "LayerFS ended without a complete result; inspect state before another action",
+      "phase": "record",
+      "detail": {
+        "signal": "SIGKILL"
+      }
+    },
+    "result": null
+  },
+  "debuggerHit": true,
+  "debuggerKilled": true
+}

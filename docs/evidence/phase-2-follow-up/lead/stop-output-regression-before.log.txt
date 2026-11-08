@@ -1,0 +1,51 @@
+✔ fresh exec IDs are persisted before launch and frames above 1MiB are retained once (2.137667ms)
+✔ pre-registration cancel is sent once even after ended and double Stop (0.354916ms)
+✔ Stop pending before launch never spawns, and Commit refusal preserves command outcome (0.716167ms)
+✔ unknown cancellation is not replayed; explicit retry requires fresh Workspace status (0.440458ms)
+✔ lost CLI transport retains unfinished remote launch custody for explicit Stop (0.222792ms)
+✔ folder launch retry observes fresh status and never resends when that read fails (2.817167ms)
+✖ Stop drains rejected output delivery without losing cancellation or partial Save facts (0.406042ms)
+✖ an output consumer failure is handled after preserving the completed command and Save (0.460458ms)
+ℹ Error: Test "Stop drains rejected output delivery without losing cancellation or partial Save facts" at host/test/exec-cancel.test.js:105:1 generated asynchronous activity after the test ended. This activity created the error "AbortError: The stream was cancelled" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "an output consumer failure is handled after preserving the completed command and Save" at host/test/exec-cancel.test.js:125:1 generated asynchronous activity after the test ended. This activity created the error "Error: output connection failed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ tests 8
+ℹ suites 0
+ℹ pass 6
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 77.650625
+
+✖ failing tests:
+
+test at host/test/exec-cancel.test.js:105:1
+✖ Stop drains rejected output delivery without losing cancellation or partial Save facts (0.406042ms)
+  AbortError: The stream was cancelled
+      at new DOMException (node:internal/per_context/domexception:76:18)
+      at onData (file:///Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect/host/test/exec-cancel.test.js:114:126)
+      at AgentWorkspaces.run (file:///Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect/host/agents/workspaces.js:241:21)
+      at async TestContext.<anonymous> (file:///Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect/host/test/exec-cancel.test.js:114:18)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at host/test/exec-cancel.test.js:125:1
+✖ an output consumer failure is handled after preserving the completed command and Save (0.460458ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection (Error).
+      at async TestContext.<anonymous> (file:///Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect/host/test/exec-cancel.test.js:132:3)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: Error: output connection failed
+        at TestContext.<anonymous> (file:///Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect/host/test/exec-cancel.test.js:126:20)
+        at Test.runInAsyncScope (node:async_hooks:227:14)
+        at Test.run (node:internal/test_runner/test:1402:25)
+        at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+        at Test.postRun (node:internal/test_runner/test:1542:19)
+        at Test.run (node:internal/test_runner/test:1467:12)
+        at async Test.processPendingSubtests (node:internal/test_runner/test:974:7),
+    operator: 'rejects',
+    diff: 'simple'
+  }

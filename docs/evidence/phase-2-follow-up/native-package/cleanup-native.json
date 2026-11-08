@@ -1,0 +1,45 @@
+{
+  "root": "/tmp/connect-followup-native-20261109",
+  "started": "2026-11-08T23:32:53.655Z",
+  "reads": [
+    {
+      "kind": "fresh sandbox.list before cleanup",
+      "value": {
+        "items": [],
+        "next_page_pos": null
+      }
+    },
+    {
+      "kind": "fresh sandbox.list after cleanup",
+      "value": {
+        "items": [],
+        "next_page_pos": null
+      }
+    },
+    {
+      "kind": "fresh store.list after cleanup",
+      "value": {
+        "items": []
+      }
+    }
+  ],
+  "actions": [
+    {
+      "kind": "remove owned project",
+      "result": {
+        "stack": "31a3e4b84ead4263cf0fea602d81d393c3",
+        "packs_kept": true,
+        "project": "route-proof/p"
+      }
+    },
+    {
+      "kind": "remove owned Store",
+      "result": {
+        "removed": "route-proof"
+      }
+    }
+  ],
+  "failures": [],
+  "removed": true,
+  "verdict": "PASS"
+}

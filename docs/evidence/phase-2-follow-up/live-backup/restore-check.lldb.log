@@ -1,0 +1,40 @@
+(lldb) process attach --pid 70103
+Process 70103 stopped
+* thread #1, stop reason = signal SIGSTOP
+    frame #0: 0x0000000183264114 dyld`mach_o::PlatformInfo::yearForMajorVersion(mach_o::Version32, unsigned short&, bool&) const + 28
+dyld`mach_o::PlatformInfo::yearForMajorVersion:
+->  0x183264114 <+28>: ldrb   w8, [x0, #0x3b]
+    0x183264118 <+32>: cmp    w8, #0x1
+    0x18326411c <+36>: b.ne   0x183264134               ; <+60>
+    0x183264120 <+40>: cmp    w1, #0x1a0, lsl #12       ; =0x1a0000 
+Target 0: (layerfs) stopped.
+Executable module set to "/Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect-cli-137/target/debug/layerfs".
+Architecture set to: arm64-apple-macosx-.
+(lldb) breakpoint set --file /Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect-cli-137/control/crates/layerfs-store/src/backup/restore.rs --line 79
+Breakpoint 1: 3 locations.
+(lldb) process continue
+Process 70103 resuming
+Process 70103 stopped
+* thread #1, name = 'main', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+    frame #0: 0x0000000102d2f6fc layerfs`layerfs_store::backup::restore::restore::h936d6b3d4fbdc023(home=&std::path::Path @ 0x000000016d2a3618, events=0x000000016d2a42c0, request=0x000000016d2a3730, related=Related @ 0x000000016d2a3638) at restore.rs:79:33
+   76  	    };
+   77  	    let mut shown = Shown::new();
+   78  	    shown.phase(events, "check");
+-> 79  	    let staging = Staging::make(&home)?;
+    	                                ^
+   80  	    let staged = staging.0.join(remote::STORE_FILE);
+   81  	    // `download` with its bytes and pieces, `verify`, then `install`
+   82  	    let loaded = shown
+Target 0: (layerfs) stopped.
+(lldb) thread backtrace -c 8
+* thread #1, name = 'main', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+  * frame #0: 0x0000000102d2f6fc layerfs`layerfs_store::backup::restore::restore::h936d6b3d4fbdc023(home=&std::path::Path @ 0x000000016d2a3618, events=0x000000016d2a42c0, request=0x000000016d2a3730, related=Related @ 0x000000016d2a3638) at restore.rs:79:33
+    frame #1: 0x0000000102be0cc8 layerfs`layerfs_control::backup::restore::hca225a21daa4e0bf(home=&std::path::Path @ 0x000000016d2a36d0, events=0x000000016d2a42c0, request=0x000000016d2a3730) at backup.rs:11:5
+    frame #2: 0x0000000102ba39d0 layerfs`layerfs_api::backup::restore::run::h00294f7061800556(context=0x000000016d2a42a8, args=0x000000016d2a3aa0) at restore.rs:28:5
+    frame #3: 0x0000000102b98040 layerfs`layerfs_api::calls::dispatch::scoped::h8c81f440be28ea1c(families=&[layerfs_api::calls::table::Family] @ 0x000000016d2a45a0, home_path=Option<&std::path::Path> @ 0x000000016d2a45b0, scope=Option<&layerfs_api::calls::scope::Scope> @ 0x000000016d2a3998, name=(data_ptr = "backup.restore", length = 14), args=SdkValue @ 0x000000016d2a4640, events=&mut dyn core::ops::function::FnMut<(layerfs_bridge::control_sdk::SdkValue), Output=()> @ 0x000000016d2a45c0) at dispatch.rs:95:17
+    frame #4: 0x0000000102ba372c layerfs`layerfs_api::calls::dispatch::call_scoped::_$u7b$$u7b$closure$u7d$$u7d$::h71aadc14d9a2f013 at dispatch.rs:61:9
+    frame #5: 0x0000000102ba3168 layerfs`layerfs_home::trace::stepped::h964b636a39c629fb(op=(data_ptr = "backup.restore", length = 14), work={closure_env#0} @ 0x000000016d2a4860) at trace.rs:101:16
+    frame #6: 0x0000000102b97968 layerfs`layerfs_api::calls::dispatch::call_scoped::ha8228fa7e16207b6(families=&[layerfs_api::calls::table::Family] @ 0x000000016d2a4838, home_path=Option<&std::path::Path> @ 0x000000016d2a4848, scope=Option<&layerfs_api::calls::scope::Scope> @ 0x000000016d2a4858, name=(data_ptr = "backup.restore", length = 14), args=<unavailable>, events=&mut dyn core::ops::function::FnMut<(layerfs_bridge::control_sdk::SdkValue), Output=()> @ 0x000000016d2a48d0) at dispatch.rs:60:5
+    frame #7: 0x0000000102ba3b7c layerfs`layerfs_api::call_scoped::hbc0e9d4c3a82e850(home=Option<&std::path::Path> @ 0x000000016d2a4988, scope=Option<&layerfs_api::calls::scope::Scope> @ 0x000000016d2a4998, name=(data_ptr = "backup.restore", length = 14), args=SdkValue @ 0x000000016d2a4f50, events=&mut dyn core::ops::function::FnMut<(layerfs_bridge::control_sdk::SdkValue), Output=()> @ 0x000000016d2a49b0) at lib.rs:150:5
+(lldb) process kill
+Process 70103 exited with status = 9 (0x00000009) killed

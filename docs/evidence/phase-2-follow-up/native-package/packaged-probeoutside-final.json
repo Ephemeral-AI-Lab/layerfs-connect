@@ -1,0 +1,771 @@
+{
+  "started": "2026-11-08T23:38:41.249Z",
+  "checks": [
+    {
+      "name": "main identity/userData isolation",
+      "result": {
+        "userData": "/private/tmp/connect-followup-package-outside-20261109/electron-data",
+        "platform": "darwin",
+        "versions": {
+          "node": "24.22.0",
+          "acorn": "8.18.0",
+          "ada": "4.0.0",
+          "amaro": "1.1.11",
+          "ares": "1.34.8",
+          "brotli": "1.2.0",
+          "cldr": "48.0",
+          "icu": "78.2",
+          "llhttp": "9.4.3",
+          "merve": "1.2.2",
+          "modules": "150",
+          "napi": "10",
+          "nbytes": "0.1.4",
+          "ncrypto": "0.0.1",
+          "nghttp2": "1.70.0",
+          "nghttp3": "",
+          "ngtcp2": "",
+          "openssl": "0.0.0",
+          "simdjson": "4.6.11",
+          "simdutf": "7.7.0",
+          "sqlite": "3.53.4",
+          "tz": "2026e",
+          "undici": "7.29.1",
+          "unicode": "17.0",
+          "uv": "1.52.1",
+          "uvwasi": "0.0.23",
+          "v8": "15.6.75.19-electron.0",
+          "zlib": "1.3.2.1-motley",
+          "zstd": "1.6.0",
+          "electron": "45.0.0",
+          "chrome": "156.0.8078.48"
+        },
+        "isPackaged": true
+      }
+    },
+    {
+      "name": "real preload IPC status/management",
+      "result": [
+        {
+          "status": 200,
+          "body": {
+            "platform": "macos",
+            "mode": "real",
+            "layerfs": "2.0.0",
+            "settings": {
+              "state": "/tmp/connect-followup-package-outside-20261109/state",
+              "home": "/tmp/connect-followup-package-outside-20261109/state/home-2",
+              "cli": "/Users/yifanxu/Applications/LayerFS Connect Follow-up Final 20261109-137.app/Contents/Resources/runtime/bin/layerfs"
+            },
+            "daemon": {
+              "recorded": true,
+              "why": null
+            },
+            "machines": [
+              {
+                "name": "docker",
+                "platform": "docker",
+                "state": "stopped"
+              },
+              {
+                "name": "native",
+                "platform": "native",
+                "state": "ready"
+              }
+            ],
+            "stores": 1
+          }
+        },
+        {
+          "status": 200,
+          "body": {
+            "available": true,
+            "readErrors": {},
+            "layerfs": "2.0.0",
+            "machines": [
+              {
+                "name": "docker",
+                "platform": "docker",
+                "backend": "namespaces",
+                "state": "stopped",
+                "supports": {
+                  "sqlite": true,
+                  "postgresql_sandbox": true,
+                  "reason": null
+                },
+                "cpus": null,
+                "memory": null,
+                "disk": null,
+                "stores": [],
+                "sandboxes": []
+              },
+              {
+                "name": "native",
+                "platform": "native",
+                "backend": "native",
+                "state": "ready",
+                "supports": {
+                  "sqlite": true,
+                  "postgresql_sandbox": true,
+                  "reason": null
+                },
+                "cpus": null,
+                "memory": null,
+                "disk": null,
+                "stores": [
+                  "route-proof"
+                ],
+                "sandboxes": []
+              }
+            ],
+            "platforms": [
+              {
+                "platform": "native",
+                "how": "built_in",
+                "backend": "native",
+                "kernel": "nfs",
+                "sqlite": "in_process",
+                "postgresql": {
+                  "store_calls": "in_process",
+                  "sandbox": true,
+                  "reason": null
+                },
+                "ready": true,
+                "missing": [],
+                "version": null,
+                "options": [],
+                "description": "this host; Sandboxes run as this user's processes, served over loopback NFS"
+              },
+              {
+                "platform": "docker",
+                "how": "built_in",
+                "backend": "namespaces",
+                "kernel": "fuse",
+                "sqlite": "worker",
+                "postgresql": {
+                  "store_calls": "in_process",
+                  "sandbox": true,
+                  "reason": null
+                },
+                "ready": false,
+                "missing": [
+                  "tool:docker"
+                ],
+                "version": null,
+                "options": [],
+                "description": "Docker's kernel (Docker Desktop's VM, or the Linux host); Sandboxes run in Linux namespaces and a cgroup"
+              },
+              {
+                "platform": "apple-container",
+                "how": "created",
+                "backend": "namespaces",
+                "kernel": "fuse",
+                "sqlite": "worker",
+                "postgresql": {
+                  "store_calls": "in_process",
+                  "sandbox": true,
+                  "reason": null
+                },
+                "ready": false,
+                "missing": [
+                  "tool:container"
+                ],
+                "version": null,
+                "options": [
+                  {
+                    "name": "cpus",
+                    "kind": "int"
+                  },
+                  {
+                    "name": "memory",
+                    "kind": "size"
+                  },
+                  {
+                    "name": "disk",
+                    "kind": "size"
+                  },
+                  {
+                    "name": "image",
+                    "kind": "text"
+                  }
+                ],
+                "description": "an Apple container VM (Apple silicon); Sandboxes run in Linux namespaces and a cgroup"
+              },
+              {
+                "platform": "lima",
+                "how": "created",
+                "backend": "namespaces",
+                "kernel": "fuse",
+                "sqlite": "worker",
+                "postgresql": {
+                  "store_calls": "in_process",
+                  "sandbox": true,
+                  "reason": null
+                },
+                "ready": false,
+                "missing": [
+                  "tool:limactl"
+                ],
+                "version": null,
+                "options": [
+                  {
+                    "name": "cpus",
+                    "kind": "int"
+                  },
+                  {
+                    "name": "memory",
+                    "kind": "size"
+                  },
+                  {
+                    "name": "disk",
+                    "kind": "size"
+                  },
+                  {
+                    "name": "image",
+                    "kind": "text"
+                  }
+                ],
+                "description": "a Lima VM (vz); Sandboxes run in Linux namespaces and a cgroup"
+              }
+            ],
+            "stores": [
+              {
+                "name": "route-proof",
+                "machine": "native",
+                "projects": 1,
+                "names": [
+                  "p"
+                ],
+                "size": null,
+                "state": "idle",
+                "op": null
+              }
+            ],
+            "postgresql": [],
+            "sandboxes": [],
+            "status": {}
+          }
+        }
+      ]
+    },
+    {
+      "name": "scratch isolation",
+      "result": "/private/tmp/connect-followup-package-outside-20261109/electron-data/scratch/e25f8ce3-f76a-4d20-a916-704de8d6b6dc"
+    },
+    {
+      "name": "window 1280x820",
+      "result": {
+        "size": [
+          1280,
+          820
+        ],
+        "visible": true
+      }
+    },
+    {
+      "name": "window 900x600",
+      "result": {
+        "size": [
+          900,
+          600
+        ],
+        "visible": true
+      }
+    },
+    {
+      "name": "native minimize/restore/focus",
+      "result": {
+        "minimized": false,
+        "restored": true
+      }
+    },
+    {
+      "name": "explicit real Doctor IPC launch",
+      "result": {
+        "status": 200,
+        "body": {
+          "id": "88ab4552-19e4-42e0-9926-abd93a7039fb",
+          "key": "native-followup-explicit-host",
+          "request": {
+            "target": "host"
+          },
+          "state": "running",
+          "created": 1794181124148,
+          "simulated": false,
+          "identity": {
+            "version": "2.0.0",
+            "commit": "833d04cf44e8e747929d50ab1170a48260d9381c",
+            "dirty": false,
+            "features": [
+              "machine",
+              "postgresql"
+            ]
+          },
+          "started": 1794181124149,
+          "pid": 93222
+        }
+      }
+    },
+    {
+      "name": "Doctor final result",
+      "result": {
+        "status": 200,
+        "body": {
+          "id": "88ab4552-19e4-42e0-9926-abd93a7039fb",
+          "key": "native-followup-explicit-host",
+          "request": {
+            "target": "host"
+          },
+          "state": "completed",
+          "created": 1794181124148,
+          "simulated": false,
+          "identity": {
+            "version": "2.0.0",
+            "commit": "833d04cf44e8e747929d50ab1170a48260d9381c",
+            "dirty": false,
+            "features": [
+              "machine",
+              "postgresql"
+            ]
+          },
+          "started": 1794181124149,
+          "pid": 93222,
+          "report": {
+            "ok": true,
+            "complete": true,
+            "target": {
+              "kind": "host",
+              "name": "local"
+            },
+            "checks": [
+              {
+                "id": "host.build",
+                "code": "host.build",
+                "outcome": "pass",
+                "severity": null,
+                "entity": {
+                  "kind": "host",
+                  "name": "local"
+                },
+                "message": "Calling executable exists and is executable",
+                "evidence": {
+                  "home": "/tmp/connect-followup-package-outside-20261109/state/home-2",
+                  "version": "2.0.0",
+                  "os": "macos",
+                  "arch": "aarch64"
+                },
+                "fix": "",
+                "blocked_by": [],
+                "observed_ms": 0,
+                "duration_ms": null
+              },
+              {
+                "id": "host.prerequisites",
+                "code": "host.prerequisites",
+                "outcome": "pass",
+                "severity": null,
+                "entity": {
+                  "kind": "host",
+                  "name": "local"
+                },
+                "message": "Observable native runtime prerequisites are present",
+                "evidence": null,
+                "fix": "",
+                "blocked_by": [],
+                "observed_ms": 0,
+                "duration_ms": null
+              },
+              {
+                "id": "host.capacity",
+                "code": "host.capacity",
+                "outcome": "pass",
+                "severity": null,
+                "entity": {
+                  "kind": "host",
+                  "name": "local"
+                },
+                "message": "Measured local filesystem capacity; no product free-space threshold applied",
+                "evidence": {
+                  "filesystem": "/dev/disk3s5",
+                  "path": "/tmp/connect-followup-package-outside-20261109/state/home-2",
+                  "free_bytes": 331289153536
+                },
+                "fix": "",
+                "blocked_by": [],
+                "observed_ms": 9,
+                "duration_ms": 9
+              },
+              {
+                "id": "host.layout",
+                "code": "host.layout",
+                "outcome": "pass",
+                "severity": null,
+                "entity": {
+                  "kind": "host",
+                  "name": "local"
+                },
+                "message": "Current home layout is readable",
+                "evidence": null,
+                "fix": "",
+                "blocked_by": [],
+                "observed_ms": 9,
+                "duration_ms": null
+              },
+              {
+                "id": "host.records",
+                "code": "host.records",
+                "outcome": "pass",
+                "severity": null,
+                "entity": {
+                  "kind": "host",
+                  "name": "local"
+                },
+                "message": "Local record, permission, reference, intent and lease checks found no problems",
+                "evidence": null,
+                "fix": "",
+                "blocked_by": [],
+                "observed_ms": 11,
+                "duration_ms": null
+              },
+              {
+                "id": "host.artifacts",
+                "code": "host.artifacts",
+                "outcome": "pass",
+                "severity": null,
+                "entity": {
+                  "kind": "host",
+                  "name": "local"
+                },
+                "message": "Machine native configured daemon is executable",
+                "evidence": null,
+                "fix": "",
+                "blocked_by": [],
+                "observed_ms": 11,
+                "duration_ms": null
+              },
+              {
+                "id": "host.bundle",
+                "code": "host.bundle",
+                "outcome": "pass",
+                "severity": null,
+                "entity": {
+                  "kind": "host",
+                  "name": "local"
+                },
+                "message": "Applicable bundle manifest and required executable/image files are present",
+                "evidence": null,
+                "fix": "",
+                "blocked_by": [],
+                "observed_ms": 12,
+                "duration_ms": null
+              },
+              {
+                "id": "host.bundle_hashes",
+                "code": "host.bundle_hashes",
+                "outcome": "skipped",
+                "severity": null,
+                "entity": {
+                  "kind": "host",
+                  "name": "local"
+                },
+                "message": "Artifact content hashes were not recomputed; presence does not authenticate bundle bytes",
+                "evidence": null,
+                "fix": "",
+                "blocked_by": [],
+                "observed_ms": 12,
+                "duration_ms": null
+              },
+              {
+                "id": "host.remote",
+                "code": "host.remote",
+                "outcome": "skipped",
+                "severity": null,
+                "entity": {
+                  "kind": "host",
+                  "name": "local"
+                },
+                "message": "Worker connections and remote transfer files are outside host scope",
+                "evidence": null,
+                "fix": "",
+                "blocked_by": [],
+                "observed_ms": 12,
+                "duration_ms": null
+              }
+            ],
+            "findings": [],
+            "truncated": false,
+            "observed_at_ms": 1794181124158,
+            "duration_ms": 12,
+            "counts": {
+              "pass": 7,
+              "skipped": 2
+            },
+            "home": "/tmp/connect-followup-package-outside-20261109/state/home-2",
+            "operation": "diagnose",
+            "mode": "observation"
+          },
+          "ended": 1794181124172
+        }
+      }
+    },
+    {
+      "name": "renderer console/main logs",
+      "result": "retained electron log; no native modal requested in package probe"
+    },
+    {
+      "name": "model-free native host preparation (expected unknown-model refusal, zero API calls)",
+      "result": {
+        "status": 500,
+        "body": {
+          "code": "failed",
+          "message": "Unknown model: no-credit-driver/not-a-model"
+        }
+      }
+    },
+    {
+      "name": "Electron-owned real host /execute mounted command; CLI real exit125",
+      "frames": "{\"type\":\"data\",\"data\":\"ZXhhY3Q=\"}\n{\"type\":\"exit\",\"exitCode\":125}\n"
+    },
+    {
+      "name": "actual running phase observed before Stop",
+      "workspace": {
+        "branch": "chat-b56d4688-fd8b-4f41-bf05-2bdd5433ea32",
+        "state": "running",
+        "sandbox": "chat.b56d4688-fd8b-4f41-bf05-2bdd5433ea32",
+        "handle": "chat.b56d4688-fd8b-4f41-bf05-2bdd5433ea32:chat-b56d4688-fd8b-4f41-bf05-2bdd5433ea32",
+        "path": "/tmp/connect-followup-package-outside-20261109/state/home-2/machine/native/run/lfs-cbb095be-chat.b56d4688-fd8b-4f41-bf05-2bdd5433ea32/workspaces/1",
+        "head": "127e7e51f57ab8fc7e063dd14360bb767b63fa473fefc3f467acbb4a5ba3904139",
+        "commitCount": 1,
+        "lastSaved": 1794181124913,
+        "error": null,
+        "branchReady": true,
+        "baseLayer": "32857215346b5259bb8ca9d4bab40008992bbf90d381afcf17caf2e25ff1278a1b",
+        "execution": {
+          "ws": "chat.b56d4688-fd8b-4f41-bf05-2bdd5433ea32:chat-b56d4688-fd8b-4f41-bf05-2bdd5433ea32",
+          "exec_id": "connect-702fc737-efc5-42ec-b685-1e2f052ffbbb",
+          "finished": false,
+          "cancelRequested": false,
+          "pid": 93254
+        }
+      },
+      "marker": "partial file exists on mounted filesystem"
+    },
+    {
+      "name": "host alive after Stop",
+      "result": {
+        "status": 200,
+        "body": {
+          "platform": "macos",
+          "mode": "real",
+          "layerfs": "2.0.0",
+          "settings": {
+            "state": "/tmp/connect-followup-package-outside-20261109/state",
+            "home": "/tmp/connect-followup-package-outside-20261109/state/home-2",
+            "cli": "/Users/yifanxu/Applications/LayerFS Connect Follow-up Final 20261109-137.app/Contents/Resources/runtime/bin/layerfs"
+          },
+          "daemon": {
+            "recorded": true,
+            "why": null
+          },
+          "machines": [
+            {
+              "name": "docker",
+              "platform": "docker",
+              "state": "stopped"
+            },
+            {
+              "name": "native",
+              "platform": "native",
+              "state": "ready"
+            }
+          ],
+          "stores": 1
+        }
+      }
+    },
+    {
+      "name": "native preload IPC Stop after published mounted-file and active execution boundary; retention and cancellation separate",
+      "stop": {
+        "status": 200,
+        "body": {
+          "id": "b56d4688-fd8b-4f41-bf05-2bdd5433ea32",
+          "title": "Native model-free IPC host route",
+          "cwd": "/tmp/connect-followup-package-outside-20261109/input with spaces",
+          "project": "route-proof/p",
+          "runs": "mount",
+          "workspace": {
+            "branch": "chat-b56d4688-fd8b-4f41-bf05-2bdd5433ea32",
+            "state": "ready",
+            "sandbox": "chat.b56d4688-fd8b-4f41-bf05-2bdd5433ea32",
+            "path": "/tmp/connect-followup-package-outside-20261109/state/home-2/machine/native/run/lfs-cbb095be-chat.b56d4688-fd8b-4f41-bf05-2bdd5433ea32/workspaces/1",
+            "head": "128cc44c4446d766fca3c281558ee81e1044130b48b1d9d55c70b74fc7936e6c52",
+            "commitCount": 2,
+            "lastSaved": 1794181125230,
+            "error": null,
+            "execution": {
+              "ws": "chat.b56d4688-fd8b-4f41-bf05-2bdd5433ea32:chat-b56d4688-fd8b-4f41-bf05-2bdd5433ea32",
+              "exec_id": "connect-702fc737-efc5-42ec-b685-1e2f052ffbbb",
+              "finished": true,
+              "cancelRequested": true,
+              "pid": 93254,
+              "cancel": {
+                "outcome": "cancelled",
+                "signal": "SIGTERM"
+              },
+              "result": {
+                "kind": "cancelled",
+                "exit_code": 143,
+                "stop": "group"
+              }
+            }
+          },
+          "created": 1794181124278,
+          "updated": 1794181125231,
+          "state": "idle",
+          "error": null,
+          "archived": false,
+          "archivedAt": null,
+          "limits": {
+            "bashTimeoutSeconds": 900,
+            "maxRetries": 2,
+            "instructions": ""
+          },
+          "execution": {
+            "phase": "idle",
+            "startedAt": 1794181124289,
+            "turns": 0,
+            "toolCalls": 0,
+            "retryAttempt": 0,
+            "reason": "Unknown model: no-credit-driver/not-a-model"
+          },
+          "usage": {
+            "input": 0,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "totalTokens": 0,
+            "cost": 0,
+            "toolCalls": 0
+          },
+          "permissionMode": "full",
+          "approvals": [],
+          "provider": "no-credit-driver",
+          "modelId": "not-a-model",
+          "thinkingLevel": "off",
+          "messages": [],
+          "children": [],
+          "tools": [
+            "bash",
+            "subagent",
+            "bg_wait",
+            "subagent_supervisor"
+          ],
+          "queued": [],
+          "contextUsage": null,
+          "recovery": {
+            "required": false,
+            "canContinue": false
+          }
+        }
+      },
+      "frames": "{\"type\":\"error\",\"message\":\"This operation was aborted\"}\n",
+      "workspace": {
+        "branch": "chat-b56d4688-fd8b-4f41-bf05-2bdd5433ea32",
+        "state": "ready",
+        "sandbox": "chat.b56d4688-fd8b-4f41-bf05-2bdd5433ea32",
+        "path": "/tmp/connect-followup-package-outside-20261109/state/home-2/machine/native/run/lfs-cbb095be-chat.b56d4688-fd8b-4f41-bf05-2bdd5433ea32/workspaces/1",
+        "head": "128cc44c4446d766fca3c281558ee81e1044130b48b1d9d55c70b74fc7936e6c52",
+        "commitCount": 2,
+        "lastSaved": 1794181125230,
+        "error": null,
+        "execution": {
+          "ws": "chat.b56d4688-fd8b-4f41-bf05-2bdd5433ea32:chat-b56d4688-fd8b-4f41-bf05-2bdd5433ea32",
+          "exec_id": "connect-702fc737-efc5-42ec-b685-1e2f052ffbbb",
+          "finished": true,
+          "cancelRequested": true,
+          "pid": 93254,
+          "cancel": {
+            "outcome": "cancelled",
+            "signal": "SIGTERM"
+          },
+          "result": {
+            "kind": "cancelled",
+            "exit_code": 143,
+            "stop": "group"
+          }
+        }
+      }
+    },
+    {
+      "name": "pinned Files/History over native IPC",
+      "files": {
+        "status": 200,
+        "body": {
+          "kind": "ok",
+          "snapshot": "8cc44c4446d7",
+          "root": "ea7a01c85cd22e444aa18786a4bf784b707a22a9aed9c55875ccb306e649843f",
+          "path": "/partial",
+          "text": "partial",
+          "start_line": 1,
+          "end_line": 1,
+          "line_truncated": false,
+          "truncated": false,
+          "next_line": null,
+          "size": 7,
+          "at": {
+            "id": "128cc44c4446d766fca3c281558ee81e1044130b48b1d9d55c70b74fc7936e6c52",
+            "kind": "Commit",
+            "branch": "chat-b56d4688-fd8b-4f41-bf05-2bdd5433ea32",
+            "root": "ea7a01c85cd22e444aa18786a4bf784b707a22a9aed9c55875ccb306e649843f"
+          },
+          "mode": 420,
+          "binary": false
+        }
+      },
+      "history": {
+        "status": 200,
+        "body": {
+          "items": [
+            {
+              "id": "128cc44c4446d766fca3c281558ee81e1044130b48b1d9d55c70b74fc7936e6c52",
+              "branch": "chat-b56d4688-fd8b-4f41-bf05-2bdd5433ea32",
+              "message": "Bash main native-stop-proof (exit 143)",
+              "at": 1794181125225,
+              "parent": "127e7e51f57ab8fc7e063dd14360bb767b63fa473fefc3f467acbb4a5ba3904139",
+              "merged": null,
+              "kind": "exec",
+              "base": "32857215346b5259bb8ca9d4bab40008992bbf90d381afcf17caf2e25ff1278a1b",
+              "sourceCommit": null,
+              "sourceBranch": null,
+              "sourceTime": null,
+              "logical": 22
+            },
+            {
+              "id": "127e7e51f57ab8fc7e063dd14360bb767b63fa473fefc3f467acbb4a5ba3904139",
+              "branch": "chat-b56d4688-fd8b-4f41-bf05-2bdd5433ea32",
+              "message": "Bash main f2046cc1-53cf-4103-9ef7-ad373bbc540a (exit 125)",
+              "at": 1794181124908,
+              "parent": null,
+              "merged": null,
+              "kind": "exec",
+              "base": "32857215346b5259bb8ca9d4bab40008992bbf90d381afcf17caf2e25ff1278a1b",
+              "sourceCommit": null,
+              "sourceBranch": null,
+              "sourceTime": null,
+              "logical": 15
+            }
+          ],
+          "head": "128cc44c4446d766fca3c281558ee81e1044130b48b1d9d55c70b74fc7936e6c52",
+          "next": null
+        }
+      }
+    },
+    {
+      "name": "final actual real-mode footer",
+      "text": "LayerFS Connect\nNew chat\nExample chat\nMachines\nStorage\nCHATS\np\nroute-proof\n1\nNative model-free IPC host route\nnow\nYX\nEphemeral-AI\nReal LayerFS\nMachines\nDiagnose this host\nNew machine\nRefresh\n\n1 running\n·\n1 stopped\n·\n0 Sandboxes\n·\n0 Workspaces\n\nnative\n\nNative · Host processes\n\nUses this computer’s resources\nSandboxes\n0\nWorkspaces\n0\nLocal Store\n1\nStores\nroute-proof\nDisk\nShared with this computer\nRunning\nThis computer\ndocker\n\nDocker · Linux namespaces\n\nCPU, memory and disk managed by Docker\nSandboxes\n0\nWorkspaces\n0\nLocal Stores\n0\nStores\nNone on this machine\nDisk\nFree space not reported\nStopped\nStart\n\nMachine power is manual: a machine runs between Start and Stop, and nothing starts or stops one by itself. Reading this page starts nothing."
+    }
+  ],
+  "scope": "packaged",
+  "launchCwd": "/tmp/connect-followup-package-outside-20261109",
+  "session": "b56d4688-fd8b-4f41-bf05-2bdd5433ea32",
+  "verdict": "PASS"
+}

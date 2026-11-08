@@ -1,0 +1,19 @@
+Debugger listening on ws://127.0.0.1:19326/09f2cfc1-3096-4235-9f95-e338ec0c7197
+For help, see: https://nodejs.org/learn/getting-started/debugging
+
+DevTools listening on ws://127.0.0.1:19325/devtools/browser/1ec40ae2-f5eb-44a4-ab15-1b22f2fa1ec9
+Debugger attached.
+[layerfs/host] ready on http://127.0.0.1:58846 (real)
+[layerfs/host] listening on http://127.0.0.1:58846 (state /tmp/connect-followup-pg-ui-20261109/state, LayerFS home /tmp/connect-followup-pg-ui-20261109/state/home-2)
+[layerfs/host] GET /api/stores/pg-proof/stats: LayerFSError: the password variable CONNECT_PROOF_PG_PASSWORD is not set
+[layerfs/host]     at outcome (file:///Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect/host/cli/outcome.js:11:113)
+[layerfs/host]     at ChildProcess.<anonymous> (file:///Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect/host/cli/spawn.js:63:23)
+[layerfs/host]     at ChildProcess.wrapper (node:events:639:12)
+[layerfs/host]     at ChildProcess.emit (node:events:514:28)
+[layerfs/host]     at maybeClose (node:internal/child_process:1141:16)
+[layerfs/host]     at Socket.<anonymous> (node:internal/child_process:498:11)
+[layerfs/host]     at Socket.emit (node:events:514:28)
+[layerfs/host]     at Pipe.<anonymous> (node:net:362:12)
+Debugger ending on ws://127.0.0.1:19326/09f2cfc1-3096-4235-9f95-e338ec0c7197
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[layerfs/host] closing (stdin closed)

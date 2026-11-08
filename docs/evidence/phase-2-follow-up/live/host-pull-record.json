@@ -1,0 +1,84 @@
+{
+  "mutations": 0,
+  "jobs": [
+    {
+      "id": "e38a9e7c-2b96-4bb1-a49c-845744ea08bd",
+      "kind": "pull",
+      "store": "live-host-pull-record",
+      "target": "native",
+      "from": "docker",
+      "file": null,
+      "started": 1794179096708,
+      "ended": 1794179120787,
+      "half": null,
+      "phase": "record",
+      "phases": [
+        {
+          "phase": "check",
+          "half": null,
+          "at": 1794179100590
+        },
+        {
+          "phase": "snapshot",
+          "half": null,
+          "at": 1794179100600
+        },
+        {
+          "phase": "send",
+          "half": null,
+          "at": 1794179100611
+        },
+        {
+          "phase": "verify",
+          "half": null,
+          "at": 1794179100616
+        },
+        {
+          "phase": "install",
+          "half": null,
+          "at": 1794179100621
+        },
+        {
+          "phase": "record",
+          "half": null,
+          "at": 1794179100621
+        }
+      ],
+      "outcome": "interrupted",
+      "pid": 70936,
+      "observation": {
+        "at": 1794179120788,
+        "kind": "transfer",
+        "value": {
+          "name": "live-host-pull-record",
+          "kind": "sqlite",
+          "state": "idle",
+          "holders": [],
+          "op": null,
+          "down_reason": null,
+          "machine": "native",
+          "file": {
+            "exists": true,
+            "free": 328001478656,
+            "bytes": 217088,
+            "wal_bytes": 0,
+            "incoming_bytes": 0
+          }
+        },
+        "direction": "pull",
+        "action": null
+      },
+      "summary": "Interrupted · Final result unavailable",
+      "done": null,
+      "total": null,
+      "error": {
+        "code": "Interrupted",
+        "message": "Host restarted; final result unavailable. Remote work may still finish.",
+        "phase": "record",
+        "detail": null
+      },
+      "result": null,
+      "recovery": null
+    }
+  ]
+}

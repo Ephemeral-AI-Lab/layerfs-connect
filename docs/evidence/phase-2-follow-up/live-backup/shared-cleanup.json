@@ -1,0 +1,65 @@
+{
+  "verdict": "PASS",
+  "calls": [
+    {
+      "argv": [
+        "store",
+        "get",
+        "backup-send"
+      ],
+      "result": {
+        "name": "backup-send",
+        "kind": "sqlite",
+        "machine": "docker",
+        "profile": "disposable",
+        "created": 1794179059367,
+        "sqlite": "3.53.2",
+        "last_transfer": {
+          "call": "store.push",
+          "from": "native",
+          "to": "docker",
+          "at": 1794179059443,
+          "bytes": 217088,
+          "sha256": "6aeea564659cebbb04be3940c5d923d26b92385ebe08b9f95714f312d5197888",
+          "heads": "4f2e3e95d6ece291939fe1ef460ca1a9ebfe4cc2f5a565da84a549b31a9e8a34",
+          "retired": true
+        },
+        "projects": [
+          "p"
+        ]
+      }
+    },
+    {
+      "argv": [
+        "backup",
+        "list",
+        "bucket"
+      ],
+      "result": {
+        "items": []
+      }
+    },
+    {
+      "argv": [
+        "store",
+        "remove",
+        "backup-send"
+      ],
+      "result": {
+        "removed": "backup-send"
+      }
+    },
+    {
+      "argv": [
+        "backup",
+        "disconnect",
+        "bucket"
+      ],
+      "result": {
+        "disconnected": "bucket",
+        "unlinked": []
+      }
+    }
+  ],
+  "note": "Only separately owned backup-send Store and bucket alias removed; peer-owned Docker Machine left running."
+}

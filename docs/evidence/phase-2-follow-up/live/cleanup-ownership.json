@@ -1,0 +1,8 @@
+{
+  "source": "833d04cf:control/crates/layerfs-machine/src/spec.rs:76-83 derives lfs-<homeid first8>-docker",
+  "owned_home": "/private/tmp/connect-followup-live-1c2f5bjz/home",
+  "home_id": "8808d596621e08b6e60fe9b3049e5968",
+  "container": "lfs-8808d596-docker",
+  "inspect": "\"/lfs-8808d596-docker\" [{\"Type\":\"volume\",\"Name\":\"lfs-8808d596-docker-data\",\"Source\":\"/var/lib/docker/volumes/lfs-8808d596-docker-data/_data\",\"Destination\":\"/layerfs/data\",\"Driver\":\"local\",\"Mode\":\"z\",\"RW\":true,\"Propagation\":\"\"},{\"Type\":\"bind\",\"Source\":\"/host_mnt/private/tmp/connect137-linux-bundle/2.0.0/linux-aarch64\",\"Destination\":\"/layerfs/bundle\",\"Mode\":\"ro\",\"RW\":false,\"Propagation\":\"rprivate\"}]\n",
+  "initial_auto_review_rejection": "Generic docker machine stop rejected until exclusive home-scoped ownership established. Fresh home id plus source naming and exact container mounts establish ownership."
+}

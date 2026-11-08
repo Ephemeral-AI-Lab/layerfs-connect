@@ -1,0 +1,52 @@
+{
+  "outcome": "PASS",
+  "method": "Lead independent offline validation of retained evidence, exact hashed logs and report counts; no mutation/audit re-execution.",
+  "live": {
+    "cli_phase_kill": 28,
+    "host_only_kill": 12,
+    "fresh_gated_explicit_recovery": 2
+  },
+  "live_hashed_files": 106,
+  "backup_cli_rows": [
+    "restore-install-store.json",
+    "create-check-2.json",
+    "restore-install-record.json",
+    "restore-download.json",
+    "create-hash.json",
+    "restore-check.json",
+    "create-send-complete.json",
+    "restore-install-staging.json",
+    "create-upload.json",
+    "create-send-enter.json",
+    "restore-verify.json",
+    "create-check-1.json",
+    "create-snapshot.json"
+  ],
+  "backup_host_rows": 2,
+  "postgresql": [
+    {
+      "report": "complete",
+      "complete": true,
+      "counts": {
+        "pass": 114,
+        "skipped": 1
+      }
+    },
+    {
+      "report": "incomplete",
+      "complete": false,
+      "counts": {
+        "pass": 54,
+        "skipped": 1,
+        "unknown": 60
+      }
+    },
+    {
+      "report": "connection",
+      "complete": true,
+      "counts": {
+        "pass": 5
+      }
+    }
+  ]
+}

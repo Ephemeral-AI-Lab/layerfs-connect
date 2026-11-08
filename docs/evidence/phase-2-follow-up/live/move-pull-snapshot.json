@@ -1,0 +1,186 @@
+{
+  "spec": {
+    "home": "/private/tmp/connect-followup-live-1c2f5bjz/home",
+    "state": "/private/tmp/connect-followup-live-1c2f5bjz/states/move-pull-snapshot",
+    "mode": "real",
+    "cli": "/Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect-cli-137/target/debug/layerfs"
+  },
+  "starts": 1,
+  "childPid": 70758,
+  "ended": {
+    "id": "c69dea33-66f4-486a-8f88-ddeb930bb487",
+    "kind": "move",
+    "store": "live-move-pull-snapshot",
+    "target": "live-move-vm",
+    "from": "docker",
+    "file": null,
+    "started": 1794179084285,
+    "ended": 1794179088203,
+    "half": "pull",
+    "phase": "snapshot",
+    "phases": [
+      {
+        "phase": "check",
+        "half": "pull",
+        "at": 1794179088142
+      },
+      {
+        "phase": "snapshot",
+        "half": "pull",
+        "at": 1794179088150
+      }
+    ],
+    "outcome": "unknown",
+    "pid": 70758,
+    "observation": null,
+    "summary": "Outcome unknown · Inspect",
+    "done": null,
+    "total": null,
+    "error": {
+      "transport": "transport-unknown",
+      "code": "Unknown",
+      "message": "LayerFS ended without a complete result; inspect state before another action",
+      "phase": "snapshot",
+      "detail": {
+        "signal": "SIGKILL"
+      }
+    },
+    "result": null
+  },
+  "inspected": {
+    "id": "c69dea33-66f4-486a-8f88-ddeb930bb487",
+    "kind": "move",
+    "store": "live-move-pull-snapshot",
+    "target": "live-move-vm",
+    "from": "docker",
+    "file": null,
+    "started": 1794179084285,
+    "ended": 1794179088203,
+    "half": "pull",
+    "phase": "snapshot",
+    "phases": [
+      {
+        "phase": "check",
+        "half": "pull",
+        "at": 1794179088142
+      },
+      {
+        "phase": "snapshot",
+        "half": "pull",
+        "at": 1794179088150
+      }
+    ],
+    "outcome": "interrupted",
+    "pid": 70758,
+    "observation": {
+      "at": 1794179088236,
+      "kind": "transfer",
+      "value": {
+        "name": "live-move-pull-snapshot",
+        "kind": "sqlite",
+        "state": "idle",
+        "holders": [],
+        "op": {
+          "id": "op-8b7cae5e766ac2b0",
+          "name": "store.pull",
+          "phase": "snapshot",
+          "started": 1794179088145,
+          "uncertain": false
+        },
+        "down_reason": null,
+        "machine": "docker",
+        "file": {
+          "exists": true,
+          "free": 190692061184,
+          "bytes": 217088,
+          "wal_bytes": 0,
+          "incoming_bytes": 0
+        }
+      },
+      "direction": "pull",
+      "action": null
+    },
+    "summary": "Interrupted · Final result unavailable",
+    "done": null,
+    "total": null,
+    "error": {
+      "transport": "transport-unknown",
+      "code": "Unknown",
+      "message": "LayerFS ended without a complete result; inspect state before another action",
+      "phase": "snapshot",
+      "detail": {
+        "signal": "SIGKILL"
+      }
+    },
+    "result": null
+  },
+  "restarted": {
+    "id": "c69dea33-66f4-486a-8f88-ddeb930bb487",
+    "kind": "move",
+    "store": "live-move-pull-snapshot",
+    "target": "live-move-vm",
+    "from": "docker",
+    "file": null,
+    "started": 1794179084285,
+    "ended": 1794179088203,
+    "half": "pull",
+    "phase": "snapshot",
+    "phases": [
+      {
+        "phase": "check",
+        "half": "pull",
+        "at": 1794179088142
+      },
+      {
+        "phase": "snapshot",
+        "half": "pull",
+        "at": 1794179088150
+      }
+    ],
+    "outcome": "interrupted",
+    "pid": 70758,
+    "observation": {
+      "at": 1794179088248,
+      "kind": "transfer",
+      "value": {
+        "name": "live-move-pull-snapshot",
+        "kind": "sqlite",
+        "state": "idle",
+        "holders": [],
+        "op": {
+          "id": "op-8b7cae5e766ac2b0",
+          "name": "store.pull",
+          "phase": "snapshot",
+          "started": 1794179088145,
+          "uncertain": false
+        },
+        "down_reason": null,
+        "machine": "docker",
+        "file": {
+          "exists": true,
+          "free": 190692061184,
+          "bytes": 217088,
+          "wal_bytes": 0,
+          "incoming_bytes": 0
+        }
+      },
+      "direction": "pull",
+      "action": null
+    },
+    "summary": "Interrupted · Final result unavailable",
+    "done": null,
+    "total": null,
+    "error": {
+      "transport": "transport-unknown",
+      "code": "Unknown",
+      "message": "LayerFS ended without a complete result; inspect state before another action",
+      "phase": "snapshot",
+      "detail": {
+        "signal": "SIGKILL"
+      }
+    },
+    "result": null
+  },
+  "debuggerHit": true,
+  "debuggerKilled": true
+}

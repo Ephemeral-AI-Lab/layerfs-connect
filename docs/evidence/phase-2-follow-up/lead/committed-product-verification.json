@@ -1,0 +1,36 @@
+{
+  "commit": "da2986c4771b9edb89db0b6761b3781ae8a1d7fa",
+  "files": [
+    {
+      "path": "host/agents/workspaces.js",
+      "sha256": "d1d367dcb2c216e56252939a4525074c5034ff879aa0c3906ba8eff3f5ea3262"
+    },
+    {
+      "path": "desktop/src/main/layerfs-host.ts",
+      "sha256": "8424f63ca7678f001bfa889ff72e8d1fcbd86dc4b3b3c1f35f47d507be27298c"
+    },
+    {
+      "path": "desktop/src/renderer/src/components/shell/Sidebar.tsx",
+      "sha256": "8ed88bb32499d9cacfc491f71dce379a2b991fdf1dbf077129e758767f40028d"
+    }
+  ],
+  "final_checks_match_committed_product_diff": true,
+  "test_summary": {
+    "root": {
+      "pass": 87,
+      "fail": 0,
+      "skip": 0
+    },
+    "host": {
+      "pass": 352,
+      "fail": 0,
+      "skip": 2,
+      "skip_reasons": [
+        "platform-real.test.js is opt-in CONNECT_REAL_LAYERFS; actual native/package/live flows qualified independently",
+        "scenarios.test.js historical port provenance needs absent sibling dsh-layerfs/scenarios"
+      ]
+    },
+    "desktop_typecheck": "PASS"
+  },
+  "deleted_tests": []
+}

@@ -1,0 +1,401 @@
+{
+  "started": "2026-11-08T23:28:27.699Z",
+  "checks": [
+    {
+      "name": "main identity/userData isolation",
+      "result": {
+        "userData": "/private/tmp/connect-followup-native-20261109/electron-data",
+        "platform": "darwin",
+        "versions": {
+          "node": "24.22.0",
+          "acorn": "8.18.0",
+          "ada": "4.0.0",
+          "amaro": "1.1.11",
+          "ares": "1.34.8",
+          "brotli": "1.2.0",
+          "cldr": "48.0",
+          "icu": "78.2",
+          "llhttp": "9.4.3",
+          "merve": "1.2.2",
+          "modules": "150",
+          "napi": "10",
+          "nbytes": "0.1.4",
+          "ncrypto": "0.0.1",
+          "nghttp2": "1.70.0",
+          "nghttp3": "",
+          "ngtcp2": "",
+          "openssl": "0.0.0",
+          "simdjson": "4.6.11",
+          "simdutf": "7.7.0",
+          "sqlite": "3.53.4",
+          "tz": "2026e",
+          "undici": "7.29.1",
+          "unicode": "17.0",
+          "uv": "1.52.1",
+          "uvwasi": "0.0.23",
+          "v8": "15.6.75.19-electron.0",
+          "zlib": "1.3.2.1-motley",
+          "zstd": "1.6.0",
+          "electron": "45.0.0",
+          "chrome": "156.0.8078.48"
+        },
+        "isPackaged": false
+      }
+    },
+    {
+      "name": "persisted completed and interrupted custody before app restart",
+      "sessions": {
+        "125f626b-4eb1-4f1e-a26a-6286811b23d9": {
+          "execution": "connect-4ab4edaf-77db-4499-a035-41d0b379b02a",
+          "commitCount": 2,
+          "head": "1204c4bcbf2453d2a64751af6e4adb5a0e3ab773c3eada08204b7b4572df63b7a1",
+          "state": "idle",
+          "recovery": {
+            "phase": "idle",
+            "startedAt": 1794179757347,
+            "turns": 0,
+            "toolCalls": 0,
+            "retryAttempt": 0,
+            "reason": "Unknown model: no-credit-driver/not-a-model"
+          },
+          "workspace": {
+            "branch": "chat-125f626b-4eb1-4f1e-a26a-6286811b23d9",
+            "state": "closed",
+            "sandbox": null,
+            "handle": null,
+            "path": null,
+            "head": "1204c4bcbf2453d2a64751af6e4adb5a0e3ab773c3eada08204b7b4572df63b7a1",
+            "commitCount": 2,
+            "lastSaved": 1794179758276,
+            "error": null,
+            "branchReady": true,
+            "baseLayer": "322615fc176e71bab35573ce9dcc84b9ec172f28c6457bca339e4f614a958b5788",
+            "execution": {
+              "ws": "chat.125f626b-4eb1-4f1e-a26a-6286811b23d9:chat-125f626b-4eb1-4f1e-a26a-6286811b23d9",
+              "exec_id": "connect-4ab4edaf-77db-4499-a035-41d0b379b02a",
+              "finished": true,
+              "cancelRequested": true,
+              "pid": 75717,
+              "cancel": {
+                "outcome": "cancelled",
+                "signal": "SIGTERM"
+              },
+              "result": {
+                "kind": "cancelled",
+                "exit_code": 143,
+                "stop": "group"
+              }
+            }
+          },
+          "usage": {
+            "input": 0,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "totalTokens": 0,
+            "cost": 0,
+            "toolCalls": 0
+          }
+        },
+        "16528102-1575-40f6-a746-409df6e834e4": {
+          "execution": "connect-a7235ca5-56cd-4889-b117-0aa06e4e7477",
+          "commitCount": 2,
+          "head": "12db2b5b62d80221ff62dc6ca7956cf34be4f4b8039eb2ed8cbd31f46818e3fbbf",
+          "state": "error",
+          "recovery": {
+            "phase": "interrupted",
+            "startedAt": 1794180325284,
+            "turns": 0,
+            "toolCalls": 0,
+            "retryAttempt": 0,
+            "reason": "The app closed with unfinished agent work. Continue to recover it, or stop it explicitly."
+          },
+          "workspace": {
+            "branch": "chat-16528102-1575-40f6-a746-409df6e834e4",
+            "state": "closed",
+            "sandbox": null,
+            "handle": null,
+            "path": null,
+            "head": "12db2b5b62d80221ff62dc6ca7956cf34be4f4b8039eb2ed8cbd31f46818e3fbbf",
+            "commitCount": 2,
+            "lastSaved": 1794180327520,
+            "error": null,
+            "branchReady": true,
+            "baseLayer": "322615fc176e71bab35573ce9dcc84b9ec172f28c6457bca339e4f614a958b5788",
+            "execution": {
+              "ws": "chat.16528102-1575-40f6-a746-409df6e834e4:chat-16528102-1575-40f6-a746-409df6e834e4",
+              "exec_id": "connect-a7235ca5-56cd-4889-b117-0aa06e4e7477",
+              "finished": false,
+              "cancelRequested": true,
+              "pid": 91472,
+              "cancel": {
+                "outcome": "unknown",
+                "message": "no Sandbox named chat.16528102-1575-40f6-a746-409df6e834e4; `sandbox.create(project, name, machine)` starts one",
+                "code": "NoSuchSandbox"
+              }
+            }
+          },
+          "usage": {
+            "input": 0,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "totalTokens": 0,
+            "cost": 0,
+            "toolCalls": 0
+          }
+        }
+      }
+    },
+    {
+      "name": "actual app relaunch read-only IPC; persisted execution IDs/heads/Commit counts unchanged",
+      "status": {
+        "status": 200,
+        "body": {
+          "platform": "macos",
+          "mode": "real",
+          "layerfs": "2.0.0",
+          "settings": {
+            "state": "/tmp/connect-followup-native-20261109/state",
+            "home": "/tmp/connect-followup-native-20261109/state/home-2",
+            "cli": "/Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect-cli-137/target/debug/layerfs"
+          },
+          "daemon": {
+            "recorded": true,
+            "why": null
+          },
+          "machines": [
+            {
+              "name": "docker",
+              "platform": "docker",
+              "state": "stopped"
+            },
+            {
+              "name": "native",
+              "platform": "native",
+              "state": "ready"
+            }
+          ],
+          "stores": 1
+        }
+      },
+      "list": {
+        "status": 200,
+        "body": [
+          {
+            "id": "16528102-1575-40f6-a746-409df6e834e4",
+            "title": "Native model-free IPC host route",
+            "cwd": "/tmp/connect-followup-native-20261109/input with spaces",
+            "project": "route-proof/p",
+            "runs": "mount",
+            "workspace": {
+              "branch": "chat-16528102-1575-40f6-a746-409df6e834e4",
+              "state": "closed",
+              "sandbox": null,
+              "path": null,
+              "head": "12db2b5b62d80221ff62dc6ca7956cf34be4f4b8039eb2ed8cbd31f46818e3fbbf",
+              "commitCount": 2,
+              "lastSaved": 1794180327520,
+              "error": null,
+              "execution": {
+                "ws": "chat.16528102-1575-40f6-a746-409df6e834e4:chat-16528102-1575-40f6-a746-409df6e834e4",
+                "exec_id": "connect-a7235ca5-56cd-4889-b117-0aa06e4e7477",
+                "finished": false,
+                "cancelRequested": true,
+                "pid": 91472,
+                "cancel": {
+                  "outcome": "unknown",
+                  "message": "no Sandbox named chat.16528102-1575-40f6-a746-409df6e834e4; `sandbox.create(project, name, machine)` starts one",
+                  "code": "NoSuchSandbox"
+                }
+              }
+            },
+            "created": 1794180325276,
+            "updated": 1794180465273,
+            "state": "error",
+            "error": "Workspace command cancellation not confirmed. Inspect the Workspace and try cancellation again explicitly.",
+            "archived": false,
+            "archivedAt": null,
+            "limits": {
+              "bashTimeoutSeconds": 900,
+              "maxRetries": 2,
+              "instructions": ""
+            },
+            "permissionMode": "full",
+            "provider": "no-credit-driver",
+            "modelId": "not-a-model",
+            "thinkingLevel": "off",
+            "execution": {
+              "phase": "interrupted",
+              "startedAt": 1794180325284,
+              "turns": 0,
+              "toolCalls": 0,
+              "retryAttempt": 0,
+              "reason": "The app closed with unfinished agent work. Continue to recover it, or stop it explicitly."
+            }
+          },
+          {
+            "id": "125f626b-4eb1-4f1e-a26a-6286811b23d9",
+            "title": "Native model-free IPC host route",
+            "cwd": "/tmp/connect-followup-native-20261109/input with spaces",
+            "project": "route-proof/p",
+            "runs": "mount",
+            "workspace": {
+              "branch": "chat-125f626b-4eb1-4f1e-a26a-6286811b23d9",
+              "state": "closed",
+              "sandbox": null,
+              "path": null,
+              "head": "1204c4bcbf2453d2a64751af6e4adb5a0e3ab773c3eada08204b7b4572df63b7a1",
+              "commitCount": 2,
+              "lastSaved": 1794179758276,
+              "error": null,
+              "execution": {
+                "ws": "chat.125f626b-4eb1-4f1e-a26a-6286811b23d9:chat-125f626b-4eb1-4f1e-a26a-6286811b23d9",
+                "exec_id": "connect-4ab4edaf-77db-4499-a035-41d0b379b02a",
+                "finished": true,
+                "cancelRequested": true,
+                "pid": 75717,
+                "cancel": {
+                  "outcome": "cancelled",
+                  "signal": "SIGTERM"
+                },
+                "result": {
+                  "kind": "cancelled",
+                  "exit_code": 143,
+                  "stop": "group"
+                }
+              }
+            },
+            "created": 1794179757342,
+            "updated": 1794179758796,
+            "state": "idle",
+            "error": null,
+            "archived": false,
+            "archivedAt": null,
+            "limits": {
+              "bashTimeoutSeconds": 900,
+              "maxRetries": 2,
+              "instructions": ""
+            },
+            "permissionMode": "full",
+            "provider": "no-credit-driver",
+            "modelId": "not-a-model",
+            "thinkingLevel": "off",
+            "execution": {
+              "phase": "idle",
+              "startedAt": 1794179757347,
+              "turns": 0,
+              "toolCalls": 0,
+              "retryAttempt": 0,
+              "reason": "Unknown model: no-credit-driver/not-a-model"
+            }
+          }
+        ]
+      },
+      "sessions": {
+        "125f626b-4eb1-4f1e-a26a-6286811b23d9": {
+          "execution": "connect-4ab4edaf-77db-4499-a035-41d0b379b02a",
+          "commitCount": 2,
+          "head": "1204c4bcbf2453d2a64751af6e4adb5a0e3ab773c3eada08204b7b4572df63b7a1",
+          "state": "idle",
+          "recovery": {
+            "phase": "idle",
+            "startedAt": 1794179757347,
+            "turns": 0,
+            "toolCalls": 0,
+            "retryAttempt": 0,
+            "reason": "Unknown model: no-credit-driver/not-a-model"
+          },
+          "workspace": {
+            "branch": "chat-125f626b-4eb1-4f1e-a26a-6286811b23d9",
+            "state": "closed",
+            "sandbox": null,
+            "handle": null,
+            "path": null,
+            "head": "1204c4bcbf2453d2a64751af6e4adb5a0e3ab773c3eada08204b7b4572df63b7a1",
+            "commitCount": 2,
+            "lastSaved": 1794179758276,
+            "error": null,
+            "branchReady": true,
+            "baseLayer": "322615fc176e71bab35573ce9dcc84b9ec172f28c6457bca339e4f614a958b5788",
+            "execution": {
+              "ws": "chat.125f626b-4eb1-4f1e-a26a-6286811b23d9:chat-125f626b-4eb1-4f1e-a26a-6286811b23d9",
+              "exec_id": "connect-4ab4edaf-77db-4499-a035-41d0b379b02a",
+              "finished": true,
+              "cancelRequested": true,
+              "pid": 75717,
+              "cancel": {
+                "outcome": "cancelled",
+                "signal": "SIGTERM"
+              },
+              "result": {
+                "kind": "cancelled",
+                "exit_code": 143,
+                "stop": "group"
+              }
+            }
+          },
+          "usage": {
+            "input": 0,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "totalTokens": 0,
+            "cost": 0,
+            "toolCalls": 0
+          }
+        },
+        "16528102-1575-40f6-a746-409df6e834e4": {
+          "execution": "connect-a7235ca5-56cd-4889-b117-0aa06e4e7477",
+          "commitCount": 2,
+          "head": "12db2b5b62d80221ff62dc6ca7956cf34be4f4b8039eb2ed8cbd31f46818e3fbbf",
+          "state": "error",
+          "recovery": {
+            "phase": "interrupted",
+            "startedAt": 1794180325284,
+            "turns": 0,
+            "toolCalls": 0,
+            "retryAttempt": 0,
+            "reason": "The app closed with unfinished agent work. Continue to recover it, or stop it explicitly."
+          },
+          "workspace": {
+            "branch": "chat-16528102-1575-40f6-a746-409df6e834e4",
+            "state": "closed",
+            "sandbox": null,
+            "handle": null,
+            "path": null,
+            "head": "12db2b5b62d80221ff62dc6ca7956cf34be4f4b8039eb2ed8cbd31f46818e3fbbf",
+            "commitCount": 2,
+            "lastSaved": 1794180327520,
+            "error": null,
+            "branchReady": true,
+            "baseLayer": "322615fc176e71bab35573ce9dcc84b9ec172f28c6457bca339e4f614a958b5788",
+            "execution": {
+              "ws": "chat.16528102-1575-40f6-a746-409df6e834e4:chat-16528102-1575-40f6-a746-409df6e834e4",
+              "exec_id": "connect-a7235ca5-56cd-4889-b117-0aa06e4e7477",
+              "finished": false,
+              "cancelRequested": true,
+              "pid": 91472,
+              "cancel": {
+                "outcome": "unknown",
+                "message": "no Sandbox named chat.16528102-1575-40f6-a746-409df6e834e4; `sandbox.create(project, name, machine)` starts one",
+                "code": "NoSuchSandbox"
+              }
+            }
+          },
+          "usage": {
+            "input": 0,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "totalTokens": 0,
+            "cost": 0,
+            "toolCalls": 0
+          }
+        }
+      }
+    }
+  ],
+  "scope": "development",
+  "verdict": "PASS"
+}

@@ -1,0 +1,40 @@
+(lldb) process attach --pid 70148
+Process 70148 stopped
+* thread #1, stop reason = signal SIGSTOP
+    frame #0: 0x00000001831e25b8 dyld`fsgetpath + 8
+dyld`fsgetpath:
+->  0x1831e25b8 <+8>:  b.lo   0x1831e25d8               ; <+40>
+    0x1831e25bc <+12>: pacibsp 
+    0x1831e25c0 <+16>: stp    x29, x30, [sp, #-0x10]!
+    0x1831e25c4 <+20>: mov    x29, sp
+Target 0: (layerfs) stopped.
+Executable module set to "/Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect-cli-137/target/debug/layerfs".
+Architecture set to: arm64-apple-macosx-.
+(lldb) breakpoint set --file /Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect-cli-137/control/crates/layerfs-bucket/src/bucket/pieces.rs --line 222
+Breakpoint 1: 3 locations.
+(lldb) process continue
+Process 70148 resuming
+Process 70148 stopped
+* thread #2, stop reason = breakpoint 1.1
+    frame #0: 0x000000010132ea5c layerfs`layerfs_bucket::bucket::pieces::download::hf7511c9bcda52fad(driver=&dyn layerfs_bucket::bucket::driver::Driver @ 0x000000016f0a0ba8, name=(data_ptr = "baseline/store.sqlite", length = 21), out=0x000000016f0a17bc) at pieces.rs:222:48
+   219 	    let pieces = match stat.metadata.get(LAYOUT).map(String::as_str) {
+   220 	        Some(WHOLE) => {
+   221 	            progress::begin("download", Some(stat.bytes));
+-> 222 	            let n = driver.download_file(name, None, &mut whole)?;
+    	                                               ^
+   223 	            if n != stat.bytes || whole.count != stat.bytes {
+   224 	                return Err(RemoteError::Integrity(format!(
+   225 	                    "{name}: {n} bytes received, {} described",
+Target 0: (layerfs) stopped.
+(lldb) thread backtrace -c 8
+* thread #2, stop reason = breakpoint 1.1
+  * frame #0: 0x000000010132ea5c layerfs`layerfs_bucket::bucket::pieces::download::hf7511c9bcda52fad(driver=&dyn layerfs_bucket::bucket::driver::Driver @ 0x000000016f0a0ba8, name=(data_ptr = "baseline/store.sqlite", length = 21), out=0x000000016f0a17bc) at pieces.rs:222:48
+    frame #1: 0x0000000101321000 layerfs`layerfs_bucket::backup::restore::fetch::_$u7b$$u7b$closure$u7d$$u7d$::ha5bf4ee64109b975 at restore.rs:234:21
+    frame #2: 0x000000010138405c layerfs`layerfs_bucket::backup::restore::fetch::h29fca5dce994983f(driver=&dyn layerfs_bucket::bucket::driver::Driver @ 0x000000016f0a2320, name=(data_ptr = "baseline", length = 8), destination=&std::path::Path @ 0x000000016f0a2330, binding=Option<&[u8]> @ 0x000000016f0a2240, cursor_key=<unavailable>) at restore.rs:176:18
+    frame #3: 0x0000000101383e20 layerfs`layerfs_bucket::backup::restore::load::hab3e0f1f546b50a1(driver=&dyn layerfs_bucket::bucket::driver::Driver @ 0x000000016f0a2410, file=(data_ptr = "baseline", length = 8), destination=&std::path::Path @ 0x000000016f0a2430, cursor_key=<unavailable>) at restore.rs:144:5
+    frame #4: 0x00000001011be1c4 layerfs`layerfs_store::backup::restore::restore::_$u7b$$u7b$closure$u7d$$u7d$::hd8c314eab1804848 at restore.rs:84:13
+    frame #5: 0x00000001011bc794 layerfs`layerfs_bucket::bucket::progress::observe::h0d2fb9ec9f82530d(progress=Arc<dyn layerfs_bucket::bucket::progress::Progress, alloc::alloc::Global> @ 0x000000016f0a2550, work={closure_env#2} @ 0x000000016f0a2590) at progress.rs:123:5
+    frame #6: 0x0000000101195624 layerfs`layerfs_store::backup::progress::Shown::transfer::_$u7b$$u7b$closure$u7d$$u7d$::_$u7b$$u7b$closure$u7d$$u7d$::hb581cecbd6701e14 at progress.rs:165:17
+    frame #7: 0x000000010118afac layerfs`std::sys::backtrace::__rust_begin_short_backtrace::hc88ecba2ecd34432(f=<unavailable>) at backtrace.rs:152:18
+(lldb) process kill
+Process 70148 exited with status = 9 (0x00000009) killed
