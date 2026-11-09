@@ -225,3 +225,22 @@ shows `Real LayerFS` or `Simulated LayerFS`. The placeholder version is removed;
 no binary version is inferred from the desktop manifest. This is a backend-mode
 label, separate from operation outcomes and Doctor completeness. Follow-up
 evidence and verification are in `phase-2-follow-up-record.md`.
+
+## Browser preview mode switch (2026-11-09)
+
+The current renderer's sidebar footer offers Simulated / Real only in the web
+preview. `desktop/vite.web.config.ts` starts independent per-mode hosts through
+`desktop/tools/web-host.ts`; the bridge receives actual mode from the ready
+envelope, along with its host connection. A same-origin POST with the page's
+preview control token prepares the target host before full-page navigation.
+Startup refusals stay in the original mode and show controlled configuration
+errors without raw stderr. Neither host is restarted or stopped by switching.
+Hosts close through stdin at preview shutdown; their state is retained.
+
+Run with Node 24 and an explicit absolute `LAYERFS_CONNECT_CLI` (matching daemon
+via `LAYERFS_CONNECT_DAEMON` or beside CLI), then `pnpm --dir desktop web`.
+Default route is simulated; `?mode=real` addresses real mode directly.
+`LFS_STATE` names the preview root, with independent `sim/` and `real/` children;
+when unset a fresh private temporary root is used. The launcher never uses
+`~/.layerfs-connect` or a CLI resolved from PATH. Native dialog controls remain
+unavailable in the browser. This does not change Electron's launch settings.

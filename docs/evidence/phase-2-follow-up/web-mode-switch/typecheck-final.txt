@@ -1,0 +1,11 @@
+$ tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.web.json
+src/renderer/src/components/layerfs/Simulation.tsx(20,10): error TS2305: Module '"@/layerfs/client"' has no exported member 'setSimHook'.
+src/renderer/src/components/layerfs/Simulation.tsx(43,31): error TS7006: Parameter 'method' implicitly has an 'any' type.
+src/renderer/src/components/layerfs/Simulation.tsx(43,39): error TS7006: Parameter 'path' implicitly has an 'any' type.
+src/renderer/src/pages/machines/MachinesPage.tsx(15,30): error TS6133: 'useEffect' is declared but its value is never read.
+src/renderer/src/pages/machines/SandboxDetailPage.tsx(19,18): error TS2552: Cannot find name 'useSimulation'. Did you mean 'SIMULATIONS'?
+src/renderer/src/pages/machines/SandboxDetailPage.tsx(25,33): error TS7053: Element implicitly has an 'any' type because expression of type 'any' can't be used to index type 'Record<SimId, Simulation>'.
+src/renderer/src/pages/machines/SandboxDetailPage.tsx(28,40): error TS7006: Parameter 'm' implicitly has an 'any' type.
+src/renderer/src/pages/machines/SandboxDetailPage.tsx(29,40): error TS7006: Parameter 'b' implicitly has an 'any' type.
+src/renderer/src/pages/storage/StoreBreakdownSample.tsx(20,79): error TS2304: Cannot find name 'simulation'.
+[ELIFECYCLE] Command failed with exit code 2.

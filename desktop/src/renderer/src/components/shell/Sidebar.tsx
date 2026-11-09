@@ -1,5 +1,5 @@
 import { SlidersHorizontal, Bot, Wrench, Workflow, ArrowLeft, Cpu, CircleHelp, Database, FlaskConical, type LucideIcon, Server, Settings, SquarePen } from 'lucide-react'
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { ChatList } from '@/components/chat/ChatList'
 import { Avatar } from '@/components/ui/avatar'
@@ -107,10 +107,28 @@ function NewChatButton() {
 }
 
 function UserCard({ settings, onToggleSettings }: { settings: boolean; onToggleSettings: () => void }) {
+  const [switching, setSwitching] = useState(false)
+  const [modeError, setModeError] = useState<string | null>(null)
+  async function switchMode(mode: 'sim' | 'real') {
+    setSwitching(true)
+    setModeError(null)
+    try { await connectBridge.switchPreviewMode(mode) }
+    catch (error) { setModeError(error instanceof Error ? error.message : 'Could not switch preview mode.'); setSwitching(false) }
+  }
   const round =
     'flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-full border border-[var(--sidebar-user-card-border)] bg-[var(--sidebar-user-card-bg)] text-[var(--text-secondary)] hover:bg-sidebar-item-hover'
   return (
     <div className="mt-auto px-3 pb-3 pt-2">
+      {connectBridge.webPreview && <div className="mb-2 space-y-1 px-2">
+        <label className="flex items-center justify-between gap-2 text-12 text-[var(--text-secondary)]">
+          Preview mode
+          <select aria-label="Preview mode" className="min-w-0 rounded border border-sidebar-border bg-sidebar px-2 py-1 text-12 text-[var(--text-primary)]" value={connectBridge.mode} disabled={switching} onChange={e => void switchMode(e.target.value as 'sim' | 'real')}>
+            <option value="sim">Simulated</option><option value="real">Real</option>
+          </select>
+        </label>
+        {switching && <p role="status" className="text-12 text-[var(--text-secondary)]">Starting selected mode…</p>}
+        {modeError && <p role="alert" className="text-12 text-destructive">{modeError}</p>}
+      </div>}
       <div className="flex h-10 items-center rounded-full border border-[var(--sidebar-user-card-border)] bg-[var(--sidebar-user-card-bg)] px-[7px] transition-colors hover:bg-[var(--sidebar-user-card-bg-hover)]">
         <button type="button" className="flex min-w-0 flex-1 items-center gap-[10px] text-left">
           <Avatar initials="YX" tint="#5A6B7D" size="user" />

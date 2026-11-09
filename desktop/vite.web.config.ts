@@ -1,49 +1,43 @@
 // The renderer alone in a browser, for quick layout checks and headless
 // screenshots: `pnpm web`, then http://127.0.0.1:1025/#/machines (?mac=1 for
-// macOS spacing). It starts a simulated LayerFS host of its own (../host, in a
-// temporary state folder) and hands the page its address in <meta name="lfs-host">.
-import { spawn } from 'node:child_process'
-import { randomUUID } from 'node:crypto'
-import { mkdirSync, mkdtempSync } from 'node:fs'
-import { tmpdir } from 'node:os'
-import { join, resolve } from 'node:path'
-import { createInterface } from 'node:readline'
+// macOS spacing). The mode selector uses independent simulated and real hosts
+// in private preview state; real mode requires LAYERFS_CONNECT_CLI.
+import { resolve } from 'node:path'
 import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
 import { defineConfig, type Plugin } from 'vite'
+import { WebHosts, parseMode } from './tools/web-host'
 
-function simulatedHost(): Plugin {
-  let endpoint: Promise<{ url: string; token: string }> | null = null
-  const state = process.env.LFS_STATE || mkdtempSync(join(tmpdir(), 'lfs-desktop-web-'))
-  const start = () =>
-    (endpoint ??= new Promise((resolveReady, reject) => {
-      const child = spawn('node', [resolve(import.meta.dirname, '../host/main.js'), '--state', state], {
-        env: { ...process.env, LAYERFS_CONNECT_MODE: 'sim' },
-        stdio: ['pipe', 'pipe', 'inherit'],
-      })
-      createInterface({ input: child.stdout! }).once('line', (line) => {
-        const ready = JSON.parse(line) as { ready: boolean; url: string; token: string; error?: string }
-        if (ready.ready) resolveReady({ url: ready.url, token: ready.token })
-        else reject(new Error(ready.error))
-      })
-      child.on('exit', (code) => reject(new Error(`host exited ${code}`)))
-    }))
+function previewHost(): Plugin {
+  const hosts = new WebHosts(resolve(import.meta.dirname, '../host/main.js'))
   return {
-    name: 'lfs-simulated-host',
+    name: 'lfs-preview-host',
     apply: 'serve',
-    // a new chat's scratch folder (the desktop app makes these in main)
     configureServer(server) {
-      server.middlewares.use('/__lfs/scratch', (req, res) => {
-        if (req.method !== 'POST') return void (res.statusCode = 405, res.end())
-        const path = join(state, 'scratch', randomUUID())
-        mkdirSync(path, { recursive: true })
+      server.httpServer?.once('close', () => hosts.close())
+      server.middlewares.use('/__lfs/', async (req, res) => {
         res.setHeader('content-type', 'application/json')
-        res.end(JSON.stringify({ path }))
+        if (req.method !== 'POST') { res.statusCode = 405; res.end('{}'); return }
+        if (req.headers['x-lfs-preview'] !== hosts.controlToken) { res.statusCode = 403; res.end('{}'); return }
+        try {
+          const url = new URL(req.url!, 'http://127.0.0.1')
+          const mode = parseMode(url.searchParams.get('mode'))
+          if (url.pathname === '/mode') {
+            await hosts.start(mode)
+            res.end(JSON.stringify({ mode }))
+          } else if (url.pathname === '/scratch') {
+            res.end(JSON.stringify({ path: hosts.scratch(mode) }))
+          } else { res.statusCode = 404; res.end('{}') }
+        } catch (error) {
+          res.statusCode = 503
+          res.end(JSON.stringify({ error: error instanceof Error ? error.message : 'Preview host unavailable.' }))
+        }
       })
     },
-    async transformIndexHtml(html) {
-      const host = await start()
-      const content = JSON.stringify(host).replace(/"/g, '&quot;')
+    async transformIndexHtml(html, ctx) {
+      const mode = parseMode(new URL(ctx.originalUrl ?? '/', 'http://127.0.0.1').searchParams.get('mode'))
+      const host = { ...await hosts.start(mode), controlToken: hosts.controlToken }
+      const content = JSON.stringify(host).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;')
       return html.replace('<head>', `<head><meta name="lfs-host" content="${content}" />`)
     },
   }
@@ -52,7 +46,7 @@ function simulatedHost(): Plugin {
 export default defineConfig({
   root: resolve(import.meta.dirname, 'src/renderer'),
   resolve: { alias: { '@': resolve(import.meta.dirname, 'src/renderer/src') } },
-  plugins: [react(), tailwindcss(), simulatedHost()],
+  plugins: [react(), tailwindcss(), previewHost()],
   server: {
     host: '127.0.0.1',
     port: 1025,

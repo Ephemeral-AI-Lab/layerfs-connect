@@ -1,0 +1,12 @@
+✔ mode validation refuses unknown values (0.765708ms)
+✔ hosts reuse only same-mode endpoint; states and scratch folders remain separate (77.493209ms)
+✔ real mode requires explicit CLI and does not start a process (40.745625ms)
+✔ startup classifies drained stderr safely and never automatically respawns failed host (80.525791ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 538.672583

@@ -1,0 +1,32 @@
+$ electron-vite build
+vite v8.3.5 building ssr environment for production...
+transforming...
+✓ 3 modules transformed.
+rendering chunks...
+out/main/index.js  9.69 kB
+
+✓ built in 17ms
+vite v8.3.5 building ssr environment for production...
+transforming...
+✓ 2 modules transformed.
+rendering chunks...
+out/preload/index.mjs  0.76 kB
+
+✓ built in 8ms
+vite v8.3.5 building client environment for production...
+transforming...
+✓ 2295 modules transformed.
+rendering chunks...
+out/renderer/index.html                                                0.58 kB
+out/renderer/assets/layerfs-logo-C9OvVoJj.png                          5.59 kB
+out/renderer/assets/inter-vietnamese-wght-normal-CBcvBZtf.woff2       10.25 kB
+out/renderer/assets/inter-greek-ext-wght-normal-DlzME5K_.woff2        11.23 kB
+out/renderer/assets/inter-cyrillic-wght-normal-DqGufNeO.woff2         18.74 kB
+out/renderer/assets/inter-greek-wght-normal-CkhJZR-_.woff2            18.99 kB
+out/renderer/assets/inter-cyrillic-ext-wght-normal-BOeWTOD4.woff2     25.96 kB
+out/renderer/assets/inter-latin-wght-normal-Dx4kXJAl.woff2            48.25 kB
+out/renderer/assets/inter-latin-ext-wght-normal-DO1Apj_S.woff2        85.06 kB
+out/renderer/assets/index-Dpdfq8R3.css                               285.15 kB
+out/renderer/assets/index-CpUX8WCQ.js                              3,208.03 kB
+
+✓ built in 366ms

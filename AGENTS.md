@@ -38,7 +38,7 @@ the older app. Make changes in the current UI unless the task names the older ap
 - Start the preview from the repository root with `pnpm --dir desktop web`.
   Use a compatible Node version (Node 24 is installed on this machine).
 - Open `http://127.0.0.1:1025/` (or `http://localhost:1025/`). The preview runs the same renderer components
-  as Electron and starts its own simulated LayerFS host with temporary state.
+  as Electron and starts its own simulated LayerFS host with temporary state. The sidebar Preview mode selector can switch to a real host when `LAYERFS_CONNECT_CLI` is configured explicitly; each mode keeps a separate state/home under the preview root (`LFS_STATE`, or a fresh private temporary directory).
   Do not build a separate demo page or duplicate the desktop UI for browser tests.
 - Use the browser tools available in the session to navigate and play with the
   actual UI. Reuse an existing preview server when it belongs to this checkout;

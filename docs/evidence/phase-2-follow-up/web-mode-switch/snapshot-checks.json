@@ -1,0 +1,18 @@
+{
+  "snapshot": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/connect-web-mode-check-jv20axtt",
+  "tree": "d6b0e34994389f5963291be09e543c9c6754d0e0",
+  "checks": [
+    {
+      "name": "snapshot-typecheck",
+      "exit": 1,
+      "timeout_seconds": 120,
+      "command": [
+        "pnpm",
+        "--dir",
+        "desktop",
+        "-s",
+        "typecheck"
+      ]
+    }
+  ]
+}

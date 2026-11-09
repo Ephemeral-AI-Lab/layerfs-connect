@@ -354,6 +354,25 @@ Sim host: Simulated LayerFS
 ```
 
 The subtitle uses `connectBridge.mode`, supplied by the Electron preload or the
-simulated web preview. It has no placeholder version. This mode label identifies
+selected web-preview host. It has no placeholder version. This mode label identifies
 the selected backend; it does not claim connectivity, a successful operation or
 Doctor coverage. Window and navigation behavior are unchanged.
+
+## Web preview mode selector (2026-11-09)
+
+```text
++-- Sidebar footer -----------------------------+
+| Preview mode           [Simulated / Real v]   |
+| [Starting selected mode… / startup error]      |
+| [avatar] Ephemeral-AI    [Settings] [Help]     |
+|          Real / Simulated LayerFS             |
++----------------------------------------------+
+```
+
+Browser preview only. The selector starts the chosen host, then reloads to the
+new-chat page with `?mode=sim` or `?mode=real`. Unsent text is discarded by the
+reload. While starting it is disabled; a startup error appears below it and the
+current host remains selected. Each mode has a separate state/home and scratch
+folder. Switching leaves the other host alive, so commands are not implicitly
+cancelled. A stopped host requires an explicit preview restart; no mutation is
+replayed. The mode label reports the selected backend, not its health.
