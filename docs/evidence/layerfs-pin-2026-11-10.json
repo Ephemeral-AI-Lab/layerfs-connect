@@ -1,0 +1,49 @@
+{
+  "branch": "layerfs_v2_0_0",
+  "identity": {
+    "version": "2.0.0",
+    "commit": "58c548b3e0a45f11880e3511bf1267d11e315415",
+    "dirty": false,
+    "features": [
+      "machine",
+      "postgresql"
+    ]
+  },
+  "cli": "/Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect/.cache/layerfs-pins/58c548b3e0a45f11880e3511bf1267d11e315415/macos-aarch64/layerfs",
+  "cli_sha256": "c6d7964d24044f7e4a6223516ce112b26b60c527fc4a52652779fdb1f925a2f1",
+  "daemon": "/Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect/.cache/layerfs-pins/58c548b3e0a45f11880e3511bf1267d11e315415/macos-aarch64/layerfs-daemon",
+  "daemon_source": "1edcf58caec2bf079a07891411a0151c9afa3e80",
+  "daemon_sha256": "4998bd157f4f25c3fdb1f397eee30b67cd9a362cfb396fa786732e2cb48448ad",
+  "daemon_compatibility": "engine/ and core/ unchanged between daemon source and CLI source",
+  "bundle": "/Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect/.cache/layerfs-bundles/833d04cf44e8e747929d50ab1170a48260d9381c/2.0.0/linux-aarch64",
+  "bundle_manifest": {
+    "hash": "29b69e47719660bcdab3d6761e5e63f3833490b37c83867db089f6a7200d0d7d",
+    "version": "2.0.0",
+    "platform": "linux-aarch64",
+    "profile": "debug",
+    "image": "sha256:1d91885de27a20805af0d1b99602ace066f0514983613e391ee1f73ac8e7c2e9",
+    "saved_from": "sha256:afa1ef9c27294f9c7298820c06483e6fb1ddafc43a7cc7d6dec8cd2e67abf38e",
+    "source": {
+      "head": "833d04cf44e8e747929d50ab1170a48260d9381c",
+      "sha256": "7ed0ffa315e8d615ceebe5045b6a8a5b27cb4fbe23c33783fcd14f5dde3a74fb"
+    },
+    "toolchain": "1.85.1",
+    "files": {
+      "layerfs": "7150a2bb8ef0158d1aaa22a95bf47132931ce0b6e7e900719297e2f6288358bd",
+      "layerfs-daemon": "e834aaf1e7530fd8b59d194f05d87e851ee01abce2c73229a4281d471918d334",
+      "layerfs-sandbox-helper": "412419d3fff1869d1b72e427000a5cbbc9c7e7d254839c0fada8b2c53bb03447",
+      "sandbox-image.tar": "e00709dfe611c61d2c128f88a186261b0ab9de6e39c186ae66e2b5dcbfdc6671"
+    },
+    "at": "2026-11-09T12:23:18.027415+00:00"
+  },
+  "verification": "All Linux bundle file hashes verified; CLI identity clean and matches remote branch head.",
+  "validation": {
+    "adapter_tests": {
+      "passed": 36,
+      "failed": 0
+    },
+    "native_reads_receipt": "phase-2/reads-native-1794290235087.json",
+    "checks": 21,
+    "cleanup": true
+  }
+}

@@ -46,7 +46,7 @@ export function execute(spec, argv, options = {}) {
       })
       const child = spawn(selected.command, [...selected.prefix, ...argv], {
         shell: false, stdio: options.passthrough ? ['inherit', 'inherit', 'inherit'] : ['pipe', 'pipe', 'pipe'],
-        env: { ...process.env, ...options.env, ...(spec.home ? { LAYERFS_HOME: spec.home } : {}), LAYERFS_PROGRESS_JSON: '1', LAYERFS_CONSTRUCTION_WORKERS: '1' },
+        env: { ...process.env, ...options.env, ...(spec.home ? { LAYERFS_HOME: spec.home } : {}), LAYERFS_PROGRESS_JSON: '1' },
       })
       if (child.pid) children.set(child.pid, { child, home: spec.home, started: Date.now() })
       child.once('error', (error) => { spawnError = error })

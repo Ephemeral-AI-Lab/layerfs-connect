@@ -3,7 +3,17 @@
 > **Current transport, 2026-11-09:** Connect runs through an explicit pinned LayerFS
 > CLI and matching daemon. `host/cli/` owns process launch, JSON discovery, lossless
 > values and exit classification; the linked Node package has been removed.
-> Binary: `833d04cf44e8e747929d50ab1170a48260d9381c`, clean, machine/postgresql.
+> Runtime pin, 2026-11-10: clean `layerfs_v2_0_0` CLI at
+> `58c548b3e0a45f11880e3511bf1267d11e315415` (`machine`, `postgresql`).
+> The pinned macOS daemon is from clean `1edcf58caec2bf079a07891411a0151c9afa3e80`;
+> `engine/` and `core/` are unchanged between these revisions. The previously
+> verified compatible protocol-3 Linux bundle is retained at hash
+> `29b69e47719660bcdab3d6761e5e63f3833490b37c83867db089f6a7200d0d7d`
+> (its independently recorded guest source is `833d04cf44e8e747929d50ab1170a48260d9381c`).
+> Stable artifact paths are selected in ignored `desktop/.env.local`;
+> [pin receipt](evidence/layerfs-pin-2026-11-10.json) records identities and hashes.
+> Connect no longer forces `LAYERFS_CONSTRUCTION_WORKERS`: current LayerFS
+> does not read it, and Commit construction already uses one producer.
 > Current implementation and verification: [phase-2-record.md](specs/phase-2-record.md).
 > The numbered sections below retain the first port's historical design; where
 > those sections describe the Node transport or older limitations, the phase-2
