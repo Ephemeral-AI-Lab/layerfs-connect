@@ -1,0 +1,91 @@
+[
+  {
+    "args": [
+      "docker",
+      "rm",
+      "lfs-2fa1c552-docker"
+    ],
+    "exit": 0,
+    "output": "lfs-2fa1c552-docker\n",
+    "error": ""
+  },
+  {
+    "args": [
+      "docker",
+      "volume",
+      "rm",
+      "lfs-2fa1c552-docker-data"
+    ],
+    "exit": 0,
+    "output": "lfs-2fa1c552-docker-data\n",
+    "error": ""
+  },
+  {
+    "args": [
+      "/Users/yifanxu/Ephemeral-AI-Lab/layerfs-machine-start/target/debug/layerfs",
+      "store",
+      "disconnect",
+      "pg"
+    ],
+    "exit": 0,
+    "output": "{\"disconnected\":\"pg\"}\n",
+    "error": ""
+  },
+  {
+    "args": [
+      "/Users/yifanxu/Ephemeral-AI-Lab/layerfs-machine-start/target/debug/layerfs",
+      "machine",
+      "remove",
+      "pg-apple"
+    ],
+    "exit": 0,
+    "output": "{\"name\":\"pg-apple\",\"removed\":true}\n",
+    "error": ""
+  },
+  {
+    "args": [
+      "docker",
+      "stop",
+      "-t",
+      "5",
+      "lfs-pg-speed-1334c1a157"
+    ],
+    "exit": 0,
+    "output": "lfs-pg-speed-1334c1a157\n",
+    "error": ""
+  },
+  {
+    "args": [
+      "docker",
+      "rm",
+      "-v",
+      "lfs-pg-speed-1334c1a157"
+    ],
+    "exit": 0,
+    "output": "lfs-pg-speed-1334c1a157\n",
+    "error": ""
+  },
+  {
+    "args": [
+      "docker",
+      "stop",
+      "-t",
+      "5",
+      "lfs-pg-bridge-ac4604d93c"
+    ],
+    "exit": 0,
+    "output": "lfs-pg-bridge-ac4604d93c\n",
+    "error": ""
+  },
+  {
+    "args": [
+      "docker",
+      "rm",
+      "-v",
+      "lfs-pg-bridge-ac4604d93c"
+    ],
+    "exit": 0,
+    "output": "lfs-pg-bridge-ac4604d93c\n",
+    "error": ""
+  }
+]

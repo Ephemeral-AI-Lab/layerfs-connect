@@ -1,0 +1,24 @@
+{
+  "leaks": {
+    "docker": [],
+    "docker_volumes": [],
+    "apple_prefixes": [],
+    "lima_prefixes": []
+  },
+  "download_artifact_bytes_removed": 646755112,
+  "download_root_removed": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/lfs-download-speed-2vbbk3t6",
+  "owned_prefixes": [
+    "lfs-2fa1c552-",
+    "lfs-ce7754ca-",
+    "lfs-f15d549d-",
+    "lfs-6e61eb24-",
+    "lfs-d05e598c-"
+  ],
+  "shared_caches_untouched": true,
+  "credentials_deleted": true,
+  "lima_data_disks_verified_absent": [
+    "lfs66e8d7a8",
+    "lfs8955597b"
+  ],
+  "apple_data_volumes_verified_absent": true
+}

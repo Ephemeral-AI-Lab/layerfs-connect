@@ -1,0 +1,150 @@
+{
+  "root": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/lfs-download-speed-2vbbk3t6",
+  "cache": "empty owned destination, full HTTP GET, no range/resume; network/CDN caches uncontrolled",
+  "scope": "stock OS image acquisition only; provider prerequisites and LayerFS runtime/prepared-image distribution excluded",
+  "status": "PASS",
+  "steps": [
+    {
+      "url": "https://auth.docker.io/token?service=registry.docker.io&scope=repository:library/debian:pull",
+      "destination": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/lfs-download-speed-2vbbk3t6/apple/auth.json",
+      "wall_ns": 1145209417,
+      "exit": 0,
+      "bytes_on_disk": 5489,
+      "transfer": {
+        "size_download": 5489,
+        "speed_download": 4900,
+        "time_namelookup": 0.000121,
+        "time_connect": 0.00048,
+        "time_appconnect": 0.819397,
+        "time_starttransfer": 1.10296,
+        "time_total": 1.120198,
+        "http_code": 200,
+        "num_redirects": 0
+      }
+    },
+    {
+      "url": "https://registry-1.docker.io/v2/library/debian/manifests/trixie-slim",
+      "destination": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/lfs-download-speed-2vbbk3t6/apple/index.json",
+      "wall_ns": 1294863209,
+      "exit": 0,
+      "bytes_on_disk": 8973,
+      "transfer": {
+        "size_download": 8973,
+        "speed_download": 7010,
+        "time_namelookup": 0.000117,
+        "time_connect": 0.000376,
+        "time_appconnect": 0.930015,
+        "time_starttransfer": 1.279528,
+        "time_total": 1.279851,
+        "http_code": 200,
+        "num_redirects": 0
+      }
+    },
+    {
+      "url": "https://registry-1.docker.io/v2/library/debian/manifests/sha256:24a01011d10eba3a023bc8585b9650b8b29021240d4217c05b905e09ef4a5232",
+      "destination": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/lfs-download-speed-2vbbk3t6/apple/manifest.json",
+      "wall_ns": 1252500541,
+      "exit": 0,
+      "bytes_on_disk": 1041,
+      "transfer": {
+        "size_download": 1041,
+        "speed_download": 843,
+        "time_namelookup": 0.000126,
+        "time_connect": 0.000602,
+        "time_appconnect": 0.919202,
+        "time_starttransfer": 1.233126,
+        "time_total": 1.233568,
+        "http_code": 200,
+        "num_redirects": 0
+      }
+    },
+    {
+      "url": "https://registry-1.docker.io/v2/library/debian/blobs/sha256:37e6c80085f82a8a7f1cea2b83f036d9c084a2cd3d5be1aa6fd56d7c6f8ad7ba",
+      "destination": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/lfs-download-speed-2vbbk3t6/apple/37e6c80085f82a8a7f1cea2b83f036d9c084a2cd3d5be1aa6fd56d7c6f8ad7ba",
+      "wall_ns": 2255739334,
+      "exit": 0,
+      "bytes_on_disk": 466,
+      "transfer": {
+        "size_download": 466,
+        "speed_download": 208,
+        "time_namelookup": 0.000152,
+        "time_connect": 0.000777,
+        "time_appconnect": 1.767113,
+        "time_starttransfer": 2.236745,
+        "time_total": 2.237036,
+        "http_code": 200,
+        "num_redirects": 1
+      }
+    },
+    {
+      "url": "https://registry-1.docker.io/v2/library/debian/blobs/sha256:acd43e9bebc37bc4ba7a5f47bd7598913337803e53d468f37d940f11f5d5f1ef",
+      "destination": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/lfs-download-speed-2vbbk3t6/apple/acd43e9bebc37bc4ba7a5f47bd7598913337803e53d468f37d940f11f5d5f1ef",
+      "wall_ns": 5200859459,
+      "exit": 0,
+      "bytes_on_disk": 30214037,
+      "transfer": {
+        "size_download": 30214037,
+        "speed_download": 5830545,
+        "time_namelookup": 0.000161,
+        "time_connect": 0.000912,
+        "time_appconnect": 1.763375,
+        "time_starttransfer": 2.336884,
+        "time_total": 5.182026,
+        "http_code": 200,
+        "num_redirects": 1
+      }
+    },
+    {
+      "url": "https://cloud-images.ubuntu.com/releases/24.04/release/SHA256SUMS",
+      "destination": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/lfs-download-speed-2vbbk3t6/lima/SHA256SUMS",
+      "wall_ns": 1762402000,
+      "exit": 0,
+      "bytes_on_disk": 7843,
+      "transfer": {
+        "size_download": 7843,
+        "speed_download": 4503,
+        "time_namelookup": 0.00017,
+        "time_connect": 0.000353,
+        "time_appconnect": 1.060519,
+        "time_starttransfer": 1.740964,
+        "time_total": 1.741545,
+        "http_code": 200,
+        "num_redirects": 1
+      }
+    },
+    {
+      "url": "https://cloud-images.ubuntu.com/releases/24.04/release/ubuntu-24.04-server-cloudimg-arm64.img",
+      "destination": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/lfs-download-speed-2vbbk3t6/lima/ubuntu-24.04-server-cloudimg-arm64.img",
+      "wall_ns": 32816994583,
+      "exit": 0,
+      "bytes_on_disk": 616522752,
+      "transfer": {
+        "size_download": 616522752,
+        "speed_download": 18796172,
+        "time_namelookup": 0.000147,
+        "time_connect": 0.000558,
+        "time_appconnect": 1.059355,
+        "time_starttransfer": 1.743734,
+        "time_total": 32.800441,
+        "http_code": 200,
+        "num_redirects": 1
+      }
+    }
+  ],
+  "apple": {
+    "manifest": "sha256:24a01011d10eba3a023bc8585b9650b8b29021240d4217c05b905e09ef4a5232",
+    "bytes": 30214503,
+    "network_acquisition_ns": 8921966208,
+    "digest_verified": true,
+    "provider_import": "NOT_RUN: shared Apple image store already contains Debian layers; no cache purged"
+  },
+  "lima": {
+    "url": "https://cloud-images.ubuntu.com/releases/24.04/release/ubuntu-24.04-server-cloudimg-arm64.img",
+    "path": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/lfs-download-speed-2vbbk3t6/lima/ubuntu-24.04-server-cloudimg-arm64.img",
+    "bytes": 616522752,
+    "download_ns": 32816994583,
+    "sha256": "50e24e1fb79e89116e939d90aa7738f7af48c442fa1bc2510131e0b39c50348e",
+    "digest_verified": true,
+    "verification_ns": 387280625
+  }
+}

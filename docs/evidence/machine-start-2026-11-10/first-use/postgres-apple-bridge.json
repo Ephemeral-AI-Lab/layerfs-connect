@@ -1,0 +1,238 @@
+{
+  "provider": "apple-container",
+  "variant": "apple-bridge",
+  "root": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/lfs-pg-speed-hhzks73z/apple-bridge",
+  "home": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/lfs-pg-speed-hhzks73z/apple-bridge/home",
+  "machine": "pg-apple",
+  "cache": "installed artifacts; uncontrolled host page cache, exploratory only",
+  "marker": "5fe0cb30a6fc44368891439bd004d1fc",
+  "steps": [
+    {
+      "args": [
+        "store",
+        "connect",
+        "pg",
+        "postgresql://proof@127.0.0.1:52740/proof_apple_bridge?sslmode=disable",
+        "--password",
+        "env:LAYERFS_PG_SPEED_PASSWORD",
+        "--synchronous-commit",
+        "off"
+      ],
+      "wall_ns": 212931625,
+      "exit": 0
+    },
+    {
+      "args": [
+        "machine",
+        "create",
+        "pg-apple",
+        "apple-container",
+        "--cpus",
+        "2",
+        "--memory",
+        "4G",
+        "--disk",
+        "4G",
+        "--progress"
+      ],
+      "wall_ns": 1642903208,
+      "exit": 0,
+      "progress": "{\"progress\":{\"stage\":\"bundle-validation\",\"state\":\"started\"}}\n{\"progress\":{\"stage\":\"bundle-validation\",\"state\":\"completed\",\"elapsed_ms\":0}}\n{\"progress\":{\"phase\":\"create\",\"machine\":\"pg-apple\"}}\n{\"progress\":{\"stage\":\"provider-and-worker\",\"state\":\"started\"}}\n{\"progress\":{\"stage\":\"provider-and-worker\",\"state\":\"completed\",\"elapsed_ms\":1504}}\n{\"progress\":{\"stage\":\"worker-compatibility\",\"state\":\"started\"}}\n{\"progress\":{\"stage\":\"worker-compatibility\",\"state\":\"completed\",\"elapsed_ms\":1}}\n"
+    },
+    {
+      "args": [
+        "project",
+        "init",
+        "pg/app",
+        "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/lfs-pg-speed-hhzks73z/apple-bridge/fixture"
+      ],
+      "wall_ns": 196531166,
+      "exit": 0
+    },
+    {
+      "args": [
+        "branch",
+        "fork",
+        "pg/app",
+        "verify",
+        "main"
+      ],
+      "wall_ns": 129889584,
+      "exit": 0
+    },
+    {
+      "args": [
+        "sandbox",
+        "create",
+        "pg/app",
+        "box",
+        "pg-apple"
+      ],
+      "wall_ns": 4131831375,
+      "exit": 0
+    },
+    {
+      "args": [
+        "workspace",
+        "mount",
+        "box",
+        "verify",
+        "--name",
+        "verify"
+      ],
+      "wall_ns": 105879917,
+      "exit": 0
+    },
+    {
+      "args": [
+        "workspace",
+        "exec",
+        "box:verify",
+        "cat proof.txt && printf \"5fe0cb30a6fc44368891439bd004d1fc\\n\" > result.txt"
+      ],
+      "wall_ns": 38861375,
+      "exit": 0
+    },
+    {
+      "args": [
+        "workspace",
+        "commit",
+        "box:verify",
+        "--message",
+        "PostgreSQL provider proof"
+      ],
+      "wall_ns": 148079167,
+      "exit": 0
+    },
+    {
+      "args": [
+        "file",
+        "read",
+        "pg/app",
+        "verify",
+        "/result.txt"
+      ],
+      "wall_ns": 162860375,
+      "exit": 0
+    },
+    {
+      "args": [
+        "workspace",
+        "unmount",
+        "box:verify"
+      ],
+      "wall_ns": 21591583,
+      "exit": 0
+    },
+    {
+      "args": [
+        "sandbox",
+        "close",
+        "box"
+      ],
+      "wall_ns": 2172326333,
+      "exit": 0
+    },
+    {
+      "args": [
+        "machine",
+        "stop",
+        "pg-apple"
+      ],
+      "wall_ns": 489194709,
+      "exit": 0
+    },
+    {
+      "args": [
+        "machine",
+        "start",
+        "pg-apple",
+        "--progress"
+      ],
+      "wall_ns": 1454917750,
+      "exit": 0,
+      "progress": "{\"progress\":{\"stage\":\"bundle-validation\",\"state\":\"started\"}}\n{\"progress\":{\"stage\":\"bundle-validation\",\"state\":\"completed\",\"elapsed_ms\":0}}\n{\"progress\":{\"stage\":\"provider-and-worker\",\"state\":\"started\"}}\n{\"progress\":{\"stage\":\"provider-and-worker\",\"state\":\"completed\",\"elapsed_ms\":1280}}\n{\"progress\":{\"stage\":\"worker-compatibility\",\"state\":\"started\"}}\n{\"progress\":{\"stage\":\"worker-compatibility\",\"state\":\"completed\",\"elapsed_ms\":2}}\n"
+    },
+    {
+      "args": [
+        "sandbox",
+        "create",
+        "pg/app",
+        "restart",
+        "pg-apple"
+      ],
+      "wall_ns": 347379500,
+      "exit": 0
+    },
+    {
+      "args": [
+        "workspace",
+        "mount",
+        "restart",
+        "verify",
+        "--name",
+        "verify"
+      ],
+      "wall_ns": 102280958,
+      "exit": 0
+    },
+    {
+      "args": [
+        "workspace",
+        "exec",
+        "restart:verify",
+        "cat result.txt"
+      ],
+      "wall_ns": 36015917,
+      "exit": 0
+    },
+    {
+      "args": [
+        "workspace",
+        "unmount",
+        "restart:verify"
+      ],
+      "wall_ns": 16324958,
+      "exit": 0
+    },
+    {
+      "args": [
+        "sandbox",
+        "close",
+        "restart"
+      ],
+      "wall_ns": 114649958,
+      "exit": 0
+    },
+    {
+      "args": [
+        "store",
+        "disconnect",
+        "pg"
+      ],
+      "wall_ns": 17113250,
+      "exit": 0
+    },
+    {
+      "args": [
+        "machine",
+        "stop",
+        "pg-apple"
+      ],
+      "wall_ns": 238431500,
+      "exit": 0
+    },
+    {
+      "args": [
+        "machine",
+        "remove",
+        "pg-apple"
+      ],
+      "wall_ns": 1171284209,
+      "exit": 0
+    }
+  ],
+  "status": "PASS",
+  "budget_seconds": 110,
+  "cleaned": true
+}

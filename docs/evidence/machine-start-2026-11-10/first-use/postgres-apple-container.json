@@ -1,0 +1,78 @@
+{
+  "provider": "apple-container",
+  "root": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/lfs-pg-speed-hhzks73z/apple-container",
+  "home": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/lfs-pg-speed-hhzks73z/apple-container/home",
+  "machine": "pg-apple",
+  "cache": "installed artifacts; uncontrolled host page cache, exploratory only",
+  "marker": "a4f8bfb6306247c19f113d4b0cb1a554",
+  "steps": [
+    {
+      "args": [
+        "store",
+        "connect",
+        "pg",
+        "postgresql://proof@127.0.0.1:51317/proof_apple_container?sslmode=disable",
+        "--password",
+        "env:LAYERFS_PG_SPEED_PASSWORD",
+        "--synchronous-commit",
+        "off"
+      ],
+      "wall_ns": 225213000,
+      "exit": 0
+    },
+    {
+      "args": [
+        "machine",
+        "create",
+        "pg-apple",
+        "apple-container",
+        "--cpus",
+        "2",
+        "--memory",
+        "4G",
+        "--disk",
+        "4G",
+        "--progress"
+      ],
+      "wall_ns": 1769705291,
+      "exit": 0,
+      "progress": "{\"progress\":{\"stage\":\"bundle-validation\",\"state\":\"started\"}}\n{\"progress\":{\"stage\":\"bundle-validation\",\"state\":\"completed\",\"elapsed_ms\":0}}\n{\"progress\":{\"phase\":\"create\",\"machine\":\"pg-apple\"}}\n{\"progress\":{\"stage\":\"provider-and-worker\",\"state\":\"started\"}}\n{\"progress\":{\"stage\":\"provider-and-worker\",\"state\":\"completed\",\"elapsed_ms\":1655}}\n{\"progress\":{\"stage\":\"worker-compatibility\",\"state\":\"started\"}}\n{\"progress\":{\"stage\":\"worker-compatibility\",\"state\":\"completed\",\"elapsed_ms\":2}}\n"
+    },
+    {
+      "args": [
+        "project",
+        "init",
+        "pg/app",
+        "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/lfs-pg-speed-hhzks73z/apple-container/fixture"
+      ],
+      "wall_ns": 181124375,
+      "exit": 0
+    },
+    {
+      "args": [
+        "branch",
+        "fork",
+        "pg/app",
+        "verify",
+        "main"
+      ],
+      "wall_ns": 127491083,
+      "exit": 0
+    },
+    {
+      "args": [
+        "sandbox",
+        "create",
+        "pg/app",
+        "box",
+        "pg-apple"
+      ],
+      "wall_ns": 26434333,
+      "exit": 125,
+      "error": "{\"code\":\"Unavailable\",\"message\":\"machine pg-apple cannot reach PostgreSQL Store pg's server at 192.168.64.1: no connection to the server was made (it refused the connection, did not answer, or closed it); an apple-container machine reaches a server on this host only when it listens on the container network's bridge (0.0.0.0, as Docker Desktop publishes a port), not on 127.0.0.1 alone\",\"detail\":null}\n"
+    }
+  ],
+  "status": "FAILED",
+  "budget_seconds": 110,
+  "failure": "{\"code\":\"Unavailable\",\"message\":\"machine pg-apple cannot reach PostgreSQL Store pg's server at 192.168.64.1: no connection to the server was made (it refused the connection, did not answer, or closed it); an apple-container machine reaches a server on this host only when it listens on the container network's bridge (0.0.0.0, as Docker Desktop publishes a port), not on 127.0.0.1 alone\",\"detail\":null}\n"
+}

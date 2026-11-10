@@ -1,0 +1,8 @@
+{
+  "home": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/lfs-pg-speed-hhzks73z/docker/home",
+  "home_id": "2fa1c5528017af287e54bd6d5c4eb0a2",
+  "worker": "lfs-2fa1c552-docker",
+  "volume": "lfs-2fa1c552-docker-data",
+  "worker_absent": true,
+  "volume_absent": true
+}

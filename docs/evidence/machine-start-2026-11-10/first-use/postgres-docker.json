@@ -1,0 +1,221 @@
+{
+  "provider": "docker",
+  "root": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/lfs-pg-speed-hhzks73z/docker",
+  "home": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/lfs-pg-speed-hhzks73z/docker/home",
+  "machine": "docker",
+  "cache": "installed artifacts; uncontrolled host page cache, exploratory only",
+  "marker": "599664a15bfa4bfab5969fc50790d459",
+  "steps": [
+    {
+      "args": [
+        "store",
+        "connect",
+        "pg",
+        "postgresql://proof@127.0.0.1:51317/proof_docker?sslmode=disable",
+        "--password",
+        "env:LAYERFS_PG_SPEED_PASSWORD",
+        "--synchronous-commit",
+        "off"
+      ],
+      "wall_ns": 206823666,
+      "exit": 0
+    },
+    {
+      "args": [
+        "machine",
+        "start",
+        "docker",
+        "--progress"
+      ],
+      "wall_ns": 519543208,
+      "exit": 0,
+      "progress": "{\"progress\":{\"stage\":\"bundle-validation\",\"state\":\"started\"}}\n{\"progress\":{\"stage\":\"bundle-validation\",\"state\":\"completed\",\"elapsed_ms\":0}}\n{\"progress\":{\"stage\":\"sandbox-image\",\"state\":\"started\"}}\n{\"progress\":{\"stage\":\"sandbox-image\",\"state\":\"completed\",\"elapsed_ms\":35}}\n{\"progress\":{\"stage\":\"provider-and-worker\",\"state\":\"started\"}}\n{\"progress\":{\"stage\":\"provider-and-worker\",\"state\":\"completed\",\"elapsed_ms\":373}}\n{\"progress\":{\"stage\":\"worker-compatibility\",\"state\":\"started\"}}\n{\"progress\":{\"stage\":\"worker-compatibility\",\"state\":\"completed\",\"elapsed_ms\":1}}\n"
+    },
+    {
+      "args": [
+        "project",
+        "init",
+        "pg/app",
+        "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/lfs-pg-speed-hhzks73z/docker/fixture"
+      ],
+      "wall_ns": 193149459,
+      "exit": 0
+    },
+    {
+      "args": [
+        "branch",
+        "fork",
+        "pg/app",
+        "verify",
+        "main"
+      ],
+      "wall_ns": 124144375,
+      "exit": 0
+    },
+    {
+      "args": [
+        "sandbox",
+        "create",
+        "pg/app",
+        "box",
+        "docker"
+      ],
+      "wall_ns": 6528234041,
+      "exit": 0
+    },
+    {
+      "args": [
+        "workspace",
+        "mount",
+        "box",
+        "verify",
+        "--name",
+        "verify"
+      ],
+      "wall_ns": 109160042,
+      "exit": 0
+    },
+    {
+      "args": [
+        "workspace",
+        "exec",
+        "box:verify",
+        "cat proof.txt && printf \"599664a15bfa4bfab5969fc50790d459\\n\" > result.txt"
+      ],
+      "wall_ns": 330293000,
+      "exit": 0
+    },
+    {
+      "args": [
+        "workspace",
+        "commit",
+        "box:verify",
+        "--message",
+        "PostgreSQL provider proof"
+      ],
+      "wall_ns": 194516917,
+      "exit": 0
+    },
+    {
+      "args": [
+        "file",
+        "read",
+        "pg/app",
+        "verify",
+        "/result.txt"
+      ],
+      "wall_ns": 129283541,
+      "exit": 0
+    },
+    {
+      "args": [
+        "workspace",
+        "unmount",
+        "box:verify"
+      ],
+      "wall_ns": 87124917,
+      "exit": 0
+    },
+    {
+      "args": [
+        "sandbox",
+        "close",
+        "box"
+      ],
+      "wall_ns": 752818500,
+      "exit": 0
+    },
+    {
+      "args": [
+        "machine",
+        "stop",
+        "docker"
+      ],
+      "wall_ns": 286945500,
+      "exit": 0
+    },
+    {
+      "args": [
+        "machine",
+        "start",
+        "docker",
+        "--progress"
+      ],
+      "wall_ns": 515544625,
+      "exit": 0,
+      "progress": "{\"progress\":{\"stage\":\"bundle-validation\",\"state\":\"started\"}}\n{\"progress\":{\"stage\":\"bundle-validation\",\"state\":\"completed\",\"elapsed_ms\":0}}\n{\"progress\":{\"stage\":\"sandbox-image\",\"state\":\"started\"}}\n{\"progress\":{\"stage\":\"sandbox-image\",\"state\":\"completed\",\"elapsed_ms\":31}}\n{\"progress\":{\"stage\":\"provider-and-worker\",\"state\":\"started\"}}\n{\"progress\":{\"stage\":\"provider-and-worker\",\"state\":\"completed\",\"elapsed_ms\":377}}\n{\"progress\":{\"stage\":\"worker-compatibility\",\"state\":\"started\"}}\n{\"progress\":{\"stage\":\"worker-compatibility\",\"state\":\"completed\",\"elapsed_ms\":1}}\n"
+    },
+    {
+      "args": [
+        "sandbox",
+        "create",
+        "pg/app",
+        "restart",
+        "docker"
+      ],
+      "wall_ns": 367943167,
+      "exit": 0
+    },
+    {
+      "args": [
+        "workspace",
+        "mount",
+        "restart",
+        "verify",
+        "--name",
+        "verify"
+      ],
+      "wall_ns": 88098291,
+      "exit": 0
+    },
+    {
+      "args": [
+        "workspace",
+        "exec",
+        "restart:verify",
+        "cat result.txt"
+      ],
+      "wall_ns": 80685666,
+      "exit": 0
+    },
+    {
+      "args": [
+        "workspace",
+        "unmount",
+        "restart:verify"
+      ],
+      "wall_ns": 71806542,
+      "exit": 0
+    },
+    {
+      "args": [
+        "sandbox",
+        "close",
+        "restart"
+      ],
+      "wall_ns": 187186083,
+      "exit": 0
+    },
+    {
+      "args": [
+        "store",
+        "disconnect",
+        "pg"
+      ],
+      "wall_ns": 10665375,
+      "exit": 0
+    },
+    {
+      "args": [
+        "machine",
+        "stop",
+        "docker"
+      ],
+      "wall_ns": 300099958,
+      "exit": 0
+    }
+  ],
+  "status": "PASS",
+  "budget_seconds": 110,
+  "cleaned": true
+}
