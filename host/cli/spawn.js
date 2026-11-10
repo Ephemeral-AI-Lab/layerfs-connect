@@ -6,6 +6,8 @@ import { binary } from './binary.js'
 import { parse } from './json.js'
 import { lines } from './progress.js'
 import { CliError, outcome } from './outcome.js'
+import { beginInvocation, registerInvocation } from '../activity/recorder.js'
+import { capture } from '../activity/redact.js'
 export const children = new Map()
 const lanes = new Map()
 async function admit(key, limit, run) {
@@ -16,9 +18,16 @@ async function admit(key, limit, run) {
   try { return await run() } finally { const next = lane.waiting.shift(); if (next) next(); else lane.active-- }
 }
 export function execute(spec, argv, options = {}) {
-  const selected = binary(spec)
+  const activity = beginInvocation(spec, argv, options)
+  let selected
+  try { selected = binary(spec) } catch (error) {
+    activity?.finished({ status: 'launch-failed', code: error.code })
+    throw error
+  }
+  const capturedOut = capture(), capturedErr = capture()
+  let processExit = null, processSignal = null
   const control = argv[0] === 'workspace' && argv[1] === 'exec-cancel'
-  return admit(`${selected.key}:${control ? 'cancel' : 'calls'}`, control ? 4 : selected.key === 'sim' ? 1 : 4, () => {
+  const launch = () => admit(`${selected.key}:${control ? 'cancel' : 'calls'}`, control ? 4 : selected.key === 'sim' ? 1 : 4, () => {
     if (!options.discovery && !spec.home) throw new CliError('InvalidInput', 'LayerFS requires an explicit home')
     if (options.read && spec.mode !== 'sim' && !existsSync(join(spec.home, 'layerfs.json'))) throw new CliError('Unavailable', 'LayerFS home is not initialized; reads will not create it')
     options.beforeSpawn?.()
@@ -31,7 +40,7 @@ export function execute(spec, argv, options = {}) {
           if (!events) { if (++finals !== 1) throw new Error('Extra result'); result = frame; return }
           if (finals) throw new Error('Frame after final')
           if ('result' in frame || 'refusal' in frame) { finals++; result = frame.result; refusal = frame.refusal }
-          else if ('progress' in frame) options.onProgress?.(frame.progress)
+          else if ('progress' in frame) { activity?.progress(frame.progress); options.onProgress?.(frame.progress) }
           else if (!['stdout', 'stderr'].includes(frame.stream) || !('bytes' in frame)) throw new Error('Unknown event')
           options.onFrame?.(frame)
         } catch { malformed = true }
@@ -39,7 +48,7 @@ export function execute(spec, argv, options = {}) {
       const stderr = lines((line) => {
         try {
           const frame = parse(line)
-          if ('progress' in frame) options.onProgress?.(frame.progress)
+          if ('progress' in frame) { activity?.progress(frame.progress); options.onProgress?.(frame.progress) }
           else if (!events && typeof frame.code === 'string') { if (refusal) malformed = true; refusal = frame }
           else malformed = true
         } catch { /* Usage is plain text; exit 2 classifies it without exposing argv/secrets. */ }
@@ -49,13 +58,15 @@ export function execute(spec, argv, options = {}) {
         env: { ...process.env, ...options.env, ...(spec.home ? { LAYERFS_HOME: spec.home } : {}), LAYERFS_PROGRESS_JSON: '1', LAYERFS_CONSTRUCTION_WORKERS: '1' },
       })
       if (child.pid) children.set(child.pid, { child, home: spec.home, started: Date.now() })
+      child.once('spawn', () => activity?.started(child, selected))
       child.once('error', (error) => { spawnError = error })
       child.stdin?.on('error', () => {})
-      child.stdout?.on('data', (data) => stdout.write(data))
-      child.stderr?.on('data', (data) => stderr.write(data))
+      child.stdout?.on('data', (data) => { capturedOut.write(data); stdout.write(data) })
+      child.stderr?.on('data', (data) => { capturedErr.write(data); stderr.write(data) })
       let deadline
       if (options.timeout) deadline = setTimeout(() => child.kill('SIGTERM'), options.timeout)
       child.once('close', (code, signal) => {
+        processExit = code; processSignal = signal
         clearTimeout(deadline)
         children.delete(child.pid)
         if (options.passthrough && !spawnError) { resolve({ exit_code: code ?? 1, signal }); return }
@@ -66,4 +77,13 @@ export function execute(spec, argv, options = {}) {
       child.stdin?.end(options.input)
     })
   })
+  const pending = launch().then(result => {
+    activity?.finished({ status: 'success', exitCode: processExit, signal: processSignal, commandExitCode: result?.exit_code, stdout: capturedOut.finish(activity.scrub), stderr: capturedErr.finish(activity.scrub), outputUnavailable: !!options.passthrough })
+    return result
+  }, error => {
+    activity?.finished({ status: error.transport === 'transport-unknown' ? 'uncertain' : error.transport === 'unavailable' ? 'launch-failed' : error.transport === 'usage-incompatible' ? 'usage-error' : error.transport === 'refusal' ? 'refused' : 'not-started', code: error.code, message: activity.scrub.bounded(error.message, 2048).text, exitCode: processExit, signal: processSignal, stdout: capturedOut.finish(activity.scrub), stderr: capturedErr.finish(activity.scrub) })
+    throw error
+  })
+  registerInvocation(pending, activity)
+  return pending
 }

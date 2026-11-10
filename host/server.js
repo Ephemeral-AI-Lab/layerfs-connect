@@ -10,6 +10,9 @@ import { createHash, randomBytes, timingSafeEqual } from 'node:crypto'
 import { createServer } from 'node:http'
 import { stringify } from './cli/json.js'
 import { agentRoute } from './agents/routes.js'
+import { withActivity, requestAction } from './activity/context.js'
+import { sanitizer } from './activity/redact.js'
+import { activityRoute } from './activity/routes.js'
 
 /** A comment line on every event stream this often, so idle proxies and sockets stay open. */
 export const HEARTBEAT_MS = 15_000
@@ -66,7 +69,7 @@ const same = (a, b) => timingSafeEqual(digest(a), digest(b))
 const CORS = {
   'access-control-allow-origin': '*',
   'access-control-allow-methods': 'GET, POST, DELETE, OPTIONS',
-  'access-control-allow-headers': 'Authorization, Content-Type',
+  'access-control-allow-headers': 'Authorization, Content-Type, X-LFS-Action',
   'access-control-max-age': '600',
 }
 
@@ -113,6 +116,7 @@ export function errorAnswer(error) {
 export function createHandler(deps) {
   const { token, projects, storage = null, machines = null, doctor = null, sim = null, runs = () => null, agents = () => null, runsError = () => null, heartbeatMs = HEARTBEAT_MS, log = (line) => process.stderr.write(`${line}\n`) } = deps
   const streams = new Set()
+  const activity = deps.activity ?? null
 
   /** The RunManager, or a 503 naming why it is not there. */
   const engine = () => {
@@ -128,6 +132,7 @@ export function createHandler(deps) {
   /** method + path segments -> the answer, or undefined when no route matches. */
   async function route(method, parts, query, body) {
     const [api, group, id, sub, ...rest] = parts
+    if (api === 'api' && group === 'cli-activity' && activity) return activityRoute(activity, method, parts.slice(2), query)
     if (api === 'api' && group === 'agent') {
       const manager = agents()
       if (!manager) throw httpError(503, 'agent-unavailable', 'The agent runtime has not started.')
@@ -272,6 +277,7 @@ export function createHandler(deps) {
     agentManager?.on('event', forward)
     storage?.on?.('event', forward)
     doctor?.on?.('event', forward)
+    activity?.on('event', forward)
     const beat = setInterval(() => res.write(': heartbeat\n\n'), heartbeatMs)
     const stream = { res, close: () => res.end() }
     streams.add(stream)
@@ -281,6 +287,7 @@ export function createHandler(deps) {
       agentManager?.off('event', forward)
       storage?.off?.('event', forward)
       doctor?.off?.('event', forward)
+      activity?.off('event', forward)
       streams.delete(stream)
     }
     req.on('close', done)
@@ -313,6 +320,7 @@ export function createHandler(deps) {
       if (method !== 'GET') return send(res, 405, { code: 'method-not-allowed', message: `${method} ${url.pathname}` })
       return events(req, res)
     }
+    let trackedAction
     try {
       let body = {}
       if (method === 'POST') {
@@ -323,11 +331,22 @@ export function createHandler(deps) {
           catch { throw httpError(400, 'invalid-input', 'Invalid JSON request body.') }
         }
       }
-      const answer = await route(method, parts, url.searchParams, body)
+      let metadata
+      try { metadata = JSON.parse(decodeURIComponent(String(req.headers['x-lfs-action'] ?? ''))) } catch { /* Older clients have no action metadata. */ }
+      const action = requestAction(metadata, method, url.pathname)
+      // Activity queries do not log themselves or launch additional LayerFS calls.
+      const track = activity && parts[1] !== 'cli-activity'
+      const scrub = sanitizer()
+      const safeAction = Object.fromEntries(Object.entries(action).map(([key, value]) => [key, typeof value === 'string' ? scrub.bounded(value, 200).text : value]))
+      if (track && safeAction.origin === 'user') activity.record(safeAction, 'action.received')
+      if (track) trackedAction = safeAction
+      const answer = await withActivity({ action: safeAction, state: activity?.state }, () => route(method, parts, url.searchParams, body))
+      if (track && safeAction.origin === 'user') activity.record(safeAction, 'action.finished', { status: answer === undefined ? 404 : 200 })
       if (answer === undefined) return send(res, 404, { code: 'not-found', message: `no route ${method} ${url.pathname}` })
       send(res, 200, answer)
     } catch (error) {
       const { status, body } = errorAnswer(error)
+      if (trackedAction) { activity.record(trackedAction, 'action.finished', { status, error: true, code: typeof error.code === 'string' ? error.code : 'Failed' }); body.activityId = trackedAction.id }
       if (status >= 500 && status !== 503) log(`${method} ${url.pathname}: ${error?.stack ?? body.message}`)
       if (!res.headersSent) send(res, status, body)
       else res.end()

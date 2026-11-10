@@ -1,0 +1,361 @@
+{
+  "items": [
+    {
+      "id": "81ebcc9c-f74f-422c-a7b5-b4b5dbe73d9b",
+      "name": "machine.create",
+      "label": "Create machine",
+      "target": "progress-ui-1110",
+      "page": "/machines",
+      "origin": "user",
+      "at": 1794272635893,
+      "invocations": [
+        {
+          "id": "ec79a70b-dce7-424f-ba64-aa99a360d2c4",
+          "at": 1794272635894,
+          "status": "success",
+          "binary": "/Users/yifanxu/Ephemeral-AI-Lab/layerfs-machine-start/target/debug/layerfs",
+          "argv": [
+            "machine",
+            "create",
+            "--cpus",
+            "2",
+            "--memory",
+            "4294967296",
+            "--disk",
+            "4294967296",
+            "--progress",
+            "--",
+            "progress-ui-1110",
+            "lima"
+          ],
+          "stdin": null,
+          "mode": "real",
+          "ownerPid": 52651,
+          "started": 1794272635896,
+          "pid": 57089,
+          "identity": {
+            "version": "2.0.0",
+            "commit": "58c548b3e0a45f11880e3511bf1267d11e315415",
+            "dirty": false,
+            "features": [
+              "machine",
+              "postgresql"
+            ]
+          },
+          "waitMs": 2,
+          "progress": {
+            "stage": "worker-compatibility",
+            "state": "completed",
+            "elapsed_ms": 3
+          },
+          "exitCode": 0,
+          "signal": null,
+          "stdout": {
+            "text": "{\"name\":\"progress-ui-1110\",\"platform\":\"lima\",\"backend\":\"namespaces\",\"supports\":{\"sqlite\":true,\"postgresql_sandbox\":true,\"reason\":null},\"state\":\"running\",\"cpus\":2,\"memory\":4294967296,\"disk\":4294967296,\"stores\":[],\"sandboxes\":[],\"os_image\":\"/Users/yifanxu/.cache/layerfs-worktrees/layerfs-machine-start-c17e354c8815/image-cache/layerfs/machine-images/objects/cf7e4430d91880d0b2c5a0315d89fa04f24b7bc2340ed64e89cd496f79a8f109/root.img\",\"error\":null}\n",
+            "truncated": false,
+            "bytes": 446
+          },
+          "stderr": {
+            "text": "{\"progress\":{\"stage\":\"bundle-validation\",\"state\":\"started\"}}\n{\"progress\":{\"stage\":\"bundle-validation\",\"state\":\"completed\",\"elapsed_ms\":0}}\n{\"progress\":{\"phase\":\"create\",\"machine\":\"progress-ui-1110\"}}\n{\"progress\":{\"stage\":\"provider-and-worker\",\"state\":\"started\"}}\n{\"progress\":{\"stage\":\"provider-and-worker\",\"state\":\"completed\",\"elapsed_ms\":10194}}\n{\"progress\":{\"stage\":\"worker-compatibility\",\"state\":\"started\"}}\n{\"progress\":{\"stage\":\"worker-compatibility\",\"state\":\"completed\",\"elapsed_ms\":3}}\n",
+            "truncated": false,
+            "bytes": 492
+          },
+          "outputUnavailable": false,
+          "ended": 1794272646159,
+          "durationMs": 10263
+        }
+      ],
+      "events": [
+        {
+          "v": 1,
+          "id": "fae69f28-ee7f-416b-b2e3-86bd2bf7455e",
+          "at": 1794272635893,
+          "seq": 1564,
+          "generation": "c22079cd-1464-42c4-9c5a-5d3e88d6f98d",
+          "action": {
+            "id": "81ebcc9c-f74f-422c-a7b5-b4b5dbe73d9b",
+            "name": "machine.create",
+            "label": "Create machine",
+            "target": "progress-ui-1110",
+            "page": "/machines",
+            "origin": "user"
+          },
+          "type": "action.received",
+          "data": {}
+        },
+        {
+          "v": 1,
+          "id": "1527c704-1164-4d5a-9241-117507f22572",
+          "at": 1794272635894,
+          "seq": 1565,
+          "generation": "c22079cd-1464-42c4-9c5a-5d3e88d6f98d",
+          "action": {
+            "id": "81ebcc9c-f74f-422c-a7b5-b4b5dbe73d9b",
+            "name": "machine.create",
+            "label": "Create machine",
+            "target": "progress-ui-1110",
+            "page": "/machines",
+            "origin": "user"
+          },
+          "type": "cli.queued",
+          "invocationId": "ec79a70b-dce7-424f-ba64-aa99a360d2c4",
+          "data": {
+            "binary": "/Users/yifanxu/Ephemeral-AI-Lab/layerfs-machine-start/target/debug/layerfs",
+            "argv": [
+              "machine",
+              "create",
+              "--cpus",
+              "2",
+              "--memory",
+              "4294967296",
+              "--disk",
+              "4294967296",
+              "--progress",
+              "--",
+              "progress-ui-1110",
+              "lima"
+            ],
+            "stdin": null,
+            "mode": "real",
+            "ownerPid": 52651
+          }
+        },
+        {
+          "v": 1,
+          "id": "6bae2a40-a70c-43b6-a587-3f43ae14e389",
+          "at": 1794272635896,
+          "seq": 1566,
+          "generation": "c22079cd-1464-42c4-9c5a-5d3e88d6f98d",
+          "action": {
+            "id": "81ebcc9c-f74f-422c-a7b5-b4b5dbe73d9b",
+            "name": "machine.create",
+            "label": "Create machine",
+            "target": "progress-ui-1110",
+            "page": "/machines",
+            "origin": "user"
+          },
+          "type": "cli.started",
+          "invocationId": "ec79a70b-dce7-424f-ba64-aa99a360d2c4",
+          "data": {
+            "started": 1794272635896,
+            "pid": 57089,
+            "binary": "/Users/yifanxu/Ephemeral-AI-Lab/layerfs-machine-start/target/debug/layerfs",
+            "identity": {
+              "version": "2.0.0",
+              "commit": "58c548b3e0a45f11880e3511bf1267d11e315415",
+              "dirty": false,
+              "features": [
+                "machine",
+                "postgresql"
+              ]
+            },
+            "waitMs": 2
+          }
+        },
+        {
+          "v": 1,
+          "id": "b2bd51c4-9b5b-43d7-ade5-2e6cc80729c8",
+          "at": 1794272635951,
+          "seq": 1567,
+          "generation": "c22079cd-1464-42c4-9c5a-5d3e88d6f98d",
+          "action": {
+            "id": "81ebcc9c-f74f-422c-a7b5-b4b5dbe73d9b",
+            "name": "machine.create",
+            "label": "Create machine",
+            "target": "progress-ui-1110",
+            "page": "/machines",
+            "origin": "user"
+          },
+          "type": "cli.progress",
+          "invocationId": "ec79a70b-dce7-424f-ba64-aa99a360d2c4",
+          "data": {
+            "progress": {
+              "stage": "bundle-validation",
+              "state": "started"
+            }
+          }
+        },
+        {
+          "v": 1,
+          "id": "064b8459-9b2b-4cf5-9491-2d2a01bfcbcb",
+          "at": 1794272635953,
+          "seq": 1568,
+          "generation": "c22079cd-1464-42c4-9c5a-5d3e88d6f98d",
+          "action": {
+            "id": "81ebcc9c-f74f-422c-a7b5-b4b5dbe73d9b",
+            "name": "machine.create",
+            "label": "Create machine",
+            "target": "progress-ui-1110",
+            "page": "/machines",
+            "origin": "user"
+          },
+          "type": "cli.progress",
+          "invocationId": "ec79a70b-dce7-424f-ba64-aa99a360d2c4",
+          "data": {
+            "progress": {
+              "stage": "bundle-validation",
+              "state": "completed",
+              "elapsed_ms": 0
+            }
+          }
+        },
+        {
+          "v": 1,
+          "id": "59b2d722-2444-4edb-9a00-48f910d2ad2b",
+          "at": 1794272635958,
+          "seq": 1569,
+          "generation": "c22079cd-1464-42c4-9c5a-5d3e88d6f98d",
+          "action": {
+            "id": "81ebcc9c-f74f-422c-a7b5-b4b5dbe73d9b",
+            "name": "machine.create",
+            "label": "Create machine",
+            "target": "progress-ui-1110",
+            "page": "/machines",
+            "origin": "user"
+          },
+          "type": "cli.progress",
+          "invocationId": "ec79a70b-dce7-424f-ba64-aa99a360d2c4",
+          "data": {
+            "progress": {
+              "stage": "provider-and-worker",
+              "state": "started"
+            }
+          }
+        },
+        {
+          "v": 1,
+          "id": "19731479-058b-41e4-97da-76d1edd70e92",
+          "at": 1794272646153,
+          "seq": 1683,
+          "generation": "c22079cd-1464-42c4-9c5a-5d3e88d6f98d",
+          "action": {
+            "id": "81ebcc9c-f74f-422c-a7b5-b4b5dbe73d9b",
+            "name": "machine.create",
+            "label": "Create machine",
+            "target": "progress-ui-1110",
+            "page": "/machines",
+            "origin": "user"
+          },
+          "type": "cli.progress",
+          "invocationId": "ec79a70b-dce7-424f-ba64-aa99a360d2c4",
+          "data": {
+            "progress": {
+              "stage": "provider-and-worker",
+              "state": "completed",
+              "elapsed_ms": 10194
+            }
+          }
+        },
+        {
+          "v": 1,
+          "id": "ba81cd94-40f1-4f8d-ad72-f8fa92827da5",
+          "at": 1794272646153,
+          "seq": 1684,
+          "generation": "c22079cd-1464-42c4-9c5a-5d3e88d6f98d",
+          "action": {
+            "id": "81ebcc9c-f74f-422c-a7b5-b4b5dbe73d9b",
+            "name": "machine.create",
+            "label": "Create machine",
+            "target": "progress-ui-1110",
+            "page": "/machines",
+            "origin": "user"
+          },
+          "type": "cli.progress",
+          "invocationId": "ec79a70b-dce7-424f-ba64-aa99a360d2c4",
+          "data": {
+            "progress": {
+              "stage": "worker-compatibility",
+              "state": "started"
+            }
+          }
+        },
+        {
+          "v": 1,
+          "id": "9860dc8e-1b31-4e27-a48f-9fc5e0ef20fa",
+          "at": 1794272646157,
+          "seq": 1685,
+          "generation": "c22079cd-1464-42c4-9c5a-5d3e88d6f98d",
+          "action": {
+            "id": "81ebcc9c-f74f-422c-a7b5-b4b5dbe73d9b",
+            "name": "machine.create",
+            "label": "Create machine",
+            "target": "progress-ui-1110",
+            "page": "/machines",
+            "origin": "user"
+          },
+          "type": "cli.progress",
+          "invocationId": "ec79a70b-dce7-424f-ba64-aa99a360d2c4",
+          "data": {
+            "progress": {
+              "stage": "worker-compatibility",
+              "state": "completed",
+              "elapsed_ms": 3
+            }
+          }
+        },
+        {
+          "v": 1,
+          "id": "643a964d-3316-479e-be47-255f9760f3cd",
+          "at": 1794272646159,
+          "seq": 1686,
+          "generation": "c22079cd-1464-42c4-9c5a-5d3e88d6f98d",
+          "action": {
+            "id": "81ebcc9c-f74f-422c-a7b5-b4b5dbe73d9b",
+            "name": "machine.create",
+            "label": "Create machine",
+            "target": "progress-ui-1110",
+            "page": "/machines",
+            "origin": "user"
+          },
+          "type": "cli.finished",
+          "invocationId": "ec79a70b-dce7-424f-ba64-aa99a360d2c4",
+          "data": {
+            "status": "success",
+            "exitCode": 0,
+            "signal": null,
+            "stdout": {
+              "text": "{\"name\":\"progress-ui-1110\",\"platform\":\"lima\",\"backend\":\"namespaces\",\"supports\":{\"sqlite\":true,\"postgresql_sandbox\":true,\"reason\":null},\"state\":\"running\",\"cpus\":2,\"memory\":4294967296,\"disk\":4294967296,\"stores\":[],\"sandboxes\":[],\"os_image\":\"/Users/yifanxu/.cache/layerfs-worktrees/layerfs-machine-start-c17e354c8815/image-cache/layerfs/machine-images/objects/cf7e4430d91880d0b2c5a0315d89fa04f24b7bc2340ed64e89cd496f79a8f109/root.img\",\"error\":null}\n",
+              "truncated": false,
+              "bytes": 446
+            },
+            "stderr": {
+              "text": "{\"progress\":{\"stage\":\"bundle-validation\",\"state\":\"started\"}}\n{\"progress\":{\"stage\":\"bundle-validation\",\"state\":\"completed\",\"elapsed_ms\":0}}\n{\"progress\":{\"phase\":\"create\",\"machine\":\"progress-ui-1110\"}}\n{\"progress\":{\"stage\":\"provider-and-worker\",\"state\":\"started\"}}\n{\"progress\":{\"stage\":\"provider-and-worker\",\"state\":\"completed\",\"elapsed_ms\":10194}}\n{\"progress\":{\"stage\":\"worker-compatibility\",\"state\":\"started\"}}\n{\"progress\":{\"stage\":\"worker-compatibility\",\"state\":\"completed\",\"elapsed_ms\":3}}\n",
+              "truncated": false,
+              "bytes": 492
+            },
+            "outputUnavailable": false,
+            "ended": 1794272646159,
+            "durationMs": 10263
+          }
+        },
+        {
+          "v": 1,
+          "id": "85a72198-d328-4b9d-a289-b7adaa7e5d09",
+          "at": 1794272646160,
+          "seq": 1687,
+          "generation": "c22079cd-1464-42c4-9c5a-5d3e88d6f98d",
+          "action": {
+            "id": "81ebcc9c-f74f-422c-a7b5-b4b5dbe73d9b",
+            "name": "machine.create",
+            "label": "Create machine",
+            "target": "progress-ui-1110",
+            "page": "/machines",
+            "origin": "user"
+          },
+          "type": "action.finished",
+          "data": {
+            "status": 200
+          }
+        }
+      ],
+      "request": {
+        "status": 200
+      },
+      "status": "success"
+    }
+  ],
+  "next": null,
+  "warning": null,
+  "cleared": true,
+  "clearedAt": 1794272333427
+}

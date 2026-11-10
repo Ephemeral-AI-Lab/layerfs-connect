@@ -2,6 +2,7 @@
 // (preload's window.desktop.layerfs), which owns the host and its token. In the
 // browser preview (`pnpm web`) the page talks to its selected host directly,
 // at the address vite.web.config.ts puts in <meta name="lfs-host">.
+import type { CliAction } from '../../../../../shared/cli-activity'
 export type LayerfsReply = { status: number; body: unknown }
 export type LayerfsConnection = 'connecting' | 'connected' | 'reconnecting'
 export type LayerfsStreamMessage = { kind: 'event'; event: unknown } | { kind: 'connection'; state: LayerfsConnection }
@@ -38,12 +39,12 @@ export const connectBridge = {
     url.hash = '/'
     window.location.assign(url.href)
   },
-  async request(method: string, path: string, body?: unknown): Promise<LayerfsReply> {
-    if (desktop) return desktop.request(method, path, body)
+  async request(method: string, path: string, body?: unknown, action?: CliAction): Promise<LayerfsReply> {
+    if (desktop) return desktop.request(method, path, body, action)
     if (!web) throw new Error('No LayerFS host: run the desktop app or `pnpm web`.')
     const res = await fetch(`${web.url}${path}`, {
       method,
-      headers: { authorization: `Bearer ${web.token}`, ...(body === undefined ? {} : { 'content-type': 'application/json' }) },
+      headers: { ...(action ? { 'x-lfs-action': encodeURIComponent(JSON.stringify(action)) } : {}), authorization: `Bearer ${web.token}`, ...(body === undefined ? {} : { 'content-type': 'application/json' }) },
       body: body === undefined ? undefined : JSON.stringify(body),
     })
     return { status: res.status, body: await res.json().catch(() => ({})) }

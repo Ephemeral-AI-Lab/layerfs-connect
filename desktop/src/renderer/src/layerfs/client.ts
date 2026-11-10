@@ -2,6 +2,8 @@
 // goes through Electron main (connect-bridge.ts); the host's token never
 // reaches the renderer.
 import { connectBridge } from '@/layerfs/bridge'
+import { desktopAction } from '@/layerfs/activity-action'
+import type { CliAction } from '../../../../../shared/cli-activity'
 import { exampleChatReply } from '@/layerfs/chat-sim'
 import type { BackupFile, CommitInfo, DemoDetail, DemoSummary, DoctorReport, FsEntry, HostEvent, HostStatus, MachinesView, NewMachine, NewProjectInput, ProjectInitJob, ProjectState, ProjectSummary, RefusalDetail, RunDetail, RunSummary, SandboxInfo, SandboxRecord, StorageJob, StorageView, TracePage } from '@/layerfs/host-api'
 
@@ -15,6 +17,7 @@ export class HostError extends Error {
     /** A layout 2 home's conversion refusal: the app shows the upgrade screen. */
     readonly conversion = false,
     readonly transport?: string,
+    readonly activityId?: string,
   ) {
     super(message)
   }
@@ -80,23 +83,24 @@ export const setSimHook = (hook: SimHook | null) => {
   sim = hook
 }
 
-export function call<T>(method: string, path: string, body?: unknown): Promise<T> {
+export function call<T>(method: string, path: string, body?: unknown, activity?: CliAction): Promise<T> {
   const answer = exampleChatReply(method, path) ?? sim?.route(method, path)
   if (answer) return answer.value instanceof Error ? Promise.reject(answer.value) : Promise.resolve(answer.value as T)
-  const real = method === 'GET' ? oneAtATime(path, () => send<T>(method, path)) : send<T>(method, path, body)
+  const action = activity ?? desktopAction(method, path)
+  const real = method === 'GET' ? oneAtATime(path, () => send<T>(method, path, undefined, action)) : send<T>(method, path, body, action)
   return sim?.extend ? real.then((value) => (sim?.extend ? (sim.extend(method, path, value) as T) : value)) : real
 }
 
-async function send<T>(method: string, path: string, body?: unknown): Promise<T> {
+async function send<T>(method: string, path: string, body?: unknown, action?: CliAction): Promise<T> {
   let reply: { status: number; body: unknown }
   try {
-    reply = await connectBridge.request(method, path, body)
+    reply = await connectBridge.request(method, path, body, action)
   } catch (error) {
     throw new HostError('no-host', error instanceof Error ? error.message : String(error), 0)
   }
-  const value = (reply.body ?? {}) as { code?: string; message?: string; detail?: RefusalDetail; conversion?: boolean; transport?: string }
+  const value = (reply.body ?? {}) as { code?: string; message?: string; detail?: RefusalDetail; conversion?: boolean; transport?: string; activityId?: string }
   if (reply.status < 200 || reply.status >= 300) {
-    const error = new HostError(value.code ?? 'failed', value.message ?? `${method} ${path}: ${reply.status}`, reply.status, value.detail ?? null, value.conversion === true, value.transport)
+    const error = new HostError(value.code ?? 'failed', value.message ?? `${method} ${path}: ${reply.status}`, reply.status, value.detail ?? null, value.conversion === true, value.transport, value.activityId)
     if (error.conversion) setConversion(error)
     throw error
   }
@@ -128,9 +132,9 @@ export const host = {
   inspectMachine: (name: string) => call<{ state?: string; observedAt: number }>('GET', `/api/machines/${enc(name)}/inspect`),
   machines: () => call<MachinesView>('GET', '/api/machines'),
   /** A VM. */
-  createMachine: (input: NewMachine) => call<unknown>('POST', '/api/machines', input),
+  createMachine: (input: NewMachine, activity?: CliAction) => call<unknown>('POST', '/api/machines', input, activity),
   /** machine.start: a stopped machine and its worker (nothing else starts one, #535 D11). */
-  startMachine: (name: string) => call<unknown>('POST', `/api/machines/${enc(name)}/start`),
+  startMachine: (name: string, activity?: CliAction) => call<unknown>('POST', `/api/machines/${enc(name)}/start`, undefined, activity),
   /** machine.stop: refused InUse while Sandboxes run on it (detail.related names them). */
   stopMachine: (name: string) => call<unknown>('POST', `/api/machines/${enc(name)}/stop`),
   /** Removes a VM; refused InUse while it holds Stores or running Sandboxes. */

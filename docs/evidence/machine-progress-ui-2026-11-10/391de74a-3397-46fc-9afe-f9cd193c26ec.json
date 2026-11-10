@@ -1,0 +1,347 @@
+{
+  "items": [
+    {
+      "id": "391de74a-3397-46fc-9afe-f9cd193c26ec",
+      "name": "machine.start",
+      "label": "Start machine",
+      "target": "progress-ui-1110",
+      "page": "/machines/progress-ui-1110",
+      "origin": "user",
+      "at": 1794272758419,
+      "invocations": [
+        {
+          "id": "bc3ed7e8-c17c-46c5-91a5-36cfd39281a5",
+          "at": 1794272758420,
+          "status": "success",
+          "binary": "/Users/yifanxu/Ephemeral-AI-Lab/layerfs-machine-start/target/debug/layerfs",
+          "argv": [
+            "machine",
+            "start",
+            "--progress",
+            "--",
+            "progress-ui-1110"
+          ],
+          "stdin": null,
+          "mode": "real",
+          "ownerPid": 52651,
+          "started": 1794272758421,
+          "pid": 59776,
+          "identity": {
+            "version": "2.0.0",
+            "commit": "58c548b3e0a45f11880e3511bf1267d11e315415",
+            "dirty": false,
+            "features": [
+              "machine",
+              "postgresql"
+            ]
+          },
+          "waitMs": 1,
+          "progress": {
+            "stage": "worker-compatibility",
+            "state": "completed",
+            "elapsed_ms": 3
+          },
+          "exitCode": 0,
+          "signal": null,
+          "stdout": {
+            "text": "{\"name\":\"progress-ui-1110\",\"platform\":\"lima\",\"backend\":\"namespaces\",\"supports\":{\"sqlite\":true,\"postgresql_sandbox\":true,\"reason\":null},\"state\":\"running\",\"cpus\":2,\"memory\":4294967296,\"disk\":4294967296,\"stores\":[],\"sandboxes\":[],\"os_image\":\"/Users/yifanxu/.cache/layerfs-worktrees/layerfs-machine-start-c17e354c8815/image-cache/layerfs/machine-images/objects/cf7e4430d91880d0b2c5a0315d89fa04f24b7bc2340ed64e89cd496f79a8f109/root.img\",\"error\":null}\n",
+            "truncated": false,
+            "bytes": 446
+          },
+          "stderr": {
+            "text": "{\"progress\":{\"stage\":\"bundle-validation\",\"state\":\"started\"}}\n{\"progress\":{\"stage\":\"bundle-validation\",\"state\":\"completed\",\"elapsed_ms\":0}}\n{\"progress\":{\"stage\":\"provider-and-worker\",\"state\":\"started\"}}\n{\"progress\":{\"stage\":\"provider-and-worker\",\"state\":\"completed\",\"elapsed_ms\":8194}}\n{\"progress\":{\"stage\":\"worker-compatibility\",\"state\":\"started\"}}\n{\"progress\":{\"stage\":\"worker-compatibility\",\"state\":\"completed\",\"elapsed_ms\":3}}\n",
+            "truncated": false,
+            "bytes": 430
+          },
+          "outputUnavailable": false,
+          "ended": 1794272766716,
+          "durationMs": 8295
+        }
+      ],
+      "events": [
+        {
+          "v": 1,
+          "id": "7de30c7b-ed1f-457e-9a8f-22595b495f9f",
+          "at": 1794272758419,
+          "seq": 2894,
+          "generation": "c22079cd-1464-42c4-9c5a-5d3e88d6f98d",
+          "action": {
+            "id": "391de74a-3397-46fc-9afe-f9cd193c26ec",
+            "name": "machine.start",
+            "label": "Start machine",
+            "target": "progress-ui-1110",
+            "page": "/machines/progress-ui-1110",
+            "origin": "user"
+          },
+          "type": "action.received",
+          "data": {}
+        },
+        {
+          "v": 1,
+          "id": "b197c30b-9470-4d02-a98e-f3ff9cf15664",
+          "at": 1794272758420,
+          "seq": 2895,
+          "generation": "c22079cd-1464-42c4-9c5a-5d3e88d6f98d",
+          "action": {
+            "id": "391de74a-3397-46fc-9afe-f9cd193c26ec",
+            "name": "machine.start",
+            "label": "Start machine",
+            "target": "progress-ui-1110",
+            "page": "/machines/progress-ui-1110",
+            "origin": "user"
+          },
+          "type": "cli.queued",
+          "invocationId": "bc3ed7e8-c17c-46c5-91a5-36cfd39281a5",
+          "data": {
+            "binary": "/Users/yifanxu/Ephemeral-AI-Lab/layerfs-machine-start/target/debug/layerfs",
+            "argv": [
+              "machine",
+              "start",
+              "--progress",
+              "--",
+              "progress-ui-1110"
+            ],
+            "stdin": null,
+            "mode": "real",
+            "ownerPid": 52651
+          }
+        },
+        {
+          "v": 1,
+          "id": "418b569f-e7a9-4726-97b7-349cd5b3560c",
+          "at": 1794272758421,
+          "seq": 2896,
+          "generation": "c22079cd-1464-42c4-9c5a-5d3e88d6f98d",
+          "action": {
+            "id": "391de74a-3397-46fc-9afe-f9cd193c26ec",
+            "name": "machine.start",
+            "label": "Start machine",
+            "target": "progress-ui-1110",
+            "page": "/machines/progress-ui-1110",
+            "origin": "user"
+          },
+          "type": "cli.started",
+          "invocationId": "bc3ed7e8-c17c-46c5-91a5-36cfd39281a5",
+          "data": {
+            "started": 1794272758421,
+            "pid": 59776,
+            "binary": "/Users/yifanxu/Ephemeral-AI-Lab/layerfs-machine-start/target/debug/layerfs",
+            "identity": {
+              "version": "2.0.0",
+              "commit": "58c548b3e0a45f11880e3511bf1267d11e315415",
+              "dirty": false,
+              "features": [
+                "machine",
+                "postgresql"
+              ]
+            },
+            "waitMs": 1
+          }
+        },
+        {
+          "v": 1,
+          "id": "79ebda27-75c9-4fd7-89b4-ff9dada86d88",
+          "at": 1794272758429,
+          "seq": 2897,
+          "generation": "c22079cd-1464-42c4-9c5a-5d3e88d6f98d",
+          "action": {
+            "id": "391de74a-3397-46fc-9afe-f9cd193c26ec",
+            "name": "machine.start",
+            "label": "Start machine",
+            "target": "progress-ui-1110",
+            "page": "/machines/progress-ui-1110",
+            "origin": "user"
+          },
+          "type": "cli.progress",
+          "invocationId": "bc3ed7e8-c17c-46c5-91a5-36cfd39281a5",
+          "data": {
+            "progress": {
+              "stage": "bundle-validation",
+              "state": "started"
+            }
+          }
+        },
+        {
+          "v": 1,
+          "id": "837497af-a9a0-489b-9c22-0498ca120cc4",
+          "at": 1794272758429,
+          "seq": 2898,
+          "generation": "c22079cd-1464-42c4-9c5a-5d3e88d6f98d",
+          "action": {
+            "id": "391de74a-3397-46fc-9afe-f9cd193c26ec",
+            "name": "machine.start",
+            "label": "Start machine",
+            "target": "progress-ui-1110",
+            "page": "/machines/progress-ui-1110",
+            "origin": "user"
+          },
+          "type": "cli.progress",
+          "invocationId": "bc3ed7e8-c17c-46c5-91a5-36cfd39281a5",
+          "data": {
+            "progress": {
+              "stage": "bundle-validation",
+              "state": "completed",
+              "elapsed_ms": 0
+            }
+          }
+        },
+        {
+          "v": 1,
+          "id": "fe21c92c-95d6-4445-b184-334728d9b64c",
+          "at": 1794272758430,
+          "seq": 2899,
+          "generation": "c22079cd-1464-42c4-9c5a-5d3e88d6f98d",
+          "action": {
+            "id": "391de74a-3397-46fc-9afe-f9cd193c26ec",
+            "name": "machine.start",
+            "label": "Start machine",
+            "target": "progress-ui-1110",
+            "page": "/machines/progress-ui-1110",
+            "origin": "user"
+          },
+          "type": "cli.progress",
+          "invocationId": "bc3ed7e8-c17c-46c5-91a5-36cfd39281a5",
+          "data": {
+            "progress": {
+              "stage": "provider-and-worker",
+              "state": "started"
+            }
+          }
+        },
+        {
+          "v": 1,
+          "id": "2c776428-e4fa-41f8-9ce5-2e1ad467587b",
+          "at": 1794272766623,
+          "seq": 2937,
+          "generation": "c22079cd-1464-42c4-9c5a-5d3e88d6f98d",
+          "action": {
+            "id": "391de74a-3397-46fc-9afe-f9cd193c26ec",
+            "name": "machine.start",
+            "label": "Start machine",
+            "target": "progress-ui-1110",
+            "page": "/machines/progress-ui-1110",
+            "origin": "user"
+          },
+          "type": "cli.progress",
+          "invocationId": "bc3ed7e8-c17c-46c5-91a5-36cfd39281a5",
+          "data": {
+            "progress": {
+              "stage": "provider-and-worker",
+              "state": "completed",
+              "elapsed_ms": 8194
+            }
+          }
+        },
+        {
+          "v": 1,
+          "id": "2287ad6d-9fcb-4c66-9961-4d46e029e415",
+          "at": 1794272766624,
+          "seq": 2938,
+          "generation": "c22079cd-1464-42c4-9c5a-5d3e88d6f98d",
+          "action": {
+            "id": "391de74a-3397-46fc-9afe-f9cd193c26ec",
+            "name": "machine.start",
+            "label": "Start machine",
+            "target": "progress-ui-1110",
+            "page": "/machines/progress-ui-1110",
+            "origin": "user"
+          },
+          "type": "cli.progress",
+          "invocationId": "bc3ed7e8-c17c-46c5-91a5-36cfd39281a5",
+          "data": {
+            "progress": {
+              "stage": "worker-compatibility",
+              "state": "started"
+            }
+          }
+        },
+        {
+          "v": 1,
+          "id": "0dfb738b-cb7d-4e64-ba4c-a5443424e9e0",
+          "at": 1794272766627,
+          "seq": 2939,
+          "generation": "c22079cd-1464-42c4-9c5a-5d3e88d6f98d",
+          "action": {
+            "id": "391de74a-3397-46fc-9afe-f9cd193c26ec",
+            "name": "machine.start",
+            "label": "Start machine",
+            "target": "progress-ui-1110",
+            "page": "/machines/progress-ui-1110",
+            "origin": "user"
+          },
+          "type": "cli.progress",
+          "invocationId": "bc3ed7e8-c17c-46c5-91a5-36cfd39281a5",
+          "data": {
+            "progress": {
+              "stage": "worker-compatibility",
+              "state": "completed",
+              "elapsed_ms": 3
+            }
+          }
+        },
+        {
+          "v": 1,
+          "id": "26aaa76a-51bf-4dd1-8240-54a06bc20b3c",
+          "at": 1794272766716,
+          "seq": 2943,
+          "generation": "c22079cd-1464-42c4-9c5a-5d3e88d6f98d",
+          "action": {
+            "id": "391de74a-3397-46fc-9afe-f9cd193c26ec",
+            "name": "machine.start",
+            "label": "Start machine",
+            "target": "progress-ui-1110",
+            "page": "/machines/progress-ui-1110",
+            "origin": "user"
+          },
+          "type": "cli.finished",
+          "invocationId": "bc3ed7e8-c17c-46c5-91a5-36cfd39281a5",
+          "data": {
+            "status": "success",
+            "exitCode": 0,
+            "signal": null,
+            "stdout": {
+              "text": "{\"name\":\"progress-ui-1110\",\"platform\":\"lima\",\"backend\":\"namespaces\",\"supports\":{\"sqlite\":true,\"postgresql_sandbox\":true,\"reason\":null},\"state\":\"running\",\"cpus\":2,\"memory\":4294967296,\"disk\":4294967296,\"stores\":[],\"sandboxes\":[],\"os_image\":\"/Users/yifanxu/.cache/layerfs-worktrees/layerfs-machine-start-c17e354c8815/image-cache/layerfs/machine-images/objects/cf7e4430d91880d0b2c5a0315d89fa04f24b7bc2340ed64e89cd496f79a8f109/root.img\",\"error\":null}\n",
+              "truncated": false,
+              "bytes": 446
+            },
+            "stderr": {
+              "text": "{\"progress\":{\"stage\":\"bundle-validation\",\"state\":\"started\"}}\n{\"progress\":{\"stage\":\"bundle-validation\",\"state\":\"completed\",\"elapsed_ms\":0}}\n{\"progress\":{\"stage\":\"provider-and-worker\",\"state\":\"started\"}}\n{\"progress\":{\"stage\":\"provider-and-worker\",\"state\":\"completed\",\"elapsed_ms\":8194}}\n{\"progress\":{\"stage\":\"worker-compatibility\",\"state\":\"started\"}}\n{\"progress\":{\"stage\":\"worker-compatibility\",\"state\":\"completed\",\"elapsed_ms\":3}}\n",
+              "truncated": false,
+              "bytes": 430
+            },
+            "outputUnavailable": false,
+            "ended": 1794272766716,
+            "durationMs": 8295
+          }
+        },
+        {
+          "v": 1,
+          "id": "6ce80d80-68a5-4d6b-9b05-e472c4e52a33",
+          "at": 1794272766717,
+          "seq": 2944,
+          "generation": "c22079cd-1464-42c4-9c5a-5d3e88d6f98d",
+          "action": {
+            "id": "391de74a-3397-46fc-9afe-f9cd193c26ec",
+            "name": "machine.start",
+            "label": "Start machine",
+            "target": "progress-ui-1110",
+            "page": "/machines/progress-ui-1110",
+            "origin": "user"
+          },
+          "type": "action.finished",
+          "data": {
+            "status": 200
+          }
+        }
+      ],
+      "request": {
+        "status": 200
+      },
+      "status": "success"
+    }
+  ],
+  "next": null,
+  "warning": null,
+  "cleared": true,
+  "clearedAt": 1794272333427
+}

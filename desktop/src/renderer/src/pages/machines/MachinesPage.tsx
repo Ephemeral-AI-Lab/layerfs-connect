@@ -25,6 +25,7 @@ import { Empty, LoadError, Loading } from '@/components/layerfs/States'
 import { Button } from '@/components/ui/button'
 import { addable, factsOf, type MachineKey, machineOrder, machineState, type Os } from '@/layerfs/compute'
 import { type MachineAction, type SimHost, simSandbox, simulate, SIMULATIONS, type SimId } from '@/layerfs/compute-sim'
+import { clearMachineProgress, performMachineStartup, useMachineStartups } from '@/layerfs/use-machine-progress'
 import { host } from '@/layerfs/client'
 import { useHostQuery, usePoll } from '@/layerfs/use-host'
 import { cn } from '@/lib/utils'
@@ -78,6 +79,8 @@ export function ComputePage({ simulate: given, onOpenProject, focus, onOpenMachi
   const os: Os = simulated?.os ?? osOfWindow()
 
   const [adding, setAdding] = useState(false)
+  const startups = useMachineStartups()
+  const starting = new Set((simulated ? [] : startups).filter(operation => operation.status === 'running').map(operation => operation.name))
   const available = view?.available ? view : null
   const f = focusOf(focus)
   const detail = f?.kind === 'machine' ? f.name : null
@@ -88,14 +91,18 @@ export function ComputePage({ simulate: given, onOpenProject, focus, onOpenMachi
       setSim(simulate(simRef.current ?? simulated, action))
       return
     }
-    if (action.kind === 'create') await host.createMachine(action.input)
-    else if (action.kind === 'remove') await host.removeMachine(action.name)
-    else if (action.kind === 'start') await host.startMachine(action.name)
-    else if (action.kind === 'stop') await host.stopMachine(action.name)
-    else if (action.kind === 'close') await host.closeSandbox(action.sandbox, action.force)
-    else if (action.kind === 'unmount') await host.unmountWorkspace(action.ws, false)
-    else await host.updateMachine(action.name, action.changes)
-    live.reload()
+    try {
+      if (action.kind === 'create') await performMachineStartup({ kind: 'create', name: action.input.name, platform: action.input.platform }, activity => host.createMachine(action.input, activity))
+      else if (action.kind === 'remove') { await host.removeMachine(action.name); clearMachineProgress(action.name) }
+      else if (action.kind === 'start') await performMachineStartup({ kind: 'start', name: action.name, platform: available?.machines.find(machine => machine.name === action.name)?.platform ?? 'unknown' }, activity => host.startMachine(action.name, activity))
+      else if (action.kind === 'stop') { await host.stopMachine(action.name); clearMachineProgress(action.name) }
+      else if (action.kind === 'close') await host.closeSandbox(action.sandbox, action.force)
+      else if (action.kind === 'unmount') await host.unmountWorkspace(action.ws, false)
+      else await host.updateMachine(action.name, action.changes)
+    } finally {
+      // A refusal can follow a real side effect (for example a worker protocol mismatch).
+      live.reload()
+    }
   }
   const ops: SandboxOps = {
     read: async (name) => (simulated ? simSandbox(simRef.current ?? simulated, name) : host.sandbox(name)),
@@ -119,14 +126,14 @@ export function ComputePage({ simulate: given, onOpenProject, focus, onOpenMachi
   }, [available, restoreScroll, detail, sim])
   const facts = useMemo(() => (available ? factsOf(available) : null), [available])
   // failed, missing or unresolved: each gets a notice with what LayerFS says and the call that clears it
-  const machines = available ? machineOrder(available.machines).sort((a, b) => RANK[machineState(a, available.status[a.name]).key] - RANK[machineState(b, available.status[b.name]).key]) : []
+  const machines = available ? machineOrder(available.machines).sort((a, b) => (starting.has(a.name) ? RANK.busy : RANK[machineState(a, available.status[a.name]).key]) - (starting.has(b.name) ? RANK.busy : RANK[machineState(b, available.status[b.name]).key])) : []
 
   if (detail && available)
     return (
       <div className="h-svh min-w-0 overflow-y-auto" ref={scrollRef} data-machine-scroll>
         <div className="mx-auto flex min-w-0 flex-col gap-4 px-4 pt-1.5 pb-12 @min-[480px]/workspace:px-5">
           {simulated && <SimulatedNote sim={simulated} />}
-          <MachinePage key={`${sim ?? 'live'}:${detail}`} name={detail} view={available} os={os} act={act} ops={ops} onBack={() => showMachine(null)} back={back} onOpenProject={onOpenProject} />
+          <MachinePage progressEnabled={!simulated} key={`${sim ?? 'live'}:${detail}`} name={detail} view={available} os={os} act={act} ops={ops} onBack={() => showMachine(null)} back={back} onOpenProject={onOpenProject} />
         </div>
       </div>
     )
@@ -173,6 +180,7 @@ export function ComputePage({ simulate: given, onOpenProject, focus, onOpenMachi
               {[
                 <span className={cn(facts!.running > 0 && 'text-foreground')}>{`${facts!.running} running`}</span>,
                 <span>{`${facts!.stopped} stopped`}</span>,
+                starting.size > 0 && <span>{`${starting.size} ${starting.size === 1 ? 'startup' : 'startups'} in progress`}</span>,
                 facts!.busy > 0 && <span>{`${facts!.busy} creating or removing`}</span>,
                 facts!.unknown > 0 && <span>{`${facts!.unknown} unknown`}</span>,
                 <span>{fill(facts!.sandboxes === 1 ? '1 Sandbox' : '{n} Sandboxes', { n: facts!.sandboxes })}</span>,
@@ -197,12 +205,12 @@ export function ComputePage({ simulate: given, onOpenProject, focus, onOpenMachi
 
             <section className="machine-board-grid" aria-label={'Machines'}>
               {machines.map((m, i) => (
-                <MachineTile key={`${sim ?? 'live'}:${m.name}`} m={m} view={available} os={os} index={Math.min(i + 2, 12)} act={act} onOpen={(newTab) => showMachine(m.name, newTab)} />
+                <MachineTile progressEnabled={!simulated} key={`${sim ?? 'live'}:${m.name}`} m={m} view={available} os={os} index={Math.min(i + 2, 12)} act={act} onOpen={(newTab) => showMachine(m.name, newTab)} />
               ))}
             </section>
 
             <p className="px-1 pt-2 text-sm text-faint">{'Machine power is manual: a machine runs between Start and Stop, and nothing starts or stops one by itself. Reading this page starts nothing.'}</p>
-            <AddMachineDialog key={sim ?? 'live'} open={adding} onOpenChange={setAdding} platforms={addable(available.platforms)} machines={available.machines} os={os} act={act} onMade={showMachine} layerfs={available.layerfs} />
+            <AddMachineDialog progressEnabled={!simulated} key={sim ?? 'live'} open={adding} onOpenChange={setAdding} platforms={addable(available.platforms)} machines={available.machines} os={os} act={act} onMade={showMachine} layerfs={available.layerfs} />
           </>
         )}
       </div>

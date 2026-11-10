@@ -24,6 +24,7 @@ import { createHostServer, listen, newToken } from './server.js'
 import { Machines } from './machines.js'
 import { Storage } from './storage.js'
 import { DoctorManager } from './doctor/manager.js'
+import { configureActivity } from './activity/recorder.js'
 
 /** How long shutdown may take before the process exits anyway. */
 const CLOSE_MS = 30_000
@@ -74,6 +75,7 @@ function liveOwner(file) {
 async function main() {
   const args = parseArgs(process.argv.slice(2))
   const spec = args.state ? resolveSpec(args.state) : resolveSpec()
+  const activity = configureActivity(spec.state)
   // §5: the native machine's daemon, once per home (a value already recorded is kept)
   const daemon = await recordNativeDaemon(spec)
   if (!daemon.recorded && !daemon.kept && daemon.why !== 'not macOS' && spec.mode !== 'sim') log(`[host] the native daemon is not recorded: ${daemon.why}`)
@@ -109,7 +111,7 @@ async function main() {
         },
       }))
     : null
-  const server = createHostServer({ token, projects, storage, machines, doctor, sim, agents: () => agents, runs: () => engine.runs, runsError: () => engine.error, log })
+  const server = createHostServer({ token, projects, storage, machines, doctor, sim, activity, agents: () => agents, runs: () => engine.runs, runsError: () => engine.error, log })
 
   const endpoint = join(spec.state, 'host.json')
   let owned = false
@@ -139,6 +141,7 @@ async function main() {
         log(`[host] closing the Stores: ${error?.message ?? error}`)
       }
       if (owned) rmSync(endpoint, { force: true })
+      await activity.flush()
       process.exit(clean ? 0 : 1)
     })()
     return closing

@@ -1,0 +1,13 @@
+{
+  "width": 900,
+  "height": 600,
+  "order": [
+    "machine:progress-ui-1110",
+    "machine:native",
+    "machine:docker",
+    "machine:demo-build",
+    "machine:demo-research"
+  ],
+  "text": "L\nprogress-ui-1110\n\nLima · Linux namespaces\n\nCPU\n2 cores\nMemory\n4 GiB\nDisk capacity\n4 GiB\nSandboxes\n0\nWorkspaces\n0\nLocal Stores\n0\nStores\nNone on this machine\nDisk\nFree space not reported\nStarting machine\n2.0s\n\nStarting machine and worker\n\n1 step completed\nView CLI activity\nStarting…\nStarting…",
+  "activity": "#/activity?action=fd66630b-da0f-418c-a375-5ef56cb14599"
+}

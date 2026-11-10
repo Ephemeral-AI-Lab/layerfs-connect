@@ -10,6 +10,8 @@ import { ModelsPage } from '@/pages/settings/ModelsPage'
 import { ToolsPage, AgentsPage, HooksPage } from '@/pages/settings/CapabilitiesPage'
 import { StorageRoute } from '@/pages/storage/StorageRoute'
 
+import { CliActivityPage } from '@/pages/activity/CliActivityPage'
+
 // Hash routes, as in Cindy: the shell stays mounted and only the outlet swaps.
 export const router = createHashRouter([
   {
@@ -19,6 +21,7 @@ export const router = createHashRouter([
       { index: true, element: <NewChatPage /> },
       // a chat and its tabs (/trace, /subagents, /subagents/:child): one route, so the page stays mounted between them
       { path: 'chat/:id/*', element: <ChatPage /> },
+      { path: 'activity', element: <CliActivityPage /> },
       { path: 'machines', element: <MachinesRoute /> },
       { path: 'machines/:name', element: <MachinesRoute /> },
       { path: 'machines/:name/sandboxes/:sandbox', element: <SandboxDetailPage /> },

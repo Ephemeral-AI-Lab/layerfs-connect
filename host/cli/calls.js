@@ -2,6 +2,7 @@ import { discover } from './capabilities.js'
 import { execute } from './spawn.js'
 import { bytes } from './json.js'
 import { CliError } from './outcome.js'
+import { shareInvocation } from '../activity/recorder.js'
 const invalid = (message) => new CliError('InvalidInput', message)
 const isPlain = (v) => v !== null && typeof v === 'object' && !Array.isArray(v) && !ArrayBuffer.isView(v)
 const reads = new Set(['list', 'get', 'status', 'platforms', 'stats', 'commits', 'get_commit', 'read', 'stat', 'glob', 'grep', 'blame', 'diff', 'revision'])
@@ -48,13 +49,18 @@ export function client(spec) {
           else words.push(flag, typeof value === 'object' ? JSON.stringify(value) : String(value))
         }
         if (events) words.push('--events')
-        else if (options.on_progress) words.push('--progress')
+        else if (options.on_progress || (family === 'machine' && ['start', 'create'].includes(call) && entry.options.some((o) => o.name === 'on_progress'))) words.push('--progress')
         if (spec.scope) words.push('--scope', spec.scope.folder, '--scope-project', spec.scope.project, ...(spec.scope.branch ? ['--scope-branch', spec.scope.branch] : []))
         words.push('--', ...positionals)
-        const invoke = () => execute(spec, words, { input, read: reads.has(call), events, onProgress: options.on_progress, beforeSpawn: options.before_spawn, onSpawn: (child) => options.on_spawn?.(child.pid), onFrame: (frame) => { if (frame.stream) options[frame.stream]?.(bytes(frame.bytes)) } })
+        const read = reads.has(call)
+        const invoke = () => execute(spec, words, { input, read, events, onProgress: options.on_progress, beforeSpawn: options.before_spawn, onSpawn: (child) => options.on_spawn?.(child.pid), onFrame: (frame) => { if (frame.stream) options[frame.stream]?.(bytes(frame.bytes)) } })
         if (!reads.has(call)) return invoke()
-        const key = JSON.stringify(words)
-        if (!flying.has(key)) flying.set(key, invoke().finally(() => flying.delete(key)))
+        const key = JSON.stringify([words, input ?? null])
+        if (!flying.has(key)) {
+          const pending = invoke()
+          flying.set(key, pending)
+          pending.finally(() => flying.delete(key)).catch(() => {})
+        } else shareInvocation(flying.get(key))
         return flying.get(key)
       }
     } }))

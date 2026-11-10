@@ -1,4 +1,4 @@
-import { SlidersHorizontal, Bot, Wrench, Workflow, ArrowLeft, Cpu, CircleHelp, Database, FlaskConical, type LucideIcon, Server, Settings, SquarePen } from 'lucide-react'
+import { Terminal, SlidersHorizontal, Bot, Wrench, Workflow, ArrowLeft, Cpu, CircleHelp, Database, FlaskConical, type LucideIcon, Server, Settings, SquarePen } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { ChatList } from '@/components/chat/ChatList'
@@ -66,6 +66,7 @@ export function Sidebar({ width, open, dragging, onResizeStart }: {
             <NavRow to={EXAMPLE_CHAT_PATH} icon={FlaskConical} label="Example chat" />
             <NavRow to="/machines" icon={Server} label="Machines" />
             <NavRow to="/storage" icon={Database} label="Storage" />
+            <NavRow to="/activity" icon={Terminal} label="CLI Activity" />
           </nav>
           <div className="scrollbar-none min-h-0 flex-1 overflow-y-auto px-3 pb-4"><ChatList /></div>
         </>}

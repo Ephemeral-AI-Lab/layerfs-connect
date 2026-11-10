@@ -470,3 +470,61 @@ stopping and creating display elapsed time with no percentage. Mutation failures
 expose an explicit fresh-state inspection. Guest free space and configured
 allocation are labelled separately. Sandbox Workspace counts remain unknown until
 an on-demand detail read. Technical details contains the shared Doctor action.
+
+## Startup progress (current desktop renderer)
+
+Source: `MachineProgress.tsx`, `machine-progress.css`,
+`layerfs/use-machine-progress.ts`, `layerfs/machine-progress.ts`.
+Shared by the board card, machine console (below hardware), and Create form.
+
+```text
++-[1] Machine progress ----------------------------------------------+
+| (spinner) Starting machine                                 4.0s   |
+|           Starting machine and worker                            |
+| [v] 1 step completed                                             |
+|     (check) Checking runtime compatibility                  0.0s   |
+| [View CLI activity ->]                                           |
++-----------------------------------------------------------------+
+
++-[2] Completed ----------------------------------------------------+
+| (check) Startup completed                                   8.3s   |
+| [>] 3 steps completed                                             |
+| [View CLI activity ->]                                           |
++-----------------------------------------------------------------+
+
++-[3] Failed / uncertain -------------------------------------------+
+| (!) Startup needs attention                                1.8s   |
+|     Starting machine and worker - failed                          |
+| Review the reported error before trying again.                    |
+| [>] Reported error                                               |
+| [View CLI activity ->]                                           |
++-----------------------------------------------------------------+
+```
+
+| [n] | Component | Behavior |
+|---|---|---|
+| 1 | MachineProgress | Actual stages and elapsed time; completed stages disclosed |
+| 2 | MachineProgress | Completion only after successful CLI response; duration retained |
+| 3 | MachineProgress | Last stage and error retained; lost reply says outcome needs inspection |
+
+- Exact action ID correlates each request and its full recorded stage history.
+  Rapid stages stay in the completed disclosure; no percentages or guessed downloads.
+- Local startup state survives board/detail and CLI Activity navigation. Active
+  cards sort with busy machines; controls cannot submit another startup for that machine.
+- Checking runtime compatibility, preparing sandbox image (when emitted), starting
+  machine/worker, and verifying worker connection are the currently supported stages.
+- Create freezes submitted fields and platform selection. Its dialog stays open
+  until Create settles; navigating to CLI Activity does not cancel creation or
+  force navigation back when it completes.
+- Stale stopped notices are hidden during an active startup. Stop/Remove clears
+  the retained startup result only after success. Other observed inventory remains intact.
+- Recovery actions target the submitted name after a failed Create, including
+  when fields are edited. A known remaining VM links to removal options.
+- No automatic retry or cancellation. Stage announcements are polite; timer ticks
+  are outside live regions. Labels wrap at narrow widths; reduced motion stops spinning.
+- Older CLIs without stages show Preparing request while the request runs.
+  A progress-read failure says updates are unavailable and leaves the mutation alone.
+
+In the isolated publication, existing simulation interfaces remain available;
+only real machine mutations feed startup progress. Simulated cards and dialogs
+do not display retained progress from a real machine with the same name.

@@ -1,3 +1,5 @@
+import { MachineProgress } from '@/pages/machines/MachineProgress'
+import { useMachineProgress } from '@/layerfs/use-machine-progress'
 import { fill } from '@/lib/text'
 // One machine console: persistent hardware header, square Sandbox grid by
 // default, an alternate Stores view, and a disclosure for technical details.
@@ -26,6 +28,7 @@ type Available = Extract<MachinesView, { available: true }>
 type Part = 'sandboxes' | 'stores'
 
 interface Props {
+  progressEnabled?: boolean
   name: string
   view: Available
   os: Os
@@ -42,8 +45,11 @@ interface Props {
 const byProject = (sandboxes: MachineSandbox[]): MachineSandbox[] =>
   [...sandboxes].sort((a, b) => Number(!a.project) - Number(!b.project) || (a.project ?? '').localeCompare(b.project ?? '') || a.name.localeCompare(b.name, undefined, { numeric: true }))
 
-export function MachinePage({ name, view, os, act, ops, onBack, back: backTo, onOpenProject }: Props) {
-  const { run, pending, error } = useMachineRun(act)
+export function MachinePage({ name, view, os, act, ops, onBack, back: backTo, onOpenProject, progressEnabled = true }: Props) {
+  const { run, pending: localPending, error } = useMachineRun(act)
+  const observedStartup = useMachineProgress(name)
+  const startup = progressEnabled ? observedStartup : undefined
+  const pending = localPending ?? (startup?.status === 'running' ? startup.kind : null)
   const [dialog, setDialog] = useState<'settings' | 'remove' | null>(null)
   const [tabParams, setTabParams] = useSearchParams()
   const requested = tabParams.get('view')
@@ -62,7 +68,7 @@ export function MachinePage({ name, view, os, act, ops, onBack, back: backTo, on
 
   const live = view.status[m.name]
   const state = machineState(m, live)
-  const reason = downReason(m, live)
+  const reason = startup?.status === 'running' ? null : downReason(m, live)
   const stores = storesOn(view, m)
   // a sandbox.list() that omits one still shows its name from the machine
   const sandboxes = byProject(m.sandboxes.map((b) => view.sandboxes.find((x) => x.name === b) ?? { name: b, machine: m.name, project: null, workspaces: null }))
@@ -72,7 +78,7 @@ export function MachinePage({ name, view, os, act, ops, onBack, back: backTo, on
   const storeCount = machineStoreCount(m, stores, view.postgresql ?? [])
   const part: Part = requested === 'stores' ? 'stores' : 'sandboxes'
   const setPart = (next: Part) => setTabParams(prev => { const params = new URLSearchParams(prev); params.set('view',next); return params }, { replace: true })
-  const attention = attentionOf(m, live)
+  const attention = startup?.status === 'running' ? null : attentionOf(m, live)
   // the disk bar says what is free; the size line leaves it out then
   const size = sizeOf(m, os, live)
   const calls = clearingCall('machine', m.name, state.op)
@@ -96,7 +102,7 @@ export function MachinePage({ name, view, os, act, ops, onBack, back: backTo, on
             <h1 className="truncate text-xl font-medium tracking-tight" title={m.name}>{m.name}</h1>
             <p className="mt-1 text-sm text-muted-foreground">{fill(kindLabel(m.platform))} · {fill(size.text, size.values)}</p>
           </div>
-          <StateChip entity="machine" state={state.state} op={state.op} />
+          {pending === 'start' ? <span className="text-sm font-medium">{m.platform === 'docker' ? 'Starting worker…' : 'Starting…'}</span> : <StateChip entity="machine" state={state.state} op={state.op} />}
         </header>
         <div className="machine-hardware-line">
           <dl className="machine-hardware" aria-label="Machine resources">
@@ -110,6 +116,7 @@ export function MachinePage({ name, view, os, act, ops, onBack, back: backTo, on
             </dd></div>}
           </dl>
         </div>
+        {progressEnabled && <MachineProgress name={name} />}
         <details className="machine-technical" open={requested === 'details' ? true : undefined}>
           <summary><ChevronRight className="size-3.5" /> Technical details</summary>
           <div className="pt-4">

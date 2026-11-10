@@ -11,6 +11,7 @@ import { type ChildProcess, spawn } from 'node:child_process'
 import { homedir } from 'node:os'
 import { delimiter, join } from 'node:path'
 import { createInterface } from 'node:readline'
+import type { CliAction } from '../../../shared/cli-activity'
 
 export type LayerfsReply = { status: number; body: unknown }
 export type LayerfsConnection = 'connecting' | 'connected' | 'reconnecting'
@@ -113,13 +114,14 @@ export class LayerfsHost {
   }
 
   /** One HTTP call to the host. A refusal resolves with its status; only a missing host rejects. */
-  async request(method: string, path: string, body?: unknown): Promise<LayerfsReply> {
+  async request(method: string, path: string, body?: unknown, action?: CliAction): Promise<LayerfsReply> {
     if (!path.startsWith('/api/')) throw new Error('LayerFS host paths start with /api/.')
     const { url, token } = await this.start()
     const res = await fetch(`${url}${path}`, {
       method,
       headers: {
         authorization: `Bearer ${token}`,
+        ...(action ? { 'x-lfs-action': encodeURIComponent(JSON.stringify(action)) } : {}),
         ...(body === undefined ? {} : { 'content-type': 'application/json' }),
       },
       body: body === undefined ? undefined : JSON.stringify(body),

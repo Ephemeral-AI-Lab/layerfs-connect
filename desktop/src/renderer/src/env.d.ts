@@ -4,7 +4,7 @@ interface Window {
   desktop?: {
     platform: string
     layerfs: {
-      request: (method: string, path: string, body?: unknown) => Promise<{ status: number; body: unknown }>
+      request: (method: string, path: string, body?: unknown, action?: import('../../../../shared/cli-activity').CliAction) => Promise<{ status: number; body: unknown }>
       subscribe: () => Promise<boolean>
       mode: 'sim' | 'real'
       chooseDirectory: (start?: string) => Promise<string | null>
