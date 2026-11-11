@@ -5,8 +5,12 @@
 // LAYERFS_TRACE_START is set) and an end line to LAYERFS_TRACE, labelled
 // LAYERFS_TRACE_STEP, with the real (scoped) arguments: Branch and Sandbox
 // names as LayerFS knows them.
+// Inside a conversation (LAYERFS_CONNECT_OPS), each call is also recorded as
+// an operation with its intent and exact receipt (sessions/recorder.js); that
+// journal, not this diagnostic line, is the conversation's authority.
 import { randomBytes } from 'node:crypto'
 import { appendFileSync } from 'node:fs'
+import { recorderFromEnv } from '../sessions/recorder.js'
 
 const PREFIX = randomBytes(4).toString('hex')
 let n = 0
@@ -57,8 +61,18 @@ function outcome(value) {
   return out
 }
 
-/** Runs one LayerFS call (`run` answers its value or throws its refusal), with its trace lines when LAYERFS_TRACE is set. */
-export async function traced(op, args, run, env = process.env) {
+/**
+ * Runs one LayerFS call (`run(operationId)` answers its value or throws its
+ * refusal), recorded as a conversation operation when the environment names
+ * one, with its trace lines when LAYERFS_TRACE is set.
+ */
+export async function traced(op, args, run, env = process.env, origin = 'sdk') {
+  const recorder = recorderFromEnv(env, origin)
+  const call = recorder ? () => recorder.record(op, args, (id) => run(id), { cause: 'tool' }) : () => run(null)
+  return diagnostic(op, args, call, env)
+}
+
+async function diagnostic(op, args, run, env) {
   const file = env.LAYERFS_TRACE
   if (!file) return run()
   const write = (line) => {

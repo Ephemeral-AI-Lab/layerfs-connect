@@ -1,0 +1,975 @@
+{
+  "target": "95F0E89164E0F5609C68BDCBD265966D",
+  "state": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/layerfs-simulation-bash-7MQLVJ",
+  "reports": [
+    {
+      "route": "/machines",
+      "elapsed": 6002,
+      "view": {
+        "h1": "Machines",
+        "main": "Viewing Original\nMachines\nDiagnose this host\nNew machine\nRefresh\n\n1 running\n·\n1 stopped\n·\n0 Sandboxes\n·\n0 Workspaces\n\nnative\n\nNative · Host processes\n\nUses this computer’s resources\nSandboxes\n0\nWorkspaces\n0\nLocal Stores\n18\nStores\nsim-billing-811beba82547613faa48\nsim-billing-a4207d40fc7fc6f3f759\nsim-compiler-5b83d8ed94cff19d4c5a\n+15 more\nDisk\nShared with this computer\nRunning\nThis computer\ndocker\n\nDocker · Linux namespaces\n\nCPU, memory and disk managed by Docker\nSandboxes\n0\nWorkspaces\n0\nLocal Stores\n0\nStores\nNone on this machine\n\nthe machine is stopped\n\nDisk\nFree space not reported\n\nLayerFS worker is stopped. Docker Desktop can be running independently. Start the worker to use LayerFS on Docker.\n\nStopped\nStart worker\n\nMachine power is manual: a machine runs between Start and Stop, and nothing starts or stops one by itself. Reading this page starts nothing.",
+        "nodes": 1321,
+        "longtasks": [
+          {
+            "start": 404.60000002384186,
+            "duration": 115
+          },
+          {
+            "start": 530.8999999761581,
+            "duration": 53
+          },
+          {
+            "start": 612,
+            "duration": 174
+          }
+        ]
+      },
+      "requests": [
+        {
+          "id": "12170.288",
+          "path": "demo-presets",
+          "start": 386428.138447,
+          "response": 386428.15257,
+          "status": 200,
+          "end": 386428.15026,
+          "bytes": 21822,
+          "duration": 11.81300001917407
+        },
+        {
+          "id": "12170.289",
+          "path": "machines",
+          "start": 386428.138807,
+          "response": 386428.62269,
+          "status": 200,
+          "end": 386428.622662,
+          "bytes": 6119,
+          "duration": 483.8549999985844
+        },
+        {
+          "id": "12170.290",
+          "path": "demo-presets",
+          "start": 386433.139176,
+          "response": 386433.143644,
+          "status": 200,
+          "end": 386433.143497,
+          "bytes": 21822,
+          "duration": 4.320999956689775
+        },
+        {
+          "id": "12170.291",
+          "path": "machines",
+          "start": 386433.139544,
+          "response": 386433.533461,
+          "status": 200,
+          "end": 386433.522916,
+          "bytes": 6119,
+          "duration": 383.3720000111498
+        }
+      ]
+    },
+    {
+      "route": "/storage",
+      "elapsed": 6005,
+      "view": {
+        "h1": "Storage",
+        "main": "Viewing Original\nStorage\nBackup buckets\n0\nNew Store\n18 Stores · 18 projects · 44.7 MB in 18 sqlite Stores\nHome checks: no findings · just now\nsim-billing-811beba82547613faa48\nSQLite\nLayerFS Home\nstore/sim-billing-811beba82547613faa48\n3.7 MB\nProjects · 1\nbilling-811beba82547613faa48\nStorage · —\n54 branches\n0 sandboxes\n0 workspaces\nNo backup yet\nAdd project\nsim-billing-a4207d40fc7fc6f3f759\nSQLite\nLayerFS Home\nstore/sim-billing-a4207d40fc7fc6f3f759\n627 KB\nProjects · 1\nbilling-a4207d40fc7fc6f3f759\nStorage · —\n15 branches\n0 sandboxes\n0 workspaces\nNo backup yet\nAdd project\nsim-compiler-5b83d8ed94cff19d4c5a\nSQLite\nLayerFS Home\nstore/sim-compiler-5b83d8ed94cff19d4c5a\n918 KB\nProjects · 1\ncompiler-5b83d8ed94cff19d4c5a\nStorage · —\n18 branches\n0 sandboxes\n0 workspaces\nNo backup yet\nAdd project\nsim-compiler-f9fb9799c955c039fe3d\nSQLite\nLayerFS Home\nstore/sim-compiler-f9fb9799c955c039fe3d\n4.7 MB\nProjects · 1\ncompiler-f9fb9799c955c039fe3d\nStorage · —\n68 branches\n0 sandboxes\n0 workspaces\nNo backup yet\nAdd project\nsim-design-258e49ee8dd5fb3f37c6\nSQLite\nLayerFS Home\nstore/sim-design-258e49ee8dd5fb3f37c6\n2.2 MB\nProjects · 1\ndesign-258e49ee8dd5fb3f37c6\nStorage · —\n— branches\n0 sandboxes\n0 workspaces\nNo backup yet\nAdd project\nsim-design-6777c9d05e81ae79ede2\nSQLite\nLayerFS Home\nstore/sim-design-6777c9d05e81ae79ede2\n1.4 MB\nProjects · 1\ndesign-6777c9d05e81ae79ede2\nStorage · —\n— branches\n0 sandboxes\n0 w",
+        "nodes": 2406,
+        "longtasks": [
+          {
+            "start": 404.60000002384186,
+            "duration": 115
+          },
+          {
+            "start": 530.8999999761581,
+            "duration": 53
+          },
+          {
+            "start": 612,
+            "duration": 174
+          },
+          {
+            "start": 22091.399999976158,
+            "duration": 101
+          },
+          {
+            "start": 26683.5,
+            "duration": 68
+          }
+        ]
+      },
+      "requests": [
+        {
+          "id": "B932368CA5357DC447798EEF406B07AC",
+          "path": "storage",
+          "start": 386433.726888,
+          "response": 386433.728211,
+          "status": 204,
+          "end": 386433.728134,
+          "bytes": 0,
+          "duration": 1.2459999998100102
+        },
+        {
+          "id": "57387527DCB86DC0A90CB90C2681DEAC",
+          "path": "doctor",
+          "start": 386433.727628,
+          "response": 386433.729543,
+          "status": 204,
+          "end": 386433.729494,
+          "bytes": 0,
+          "duration": 1.8660000059753656
+        },
+        {
+          "id": "0373399813FD167F4B099DF3476430A3",
+          "path": "projects",
+          "start": 386433.728105,
+          "response": 386433.743921,
+          "status": 204,
+          "end": 386433.74388,
+          "bytes": 0,
+          "duration": 15.775000036228448
+        },
+        {
+          "id": "12170.292",
+          "path": "storage",
+          "start": 386433.726305,
+          "response": 386434.648214,
+          "status": 200,
+          "end": 386434.648433,
+          "bytes": 5775,
+          "duration": 922.128000005614
+        },
+        {
+          "id": "12170.293",
+          "path": "machines",
+          "start": 386433.726774,
+          "response": 386434.516474,
+          "status": 200,
+          "end": 386434.496352,
+          "bytes": 6119,
+          "duration": 769.5780000067316
+        },
+        {
+          "id": "12170.294",
+          "path": "doctor",
+          "start": 386433.727156,
+          "response": 386434.006037,
+          "status": 200,
+          "end": 386434.005663,
+          "bytes": 406,
+          "duration": 278.50700000999495
+        },
+        {
+          "id": "12170.295",
+          "path": "projects",
+          "start": 386433.72763,
+          "response": 386434.648423,
+          "status": 200,
+          "end": 386434.648745,
+          "bytes": 5233,
+          "duration": 921.1150000337511
+        },
+        {
+          "id": "B3E3A2844BF74F4A14854D51F2369CEE",
+          "path": "projects/sim-billing-811beba82547613faa48%2Fbilling-811beba82547613faa48",
+          "start": 386434.776171,
+          "response": 386434.793363,
+          "status": 204,
+          "end": 386434.793289,
+          "bytes": 0,
+          "duration": 17.118000017944723
+        },
+        {
+          "id": "65652F9EF64EFC385A8C98C4E5FD6246",
+          "path": "projects/sim-billing-a4207d40fc7fc6f3f759%2Fbilling-a4207d40fc7fc6f3f759",
+          "start": 386434.776527,
+          "response": 386434.79345,
+          "status": 204,
+          "end": 386434.79338,
+          "bytes": 0,
+          "duration": 16.85299997916445
+        },
+        {
+          "id": "211E413C74670CEAC26B5D7E6C737B60",
+          "path": "projects/sim-compiler-5b83d8ed94cff19d4c5a%2Fcompiler-5b83d8ed94cff19d4c5a",
+          "start": 386434.777108,
+          "response": 386434.793902,
+          "status": 204,
+          "end": 386434.793845,
+          "bytes": 0,
+          "duration": 16.736999968998134
+        },
+        {
+          "id": "6FC4C5785D027540DB00E5A723415D7A",
+          "path": "projects/sim-compiler-f9fb9799c955c039fe3d%2Fcompiler-f9fb9799c955c039fe3d",
+          "start": 386434.778007,
+          "response": 386434.793996,
+          "status": 204,
+          "end": 386434.793918,
+          "bytes": 0,
+          "duration": 15.91100002406165
+        },
+        {
+          "id": "12170.296",
+          "path": "projects/sim-billing-811beba82547613faa48%2Fbilling-811beba82547613faa48",
+          "start": 386434.775273,
+          "response": 386435.799161,
+          "status": 200,
+          "end": 386435.799363,
+          "bytes": 13162,
+          "duration": 1024.0900000208057
+        },
+        {
+          "id": "12170.297",
+          "path": "projects/sim-billing-a4207d40fc7fc6f3f759%2Fbilling-a4207d40fc7fc6f3f759",
+          "start": 386434.77606,
+          "response": 386435.800771,
+          "status": 200,
+          "end": 386435.800088,
+          "bytes": 4275,
+          "duration": 1024.0280000143684
+        },
+        {
+          "id": "12170.298",
+          "path": "projects/sim-compiler-5b83d8ed94cff19d4c5a%2Fcompiler-5b83d8ed94cff19d4c5a",
+          "start": 386434.776648,
+          "response": 386435.82508,
+          "status": 200,
+          "end": 386435.82729,
+          "bytes": 4985,
+          "duration": 1050.6419999874197
+        },
+        {
+          "id": "12170.299",
+          "path": "projects/sim-compiler-f9fb9799c955c039fe3d%2Fcompiler-f9fb9799c955c039fe3d",
+          "start": 386434.777438,
+          "response": 386435.813734,
+          "status": 200,
+          "end": 386435.813984,
+          "bytes": 16427,
+          "duration": 1036.5459999884479
+        },
+        {
+          "id": "12170.304",
+          "path": "demo-presets",
+          "start": 386438.138537,
+          "response": 386438.142577,
+          "status": 200,
+          "end": 386438.142248,
+          "bytes": 21822,
+          "duration": 3.7110000266693532
+        },
+        {
+          "id": "12170.305",
+          "path": "storage",
+          "start": 386438.773483,
+          "response": 386439.240679,
+          "status": 200,
+          "end": 386439.239635,
+          "bytes": 5775,
+          "duration": 466.15200000815094
+        }
+      ]
+    },
+    {
+      "route": "/presets",
+      "elapsed": 6004,
+      "view": {
+        "h1": "Presets",
+        "main": "Viewing Original\nPresets\n\nOne project library across four machines. Inspect each project’s files, branches and CLI script.\n\nStudio\nReset\n\nEight projects with source files, feature branches, merges, and published releases.\n\n4 machines\n4 stores\n8 projects\nExecution mode\nFilesystem\nMixed\n\nAt least 30% of authored revisions use workspace exec and commit. Each workspace runs two exec/commit pairs, then unmounts. Reuse sandboxes: at most 3 per project and 16 mounted workspaces per sandbox.\n\nProject library\nLast build verified\n\nPlanned load: 8 projects · 8 workload tiers · 2 per machine. Independent branches share the CLI pool after source imports and store placement finish.\n\nNative\nLocal machine\nReady\ndemo-studio\nSQLite store\nReady\nwebsite\nTrail Supply storefront\nTier 8 · 10,056 / 10,056 commits · 2,095 / 2,095 Layers · 199 side branches · 16:13\nReady\nView script\ndesign\nField Notes design kit\nTier 1 · 2,400 / 2,400 commits · 500 / 500 Layers · 54 side branches · 4:23\nReady\nView script\nDocker\nContainer\nReady\ndemo-services\nSQLite store\nReady\ngateway\nMuseum collection API handbook\nTier 7 · 7,944 / 7,944 commits · 1,655 / 1,655 Layers · 159 side branches · 10:34\nReady\nView script\nbilling\nWorkshop invoice notebook\nTier 2 · 2,664 / 2,664 commits · 555 / 555 Layers · 59 side branches · 3:33\nReady\nView script\ndemo-build\nLima virtual machine\nReady\ndemo-build-cache\nSQLite store\nReady\ncompiler\n",
+        "nodes": 1459,
+        "longtasks": [
+          {
+            "start": 404.60000002384186,
+            "duration": 115
+          },
+          {
+            "start": 530.8999999761581,
+            "duration": 53
+          },
+          {
+            "start": 612,
+            "duration": 174
+          },
+          {
+            "start": 22091.399999976158,
+            "duration": 101
+          },
+          {
+            "start": 26683.5,
+            "duration": 68
+          }
+        ]
+      },
+      "requests": [
+        {
+          "id": "12170.306",
+          "path": "demo-presets",
+          "start": 386439.691287,
+          "response": 386439.700665,
+          "status": 200,
+          "end": 386439.696164,
+          "bytes": 21822,
+          "duration": 4.876999999396503
+        },
+        {
+          "id": "12170.307",
+          "path": "demo-presets",
+          "start": 386443.138415,
+          "response": 386443.141769,
+          "status": 200,
+          "end": 386443.141694,
+          "bytes": 21822,
+          "duration": 3.2789999968372285
+        },
+        {
+          "id": "12170.308",
+          "path": "demo-presets",
+          "start": 386444.692537,
+          "response": 386444.709683,
+          "status": 200,
+          "end": 386444.697885,
+          "bytes": 21822,
+          "duration": 5.347999976947904
+        }
+      ]
+    },
+    {
+      "route": "/machines",
+      "elapsed": 6008,
+      "view": {
+        "h1": "Machines",
+        "main": "Viewing Original\nMachines\nDiagnose this host\nNew machine\nRefresh\n\n1 running\n·\n1 stopped\n·\n0 Sandboxes\n·\n0 Workspaces\n\nnative\n\nNative · Host processes\n\nUses this computer’s resources\nSandboxes\n0\nWorkspaces\n0\nLocal Stores\n18\nStores\nsim-billing-811beba82547613faa48\nsim-billing-a4207d40fc7fc6f3f759\nsim-compiler-5b83d8ed94cff19d4c5a\n+15 more\nDisk\nShared with this computer\nRunning\nThis computer\ndocker\n\nDocker · Linux namespaces\n\nCPU, memory and disk managed by Docker\nSandboxes\n0\nWorkspaces\n0\nLocal Stores\n0\nStores\nNone on this machine\n\nthe machine is stopped\n\nDisk\nFree space not reported\n\nLayerFS worker is stopped. Docker Desktop can be running independently. Start the worker to use LayerFS on Docker.\n\nStopped\nStart worker\n\nMachine power is manual: a machine runs between Start and Stop, and nothing starts or stops one by itself. Reading this page starts nothing.",
+        "nodes": 1321,
+        "longtasks": [
+          {
+            "start": 404.60000002384186,
+            "duration": 115
+          },
+          {
+            "start": 530.8999999761581,
+            "duration": 53
+          },
+          {
+            "start": 612,
+            "duration": 174
+          },
+          {
+            "start": 22091.399999976158,
+            "duration": 101
+          },
+          {
+            "start": 26683.5,
+            "duration": 68
+          }
+        ]
+      },
+      "requests": [
+        {
+          "id": "12170.309",
+          "path": "machines",
+          "start": 386445.813582,
+          "response": 386446.351507,
+          "status": 200,
+          "end": 386446.351724,
+          "bytes": 6119,
+          "duration": 538.1420000339858
+        },
+        {
+          "id": "12170.310",
+          "path": "demo-presets",
+          "start": 386448.137909,
+          "response": 386448.143099,
+          "status": 200,
+          "end": 386448.143267,
+          "bytes": 21822,
+          "duration": 5.357999994885176
+        },
+        {
+          "id": "12170.311",
+          "path": "machines",
+          "start": 386450.815413,
+          "response": 386451.198548,
+          "status": 200,
+          "end": 386451.185248,
+          "bytes": 6119,
+          "duration": 369.8350000195205
+        }
+      ]
+    },
+    {
+      "route": "/storage",
+      "elapsed": 6006,
+      "view": {
+        "h1": "Storage",
+        "main": "Viewing Original\nStorage\nBackup buckets\n0\nNew Store\n18 Stores · 18 projects · 45.8 MB in 18 sqlite Stores\nHome checks: no findings · just now\nsim-billing-811beba82547613faa48\nSQLite\nLayerFS Home\nstore/sim-billing-811beba82547613faa48\n3.7 MB\nProjects · 1\nbilling-811beba82547613faa48\nStorage · —\n54 branches\n0 sandboxes\n0 workspaces\nNo backup yet\nAdd project\nsim-billing-a4207d40fc7fc6f3f759\nSQLite\nLayerFS Home\nstore/sim-billing-a4207d40fc7fc6f3f759\n741 KB\nProjects · 1\nbilling-a4207d40fc7fc6f3f759\nStorage · —\n18 branches\n0 sandboxes\n0 workspaces\nNo backup yet\nAdd project\nsim-compiler-5b83d8ed94cff19d4c5a\nSQLite\nLayerFS Home\nstore/sim-compiler-5b83d8ed94cff19d4c5a\n1.1 MB\nProjects · 1\ncompiler-5b83d8ed94cff19d4c5a\nStorage · —\n20 branches\n0 sandboxes\n0 workspaces\nNo backup yet\nAdd project\nsim-compiler-f9fb9799c955c039fe3d\nSQLite\nLayerFS Home\nstore/sim-compiler-f9fb9799c955c039fe3d\n4.7 MB\nProjects · 1\ncompiler-f9fb9799c955c039fe3d\nStorage · —\n68 branches\n0 sandboxes\n0 workspaces\nNo backup yet\nAdd project\nsim-design-258e49ee8dd5fb3f37c6\nSQLite\nLayerFS Home\nstore/sim-design-258e49ee8dd5fb3f37c6\n2.2 MB\nProjects · 1\ndesign-258e49ee8dd5fb3f37c6\nStorage · —\n— branches\n0 sandboxes\n0 workspaces\nNo backup yet\nAdd project\nsim-design-6777c9d05e81ae79ede2\nSQLite\nLayerFS Home\nstore/sim-design-6777c9d05e81ae79ede2\n1.4 MB\nProjects · 1\ndesign-6777c9d05e81ae79ede2\nStorage · —\n— branches\n0 sandboxes\n0 w",
+        "nodes": 2406,
+        "longtasks": [
+          {
+            "start": 404.60000002384186,
+            "duration": 115
+          },
+          {
+            "start": 530.8999999761581,
+            "duration": 53
+          },
+          {
+            "start": 612,
+            "duration": 174
+          },
+          {
+            "start": 22091.399999976158,
+            "duration": 101
+          },
+          {
+            "start": 26683.5,
+            "duration": 68
+          },
+          {
+            "start": 39801.39999997616,
+            "duration": 59
+          },
+          {
+            "start": 44200,
+            "duration": 78
+          }
+        ]
+      },
+      "requests": [
+        {
+          "id": "12170.312",
+          "path": "storage",
+          "start": 386451.751244,
+          "response": 386452.716537,
+          "status": 200,
+          "end": 386452.716798,
+          "bytes": 5783,
+          "duration": 965.5539999948815
+        },
+        {
+          "id": "12170.313",
+          "path": "machines",
+          "start": 386451.751772,
+          "response": 386452.358248,
+          "status": 200,
+          "end": 386452.358491,
+          "bytes": 6119,
+          "duration": 606.7190000321716
+        },
+        {
+          "id": "12170.314",
+          "path": "doctor",
+          "start": 386451.752174,
+          "response": 386451.864812,
+          "status": 200,
+          "end": 386451.84493,
+          "bytes": 406,
+          "duration": 92.75599999818951
+        },
+        {
+          "id": "12170.315",
+          "path": "projects",
+          "start": 386451.752582,
+          "response": 386451.843448,
+          "status": 200,
+          "end": 386451.843542,
+          "bytes": 5233,
+          "duration": 90.96000000135973
+        },
+        {
+          "id": "12170.316",
+          "path": "projects/sim-billing-811beba82547613faa48%2Fbilling-811beba82547613faa48",
+          "start": 386451.786568,
+          "response": 386453.007365,
+          "status": 200,
+          "end": 386453.007693,
+          "bytes": 13162,
+          "duration": 1221.1250000400469
+        },
+        {
+          "id": "12170.317",
+          "path": "projects/sim-billing-a4207d40fc7fc6f3f759%2Fbilling-a4207d40fc7fc6f3f759",
+          "start": 386451.787115,
+          "response": 386453.328144,
+          "status": 200,
+          "end": 386453.3283,
+          "bytes": 4958,
+          "duration": 1541.1849999800324
+        },
+        {
+          "id": "12170.318",
+          "path": "projects/sim-compiler-5b83d8ed94cff19d4c5a%2Fcompiler-5b83d8ed94cff19d4c5a",
+          "start": 386451.787551,
+          "response": 386453.328339,
+          "status": 200,
+          "end": 386453.3286,
+          "bytes": 5442,
+          "duration": 1541.0489999921992
+        },
+        {
+          "id": "12170.319",
+          "path": "projects/sim-compiler-f9fb9799c955c039fe3d%2Fcompiler-f9fb9799c955c039fe3d",
+          "start": 386451.787974,
+          "response": 386453.854896,
+          "status": 200,
+          "end": 386453.855136,
+          "bytes": 16427,
+          "duration": 2067.1620000503026
+        },
+        {
+          "id": "12170.320",
+          "path": "demo-presets",
+          "start": 386453.138853,
+          "response": 386453.148898,
+          "status": 200,
+          "end": 386453.148695,
+          "bytes": 21822,
+          "duration": 9.841999970376492
+        },
+        {
+          "id": "12170.321",
+          "path": "storage",
+          "start": 386456.845426,
+          "duration": null
+        }
+      ]
+    }
+  ],
+  "network": [
+    {
+      "id": "B8A1FA29FF093483E50EC55A90E8964E",
+      "path": "agent/sessions",
+      "start": 386413.134747,
+      "response": 386413.136607,
+      "status": 204,
+      "end": 386413.136557,
+      "bytes": 0
+    },
+    {
+      "id": "95797FC749CD2FF3CC09E937F82F3CE6",
+      "path": "demo-presets",
+      "start": 386413.13527,
+      "response": 386413.137762,
+      "status": 204,
+      "end": 386413.137717,
+      "bytes": 0
+    },
+    {
+      "id": "FBB6C48271A68FEAF98C0200505C4DD9",
+      "path": "machines",
+      "start": 386413.135766,
+      "response": 386413.139914,
+      "status": 204,
+      "end": 386413.139677,
+      "bytes": 0
+    },
+    {
+      "id": "12170.278",
+      "path": "agent/sessions",
+      "start": 386413.134277,
+      "response": 386413.167688,
+      "status": 200,
+      "end": 386413.139794,
+      "bytes": 69693
+    },
+    {
+      "id": "12170.279",
+      "path": "demo-presets",
+      "start": 386413.134917,
+      "response": 386413.16798,
+      "status": 200,
+      "end": 386413.148432,
+      "bytes": 21822
+    },
+    {
+      "id": "12170.280",
+      "path": "machines",
+      "start": 386413.135325,
+      "response": 386413.53782,
+      "status": 200,
+      "end": 386413.537918,
+      "bytes": 6119
+    },
+    {
+      "id": "12170.282",
+      "path": "events?token=[redacted]",
+      "start": 386413.167328,
+      "response": 386413.358618,
+      "status": 200
+    },
+    {
+      "id": "12170.283",
+      "path": "agent/sessions",
+      "start": 386413.358857,
+      "response": 386413.384097,
+      "status": 200,
+      "end": 386413.38433,
+      "bytes": 69693
+    },
+    {
+      "id": "12170.284",
+      "path": "demo-presets",
+      "start": 386418.138651,
+      "response": 386418.152154,
+      "status": 200,
+      "end": 386418.143937,
+      "bytes": 21822
+    },
+    {
+      "id": "12170.285",
+      "path": "machines",
+      "start": 386418.138971,
+      "response": 386418.408524,
+      "status": 200,
+      "end": 386418.408736,
+      "bytes": 6119
+    },
+    {
+      "id": "12170.286",
+      "path": "demo-presets",
+      "start": 386423.137704,
+      "response": 386423.149762,
+      "status": 200,
+      "end": 386423.146386,
+      "bytes": 21822
+    },
+    {
+      "id": "12170.287",
+      "path": "machines",
+      "start": 386423.137959,
+      "response": 386423.519947,
+      "status": 200,
+      "end": 386423.520149,
+      "bytes": 6119
+    },
+    {
+      "id": "12170.288",
+      "path": "demo-presets",
+      "start": 386428.138447,
+      "response": 386428.15257,
+      "status": 200,
+      "end": 386428.15026,
+      "bytes": 21822
+    },
+    {
+      "id": "12170.289",
+      "path": "machines",
+      "start": 386428.138807,
+      "response": 386428.62269,
+      "status": 200,
+      "end": 386428.622662,
+      "bytes": 6119
+    },
+    {
+      "id": "12170.290",
+      "path": "demo-presets",
+      "start": 386433.139176,
+      "response": 386433.143644,
+      "status": 200,
+      "end": 386433.143497,
+      "bytes": 21822
+    },
+    {
+      "id": "12170.291",
+      "path": "machines",
+      "start": 386433.139544,
+      "response": 386433.533461,
+      "status": 200,
+      "end": 386433.522916,
+      "bytes": 6119
+    },
+    {
+      "id": "B932368CA5357DC447798EEF406B07AC",
+      "path": "storage",
+      "start": 386433.726888,
+      "response": 386433.728211,
+      "status": 204,
+      "end": 386433.728134,
+      "bytes": 0
+    },
+    {
+      "id": "57387527DCB86DC0A90CB90C2681DEAC",
+      "path": "doctor",
+      "start": 386433.727628,
+      "response": 386433.729543,
+      "status": 204,
+      "end": 386433.729494,
+      "bytes": 0
+    },
+    {
+      "id": "0373399813FD167F4B099DF3476430A3",
+      "path": "projects",
+      "start": 386433.728105,
+      "response": 386433.743921,
+      "status": 204,
+      "end": 386433.74388,
+      "bytes": 0
+    },
+    {
+      "id": "12170.292",
+      "path": "storage",
+      "start": 386433.726305,
+      "response": 386434.648214,
+      "status": 200,
+      "end": 386434.648433,
+      "bytes": 5775
+    },
+    {
+      "id": "12170.293",
+      "path": "machines",
+      "start": 386433.726774,
+      "response": 386434.516474,
+      "status": 200,
+      "end": 386434.496352,
+      "bytes": 6119
+    },
+    {
+      "id": "12170.294",
+      "path": "doctor",
+      "start": 386433.727156,
+      "response": 386434.006037,
+      "status": 200,
+      "end": 386434.005663,
+      "bytes": 406
+    },
+    {
+      "id": "12170.295",
+      "path": "projects",
+      "start": 386433.72763,
+      "response": 386434.648423,
+      "status": 200,
+      "end": 386434.648745,
+      "bytes": 5233
+    },
+    {
+      "id": "B3E3A2844BF74F4A14854D51F2369CEE",
+      "path": "projects/sim-billing-811beba82547613faa48%2Fbilling-811beba82547613faa48",
+      "start": 386434.776171,
+      "response": 386434.793363,
+      "status": 204,
+      "end": 386434.793289,
+      "bytes": 0
+    },
+    {
+      "id": "65652F9EF64EFC385A8C98C4E5FD6246",
+      "path": "projects/sim-billing-a4207d40fc7fc6f3f759%2Fbilling-a4207d40fc7fc6f3f759",
+      "start": 386434.776527,
+      "response": 386434.79345,
+      "status": 204,
+      "end": 386434.79338,
+      "bytes": 0
+    },
+    {
+      "id": "211E413C74670CEAC26B5D7E6C737B60",
+      "path": "projects/sim-compiler-5b83d8ed94cff19d4c5a%2Fcompiler-5b83d8ed94cff19d4c5a",
+      "start": 386434.777108,
+      "response": 386434.793902,
+      "status": 204,
+      "end": 386434.793845,
+      "bytes": 0
+    },
+    {
+      "id": "6FC4C5785D027540DB00E5A723415D7A",
+      "path": "projects/sim-compiler-f9fb9799c955c039fe3d%2Fcompiler-f9fb9799c955c039fe3d",
+      "start": 386434.778007,
+      "response": 386434.793996,
+      "status": 204,
+      "end": 386434.793918,
+      "bytes": 0
+    },
+    {
+      "id": "12170.296",
+      "path": "projects/sim-billing-811beba82547613faa48%2Fbilling-811beba82547613faa48",
+      "start": 386434.775273,
+      "response": 386435.799161,
+      "status": 200,
+      "end": 386435.799363,
+      "bytes": 13162
+    },
+    {
+      "id": "12170.297",
+      "path": "projects/sim-billing-a4207d40fc7fc6f3f759%2Fbilling-a4207d40fc7fc6f3f759",
+      "start": 386434.77606,
+      "response": 386435.800771,
+      "status": 200,
+      "end": 386435.800088,
+      "bytes": 4275
+    },
+    {
+      "id": "12170.298",
+      "path": "projects/sim-compiler-5b83d8ed94cff19d4c5a%2Fcompiler-5b83d8ed94cff19d4c5a",
+      "start": 386434.776648,
+      "response": 386435.82508,
+      "status": 200,
+      "end": 386435.82729,
+      "bytes": 4985
+    },
+    {
+      "id": "12170.299",
+      "path": "projects/sim-compiler-f9fb9799c955c039fe3d%2Fcompiler-f9fb9799c955c039fe3d",
+      "start": 386434.777438,
+      "response": 386435.813734,
+      "status": 200,
+      "end": 386435.813984,
+      "bytes": 16427
+    },
+    {
+      "id": "12170.304",
+      "path": "demo-presets",
+      "start": 386438.138537,
+      "response": 386438.142577,
+      "status": 200,
+      "end": 386438.142248,
+      "bytes": 21822
+    },
+    {
+      "id": "12170.305",
+      "path": "storage",
+      "start": 386438.773483,
+      "response": 386439.240679,
+      "status": 200,
+      "end": 386439.239635,
+      "bytes": 5775
+    },
+    {
+      "id": "12170.306",
+      "path": "demo-presets",
+      "start": 386439.691287,
+      "response": 386439.700665,
+      "status": 200,
+      "end": 386439.696164,
+      "bytes": 21822
+    },
+    {
+      "id": "12170.307",
+      "path": "demo-presets",
+      "start": 386443.138415,
+      "response": 386443.141769,
+      "status": 200,
+      "end": 386443.141694,
+      "bytes": 21822
+    },
+    {
+      "id": "12170.308",
+      "path": "demo-presets",
+      "start": 386444.692537,
+      "response": 386444.709683,
+      "status": 200,
+      "end": 386444.697885,
+      "bytes": 21822
+    },
+    {
+      "id": "12170.309",
+      "path": "machines",
+      "start": 386445.813582,
+      "response": 386446.351507,
+      "status": 200,
+      "end": 386446.351724,
+      "bytes": 6119
+    },
+    {
+      "id": "12170.310",
+      "path": "demo-presets",
+      "start": 386448.137909,
+      "response": 386448.143099,
+      "status": 200,
+      "end": 386448.143267,
+      "bytes": 21822
+    },
+    {
+      "id": "12170.311",
+      "path": "machines",
+      "start": 386450.815413,
+      "response": 386451.198548,
+      "status": 200,
+      "end": 386451.185248,
+      "bytes": 6119
+    },
+    {
+      "id": "12170.312",
+      "path": "storage",
+      "start": 386451.751244,
+      "response": 386452.716537,
+      "status": 200,
+      "end": 386452.716798,
+      "bytes": 5783
+    },
+    {
+      "id": "12170.313",
+      "path": "machines",
+      "start": 386451.751772,
+      "response": 386452.358248,
+      "status": 200,
+      "end": 386452.358491,
+      "bytes": 6119
+    },
+    {
+      "id": "12170.314",
+      "path": "doctor",
+      "start": 386451.752174,
+      "response": 386451.864812,
+      "status": 200,
+      "end": 386451.84493,
+      "bytes": 406
+    },
+    {
+      "id": "12170.315",
+      "path": "projects",
+      "start": 386451.752582,
+      "response": 386451.843448,
+      "status": 200,
+      "end": 386451.843542,
+      "bytes": 5233
+    },
+    {
+      "id": "12170.316",
+      "path": "projects/sim-billing-811beba82547613faa48%2Fbilling-811beba82547613faa48",
+      "start": 386451.786568,
+      "response": 386453.007365,
+      "status": 200,
+      "end": 386453.007693,
+      "bytes": 13162
+    },
+    {
+      "id": "12170.317",
+      "path": "projects/sim-billing-a4207d40fc7fc6f3f759%2Fbilling-a4207d40fc7fc6f3f759",
+      "start": 386451.787115,
+      "response": 386453.328144,
+      "status": 200,
+      "end": 386453.3283,
+      "bytes": 4958
+    },
+    {
+      "id": "12170.318",
+      "path": "projects/sim-compiler-5b83d8ed94cff19d4c5a%2Fcompiler-5b83d8ed94cff19d4c5a",
+      "start": 386451.787551,
+      "response": 386453.328339,
+      "status": 200,
+      "end": 386453.3286,
+      "bytes": 5442
+    },
+    {
+      "id": "12170.319",
+      "path": "projects/sim-compiler-f9fb9799c955c039fe3d%2Fcompiler-f9fb9799c955c039fe3d",
+      "start": 386451.787974,
+      "response": 386453.854896,
+      "status": 200,
+      "end": 386453.855136,
+      "bytes": 16427
+    },
+    {
+      "id": "12170.320",
+      "path": "demo-presets",
+      "start": 386453.138853,
+      "response": 386453.148898,
+      "status": 200,
+      "end": 386453.148695,
+      "bytes": 21822
+    },
+    {
+      "id": "12170.321",
+      "path": "storage",
+      "start": 386456.845426
+    }
+  ],
+  "errors": []
+}

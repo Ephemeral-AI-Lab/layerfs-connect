@@ -1,0 +1,30 @@
+#!/usr/bin/python3
+import os,pathlib,pwd,subprocess,yaml
+cidata=pathlib.Path('/mnt/lima-cidata')
+subprocess.run(['mkdir','-p',str(cidata)],check=True)
+subprocess.run(['mount','-o','ro,mode=0700,dmode=0700,overriderockperm,exec,uid=0','/dev/disk/by-label/cidata',str(cidata)],check=True)
+meta=yaml.safe_load((cidata/'meta-data').read_text())
+hostname=meta['local-hostname']
+pathlib.Path('/etc/hostname').write_text(hostname+'\n')
+subprocess.run(['hostname',hostname],check=True)
+config=yaml.safe_load((cidata/'user-data').read_text())
+for user in config['users']:
+    name=user['name']
+    try:
+        account=pwd.getpwnam(name)
+    except KeyError:
+        subprocess.run(['useradd','-m','-U','-u',str(user['uid']),'-d',user['homedir'],'-s',user['shell'],name],check=True)
+        account=pwd.getpwnam(name)
+    if account.pw_uid != int(user['uid']):raise RuntimeError('UID mismatch')
+    subprocess.run(['usermod','-L',name],check=True)
+    ssh=pathlib.Path(account.pw_dir)/'.ssh'
+    ssh.mkdir(mode=0o700,parents=True,exist_ok=True)
+    keyfile=ssh/'authorized_keys'
+    keyfile.write_text('\n'.join(user['ssh-authorized-keys'])+'\n')
+    for file,mode in [(ssh,0o700),(keyfile,0o600)]:
+        os.chown(file,account.pw_uid,account.pw_gid)
+        os.chmod(file,mode)
+    sudo=pathlib.Path('/etc/sudoers.d/90-layerfs-'+name)
+    sudo.write_text(name+' ALL=(ALL) NOPASSWD:ALL\n')
+    sudo.chmod(0o440)
+subprocess.run(['ssh-keygen','-A'],check=True)

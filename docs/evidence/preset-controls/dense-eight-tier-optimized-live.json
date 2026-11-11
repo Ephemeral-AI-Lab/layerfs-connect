@@ -1,0 +1,385 @@
+{
+  "state": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/connect-dense-optimized-Cur1hM",
+  "cli": "/Users/yifanxu/.cache/layerfs-worktrees/layerfs-macos-writer-adm-905cf46b6910/artifacts/build-macos-b4035a8f06434f7e8e09c823dad9e32a/layerfs",
+  "linuxBundle": "/Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect/.cache/layerfs-bundles/833d04cf44e8e747929d50ab1170a48260d9381c/2.0.0/linux-aarch64",
+  "started": 1794290968862,
+  "scope": "Production Studio: four machines, four stores, eight unequal tiers concurrently on final machines. No sandboxes/workspaces. No command retries.",
+  "source": {
+    "tools/demo/runner.mjs": "3e5b79dbf6ab487549142c44b10d775d86ae4ec920336d49de3a4af8befb1df1",
+    "tools/demo/recipe.mjs": "18096e86814ad2badcca64435effef91a2919673eb526f43af0efa5429bda72c",
+    "tools/demo/dense-recipe.mjs": "15d252cedd5294c2ce3bdf886c5103d972812083707c7b945d01865ce3343a7e",
+    "tools/demo/history-scheduler.mjs": "e33b0666441877d043e9fd1695cb4b7ef8c608abcc4f3d67bf14438319bedd20",
+    "tools/demo/drivers.mjs": "e7b045e22878cad81b0078d2c660da6eaf78092e5a570a6f2017938f4e40ec1f",
+    "tools/demo/project-verification.mjs": "a179608b9f55e5f295e321c3625a30b6acf6f3de8568df433ad1df9a1b0474a3",
+    "tools/demo/step-journal.mjs": "203f8348483b9f262d1105c23e1ec3bbd574ecaaba7ea2a1a5ebd19bc0779175",
+    "host/cli/spawn.js": "8ae7a381993394c63c57369350c668e3b1fd1ecc2563f3a02b7966e11e4e74f1",
+    "host/cli/concurrency.js": "b54ffe87ca2c8bdb6c0eb91fabf366df69de675ab162abb92aa9388c73613f6f"
+  },
+  "profile": "release",
+  "numericEligibility": "INCOMPLETE: uncontrolled OS/worker caches; single diagnostic user-flow observation, not a cold benchmark",
+  "historyLimits": {
+    "concurrency": 12,
+    "perStore": 3,
+    "perProject": 3
+  },
+  "historySchedule": "parallel",
+  "verificationConcurrency": 4,
+  "plans": [
+    {
+      "project": "demo-studio/website",
+      "machine": "native",
+      "tier": 8,
+      "commits": 10056,
+      "branches": 199,
+      "layers": 2095,
+      "commands": 12271
+    },
+    {
+      "project": "demo-studio/design",
+      "machine": "native",
+      "tier": 1,
+      "commits": 2400,
+      "branches": 54,
+      "layers": 500,
+      "commands": 2933
+    },
+    {
+      "project": "demo-services/gateway",
+      "machine": "docker",
+      "tier": 7,
+      "commits": 7944,
+      "branches": 159,
+      "layers": 1655,
+      "commands": 9695
+    },
+    {
+      "project": "demo-services/billing",
+      "machine": "docker",
+      "tier": 2,
+      "commits": 2664,
+      "branches": 59,
+      "layers": 555,
+      "commands": 3255
+    },
+    {
+      "project": "demo-build-cache/compiler",
+      "machine": "demo-build",
+      "tier": 6,
+      "commits": 6360,
+      "branches": 129,
+      "layers": 1325,
+      "commands": 7763
+    },
+    {
+      "project": "demo-build-cache/sdk",
+      "machine": "demo-build",
+      "tier": 3,
+      "commits": 3192,
+      "branches": 69,
+      "layers": 665,
+      "commands": 3899
+    },
+    {
+      "project": "demo-experiments/embeddings",
+      "machine": "demo-research",
+      "tier": 5,
+      "commits": 5040,
+      "branches": 104,
+      "layers": 1050,
+      "commands": 6153
+    },
+    {
+      "project": "demo-experiments/evaluation",
+      "machine": "demo-research",
+      "tier": 4,
+      "commits": 3984,
+      "branches": 84,
+      "layers": 830,
+      "commands": 4865
+    }
+  ],
+  "progress": {
+    "stage": "building",
+    "completed": 2362,
+    "total": 50842,
+    "historyCompleted": 2354,
+    "historyTotal": 50834,
+    "label": "Building demo-services/gateway on docker",
+    "tasks": [
+      {
+        "project": "demo-studio/website",
+        "tier": 8,
+        "state": "running",
+        "completed": 402,
+        "total": 12271,
+        "commits": 330,
+        "layers": 60,
+        "started": 1794290988287
+      },
+      {
+        "project": "demo-studio/design",
+        "tier": 1,
+        "state": "running",
+        "completed": 281,
+        "total": 2933,
+        "commits": 250,
+        "layers": 22,
+        "started": 1794290988290
+      },
+      {
+        "project": "demo-services/gateway",
+        "tier": 7,
+        "state": "running",
+        "completed": 347,
+        "total": 9695,
+        "commits": 283,
+        "layers": 55,
+        "started": 1794290988291
+      },
+      {
+        "project": "demo-services/billing",
+        "tier": 2,
+        "state": "running",
+        "completed": 221,
+        "total": 3255,
+        "commits": 207,
+        "layers": 5,
+        "started": 1794290988293
+      },
+      {
+        "project": "demo-build-cache/compiler",
+        "tier": 6,
+        "state": "running",
+        "completed": 335,
+        "total": 7763,
+        "commits": 277,
+        "layers": 49,
+        "started": 1794290988294
+      },
+      {
+        "project": "demo-build-cache/sdk",
+        "tier": 3,
+        "state": "running",
+        "completed": 212,
+        "total": 3899,
+        "commits": 198,
+        "layers": 5,
+        "started": 1794290988296
+      },
+      {
+        "project": "demo-experiments/embeddings",
+        "tier": 5,
+        "state": "running",
+        "completed": 337,
+        "total": 6153,
+        "commits": 278,
+        "layers": 50,
+        "started": 1794290988297
+      },
+      {
+        "project": "demo-experiments/evaluation",
+        "tier": 4,
+        "state": "running",
+        "completed": 219,
+        "total": 4865,
+        "commits": 205,
+        "layers": 5,
+        "started": 1794290988299
+      }
+    ]
+  },
+  "tasks": [
+    {
+      "id": "demo-studio/website",
+      "project": "demo-studio/website",
+      "machine": "native",
+      "tier": 8,
+      "state": "stopped",
+      "completed": 733,
+      "total": 12271,
+      "commits": 603,
+      "branches": 23,
+      "layers": 115,
+      "targetCommits": 10056,
+      "targetBranches": 200,
+      "targetLayers": 2095,
+      "started": 1794290988287,
+      "ended": 1794291006565
+    },
+    {
+      "id": "demo-studio/design",
+      "project": "demo-studio/design",
+      "machine": "native",
+      "tier": 1,
+      "state": "stopped",
+      "completed": 523,
+      "total": 2933,
+      "commits": 451,
+      "branches": 18,
+      "layers": 60,
+      "targetCommits": 2400,
+      "targetBranches": 55,
+      "targetLayers": 500,
+      "started": 1794290988290,
+      "ended": 1794291006565
+    },
+    {
+      "id": "demo-services/gateway",
+      "project": "demo-services/gateway",
+      "machine": "docker",
+      "tier": 7,
+      "state": "stopped",
+      "completed": 642,
+      "total": 9695,
+      "commits": 534,
+      "branches": 20,
+      "layers": 96,
+      "targetCommits": 7944,
+      "targetBranches": 160,
+      "targetLayers": 1655,
+      "started": 1794290988291,
+      "ended": 1794291006565
+    },
+    {
+      "id": "demo-services/billing",
+      "project": "demo-services/billing",
+      "machine": "docker",
+      "tier": 2,
+      "state": "stopped",
+      "completed": 378,
+      "total": 3255,
+      "commits": 306,
+      "branches": 18,
+      "layers": 60,
+      "targetCommits": 2664,
+      "targetBranches": 60,
+      "targetLayers": 555,
+      "started": 1794290988293,
+      "ended": 1794291006565
+    },
+    {
+      "id": "demo-build-cache/compiler",
+      "project": "demo-build-cache/compiler",
+      "machine": "demo-build",
+      "tier": 6,
+      "state": "stopped",
+      "completed": 621,
+      "total": 7763,
+      "commits": 523,
+      "branches": 19,
+      "layers": 86,
+      "targetCommits": 6360,
+      "targetBranches": 130,
+      "targetLayers": 1325,
+      "started": 1794290988294,
+      "ended": 1794291006565
+    },
+    {
+      "id": "demo-build-cache/sdk",
+      "project": "demo-build-cache/sdk",
+      "machine": "demo-build",
+      "tier": 3,
+      "state": "stopped",
+      "completed": 380,
+      "total": 3899,
+      "commits": 308,
+      "branches": 18,
+      "layers": 60,
+      "targetCommits": 3192,
+      "targetBranches": 70,
+      "targetLayers": 665,
+      "started": 1794290988296,
+      "ended": 1794291006565
+    },
+    {
+      "id": "demo-experiments/embeddings",
+      "project": "demo-experiments/embeddings",
+      "machine": "demo-research",
+      "tier": 5,
+      "state": "stopped",
+      "completed": 629,
+      "total": 6153,
+      "commits": 527,
+      "branches": 20,
+      "layers": 90,
+      "targetCommits": 5040,
+      "targetBranches": 105,
+      "targetLayers": 1050,
+      "started": 1794290988297,
+      "ended": 1794291006565
+    },
+    {
+      "id": "demo-experiments/evaluation",
+      "project": "demo-experiments/evaluation",
+      "machine": "demo-research",
+      "tier": 4,
+      "state": "failed",
+      "completed": 379,
+      "total": 4865,
+      "commits": 307,
+      "branches": 18,
+      "layers": 60,
+      "targetCommits": 3984,
+      "targetBranches": 85,
+      "targetLayers": 830,
+      "started": 1794290988299,
+      "ended": 1794291006527,
+      "error": "CLI activity capacity reached. Export and reset activity before continuing; recorded preset output has been preserved.",
+      "errorCode": "ActivityCapacity"
+    }
+  ],
+  "ok": false,
+  "error": {
+    "code": "ActivityCapacity",
+    "message": "CLI activity capacity reached. Export and reset activity before continuing; recorded preset output has been preserved.",
+    "stack": "Error: CLI activity capacity reached. Export and reset activity before continuing; recorded preset output has been preserved.\n    at ActivityStore.append (file:///Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect/host/activity/store.js:42:79)\n    at ActivityRecorder.record (file:///Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect/host/activity/recorder.js:39:16)\n    at emit (file:///Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect/host/activity/recorder.js:70:41)\n    at beginInvocation (file:///Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect/host/activity/recorder.js:72:9)\n    at execute (file:///Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect/host/cli/spawn.js:26:20)\n    at CliDriver.invoke (file:///Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect/tools/demo/drivers.mjs:17:21)\n    at DemoRunner.once (file:///Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect/tools/demo/runner.mjs:153:40)\n    at DemoRunner.executeHistoryStep (file:///Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect/tools/demo/runner.mjs:243:16)\n    at file:///Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect/tools/demo/runner.mjs:323:42\n    at file:///Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect/tools/demo/history-scheduler.mjs:33:54"
+  },
+  "cleanup": {
+    "preset": "studio",
+    "state": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/connect-dense-optimized-Cur1hM",
+    "home": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/connect-dense-optimized-Cur1hM/home-2",
+    "actionId": "b52ea6a5-ad53-4a6e-ace3-75941b1d045f",
+    "cleanup": {
+      "remove": {
+        "stores": [
+          "demo-build-cache",
+          "demo-experiments",
+          "demo-services",
+          "demo-studio"
+        ],
+        "sandboxes": [],
+        "machines": [
+          "demo-build",
+          "demo-research"
+        ],
+        "workspaces": []
+      },
+      "retainMachines": [],
+      "preserved": {
+        "machine": [],
+        "store": [],
+        "sandbox": []
+      },
+      "projects": 8,
+      "signature": "faf27d71f91fb590ce85f1d5a25f3acd4402e8bda3d5dc5d3abe5b5cfe456c17",
+      "verified": true,
+      "at": 1794291008750,
+      "remaining": [],
+      "unexpected": []
+    },
+    "activityUrl": "http://127.0.0.1:1025/#/activity?action=b52ea6a5-ad53-4a6e-ace3-75941b1d045f"
+  },
+  "ended": 1794291011382,
+  "sourceAfter": {
+    "tools/demo/runner.mjs": "3e5b79dbf6ab487549142c44b10d775d86ae4ec920336d49de3a4af8befb1df1",
+    "tools/demo/recipe.mjs": "18096e86814ad2badcca64435effef91a2919673eb526f43af0efa5429bda72c",
+    "tools/demo/dense-recipe.mjs": "15d252cedd5294c2ce3bdf886c5103d972812083707c7b945d01865ce3343a7e",
+    "tools/demo/history-scheduler.mjs": "e33b0666441877d043e9fd1695cb4b7ef8c608abcc4f3d67bf14438319bedd20",
+    "tools/demo/drivers.mjs": "e7b045e22878cad81b0078d2c660da6eaf78092e5a570a6f2017938f4e40ec1f",
+    "tools/demo/project-verification.mjs": "a179608b9f55e5f295e321c3625a30b6acf6f3de8568df433ad1df9a1b0474a3",
+    "tools/demo/step-journal.mjs": "203f8348483b9f262d1105c23e1ec3bbd574ecaaba7ea2a1a5ebd19bc0779175",
+    "host/cli/spawn.js": "8ae7a381993394c63c57369350c668e3b1fd1ecc2563f3a02b7966e11e4e74f1",
+    "host/cli/concurrency.js": "b54ffe87ca2c8bdb6c0eb91fabf366df69de675ab162abb92aa9388c73613f6f"
+  },
+  "sourceStable": true
+}

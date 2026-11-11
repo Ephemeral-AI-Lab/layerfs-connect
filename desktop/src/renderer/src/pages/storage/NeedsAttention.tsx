@@ -17,7 +17,7 @@ import { cn } from '@/lib/utils'
 import type { DoctorReport } from '@/layerfs/host-api'
 
 /** Reads `layerfs doctor` again whenever `tick` changes. */
-export const useDoctor = (tick: number) => useHostQuery(() => host.doctor(), [tick])
+export const useDoctor = (tick: number) => useHostQuery(() => host.doctor(), [tick], 'doctor')
 
 /** The summary badge: checking, nothing found, or how many findings; a button that opens them. */
 export function DoctorBadge({ read, open, onToggle }: { read: Loaded<DoctorReport>; open: boolean; onToggle: () => void }) {

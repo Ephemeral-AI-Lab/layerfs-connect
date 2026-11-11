@@ -1,7 +1,7 @@
 // One chat in the sidebar: its title, a status mark (working, waiting for an
 // approval, failed) and its age; on hover a ⋯ menu to rename, archive or delete.
 import { Archive, Ellipsis, LoaderCircle, Pencil, Trash2 } from 'lucide-react'
-import { useState } from 'react'
+import { memo, useState } from 'react'
 import { NavLink, useMatch, useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -19,7 +19,7 @@ const shortAgo = (at: number) =>
     .replace('yesterday', '1d')
     .replace('just now', 'now')
 
-export function ChatRow({ chat }: { chat: ChatSummary }) {
+export const ChatRow = memo(function ChatRow({ chat }: { chat: ChatSummary }) {
   const navigate = useNavigate()
   const here = useMatch(`/chat/${encodeURIComponent(chat.id)}`)
   const [renaming, setRenaming] = useState(false)
@@ -122,4 +122,4 @@ export function ChatRow({ chat }: { chat: ChatSummary }) {
       </Dialog>
     </div>
   )
-}
+})

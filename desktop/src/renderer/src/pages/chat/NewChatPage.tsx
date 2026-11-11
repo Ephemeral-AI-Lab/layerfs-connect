@@ -14,7 +14,12 @@ import { upsertChat } from '@/layerfs/use-chats'
 import { useProjects } from '@/layerfs/use-projects'
 import { useLayout } from '@/components/shell/layout-context'
 import { CHROME_CLUSTER_PX, macChrome, TRAFFIC_LIGHTS_PX } from '@/lib/platform'
-import { EXAMPLE_CHAT_PATH } from '@/layerfs/chat-sim'
+
+import { parseSimulationCommand } from '@/layerfs/simulation-command'
+import { SavedConversations } from '@/components/chat/SavedConversations'
+import { useSimulationLaunch } from './simulation/use-simulation'
+import { SimulationCommandHelp } from './simulation/SimulationCommandHelp'
+import { SimulationLaunchStatus } from './simulation/SimulationLaunchStatus'
 
 const MODEL_KEY = 'lfs.chat.model'
 type ModelChoice = { provider: string; modelId: string; thinkingLevel: string }
@@ -37,6 +42,7 @@ function titleFrom(text: string) {
 
 export function NewChatPage() {
   const navigate = useNavigate()
+  const simulation = useSimulationLaunch()
   const [params] = useSearchParams()
   const catalog = useProjects()
   const { sidebarOpen } = useLayout()
@@ -74,9 +80,10 @@ export function NewChatPage() {
 
   const projects = catalog.data ?? []
   const chosen = project ? splitProjectKey(project) : null
-  const where =
-    (workspace.kind === 'scratch' ? 'Works in a new scratch folder' : `Works in ${workspace.path}`) +
-    (chosen ? ` with ${chosen.name} from ${chosen.store}.` : '.')
+  // a project chat runs in a mounted Workspace of its own new branch; its conversation is saved to the project
+  const where = chosen
+    ? `Works in a mounted LayerFS Workspace of a new branch of ${chosen.name} from ${chosen.store}; the conversation is saved to that project.`
+    : workspace.kind === 'scratch' ? 'Works in a new scratch folder.' : `Works in ${workspace.path}.`
 
   function chooseModel(m: ChatModel) {
     const next = { provider: m.provider, modelId: m.id, thinkingLevel: m.thinkingLevels?.includes('medium') ? 'medium' : 'off' }
@@ -95,7 +102,15 @@ export function NewChatPage() {
 
   async function send() {
     const message = text.trim()
-    if (!message || !model) return
+    if (!message || busy || simulation.busy) return
+    const command = parseSimulationCommand(message)
+    if (command) {
+      setError(null)
+      if (!command.ok) { setError(command.error); return }
+      if (await simulation.start(command.input)) setText('')
+      return
+    }
+    if (!model) return
     setBusy(true)
     setError(null)
     let made: string | null = null
@@ -115,13 +130,14 @@ export function NewChatPage() {
     }
   }
 
+  const simulationCommand = parseSimulationCommand(text) !== null
   const lead = sidebarOpen ? 0 : (macChrome ? TRAFFIC_LIGHTS_PX : 8) + CHROME_CLUSTER_PX
   return (
     <div className="relative flex min-h-0 flex-1 flex-col overflow-y-auto">
       <div className="drag h-[46px] shrink-0" style={{ marginLeft: lead }} />
       <div className="mx-auto flex w-full max-w-[760px] flex-1 flex-col px-5 pb-16 pt-[14vh]">
         <h1 className="mb-6 text-center text-20 font-medium leading-7 text-[var(--text-primary)]">What should we work on?</h1>
-        {catalogModels && !models.length && <div className="mb-4 flex items-center justify-between gap-3 rounded-xs border border-[var(--border-default)] px-4 py-3 text-13">
+        {!simulationCommand && catalogModels && !models.length && <div className="mb-4 flex items-center justify-between gap-3 rounded-xs border border-[var(--border-default)] px-4 py-3 text-13">
           <div><p className="font-medium">Connect a model to start</p><p className="mt-1 text-12 text-[var(--text-secondary)]">Sign in to a provider or add an API key. Pi will run your chat and tools.</p></div>
           <button type="button" onClick={() => navigate('/settings')} className="shrink-0 rounded-full bg-primary px-3 py-2 text-primary-foreground">Connect model</button>
         </div>}
@@ -129,8 +145,8 @@ export function NewChatPage() {
           value={text}
           onChange={setText}
           onSend={() => void send()}
-          busy={busy}
-          sendBlocked={model ? null : 'Choose a model first'}
+          busy={busy || simulation.busy}
+          sendBlocked={simulationCommand || model ? null : 'Choose a model first'}
           placeholder={chosen ? `Ask about ${chosen.name}, or give it a task…` : 'Ask anything, or give it a task…'}
           chips={
             <>
@@ -146,13 +162,11 @@ export function NewChatPage() {
           end={<ModelPicker value={model} models={models} onChange={chooseModel} />}
         />
         <p className="mt-2.5 px-1 text-12 text-[var(--text-tertiary)]">{where}</p>
-        {model && <p className="mt-1 px-1 text-12 text-[var(--text-tertiary)]">Pi agent · {model.provider} / {model.modelId}</p>}
-        <div className="mt-5 px-1 text-center text-13 text-[var(--text-secondary)]">
-          <button type="button" onClick={() => navigate(EXAMPLE_CHAT_PATH)} className="underline underline-offset-4 hover:text-[var(--text-primary)]">
-            Explore an example chat
-          </button>
-          <p className="mt-1.5 text-12 text-[var(--text-tertiary)]">Simulated conversation, Trace, and Subagents. No model needed.</p>
-        </div>
+        {project && !simulationCommand && <SavedConversations project={project} />}
+        {simulationCommand && <p className="mt-1 px-1 text-12 text-[var(--text-tertiary)]">Scripted simulation · fresh SQLite Store · no model required</p>}
+        <SimulationCommandHelp text={text} onChange={setText} />
+        <SimulationLaunchStatus launch={simulation} />
+        {!simulationCommand && model && <p className="mt-1 px-1 text-12 text-[var(--text-tertiary)]">Pi agent · {model.provider} / {model.modelId}</p>}
         {error && <p role="alert" className="mt-2 px-1 text-12 text-destructive">{error}</p>}
       </div>
     </div>

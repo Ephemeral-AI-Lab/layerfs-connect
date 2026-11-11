@@ -1,0 +1,40 @@
+{
+  "root": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/connect-readable-preset-NLohQV",
+  "runAction": "1f1a7f36-fe97-417b-a799-22856b7ebe61",
+  "resetAction": "cd0cb06a-efe4-42c9-8311-6b7075d8df31",
+  "stateBeforePageReads": "running",
+  "pageReads": [
+    {
+      "path": "/api/machines",
+      "ok": true
+    },
+    {
+      "path": "/api/storage",
+      "ok": true
+    },
+    {
+      "path": "/api/projects",
+      "ok": true
+    },
+    {
+      "path": "/api/status",
+      "ok": true
+    }
+  ],
+  "resetPageReads": [
+    {
+      "path": "/api/machines",
+      "ok": true
+    },
+    {
+      "path": "/api/storage",
+      "ok": true
+    }
+  ],
+  "completed": true,
+  "date": "2026-11-09",
+  "typecheck": "PASS",
+  "desktopBuild": "PASS",
+  "rootTests": 119,
+  "cleanup": "Private host stopped; fixture data removed; logs retained."
+}

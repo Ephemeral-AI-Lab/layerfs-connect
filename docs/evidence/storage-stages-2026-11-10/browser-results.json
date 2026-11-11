@@ -1,0 +1,161 @@
+{
+  "results": [
+    {
+      "name": "project: selected population flow and independent main",
+      "url": "http://127.0.0.1:1025/?mac=1&storage-stages=final5#/storage/demo-studio/website/storage",
+      "width": 1280,
+      "overflow": false,
+      "panels": [
+        "From snapshots to stored data"
+      ],
+      "alerts": []
+    },
+    {
+      "name": "encoded stage value",
+      "value": "724 B"
+    },
+    {
+      "name": "replay finite animation settings",
+      "animations": [
+        {
+          "name": "storage-flow-travel",
+          "iterations": "2"
+        },
+        {
+          "name": "storage-flow-travel",
+          "iterations": "2"
+        },
+        {
+          "name": "storage-flow-travel",
+          "iterations": "2"
+        },
+        {
+          "name": "storage-flow-travel",
+          "iterations": "2"
+        },
+        {
+          "name": "storage-flow-travel",
+          "iterations": "2"
+        },
+        {
+          "name": "storage-flow-travel",
+          "iterations": "2"
+        }
+      ]
+    },
+    {
+      "name": "revision inspection after flow",
+      "url": "http://127.0.0.1:1025/?mac=1&storage-stages=final5#/storage/demo-studio/website/storage",
+      "width": 1280,
+      "overflow": false,
+      "panels": [
+        "From snapshots to stored data"
+      ],
+      "alerts": []
+    },
+    {
+      "name": "project900",
+      "url": "http://127.0.0.1:1025/?mac=1&storage-stages=final5#/storage/demo-studio/website/storage",
+      "width": 900,
+      "overflow": false,
+      "panels": [
+        "From snapshots to stored data"
+      ],
+      "alerts": []
+    },
+    {
+      "name": "project reduced motion",
+      "animations": [
+        "none",
+        "none",
+        "none",
+        "none",
+        "none",
+        "none",
+        "none",
+        "none",
+        "none",
+        "none",
+        "none",
+        "none",
+        "none",
+        "none",
+        "none",
+        "none",
+        "none"
+      ]
+    },
+    {
+      "name": "Store measured 3stage encoding allocation flow",
+      "url": "http://127.0.0.1:1025/?mac=1&storage-stages=final5#/storage/demo-studio",
+      "width": 1280,
+      "overflow": false,
+      "panels": [
+        "Observed storage growth",
+        "Project snapshot analysis"
+      ],
+      "alerts": []
+    },
+    {
+      "name": "Store selected snapshot flow",
+      "url": "http://127.0.0.1:1025/?mac=1&storage-stages=final5#/storage/demo-studio",
+      "width": 1280,
+      "overflow": false,
+      "panels": [
+        "Observed storage growth",
+        "Project snapshot analysis"
+      ],
+      "alerts": []
+    },
+    {
+      "name": "Store900",
+      "url": "http://127.0.0.1:1025/?mac=1&storage-stages=final5#/storage/demo-studio",
+      "width": 900,
+      "overflow": false,
+      "panels": [
+        "Observed storage growth",
+        "Project snapshot analysis"
+      ],
+      "alerts": []
+    },
+    {
+      "name": "Store reduced motion",
+      "animations": [
+        "none",
+        "none",
+        "none",
+        "none",
+        "none",
+        "none",
+        "none",
+        "none",
+        "none",
+        "none",
+        "none",
+        "none",
+        "none",
+        "none",
+        "none",
+        "none",
+        "none",
+        "none",
+        "none",
+        "none",
+        "none",
+        "none",
+        "none",
+        "none",
+        "none",
+        "none",
+        "none",
+        "none",
+        "none",
+        "none",
+        "none",
+        "none",
+        "none"
+      ]
+    }
+  ],
+  "errors": []
+}

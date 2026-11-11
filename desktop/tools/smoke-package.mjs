@@ -53,7 +53,7 @@ try {
     cwd: temp,
     env: {
       ...process.env, HOME: temp, PATH: `${bin}:/usr/bin:/bin:/usr/sbin:/sbin`,
-      LAYERFS_CONNECT_MODE: 'sim', LAYERFS_CONNECT_STATE: join(temp, 'state'),
+      LAYERFS_CONNECT_STATE: join(temp, 'state'),
       LAYERFS_CONNECT_CLI: join(bin, 'layerfs'), LAYERFS_CONNECT_DAEMON: join(bin, 'layerfs-daemon'),
     },
     stdio: ['pipe', 'pipe', 'pipe'],

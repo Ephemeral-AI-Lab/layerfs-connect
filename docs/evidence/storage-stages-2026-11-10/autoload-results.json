@@ -1,0 +1,53 @@
+{
+  "results": [
+    {
+      "name": "design direct URL autoanalysis",
+      "url": "http://127.0.0.1:1025/#/storage/demo-studio/design/storage",
+      "width": 1280,
+      "overflow": false,
+      "panels": [
+        "From snapshots to stored data"
+      ],
+      "alerts": []
+    },
+    {
+      "name": "design main stages",
+      "values": [
+        "1.5 KB",
+        "765 B",
+        "436 B"
+      ]
+    },
+    {
+      "name": "branch change autoanalysis",
+      "url": "http://127.0.0.1:1025/#/storage/demo-studio/design/storage",
+      "width": 1280,
+      "overflow": false,
+      "panels": [
+        "From snapshots to stored data"
+      ],
+      "alerts": []
+    },
+    {
+      "name": "range change autoanalysis",
+      "url": "http://127.0.0.1:1025/#/storage/demo-studio/design/storage",
+      "width": 1280,
+      "overflow": false,
+      "panels": [
+        "From snapshots to stored data"
+      ],
+      "alerts": []
+    },
+    {
+      "name": "design autoanalysis900",
+      "url": "http://127.0.0.1:1025/#/storage/demo-studio/design/storage",
+      "width": 900,
+      "overflow": false,
+      "panels": [
+        "From snapshots to stored data"
+      ],
+      "alerts": []
+    }
+  ],
+  "errors": []
+}

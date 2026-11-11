@@ -32,7 +32,7 @@ import { type MachineSandbox, projectRef, type SandboxInfo, type WorkspaceInfo }
 /** LayerFS refuses a mount past this many Workspaces in one Sandbox. */
 export const SANDBOX_CAPACITY = 16
 
-/** The Sandbox and Workspace calls, on the live host or a simulated one. */
+/** The Sandbox and Workspace calls on the real host. */
 export interface SandboxOps {
   /** sandbox.get */
   read: (name: string) => Promise<SandboxInfo>

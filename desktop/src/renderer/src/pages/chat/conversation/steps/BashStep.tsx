@@ -4,7 +4,7 @@
 // bar in its kind's colour and the calls the trace recorded for it, then the
 // output.
 import { ChevronRight, ListTree, LoaderCircle, Terminal } from 'lucide-react'
-import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
+import { Fragment, memo, useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { LfsIcon } from '@/components/layerfs/LfsIcons'
 import type { ChatMessage, StepCall, StepSegment } from '@/layerfs/agent-api'
@@ -12,6 +12,7 @@ import { callColor, callIcon, callTarget, callVerb, duration, KIND_COLOR, matchC
 import { cn } from '@/lib/utils'
 import { useScope } from '../scope'
 import { ShellOutput } from './ShellOutput'
+import { OperationList, opSummary } from '@/components/layerfs/Operations'
 
 const firstLine = (command: string) =>
   command
@@ -35,7 +36,7 @@ function Mark({ ok, running }: { ok: boolean | null; running?: boolean }) {
   return ok ? <span className="text-success">✓</span> : <span className="text-destructive">✗</span>
 }
 
-export function BashStep({ message }: { message: ChatMessage }) {
+export const BashStep = memo(function BashStep({ message }: { message: ChatMessage }) {
   const { chatId, focus, inChild, childId } = useScope()
   const focused = focus === message.id
   const [open, setOpen] = useState(focused)
@@ -46,6 +47,8 @@ export function BashStep({ message }: { message: ChatMessage }) {
     setOpen(true)
     requestAnimationFrame(() => root.current?.scrollIntoView({ block: 'center' }))
   }, [focused])
+  const ops = message.operations
+  const chatPath = `/chat/${encodeURIComponent(chatId)}${childId ? `/subagents/${encodeURIComponent(childId)}` : ''}`
   const command = String(message.args?.command ?? '')
   const segments = message.view?.segments ?? []
   const calls = message.view?.calls ?? []
@@ -96,7 +99,7 @@ export function BashStep({ message }: { message: ChatMessage }) {
           </span>
         )}
         <span className="flex shrink-0 items-center gap-1.5 text-12 tabular-nums text-[var(--text-tertiary)]">
-          {calls.length > 0 && <span>{calls.length} {calls.length === 1 ? 'call' : 'calls'}</span>}
+          {ops && ops.count > 0 ? <span title={opSummary(ops)} className={cn(ops.unknown > 0 && 'text-[var(--warning,#b7791f)]')}>{ops.count} {ops.count === 1 ? 'op' : 'ops'} · {ops.links} {ops.links === 1 ? 'link' : 'links'}</span> : calls.length > 0 && <span>{calls.length} {calls.length === 1 ? 'call' : 'calls'}</span>}
           {total > 0 && <span>{duration(total)}</span>}
           <Mark ok={running ? null : !failed} running={running} />
         </span>
@@ -112,6 +115,12 @@ export function BashStep({ message }: { message: ChatMessage }) {
               ))}
             </div>
           )}
+          {ops && ops.count > 0 && (
+            <div className="border-t border-[var(--border-default)] py-1">
+              <p className="px-3 pt-1 text-11 font-medium uppercase tracking-[0.04em] text-[var(--text-tertiary)]">{opSummary(ops)}</p>
+              <OperationList ops={ops} chatPath={chatPath} />
+            </div>
+          )}
           <ShellOutput chatId={chatId} message={message} />
           {(!inChild || childId) && (
             <div className="flex justify-end border-t border-[var(--border-default)] px-3 py-1.5">
@@ -124,7 +133,7 @@ export function BashStep({ message }: { message: ChatMessage }) {
       )}
     </div>
   )
-}
+})
 
 /** The script, a row per segment: bar, numbered lines, and its calls on the right. */
 function Script({ segments, command, bySegment, missing, done }: {

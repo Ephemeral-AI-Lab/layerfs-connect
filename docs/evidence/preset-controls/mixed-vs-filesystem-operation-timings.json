@@ -1,0 +1,357 @@
+{
+  "method": "History mutation invocation IDs from final journal; cli.started.started to cli.finished.ended. Process durations overlap and cannot be added as wall time. Baseline is an earlier single run, not controlled.",
+  "commands": 66542,
+  "baseline": {
+    "commands": 50834,
+    "processMs": {
+      "count": 50834,
+      "sum": 2123982,
+      "mean": 41.7827,
+      "min": 7,
+      "p50": 43.0,
+      "p90": 63.0,
+      "p99": 82.0,
+      "max": 192
+    },
+    "queuedToStartedMs": {
+      "count": 50834,
+      "sum": 135578,
+      "mean": 2.6671,
+      "min": 0,
+      "p50": 2.0,
+      "p90": 5.0,
+      "p99": 10.0,
+      "max": 79
+    },
+    "activeProcessesAtStart": {
+      "count": 50834,
+      "sum": 472789,
+      "mean": 9.3006,
+      "min": 1,
+      "p50": 10.0,
+      "p90": 12.0,
+      "p99": 12.0,
+      "max": 12
+    },
+    "operations": {
+      "branch.fork": {
+        "commands": 527,
+        "processMs": {
+          "count": 527,
+          "sum": 9910,
+          "mean": 18.8046,
+          "min": 9,
+          "p50": 17.0,
+          "p90": 28.0,
+          "p99": 38.48,
+          "max": 58
+        },
+        "queuedToStartedMs": {
+          "count": 527,
+          "sum": 1752,
+          "mean": 3.3245,
+          "min": 0,
+          "p50": 3.0,
+          "p90": 6.0,
+          "p99": 10.74,
+          "max": 15
+        }
+      },
+      "branch.merge": {
+        "commands": 330,
+        "processMs": {
+          "count": 330,
+          "sum": 12075,
+          "mean": 36.5909,
+          "min": 16,
+          "p50": 35.0,
+          "p90": 55.0,
+          "p99": 67.71,
+          "max": 72
+        },
+        "queuedToStartedMs": {
+          "count": 330,
+          "sum": 831,
+          "mean": 2.5182,
+          "min": 0,
+          "p50": 2.0,
+          "p90": 5.0,
+          "p99": 10.71,
+          "max": 15
+        }
+      },
+      "branch.publish": {
+        "commands": 8667,
+        "processMs": {
+          "count": 8667,
+          "sum": 151818,
+          "mean": 17.5168,
+          "min": 7,
+          "p50": 16.0,
+          "p90": 24.0,
+          "p99": 33.0,
+          "max": 105
+        },
+        "queuedToStartedMs": {
+          "count": 8667,
+          "sum": 21236,
+          "mean": 2.4502,
+          "min": 0,
+          "p50": 2.0,
+          "p90": 5.0,
+          "p99": 10.0,
+          "max": 76
+        }
+      },
+      "file.write": {
+        "commands": 41310,
+        "processMs": {
+          "count": 41310,
+          "sum": 1950179,
+          "mean": 47.2084,
+          "min": 19,
+          "p50": 47.0,
+          "p90": 64.0,
+          "p99": 84.0,
+          "max": 192
+        },
+        "queuedToStartedMs": {
+          "count": 41310,
+          "sum": 111759,
+          "mean": 2.7054,
+          "min": 0,
+          "p50": 2.0,
+          "p90": 5.0,
+          "p99": 10.0,
+          "max": 79
+        }
+      }
+    }
+  },
+  "mixed": {
+    "branch.fork": {
+      "count": 527,
+      "meanMs": 23.343453510436433,
+      "p50Ms": 19,
+      "p90Ms": 29,
+      "p99Ms": 158,
+      "sumMs": 12302
+    },
+    "file.write": {
+      "count": 26238,
+      "meanMs": 50.1488299413065,
+      "p50Ms": 47.0,
+      "p90Ms": 69,
+      "p99Ms": 191,
+      "sumMs": 1315805
+    },
+    "branch.publish": {
+      "count": 8667,
+      "meanMs": 20.453559478481598,
+      "p50Ms": 17,
+      "p90Ms": 26,
+      "p99Ms": 156,
+      "sumMs": 177271
+    },
+    "branch.merge": {
+      "count": 330,
+      "meanMs": 42.375757575757575,
+      "p50Ms": 36.0,
+      "p90Ms": 55,
+      "p99Ms": 181,
+      "sumMs": 13984
+    },
+    "sandbox.create": {
+      "count": 8,
+      "meanMs": 7943.5,
+      "p50Ms": 9855.0,
+      "p90Ms": 11993,
+      "p99Ms": 11993,
+      "sumMs": 63548
+    },
+    "workspace.mount": {
+      "count": 314,
+      "meanMs": 51.86305732484077,
+      "p50Ms": 45.0,
+      "p90Ms": 73,
+      "p99Ms": 227,
+      "sumMs": 16285
+    },
+    "workspace.exec": {
+      "count": 15072,
+      "meanMs": 46.73341295116773,
+      "p50Ms": 40.0,
+      "p90Ms": 63,
+      "p99Ms": 202,
+      "sumMs": 704366
+    },
+    "workspace.commit": {
+      "count": 15072,
+      "meanMs": 77.09554140127389,
+      "p50Ms": 57.0,
+      "p90Ms": 128,
+      "p99Ms": 250,
+      "sumMs": 1161984
+    },
+    "workspace.unmount": {
+      "count": 314,
+      "meanMs": 38.39808917197452,
+      "p50Ms": 31.0,
+      "p90Ms": 54,
+      "p99Ms": 201,
+      "sumMs": 12057
+    }
+  },
+  "mixedProcessTotals": {
+    "elapsedMs": 708100,
+    "processMs": 3477602,
+    "meanConcurrent": 4.911173563056066,
+    "peak": 12,
+    "meanWaitMs": 3.8086772264133932
+  },
+  "byMachine": {
+    "native": {
+      "branch.fork": {
+        "count": 155,
+        "meanMs": 27
+      },
+      "file.write": {
+        "count": 7846,
+        "meanMs": 37.66760132551619
+      },
+      "branch.publish": {
+        "count": 2593,
+        "meanMs": 24.27111453914385
+      },
+      "branch.merge": {
+        "count": 98,
+        "meanMs": 31.846938775510203
+      },
+      "workspace.mount": {
+        "count": 94,
+        "meanMs": 71.86170212765957
+      },
+      "workspace.exec": {
+        "count": 4512,
+        "meanMs": 46.17331560283688
+      },
+      "workspace.commit": {
+        "count": 4512,
+        "meanMs": 133.24867021276594
+      },
+      "workspace.unmount": {
+        "count": 94,
+        "meanMs": 59.11702127659574
+      }
+    },
+    "docker": {
+      "branch.fork": {
+        "count": 134,
+        "meanMs": 19.059701492537314
+      },
+      "file.write": {
+        "count": 6684,
+        "meanMs": 55.07226211849192
+      },
+      "branch.publish": {
+        "count": 2208,
+        "meanMs": 19.202898550724637
+      },
+      "branch.merge": {
+        "count": 84,
+        "meanMs": 50.345238095238095
+      },
+      "workspace.mount": {
+        "count": 80,
+        "meanMs": 34.3
+      },
+      "workspace.exec": {
+        "count": 3840,
+        "meanMs": 54.37083333333333
+      },
+      "workspace.commit": {
+        "count": 3840,
+        "meanMs": 45.7546875
+      },
+      "workspace.unmount": {
+        "count": 80,
+        "meanMs": 19.6875
+      }
+    },
+    "demo-build": {
+      "branch.fork": {
+        "count": 122,
+        "meanMs": 23.16393442622951
+      },
+      "file.write": {
+        "count": 6020,
+        "meanMs": 55.47757475083056
+      },
+      "branch.publish": {
+        "count": 1988,
+        "meanMs": 18.624748490945674
+      },
+      "branch.merge": {
+        "count": 76,
+        "meanMs": 46.39473684210526
+      },
+      "workspace.mount": {
+        "count": 72,
+        "meanMs": 54.27777777777778
+      },
+      "workspace.exec": {
+        "count": 3456,
+        "meanMs": 42.94762731481482
+      },
+      "workspace.commit": {
+        "count": 3456,
+        "meanMs": 57.328414351851855
+      },
+      "workspace.unmount": {
+        "count": 72,
+        "meanMs": 36.263888888888886
+      }
+    },
+    "demo-research": {
+      "branch.fork": {
+        "count": 116,
+        "meanMs": 23.594827586206897
+      },
+      "file.write": {
+        "count": 5688,
+        "meanMs": 55.94004922644163
+      },
+      "branch.publish": {
+        "count": 1878,
+        "meanMs": 18.588924387646433
+      },
+      "branch.merge": {
+        "count": 72,
+        "meanMs": 43.166666666666664
+      },
+      "workspace.mount": {
+        "count": 68,
+        "meanMs": 42.3235294117647
+      },
+      "workspace.exec": {
+        "count": 3264,
+        "meanMs": 42.53094362745098
+      },
+      "workspace.commit": {
+        "count": 3264,
+        "meanMs": 57.27359068627451
+      },
+      "workspace.unmount": {
+        "count": 68,
+        "meanMs": 34.029411764705884
+      }
+    },
+    "unknown": {
+      "sandbox.create": {
+        "count": 8,
+        "meanMs": 7943.5
+      }
+    }
+  },
+  "baselineMeanConcurrent": 8.573363
+}

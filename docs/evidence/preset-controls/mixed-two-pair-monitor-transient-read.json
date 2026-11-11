@@ -1,0 +1,313 @@
+{
+  "started": 1794299527683,
+  "scope": "Actual renderer Reset and build Studio; Mixed recipe version2; two exec/commit pairs per fresh workspace",
+  "context": {
+    "gateway": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/lfs-desktop-web-4oV3rQ",
+    "presets": "/Users/yifanxu/.layerfs-connect-demo"
+  },
+  "source": {
+    "tools/demo/runner.mjs": "e9730b00ba2e8f1a3bd5955ffe73bb7e248973f7cd4a3a8ab5f31437d55d78a6",
+    "tools/demo/recipe.mjs": "4ea619989fba850c673ae6e1a72069542c9ac3196d3a3b9668ff4c2b67d12a4d",
+    "tools/demo/dense-recipe.mjs": "15d252cedd5294c2ce3bdf886c5103d972812083707c7b945d01865ce3343a7e",
+    "tools/demo/mixed-recipe.mjs": "8a5bd501f489cac65a52f1055ef76d5942f479c2150734edfa77b79d41a0f495",
+    "tools/demo/history-scheduler.mjs": "e33b0666441877d043e9fd1695cb4b7ef8c608abcc4f3d67bf14438319bedd20",
+    "tools/demo/project-verification.mjs": "053b8601bb009e3507f1ffb4304586c8eb1357800a810096e13e32bb3b74844a",
+    "tools/demo/build.mjs": "525416fbfc88cd4c9c003d22f6e568fa55493eb9af89d56a0712d180b26836e2",
+    "host/demo-presets/manager.js": "081204828cf16cafa91f14d481eef6d88196c28a349749e2aec7995477e56a2f",
+    "desktop/src/renderer/src/components/presets/PresetControls.tsx": "d5f29743b4ddca53276b1289a112db57b4572c2a8278c2c29ba5da07032ea7cc",
+    "desktop/src/renderer/src/components/presets/PresetScript.tsx": "2437bd693e390ea6749d33506a9cf6a266f8a6f87184a0d1a831c206618e25e0",
+    "desktop/src/renderer/src/components/presets/PresetProgress.tsx": "5b67138691e5f6d8812bf4918942c9caa345c6549e8bcc08a3a882408f220e21",
+    "host/cli/spawn.js": "92c7cef7981b41102c9f928fede53043ad238ed773276b8a4f3df489cf3bf26a",
+    "host/activity/store.js": "6f5919e6c58ad1ac6a4c689f801b3b5fb01066628f19d1f379a751f207c92f32",
+    "host/activity/recorder.js": "ab12dce139166c9a0edd148b4e71c50b360d454b6ca484b59f31cf9ba010b909"
+  },
+  "ok": false,
+  "job": {
+    "id": "c7120f3c-222e-4725-875a-726604781211",
+    "requestId": "aa85966e-b9d4-4ab1-8841-567b8eb9b3fc",
+    "fingerprint": "[\"studio\",\"environment-reset\",\"mixed:6c343a92123df8e63892f954254d3222aa2b57553d1bce27571de04f5fc666e0\",true,true,\"mixed\"]",
+    "preset": "studio",
+    "command": "environment-reset",
+    "executionMode": "mixed",
+    "rebuild": true,
+    "actionId": "48e04743-529e-49e7-9649-9be2e65112f6",
+    "state": "running",
+    "phase": "CLI: layerfs file write demo-services/gateway release-029 /docs/history-release.md --message Prepare release publication 29.15",
+    "created": 1794299489700,
+    "historyCleared": true,
+    "actionIds": [
+      "48e04743-529e-49e7-9649-9be2e65112f6",
+      "af800596-6534-4b6f-a98e-3b07577ad028"
+    ],
+    "progress": {
+      "stage": "building",
+      "completed": 70363,
+      "total": 80994,
+      "historyCompleted": 70355,
+      "historyTotal": 80986,
+      "workspaceCoverage": {
+        "completed": 13116,
+        "required": 15072,
+        "total": 41310
+      },
+      "label": "Building demo-services/gateway on docker",
+      "tasks": [
+        {
+          "id": "demo-studio/website",
+          "project": "demo-studio/website",
+          "machine": "native",
+          "tier": 8,
+          "state": "running",
+          "completed": 10153,
+          "total": 19568,
+          "commits": 5231,
+          "branches": 108,
+          "layers": 1050,
+          "targetCommits": 10056,
+          "targetBranches": 200,
+          "targetLayers": 2095,
+          "started": 1794299512737
+        },
+        {
+          "id": "demo-studio/design",
+          "project": "demo-studio/design",
+          "machine": "native",
+          "tier": 1,
+          "state": "completed",
+          "completed": 4662,
+          "total": 4662,
+          "commits": 2400,
+          "branches": 55,
+          "layers": 500,
+          "targetCommits": 2400,
+          "targetBranches": 55,
+          "targetLayers": 500,
+          "started": 1794299512739,
+          "ended": 1794299776582
+        },
+        {
+          "id": "demo-services/gateway",
+          "project": "demo-services/gateway",
+          "machine": "docker",
+          "tier": 7,
+          "state": "running",
+          "completed": 14916,
+          "total": 15456,
+          "commits": 7667,
+          "branches": 155,
+          "layers": 1587,
+          "targetCommits": 7944,
+          "targetBranches": 160,
+          "targetLayers": 1655,
+          "started": 1794299512740
+        },
+        {
+          "id": "demo-services/billing",
+          "project": "demo-services/billing",
+          "machine": "docker",
+          "tier": 2,
+          "state": "completed",
+          "completed": 5176,
+          "total": 5176,
+          "commits": 2664,
+          "branches": 60,
+          "layers": 555,
+          "targetCommits": 2664,
+          "targetBranches": 60,
+          "targetLayers": 555,
+          "started": 1794299512741,
+          "ended": 1794299726676
+        },
+        {
+          "id": "demo-build-cache/compiler",
+          "project": "demo-build-cache/compiler",
+          "machine": "demo-build",
+          "tier": 6,
+          "state": "running",
+          "completed": 11696,
+          "total": 12372,
+          "commits": 6023,
+          "branches": 123,
+          "layers": 1215,
+          "targetCommits": 6360,
+          "targetBranches": 130,
+          "targetLayers": 1325,
+          "started": 1794299512743
+        },
+        {
+          "id": "demo-build-cache/sdk",
+          "project": "demo-build-cache/sdk",
+          "machine": "demo-build",
+          "tier": 3,
+          "state": "completed",
+          "completed": 6204,
+          "total": 6204,
+          "commits": 3192,
+          "branches": 70,
+          "layers": 665,
+          "targetCommits": 3192,
+          "targetBranches": 70,
+          "targetLayers": 665,
+          "started": 1794299512744,
+          "ended": 1794299809494
+        },
+        {
+          "id": "demo-experiments/embeddings",
+          "project": "demo-experiments/embeddings",
+          "machine": "demo-research",
+          "tier": 5,
+          "state": "completed",
+          "completed": 9802,
+          "total": 9802,
+          "commits": 5040,
+          "branches": 105,
+          "layers": 1050,
+          "targetCommits": 5040,
+          "targetBranches": 105,
+          "targetLayers": 1050,
+          "started": 1794299512745,
+          "ended": 1794299888866
+        },
+        {
+          "id": "demo-experiments/evaluation",
+          "project": "demo-experiments/evaluation",
+          "machine": "demo-research",
+          "tier": 4,
+          "state": "completed",
+          "completed": 7746,
+          "total": 7746,
+          "commits": 3984,
+          "branches": 85,
+          "layers": 830,
+          "targetCommits": 3984,
+          "targetBranches": 85,
+          "targetLayers": 830,
+          "started": 1794299512747,
+          "ended": 1794299865025
+        }
+      ]
+    },
+    "started": 1794299490524,
+    "cleanup": {
+      "home": "/Users/yifanxu/.layerfs-connect-demo/studio/home-2",
+      "homeId": "3755bebd9f5d61a3f295ac80feba47a5",
+      "remove": {
+        "stores": [
+          "demo-build-cache",
+          "demo-experiments",
+          "demo-services",
+          "demo-studio"
+        ],
+        "sandboxes": [],
+        "machines": [
+          "demo-build",
+          "demo-research"
+        ],
+        "workspaces": []
+      },
+      "disconnect": [],
+      "unknownSandboxes": [],
+      "workspaceGroups": [],
+      "startMachines": [],
+      "detectedMachines": [
+        {
+          "name": "demo-build",
+          "state": "running",
+          "platform": "lima"
+        },
+        {
+          "name": "demo-research",
+          "state": "running",
+          "platform": "lima"
+        },
+        {
+          "name": "docker",
+          "state": "running",
+          "platform": "docker"
+        },
+        {
+          "name": "native",
+          "state": "ready",
+          "platform": "native"
+        }
+      ],
+      "projects": 8,
+      "stopDocker": true,
+      "scope": "environment",
+      "signature": "6c343a92123df8e63892f954254d3222aa2b57553d1bce27571de04f5fc666e0",
+      "actionId": "48e04743-529e-49e7-9649-9be2e65112f6",
+      "verified": true,
+      "completed": [
+        [
+          "store",
+          "remove",
+          "demo-build-cache"
+        ],
+        [
+          "store",
+          "remove",
+          "demo-experiments"
+        ],
+        [
+          "store",
+          "remove",
+          "demo-services"
+        ],
+        [
+          "store",
+          "remove",
+          "demo-studio"
+        ],
+        [
+          "machine",
+          "remove",
+          "demo-build"
+        ],
+        [
+          "machine",
+          "remove",
+          "demo-research"
+        ],
+        [
+          "machine",
+          "stop",
+          "docker"
+        ]
+      ],
+      "remaining": [],
+      "warnings": [],
+      "at": 1794299490523,
+      "ended": 1794299492319
+    },
+    "rebuildActionId": "af800596-6534-4b6f-a98e-3b07577ad028"
+  },
+  "contentReady": false,
+  "settings": {
+    "sandboxes": false,
+    "executionMode": "mixed"
+  },
+  "active": "studio",
+  "busy": true,
+  "error": {
+    "message": "fetch failed",
+    "stack": "TypeError: fetch failed"
+  },
+  "sourceAfter": {
+    "tools/demo/runner.mjs": "e9730b00ba2e8f1a3bd5955ffe73bb7e248973f7cd4a3a8ab5f31437d55d78a6",
+    "tools/demo/recipe.mjs": "4ea619989fba850c673ae6e1a72069542c9ac3196d3a3b9668ff4c2b67d12a4d",
+    "tools/demo/dense-recipe.mjs": "15d252cedd5294c2ce3bdf886c5103d972812083707c7b945d01865ce3343a7e",
+    "tools/demo/mixed-recipe.mjs": "8a5bd501f489cac65a52f1055ef76d5942f479c2150734edfa77b79d41a0f495",
+    "tools/demo/history-scheduler.mjs": "e33b0666441877d043e9fd1695cb4b7ef8c608abcc4f3d67bf14438319bedd20",
+    "tools/demo/project-verification.mjs": "053b8601bb009e3507f1ffb4304586c8eb1357800a810096e13e32bb3b74844a",
+    "tools/demo/build.mjs": "525416fbfc88cd4c9c003d22f6e568fa55493eb9af89d56a0712d180b26836e2",
+    "host/demo-presets/manager.js": "081204828cf16cafa91f14d481eef6d88196c28a349749e2aec7995477e56a2f",
+    "desktop/src/renderer/src/components/presets/PresetControls.tsx": "d5f29743b4ddca53276b1289a112db57b4572c2a8278c2c29ba5da07032ea7cc",
+    "desktop/src/renderer/src/components/presets/PresetScript.tsx": "2437bd693e390ea6749d33506a9cf6a266f8a6f87184a0d1a831c206618e25e0",
+    "desktop/src/renderer/src/components/presets/PresetProgress.tsx": "5b67138691e5f6d8812bf4918942c9caa345c6549e8bcc08a3a882408f220e21",
+    "host/cli/spawn.js": "92c7cef7981b41102c9f928fede53043ad238ed773276b8a4f3df489cf3bf26a",
+    "host/activity/store.js": "6f5919e6c58ad1ac6a4c689f801b3b5fb01066628f19d1f379a751f207c92f32",
+    "host/activity/recorder.js": "ab12dce139166c9a0edd148b4e71c50b360d454b6ca484b59f31cf9ba010b909"
+  },
+  "sourceStable": true,
+  "ended": 1794300024470
+}

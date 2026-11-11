@@ -1,0 +1,372 @@
+{
+  "at": 1794298621172,
+  "ok": true,
+  "executionMode": "mixed",
+  "limits": {
+    "sandboxesPerProject": 3,
+    "workspacesPerSandbox": 16,
+    "actualSandboxesPerProject": 1,
+    "actualMountedWorkspacesPerProject": 2,
+    "cliGlobal": 12,
+    "cliPerProject": 3
+  },
+  "coverage": {
+    "workspaceRevisions": 15072,
+    "authoredRevisions": 41310,
+    "percent": 36.485112563543936,
+    "minimumPerProjectPercent": 30
+  },
+  "counts": {
+    "historyCli": 66542,
+    "setupCli": 70552,
+    "uniqueCommits": 41640,
+    "sideBranches": 857,
+    "mainLayers": 8675,
+    "savedFilesVerified": 359,
+    "persistentSandboxesAfterBuild": 8,
+    "mountedWorkspacesAfterBuild": 0
+  },
+  "timingMs": {
+    "preparation": 19865,
+    "history": 708118,
+    "verificationAndFinalization": 37476,
+    "ready": 765459
+  },
+  "checks": {
+    "rootTests": 206,
+    "activityTests": 27,
+    "controlsTests": 32,
+    "desktopTypecheck": "passed",
+    "desktopBuild": "passed",
+    "web": "actual renderer on port 1025; Mixed selection, project scripts, Build confirmation, live progress, Activity navigation and exact input/output, project-filter workspace association, reset, restored Storage",
+    "viewportSizes": [
+      "900x600",
+      "1280x820"
+    ],
+    "projectActivityFilter": "View index fixed after full build; existing full archive project filter verified in browser. No operation replay.",
+    "capacityPilot": "16 mounts accepted; 17th refused Capacity. CLI pool concurrency and resource capacity are separate.",
+    "freshRestoredTabConsoleErrors": 0
+  },
+  "reset": {
+    "receipt": "mixed-web-reset-verification.json",
+    "removedSandboxes": 8,
+    "removedStores": 4,
+    "removedCustomMachines": 2,
+    "remaining": [],
+    "oldBuildActivityCleared": true
+  },
+  "restoration": {
+    "receipt": "mixed-web-restoration-verification.json",
+    "projectsUnchanged": true,
+    "allStoreReadsOk": true,
+    "mode": {
+      "sandboxes": false,
+      "executionMode": "filesystem"
+    },
+    "ready": true
+  },
+  "evidence": [
+    "mixed-web-build-live.json",
+    "mixed-web-independent-archive-audit.json",
+    "mixed-web-reset-verification.json",
+    "mixed-web-restoration-verification.json"
+  ],
+  "archiveExport": {
+    "path": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/connect-mixed-web-0oplwF/retained-build-proof",
+    "files": [
+      {
+        "file": "logs/cli/activity-2026-11-10-11372-dc7f02a5-59a8-4b6b-a9fd-75680e3090dc-protected-5.ndjson",
+        "bytes": 4999757,
+        "sha256": "558055c4b8efc4258b730b2ae12a04f2d2174a735b549caa9a2025fdaa0bb313"
+      },
+      {
+        "file": "logs/cli/activity-2026-11-10-11372-dc7f02a5-59a8-4b6b-a9fd-75680e3090dc-protected-9.ndjson",
+        "bytes": 4998999,
+        "sha256": "565c444cea8a53899c073c218ed6513e147828bd54e5b16bb611cff47406aa37"
+      },
+      {
+        "file": "logs/cli/activity-2026-11-10-11372-dc7f02a5-59a8-4b6b-a9fd-75680e3090dc-protected-11.ndjson",
+        "bytes": 4999452,
+        "sha256": "40241e3e41474673b3658f2df926f9dd23f86f7276dd5b3b832ea333e88774d2"
+      },
+      {
+        "file": "logs/cli/activity-2026-11-10-11372-dc7f02a5-59a8-4b6b-a9fd-75680e3090dc-protected-39.ndjson",
+        "bytes": 4999525,
+        "sha256": "6fbcfa3f91e9d77e2f4d80b6aec3425abdb07096fce1afeab4e307d691724a80"
+      },
+      {
+        "file": "logs/cli/activity-2026-11-10-11372-dc7f02a5-59a8-4b6b-a9fd-75680e3090dc-protected-44.ndjson",
+        "bytes": 4989481,
+        "sha256": "080e3325885f8d3c276f1812ae0aa7ca67013e56cd6f8032390ea5db040d73b3"
+      },
+      {
+        "file": "logs/cli/activity-2026-11-10-11372-dc7f02a5-59a8-4b6b-a9fd-75680e3090dc-protected-27.ndjson",
+        "bytes": 4999660,
+        "sha256": "dfd5529635b98dd25da5da3998b15ad11f34c0af7ace95ed1094602e4187f9d0"
+      },
+      {
+        "file": "logs/cli/activity-2026-11-10-11372-dc7f02a5-59a8-4b6b-a9fd-75680e3090dc-protected-35.ndjson",
+        "bytes": 4999551,
+        "sha256": "8d423d6d48db69bbd7af3c829e6ad11cb0e4afddc8617b810f217238b9a86497"
+      },
+      {
+        "file": "logs/cli/activity-2026-11-10-11372-dc7f02a5-59a8-4b6b-a9fd-75680e3090dc-protected-48.ndjson",
+        "bytes": 4995526,
+        "sha256": "8e60834ca78e658a298140dcc8cd826ca2778b572676dc0c5bbe7142a1cb041b"
+      },
+      {
+        "file": "logs/cli/activity-2026-11-10-11372-dc7f02a5-59a8-4b6b-a9fd-75680e3090dc-protected-13.ndjson",
+        "bytes": 4999435,
+        "sha256": "a3adb1bc55fb7c942cd2d96c3a2294ce838f9dbfe4849885539409a20fe6f3ea"
+      },
+      {
+        "file": "logs/cli/activity-2026-11-10-11372-dc7f02a5-59a8-4b6b-a9fd-75680e3090dc-protected-7.ndjson",
+        "bytes": 4999991,
+        "sha256": "94af59e2126f9e2f8d916a32131cdd6247eafaee5b29053137ead111120493f4"
+      },
+      {
+        "file": "logs/cli/activity-2026-11-10-11372-dc7f02a5-59a8-4b6b-a9fd-75680e3090dc-protected-37.ndjson",
+        "bytes": 4999727,
+        "sha256": "b80393fea63b1dcbecb3914c50c7fb453c1a0ab15dd995cc22c9567873473a5d"
+      },
+      {
+        "file": "logs/cli/activity-2026-11-10-11372-dc7f02a5-59a8-4b6b-a9fd-75680e3090dc-protected-29.ndjson",
+        "bytes": 4999865,
+        "sha256": "600c5d3a99c8f1ab1da7743bb08772f74aa6f9da63cdde6521f31fac981b9ae8"
+      },
+      {
+        "file": "logs/cli/activity-2026-11-10-11372-dc7f02a5-59a8-4b6b-a9fd-75680e3090dc-protected-54.ndjson",
+        "bytes": 4999896,
+        "sha256": "2dbdb0a1b477b6a3e800fa70d23a834e7c2830da564d4301f951d100e7c228ac"
+      },
+      {
+        "file": "logs/cli/activity-2026-11-10-11372-dc7f02a5-59a8-4b6b-a9fd-75680e3090dc-protected-25.ndjson",
+        "bytes": 4998614,
+        "sha256": "9892ca0a671f18b5bc44cdf7787f62632fd817ba728d8ee22468e7877d554b07"
+      },
+      {
+        "file": "logs/cli/activity-2026-11-10-11372-dc7f02a5-59a8-4b6b-a9fd-75680e3090dc-protected-46.ndjson",
+        "bytes": 4999973,
+        "sha256": "e1969f8269cc7b0f31d51eeadbdfdf512ebd4ea5901016364fd04f12c92e5966"
+      },
+      {
+        "file": "logs/cli/activity-2026-11-10-11372-dc7f02a5-59a8-4b6b-a9fd-75680e3090dc-protected-21.ndjson",
+        "bytes": 4999788,
+        "sha256": "5799380767b2988ad309955c548cc0e7c808efb373829d078ce151f5c3629242"
+      },
+      {
+        "file": "logs/cli/activity-2026-11-10-11372-dc7f02a5-59a8-4b6b-a9fd-75680e3090dc-protected-42.ndjson",
+        "bytes": 4999517,
+        "sha256": "b54e46a56b2660b15e8c872c2a6ad661ef505fd09be05cd1615d10c622f960dd"
+      },
+      {
+        "file": "logs/cli/activity-2026-11-10-11372-dc7f02a5-59a8-4b6b-a9fd-75680e3090dc-protected-33.ndjson",
+        "bytes": 4999802,
+        "sha256": "7577db776ca75551265bc17c7f78ea8068ba8b47a74a7e46345b1f47916c266d"
+      },
+      {
+        "file": "logs/cli/activity-2026-11-10-11372-dc7f02a5-59a8-4b6b-a9fd-75680e3090dc-protected-50.ndjson",
+        "bytes": 4993592,
+        "sha256": "ac01873f67c8031247001378d7d2b62bc5d85558f4be6c31fa3eba3496b808c1"
+      },
+      {
+        "file": "logs/cli/activity-2026-11-10-11372-dc7f02a5-59a8-4b6b-a9fd-75680e3090dc-protected-3.ndjson",
+        "bytes": 4999488,
+        "sha256": "f1dce065ed0e5cb3324118f4ca9692750b3fb1e7ab7da513e9f88e15f01c4c09"
+      },
+      {
+        "file": "logs/cli/activity-2026-11-10-11372-dc7f02a5-59a8-4b6b-a9fd-75680e3090dc-protected-17.ndjson",
+        "bytes": 4999847,
+        "sha256": "3d377d90f7875a4675c7fa63e64bfe477769d83412744393a891882ae68c9b98"
+      },
+      {
+        "file": "logs/cli/activity-2026-11-10-11372-dc7f02a5-59a8-4b6b-a9fd-75680e3090dc-protected-52.ndjson",
+        "bytes": 4999461,
+        "sha256": "e8ff79958669b7f4d83c62d743acc3625e5dc97a52096fc9a0fe7bb24875db13"
+      },
+      {
+        "file": "logs/cli/activity-2026-11-10-11372-dc7f02a5-59a8-4b6b-a9fd-75680e3090dc-protected-31.ndjson",
+        "bytes": 4998886,
+        "sha256": "91be28232369240245f1a949febb5cef67d3b7b33f1f973edb54acdb8d6f4144"
+      },
+      {
+        "file": "logs/cli/activity-2026-11-10-11372-dc7f02a5-59a8-4b6b-a9fd-75680e3090dc-protected-40.ndjson",
+        "bytes": 4999943,
+        "sha256": "8160263592434a8b7f3e2abcc9c71c042fcbc22be87cc6342d01ac81759fc4f5"
+      },
+      {
+        "file": "logs/cli/activity-2026-11-10-11372-dc7f02a5-59a8-4b6b-a9fd-75680e3090dc-protected-23.ndjson",
+        "bytes": 4999918,
+        "sha256": "ac88053999efc925ba736ed24aa99ecdd0bc3d8cf5ea92ce1f5e2fca7df9a824"
+      },
+      {
+        "file": "logs/cli/activity-2026-11-10-11372-dc7f02a5-59a8-4b6b-a9fd-75680e3090dc-protected-15.ndjson",
+        "bytes": 4999933,
+        "sha256": "ebba1b704c333373efe09523211d4709df43d2746b0205cb9020369f30d2df05"
+      },
+      {
+        "file": "logs/cli/activity-2026-11-10-11372-dc7f02a5-59a8-4b6b-a9fd-75680e3090dc-protected-19.ndjson",
+        "bytes": 4999091,
+        "sha256": "85647187cc88900b46e72fc72a0730197baf33ff11e862469347a209ff476535"
+      },
+      {
+        "file": "logs/cli/activity-2026-11-10-11372-dc7f02a5-59a8-4b6b-a9fd-75680e3090dc-protected-26.ndjson",
+        "bytes": 4998708,
+        "sha256": "9ff6c3f6299c442e1c189722ceb4013f52fe8b12ca54e67e5710c0f7555cdd1b"
+      },
+      {
+        "file": "logs/cli/activity-2026-11-10-11372-dc7f02a5-59a8-4b6b-a9fd-75680e3090dc-protected-45.ndjson",
+        "bytes": 4985270,
+        "sha256": "18bdf40321dcc6329d20cb0fdfbecfad1fc51c6f6a7d8b518dc0d9c53c6546bc"
+      },
+      {
+        "file": "logs/cli/activity-2026-11-10-11372-dc7f02a5-59a8-4b6b-a9fd-75680e3090dc-protected-38.ndjson",
+        "bytes": 4999485,
+        "sha256": "1d7fc5fc414b4b26d6546fb4beef91c74315941a8a88cc0a358ca0ff6cc4b3b6"
+      },
+      {
+        "file": "logs/cli/activity-2026-11-10-11372-dc7f02a5-59a8-4b6b-a9fd-75680e3090dc-protected-49.ndjson",
+        "bytes": 4986801,
+        "sha256": "6d4a5747ae7a0284ce07f9ad597509be57c516052e531a4ee682a8197c2930f4"
+      },
+      {
+        "file": "logs/cli/activity-2026-11-10-11372-dc7f02a5-59a8-4b6b-a9fd-75680e3090dc-protected-34.ndjson",
+        "bytes": 4999456,
+        "sha256": "377adac4fd7ad0f3d038de10844d012f543a1f1131427767c82c760cedec5fb1"
+      },
+      {
+        "file": "logs/cli/activity-2026-11-10-11372-dc7f02a5-59a8-4b6b-a9fd-75680e3090dc-protected-4.ndjson",
+        "bytes": 4999901,
+        "sha256": "f08f3fcc9a14cc1bba5338e44cc26318b270f1ad57218af14fef3dd38e509906"
+      },
+      {
+        "file": "logs/cli/activity-2026-11-10-11372-dc7f02a5-59a8-4b6b-a9fd-75680e3090dc-protected-10.ndjson",
+        "bytes": 4999305,
+        "sha256": "e8e7533875856142e6f53fe22f0c27f116b6b224b142f16ea9a1a8705429d6ea"
+      },
+      {
+        "file": "logs/cli/activity-2026-11-10-11372-dc7f02a5-59a8-4b6b-a9fd-75680e3090dc-protected-8.ndjson",
+        "bytes": 4999586,
+        "sha256": "3d007cf60106ca6239541458426355baa97d7bf8a4aec84c0d6bd1083a55e468"
+      },
+      {
+        "file": "logs/cli/activity-2026-11-10-11372-dc7f02a5-59a8-4b6b-a9fd-75680e3090dc-protected-55.ndjson",
+        "bytes": 67673,
+        "sha256": "1d82d43bb484ebcbc5173504de7d84ac0544bfe9ebd7c3043f3dbb328745dcf1"
+      },
+      {
+        "file": "logs/cli/activity-2026-11-10-11372-dc7f02a5-59a8-4b6b-a9fd-75680e3090dc-protected-28.ndjson",
+        "bytes": 4999765,
+        "sha256": "19592a1d8355c9fff94a7b5d820c266c47ff6a82f033eb811ea4e036ed0296c9"
+      },
+      {
+        "file": "logs/cli/activity-2026-11-10-11372-dc7f02a5-59a8-4b6b-a9fd-75680e3090dc-protected-36.ndjson",
+        "bytes": 4999371,
+        "sha256": "28966b80987be82b40473d479b71009e407c13aa3a90ecd06ba70550b916e591"
+      },
+      {
+        "file": "logs/cli/activity-2026-11-10-11372-dc7f02a5-59a8-4b6b-a9fd-75680e3090dc-protected-47.ndjson",
+        "bytes": 4996622,
+        "sha256": "9a5ceac76a5c53249373b0a7b27b639a9bbf1a2fcb9d8d09c590d80df9b98a64"
+      },
+      {
+        "file": "logs/cli/activity-2026-11-10-11372-dc7f02a5-59a8-4b6b-a9fd-75680e3090dc-protected-24.ndjson",
+        "bytes": 4999942,
+        "sha256": "c1452cdf4e49991a97bbeecdc9fd3d81b0af937a173eb749129a3a455e5e2887"
+      },
+      {
+        "file": "logs/cli/activity-2026-11-10-11372-dc7f02a5-59a8-4b6b-a9fd-75680e3090dc-protected-12.ndjson",
+        "bytes": 4998418,
+        "sha256": "2b675d1beacbd7c162f9d6489553dd176466bd0391bc813a569c3de0acbd8b84"
+      },
+      {
+        "file": "logs/cli/activity-2026-11-10-11372-dc7f02a5-59a8-4b6b-a9fd-75680e3090dc-protected-6.ndjson",
+        "bytes": 4999361,
+        "sha256": "baac2076f3b20ac86c102b99308f502379123434c9ea7ab50cd8cb20e6d79037"
+      },
+      {
+        "file": "logs/cli/activity-2026-11-10-11372-dc7f02a5-59a8-4b6b-a9fd-75680e3090dc-protected-2.ndjson",
+        "bytes": 4998595,
+        "sha256": "30b6ca4321ce5a2bdd2dc925f402ac44249cfbcc96ce19a57b0a6ac5be66b52b"
+      },
+      {
+        "file": "logs/cli/activity-2026-11-10-11372-dc7f02a5-59a8-4b6b-a9fd-75680e3090dc-protected-16.ndjson",
+        "bytes": 4999948,
+        "sha256": "e6603afb79ea3f985a36533e250961d72bfbb2eb0929e90a0cd21330d77ba275"
+      },
+      {
+        "file": "logs/cli/activity-2026-11-10-11372-dc7f02a5-59a8-4b6b-a9fd-75680e3090dc-protected-43.ndjson",
+        "bytes": 4999433,
+        "sha256": "9c27a1d4c1be53e2e6ed96dc6fb88175f3459c61866853ea115ce049f9ccf291"
+      },
+      {
+        "file": "logs/cli/activity-2026-11-10-11372-dc7f02a5-59a8-4b6b-a9fd-75680e3090dc-protected-20.ndjson",
+        "bytes": 4999403,
+        "sha256": "2c415ccff0e86613959985941d81b0641c49602446977ec9249a6ead2494bee5"
+      },
+      {
+        "file": "logs/cli/activity-2026-11-10-11372-dc7f02a5-59a8-4b6b-a9fd-75680e3090dc-protected-51.ndjson",
+        "bytes": 4998386,
+        "sha256": "74ec707b8b9a3333e0b5af4820c08c186a3c970429f79383ac71a325ef7c68ca"
+      },
+      {
+        "file": "logs/cli/activity-2026-11-10-11372-dc7f02a5-59a8-4b6b-a9fd-75680e3090dc-protected-32.ndjson",
+        "bytes": 4999600,
+        "sha256": "61858b5067edbaed9a636d12cd1efffa22cf910f7a34ededc8e337fc4a7295d9"
+      },
+      {
+        "file": "logs/cli/activity-2026-11-10-11372-dc7f02a5-59a8-4b6b-a9fd-75680e3090dc-protected-14.ndjson",
+        "bytes": 4999188,
+        "sha256": "e969ec2daeaad81dab84a96b298ac0b2d8043541573af483b041fd5b1e51c44e"
+      },
+      {
+        "file": "logs/cli/activity-2026-11-10-11372-dc7f02a5-59a8-4b6b-a9fd-75680e3090dc-protected-18.ndjson",
+        "bytes": 4999997,
+        "sha256": "c439ce7db5c9ad6375164d7dc83213fe2f9e18ffa44c63b28cfab32838226cbf"
+      },
+      {
+        "file": "logs/cli/activity-2026-11-10-11372-dc7f02a5-59a8-4b6b-a9fd-75680e3090dc-protected-30.ndjson",
+        "bytes": 4999914,
+        "sha256": "b902f4751c15de814ba46893faa7fc771ecee732253eed5a6636cba7fa67a93f"
+      },
+      {
+        "file": "logs/cli/activity-2026-11-10-11372-dc7f02a5-59a8-4b6b-a9fd-75680e3090dc-protected-53.ndjson",
+        "bytes": 4986589,
+        "sha256": "ca730986b96f4cab302fa5e41aab040984b60045da7a7767ef3a0ac05d17b307"
+      },
+      {
+        "file": "logs/cli/activity-2026-11-10-11372-dc7f02a5-59a8-4b6b-a9fd-75680e3090dc-protected-22.ndjson",
+        "bytes": 4999426,
+        "sha256": "f0fa347bedfd7e10c279c12e244fcc1c1fcd7c7d4be329f1ef5254d91134d251"
+      },
+      {
+        "file": "logs/cli/activity-2026-11-10-11372-dc7f02a5-59a8-4b6b-a9fd-75680e3090dc-protected-41.ndjson",
+        "bytes": 4999747,
+        "sha256": "680e1abd53a39e011c64a3d68c6cc279a790a0aa7503462c517f3de4a8c922da"
+      },
+      {
+        "file": "demo-steps.ndjson",
+        "bytes": 150710168,
+        "sha256": "6d1d045b99fa3e5eb9377a7bea675212206db4e02c61c811990bee8812c2578b"
+      },
+      {
+        "file": "demo-fixtures.json",
+        "bytes": 11294,
+        "sha256": "c26bddbda89c9c8d142921a412550b49bc7927b9e53f888e47a447714ab926f8"
+      },
+      {
+        "file": "logs/cli-control/generation.json",
+        "bytes": 79,
+        "sha256": "6b68cf1caa267b59b072bbf1a6e945ccac40eb365d07e4ef2c25a9141aed17b2"
+      }
+    ],
+    "bytes": 415700149,
+    "verifiedIdentical": true
+  },
+  "hostFreeBytes": 228058226688,
+  "limitations": [
+    "Web verification only; Electron was not launched.",
+    "Normal recipe uses one persistent sandbox and up to two mounted workspaces per project; 3/16 are capacity ceilings.",
+    "Original Studio remains Filesystem; select Mixed and Build projects to replace it with a Mixed library."
+  ]
+}

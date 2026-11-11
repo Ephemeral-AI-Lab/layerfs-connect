@@ -1,0 +1,19 @@
+{
+  "host/agents/live-reader.js": "26a630f39e56bb32498e2ede6830774093b00b9d45c354c6f4a3199b950819e4",
+  "host/agents/trace.js": "2b89cfd042221625a4df7a197a81c59493ee4aba3c4d517ab4baadc69a502a12",
+  "host/agents/children.js": "b9487e2100f679fde1a29f853fc0ca2ad3937e3f8ce363b5ca25e2027cb36061",
+  "host/runs/live.js": "ddb2ad043522a8c4d7de879560ef6871e4cb64e9a537f2b435ea2646eb788ec4",
+  "host/runs/traces.js": "02e1aa183e15c54780680af7339d20227c719c340b346cab596c00b89b59e6d1",
+  "desktop/src/renderer/src/layerfs/sandbox-live.ts": "d119087f29e51db6efc3ca2d130106132adeddc896e71d3c4c32008d0e53e863",
+  "desktop/src/renderer/src/layerfs/use-sandbox-live.ts": "fce6bfc4257369abc055951a39728dc10a6f96b220df71fa711b7a104d60c5dd",
+  "desktop/src/renderer/src/layerfs/use-project-sandboxes.ts": "668fb913186394f820a6fa354a85e4d0e093afd7459e952ac43466dbc86035e3",
+  "desktop/src/renderer/src/pages/chat/SandboxesTab.tsx": "7cd695a126b06a406cbe0f99eccabf56e8073b179afb12e7d453e7948aca2b84",
+  "desktop/src/renderer/src/components/sandbox/ProjectSandboxes.tsx": "6a9aa9e25fc7a1dfe098645795c7c0abeeb6d6689d96c7ae8d9d89d75a1a699e",
+  "desktop/src/renderer/src/components/sandbox/SandboxMap.tsx": "5f4e8acf813f40d6c361d77aaa236d6ff8b694e05d43bfe9755f0e0c2f298009",
+  "desktop/src/renderer/src/components/sandbox/SandboxWorkspaces.tsx": "21fadbb41b4bb3970c7305991d13ba613fc6987700e887544f1b44f289ddb1c6",
+  "desktop/src/renderer/src/components/sandbox/types.ts": "6c56b27ff324ca20cfd2dfa8928de5b2750b5d3ac98cb4002e9bc3e124883628",
+  "desktop/src/renderer/src/components/sandbox/model.ts": "bc496d4075645931b402973eb2d74e2f7c535e050179ddee3eaf7876e009e879",
+  "host/test/sandbox-live.test.js": "29c3bfa95462d10f93beb994baed99b186994863000e1f9df03311f55be1ebf6",
+  "test/sandbox-live-view.test.mjs": "86bdb0f3e283812aee0c47e7d332053d05cb629d0a143331e5ebbb22222392b4",
+  "docs/ui/sandbox.md": "8bdf7bbc4217d47679cd0c0839fd6a9b89110fad79a9d01368d87842f459ca36"
+}

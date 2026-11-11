@@ -1,0 +1,47 @@
+{
+  "date": "2026-11-10",
+  "execution": "Initial import/placement barrier followed by 8 concurrent project histories, 2 per machine",
+  "unit_tests_passed": 155,
+  "typecheck": "passed",
+  "build": "passed",
+  "diff_check": "passed",
+  "actual_load_result": {
+    "passed": false,
+    "peakConcurrentHistoryCLI": 8,
+    "placementBarrierVerified": true,
+    "cliFailures": [
+      {
+        "id": "df68e821-14a4-45e0-8815-eafc599ed95e",
+        "argv": [
+          "file",
+          "write",
+          "demo-studio/website",
+          "release-0.1",
+          "/docs/project-map.md",
+          "--message",
+          "Add an orientation map for the project"
+        ],
+        "status": "refused",
+        "code": "Unknown",
+        "message": "Service(History(Busy))",
+        "started": 1794282643041,
+        "ended": 1794282643079
+      }
+    ],
+    "controlledSiblingStops": 7,
+    "privateCleanupVerified": true
+  },
+  "browser": [
+    "8 project script buttons remain",
+    "planned concurrency and preparation barrier shown",
+    "script dependency order is separate from actual CLI execution chronology"
+  ],
+  "limits": [
+    "The current pinned CLI returned Unknown / Service(History(Busy)) on a native file write while another project shared the same store.",
+    "This is not a successful eight-way throughput result.",
+    "Stopped-label refinement verified by unit tests after the original live trace.",
+    "User environment was not rebuilt/reset.",
+    "No Electron GUI was launched."
+  ],
+  "next_investigation": "Concurrent direct native writes to separate projects sharing a SQLite store; preserve the real refusal, do not silently serialize or retry Unknown."
+}

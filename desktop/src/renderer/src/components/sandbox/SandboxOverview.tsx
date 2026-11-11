@@ -2,9 +2,9 @@ import { ArrowRight, Layers } from 'lucide-react'
 import { useSandboxDetail } from './detail-context'
 
 export function SandboxOverview() {
-  const { s, observed, simulation, openTab, mounted, workspacesKnown, closed, creating } = useSandboxDetail()
+  const { s, observed, openTab, mounted, workspacesKnown, closed, creating } = useSandboxDetail()
   return <>
-    <div className="sd-section-heading"><h2>Overview</h2><span>{simulation ? 'Simulated observation' : `Observed ${new Date(observed).toLocaleTimeString()}`}</span></div>
+    <div className="sd-section-heading"><h2>Overview</h2><span>{`Observed ${new Date(observed).toLocaleTimeString()}`}</span></div>
     {s.recorded?.state === 'gone' && <div className="sd-notice"><div><strong>No runtime recorded</strong><p>Committed branch history remains available.</p></div></div>}
     {closed && <div className="sd-notice"><div><strong>This sandbox is closed</strong><p>Committed branch history remains available.</p></div></div>}
     {creating && <div className="sd-notice"><div><strong>Creating sandbox</strong><p>Workspace mounts appear after creation completes.</p></div></div>}

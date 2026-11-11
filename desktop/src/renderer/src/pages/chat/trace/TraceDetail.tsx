@@ -3,7 +3,8 @@
 // auto-checkpoints), its output, checks and token use, and a link to the
 // same step in the chat or to the subagent it started.
 import { ArrowUpRight, CircleCheck, CircleX } from 'lucide-react'
-import { useContext, useEffect, useRef, type ReactNode } from 'react'
+import { useContext, useEffect, useRef, useState, type ReactNode } from 'react'
+import { OperationInspector, OperationList, opSummary } from '@/components/layerfs/Operations'
 import { Link, useSearchParams } from 'react-router-dom'
 import { duration } from '@/layerfs/call-labels'
 import { bytes } from '@/layerfs/format'
@@ -64,6 +65,9 @@ export function TraceDetail({ chatId, row }: { chatId: string; row: TraceRecord 
   }, [checkpoint])
   const label = TEXT_LABEL[row.kind]
   const writes = row.writes ?? []
+  // ?op= (from Chat or History) opens that operation's inspector when it belongs to this row
+  const focusOp = params.get('op')
+  const [inspected, setInspected] = useState<string | null>(focusOp && row.operations?.items.some((o) => o.operation_id === focusOp) ? focusOp : null)
   return (
     <div className="flex flex-col gap-3 px-3 pb-3 pl-[34px] pt-1 text-13">
       {row.error && (
@@ -88,8 +92,16 @@ export function TraceDetail({ chatId, row }: { chatId: string; row: TraceRecord 
           <Pre tall={row.kind === 'tool'}>{row.text}</Pre>
         </Block>
       )}
-      {writes.length > 0 && (
-        <Block label={writes.some((w) => w.checkpoint !== null) ? 'Auto-checkpoints' : 'Refused writes'}>
+      {row.operations && row.operations.count > 0 && (
+        <Block label={opSummary(row.operations)}>
+          <div className="rounded-xs border border-[var(--border-default)] bg-[var(--card)]">
+            <OperationList ops={row.operations} chatPath={chatPath} selected={inspected} onSelect={(id) => setInspected(inspected === id ? null : id)} />
+          </div>
+          {inspected && <OperationInspector chatId={chatId} chatPath={chatPath} operationId={inspected} onClose={() => setInspected(null)} />}
+        </Block>
+      )}
+      {!row.operations && writes.length > 0 && (
+        <Block label={writes.some((w) => w.checkpoint !== null) ? 'Diagnostic writes (not a saved-version ledger)' : 'Refused writes'}>
           <div className="flex flex-col rounded-xs border border-[var(--border-default)] bg-[var(--card)] py-1">
             {writes.map((w, i) => (
               <div key={i} ref={checkpoint !== null && String(w.checkpoint) === checkpoint ? checkpointRef : undefined} data-checkpoint={w.checkpoint ?? undefined} className={cn("flex min-h-7 min-w-0 items-center gap-2 px-3 text-12", checkpoint !== null && String(w.checkpoint) === checkpoint && "ring-2 ring-[var(--ring)]")} >

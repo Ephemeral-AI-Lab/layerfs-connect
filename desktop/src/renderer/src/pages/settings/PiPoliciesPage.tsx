@@ -67,7 +67,6 @@ export function PiPoliciesPage() {
       {dirty && !valid && <p role="alert" className="text-13 text-destructive">Use whole numbers within the field limits. Initial retry delay must not exceed the maximum delay.</p>}
       {notice && <p role="status" className="text-13">{notice}</p>}
       <div className="flex flex-wrap items-center justify-between gap-3"><Button type="button" variant="outline" disabled={locked} onClick={() => { if (view) setDraft(structuredClone(view.defaults)); setNotice(null) }}>Restore defaults</Button><div className="flex gap-2"><Button type="button" variant="ghost" disabled={locked || !dirty} onClick={() => { if (view) take(view); setNotice(null) }}>Discard</Button><Button type="submit" disabled={locked || !dirty || !valid}>{pending ? 'Saving…' : 'Save configurations'}</Button></div></div>
-      <p className="text-12 leading-5 text-muted-foreground">Preview compaction and retries without an API key in <Link to="/chat/ui-example-chat?policy=near-limit" className="underline underline-offset-2">Example chat</Link>.</p>
     </form>}
   </div></div>
 }

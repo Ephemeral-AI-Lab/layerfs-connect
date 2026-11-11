@@ -1,0 +1,64 @@
+{
+  "status": "PASS for implemented backend reads, regression checks and builds",
+  "rootCause": [
+    "ProjectState eagerly read up to1000saved commits per branch, making every project tab depend on oversized history replies.",
+    "History view requested100records per saved-query reply despite48KiB budget.",
+    "Project Storage canonical analysis started automatically on entry."
+  ],
+  "changes": [
+    "Project shell has branch metadata and no saved-history reads; counts unknown without scan remain null.",
+    "History pages20rows, immutable parent continuation; legacy bounded commit reads use same pages.",
+    "Full commit relationships and changed paths load for selected history item.",
+    "Project canonical/encoding analysis now requires Analyze revisions; selection changes remount/reset it."
+  ],
+  "checks": {
+    "rootTests": 197,
+    "hostFocusedTests": 43,
+    "desktopTypecheck": "PASS",
+    "desktopBuild": "PASS",
+    "rootTypecheck": "PASS",
+    "realDenseFixture": "large-project-progressive-live.json"
+  },
+  "liveProof": {
+    "commits": 2400,
+    "branchesIncludingMain": 55,
+    "mainLayers": 500,
+    "old100rowRequest": "Capacity reproduced",
+    "shellHistoryCalls": 0,
+    "historyPages": [
+      20,
+      20
+    ],
+    "uniqueRowsAcrossPages": 40,
+    "storageRows": 20,
+    "selectedDetails": "PASS",
+    "privateCleanupVerified": true
+  },
+  "browser": {
+    "denseProjectRender": "PASS against rebuilt user Studio, read-only",
+    "flows": [
+      "designStorage20savedrows/latestmain summary",
+      "Loadearlier20to40savedrows without analysis",
+      "Analyze revisions completed20snapshot report",
+      "Branchchange tokens-001clearsanalysisandreturnsAnalyze revisions",
+      "websiteHistorywith10056commits/200branches renders160boundedcheckpointmetadata rows withoutCapacity"
+    ],
+    "analysisClickFlow": "PASS",
+    "errors": [],
+    "overlay": false
+  },
+  "limitations": [
+    "Branch metadata for project navigation is still listed; histories and details are progressive.",
+    "History graph initially prefetches metadata for at most8branches,20records each.",
+    "No Electron GUI verification."
+  ],
+  "resetObserved": {
+    "actionId": "77cbd217-a3d1-42c4-aeeb-2135d64a038c",
+    "name": "environment.reset",
+    "origin": "user",
+    "page": "/presets",
+    "storesRemoved": 4,
+    "customMachinesRemoved": 2
+  },
+  "retainedHarnessFailure": "large-project-progressive-live-harness-error.json"
+}

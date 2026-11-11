@@ -1,0 +1,407 @@
+{
+  "provider": "lima",
+  "root": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/lfs-isolation-lima-cczzgpdv",
+  "source": "833d04cf44e8e747929d50ab1170a48260d9381c plus machine-start-artifacts working tree",
+  "cache": "installed immutable artifacts; no controlled host page-cache state",
+  "steps": [
+    {
+      "member": 0,
+      "args": [
+        "store",
+        "create",
+        "proof"
+      ],
+      "wall_ns": 1601011333,
+      "exit": 0
+    },
+    {
+      "member": 1,
+      "args": [
+        "store",
+        "create",
+        "proof"
+      ],
+      "wall_ns": 19842459,
+      "exit": 0
+    },
+    {
+      "member": 0,
+      "args": [
+        "machine",
+        "create",
+        "machine",
+        "lima",
+        "--cpus",
+        "2",
+        "--memory",
+        "4G",
+        "--disk",
+        "20G",
+        "--progress"
+      ],
+      "wall_ns": 8940662042,
+      "exit": 0,
+      "progress": "{\"progress\":{\"stage\":\"bundle-validation\",\"state\":\"started\"}}\n{\"progress\":{\"stage\":\"bundle-validation\",\"state\":\"completed\",\"elapsed_ms\":0}}\n{\"progress\":{\"phase\":\"create\",\"machine\":\"machine\"}}\n{\"progress\":{\"stage\":\"provider-and-worker\",\"state\":\"started\"}}\n{\"progress\":{\"stage\":\"provider-and-worker\",\"state\":\"completed\",\"elapsed_ms\":8875}}\n{\"progress\":{\"stage\":\"worker-compatibility\",\"state\":\"started\"}}\n{\"progress\":{\"stage\":\"worker-compatibility\",\"state\":\"completed\",\"elapsed_ms\":4}}\n"
+    },
+    {
+      "member": 1,
+      "args": [
+        "machine",
+        "create",
+        "machine",
+        "lima",
+        "--cpus",
+        "2",
+        "--memory",
+        "4G",
+        "--disk",
+        "20G",
+        "--progress"
+      ],
+      "wall_ns": 8982582666,
+      "exit": 0,
+      "progress": "{\"progress\":{\"stage\":\"bundle-validation\",\"state\":\"started\"}}\n{\"progress\":{\"stage\":\"bundle-validation\",\"state\":\"completed\",\"elapsed_ms\":0}}\n{\"progress\":{\"phase\":\"create\",\"machine\":\"machine\"}}\n{\"progress\":{\"stage\":\"provider-and-worker\",\"state\":\"started\"}}\n{\"progress\":{\"stage\":\"provider-and-worker\",\"state\":\"completed\",\"elapsed_ms\":8919}}\n{\"progress\":{\"stage\":\"worker-compatibility\",\"state\":\"started\"}}\n{\"progress\":{\"stage\":\"worker-compatibility\",\"state\":\"completed\",\"elapsed_ms\":4}}\n"
+    },
+    {
+      "member": 0,
+      "args": [
+        "project",
+        "init",
+        "proof/app",
+        "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/lfs-isolation-lima-cczzgpdv/fixture-0"
+      ],
+      "wall_ns": 36333000,
+      "exit": 0
+    },
+    {
+      "member": 0,
+      "args": [
+        "store",
+        "push",
+        "proof",
+        "machine"
+      ],
+      "wall_ns": 66786459,
+      "exit": 0
+    },
+    {
+      "member": 0,
+      "args": [
+        "branch",
+        "fork",
+        "proof/app",
+        "verify",
+        "main"
+      ],
+      "wall_ns": 34714416,
+      "exit": 0
+    },
+    {
+      "member": 0,
+      "args": [
+        "sandbox",
+        "create",
+        "proof/app",
+        "box",
+        "machine"
+      ],
+      "wall_ns": 6360936417,
+      "exit": 0
+    },
+    {
+      "member": 0,
+      "args": [
+        "workspace",
+        "mount",
+        "box",
+        "verify",
+        "--name",
+        "verify"
+      ],
+      "wall_ns": 31598833,
+      "exit": 0
+    },
+    {
+      "member": 0,
+      "args": [
+        "workspace",
+        "exec",
+        "box:verify",
+        "cat proof.txt && printf \"ea46c14624e342a69efe3cadd857d55b\\n\" > result.txt"
+      ],
+      "wall_ns": 42512083,
+      "exit": 0
+    },
+    {
+      "member": 0,
+      "args": [
+        "workspace",
+        "commit",
+        "box:verify",
+        "--message",
+        "Verify independent private machine"
+      ],
+      "wall_ns": 36429500,
+      "exit": 0
+    },
+    {
+      "member": 0,
+      "args": [
+        "file",
+        "read",
+        "proof/app",
+        "verify",
+        "/result.txt"
+      ],
+      "wall_ns": 23563500,
+      "exit": 0
+    },
+    {
+      "member": 0,
+      "args": [
+        "workspace",
+        "unmount",
+        "box:verify"
+      ],
+      "wall_ns": 24767792,
+      "exit": 0
+    },
+    {
+      "member": 0,
+      "args": [
+        "sandbox",
+        "close",
+        "box"
+      ],
+      "wall_ns": 435618541,
+      "exit": 0
+    },
+    {
+      "member": 1,
+      "args": [
+        "project",
+        "init",
+        "proof/app",
+        "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/lfs-isolation-lima-cczzgpdv/fixture-1"
+      ],
+      "wall_ns": 32320666,
+      "exit": 0
+    },
+    {
+      "member": 1,
+      "args": [
+        "store",
+        "push",
+        "proof",
+        "machine"
+      ],
+      "wall_ns": 72177542,
+      "exit": 0
+    },
+    {
+      "member": 1,
+      "args": [
+        "branch",
+        "fork",
+        "proof/app",
+        "verify",
+        "main"
+      ],
+      "wall_ns": 31516375,
+      "exit": 0
+    },
+    {
+      "member": 1,
+      "args": [
+        "sandbox",
+        "create",
+        "proof/app",
+        "box",
+        "machine"
+      ],
+      "wall_ns": 7478777084,
+      "exit": 0
+    },
+    {
+      "member": 1,
+      "args": [
+        "workspace",
+        "mount",
+        "box",
+        "verify",
+        "--name",
+        "verify"
+      ],
+      "wall_ns": 35381500,
+      "exit": 0
+    },
+    {
+      "member": 1,
+      "args": [
+        "workspace",
+        "exec",
+        "box:verify",
+        "cat proof.txt && printf \"fc7bd2799c9d48a1ad8ab7794036151e\\n\" > result.txt"
+      ],
+      "wall_ns": 39059875,
+      "exit": 0
+    },
+    {
+      "member": 1,
+      "args": [
+        "workspace",
+        "commit",
+        "box:verify",
+        "--message",
+        "Verify independent private machine"
+      ],
+      "wall_ns": 33159375,
+      "exit": 0
+    },
+    {
+      "member": 1,
+      "args": [
+        "file",
+        "read",
+        "proof/app",
+        "verify",
+        "/result.txt"
+      ],
+      "wall_ns": 25639875,
+      "exit": 0
+    },
+    {
+      "member": 1,
+      "args": [
+        "workspace",
+        "unmount",
+        "box:verify"
+      ],
+      "wall_ns": 24315458,
+      "exit": 0
+    },
+    {
+      "member": 1,
+      "args": [
+        "sandbox",
+        "close",
+        "box"
+      ],
+      "wall_ns": 621414250,
+      "exit": 0
+    },
+    {
+      "member": 0,
+      "args": [
+        "file",
+        "read",
+        "proof/app",
+        "verify",
+        "/result.txt"
+      ],
+      "wall_ns": 55701000,
+      "exit": 0
+    },
+    {
+      "member": 0,
+      "args": [
+        "store",
+        "pull",
+        "proof"
+      ],
+      "wall_ns": 41262834,
+      "exit": 0
+    },
+    {
+      "member": 0,
+      "args": [
+        "store",
+        "remove",
+        "proof"
+      ],
+      "wall_ns": 14290417,
+      "exit": 0
+    },
+    {
+      "member": 0,
+      "args": [
+        "machine",
+        "remove",
+        "machine"
+      ],
+      "wall_ns": 921042375,
+      "exit": 0
+    },
+    {
+      "member": 1,
+      "args": [
+        "file",
+        "read",
+        "proof/app",
+        "verify",
+        "/result.txt"
+      ],
+      "wall_ns": 19343958,
+      "exit": 0
+    },
+    {
+      "member": 1,
+      "args": [
+        "store",
+        "pull",
+        "proof"
+      ],
+      "wall_ns": 37333208,
+      "exit": 0
+    },
+    {
+      "member": 1,
+      "args": [
+        "store",
+        "remove",
+        "proof"
+      ],
+      "wall_ns": 13604208,
+      "exit": 0
+    },
+    {
+      "member": 1,
+      "args": [
+        "machine",
+        "remove",
+        "machine"
+      ],
+      "wall_ns": 480530625,
+      "exit": 0
+    }
+  ],
+  "members": [
+    {
+      "index": 0,
+      "home": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/lfs-isolation-lima-cczzgpdv/home-0",
+      "name": "machine",
+      "marker": "ea46c14624e342a69efe3cadd857d55b",
+      "vm_name": "lfs-4fafd81a-machine",
+      "cleaned": true
+    },
+    {
+      "index": 1,
+      "home": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/lfs-isolation-lima-cczzgpdv/home-1",
+      "name": "machine",
+      "marker": "fc7bd2799c9d48a1ad8ab7794036151e",
+      "vm_name": "lfs-0acf1786-machine",
+      "cleaned": true
+    }
+  ],
+  "unique_endpoints": true,
+  "unique_worker_secrets": true,
+  "endpoints": [
+    "127.0.0.1:58967",
+    "127.0.0.1:58966"
+  ],
+  "unique_machine_ids": true,
+  "unique_ssh_host_keys": true,
+  "seed_credentials_absent": true,
+  "apparmor_active": true,
+  "status": "PASS"
+}

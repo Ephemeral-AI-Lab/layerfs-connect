@@ -1,0 +1,36 @@
+{
+  "date": "2026-11-10",
+  "scope": "General selected-home reset, independent CLI Activity clear, optional preset rebuild",
+  "checks": {
+    "root_tests": {
+      "passed": 130,
+      "log": "/tmp/connect-general-reset-all-tests.txt"
+    },
+    "final_focused_tests": {
+      "passed": 39,
+      "log": "/tmp/connect-reset-workflows-tests.txt"
+    },
+    "desktop_typecheck": "passed",
+    "desktop_build": "passed",
+    "diff_check": "passed",
+    "real_native_host_lifecycle": "general-reset-live.json",
+    "real_cli_lifecycle": "general-reset-cli-live.json",
+    "browser": [
+      "Actual preview at 1280x820 and 900x600",
+      "Studio reset dialog displays 4 stores, 4 sandboxes, 8 workspaces, 2 custom machines",
+      "Rebuild defaults unchecked; selecting it updates destructive button text",
+      "Expanded actual resource names; escaped/cancelled confirmation without resetting Studio",
+      "Clear history dialog names Studio home and scope; cancelled without deleting logs",
+      "View CLI Activity navigates to existing activity page/action deep link",
+      "900x600 viewport: no document horizontal overflow"
+    ],
+    "console": "Inspected; historical old-backend/HMR reload errors present. No clean-console claim.",
+    "limits": [
+      "Live cleanup exercised Native sandbox/workspaces plus non-preset store/sandbox/workspace.",
+      "Custom VM removal and PostgreSQL disconnect covered by adapter tests; not live exercised.",
+      "No Electron/native GUI verification requested.",
+      "Empty LayerFS inventory does not assert unregistered provider disks/processes were scanned."
+    ],
+    "test_cleanup": "Private live hosts exited; final inventories empty; receipts retained. No Cargo targets allocated/released."
+  }
+}

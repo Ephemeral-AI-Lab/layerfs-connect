@@ -1,0 +1,13 @@
+{
+  "path": "/Users/yifanxu/Ephemeral-AI-Lab/layerfs-machine-start/target/debug/layerfs",
+  "sha256": "c6d7964d24044f7e4a6223516ce112b26b60c527fc4a52652779fdb1f925a2f1",
+  "version": {
+    "version": "2.0.0",
+    "commit": "58c548b3e0a45f11880e3511bf1267d11e315415",
+    "dirty": false,
+    "features": [
+      "machine",
+      "postgresql"
+    ]
+  }
+}

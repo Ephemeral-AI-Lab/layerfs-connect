@@ -3,6 +3,7 @@
 // a scenario's checks), from host/agents/trace.js. Types mirror TracePage in
 // the old app's src/shared/host-api.ts.
 import { call } from '@/layerfs/client'
+import type { Coverage, Persistence, ToolOperations } from '@/layerfs/operations-api'
 
 /** A LayerFS write a tool call made: an auto-checkpoint when it went through. */
 export interface TraceWrite {
@@ -71,6 +72,8 @@ export interface TraceRecord {
   parent?: string
   outcome?: string | null
   args?: Record<string, string>
+  /** tool/subagent: its recorded LayerFS operations (the conversation's journal). */
+  operations?: ToolOperations
 }
 
 /** Rows [from, from + records.length) of total, oldest first. */
@@ -82,6 +85,10 @@ export interface TracePage {
   records: TraceRecord[]
   agents: { name: string; parent: string | null; state: string }[]
   checkpoints?: number
+  /** The journal agent the page's operations belong to (root, or child-<session>). */
+  operationAgent?: string
+  persistence?: Persistence
+  ledger?: { counts: { operations: number; links: number; distinct_versions: number; unknown: number }; coverage: Coverage }
 }
 
 export const TRACE_PAGE = 300

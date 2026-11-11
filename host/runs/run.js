@@ -19,6 +19,7 @@
 import { mkdirSync, renameSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { layerfsEnv, projectRef } from '../config.js'
+import { activityEnv, activityContext } from '../activity/context.js'
 import { layerfs, workspacesOf } from '../layerfs.js'
 import { Agent } from './agent.js'
 import { Job } from './jobs.js'
@@ -52,6 +53,7 @@ export class Run {
    */
   constructor({ spec, demo, record, emit, loadSeed, loadChecks, after = null, launch = null }) {
     this.spec = spec
+    this.activityContext = activityContext()
     this.source = demo
     this.scenario = demo.scenario
     this.emit = (event) => { if (!this.removed) emit(event) }
@@ -282,6 +284,7 @@ export class Run {
     return {
       ...env,
       ...layerfsEnv(this.spec),
+      ...activityEnv(this.spec.state),
       LAYERFS_CONNECT_PROJECT: projectRef(this.project).key,
       PATH: `${this.bin}:${process.env.PATH ?? ''}`,
       LAYERFS_TRACE: join(this.traceDir, `${agent.name}.jsonl`),

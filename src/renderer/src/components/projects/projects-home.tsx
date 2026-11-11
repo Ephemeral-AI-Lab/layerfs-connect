@@ -7,15 +7,12 @@ import { PageHeader } from '@/components/motion/page-header'
 import { revealStyle } from '@/components/motion/reveal'
 import { type ProjectChats, type ProjectRowData, ProjectTable } from '@/components/projects/home/project-table'
 import { Empty, LoadError } from '@/components/projects/states'
-import { SimulatedNote, SimulationPicker, useSimulation } from '@/components/simulation'
 import { storeFacts, useStorageView } from '@/components/projects/store-facts'
 import { MachineChip, runsOn, sandboxesByProject, StoreChip, useMachinesView } from '@/components/projects/where-chips'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
-import { SIMULATIONS } from '@/data/compute-sim'
 import { toMs } from '@/data/format'
-import { simProjects, simStorage } from '@/data/home-sim'
 import type { ProjectCatalog } from '@/host/use-projects'
 import { chatLive, chatProject, useChatSessions } from '@/host/use-chat-sessions'
 import { useNow } from '@/lib/use-now'
@@ -70,17 +67,14 @@ export function ProjectsHome({ projects, onOpenProject, onNewProject }: Projects
   const [group, setGroup] = useState<Group>('none')
   const [sort, setSort] = useState<Sort>('recent')
   const search = setQuery
-  // dev builds: a simulated host (shared with Machines and Storage); its sample projects open on sample content
-  const simId = useSimulation()
-  const simulated = simId ? SIMULATIONS[simId] : null
   const liveStorage = useStorageView()
   const liveChats = useChatSessions('projects-home').sessions
-  const storage = simulated ? simStorage(simulated) : liveStorage
-  const sessions = simulated ? simulated.chats : liveChats
-  const data = simulated ? simProjects(simulated) : projects.data
-  const error = simulated ? undefined : projects.error
+  const storage = liveStorage
+  const sessions = liveChats
+  const data = projects.data
+  const error = projects.error
   // where each project runs: its Sandboxes, on any machines
-  const machines = useMachinesView(simulated?.view ?? null)
+  const machines = useMachinesView()
   const sandboxes = useMemo(() => sandboxesByProject(machines), [machines])
 
   // each project's open chats: how many, how many work, and the newest activity
@@ -122,7 +116,6 @@ export function ProjectsHome({ projects, onOpenProject, onNewProject }: Projects
         description={t("Each project is stored in one Store and runs in Sandboxes on any of your machines.")}
         actions={
           <div className="flex w-full min-w-0 flex-wrap items-center gap-2.5">
-            <SimulationPicker />
             <div className="group/search relative min-w-40 flex-1 basis-52">
               <Search
                 aria-hidden="true"
@@ -152,14 +145,13 @@ export function ProjectsHome({ projects, onOpenProject, onNewProject }: Projects
                 </button>
               )}
             </div>
-            <Button variant="outline" size="sm" className="h-9 rounded-full px-3.5 text-xs shadow-xs" disabled={projects.loading || !!simulated} onClick={projects.reload}>
+            <Button variant="outline" size="sm" className="h-9 rounded-full px-3.5 text-xs shadow-xs" disabled={projects.loading} onClick={projects.reload}>
               <RotateCw className={projects.loading ? 'size-3.5 animate-spin' : 'size-3.5'} />{t("Refresh")}</Button>
-            <Button size="sm" className="h-9 rounded-full px-3.5 text-xs" disabled={!!simulated} onClick={onNewProject}><Plus className="size-3.5" />{t("New project")}</Button>
+            <Button size="sm" className="h-9 rounded-full px-3.5 text-xs"  onClick={onNewProject}><Plus className="size-3.5" />{t("New project")}</Button>
           </div>
         }
       />
       <div className="mx-auto flex max-w-6xl flex-col gap-4 px-6 pt-2 pb-12 @min-[56rem]/workspace:px-8">
-        {simulated && <SimulatedNote sim={simulated} />}
         {error ? (
           <LoadError error={error} what={t("the projects")} onRetry={projects.reload} />
         ) : !data ? (

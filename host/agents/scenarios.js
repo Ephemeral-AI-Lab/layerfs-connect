@@ -111,6 +111,7 @@ export class AgentScenarios {
     if (!s.scopeDir) throw Object.assign(new Error('The scenario is still setting up its folder.'), { status: 409 })
     return {
       ...layerfsEnv(this.spec),
+      LAYERFS_CONNECT_ACTIVITY_STATE: this.spec.state,
       LAYERFS_CONNECT_PROJECT: projectRef(s.project).key,
       PATH: `${join(s.dir, 'bin')}:${process.env.PATH ?? ''}`,
       [this.scopeEnv]: s.scopeDir,

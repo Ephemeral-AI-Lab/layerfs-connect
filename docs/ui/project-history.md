@@ -285,3 +285,14 @@ The Lineage/Map description above belongs to the older root renderer.
 3. The attribution comparison uses pinned branch.diff and its opaque continuation.
    File comparison uses pinned file.diff rows and displays omission and coverage.
    No fabricated empty-project endpoint, total page count or provenance inference.
+
+
+## Dense history reply budgets (2026-11-10)
+
+Current desktop: `desktop/src/renderer/src/components/history/ProjectHistory.tsx`.
+Project shell is metadata-only and does not scan histories. The History view loads
+Branch metadata separately, with a bounded initial set of up to eight Branches.
+Each saved-revision page contains at most 20 compact records, below the LayerFS
+reply budget for dense merge/publication records. Load more follows immutable
+parent anchors. Full Commit details/diffs load for the selected item. Counts of
+loaded records are never presented as complete project history totals.

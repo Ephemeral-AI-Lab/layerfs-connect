@@ -1,0 +1,43 @@
+{
+  "startedAt": "2026-11-10T12:04:53.777Z",
+  "chatId": "274967a3-183a-42c7-af0a-23d28d267d6b",
+  "host": "http://127.0.0.1:56107",
+  "checks": [
+    "Completed saved main conversation restores natural prompts, replies and genuine successful Bash details",
+    "Saved main Bash opens its actual restored Trace view",
+    "Saved reusable child restores natural prompts, reply, turn count and genuine successful Bash details",
+    "Read-only browser restore sends no host API writes and records zero browser errors"
+  ],
+  "exceptions": [],
+  "consoleErrors": [],
+  "writes": [],
+  "runId": "819a4324-b54c-4575-af2e-0bc625ef8093",
+  "project": "sim-design-98d5dd39f104dd9549f2/design-98d5dd39f104dd9549f2",
+  "progress": {
+    "completed": 4665,
+    "total": 4665
+  },
+  "workspaceSessions": 432,
+  "main": {
+    "turns": 6,
+    "bashSteps": 601,
+    "step": {
+      "id": "simulation_cycle-005-release_dense.005.release.publish.27",
+      "command": "\"${LAYERFS_CONNECT_CLI:-layerfs}\" 'branch' 'publish' 'sim-design-98d5dd39f104dd9549f2/design-98d5dd39f104dd9549f2' 'release-005' '125b289e2d0781b18d54efe43aa0490ede2de47860f6cb85d8905e9e16690ed853'",
+      "scriptPath": "conversations/c01-tokens/main/scripts/cycle-005-release.sh",
+      "receiptKind": "Added"
+    }
+  },
+  "childId": "a01-worker",
+  "child": {
+    "turns": 5,
+    "bashSteps": 2005,
+    "step": {
+      "id": "simulation_cycle-005-maintenance_dense.005.maintenance.write.49",
+      "command": "printf '%s' '{\n  \"project\": \"design\",\n  \"topic\": \"accessibility\",\n  \"artifact\": \"specification\",\n  \"releaseCycle\": 5,\n  \"revision\": 245,\n  \"fixture\": true,\n  \"execution\": \"not-run\",\n  \"cases\": [\n    {\n      \"id\": \"accessibility-1\",\n      \"order\": 1,\n      \"enabled\": true,\n      \"boundary\": 51,\n      \"policy\": \"request-clarification\"\n    },\n    {\n      \"id\": \"accessibility-2\",\n      \"order\": 2,\n      \"enabled\": false,\n      \"boundary\": 5,\n      \"policy\": \"accept-valid\"\n    },\n    {\n      \"id\": \"accessibility-3\",\n      \"order\": 3,\n      \"enabled\": true,\n      \"boundary\": 56,\n      \"policy\": \"reject-invalid\"\n    },\n    {\n      \"id\": \"accessibility-4\",\n      \"order\": 4,\n      \"enabled\": true,\n      \"boundary\": 10,\n      \"policy\": \"request-clarification\"\n    }\n  ]\n}\n' | \"${LAYERFS_CONNECT_CLI:-layerfs}\" 'file' 'write' 'sim-design-98d5dd39f104dd9549f2/design-98d5dd39f104dd9549f2' 'accessibility-005' '/docs/revision-accessibility-specification.json' '--message' 'Revise accessibility specification: cycle 5, revision 245'",
+      "scriptPath": "conversations/c01-tokens/subagents/a01-worker/scripts/cycle-005-maintenance.sh",
+      "receiptKind": "Committed"
+    }
+  },
+  "finishedAt": "2026-11-10T12:04:56.579Z"
+}

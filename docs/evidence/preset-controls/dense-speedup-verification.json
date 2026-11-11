@@ -1,0 +1,238 @@
+{
+  "version": 1,
+  "date": "2026-11-10",
+  "status": "PASS",
+  "workload": {
+    "machines": 4,
+    "stores": 4,
+    "projects": 8,
+    "historyCommands": 50834,
+    "commits": 41640,
+    "sideBranches": 857,
+    "merges": 330,
+    "publications": 8667,
+    "mainLayers": 8675,
+    "sandboxes": 0,
+    "workspaces": 0
+  },
+  "evidence": "dense-eight-tier-optimized-verified-live.json",
+  "trace": "dense-eight-tier-optimized-trace-analysis.json",
+  "timing": {
+    "preparationMs": 21752,
+    "historyMs": 247754,
+    "verificationMs": 24911,
+    "readyMs": 294417,
+    "includingCleanupMs": 298150,
+    "previousHistoryMs": 673090,
+    "observedHistoryRatio": 2.7167674386690024,
+    "qualification": "Single diagnostic before/after observations with uncontrolled OS/worker caches and multiple workflow changes; not a statistical guarantee or isolated scheduler benchmark."
+  },
+  "limits": {
+    "concurrency": 12,
+    "perStore": 3,
+    "perProject": 3
+  },
+  "actualProcessPeak": 12,
+  "logging": {
+    "peakPendingBytes": 63020,
+    "peakBufferedBytes": 6297154,
+    "peakReservedBytes": 6290091,
+    "recordsWritten": 164476,
+    "writableWaits": 0,
+    "terminalDrops": 0,
+    "skippedProgress": 0,
+    "batches": 84993,
+    "capacityBytes": 8000000,
+    "pendingBytes": 0,
+    "reservedBytes": 0,
+    "reservations": 0,
+    "waiting": 0
+  },
+  "capture": {
+    "allSetupInvocations": 54821,
+    "historyInvocations": 50834,
+    "writeInputs": 41310,
+    "failed": 0,
+    "missing": 0,
+    "duplicates": 0,
+    "truncated": 0,
+    "mutationIDsVerified": 50852,
+    "payloadValidation": "Required stdin presence/truncation and output fields checked, not independent byte comparison of every payload."
+  },
+  "checks": {
+    "rootTests": {
+      "passed": 195,
+      "log": "speed-final-root-tests.log"
+    },
+    "activityTests": {
+      "passed": 24,
+      "log": "speed-final-activity-tests.log"
+    },
+    "cliAdapterTests": {
+      "passed": 10,
+      "log": "speed-final-cli-adapter-tests.log"
+    },
+    "nativeReleaseRegressions": {
+      "passed": 20,
+      "log": "speed-final-native-regressions.log"
+    },
+    "desktopTypecheck": "PASS",
+    "desktopBuild": "PASS",
+    "sourceStable": true,
+    "savedGraphAndFiles": "8/8PASS",
+    "cleanup": {
+      "remove": {
+        "stores": [
+          "demo-build-cache",
+          "demo-experiments",
+          "demo-services",
+          "demo-studio"
+        ],
+        "sandboxes": [],
+        "machines": [
+          "demo-build",
+          "demo-research"
+        ],
+        "workspaces": []
+      },
+      "retainMachines": [],
+      "preserved": {
+        "machine": [],
+        "store": [],
+        "sandbox": []
+      },
+      "projects": 8,
+      "signature": "08b4c014ac459aee161c4af38ee6813dbb9b5d6dcd2bbc561c663bb5b543920a",
+      "verified": true,
+      "at": 1794293140352,
+      "remaining": [],
+      "unexpected": []
+    }
+  },
+  "runtime": {
+    "cli": "/Users/yifanxu/.cache/layerfs-worktrees/layerfs-macos-writer-adm-905cf46b6910/artifacts/build-macos-b4035a8f06434f7e8e09c823dad9e32a/layerfs",
+    "manifest": {
+      "version": 1,
+      "status": "sealed",
+      "build_id": "build-macos-b4035a8f06434f7e8e09c823dad9e32a",
+      "at": "2026-11-10T05:39:29.251215+00:00",
+      "worktree_id": "layerfs-macos-writer-adm-905cf46b6910",
+      "platform": "macos",
+      "profile": "release",
+      "source": {
+        "head": "1edcf58caec2bf079a07891411a0151c9afa3e80",
+        "sha256": "86843cd2239832dcc560134a36d65fa2dc565818a2afd6cf4c20e087366679f5"
+      },
+      "toolchain": "1.85.1",
+      "images": {
+        "build": "sha256:378b799ef43343fc64008b6a5ef456dd6bf0cb8f6ea4cec72e7b42dfc17d2cd6",
+        "runtime": "sha256:afa1ef9c27294f9c7298820c06483e6fb1ddafc43a7cc7d6dec8cd2e67abf38e",
+        "sandbox": "sha256:afa1ef9c27294f9c7298820c06483e6fb1ddafc43a7cc7d6dec8cd2e67abf38e"
+      },
+      "command": [
+        "cargo",
+        "+1.85.1",
+        "build",
+        "--manifest-path",
+        "Cargo.toml",
+        "--locked",
+        "--offline",
+        "-p",
+        "layerfs-daemon",
+        "-p",
+        "layerfs-node",
+        "-p",
+        "layerfs-cli",
+        "-p",
+        "layerfs-sandbox-backend",
+        "-j",
+        "4",
+        "--features",
+        "layerfs-node/postgresql,layerfs-cli/postgresql",
+        "--release"
+      ],
+      "files": {
+        "layerfs.node": "647eaa2be18b767c2bc8af25085e61e096c24c1d28c6fba6ee23cc26cc94ff04",
+        "layerfs": "571032b596aa33e5f6c7fcb2690f23ec3c92f76365957f58b9121ca2c13e3445",
+        "layerfs-daemon": "466c32557b9ec717483f5736eb9d6f41e1616b106305dca178879cb50643f302",
+        "api/package.json": "ba520ca5da19295591003c689f8394cc5f325a7c9ffd393b54f15eab74f68310",
+        "api/node/LICENSE": "e20a92efe4b92c0460bd0c475395166e37b6450ed410af155fa0ed99d479f676",
+        "api/node/README.md": "06a6b09df47d137266e8c982dca9c240b95adf600c8c8185de32dc49734db2aa",
+        "api/node/package.json": "ceb844665ed0fe933fdbf272d9fe59cf36927d9da78ddf7752c87932907b21d7",
+        "api/node/test/coverage.mjs": "e5026d947fec0588abbd62467eb61a728dabda327a1f904af1513f436c1cd570",
+        "api/node/test/close.mjs": "cf3d487215737986bd47809f8b485513c894e6f6d584bc4e961b877ea7b501b6",
+        "api/node/test/contract.mjs": "658a4bb0fc20a7ab66269cbfe87d662514f080db8fd97b56c7f73ace09875727",
+        "api/node/test/progress.mjs": "37bc32fdf6ecf75de449e8f89713ecf0fbe2411610e6a84896edb4a047299bbf",
+        "api/node/test/doctor-targets.mjs": "4240110a4ff3215ac42119292cd9606b93589d6022979d6f056b9e9f4f37c92a",
+        "api/node/test/shell.mjs": "5929bde568fc8baa33e48af7ea7eb0101340e25a5a8e18172bf61669d4a3d9c3",
+        "api/node/test/package.mjs": "5d2e0475ac18cd3fa1a98dfdc9dca0b7abc87314abd6299d94573634551c2c69",
+        "api/node/test/values.mjs": "50526f523997c72960aebd543e0a22727083a91bae0287f5c15c623115cd1e79",
+        "api/node/test/native.mjs": "c74a88cb2ccd0a25faa049f3d856e4085f1e1350c653bf9cf74207ca8a1aea17",
+        "api/node/test/doctor.mjs": "facf8860603ef6a0844ab92659b053257f906ce3e92736caf4642b6ac9e6288e",
+        "api/node/test/branch-file.mjs": "b5cc12b2842ef1a6dcc3c1b3a15888e590ff25f263465876e7c5c7e6a70eec00",
+        "api/node/test/project_export.mjs": "c93f18c23c48f5e12fc4ffbfce2e2012fd24385ba0dd26466d9df6bb5455cb24",
+        "api/node/test/calls.mjs": "7e1b360201cf8feb135bcc235ed023eedd98a0f696a8ba883210c7b68d1d8163",
+        "api/node/test/disabled-platforms.mjs": "2caede60cd6e07a7bf4148428e72c63cfe8343aff9bd32d52ffb61b2b207bb60",
+        "api/node/test/events.mjs": "768eba6f54ad5979d1c5f418be75450bb23a9d702ba41ea14af315d707dacb5a",
+        "api/node/examples/file-history.mjs": "aeeed6b3c83e2209fbc49f7d6bb5a4ffc823f530f398f5d8bbbcfe2ec6982a17",
+        "api/node/src/native.js": "7111d9bf989aa3837c73e3f7493302b2dcdd941601e560dbc7656e0d054e8012",
+        "api/node/src/index.js": "e6392ad9e1c71a26e7fca997d7295d36f2283ac21d22e2ded23cb09e18859879",
+        "api/node/src/values.js": "313447fbfaf296f8b9936a84768f42db0cc42ffeff49f5ef117679a21d581959",
+        "api/node/src/errors.js": "422face8099acc121ff1763b119bb040936462acbbba1105f00afceac3034d5a",
+        "api/node/src/index.d.ts": "981faeff614c24ce79c020082408c4b398ce9fc80a6d3921d6e6d49188a5fbf7",
+        "api/node/test/contract/cases.mjs": "09282e52001ff286663ca7b6644beb47f3d97e02dd1eca21fc1b12406d18327d",
+        "api/node/test/contract/driver.py": "69d167125eb05c88024ae9e37e1150aa610bc8c8cb2d241c19bfd2ab03ae58b0",
+        "api/node/test/types/sample.ts": "98df30fdc541cd0b0fe648a0ae1ab96ec50d48863691af2fa982a4c23f044c91",
+        "api/node/test/branch-file/fixture.mjs": "b3af677835150054007d8ff436ae2b98bfe9a34a089d8f8a4639d323058c25d4",
+        "api/node/test/branch-file/inventory.mjs": "b32eda3e0a3295a448ad1d037ad3faca9696eb2387f62aec9369a9efad7047a9",
+        "api/node/test/branch-file/frontends.mjs": "7b9a069706a47c4e8bba18a3c400a4cf74b7205de8351d7cc8a22fe5825c23ac",
+        "api/node/test/verify/cells/cell.mjs": "7a944f014639a9f6efe8d905d5138bf9087c6b55bd7294be547a0aa6912137b3",
+        "api/node/test/verify/cells/workloads.mjs": "e22d812db8858758dc8cae491168b881bb81489663e43b8ebac115f9eec99f62"
+      }
+    },
+    "localNativeChanges": "Private unmerged macOS writer admission/lifecycle patches; sealed release runtime is selected in desktop/.env.local. Linux bundle unchanged."
+  },
+  "preview": {
+    "runtimeAPI": "Confirmed sealed release CLI b4035a8f06434f7e8e09c823dad9e32a",
+    "active": "studio",
+    "userSavedContentsPreserved": true,
+    "flows": [
+      "Studio opened without Build/Reset",
+      "Eight tier targets rendered",
+      "Design script100commands/page",
+      "Next page1to2",
+      "12global/3store/3project and ordered write/publish context",
+      "1280x820 and900x600 drawer layout",
+      "Escape closes drawer"
+    ],
+    "console": "Only favicon.ico404; no app error or Vite overlay",
+    "limitations": [
+      "No Electron/native GUI check",
+      "Full dense backend proof used private state; no browser Build/Reset of user Studio",
+      "Downloaded full command-plan artifact not independently inspected"
+    ]
+  },
+  "retainedFailures": [
+    "speed-native-release-dag8.json",
+    "dense-eight-tier-optimized-activity-queue-diagnostic.json",
+    "speed-activity-pressure-red.log"
+  ],
+  "privateState": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/connect-dense-optimized-NSkDPj",
+  "archiveRetained": true,
+  "resources": {
+    "hostFreeBytes": 236516720640,
+    "cleanupRequired": false,
+    "cacheReleaseScope": "/Users/yifanxu/.cache/layerfs-worktrees/layerfs-macos-writer-adm-905cf46b6910/cleanup-scope.json",
+    "releasedCacheProfiles": [
+      "debug",
+      "release"
+    ],
+    "protected": "Sealed runtimes, source and retained evidence",
+    "dockerGuestFreeBytes": 174246162432
+  },
+  "followUp": {
+    "issue": "Promoting CLI left saved Studio workers running an older build. Original preview check verified pins/scripts but missed remote store reads. Fresh private full proof was valid; saved-environment upgrade was incomplete.",
+    "repair": "saved-studio-worker-upgrade.json",
+    "result": "Stopped/started Docker and both Lima machines via logged host routes; all4 store stats and all8 project stats HTTP200; stores/projects preserved."
+  }
+}

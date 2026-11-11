@@ -1,0 +1,237 @@
+{
+  "provider": "lima",
+  "root": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/lfs-pg-speed-hhzks73z/lima",
+  "home": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/lfs-pg-speed-hhzks73z/lima/home",
+  "machine": "pg-lima",
+  "cache": "installed artifacts; uncontrolled host page cache, exploratory only",
+  "marker": "1fab92996644472585570c492d020c30",
+  "steps": [
+    {
+      "args": [
+        "store",
+        "connect",
+        "pg",
+        "postgresql://proof@127.0.0.1:51317/proof_lima?sslmode=disable",
+        "--password",
+        "env:LAYERFS_PG_SPEED_PASSWORD",
+        "--synchronous-commit",
+        "off"
+      ],
+      "wall_ns": 205520542,
+      "exit": 0
+    },
+    {
+      "args": [
+        "machine",
+        "create",
+        "pg-lima",
+        "lima",
+        "--cpus",
+        "2",
+        "--memory",
+        "4G",
+        "--disk",
+        "4G",
+        "--progress"
+      ],
+      "wall_ns": 9811821000,
+      "exit": 0,
+      "progress": "{\"progress\":{\"stage\":\"bundle-validation\",\"state\":\"started\"}}\n{\"progress\":{\"stage\":\"bundle-validation\",\"state\":\"completed\",\"elapsed_ms\":0}}\n{\"progress\":{\"phase\":\"create\",\"machine\":\"pg-lima\"}}\n{\"progress\":{\"stage\":\"provider-and-worker\",\"state\":\"started\"}}\n{\"progress\":{\"stage\":\"provider-and-worker\",\"state\":\"completed\",\"elapsed_ms\":9756}}\n{\"progress\":{\"stage\":\"worker-compatibility\",\"state\":\"started\"}}\n{\"progress\":{\"stage\":\"worker-compatibility\",\"state\":\"completed\",\"elapsed_ms\":7}}\n"
+    },
+    {
+      "args": [
+        "project",
+        "init",
+        "pg/app",
+        "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/lfs-pg-speed-hhzks73z/lima/fixture"
+      ],
+      "wall_ns": 199245000,
+      "exit": 0
+    },
+    {
+      "args": [
+        "branch",
+        "fork",
+        "pg/app",
+        "verify",
+        "main"
+      ],
+      "wall_ns": 133773291,
+      "exit": 0
+    },
+    {
+      "args": [
+        "sandbox",
+        "create",
+        "pg/app",
+        "box",
+        "pg-lima"
+      ],
+      "wall_ns": 7717573209,
+      "exit": 0
+    },
+    {
+      "args": [
+        "workspace",
+        "mount",
+        "box",
+        "verify",
+        "--name",
+        "verify"
+      ],
+      "wall_ns": 63739625,
+      "exit": 0
+    },
+    {
+      "args": [
+        "workspace",
+        "exec",
+        "box:verify",
+        "cat proof.txt && printf \"1fab92996644472585570c492d020c30\\n\" > result.txt"
+      ],
+      "wall_ns": 41202709,
+      "exit": 0
+    },
+    {
+      "args": [
+        "workspace",
+        "commit",
+        "box:verify",
+        "--message",
+        "PostgreSQL provider proof"
+      ],
+      "wall_ns": 158091125,
+      "exit": 0
+    },
+    {
+      "args": [
+        "file",
+        "read",
+        "pg/app",
+        "verify",
+        "/result.txt"
+      ],
+      "wall_ns": 143423666,
+      "exit": 0
+    },
+    {
+      "args": [
+        "workspace",
+        "unmount",
+        "box:verify"
+      ],
+      "wall_ns": 24308625,
+      "exit": 0
+    },
+    {
+      "args": [
+        "sandbox",
+        "close",
+        "box"
+      ],
+      "wall_ns": 615441167,
+      "exit": 0
+    },
+    {
+      "args": [
+        "machine",
+        "stop",
+        "pg-lima"
+      ],
+      "wall_ns": 6720723166,
+      "exit": 0
+    },
+    {
+      "args": [
+        "machine",
+        "start",
+        "pg-lima",
+        "--progress"
+      ],
+      "wall_ns": 7640940917,
+      "exit": 0,
+      "progress": "{\"progress\":{\"stage\":\"bundle-validation\",\"state\":\"started\"}}\n{\"progress\":{\"stage\":\"bundle-validation\",\"state\":\"completed\",\"elapsed_ms\":0}}\n{\"progress\":{\"stage\":\"provider-and-worker\",\"state\":\"started\"}}\n{\"progress\":{\"stage\":\"provider-and-worker\",\"state\":\"completed\",\"elapsed_ms\":7517}}\n{\"progress\":{\"stage\":\"worker-compatibility\",\"state\":\"started\"}}\n{\"progress\":{\"stage\":\"worker-compatibility\",\"state\":\"completed\",\"elapsed_ms\":9}}\n"
+    },
+    {
+      "args": [
+        "sandbox",
+        "create",
+        "pg/app",
+        "restart",
+        "pg-lima"
+      ],
+      "wall_ns": 1016764750,
+      "exit": 0
+    },
+    {
+      "args": [
+        "workspace",
+        "mount",
+        "restart",
+        "verify",
+        "--name",
+        "verify"
+      ],
+      "wall_ns": 64962083,
+      "exit": 0
+    },
+    {
+      "args": [
+        "workspace",
+        "exec",
+        "restart:verify",
+        "cat result.txt"
+      ],
+      "wall_ns": 46673000,
+      "exit": 0
+    },
+    {
+      "args": [
+        "workspace",
+        "unmount",
+        "restart:verify"
+      ],
+      "wall_ns": 26843833,
+      "exit": 0
+    },
+    {
+      "args": [
+        "sandbox",
+        "close",
+        "restart"
+      ],
+      "wall_ns": 292704666,
+      "exit": 0
+    },
+    {
+      "args": [
+        "store",
+        "disconnect",
+        "pg"
+      ],
+      "wall_ns": 11271333,
+      "exit": 0
+    },
+    {
+      "args": [
+        "machine",
+        "stop",
+        "pg-lima"
+      ],
+      "wall_ns": 1215919333,
+      "exit": 0
+    },
+    {
+      "args": [
+        "machine",
+        "remove",
+        "pg-lima"
+      ],
+      "wall_ns": 937037166,
+      "exit": 0
+    }
+  ],
+  "status": "PASS",
+  "budget_seconds": 110,
+  "cleaned": true
+}

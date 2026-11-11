@@ -1,0 +1,16 @@
+{
+  "status": "passed",
+  "baseline": "live-1794316404959/verification.json",
+  "final": "fixed-1794318043779/verification.json",
+  "interactions": "fixed-1794318043779/interactions.json",
+  "tests": {
+    "rootPassed": 233,
+    "hostPassed": 436,
+    "hostSkipped": 2,
+    "failed": 0,
+    "desktopTypecheck": "passed",
+    "desktopBuild": "passed"
+  },
+  "nativeElectron": "not exercised",
+  "note": "The initial fixed run recorded real movement but its completion assertion could not run after the verification tab navigated away. A separate labeled tab passed the complete check; the last run reverified final source."
+}

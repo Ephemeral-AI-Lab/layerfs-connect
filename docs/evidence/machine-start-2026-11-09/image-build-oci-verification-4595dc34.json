@@ -1,0 +1,59 @@
+{
+  "work": "/Users/yifanxu/.cache/layerfs-worktrees/layerfs-machine-start-c17e354c8815/image-cache/layerfs/machine-images/builds/oci-verification-4595dc34",
+  "provider": "apple-container",
+  "steps": [
+    {
+      "stage": "oci-check-create",
+      "command": [
+        "container",
+        "run",
+        "--detach",
+        "--name",
+        "lfs-image-check-fd20be666664",
+        "--cpus",
+        "2",
+        "--memory",
+        "2G",
+        "--publish",
+        "127.0.0.1:60796:7070",
+        "layerfs-machine:ba52f2abe48ffc54f163a4cd1d420e1eb2aa37dd417aff8093ab3b1e83f9db65",
+        "sh",
+        "-c",
+        "trap 'exit 0' TERM; sleep infinity & wait"
+      ],
+      "elapsed_ns": 738274209,
+      "exit": 0
+    },
+    {
+      "stage": "oci-worker-launch",
+      "command": [
+        "container",
+        "exec",
+        "-i",
+        "lfs-image-check-fd20be666664",
+        "sh",
+        "-c",
+        "umask 077; cat > /tmp/image-check-secret; LAYERFS_WORKER_SECRET=/tmp/image-check-secret LAYERFS_WORKER_LISTEN=0.0.0.0:7070 nohup /layerfs/bundle/layerfs worker > /tmp/image-check.log 2>&1 < /dev/null &"
+      ],
+      "elapsed_ns": 73679958,
+      "exit": 0
+    },
+    {
+      "stage": "oci-worker-hello",
+      "elapsed_ns": 12750708,
+      "exit": 0
+    },
+    {
+      "stage": "oci-check-remove",
+      "command": [
+        "container",
+        "delete",
+        "--force",
+        "lfs-image-check-fd20be666664"
+      ],
+      "elapsed_ns": 134411875,
+      "exit": 0
+    }
+  ],
+  "verification_container": "lfs-image-check-fd20be666664"
+}

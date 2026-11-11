@@ -3,6 +3,7 @@ import { mkdir, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { app, BrowserWindow, dialog, ipcMain, shell } from 'electron'
 import { LayerfsHost, type LayerfsStreamMessage } from './layerfs-host'
+import type { CliAction } from '../../../shared/cli-activity'
 
 const isMac = process.platform === 'darwin'
 
@@ -26,10 +27,10 @@ const fromMainWindow = (event: Electron.IpcMainInvokeEvent) => {
 /** The renderer's only way to the LayerFS host: { status, body } for each call. */
 ipcMain.handle('layerfs:request', (event, input: unknown) => {
   fromMainWindow(event)
-  const { method, path, body } = (input ?? {}) as { method?: unknown; path?: unknown; body?: unknown }
+  const { method, path, body, action } = (input ?? {}) as { method?: unknown; path?: unknown; body?: unknown; action?: CliAction }
   if (typeof method !== 'string' || !/^(GET|POST|PUT|PATCH|DELETE)$/.test(method)) throw new Error('layerfs:request: bad method')
   if (typeof path !== 'string') throw new Error('layerfs:request: bad path')
-  return host.request(method, path, body)
+  return host.request(method, path, body, action)
 })
 ipcMain.handle('layerfs:subscribe', (event) => {
   fromMainWindow(event)

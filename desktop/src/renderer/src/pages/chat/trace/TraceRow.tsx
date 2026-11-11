@@ -11,6 +11,8 @@ import type { TraceRecord } from '@/layerfs/trace-api'
 import { cn } from '@/lib/utils'
 import { failed } from './rows'
 import { CallDetail, TraceDetail } from './TraceDetail'
+import { opSummary } from '@/components/layerfs/Operations'
+import { plural } from '@/layerfs/format'
 
 const BADGE: Record<string, string> = {
   System: '#6b7a8f',
@@ -149,7 +151,12 @@ export const TraceRow = forwardRef<HTMLDivElement, RowProps>(function TraceRow({
         </button>
         <span className="flex shrink-0 items-center gap-2 text-12 tabular-nums text-[var(--text-tertiary)]">
           {row.kind === 'system' && row.sections?.length ? <span className="hidden @min-[720px]/chat:inline">{row.sections.length} sections</span> : null}
-          {row.checkpoints && row.checkpoints.length > 0 && (
+          {row.operations && row.operations.count > 0 && (
+            <span title={opSummary(row.operations)} className={cn('rounded-full bg-[var(--surface-hover)] px-1.5 text-11 text-[var(--text-secondary)]', row.operations.unknown > 0 && 'text-[var(--warning,#b7791f)]')}>
+              {row.operations.count} {row.operations.count === 1 ? 'op' : 'ops'} · {plural(row.operations.links, 'link')}
+            </span>
+          )}
+          {!row.operations && row.checkpoints && row.checkpoints.length > 0 && (
             <Link to={historyLink(chatPath, firstWrite?.commit, firstWrite?.branch, row.callId ?? row.id)} title="Show this call’s checkpoints in History" className="rounded-full bg-[var(--surface-hover)] px-1.5 font-mono text-11 text-[var(--text-secondary)]">
               {checkpointLabel(row.checkpoints)}
             </Link>

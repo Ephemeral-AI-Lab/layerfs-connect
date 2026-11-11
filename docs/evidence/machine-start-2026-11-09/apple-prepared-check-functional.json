@@ -1,0 +1,192 @@
+{
+  "source": "/tmp/apple-prepared-check.json",
+  "home": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/layerfs-apple-prepared-f5c9j7cd/home",
+  "machine": "apple",
+  "marker": "fe13f2cc51b74b6db18da44918e274a9",
+  "steps": [
+    {
+      "args": [
+        "project",
+        "init",
+        "proof/app",
+        "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/layerfs-apple-prepared-f5c9j7cd/fixture"
+      ],
+      "wall_ns": 242320292,
+      "exit": 0
+    },
+    {
+      "args": [
+        "store",
+        "push",
+        "proof",
+        "apple"
+      ],
+      "wall_ns": 114001500,
+      "exit": 0
+    },
+    {
+      "args": [
+        "branch",
+        "fork",
+        "proof/app",
+        "verify",
+        "main"
+      ],
+      "wall_ns": 39315958,
+      "exit": 0
+    },
+    {
+      "args": [
+        "sandbox",
+        "create",
+        "proof/app",
+        "box",
+        "apple"
+      ],
+      "wall_ns": 3657426959,
+      "exit": 0
+    },
+    {
+      "args": [
+        "workspace",
+        "mount",
+        "box",
+        "verify",
+        "--name",
+        "verify"
+      ],
+      "wall_ns": 51030375,
+      "exit": 0
+    },
+    {
+      "args": [
+        "workspace",
+        "exec",
+        "box:verify",
+        "cat proof.txt && printf \"fe13f2cc51b74b6db18da44918e274a9\\n\" > result.txt"
+      ],
+      "wall_ns": 42469000,
+      "exit": 0
+    },
+    {
+      "args": [
+        "workspace",
+        "commit",
+        "box:verify",
+        "--message",
+        "Verify prepared machine persistence"
+      ],
+      "wall_ns": 25682708,
+      "exit": 0
+    },
+    {
+      "args": [
+        "file",
+        "read",
+        "proof/app",
+        "verify",
+        "/result.txt"
+      ],
+      "wall_ns": 20717125,
+      "exit": 0
+    },
+    {
+      "args": [
+        "workspace",
+        "unmount",
+        "box:verify"
+      ],
+      "wall_ns": 14846167,
+      "exit": 0
+    },
+    {
+      "args": [
+        "sandbox",
+        "close",
+        "box"
+      ],
+      "wall_ns": 1670060708,
+      "exit": 0
+    },
+    {
+      "args": [
+        "machine",
+        "stop",
+        "apple"
+      ],
+      "wall_ns": 497072292,
+      "exit": 0
+    },
+    {
+      "args": [
+        "machine",
+        "start",
+        "apple",
+        "--progress"
+      ],
+      "wall_ns": 1319122709,
+      "exit": 0
+    },
+    {
+      "args": [
+        "file",
+        "read",
+        "proof/app",
+        "verify",
+        "/result.txt"
+      ],
+      "wall_ns": 41716042,
+      "exit": 0
+    },
+    {
+      "args": [
+        "machine",
+        "start",
+        "apple",
+        "--progress"
+      ],
+      "wall_ns": 160057042,
+      "exit": 0
+    },
+    {
+      "args": [
+        "store",
+        "pull",
+        "proof"
+      ],
+      "wall_ns": 55099958,
+      "exit": 0
+    },
+    {
+      "args": [
+        "file",
+        "read",
+        "proof/app",
+        "verify",
+        "/result.txt"
+      ],
+      "wall_ns": 38196250,
+      "exit": 0
+    },
+    {
+      "args": [
+        "store",
+        "remove",
+        "proof"
+      ],
+      "wall_ns": 15231458,
+      "exit": 0
+    },
+    {
+      "args": [
+        "machine",
+        "remove",
+        "apple"
+      ],
+      "wall_ns": 669692875,
+      "exit": 0
+    }
+  ],
+  "status": "PASS",
+  "cleaned": true
+}

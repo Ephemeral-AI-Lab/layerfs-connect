@@ -1,0 +1,140 @@
+{
+  "started": 1794295008964,
+  "state": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/connect-large-project-ui-vtRn71",
+  "scope": "Private native design tier:2400commits/55branches/500Layers. No user home changes.",
+  "ok": true,
+  "originalLargePage": {
+    "code": "Capacity",
+    "message": "saved history page exceeds reply budget; reduce page_size"
+  },
+  "shell": {
+    "branches": 55,
+    "historyCalls": 0,
+    "commits": null
+  },
+  "history": {
+    "first": 20,
+    "second": 20,
+    "unique": 40,
+    "head": "321cf38e98d12369c1caaf53a13f3145d6d891b51020876b75d840028d5f82e75f",
+    "next": "3292d8bc2b48e1a2a8e3f3daf4aff34259cdd0d71796d75dc2f0f9b9210785a888"
+  },
+  "storage": {
+    "rows": 20,
+    "head": {
+      "id": "321cf38e98d12369c1caaf53a13f3145d6d891b51020876b75d840028d5f82e75f",
+      "kind": "Layer",
+      "branch": "main",
+      "root": "1a7755b748c141f68932af93575d02d902a6c68c1962dca3f52791f41c07382a"
+    },
+    "next": "3292d8bc2b48e1a2a8e3f3daf4aff34259cdd0d71796d75dc2f0f9b9210785a888"
+  },
+  "detail": {
+    "item": {
+      "id": "321cf38e98d12369c1caaf53a13f3145d6d891b51020876b75d840028d5f82e75f",
+      "branch": "main",
+      "message": "",
+      "at": null,
+      "parent": "328b3375b5b166a5c7a13cc4f517b86f3bd377d0fd6a00802c3f6ba055fdfe24f9",
+      "merged": null,
+      "kind": "Publish",
+      "base": null,
+      "sourceCommit": "128e3b5336ff35aa4f01d5e01d942e38b95e5d2f3a3c0a6c26f2e27b834b830b95",
+      "sourceBranch": "release-009",
+      "sourceTime": 1794295056947,
+      "logical": 14231,
+      "savedKind": "layer",
+      "ref": {
+        "id": "321cf38e98d12369c1caaf53a13f3145d6d891b51020876b75d840028d5f82e75f",
+        "kind": "Layer",
+        "branch": "main",
+        "root": "1a7755b748c141f68932af93575d02d902a6c68c1962dca3f52791f41c07382a"
+      },
+      "parentRef": {
+        "id": "328b3375b5b166a5c7a13cc4f517b86f3bd377d0fd6a00802c3f6ba055fdfe24f9",
+        "kind": "Layer",
+        "branch": "main",
+        "root": "633ed3dd7191980e94e466a3b5b88a0b6f99d450ec33d277cddc5dd8e663df9b"
+      },
+      "sourceRef": {
+        "id": "128e3b5336ff35aa4f01d5e01d942e38b95e5d2f3a3c0a6c26f2e27b834b830b95",
+        "kind": "Commit",
+        "branch": "release-009",
+        "root": "1a7755b748c141f68932af93575d02d902a6c68c1962dca3f52791f41c07382a"
+      },
+      "timeStatus": "unavailable",
+      "newCanonical": null,
+      "newStored": null,
+      "newMetadata": null
+    },
+    "changes": [
+      {
+        "path": "/docs/history-release.md",
+        "kind": "Modified",
+        "type": "file",
+        "before": {
+          "type": "file",
+          "inode": 110617
+        },
+        "after": {
+          "type": "file",
+          "inode": 110617
+        },
+        "content": true,
+        "identity": false,
+        "metadata": true,
+        "hunks": null,
+        "hunks_omitted": false
+      }
+    ],
+    "nextChanges": null
+  },
+  "graph": {
+    "demo-studio/design": {
+      "seeded": true,
+      "verification": {
+        "project": "demo-studio/design",
+        "tier": 1,
+        "cycles": 9,
+        "branches": 55,
+        "commits": 2400,
+        "merges": 20,
+        "publications": 499,
+        "layers": 500,
+        "filesVerified": 44,
+        "publicationReceiptsVerified": true
+      }
+    }
+  },
+  "requests": [],
+  "cleanup": {
+    "preset": "studio",
+    "state": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/connect-large-project-ui-vtRn71",
+    "home": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/connect-large-project-ui-vtRn71/home-2",
+    "actionId": "8a835591-cf41-4e2d-bc17-298f4bd32260",
+    "cleanup": {
+      "remove": {
+        "stores": [
+          "demo-studio"
+        ],
+        "sandboxes": [],
+        "machines": [],
+        "workspaces": []
+      },
+      "retainMachines": [],
+      "preserved": {
+        "machine": [],
+        "store": [],
+        "sandbox": []
+      },
+      "projects": 1,
+      "signature": "5ca42a57a74ba4017853fa21ea3f809d1ebae80e74719864a3f1c07eaf7c8cc0",
+      "verified": true,
+      "at": 1794295061975,
+      "remaining": [],
+      "unexpected": []
+    },
+    "activityUrl": "http://127.0.0.1:1025/#/activity?action=8a835591-cf41-4e2d-bc17-298f4bd32260"
+  },
+  "ended": 1794295062097
+}

@@ -1,0 +1,22 @@
+{
+  "root": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/layerfs-apple-baseline-dhdt5qp2",
+  "home": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/layerfs-apple-baseline-dhdt5qp2/home",
+  "cli": "/Users/yifanxu/Ephemeral-AI-Lab/layerfs-machine-start/target/debug/layerfs",
+  "bundle": "/Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect/.cache/layerfs-bundles/833d04cf44e8e747929d50ab1170a48260d9381c/2.0.0/linux-aarch64",
+  "cache": "Apple service running, Debian image installed, ordinary host cache uncontrolled",
+  "steps": [
+    {
+      "args": [
+        "store",
+        "create",
+        "proof",
+        "--profile",
+        "disposable"
+      ],
+      "wall_ns": 1629243917,
+      "exit": 2,
+      "result": "",
+      "events": "layerfs: store.create: unknown option --profile\naccepted options: --text\n"
+    }
+  ]
+}

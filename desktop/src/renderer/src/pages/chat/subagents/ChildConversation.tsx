@@ -9,7 +9,7 @@ export function ChildConversation({ chat, child: summary, shown = true, onChange
   shown?: boolean
   onChange: (next: ChatDetail) => void
 }) {
-  const { data, error } = useChild(chat.id, summary.id)
+  const { data, error } = useChild(chat.id, summary.id, shown, !!chat.simulation)
   const child = { ...data?.child, ...summary }
   const running = childActive(child)
   const messages = data?.messages.length ? data.messages : [

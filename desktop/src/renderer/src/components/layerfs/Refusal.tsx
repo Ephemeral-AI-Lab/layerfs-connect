@@ -33,6 +33,7 @@ export function Refusal({ error, className, compact }: { error: unknown; classNa
   return (
     <div role="alert" className={cn('min-w-0 break-words text-sm leading-relaxed', className)}>
       {!compact && <p className="text-xs text-muted-foreground">{category}</p>}
+      {error instanceof HostError && error.activityId && <a className="text-xs underline underline-offset-2" href={`#/activity?action=${encodeURIComponent(error.activityId)}`}>View CLI activity</a>}
       <p>
         <span className="font-strong">{r.code}</span>
         {': '}

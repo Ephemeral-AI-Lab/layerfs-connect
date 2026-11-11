@@ -34,7 +34,7 @@ writeFileSync(join(resources, 'app', 'package.json'), JSON.stringify({
 }, null, 2) + '\n')
 
 // Keep host code and its data files intact: Pi loads extension modules at runtime.
-for (const dir of ['host', 'scenarios', 'fixtures', 'tools/lib']) {
+for (const dir of ['host', 'scenarios', 'fixtures', 'tools/lib', 'tools/demo', 'tools/simulation']) {
   cpSync(join(root, dir), join(backend, dir), {
     recursive: true,
     filter: (path) => basename(path) !== 'test',
@@ -133,7 +133,7 @@ run('/usr/bin/codesign', ['--verify', '--deep', '--strict', app])
 writeFileSync(join(output, 'BUILD.json'), JSON.stringify({
   app: basename(app), platform: process.platform, arch: process.arch,
   node: process.version, electron: readJSON(join(electron, 'package.json')).version,
-  packages: copied.size, builtAt: new Date().toISOString(), signing: 'ad-hoc', defaultMode: 'sim',
+  packages: copied.size, builtAt: new Date().toISOString(), signing: 'ad-hoc', defaultMode: 'real',
 }, null, 2) + '\n')
 console.log(`Packaged ${copied.size} runtime packages into ${app}`)
 if (process.argv.includes('--zip')) {

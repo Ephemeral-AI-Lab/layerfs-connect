@@ -7,7 +7,7 @@
 // and its final checks end the root's rows.
 import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { LiveState } from '../runs/live.js'
+import { readChatLive } from './live-reader.js'
 import { traceCall } from '../runs/traces.js'
 import { trajectory, writeNotes } from '../runs/trajectory.js'
 
@@ -34,38 +34,8 @@ export function chatCalls(traceDir, agent = 'root') {
   return new Map([...byStep].map(([id, calls]) => [id, [...calls.values()]]))
 }
 
-/** LayerFS calls a chat's Live keeps: the newest, by agent and call id. */
-const LIVE_CALLS = 400
-
-/**
- * A chat's Live (the project page's diagram): its newest LayerFS calls and
- * what its agents hold in LayerFS now (running calls, Sandboxes, mounted
- * Workspaces), read from every agent's trace lines (traces/<agent>.jsonl), as
- * a scenario run's were. A chat no longer working has nothing running.
- */
-export function chatLive(traceDir, { running = false } = {}) {
-  const state = new LiveState()
-  const calls = new Map()
-  const files = existsSync(traceDir) ? readdirSync(traceDir).filter((name) => name.endsWith('.jsonl')) : []
-  for (const name of files) {
-    const agent = name.slice(0, -'.jsonl'.length)
-    for (const raw of readFileSync(join(traceDir, name), 'utf8').split('\n')) {
-      if (!raw.startsWith('{')) continue
-      let line
-      try { line = JSON.parse(raw) } catch { continue } // a line being written
-      if (line?.layerfs_trace !== 1 || line.id === undefined) continue
-      const key = `${agent}:${line.id}`
-      if (line.phase === 'start') {
-        if (calls.has(key)) continue
-        state.started(line, agent)
-      } else state.ended(line, agent)
-      calls.delete(key)
-      calls.set(key, traceCall(line, agent))
-    }
-  }
-  if (!running) state.stopped()
-  return { calls: [...calls.values()].slice(-LIVE_CALLS), live: state.view() }
-}
+/** Compact live projection, incrementally tailed and bounded by call count. */
+export const chatLive = readChatLive
 
 /** Each tool call of Pi's log as a run's step (RunDetail steps): its command, output, exit and LayerFS calls. */
 function steps(entries, calls, running) {

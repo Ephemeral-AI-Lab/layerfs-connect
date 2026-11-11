@@ -1,0 +1,253 @@
+{
+  "status": "PASS",
+  "kind": "real renderer and CLI diagnostic",
+  "viewports": [
+    {
+      "width": 1280,
+      "height": 820
+    },
+    {
+      "width": 900,
+      "height": 600
+    }
+  ],
+  "actions": [
+    {
+      "id": "81ebcc9c-f74f-422c-a7b5-b4b5dbe73d9b",
+      "status": "success",
+      "target": "progress-ui-1110",
+      "commands": [
+        {
+          "argv": [
+            "machine",
+            "create",
+            "--cpus",
+            "2",
+            "--memory",
+            "4294967296",
+            "--disk",
+            "4294967296",
+            "--progress",
+            "--",
+            "progress-ui-1110",
+            "lima"
+          ],
+          "status": "success",
+          "durationMs": 10263,
+          "identity": {
+            "version": "2.0.0",
+            "commit": "58c548b3e0a45f11880e3511bf1267d11e315415",
+            "dirty": false,
+            "features": [
+              "machine",
+              "postgresql"
+            ]
+          }
+        }
+      ],
+      "stages": [
+        {
+          "stage": "bundle-validation",
+          "state": "started"
+        },
+        {
+          "stage": "bundle-validation",
+          "state": "completed",
+          "elapsed_ms": 0
+        },
+        {
+          "stage": "provider-and-worker",
+          "state": "started"
+        },
+        {
+          "stage": "provider-and-worker",
+          "state": "completed",
+          "elapsed_ms": 10194
+        },
+        {
+          "stage": "worker-compatibility",
+          "state": "started"
+        },
+        {
+          "stage": "worker-compatibility",
+          "state": "completed",
+          "elapsed_ms": 3
+        }
+      ]
+    },
+    {
+      "id": "391de74a-3397-46fc-9afe-f9cd193c26ec",
+      "status": "success",
+      "target": "progress-ui-1110",
+      "commands": [
+        {
+          "argv": [
+            "machine",
+            "start",
+            "--progress",
+            "--",
+            "progress-ui-1110"
+          ],
+          "status": "success",
+          "durationMs": 8295,
+          "identity": {
+            "version": "2.0.0",
+            "commit": "58c548b3e0a45f11880e3511bf1267d11e315415",
+            "dirty": false,
+            "features": [
+              "machine",
+              "postgresql"
+            ]
+          }
+        }
+      ],
+      "stages": [
+        {
+          "stage": "bundle-validation",
+          "state": "started"
+        },
+        {
+          "stage": "bundle-validation",
+          "state": "completed",
+          "elapsed_ms": 0
+        },
+        {
+          "stage": "provider-and-worker",
+          "state": "started"
+        },
+        {
+          "stage": "provider-and-worker",
+          "state": "completed",
+          "elapsed_ms": 8194
+        },
+        {
+          "stage": "worker-compatibility",
+          "state": "started"
+        },
+        {
+          "stage": "worker-compatibility",
+          "state": "completed",
+          "elapsed_ms": 3
+        }
+      ]
+    },
+    {
+      "id": "fd66630b-da0f-418c-a375-5ef56cb14599",
+      "status": "success",
+      "target": "progress-ui-1110",
+      "commands": [
+        {
+          "argv": [
+            "machine",
+            "start",
+            "--progress",
+            "--",
+            "progress-ui-1110"
+          ],
+          "status": "success",
+          "durationMs": 8280,
+          "identity": {
+            "version": "2.0.0",
+            "commit": "58c548b3e0a45f11880e3511bf1267d11e315415",
+            "dirty": true,
+            "features": [
+              "machine",
+              "postgresql"
+            ]
+          }
+        }
+      ],
+      "stages": [
+        {
+          "stage": "bundle-validation",
+          "state": "started"
+        },
+        {
+          "stage": "bundle-validation",
+          "state": "completed",
+          "elapsed_ms": 0
+        },
+        {
+          "stage": "provider-and-worker",
+          "state": "started"
+        },
+        {
+          "stage": "provider-and-worker",
+          "state": "completed",
+          "elapsed_ms": 8154
+        },
+        {
+          "stage": "worker-compatibility",
+          "state": "started"
+        },
+        {
+          "stage": "worker-compatibility",
+          "state": "completed",
+          "elapsed_ms": 4
+        }
+      ]
+    },
+    {
+      "id": "b35a3f14-83db-4cec-9508-16ffaad16884",
+      "status": "failed",
+      "target": "progress-refused-1110",
+      "commands": [
+        {
+          "argv": [
+            "machine",
+            "create",
+            "--cpus",
+            "2",
+            "--memory",
+            "4294967296",
+            "--disk",
+            "4294967296",
+            "--image",
+            "/private/tmp/lfs-progress-no-image.tar",
+            "--progress",
+            "--",
+            "progress-refused-1110",
+            "apple-container"
+          ],
+          "status": "refused",
+          "durationMs": 1906,
+          "identity": {
+            "version": "2.0.0",
+            "commit": "58c548b3e0a45f11880e3511bf1267d11e315415",
+            "dirty": true,
+            "features": [
+              "machine",
+              "postgresql"
+            ]
+          }
+        }
+      ],
+      "stages": [
+        {
+          "stage": "bundle-validation",
+          "state": "started"
+        },
+        {
+          "stage": "bundle-validation",
+          "state": "completed",
+          "elapsed_ms": 0
+        },
+        {
+          "stage": "provider-and-worker",
+          "state": "started"
+        },
+        {
+          "stage": "provider-and-worker",
+          "state": "failed",
+          "elapsed_ms": 1766
+        }
+      ]
+    }
+  ],
+  "noAutomaticRetry": true,
+  "notes": [
+    "Ordinary host caches uncontrolled; these UI timings are not performance qualification",
+    "Separate uncertain request 75c83165-1a65-4c97-b6e9-c78a5a74e1ea had no record or owned machine in either checked home; not replayed",
+    "Shared preview picked up another session stylesheet/host updates; resumed after dependency appeared and reloaded host metadata"
+  ]
+}

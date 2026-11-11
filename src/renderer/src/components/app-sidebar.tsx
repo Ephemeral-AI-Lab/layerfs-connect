@@ -3,7 +3,6 @@ import { useEffect, useMemo, useState } from 'react'
 import type { AgentSessionSummary } from '@shared/agent-api'
 import { projectKey, projectRef, type ProjectSummary } from '@shared/host-api'
 
-import { ModeChip } from '@/components/mode-switch'
 import { LfsProject, LfsStore } from '@/components/lfs-icons'
 import { Collapse } from '@/components/motion/collapse'
 import { useIndicator } from '@/components/motion/indicator'
@@ -197,7 +196,6 @@ export function AppSidebar({ selected, projects, onSelect, onNewProject, onDelet
           <Settings className="size-[18px] shrink-0 text-muted-foreground" strokeWidth={1.7} />
           <span className="truncate">{t('Settings')}</span>
         </button>
-        <ModeChip />
       </SidebarFooter>
     </Sidebar>
     </div>

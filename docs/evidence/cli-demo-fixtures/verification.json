@@ -1,0 +1,30 @@
+{
+  "verifiedAt": "2026-11-09T12:46:41.094Z",
+  "preset": "native",
+  "sandboxes": false,
+  "state": "/tmp/connect-demo-proof-vp2X0x",
+  "desktopReset": {
+    "actionId": "92d692ad-0f05-4533-9af0-22252a25e427",
+    "status": "success",
+    "cliInvocations": 40,
+    "inputOutputCaptured": true
+  },
+  "repeatSetup": {
+    "actionId": "f4edd70d-4466-4cf2-a8a5-d07980db678b",
+    "cliInvocations": 11,
+    "mutations": 0
+  },
+  "hostActivityEndpoint": true,
+  "fullStudioProvisioning": "NOT_RUN",
+  "electron": "NOT_RUN",
+  "teardown": {
+    "ownedResourcesRemaining": 0,
+    "storesRemaining": 0,
+    "logsRetained": true
+  },
+  "rootTests": {
+    "passed": 102,
+    "failed": 0
+  },
+  "headlessHostShutdown": "clean exit; host.json removed"
+}

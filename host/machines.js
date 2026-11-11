@@ -23,7 +23,7 @@ export const OFF = new Set(['ssh', 'firecracker'])
 /** Create options only Firecracker used (a nested Lima machine hosts it): not offered either. */
 const OFF_OPTIONS = new Set(['nested', 'host'])
 /** States whose machine.status says something the list does not: free disk, or the op that holds it. */
-const ASK_STATUS = new Set(['running', 'creating', 'removing', 'unresolved', 'failed', 'unknown'])
+const ASK_STATUS = new Set(['running', 'stopped', 'creating', 'removing', 'unresolved', 'failed', 'unknown'])
 
 const refuse = (code, message) => Object.assign(new Error(message), { code })
 
@@ -124,7 +124,7 @@ export class Machines {
       lfs.store.list().then(list, failed('stores')),
       // sandbox.list items carry no Workspaces: each one's count is its sandbox.get (a record read; null when refused)
       pages((p) => lfs.sandbox.list(p)).then((rows) => rows.map(sandboxOf), failed('sandboxes')),
-      // starts nothing; asked only where it adds the free disk or the op (a stopped machine's says only that it is stopped)
+      // Starts nothing; stopped machines can carry provider/socket diagnostics too.
       Promise.all(machines.filter((m) => m.platform !== 'native' && ASK_STATUS.has(m.state)).map((m) => lfs.machine.status(m.name).then(statusOf, (e) => ({ name: m.name, state: null, freeDisk: null, toolVersion: null, down: e?.message ?? String(e), op: null })))),
     ])
     const stores = listedStores.map(storeOf).filter(Boolean)
@@ -153,6 +153,9 @@ export class Machines {
   }
 
   async inspect(name) { return { ...(await this.lfs.machine.get(name)), ...(await this.lfs.machine.status(name)), observedAt: Date.now() } }
+
+  /** The selected machine's Sandbox archive inventory; never starts or pulls. */
+  async images(name) { return this.lfs.machine.images(name) }
 
   /** machine.start(name): a stopped machine and its worker, waited for; native and a running one answer at once. */
   async start(name) {

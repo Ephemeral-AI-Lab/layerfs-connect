@@ -1,0 +1,60 @@
+{
+  "checkedAt": "2026-11-10T13:43:17.215Z",
+  "id": "62c84908-fcc1-4f05-b090-ba5e780f59bd",
+  "project": "sim-design-74d9cf77585e36f0cc8a/design-74d9cf77585e36f0cc8a",
+  "chatId": "96ba1a5e-a5bf-416a-b6d9-f71b23ca3038",
+  "browserUrl": "http://127.0.0.1:1025/#/chat/96ba1a5e-a5bf-416a-b6d9-f71b23ca3038/subagents/a01-worker/sandboxes",
+  "configuration": {
+    "project": "design",
+    "machine": "native",
+    "cycles": 1,
+    "mixed": true
+  },
+  "simulation": {
+    "state": "completed",
+    "plannedCommands": 553,
+    "capturedCLI": 633,
+    "agentBashSteps": 550,
+    "workspaceSessions": 48,
+    "lifecycleAdmissionVerified": true
+  },
+  "animation": {
+    "samples": 492,
+    "visibleDuringRealCalls": 130,
+    "overlappingMethods": [
+      "workspace.commit",
+      "workspace.unmount",
+      "workspace.exec",
+      "workspace.mount"
+    ],
+    "observedPackets": 2,
+    "observedAgentNodes": 2,
+    "observedWires": 3,
+    "observedWorkspaceNodes": 1,
+    "playingValues": [
+      "false",
+      "true"
+    ],
+    "reducedMotion": [
+      false,
+      true
+    ],
+    "allSamplesVisible": true,
+    "working": true,
+    "movingPositionSamples": 173,
+    "idlePackets": 0,
+    "idlePlaying": "false",
+    "viewportWidths": [
+      1280,
+      900
+    ],
+    "horizontalOverflow": false,
+    "reducedMotionSamples": 15,
+    "reducedMotionSuppressed": true,
+    "agentOrderChanges": 0
+  },
+  "exceptions": [],
+  "consoleErrors": [],
+  "sourceBatch": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/layerfs-simulation-bash-7MQLVJ/animation-proof-62c84908-fcc1-4f05-b090-ba5e780f59bd.json",
+  "applicationChanges": true
+}

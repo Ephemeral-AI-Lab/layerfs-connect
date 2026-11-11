@@ -12,7 +12,7 @@ const appPath = resolve(process.argv[2])
 const temp = await mkdtemp(join(tmpdir(), 'connect-settings-ui-'))
 const app = spawn(join(appPath, 'Contents/MacOS/LayerFS Connect'), ['--remote-debugging-port=0'], {
   cwd: temp,
-  env: { ...process.env, HOME: temp, PATH: '/usr/bin:/bin:/usr/sbin:/sbin', LAYERFS_CONNECT_MODE: 'sim', CAPTURE_PATH: '', CAPTURE_HASH: '' },
+  env: { ...process.env, HOME: temp, PATH: '/usr/bin:/bin:/usr/sbin:/sbin', CAPTURE_PATH: '', CAPTURE_HASH: '' },
   stdio: ['ignore', 'ignore', 'pipe'],
 })
 const exit = once(app, 'exit')

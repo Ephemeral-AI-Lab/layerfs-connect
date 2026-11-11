@@ -1,0 +1,123 @@
+{
+  "commit": "58c548b3e0a45f11880e3511bf1267d11e315415",
+  "branch": "layerfs_v2_0_0",
+  "tree": "84291eb9a06cd740236490d362c37ea99d4e212c",
+  "checks": [
+    {
+      "id": "cargo-macos-700ec43d94e8434a935507f8bf54354e",
+      "status": "passed",
+      "command": [
+        "cargo",
+        "+1.85.1",
+        "test",
+        "--manifest-path",
+        "Cargo.toml",
+        "--locked",
+        "--offline",
+        "-p",
+        "layerfs-machine",
+        "--features",
+        "machine",
+        "--test",
+        "bundle_preflight",
+        "--test",
+        "image_reuse",
+        "--test",
+        "start_compatibility"
+      ],
+      "at": "2026-11-10T00:32:42.680587+00:00"
+    },
+    {
+      "id": "cargo-macos-ed294cbc58124e5a9d1c419160d5790a",
+      "status": "passed",
+      "command": [
+        "cargo",
+        "+1.85.1",
+        "test",
+        "--manifest-path",
+        "Cargo.toml",
+        "--locked",
+        "--offline",
+        "-p",
+        "layerfs-platform",
+        "--test",
+        "docker_image_cache",
+        "--test",
+        "guest_artifacts",
+        "--test",
+        "conformance",
+        "--test",
+        "machine_platform"
+      ],
+      "at": "2026-11-10T00:33:14.840242+00:00"
+    },
+    {
+      "id": "cargo-macos-6859127a42d64daea5b561a6a93f1e41",
+      "status": "passed",
+      "command": [
+        "cargo",
+        "+1.85.1",
+        "test",
+        "--manifest-path",
+        "Cargo.toml",
+        "--locked",
+        "--offline",
+        "-p",
+        "layerfs-api",
+        "--features",
+        "machine",
+        "--test",
+        "calls_table",
+        "--test",
+        "progress_options",
+        "--test",
+        "machine_power"
+      ],
+      "at": "2026-11-10T00:34:04.250492+00:00"
+    },
+    {
+      "id": "cargo-macos-545abdd6b76f4d769027ce2fe4588cec",
+      "status": "passed",
+      "command": [
+        "cargo",
+        "+1.85.1",
+        "clippy",
+        "--manifest-path",
+        "Cargo.toml",
+        "--locked",
+        "--offline",
+        "-p",
+        "layerfs-platform",
+        "-p",
+        "layerfs-machine",
+        "-p",
+        "layerfs-api",
+        "-p",
+        "layerfs-cli",
+        "--features",
+        "layerfs-cli/machine,layerfs-cli/postgresql",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "at": "2026-11-10T00:34:41.883462+00:00"
+    }
+  ],
+  "python_builder_tests": 12,
+  "rust_tests": 50,
+  "other_checks": [
+    "Rust fmt",
+    "Ruff 0.17.2 format/lint",
+    "git diff --check",
+    "product boundary scan",
+    "Node progress test syntax"
+  ],
+  "live_proof": "Prior unchanged-source Docker, Apple Container and Lima receipts in ../machine-start-2026-11-09; not rerun for publication",
+  "limitations": [
+    "Fresh-host inclusive download time",
+    "All provider live invalidation cells",
+    "PostgreSQL Sandbox/workspace routes",
+    "Native Node/Python binding execution"
+  ]
+}

@@ -1,0 +1,34 @@
+{
+  "results": [
+    {
+      "name": "blocked history read renders error",
+      "text": "The Connect host is not reachableFailed to fetchTry again"
+    },
+    {
+      "name": "history retry recovers",
+      "url": "http://127.0.0.1:1025/?mac=1&storage-layout=final#/storage/demo-studio/design/storage",
+      "width": 1280,
+      "overflow": false,
+      "panels": [
+        "Canonical reuse"
+      ],
+      "alerts": []
+    },
+    {
+      "name": "exact measurements disclosure",
+      "rows": 2
+    },
+    {
+      "name": "Store Refresh",
+      "url": "http://127.0.0.1:1025/?mac=1&storage-layout=final#/storage/demo-studio",
+      "width": 1280,
+      "overflow": false,
+      "panels": [
+        "Observed storage growth",
+        "Project snapshot analysis"
+      ],
+      "alerts": []
+    }
+  ],
+  "errors": []
+}

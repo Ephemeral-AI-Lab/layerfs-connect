@@ -38,19 +38,17 @@ the older app. Make changes in the current UI unless the task names the older ap
 - Start the preview from the repository root with `pnpm --dir desktop web`.
   Use a compatible Node version (Node 24 is installed on this machine).
 - Open `http://127.0.0.1:1025/` (or `http://localhost:1025/`). The preview runs the same renderer components
-  as Electron and starts its own simulated LayerFS host with temporary state. The sidebar Preview mode selector can switch to a real host when `LAYERFS_CONNECT_CLI` is configured explicitly; each mode keeps a separate state/home under the preview root (`LFS_STATE`, or a fresh private temporary directory).
+  as Electron and starts a real LayerFS host with a private preview home.
+  Set `LAYERFS_CONNECT_CLI` to an absolute pinned CLI and optionally
+  `LAYERFS_CONNECT_DAEMON` to its matching daemon before starting. There is no
+  mode selector or fallback. `LFS_STATE` can select a persistent private preview root.
   Do not build a separate demo page or duplicate the desktop UI for browser tests.
 - Use the browser tools available in the session to navigate and play with the
   actual UI. Reuse an existing preview server when it belongs to this checkout;
   The server binds to `127.0.0.1` on fixed port 1025 with `strictPort: true`;
   it must fail rather than switch ports. Do not kill another session's process to claim it.
-- For chat work, open the model-free **Example chat**. Direct routes:
-  - `http://localhost:1025/#/chat/ui-example-chat`
-  - `http://localhost:1025/#/chat/ui-example-chat/files`
-  - `http://localhost:1025/#/chat/ui-example-chat/sandboxes`
-  - `http://localhost:1025/#/chat/ui-example-chat/trace`
-  - `http://localhost:1025/#/chat/ui-example-chat/subagents`
-  These are read-only samples, not real execution results. No API key is needed.
+- For chat work, use a real saved chat or create a disposable chat with a configured
+  model. There are no built-in Example chats or fabricated resource views.
 - Iterate in the browser: reproduce the relevant state, change the renderer,
   wait for hot reload, and exercise the changed flow. Click tabs and menus,
   open files, switch branches, type into inputs, and check loading, empty and
@@ -58,7 +56,7 @@ the older app. Make changes in the current UI unless the task names the older ap
   rendered result; a screenshot alone does not verify an interaction.
 - Verify at desktop window sizes (for example 1280×820 and 900×600). For macOS
   spacing in the preview, put `?mac=1` before the hash, for example
-  `http://localhost:1025/?mac=1#/chat/ui-example-chat/files`.
+  `http://localhost:1025/?mac=1#/machines`.
 - Keep shared views shared: chat Files and Storage project Files use
   `desktop/src/renderer/src/components/files/`. Update the relevant `docs/ui/*.md`
   spec alongside UI changes.
@@ -80,8 +78,6 @@ shared host. For the current desktop renderer, use the commands above.
 - Typecheck: `pnpm -s typecheck`
 - Tests: `node --test test/*.test.mjs` (a bare `node --test test/` fails on Node 24)
 - Build: `pnpm -s build`
-- Simulated LayerFS: `pnpm dev:sim` (or the LayerFS menu / sidebar mode chip) runs the host on `host/sim`, state in
-  `~/.layerfs-connect-sim`; `node tools/sim-table.mjs` after upgrading LayerFS (host/README.md).
 - Headless screenshots: `"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless=new
   --window-size=1280,760 --virtual-time-budget=8000 --screenshot=/tmp/x.png "<url>"`. The app uses one fixed Cindy-inspired light theme; verify the browser preview at desktop window sizes.
 - UI specs live in `docs/ui/*.md`: ASCII layout diagrams with numbered regions and little prose (conventions in
@@ -96,3 +92,17 @@ shared host. For the current desktop renderer, use the commands above.
   `cargo +1.85.1 build --offline --locked --release -p layerfs-node --features layerfs-node/postgresql`, copy
   `target/release/liblayerfs_node.dylib` over `api/crates/layerfs-node/layerfs.node` by a rename; the CLI likewise
   with `-p layerfs-cli --features layerfs-cli/postgresql --bin layerfs`). The Linux bundle already has it.
+
+## Conversation journals (host/sessions/)
+
+- Unit: `node --test host/test/session-store.test.js`.
+- Live (pinned CLI/daemon, private disposable homes, local deterministic model):
+  `LAYERFS_CONNECT_LIVE_SESSIONS=1 LAYERFS_CONNECT_CLI=<pinned layerfs> LAYERFS_CONNECT_DAEMON=<pinned daemon> node --test --test-timeout=600000 host/test/session-live.test.js`;
+  add `LAYERFS_CONNECT_LIVE_BUCKET_URL=http://127.0.0.1:<port>/<bucket>/<prefix>` with
+  `LAYERFS_BUCKET_LIVEBK_ACCESS_KEY`/`_SECRET_KEY` for the backup/restore case (use an owned MinIO),
+  and `LAYERFS_CONNECT_LIVE_DOCKER=1` (with `LAYERFS_BUNDLE` from `desktop/.env.local`) for the Store push case.
+- Run host tests with the CLI from `desktop/.env.local` (the app's runtime); `agent-sdks.test.js` expects its call table.
+- Browser: `node desktop/tools/smoke-chat-operations.mjs <mounted chat id> <sdk chat id>` against
+  real preview chats. `pnpm` via corepack fails when `desktop/.env.local`'s `XDG_CACHE_HOME` is
+  exported; start the preview with `./node_modules/.bin/vite --config vite.web.config.ts` from `desktop/`.
+- Record: `docs/specs/chat-session-store-record.md`.

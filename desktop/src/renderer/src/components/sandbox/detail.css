@@ -9,7 +9,6 @@
 .sd-breadcrumb > button { display: flex; align-items: center; gap: 6px; border-radius: 4px; }
 .sd-breadcrumb > button:hover { color: var(--foreground); }
 .sd-breadcrumb strong { color: var(--description); font-weight: 450; }
-.sd-simulation { display: inline-flex; align-items: center; gap: 5px; margin-left: auto; padding: 3px 7px; border: 1px solid var(--border); border-radius: 5px; font-size: 10px; }
 .sd-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 20px; }
 .sd-identity { display: flex; gap: 12px; align-items: center; }
 .sd-box-icon { display: grid; place-items: center; width: 42px; height: 42px; border: 1px solid var(--border); border-radius: 12px; color: var(--description); }

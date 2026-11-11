@@ -74,14 +74,13 @@ export function sandboxesByProject(view: MachinesView | null | undefined): Map<s
 
 /**
  * The host's machines (for where each project runs), read on mount, when
- * `tick` changes and when projects change; a simulated host's view instead
- * when given (nothing is asked then).
+ * `tick` changes and when projects change.
  */
-export function useMachinesView(simulated: MachinesView | null, tick = 0): MachinesView | null | undefined {
-  const read = useHostQuery(() => (simulated ? Promise.resolve(null) : host.machines()), [simulated, tick], simulated ? undefined : 'machines')
+export function useMachinesView(tick = 0): MachinesView | null | undefined {
+  const read = useHostQuery(() => host.machines(), [tick], 'machines')
   const { reload } = read
-  useEffect(() => (simulated ? undefined : onProjectsChanged(reload)), [simulated, reload])
-  return simulated ?? read.data
+  useEffect(() => onProjectsChanged(reload), [reload])
+  return read.data
 }
 
 /** `▤ native ×2  ▤ docker`: the machines a project runs on, each a link; "not running" with none. */

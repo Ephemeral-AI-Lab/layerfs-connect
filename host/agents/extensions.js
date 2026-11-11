@@ -131,7 +131,7 @@ ${instructionsLine(instructionsOn('lead', setup))}- Connect gates every \`bash\`
  * env contains shell overrides only; never pass a copy of process.env here.
  * sdk.prompt (by agent kind) is what Settings → SDKs adds to each agent's system prompt (sdks.js).
  */
-export async function createConnectExtensions({ cwd, agentDir, runDir, env = {}, approvalFile, workspace = false, instructions = '', defaultBashTimeoutSeconds = 120, allowNestedSubagents = false, setup = DEFAULT_SETUP, sdk = {}, onSubagentEvent = () => {}, onUserMessage = async () => {}, onTurnStart = async () => {} }) {
+export async function createConnectExtensions({ cwd, agentDir, runDir, env = {}, approvalFile, workspace = false, hostShell = false, instructions = '', defaultBashTimeoutSeconds = 120, allowNestedSubagents = false, setup = DEFAULT_SETUP, sdk = {}, onSubagentEvent = () => {}, onUserMessage = async () => {}, onTurnStart = async () => {} }) {
   process.env.PI_CODING_AGENT_DIR = agentDir
   process.env.PI_SUBAGENTS_TEMP_ROOT = join(agentDir, 'subagents')
   const projectInstructions = { main: instructionsOn('main', setup), worker: instructionsOn('worker', setup), lead: instructionsOn('lead', setup) }
@@ -162,7 +162,7 @@ export async function createConnectExtensions({ cwd, agentDir, runDir, env = {},
   // Children may run in this process, where Node keeps the first import of a module:
   // the module reads its settings each time a child starts, so they follow the chat's.
   const childExtensionPath = join(runDir, 'connect-child.mjs')
-  await writeFile(join(runDir, 'connect-child.json'), JSON.stringify({ cwd, env, traceDir, runDir, approvalFile, workspace, instructions, defaultBashTimeoutSeconds, projectInstructions, sdk }), { mode: 0o600 })
+  await writeFile(join(runDir, 'connect-child.json'), JSON.stringify({ cwd, env, traceDir, runDir, approvalFile, workspace, hostShell, instructions, defaultBashTimeoutSeconds, projectInstructions, sdk }), { mode: 0o600 })
   await writeFile(childExtensionPath,
     `import { readFileSync } from 'node:fs';\n` +
     `import { createConnectBashExtension } from ${JSON.stringify(CHILD_MODULE)};\n` +
@@ -206,7 +206,7 @@ export async function createConnectExtensions({ cwd, agentDir, runDir, env = {},
   const extension = (pi) => {
     // pi-subagents is an extension of its own; both share Pi's event bus
     events = pi.events
-    createConnectBashExtension({ cwd, env, traceDir, runDir, agent: 'root', approvalFile, workspace, instructions, defaultBashTimeoutSeconds, projectInstructions, sdk })(pi)
+    createConnectBashExtension({ cwd, env, traceDir, runDir, agent: 'root', approvalFile, workspace, hostShell, instructions, defaultBashTimeoutSeconds, projectInstructions, sdk })(pi)
     pi.on('turn_start', onTurnStart)
     // before_agent_start is per run; message_start also covers queued follow-ups and steering messages.
     pi.on('message_start', async (event, ctx) => {

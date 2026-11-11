@@ -1,0 +1,221 @@
+{
+  "store_stats": {
+    "name": "demo-studio",
+    "history_logical": 7866,
+    "canonical": 12494,
+    "stored": 4697,
+    "metadata": 224007,
+    "file": 225280,
+    "free": 0,
+    "accounting_version": 1,
+    "data_pack_bytes": 1273,
+    "metadata_pack_bytes": 3424,
+    "database_overhead_bytes": 220583,
+    "free_page_bytes": 0,
+    "database_page_bytes": 225280,
+    "composition_complete": true,
+    "init": null,
+    "kind": "sqlite",
+    "store_id": "3d97458e36f85a602d249a7e2ed15395d2b6fc4b7b8eb03c90af40b42daee4ca",
+    "store_generation": 1794272369592,
+    "fileMeasurements": {
+      "observedAt": 1794273309761,
+      "bytes": 225280,
+      "walBytes": 0,
+      "incomingBytes": 0
+    }
+  },
+  "project_history": {
+    "items": [
+      {
+        "id": "325f2c63948c6c63abe733c28efe9c3850cbb69a6332684ba26fccc8b4a5c5c24f",
+        "branch": "main",
+        "message": "",
+        "at": null,
+        "parent": "3254150cb9d3cf5f4b21359990e9d4a3b20e939055505273f4e2398fed913a7cc3",
+        "merged": null,
+        "kind": "Publish",
+        "base": null,
+        "sourceCommit": "12626efa211b2f37a2bf00b9769e3df685fe52366d4ce0cd64123487e42b789e49",
+        "sourceBranch": "demo-baseline",
+        "sourceTime": 1794272369750,
+        "logical": 631,
+        "savedKind": "layer",
+        "ref": {
+          "id": "325f2c63948c6c63abe733c28efe9c3850cbb69a6332684ba26fccc8b4a5c5c24f",
+          "kind": "Layer",
+          "branch": "main",
+          "root": "182fa7b2303f8bd63c5d2f75bb2db31a27da8b96cb86e45fd97c6b5d81231f48"
+        },
+        "parentRef": {
+          "id": "3254150cb9d3cf5f4b21359990e9d4a3b20e939055505273f4e2398fed913a7cc3",
+          "kind": "Layer",
+          "branch": "main"
+        },
+        "sourceRef": {
+          "id": "12626efa211b2f37a2bf00b9769e3df685fe52366d4ce0cd64123487e42b789e49",
+          "kind": "Commit",
+          "branch": "demo-baseline"
+        },
+        "timeStatus": "unavailable",
+        "newCanonical": null,
+        "newStored": null,
+        "newMetadata": null
+      },
+      {
+        "id": "3254150cb9d3cf5f4b21359990e9d4a3b20e939055505273f4e2398fed913a7cc3",
+        "branch": "main",
+        "message": "",
+        "at": null,
+        "parent": null,
+        "merged": null,
+        "kind": "Init",
+        "base": null,
+        "sourceCommit": null,
+        "sourceBranch": null,
+        "sourceTime": null,
+        "logical": 585,
+        "savedKind": "layer",
+        "ref": {
+          "id": "3254150cb9d3cf5f4b21359990e9d4a3b20e939055505273f4e2398fed913a7cc3",
+          "kind": "Layer",
+          "branch": "main",
+          "root": "e569ad2a5607532456c33b1ed938b211f02e4d84a3079fa15ae2295d5e118e01"
+        },
+        "parentRef": null,
+        "sourceRef": null,
+        "timeStatus": "unavailable",
+        "newCanonical": null,
+        "newStored": null,
+        "newMetadata": null
+      }
+    ],
+    "head": {
+      "id": "325f2c63948c6c63abe733c28efe9c3850cbb69a6332684ba26fccc8b4a5c5c24f",
+      "kind": "Layer",
+      "branch": "main",
+      "root": "182fa7b2303f8bd63c5d2f75bb2db31a27da8b96cb86e45fd97c6b5d81231f48"
+    },
+    "next": null
+  },
+  "project_analysis": {
+    "definition_version": 1,
+    "population_id": "ef55ddb652e9c4cf9f456903f28ac5321e56d305c2c8d20800bcc6b1734b1e5f",
+    "population": "explicit_saved_snapshots",
+    "snapshots": [
+      {
+        "project": "demo-studio/website",
+        "branch": "main",
+        "at": {
+          "id": "3254150cb9d3cf5f4b21359990e9d4a3b20e939055505273f4e2398fed913a7cc3",
+          "kind": "Layer",
+          "branch": "main",
+          "root": "e569ad2a5607532456c33b1ed938b211f02e4d84a3079fa15ae2295d5e118e01"
+        }
+      },
+      {
+        "project": "demo-studio/website",
+        "branch": "main",
+        "at": {
+          "id": "325f2c63948c6c63abe733c28efe9c3850cbb69a6332684ba26fccc8b4a5c5c24f",
+          "kind": "Layer",
+          "branch": "main",
+          "root": "182fa7b2303f8bd63c5d2f75bb2db31a27da8b96cb86e45fd97c6b5d81231f48"
+        }
+      }
+    ],
+    "complete": true,
+    "examined_objects": 23,
+    "canonical_bytes_read": 4024,
+    "referenced_canonical_bytes": 4024,
+    "unique_canonical_bytes": 3126,
+    "projects": [
+      {
+        "project": "demo-studio/website",
+        "referenced_canonical_bytes": 4024,
+        "exclusive_within_population_canonical_bytes": 3126,
+        "shared_within_population_canonical_bytes": 0
+      }
+    ],
+    "physical_bytes": null,
+    "reclaimable_bytes": null,
+    "physical_reason": "Canonical reachability within the supplied population does not attribute encoded packs, delta bases, database overhead or reclaimable disk bytes",
+    "scope": "project",
+    "project": "demo-studio/website",
+    "selection": {
+      "scope": "project_saved_revisions",
+      "limit": 20,
+      "selected": 2,
+      "hasEarlier": false,
+      "head": {
+        "id": "325f2c63948c6c63abe733c28efe9c3850cbb69a6332684ba26fccc8b4a5c5c24f",
+        "kind": "Layer",
+        "branch": "main",
+        "root": "182fa7b2303f8bd63c5d2f75bb2db31a27da8b96cb86e45fd97c6b5d81231f48"
+      }
+    }
+  },
+  "store_analysis": {
+    "definition_version": 1,
+    "population_id": "cdcd03adc57c583fcb4e2b6f1c019832462d78f6e754698701fd56e4fc955dce",
+    "population": "explicit_saved_snapshots",
+    "snapshots": [
+      {
+        "project": "demo-studio/design",
+        "branch": "main",
+        "at": {
+          "id": "32f96cd53998be26243dd674d39e8d26777434bfccc4e5416463a5c0bed22859fa",
+          "kind": "Layer",
+          "branch": "main",
+          "root": "98df12f12f81454ab305f45b53cd15260eab7d5de2b50a27dde2d913d595e790"
+        }
+      },
+      {
+        "project": "demo-studio/website",
+        "branch": "main",
+        "at": {
+          "id": "325f2c63948c6c63abe733c28efe9c3850cbb69a6332684ba26fccc8b4a5c5c24f",
+          "kind": "Layer",
+          "branch": "main",
+          "root": "182fa7b2303f8bd63c5d2f75bb2db31a27da8b96cb86e45fd97c6b5d81231f48"
+        }
+      }
+    ],
+    "complete": true,
+    "examined_objects": 24,
+    "canonical_bytes_read": 4192,
+    "referenced_canonical_bytes": 4192,
+    "unique_canonical_bytes": 3571,
+    "projects": [
+      {
+        "project": "demo-studio/design",
+        "referenced_canonical_bytes": 2094,
+        "exclusive_within_population_canonical_bytes": 1473,
+        "shared_within_population_canonical_bytes": 621
+      },
+      {
+        "project": "demo-studio/website",
+        "referenced_canonical_bytes": 2098,
+        "exclusive_within_population_canonical_bytes": 1477,
+        "shared_within_population_canonical_bytes": 621
+      }
+    ],
+    "physical_bytes": null,
+    "reclaimable_bytes": null,
+    "physical_reason": "Canonical reachability within the supplied population does not attribute encoded packs, delta bases, database overhead or reclaimable disk bytes",
+    "scope": "store",
+    "name": "demo-studio",
+    "selection": {
+      "scope": "store_main_heads",
+      "limit": 20,
+      "selected": 2,
+      "availableProjects": 2,
+      "excludedProjects": 0,
+      "projects": [
+        "demo-studio/design",
+        "demo-studio/website"
+      ]
+    }
+  },
+  "observation_series": 1
+}

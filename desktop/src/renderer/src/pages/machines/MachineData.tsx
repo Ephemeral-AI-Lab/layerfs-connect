@@ -12,14 +12,11 @@ import type { ReactNode } from 'react'
 import { LfsStore } from '@/components/layerfs/LfsIcons'
 import { useProjectRows } from '@/layerfs/project-rows'
 import { useStorageView } from '@/components/layerfs/StoreFacts'
-import { useSimulation } from '@/components/layerfs/Simulation'
 import { StoreSection } from '@/pages/storage/StoreSection'
 import { JobChip } from '@/pages/storage/JobProgress'
 import { Card } from '@/pages/storage/RowParts'
 import { go } from '@/layerfs/go'
-import { SIMULATIONS } from '@/layerfs/compute-sim'
 import { bytes } from '@/layerfs/format'
-import { simStorage } from '@/layerfs/home-sim'
 import { useProjects } from '@/layerfs/use-projects'
 import { useStorageJobs } from '@/layerfs/storage-jobs'
 import { cn } from '@/lib/utils'
@@ -41,10 +38,8 @@ export function machineStoreCount(m: MachineInfo, sqlite: MachineStore[], postgr
 
 export function MachineData({ m, sqlite, postgresql, running, onOpenProject }: Props) {
   const { jobs } = useStorageJobs()
-  const simId = useSimulation()
-  const simulated = simId ? SIMULATIONS[simId] : null
   const liveStorage = useStorageView()
-  const storage = simulated ? simStorage(simulated) : liveStorage
+  const storage = liveStorage
   const rows = useProjectRows(useProjects())
   /** The job moving a Store onto or off this machine now. */
   const moving = (store: string) => jobs.find((j) => j.store === store && !j.ended && (j.target === m.name || j.from === m.name))

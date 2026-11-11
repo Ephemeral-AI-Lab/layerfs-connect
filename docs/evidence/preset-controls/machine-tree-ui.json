@@ -1,0 +1,37 @@
+{
+  "date": "2026-11-10",
+  "scope": "Machine-first preset plan and resource CLI selection",
+  "checks": {
+    "root_tests": 140,
+    "resource_matching_status_tests": 4,
+    "typecheck": "passed",
+    "desktop_build": "passed",
+    "diff_check": "passed"
+  },
+  "browser": {
+    "viewports": [
+      "1280x820",
+      "900x600"
+    ],
+    "verified": [
+      "Studio machine/store/project hierarchy",
+      "machine collapse preserves other machines; Enter expands focused control",
+      "Lima configured resources: 2 CPUs, 4G memory, 20G disk",
+      "store location and project membership",
+      "project planned branches and sandbox/workspaces",
+      "details open directly beneath selected row",
+      "project-related CLI plan: 20 commands; all plan: 164 commands for observed Studio inventory",
+      "recorded command link selects exact project.get invocation input/output",
+      "Empty plan contains built-in Native/Docker records and no projects",
+      "no horizontal overflow",
+      "no errors or unhandled rejections observed during final controls check"
+    ],
+    "environment_at_handoff": "Studio"
+  },
+  "limitations": [
+    "Existing environments were not reset or rebuilt for this UI change.",
+    "Running/failure row mapping validated by focused tests, not a new live build.",
+    "Ready describes latest verified build; tree is a preset plan, not live resource health.",
+    "Native Electron UI not launched."
+  ]
+}

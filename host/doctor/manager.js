@@ -6,6 +6,7 @@ import { execute } from '../cli/spawn.js'
 import { discover } from '../cli/capabilities.js'
 import { stringify } from '../cli/json.js'
 import { validateReport } from './report.js'
+import { activityContext, withActivity } from '../activity/context.js'
 
 const targets = new Set(['host', 'machine', 'sandbox', 'store.integrity', 'store.connection', 'backup.connection'])
 const invalid = (message) => Object.assign(new Error(message), { status: 400, code: 'InvalidInput' })
@@ -17,6 +18,7 @@ export class DoctorManager extends EventEmitter {
     this.file = join(spec.state, 'doctor-jobs.json')
     this.jobs = new Map()
     this.active = 0
+    this.activityContexts = new WeakMap()
     if (existsSync(this.file)) for (const job of JSON.parse(readFileSync(this.file, 'utf8'))) {
       if (['queued', 'running'].includes(job.state)) Object.assign(job, { state: 'interrupted', error: 'Interrupted — final result unavailable after host restart.', ended: Date.now() })
       this.jobs.set(job.id, job)
@@ -55,8 +57,9 @@ export class DoctorManager extends EventEmitter {
     }
     if (target === 'store.integrity' && [...this.jobs.values()].some(j => ['queued', 'running'].includes(j.state) && j.request.target === target && j.request.name === name)) throw Object.assign(new Error('An integrity audit is already queued or running for this Store.'), { status: 409 })
     if ([...this.jobs.values()].filter(j => ['queued', 'running'].includes(j.state)).length >= this.maxReports) throw Object.assign(new Error('Doctor queue is full; wait for an active diagnosis to finish.'), { status: 409 })
-    const job = { id: randomUUID(), key, request: { target, name, timeout, quick, write_test }, state: 'queued', created: Date.now(), simulated: this.spec.mode === 'sim', identity: capability.identity }
+    const job = { id: randomUUID(), key, request: { target, name, timeout, quick, write_test }, state: 'queued', created: Date.now(), simulated: false, identity: capability.identity }
     this.jobs.set(job.id, job)
+    this.activityContexts.set(job, activityContext())
     this.changed(job)
     void this.drain()
     return job
@@ -71,7 +74,7 @@ export class DoctorManager extends EventEmitter {
     const request = job.request
     const argv = ['doctor', ...request.target.split('.'), ...(request.name ? [request.name] : []), ...(request.quick ? ['--quick'] : []), ...(request.write_test ? ['--write-test'] : []), ...(request.timeout ? ['--timeout', request.timeout] : [])]
     try {
-      job.report = validateReport(await this.run(this.spec, argv, { read: true, onSpawn: child => { job.pid = child.pid; this.changed(job) } }), request)
+      job.report = validateReport(await withActivity(this.activityContexts.get(job), () => this.run(this.spec, argv, { read: true, onSpawn: child => { job.pid = child.pid; this.changed(job) } })), request)
       job.state = 'completed'
       if (Buffer.byteLength(stringify(job)) > this.maxBytes / 2) { delete job.report; job.error = 'Report exceeded the retention budget; final report unavailable.' }
     } catch (error) {

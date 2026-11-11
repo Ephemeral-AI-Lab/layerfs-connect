@@ -1,0 +1,84 @@
+{"event": "start", "at": 1794227059.557585, "args": ["--version"]}
+{"event": "end", "at": 1794227059.597058, "seconds": 0.03947305679321289, "args": ["--version"], "exit": 0}
+{"event": "start", "at": 1794227059.669657, "args": ["list", "--format", "{{.Status}}\t{{.Dir}}", "lfs-9db6904d-seed"]}
+{"event": "end", "at": 1794227059.709174, "seconds": 0.03951692581176758, "args": ["list", "--format", "{{.Status}}\t{{.Dir}}", "lfs-9db6904d-seed"], "exit": 1}
+{"event": "start", "at": 1794227059.773113, "args": ["disk", "list", "--json"]}
+{"event": "end", "at": 1794227059.812066, "seconds": 0.03895306587219238, "args": ["disk", "list", "--json"], "exit": 0}
+{"event": "start", "at": 1794227059.873034, "args": ["disk", "create", "lfsf4ad03a9", "--size", "20480MiB", "--format", "raw"]}
+{"event": "end", "at": 1794227060.004127, "seconds": 0.13109397888183594, "args": ["disk", "create", "lfsf4ad03a9", "--size", "20480MiB", "--format", "raw"], "exit": 0}
+{"event": "start", "at": 1794227060.0793338, "args": ["create", "--name", "lfs-9db6904d-seed", "--tty=false", "-"]}
+{"event": "end", "at": 1794227062.23006, "seconds": 2.150726318359375, "args": ["create", "--name", "lfs-9db6904d-seed", "--tty=false", "-"], "exit": 0}
+{"event": "start", "at": 1794227062.300436, "args": ["start", "--tty=false", "lfs-9db6904d-seed"]}
+{"event": "end", "at": 1794227078.704894, "seconds": 16.40445899963379, "args": ["start", "--tty=false", "lfs-9db6904d-seed"], "exit": 0}
+{"event": "start", "at": 1794227078.790644, "args": ["list", "--format", "{{.Status}}\t{{.Dir}}", "lfs-9db6904d-seed"]}
+{"event": "end", "at": 1794227078.834388, "seconds": 0.04374504089355469, "args": ["list", "--format", "{{.Status}}\t{{.Dir}}", "lfs-9db6904d-seed"], "exit": 0}
+{"event": "start", "at": 1794227142.417844, "args": ["--version"]}
+{"event": "end", "at": 1794227142.4539268, "seconds": 0.03608274459838867, "args": ["--version"], "exit": 0}
+{"event": "start", "at": 1794227142.51381, "args": ["list", "--format", "{{.Status}}\t{{.Dir}}", "lfs-9db6904d-preinstalled"]}
+{"event": "end", "at": 1794227142.549373, "seconds": 0.035562992095947266, "args": ["list", "--format", "{{.Status}}\t{{.Dir}}", "lfs-9db6904d-preinstalled"], "exit": 1}
+{"event": "start", "at": 1794227142.610231, "args": ["disk", "list", "--json"]}
+{"event": "end", "at": 1794227142.6486778, "seconds": 0.03844809532165527, "args": ["disk", "list", "--json"], "exit": 0}
+{"event": "start", "at": 1794227142.711755, "args": ["disk", "create", "lfs812c48fb", "--size", "20480MiB", "--format", "raw"]}
+{"event": "end", "at": 1794227142.848137, "seconds": 0.136383056640625, "args": ["disk", "create", "lfs812c48fb", "--size", "20480MiB", "--format", "raw"], "exit": 0}
+{"event": "start", "at": 1794227142.91183, "args": ["create", "--name", "lfs-9db6904d-preinstalled", "--tty=false", "-"]}
+{"event": "end", "at": 1794227143.174382, "seconds": 0.26255202293395996, "args": ["create", "--name", "lfs-9db6904d-preinstalled", "--tty=false", "-"], "exit": 0}
+{"event": "start", "at": 1794227143.235242, "args": ["start", "--tty=false", "lfs-9db6904d-preinstalled"]}
+{"event": "end", "at": 1794227153.7304509, "seconds": 10.49521017074585, "args": ["start", "--tty=false", "lfs-9db6904d-preinstalled"], "exit": 0}
+{"event": "start", "at": 1794227153.797392, "args": ["list", "--format", "{{.Status}}\t{{.Dir}}", "lfs-9db6904d-preinstalled"]}
+{"event": "end", "at": 1794227153.8346171, "seconds": 0.03722524642944336, "args": ["list", "--format", "{{.Status}}\t{{.Dir}}", "lfs-9db6904d-preinstalled"], "exit": 0}
+{"event": "start", "at": 1794227230.572203, "args": ["--version"]}
+{"event": "end", "at": 1794227230.6142359, "seconds": 0.04203391075134277, "args": ["--version"], "exit": 0}
+{"event": "start", "at": 1794227230.69187, "args": ["list", "--format", "{{.Status}}\t{{.Dir}}", "lfs-9db6904d-trimmed"]}
+{"event": "end", "at": 1794227230.728585, "seconds": 0.036715030670166016, "args": ["list", "--format", "{{.Status}}\t{{.Dir}}", "lfs-9db6904d-trimmed"], "exit": 1}
+{"event": "start", "at": 1794227230.789564, "args": ["disk", "list", "--json"]}
+{"event": "end", "at": 1794227230.829279, "seconds": 0.03971505165100098, "args": ["disk", "list", "--json"], "exit": 0}
+{"event": "start", "at": 1794227230.88783, "args": ["disk", "create", "lfs53239bca", "--size", "20480MiB", "--format", "raw"]}
+{"event": "end", "at": 1794227231.0051851, "seconds": 0.1173560619354248, "args": ["disk", "create", "lfs53239bca", "--size", "20480MiB", "--format", "raw"], "exit": 0}
+{"event": "start", "at": 1794227231.066255, "args": ["create", "--name", "lfs-9db6904d-trimmed", "--tty=false", "-"]}
+{"event": "end", "at": 1794227231.319901, "seconds": 0.2536468505859375, "args": ["create", "--name", "lfs-9db6904d-trimmed", "--tty=false", "-"], "exit": 0}
+{"event": "start", "at": 1794227231.383614, "args": ["start", "--tty=false", "lfs-9db6904d-trimmed"]}
+{"event": "end", "at": 1794227241.101773, "seconds": 9.718159914016724, "args": ["start", "--tty=false", "lfs-9db6904d-trimmed"], "exit": 0}
+{"event": "start", "at": 1794227241.17422, "args": ["list", "--format", "{{.Status}}\t{{.Dir}}", "lfs-9db6904d-trimmed"]}
+{"event": "end", "at": 1794227241.213313, "seconds": 0.039093017578125, "args": ["list", "--format", "{{.Status}}\t{{.Dir}}", "lfs-9db6904d-trimmed"], "exit": 0}
+{"event": "start", "at": 1794227386.5431721, "args": ["--version"]}
+{"event": "end", "at": 1794227386.580697, "seconds": 0.03752493858337402, "args": ["--version"], "exit": 0}
+{"event": "start", "at": 1794227386.6431098, "args": ["list", "--format", "{{.Status}}\t{{.Dir}}", "lfs-9db6904d-specialized"]}
+{"event": "end", "at": 1794227386.683451, "seconds": 0.040342092514038086, "args": ["list", "--format", "{{.Status}}\t{{.Dir}}", "lfs-9db6904d-specialized"], "exit": 1}
+{"event": "start", "at": 1794227386.7460082, "args": ["disk", "list", "--json"]}
+{"event": "end", "at": 1794227386.7825248, "seconds": 0.03651785850524902, "args": ["disk", "list", "--json"], "exit": 0}
+{"event": "start", "at": 1794227386.8476212, "args": ["disk", "create", "lfsa3de5760", "--size", "20480MiB", "--format", "raw"]}
+{"event": "end", "at": 1794227386.9730701, "seconds": 0.12544894218444824, "args": ["disk", "create", "lfsa3de5760", "--size", "20480MiB", "--format", "raw"], "exit": 0}
+{"event": "start", "at": 1794227387.03676, "args": ["create", "--name", "lfs-9db6904d-specialized", "--tty=false", "-"]}
+{"event": "end", "at": 1794227387.408065, "seconds": 0.3713059425354004, "args": ["create", "--name", "lfs-9db6904d-specialized", "--tty=false", "-"], "exit": 0}
+{"event": "start", "at": 1794227387.4784188, "args": ["start", "--tty=false", "lfs-9db6904d-specialized"]}
+{"event": "end", "at": 1794227394.292778, "seconds": 6.81436014175415, "args": ["start", "--tty=false", "lfs-9db6904d-specialized"], "exit": 0}
+{"event": "start", "at": 1794227394.358725, "args": ["list", "--format", "{{.Status}}\t{{.Dir}}", "lfs-9db6904d-specialized"]}
+{"event": "end", "at": 1794227394.396387, "seconds": 0.03766298294067383, "args": ["list", "--format", "{{.Status}}\t{{.Dir}}", "lfs-9db6904d-specialized"], "exit": 0}
+{"event": "start", "at": 1794227534.7390158, "args": ["--version"]}
+{"event": "end", "at": 1794227534.771936, "seconds": 0.032920122146606445, "args": ["--version"], "exit": 0}
+{"event": "start", "at": 1794227534.845014, "args": ["list", "--format", "{{.Status}}\t{{.Dir}}", "lfs-9db6904d-matchedstock"]}
+{"event": "end", "at": 1794227534.879585, "seconds": 0.034570932388305664, "args": ["list", "--format", "{{.Status}}\t{{.Dir}}", "lfs-9db6904d-matchedstock"], "exit": 1}
+{"event": "start", "at": 1794227534.933942, "args": ["disk", "list", "--json"]}
+{"event": "end", "at": 1794227534.977813, "seconds": 0.04387187957763672, "args": ["disk", "list", "--json"], "exit": 0}
+{"event": "start", "at": 1794227535.037567, "args": ["disk", "create", "lfsc080e9e2", "--size", "20480MiB", "--format", "raw"]}
+{"event": "end", "at": 1794227535.172239, "seconds": 0.1346721649169922, "args": ["disk", "create", "lfsc080e9e2", "--size", "20480MiB", "--format", "raw"], "exit": 0}
+{"event": "start", "at": 1794227535.240016, "args": ["create", "--name", "lfs-9db6904d-matchedstock", "--tty=false", "-"]}
+{"event": "end", "at": 1794227537.4692779, "seconds": 2.229261875152588, "args": ["create", "--name", "lfs-9db6904d-matchedstock", "--tty=false", "-"], "exit": 0}
+{"event": "start", "at": 1794227537.535166, "args": ["start", "--tty=false", "lfs-9db6904d-matchedstock"]}
+{"event": "end", "at": 1794227551.038083, "seconds": 13.502918004989624, "args": ["start", "--tty=false", "lfs-9db6904d-matchedstock"], "exit": 0}
+{"event": "start", "at": 1794227551.121779, "args": ["list", "--format", "{{.Status}}\t{{.Dir}}", "lfs-9db6904d-matchedstock"]}
+{"event": "end", "at": 1794227551.165053, "seconds": 0.04327392578125, "args": ["list", "--format", "{{.Status}}\t{{.Dir}}", "lfs-9db6904d-matchedstock"], "exit": 0}
+{"event": "start", "at": 1794227574.047391, "args": ["--version"]}
+{"event": "end", "at": 1794227574.088425, "seconds": 0.04103493690490723, "args": ["--version"], "exit": 0}
+{"event": "start", "at": 1794227574.153732, "args": ["list", "--format", "{{.Status}}\t{{.Dir}}", "lfs-9db6904d-matchedoptimized"]}
+{"event": "end", "at": 1794227574.19457, "seconds": 0.040838003158569336, "args": ["list", "--format", "{{.Status}}\t{{.Dir}}", "lfs-9db6904d-matchedoptimized"], "exit": 1}
+{"event": "start", "at": 1794227574.259786, "args": ["disk", "list", "--json"]}
+{"event": "end", "at": 1794227574.304359, "seconds": 0.044573068618774414, "args": ["disk", "list", "--json"], "exit": 0}
+{"event": "start", "at": 1794227574.368618, "args": ["disk", "create", "lfs1a216fca", "--size", "20480MiB", "--format", "raw"]}
+{"event": "end", "at": 1794227574.439691, "seconds": 0.07107305526733398, "args": ["disk", "create", "lfs1a216fca", "--size", "20480MiB", "--format", "raw"], "exit": 0}
+{"event": "start", "at": 1794227574.509388, "args": ["create", "--name", "lfs-9db6904d-matchedoptimized", "--tty=false", "-"]}
+{"event": "end", "at": 1794227574.8159611, "seconds": 0.30657410621643066, "args": ["create", "--name", "lfs-9db6904d-matchedoptimized", "--tty=false", "-"], "exit": 0}
+{"event": "start", "at": 1794227574.896279, "args": ["start", "--tty=false", "lfs-9db6904d-matchedoptimized"]}
+{"event": "end", "at": 1794227581.542239, "seconds": 6.645960807800293, "args": ["start", "--tty=false", "lfs-9db6904d-matchedoptimized"], "exit": 0}
+{"event": "start", "at": 1794227581.746867, "args": ["list", "--format", "{{.Status}}\t{{.Dir}}", "lfs-9db6904d-matchedoptimized"]}
+{"event": "end", "at": 1794227582.0244741, "seconds": 0.27760791778564453, "args": ["list", "--format", "{{.Status}}\t{{.Dir}}", "lfs-9db6904d-matchedoptimized"], "exit": 0}

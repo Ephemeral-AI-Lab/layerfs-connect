@@ -3,7 +3,7 @@
 import { Bot, ChevronRight, LoaderCircle } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { childActive, type ChatMessage, type ChildRun } from '@/layerfs/agent-api'
-import { useScope } from '../scope'
+import { useScope, useScopeChildren } from '../scope'
 
 /** The children a subagent call started: by its run id, else by the call's own id. */
 export function childrenOf(message: ChatMessage, children: ChildRun[]): ChildRun[] {
@@ -13,7 +13,8 @@ export function childrenOf(message: ChatMessage, children: ChildRun[]): ChildRun
 }
 
 export function SubagentStep({ message }: { message: ChatMessage }) {
-  const { chatId, children, inChild } = useScope()
+  const { chatId, inChild } = useScope()
+  const children = useScopeChildren()
   const mine = inChild ? [] : childrenOf(message, children)
   const args = (message.args ?? {}) as { agent?: string; task?: string; tasks?: { agent?: string; task?: string }[]; chain?: { agent?: string; task?: string }[] }
   const planned = args.tasks ?? args.chain ?? (args.task ? [{ agent: args.agent, task: args.task }] : [])

@@ -31,7 +31,7 @@ import {
   type VmKind,
   declares,
 } from '@/data/compute'
-import type { MachineAction } from '@/data/compute-sim'
+import type { MachineAction } from '@/data/machine-actions'
 import { cn } from '@/lib/utils'
 import type { MachineInfo, MachinePlatformInfo } from '@shared/host-api'
 

@@ -1,3 +1,5 @@
+import { MachineProgress } from '@/pages/machines/MachineProgress'
+import { useMachineProgress } from '@/layerfs/use-machine-progress'
 import { useElapsed } from '@/layerfs/use-elapsed'
 import { host } from '@/layerfs/client'
 import { fill } from '@/lib/text'
@@ -20,7 +22,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input'
 import { BUILT_IN, downReason, gib, inUse, kindLabel, machineState, type Os, storesOn } from '@/layerfs/compute'
-import type { MachineAction } from '@/layerfs/compute-sim'
+import type { MachineAction } from '@/layerfs/machine-actions'
 import { clearingCall } from '@/layerfs/states'
 import { bytes, shortDigest } from '@/layerfs/format'
 import { cn } from '@/lib/utils'
@@ -60,7 +62,7 @@ export function PowerButton({ m, pending, run, className }: { m: MachineInfo; pe
   return (
     <Button size="sm" variant={power === 'stop' ? 'outline' : 'default'} className={cn('h-7 rounded-md px-2.5 text-sm', className)} disabled={pending !== null} title={fill(power === 'stop' ? '{name} is running.' : '{name} is stopped: its Stores and Sandboxes can’t be used until it starts.', { name: m.name })} onClick={() => void run(power, { kind: power, name: m.name })}>
       <Power className="size-3.5" />
-      {pending === 'start' ? `Starting… ${elapsed}s` : pending === 'stop' ? `Stopping… ${elapsed}s` : fill(power === 'stop' ? 'Stop' : 'Start')}
+      {pending === 'start' ? 'Starting…' : pending === 'stop' ? `Stopping… ${elapsed}s` : fill(m.platform === 'docker' ? power === 'stop' ? 'Stop worker' : 'Start worker' : power === 'stop' ? 'Stop' : 'Start')}
     </Button>
   )
 }
@@ -85,7 +87,7 @@ export function MachineMenu({ m, pending, run, onOpen, onDialog, className }: { 
         {power && (
           <DropdownMenuItem disabled={pending !== null} onSelect={() => void run(power, { kind: power, name: m.name })}>
             <Power />
-            {fill(power === 'stop' ? 'Stop' : 'Start')}
+            {fill(m.platform === 'docker' ? power === 'stop' ? 'Stop worker' : 'Start worker' : power === 'stop' ? 'Stop' : 'Start')}
           </DropdownMenuItem>
         )}
         {builtIn ? (
@@ -145,15 +147,17 @@ interface TileProps {
 
 /** A machine overview: identity, allocation, inventory, disk and manual power. */
 export function MachineTile({ m, view, os, act, onOpen }: TileProps) {
+  const startup = useMachineProgress(m.name)
   const live = view.status[m.name]
   const state = machineState(m, live)
-  const reason = downReason(m, live)
+  const reason = startup?.status === 'running' ? null : downReason(m, live)
   const stores = storesOn(view, m)
   const boxes = m.sandboxes.map(name => view.sandboxes.find(b => b.name === name) ?? { name, workspaces: null })
   const knownWorkspaces = boxes.reduce((n, b) => n + (b.workspaces ?? 0), 0)
   const workspaces = boxes.some(b => b.workspaces === null) ? knownWorkspaces > 0 ? `${knownWorkspaces}+` : '—' : knownWorkspaces
-  const attention = attentionOf(m, live)
-  const { run, pending, error } = useMachineRun(act)
+  const attention = startup?.status === 'running' ? null : attentionOf(m, live)
+  const { run, pending: localPending, error } = useMachineRun(act)
+  const pending = localPending ?? (startup?.status === 'running' ? startup.kind : null)
   const [inspection, setInspection] = useState<string | null>(null)
   const inspect = async () => { try { const answer = await host.inspectMachine(m.name); setInspection(`Observed ${new Date().toLocaleTimeString()}: ${answer.state ?? 'unknown'}`) } catch (e) { setInspection(e instanceof Error ? e.message : String(e)) } }
   const [dialog, setDialog] = useState<'settings' | 'remove' | null>(null)
@@ -207,8 +211,10 @@ export function MachineTile({ m, view, os, act, onOpen }: TileProps) {
         <div><span>Disk</span><span>{live?.freeDisk != null ? `${gib(live.freeDisk)} free (guest)${m.disk != null ? ` · ${gib(m.disk)} allocated` : ''}` : m.platform === 'native' ? 'Shared with this computer' : 'Free space not reported'}</span></div>
       </div>
 
+      {m.platform === 'docker' && m.state === 'stopped' && pending !== 'start' && <p className="px-5 pb-3 text-sm text-muted-foreground">LayerFS worker is stopped. Docker Desktop can be running independently. Start the worker to use LayerFS on Docker.</p>}
+      <MachineProgress name={m.name} compact />
       <footer className="machine-board-footer">
-        <StateChip entity="machine" state={state.state} op={state.op} />
+        {pending === 'start' ? <span className="text-sm font-medium">{m.platform === 'docker' ? 'Starting worker…' : 'Starting…'}</span> : <StateChip entity="machine" state={state.state} op={state.op} />}
         <div className="machine-board-control">{m.platform === 'native' ? <span className="machine-board-native">This computer</span> : <PowerButton m={m} pending={pending} run={run} />}</div>
       </footer>
       <MachineDialogs m={m} os={os} dialog={dialog} onClose={() => setDialog(null)} pending={pending} run={run} />

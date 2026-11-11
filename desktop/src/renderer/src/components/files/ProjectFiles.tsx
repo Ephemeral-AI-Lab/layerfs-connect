@@ -4,15 +4,11 @@ import { call } from '@/layerfs/client'
 import { useHostQuery } from '@/layerfs/use-host'
 import type { BranchInfo } from '@/layerfs/host-api'
 import { useEffect, useState } from 'react'
-import { previewBranches } from './file-preview-data'
-import { connectBridge } from '@/layerfs/bridge'
 import { FilesTab } from './FilesTab'
 
 /** Shared LayerFS browser for Storage projects and a chat's linked project. */
 export function ProjectFiles({ project, tick = 0, initialBranch }: { project: string; tick?: number; initialBranch?: string }) {
-  const [sample, setSample] = useState(false)
-  const available = import.meta.env.DEV && connectBridge.mode === 'sim' && project === 'shop/api'
-  return <>{available && <div className="fp-preview-notice"><span>{sample ? 'Sample data · read-only' : 'Browsing simulated CLI files'}</span><button onClick={() => setSample(v => !v)}>{sample ? 'Browse CLI files' : 'Open labelled design preview'}</button></div>}{sample && available ? <FilesTab project={project} branches={previewBranches} initialBranch={initialBranch} preview /> : <HostProjectFiles key={project} project={project} tick={tick} initialBranch={initialBranch} />}</>
+  return <HostProjectFiles key={project} project={project} tick={tick} initialBranch={initialBranch} />
 }
 
 function HostProjectFiles({ project, tick, initialBranch }: { project: string; tick: number; initialBranch?: string }) {

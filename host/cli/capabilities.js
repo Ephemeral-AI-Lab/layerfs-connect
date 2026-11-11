@@ -1,6 +1,7 @@
 import { execute } from './spawn.js'
 import { binary } from './binary.js'
 import { CliError } from './outcome.js'
+import { recordBinaryIdentity } from '../activity/recorder.js'
 const known = new Map()
 export let lastIdentity = null
 export function discover(spec = {}) {
@@ -14,6 +15,7 @@ export function discover(spec = {}) {
     }
     if (!help.switches.some((s) => s.name === '--events' && s.calls.includes('workspace.exec'))) throw new CliError('CliIncompatible', 'The selected CLI lacks framed execution', null, 'usage-incompatible')
     lastIdentity = identity
+    recordBinaryIdentity(key, identity)
     return { identity, ...help }
   })())
   return known.get(key)

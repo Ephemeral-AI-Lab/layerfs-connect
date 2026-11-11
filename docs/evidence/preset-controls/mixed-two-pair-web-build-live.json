@@ -1,0 +1,1177 @@
+{
+  "started": 1794300201031,
+  "scope": "Actual renderer Reset and build Studio; Mixed recipe version2; two exec/commit pairs per fresh workspace",
+  "context": {
+    "gateway": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/lfs-desktop-web-4oV3rQ",
+    "presets": "/Users/yifanxu/.layerfs-connect-demo"
+  },
+  "source": {
+    "tools/demo/runner.mjs": "e9730b00ba2e8f1a3bd5955ffe73bb7e248973f7cd4a3a8ab5f31437d55d78a6",
+    "tools/demo/recipe.mjs": "4ea619989fba850c673ae6e1a72069542c9ac3196d3a3b9668ff4c2b67d12a4d",
+    "tools/demo/dense-recipe.mjs": "15d252cedd5294c2ce3bdf886c5103d972812083707c7b945d01865ce3343a7e",
+    "tools/demo/mixed-recipe.mjs": "8a5bd501f489cac65a52f1055ef76d5942f479c2150734edfa77b79d41a0f495",
+    "tools/demo/history-scheduler.mjs": "e33b0666441877d043e9fd1695cb4b7ef8c608abcc4f3d67bf14438319bedd20",
+    "tools/demo/project-verification.mjs": "053b8601bb009e3507f1ffb4304586c8eb1357800a810096e13e32bb3b74844a",
+    "tools/demo/build.mjs": "525416fbfc88cd4c9c003d22f6e568fa55493eb9af89d56a0712d180b26836e2",
+    "host/demo-presets/manager.js": "081204828cf16cafa91f14d481eef6d88196c28a349749e2aec7995477e56a2f",
+    "desktop/src/renderer/src/components/presets/PresetControls.tsx": "d5f29743b4ddca53276b1289a112db57b4572c2a8278c2c29ba5da07032ea7cc",
+    "desktop/src/renderer/src/components/presets/PresetScript.tsx": "2437bd693e390ea6749d33506a9cf6a266f8a6f87184a0d1a831c206618e25e0",
+    "desktop/src/renderer/src/components/presets/PresetProgress.tsx": "5b67138691e5f6d8812bf4918942c9caa345c6549e8bcc08a3a882408f220e21",
+    "host/cli/spawn.js": "92c7cef7981b41102c9f928fede53043ad238ed773276b8a4f3df489cf3bf26a",
+    "host/activity/store.js": "6f5919e6c58ad1ac6a4c689f801b3b5fb01066628f19d1f379a751f207c92f32",
+    "host/activity/recorder.js": "ab12dce139166c9a0edd148b4e71c50b360d454b6ca484b59f31cf9ba010b909"
+  },
+  "ok": true,
+  "job": {
+    "id": "c7120f3c-222e-4725-875a-726604781211",
+    "requestId": "aa85966e-b9d4-4ab1-8841-567b8eb9b3fc",
+    "fingerprint": "[\"studio\",\"environment-reset\",\"mixed:6c343a92123df8e63892f954254d3222aa2b57553d1bce27571de04f5fc666e0\",true,true,\"mixed\"]",
+    "preset": "studio",
+    "command": "environment-reset",
+    "executionMode": "mixed",
+    "rebuild": true,
+    "actionId": "48e04743-529e-49e7-9649-9be2e65112f6",
+    "state": "completed",
+    "phase": "Environment reset verified. Selected preset rebuilt and verified.",
+    "created": 1794299489700,
+    "historyCleared": true,
+    "actionIds": [
+      "48e04743-529e-49e7-9649-9be2e65112f6",
+      "af800596-6534-4b6f-a98e-3b07577ad028"
+    ],
+    "progress": {
+      "stage": "verifying",
+      "completed": 8,
+      "total": 8,
+      "label": "Preset verified",
+      "tasks": [
+        {
+          "id": "demo-studio/website",
+          "project": "demo-studio/website",
+          "machine": "native",
+          "tier": 8,
+          "state": "completed",
+          "completed": 19568,
+          "total": 19568,
+          "commits": 10056,
+          "branches": 200,
+          "layers": 2095,
+          "targetCommits": 10056,
+          "targetBranches": 200,
+          "targetLayers": 2095,
+          "started": 1794299512737,
+          "ended": 1794300486044
+        },
+        {
+          "id": "demo-studio/design",
+          "project": "demo-studio/design",
+          "machine": "native",
+          "tier": 1,
+          "state": "completed",
+          "completed": 4662,
+          "total": 4662,
+          "commits": 2400,
+          "branches": 55,
+          "layers": 500,
+          "targetCommits": 2400,
+          "targetBranches": 55,
+          "targetLayers": 500,
+          "started": 1794299512739,
+          "ended": 1794299776582
+        },
+        {
+          "id": "demo-services/gateway",
+          "project": "demo-services/gateway",
+          "machine": "docker",
+          "tier": 7,
+          "state": "completed",
+          "completed": 15456,
+          "total": 15456,
+          "commits": 7944,
+          "branches": 160,
+          "layers": 1655,
+          "targetCommits": 7944,
+          "targetBranches": 160,
+          "targetLayers": 1655,
+          "started": 1794299512740,
+          "ended": 1794300147426
+        },
+        {
+          "id": "demo-services/billing",
+          "project": "demo-services/billing",
+          "machine": "docker",
+          "tier": 2,
+          "state": "completed",
+          "completed": 5176,
+          "total": 5176,
+          "commits": 2664,
+          "branches": 60,
+          "layers": 555,
+          "targetCommits": 2664,
+          "targetBranches": 60,
+          "targetLayers": 555,
+          "started": 1794299512741,
+          "ended": 1794299726676
+        },
+        {
+          "id": "demo-build-cache/compiler",
+          "project": "demo-build-cache/compiler",
+          "machine": "demo-build",
+          "tier": 6,
+          "state": "completed",
+          "completed": 12372,
+          "total": 12372,
+          "commits": 6360,
+          "branches": 130,
+          "layers": 1325,
+          "targetCommits": 6360,
+          "targetBranches": 130,
+          "targetLayers": 1325,
+          "started": 1794299512743,
+          "ended": 1794300160778
+        },
+        {
+          "id": "demo-build-cache/sdk",
+          "project": "demo-build-cache/sdk",
+          "machine": "demo-build",
+          "tier": 3,
+          "state": "completed",
+          "completed": 6204,
+          "total": 6204,
+          "commits": 3192,
+          "branches": 70,
+          "layers": 665,
+          "targetCommits": 3192,
+          "targetBranches": 70,
+          "targetLayers": 665,
+          "started": 1794299512744,
+          "ended": 1794299809494
+        },
+        {
+          "id": "demo-experiments/embeddings",
+          "project": "demo-experiments/embeddings",
+          "machine": "demo-research",
+          "tier": 5,
+          "state": "completed",
+          "completed": 9802,
+          "total": 9802,
+          "commits": 5040,
+          "branches": 105,
+          "layers": 1050,
+          "targetCommits": 5040,
+          "targetBranches": 105,
+          "targetLayers": 1050,
+          "started": 1794299512745,
+          "ended": 1794299888866
+        },
+        {
+          "id": "demo-experiments/evaluation",
+          "project": "demo-experiments/evaluation",
+          "machine": "demo-research",
+          "tier": 4,
+          "state": "completed",
+          "completed": 7746,
+          "total": 7746,
+          "commits": 3984,
+          "branches": 85,
+          "layers": 830,
+          "targetCommits": 3984,
+          "targetBranches": 85,
+          "targetLayers": 830,
+          "started": 1794299512747,
+          "ended": 1794299865025
+        }
+      ]
+    },
+    "started": 1794299490524,
+    "cleanup": {
+      "home": "/Users/yifanxu/.layerfs-connect-demo/studio/home-2",
+      "homeId": "3755bebd9f5d61a3f295ac80feba47a5",
+      "remove": {
+        "stores": [
+          "demo-build-cache",
+          "demo-experiments",
+          "demo-services",
+          "demo-studio"
+        ],
+        "sandboxes": [],
+        "machines": [
+          "demo-build",
+          "demo-research"
+        ],
+        "workspaces": []
+      },
+      "disconnect": [],
+      "unknownSandboxes": [],
+      "workspaceGroups": [],
+      "startMachines": [],
+      "detectedMachines": [
+        {
+          "name": "demo-build",
+          "state": "running",
+          "platform": "lima"
+        },
+        {
+          "name": "demo-research",
+          "state": "running",
+          "platform": "lima"
+        },
+        {
+          "name": "docker",
+          "state": "running",
+          "platform": "docker"
+        },
+        {
+          "name": "native",
+          "state": "ready",
+          "platform": "native"
+        }
+      ],
+      "projects": 8,
+      "stopDocker": true,
+      "scope": "environment",
+      "signature": "6c343a92123df8e63892f954254d3222aa2b57553d1bce27571de04f5fc666e0",
+      "actionId": "48e04743-529e-49e7-9649-9be2e65112f6",
+      "verified": true,
+      "completed": [
+        [
+          "store",
+          "remove",
+          "demo-build-cache"
+        ],
+        [
+          "store",
+          "remove",
+          "demo-experiments"
+        ],
+        [
+          "store",
+          "remove",
+          "demo-services"
+        ],
+        [
+          "store",
+          "remove",
+          "demo-studio"
+        ],
+        [
+          "machine",
+          "remove",
+          "demo-build"
+        ],
+        [
+          "machine",
+          "remove",
+          "demo-research"
+        ],
+        [
+          "machine",
+          "stop",
+          "docker"
+        ]
+      ],
+      "remaining": [],
+      "warnings": [],
+      "at": 1794299490523,
+      "ended": 1794299492319
+    },
+    "rebuildActionId": "af800596-6534-4b6f-a98e-3b07577ad028",
+    "presetVerified": true,
+    "ended": 1794300509932
+  },
+  "contentReady": true,
+  "settings": {
+    "sandboxes": false,
+    "executionMode": "mixed"
+  },
+  "active": "studio",
+  "busy": false,
+  "manifest": {
+    "tool": "layerfs-connect-demo",
+    "version": 1,
+    "id": "bb3b5035-880f-4286-b7af-5a4097a5e12a",
+    "preset": "studio",
+    "sandboxes": false,
+    "state": "/Users/yifanxu/.layerfs-connect-demo/studio",
+    "homeId": "3755bebd9f5d61a3f295ac80feba47a5",
+    "created": 1794231740295,
+    "resources": {
+      "machine": {
+        "demo-build": {
+          "owned": true,
+          "created": null,
+          "status": "ready"
+        },
+        "demo-research": {
+          "owned": true,
+          "created": null,
+          "status": "ready"
+        }
+      },
+      "store": {
+        "demo-services": {
+          "owned": true,
+          "created": 1794299512051,
+          "status": "ready"
+        },
+        "demo-studio": {
+          "owned": true,
+          "created": 1794299512064,
+          "status": "ready"
+        },
+        "demo-build-cache": {
+          "owned": true,
+          "created": 1794299512169,
+          "status": "ready"
+        },
+        "demo-experiments": {
+          "owned": true,
+          "created": 1794299512204,
+          "status": "ready"
+        }
+      },
+      "sandbox": {
+        "demo-mix-website-1": {
+          "owned": true,
+          "created": 1794299513833,
+          "status": "ready"
+        },
+        "demo-mix-design-1": {
+          "owned": true,
+          "created": 1794299513874,
+          "status": "ready"
+        },
+        "demo-mix-embeddings-1": {
+          "owned": true,
+          "created": 1794299514022,
+          "status": "ready"
+        },
+        "demo-mix-evaluation-1": {
+          "owned": true,
+          "created": 1794299514056,
+          "status": "ready"
+        },
+        "demo-mix-compiler-1": {
+          "owned": true,
+          "created": 1794299514048,
+          "status": "ready"
+        },
+        "demo-mix-sdk-1": {
+          "owned": true,
+          "created": 1794299514087,
+          "status": "ready"
+        },
+        "demo-mix-gateway-1": {
+          "owned": true,
+          "created": 1794299514093,
+          "status": "ready"
+        },
+        "demo-mix-billing-1": {
+          "owned": true,
+          "created": 1794299514100,
+          "status": "ready"
+        }
+      }
+    },
+    "projects": {
+      "demo-services/gateway": {
+        "seeded": true,
+        "verification": {
+          "project": "demo-services/gateway",
+          "tier": 7,
+          "cycles": 30,
+          "branches": 160,
+          "commits": 7944,
+          "merges": 62,
+          "publications": 1654,
+          "layers": 1655,
+          "filesVerified": 45,
+          "publicationReceiptsVerified": true,
+          "workspaceRevisions": 2880,
+          "authoredRevisions": 7882
+        }
+      },
+      "demo-studio/website": {
+        "seeded": true,
+        "verification": {
+          "project": "demo-studio/website",
+          "tier": 8,
+          "cycles": 38,
+          "branches": 200,
+          "commits": 10056,
+          "merges": 78,
+          "publications": 2094,
+          "layers": 2095,
+          "filesVerified": 42,
+          "publicationReceiptsVerified": true,
+          "workspaceRevisions": 3648,
+          "authoredRevisions": 9978
+        }
+      },
+      "demo-services/billing": {
+        "seeded": true,
+        "verification": {
+          "project": "demo-services/billing",
+          "tier": 2,
+          "cycles": 10,
+          "branches": 60,
+          "commits": 2664,
+          "merges": 22,
+          "publications": 554,
+          "layers": 555,
+          "filesVerified": 46,
+          "publicationReceiptsVerified": true,
+          "workspaceRevisions": 960,
+          "authoredRevisions": 2642
+        }
+      },
+      "demo-studio/design": {
+        "seeded": true,
+        "verification": {
+          "project": "demo-studio/design",
+          "tier": 1,
+          "cycles": 9,
+          "branches": 55,
+          "commits": 2400,
+          "merges": 20,
+          "publications": 499,
+          "layers": 500,
+          "filesVerified": 44,
+          "publicationReceiptsVerified": true,
+          "workspaceRevisions": 864,
+          "authoredRevisions": 2380
+        }
+      },
+      "demo-build-cache/compiler": {
+        "seeded": true,
+        "verification": {
+          "project": "demo-build-cache/compiler",
+          "tier": 6,
+          "cycles": 24,
+          "branches": 130,
+          "commits": 6360,
+          "merges": 50,
+          "publications": 1324,
+          "layers": 1325,
+          "filesVerified": 46,
+          "publicationReceiptsVerified": true,
+          "workspaceRevisions": 2304,
+          "authoredRevisions": 6310
+        }
+      },
+      "demo-build-cache/sdk": {
+        "seeded": true,
+        "verification": {
+          "project": "demo-build-cache/sdk",
+          "tier": 3,
+          "cycles": 12,
+          "branches": 70,
+          "commits": 3192,
+          "merges": 26,
+          "publications": 664,
+          "layers": 665,
+          "filesVerified": 47,
+          "publicationReceiptsVerified": true,
+          "workspaceRevisions": 1152,
+          "authoredRevisions": 3166
+        }
+      },
+      "demo-experiments/embeddings": {
+        "seeded": true,
+        "verification": {
+          "project": "demo-experiments/embeddings",
+          "tier": 5,
+          "cycles": 19,
+          "branches": 105,
+          "commits": 5040,
+          "merges": 40,
+          "publications": 1049,
+          "layers": 1050,
+          "filesVerified": 45,
+          "publicationReceiptsVerified": true,
+          "workspaceRevisions": 1824,
+          "authoredRevisions": 5000
+        }
+      },
+      "demo-experiments/evaluation": {
+        "seeded": true,
+        "verification": {
+          "project": "demo-experiments/evaluation",
+          "tier": 4,
+          "cycles": 15,
+          "branches": 85,
+          "commits": 3984,
+          "merges": 32,
+          "publications": 829,
+          "layers": 830,
+          "filesVerified": 44,
+          "publicationReceiptsVerified": true,
+          "workspaceRevisions": 1440,
+          "authoredRevisions": 3952
+        }
+      }
+    },
+    "borrowed": {
+      "docker": {
+        "initially": "stopped",
+        "started": true
+      }
+    },
+    "presetOperation": {
+      "id": "af800596-6534-4b6f-a98e-3b07577ad028",
+      "actionId": "af800596-6534-4b6f-a98e-3b07577ad028",
+      "command": "setup",
+      "preset": "studio",
+      "pid": 76843,
+      "created": 1794299492326,
+      "state": "completed",
+      "phase": "Preset is ready and verified",
+      "historyCleared": false,
+      "progress": {
+        "stage": "verifying",
+        "completed": 8,
+        "total": 8,
+        "label": "Preset verified",
+        "tasks": [
+          {
+            "id": "demo-studio/website",
+            "project": "demo-studio/website",
+            "machine": "native",
+            "tier": 8,
+            "state": "completed",
+            "completed": 19568,
+            "total": 19568,
+            "commits": 10056,
+            "branches": 200,
+            "layers": 2095,
+            "targetCommits": 10056,
+            "targetBranches": 200,
+            "targetLayers": 2095,
+            "started": 1794299512737,
+            "ended": 1794300486044
+          },
+          {
+            "id": "demo-studio/design",
+            "project": "demo-studio/design",
+            "machine": "native",
+            "tier": 1,
+            "state": "completed",
+            "completed": 4662,
+            "total": 4662,
+            "commits": 2400,
+            "branches": 55,
+            "layers": 500,
+            "targetCommits": 2400,
+            "targetBranches": 55,
+            "targetLayers": 500,
+            "started": 1794299512739,
+            "ended": 1794299776582
+          },
+          {
+            "id": "demo-services/gateway",
+            "project": "demo-services/gateway",
+            "machine": "docker",
+            "tier": 7,
+            "state": "completed",
+            "completed": 15456,
+            "total": 15456,
+            "commits": 7944,
+            "branches": 160,
+            "layers": 1655,
+            "targetCommits": 7944,
+            "targetBranches": 160,
+            "targetLayers": 1655,
+            "started": 1794299512740,
+            "ended": 1794300147426
+          },
+          {
+            "id": "demo-services/billing",
+            "project": "demo-services/billing",
+            "machine": "docker",
+            "tier": 2,
+            "state": "completed",
+            "completed": 5176,
+            "total": 5176,
+            "commits": 2664,
+            "branches": 60,
+            "layers": 555,
+            "targetCommits": 2664,
+            "targetBranches": 60,
+            "targetLayers": 555,
+            "started": 1794299512741,
+            "ended": 1794299726676
+          },
+          {
+            "id": "demo-build-cache/compiler",
+            "project": "demo-build-cache/compiler",
+            "machine": "demo-build",
+            "tier": 6,
+            "state": "completed",
+            "completed": 12372,
+            "total": 12372,
+            "commits": 6360,
+            "branches": 130,
+            "layers": 1325,
+            "targetCommits": 6360,
+            "targetBranches": 130,
+            "targetLayers": 1325,
+            "started": 1794299512743,
+            "ended": 1794300160778
+          },
+          {
+            "id": "demo-build-cache/sdk",
+            "project": "demo-build-cache/sdk",
+            "machine": "demo-build",
+            "tier": 3,
+            "state": "completed",
+            "completed": 6204,
+            "total": 6204,
+            "commits": 3192,
+            "branches": 70,
+            "layers": 665,
+            "targetCommits": 3192,
+            "targetBranches": 70,
+            "targetLayers": 665,
+            "started": 1794299512744,
+            "ended": 1794299809494
+          },
+          {
+            "id": "demo-experiments/embeddings",
+            "project": "demo-experiments/embeddings",
+            "machine": "demo-research",
+            "tier": 5,
+            "state": "completed",
+            "completed": 9802,
+            "total": 9802,
+            "commits": 5040,
+            "branches": 105,
+            "layers": 1050,
+            "targetCommits": 5040,
+            "targetBranches": 105,
+            "targetLayers": 1050,
+            "started": 1794299512745,
+            "ended": 1794299888866
+          },
+          {
+            "id": "demo-experiments/evaluation",
+            "project": "demo-experiments/evaluation",
+            "machine": "demo-research",
+            "tier": 4,
+            "state": "completed",
+            "completed": 7746,
+            "total": 7746,
+            "commits": 3984,
+            "branches": 85,
+            "layers": 830,
+            "targetCommits": 3984,
+            "targetBranches": 85,
+            "targetLayers": 830,
+            "started": 1794299512747,
+            "ended": 1794299865025
+          }
+        ]
+      },
+      "ended": 1794300509930,
+      "presetVerified": true
+    },
+    "lastSetupActionId": "af800596-6534-4b6f-a98e-3b07577ad028",
+    "last": {
+      "command": "setup",
+      "at": 1794300509930,
+      "actionId": "af800596-6534-4b6f-a98e-3b07577ad028"
+    },
+    "contentVersion": 3,
+    "stepJournal": {
+      "version": 1,
+      "file": "demo-steps.ndjson",
+      "records": 243023
+    },
+    "executionMode": "mixed",
+    "mixedRecipeVersion": 2,
+    "activityCapture": {
+      "complete": true,
+      "verifiedAt": 1794300509927,
+      "expectedMutations": 81005,
+      "cliInvocations": 84996,
+      "actions": [
+        {
+          "actionId": "af800596-6534-4b6f-a98e-3b07577ad028",
+          "complete": true,
+          "expected": 81005,
+          "count": 84996,
+          "queued": 81005,
+          "started": 81005,
+          "finished": 81005,
+          "outputCaptured": 81005,
+          "failedCount": 0,
+          "truncatedCount": 0,
+          "expectedTruncated": 0,
+          "expectedInputMissing": [],
+          "expectedInputMissingCount": 0,
+          "missingIds": [],
+          "missingCount": 0,
+          "unexpectedIds": [
+            "b108446a-db1a-48d2-91b1-346f1cbe815e",
+            "1ee1f665-ab1e-4775-8201-7d03e6fdfcd3",
+            "1342da82-ec66-4249-9b87-bb3d903b3992",
+            "b364af01-9099-4c2e-be0c-7afef7ac7902",
+            "1a2c8d8c-1c57-4fe6-81a4-865e716061b5",
+            "11a0c25e-c59a-4dce-bf6c-04ebb50f0845",
+            "8467e169-43f5-459a-a670-7c74603d8758",
+            "4b82b921-f526-4c31-baf9-49e8654d8ea1",
+            "129380b2-218f-4c8a-8cc5-97f61025cc06",
+            "c34451d7-7e7f-4865-a672-454be998053a",
+            "278facee-09c2-4bb9-9191-fd1c224a2982",
+            "2f5aa316-727f-4cba-beb6-13f5f25a7163",
+            "23f70bd4-c812-4261-a93a-def72bbb8d80",
+            "86b737df-e27c-4c5b-a415-1d64a4683904",
+            "d51caa97-625b-4549-93b0-3647d28aa57a",
+            "a4411c13-8d59-4737-b3a3-3f7e39b405b9",
+            "3ab1eb73-5f76-4a59-ac39-3dc30051cb2c",
+            "ef48243d-e876-4db6-972c-c513ee4ad4b2",
+            "71adfc75-a219-4d2e-82e6-4e90b0160561",
+            "804816d4-8434-49d2-8828-5c3443f224e6",
+            "a8043f49-a67a-4dd1-b308-4ed657f19983",
+            "bae36872-340f-44f5-ba08-a9332021918a",
+            "6ae395f6-43a0-4234-a6fb-39222ea78f7e",
+            "3c60f250-264d-4a5d-a8a5-7ac4aa8e2568",
+            "e2701c2f-1538-4f10-8c03-a7a860b75ba9",
+            "9bf6e9ec-def2-4b16-8c0a-0d4f8da858b3",
+            "6c646544-999c-4084-a6e1-62b6865018b9",
+            "d937fd53-ca80-49f5-895f-3e247c600625",
+            "0bf8f21d-96a6-4a32-92ec-835de9dbce90",
+            "13cfed91-e2bd-4d4d-81b0-7779b24a01b5",
+            "0746b444-352e-4a1d-b575-08b100ff11e1",
+            "7ef0510d-95de-40ce-9f70-aaa625caf9db",
+            "96fa14d2-d35a-4685-95a0-ba4ac3bbee21",
+            "fecf0507-a2c2-45aa-a658-5fc74592d676",
+            "22aff7c4-2821-43dd-92ee-84b245b81b56",
+            "4863df2e-0e95-46fc-90a1-0e64b4da79f3",
+            "6d9baf48-3889-4a04-a393-1c77ca22e196",
+            "42b9f5f5-cf92-438b-80fb-d7231def0512",
+            "76b7e4c4-08bd-4774-a05b-cf759c175146",
+            "0edb2aa1-084d-4e31-9718-076a03de7aef",
+            "1749b59b-d84f-4217-ab2d-114189695065",
+            "a30d24ec-333e-4035-8c9e-980a1ec165de",
+            "14c0c891-b50b-4d47-84b2-1a90c5624856",
+            "5b8b8c7a-7ab4-4cc0-9599-044cf0a7ad2e",
+            "0dceae2c-d80a-47c8-8e39-cb996951fc0c",
+            "53fd13e6-b677-4fdb-9d03-ffb9103e5870",
+            "171fe4a1-6f13-4ab0-8e45-2e56aee8b830",
+            "9bdd5a00-7e2b-4a3e-879c-a929edc03695",
+            "86f505d6-3436-4305-9797-efcb55ee7dbe",
+            "56f14b45-52a6-4e2c-84c0-38cdc616a595",
+            "db72499f-751b-4509-a63e-95d6e31846a3",
+            "62516348-4a48-451d-b341-8bc0af056e13",
+            "36b4e7c5-cb3a-4937-b734-af889594a772",
+            "5dde9dfc-b189-4eba-b521-4c4d1f2c9b39",
+            "f8306205-5f87-4a5c-9c78-6d14f3c4df1d",
+            "6ffd6035-4fb4-4c4d-b00f-75fcdfebd4dd",
+            "063666a2-cb35-45f3-bac4-a01fcee42ceb",
+            "6f4e8e43-7bfe-4f29-a1a4-671ece0018f0",
+            "bd880768-8d84-41d2-9766-7fbc1c8c1209",
+            "e89d633e-e0eb-4171-bc49-709ec1c2b7d7",
+            "4f707b9a-1493-4be7-906b-4311d66b9dee",
+            "c9c21967-3312-4141-b861-1113c29cae45",
+            "61a954d5-b8ce-4e61-8a70-770935744cfc",
+            "42207f56-09ff-4cf2-9598-8f32e24772cf",
+            "0af73eaa-9c7a-4d00-82a0-efa88965786d",
+            "6a588a48-7329-4586-85c7-1ca0279d84f9",
+            "62b5d21e-6341-4946-8af9-29b59479efd4",
+            "215d09c7-303a-4de7-aab2-7be5ce4ae85c",
+            "fc2e577f-ec6b-40e6-a4dc-2742bb3911f3",
+            "f186ecb6-04d2-4ac1-89c9-55cfc832e10e",
+            "a8067006-b08b-4b41-8eb2-98482b2cb6f6",
+            "0ece0dbd-6d74-4885-9e80-c1363a4a274a",
+            "c824581f-8558-4961-afd3-1ecfcc18da03",
+            "eada2b5e-095b-47df-a46e-31b93b14105a",
+            "a0868669-b84e-495a-8306-866b51053312",
+            "7e76535b-b7a4-415d-8e39-6acfe35cc343",
+            "25982029-a271-4725-bed1-af97653a99df",
+            "92f183df-9d3d-4891-bce2-4161cf189320",
+            "17cb94f8-04c7-4fe9-9f99-a722cabc9bcd",
+            "288262c0-7f68-4300-bfe2-c64915e244ad",
+            "8418b4e3-6915-4a64-90a6-eb62de9049bc",
+            "f61c059b-258b-49f2-93f7-0d92621e452d",
+            "23c48e7e-6284-4370-afba-f0728fb49720",
+            "0c4209a4-983f-4a4e-8b42-5c282efdc78c",
+            "e4ea5f36-d28e-4448-9b12-9e77ac182cd5",
+            "250a6cfc-382f-49ae-baf8-c3a44a384bd9",
+            "c9a6e397-9078-4eee-85d7-b5f07aac5356",
+            "910aeaea-4e6c-4759-b6d6-cfe2b1af00b2",
+            "849dd8e6-cd9f-49d4-8244-7b4f2bb13f26",
+            "4b63eed0-3c86-4d05-827c-e1328d46b774",
+            "1347fd12-5a4a-45bc-9696-f99a9627c096",
+            "bf98aee6-cbfe-46da-a5ed-f075a370a94c",
+            "aa67ee93-f36c-42c8-aac1-2f3c3b844512",
+            "0ca51f18-d271-4484-ae47-8bda29219afd",
+            "a2a2276d-5535-4eb9-b941-56ab3371aeeb",
+            "fb9ee568-44cf-4b80-b8d4-0ae564508e94",
+            "c311ac3b-4c22-498f-ac4d-4c4ca774d775",
+            "e2cb4b31-5710-4e7f-b257-21b73c25b524",
+            "261d66db-0982-4445-aad6-30a6e6701ee6",
+            "0c411933-a4b4-4e75-b532-36bf7fb6130c"
+          ],
+          "unexpectedCount": 3991,
+          "incomplete": 0,
+          "warning": null
+        }
+      ]
+    },
+    "steps": {}
+  },
+  "finished": 1794300511632,
+  "sourceAfter": {
+    "tools/demo/runner.mjs": "e9730b00ba2e8f1a3bd5955ffe73bb7e248973f7cd4a3a8ab5f31437d55d78a6",
+    "tools/demo/recipe.mjs": "4ea619989fba850c673ae6e1a72069542c9ac3196d3a3b9668ff4c2b67d12a4d",
+    "tools/demo/dense-recipe.mjs": "15d252cedd5294c2ce3bdf886c5103d972812083707c7b945d01865ce3343a7e",
+    "tools/demo/mixed-recipe.mjs": "8a5bd501f489cac65a52f1055ef76d5942f479c2150734edfa77b79d41a0f495",
+    "tools/demo/history-scheduler.mjs": "e33b0666441877d043e9fd1695cb4b7ef8c608abcc4f3d67bf14438319bedd20",
+    "tools/demo/project-verification.mjs": "053b8601bb009e3507f1ffb4304586c8eb1357800a810096e13e32bb3b74844a",
+    "tools/demo/build.mjs": "525416fbfc88cd4c9c003d22f6e568fa55493eb9af89d56a0712d180b26836e2",
+    "host/demo-presets/manager.js": "081204828cf16cafa91f14d481eef6d88196c28a349749e2aec7995477e56a2f",
+    "desktop/src/renderer/src/components/presets/PresetControls.tsx": "d5f29743b4ddca53276b1289a112db57b4572c2a8278c2c29ba5da07032ea7cc",
+    "desktop/src/renderer/src/components/presets/PresetScript.tsx": "2437bd693e390ea6749d33506a9cf6a266f8a6f87184a0d1a831c206618e25e0",
+    "desktop/src/renderer/src/components/presets/PresetProgress.tsx": "5b67138691e5f6d8812bf4918942c9caa345c6549e8bcc08a3a882408f220e21",
+    "host/cli/spawn.js": "92c7cef7981b41102c9f928fede53043ad238ed773276b8a4f3df489cf3bf26a",
+    "host/activity/store.js": "6f5919e6c58ad1ac6a4c689f801b3b5fb01066628f19d1f379a751f207c92f32",
+    "host/activity/recorder.js": "ab12dce139166c9a0edd148b4e71c50b360d454b6ca484b59f31cf9ba010b909"
+  },
+  "sourceStable": true,
+  "ended": 1794300511633,
+  "archiveExport": {
+    "path": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/connect-mixed-two-pair-proof-pbhakgls",
+    "files": [
+      {
+        "file": "logs/cli/activity-2026-11-10-76843-a096548b-b017-49e7-9032-da2c7f2e505f-protected-17.ndjson",
+        "bytes": 4998660,
+        "sha256": "431cc090df2e284f401721b77b5b9dec08626610ec1e1f85052e1057d6da261f"
+      },
+      {
+        "file": "logs/cli/activity-2026-11-10-76843-a096548b-b017-49e7-9032-da2c7f2e505f-protected-33.ndjson",
+        "bytes": 4998845,
+        "sha256": "17bc1667ba78a435682f7b16a65dcf3dea6ca2fd62919b87fe4d648f6a792cc6"
+      },
+      {
+        "file": "logs/cli/activity-2026-11-10-76843-a096548b-b017-49e7-9032-da2c7f2e505f-protected-50.ndjson",
+        "bytes": 4999865,
+        "sha256": "2994b41cb0bf24a60473cc52576c3579eb4a32b1e8dd02822623791f7d41d40b"
+      },
+      {
+        "file": "logs/cli/activity-2026-11-10-76843-a096548b-b017-49e7-9032-da2c7f2e505f-protected-21.ndjson",
+        "bytes": 4999772,
+        "sha256": "01f825b3dfb2637f00997b9ef9d89fe4acd38f5eb6cc4f5bdb6a451c3650ab5f"
+      },
+      {
+        "file": "logs/cli/activity-2026-11-10-76843-a096548b-b017-49e7-9032-da2c7f2e505f-protected-42.ndjson",
+        "bytes": 4999869,
+        "sha256": "b86f54816b45238ccf9247a363ba9035554c478ee0a4f609744036019e4b34f9"
+      },
+      {
+        "file": "logs/cli/activity-2026-11-10-76843-a096548b-b017-49e7-9032-da2c7f2e505f-protected-19.ndjson",
+        "bytes": 4998907,
+        "sha256": "585aaefd5e998b42dd493bcbf9fbac6d27a357127ce31f6c71e174b32a85b034"
+      },
+      {
+        "file": "logs/cli/activity-2026-11-10-76843-a096548b-b017-49e7-9032-da2c7f2e505f-protected-15.ndjson",
+        "bytes": 4999451,
+        "sha256": "4e3cdfa6f291944866f8141c4b14673a7e20772920f8d3f4e12d7a70cb7e1f63"
+      },
+      {
+        "file": "logs/cli/activity-2026-11-10-76843-a096548b-b017-49e7-9032-da2c7f2e505f-protected-40.ndjson",
+        "bytes": 4999731,
+        "sha256": "ba4c25623cb44b42b30e62377bcab957c932d19eb614d2d3ee1cac7ef0846b5f"
+      },
+      {
+        "file": "logs/cli/activity-2026-11-10-76843-a096548b-b017-49e7-9032-da2c7f2e505f-protected-3.ndjson",
+        "bytes": 4999252,
+        "sha256": "d32deed357ee415e933c4617fcf80dd86a08386bd40fb3d5204e3e874c450858"
+      },
+      {
+        "file": "logs/cli/activity-2026-11-10-76843-a096548b-b017-49e7-9032-da2c7f2e505f-protected-23.ndjson",
+        "bytes": 4999797,
+        "sha256": "014a51c4ac0aa9b50f8f1344d98318223bd0e572ba0ce70b980878190236ed7b"
+      },
+      {
+        "file": "logs/cli/activity-2026-11-10-76843-a096548b-b017-49e7-9032-da2c7f2e505f-protected-52.ndjson",
+        "bytes": 4999191,
+        "sha256": "2c3675772aa598956ea3d905f46c70c2210a2acef63b246f48beebff6b18e1b1"
+      },
+      {
+        "file": "logs/cli/activity-2026-11-10-76843-a096548b-b017-49e7-9032-da2c7f2e505f-protected-31.ndjson",
+        "bytes": 4999602,
+        "sha256": "9a6706fb3bb93f667a4377947248c43d961eadfa1bac83c62dd0ef9edc06a0d2"
+      },
+      {
+        "file": "logs/cli/activity-2026-11-10-76843-a096548b-b017-49e7-9032-da2c7f2e505f-protected-56.ndjson",
+        "bytes": 4990189,
+        "sha256": "a0f5410e323b3184c7f52da5d00e7e9a55b3fc90f57420c9669ffcf1d940c4c5"
+      },
+      {
+        "file": "logs/cli/activity-2026-11-10-76843-a096548b-b017-49e7-9032-da2c7f2e505f-protected-35.ndjson",
+        "bytes": 4999458,
+        "sha256": "7a5527ed47eaa357863cbcc182470897e81e9d00c61526de04b93510678b36af"
+      },
+      {
+        "file": "logs/cli/activity-2026-11-10-76843-a096548b-b017-49e7-9032-da2c7f2e505f-protected-48.ndjson",
+        "bytes": 4999459,
+        "sha256": "e582662e193085bab5d05742fbf8818dda6f86b2c4b11c89a1982decfe8fe001"
+      },
+      {
+        "file": "logs/cli/activity-2026-11-10-76843-a096548b-b017-49e7-9032-da2c7f2e505f-protected-39.ndjson",
+        "bytes": 4999777,
+        "sha256": "7ba43ebe0d27218a3fd7b81ec4d3254fd2acd5b5d231cb11d205901c4365b6c6"
+      },
+      {
+        "file": "logs/cli/activity-2026-11-10-76843-a096548b-b017-49e7-9032-da2c7f2e505f-protected-44.ndjson",
+        "bytes": 4999444,
+        "sha256": "6b77e2f9db5bcc633969fd6031f599152105556b15b1b8b462a13daa3c9d1e19"
+      },
+      {
+        "file": "logs/cli/activity-2026-11-10-76843-a096548b-b017-49e7-9032-da2c7f2e505f-protected-7.ndjson",
+        "bytes": 4999411,
+        "sha256": "82991f3eb85293664a058bddb61cc68cebd278bb75dedf14cb3924b36169ee31"
+      },
+      {
+        "file": "logs/cli/activity-2026-11-10-76843-a096548b-b017-49e7-9032-da2c7f2e505f-protected-27.ndjson",
+        "bytes": 5000000,
+        "sha256": "2bb7e5d611011a1c500dc449aa589de02304667b954c3555c0fa1583b39e1423"
+      },
+      {
+        "file": "logs/cli/activity-2026-11-10-76843-a096548b-b017-49e7-9032-da2c7f2e505f-protected-11.ndjson",
+        "bytes": 4999983,
+        "sha256": "52b09f27aaf6ebb3d9d4dd5c24f9b1ac5c2d9149062213852bdd02c41cc42559"
+      },
+      {
+        "file": "logs/cli/activity-2026-11-10-76843-a096548b-b017-49e7-9032-da2c7f2e505f-protected-60.ndjson",
+        "bytes": 4999486,
+        "sha256": "97e32c6aaa5147421abbfe6c1ae25346d1f33f1809e75dfac6011a0f897b02f3"
+      },
+      {
+        "file": "logs/cli/activity-2026-11-10-76843-a096548b-b017-49e7-9032-da2c7f2e505f-protected-25.ndjson",
+        "bytes": 4999452,
+        "sha256": "4b1d6433359ab5bde46dfe14f449a68815ccf9a127f423b9046cfd49af2fd506"
+      },
+      {
+        "file": "logs/cli/activity-2026-11-10-76843-a096548b-b017-49e7-9032-da2c7f2e505f-protected-5.ndjson",
+        "bytes": 4999895,
+        "sha256": "0b37c6409a54e31b2f6a344bed201dbb895fdea0b380cebbcaf8d920b079d742"
+      },
+      {
+        "file": "logs/cli/activity-2026-11-10-76843-a096548b-b017-49e7-9032-da2c7f2e505f-protected-58.ndjson",
+        "bytes": 4999400,
+        "sha256": "a1d08cce673a8443a655988d52388e07e2f6cd2e617d516f21ca31a130434827"
+      },
+      {
+        "file": "logs/cli/activity-2026-11-10-76843-a096548b-b017-49e7-9032-da2c7f2e505f-protected-46.ndjson",
+        "bytes": 4999120,
+        "sha256": "43338bfae1db1f59549b5b9e6aad70e63d6f03402fe79b6816eea296ec4c8a86"
+      },
+      {
+        "file": "logs/cli/activity-2026-11-10-76843-a096548b-b017-49e7-9032-da2c7f2e505f-protected-37.ndjson",
+        "bytes": 4999859,
+        "sha256": "2413296844d9e14bb2abfc10a81a9d41de75f9058f74248b500f7f4ff4d05687"
+      },
+      {
+        "file": "logs/cli/activity-2026-11-10-76843-a096548b-b017-49e7-9032-da2c7f2e505f-protected-9.ndjson",
+        "bytes": 4999671,
+        "sha256": "43a73c6e572e6f8c4e11e73cd4a368c7e7221ca4fa245d89d5928a37bfdf737a"
+      },
+      {
+        "file": "logs/cli/activity-2026-11-10-76843-a096548b-b017-49e7-9032-da2c7f2e505f-protected-29.ndjson",
+        "bytes": 4999737,
+        "sha256": "8e7541adb2013af40b926779e408ac7b19bebb8ccd888edbd5487b0971e7af8b"
+      },
+      {
+        "file": "logs/cli/activity-2026-11-10-76843-a096548b-b017-49e7-9032-da2c7f2e505f-protected-54.ndjson",
+        "bytes": 4995676,
+        "sha256": "848bd4c36707ad26d3ebecdcce1179fd9f001892419eef157ff91903834639f4"
+      },
+      {
+        "file": "logs/cli/activity-2026-11-10-76843-a096548b-b017-49e7-9032-da2c7f2e505f-protected-13.ndjson",
+        "bytes": 4999605,
+        "sha256": "dd942b7f8eec7c5be4944701f3d09519d1951860464b65483bd70ba7696a9185"
+      },
+      {
+        "file": "logs/cli/activity-2026-11-10-76843-a096548b-b017-49e7-9032-da2c7f2e505f-protected-51.ndjson",
+        "bytes": 4991360,
+        "sha256": "d5a57812afd893428edbaadb98e16cf3c680f788a5d2d8b452d390c38c5c95a2"
+      },
+      {
+        "file": "logs/cli/activity-2026-11-10-76843-a096548b-b017-49e7-9032-da2c7f2e505f-protected-32.ndjson",
+        "bytes": 4999838,
+        "sha256": "cec72d892da96f089737d6ac70fafda74849ab7de1e9e330cb0055d990fceefa"
+      },
+      {
+        "file": "logs/cli/activity-2026-11-10-76843-a096548b-b017-49e7-9032-da2c7f2e505f-protected-43.ndjson",
+        "bytes": 4998637,
+        "sha256": "bb57cec0389fc1fb364eaac3ee508c662842acf2fb4bc3e22dfc62dd7cbdd7e7"
+      },
+      {
+        "file": "logs/cli/activity-2026-11-10-76843-a096548b-b017-49e7-9032-da2c7f2e505f-protected-20.ndjson",
+        "bytes": 4999819,
+        "sha256": "3c94c23cc1ab25e683c3bb2b2d49d686b01d5649eac076d009627ddf028c8bc1"
+      },
+      {
+        "file": "logs/cli/activity-2026-11-10-76843-a096548b-b017-49e7-9032-da2c7f2e505f-protected-16.ndjson",
+        "bytes": 4998762,
+        "sha256": "c70c88cb804435bcb9db81318a77768e73b10cae77f0896b527cc0e3d450ae18"
+      },
+      {
+        "file": "logs/cli/activity-2026-11-10-76843-a096548b-b017-49e7-9032-da2c7f2e505f-protected-2.ndjson",
+        "bytes": 4999673,
+        "sha256": "6dbd527ad168b3ed83904df3040e4e4be048676fbe48f01551ff571b59e09950"
+      },
+      {
+        "file": "logs/cli/activity-2026-11-10-76843-a096548b-b017-49e7-9032-da2c7f2e505f-protected-22.ndjson",
+        "bytes": 4999322,
+        "sha256": "d886d01f04be1fa42824c9b4aabab620bf5d8bfe21a7476cc1233ae342b8dc65"
+      },
+      {
+        "file": "logs/cli/activity-2026-11-10-76843-a096548b-b017-49e7-9032-da2c7f2e505f-protected-41.ndjson",
+        "bytes": 4999608,
+        "sha256": "1dfe39730e9d89d399651f94ba5a82a13e55b4822ac52a59835882952f782b52"
+      },
+      {
+        "file": "logs/cli/activity-2026-11-10-76843-a096548b-b017-49e7-9032-da2c7f2e505f-protected-30.ndjson",
+        "bytes": 4999713,
+        "sha256": "8db818dacc3191050c01a904d2cb2c5860aefeae6da789e16a6109b2ff2fa726"
+      },
+      {
+        "file": "logs/cli/activity-2026-11-10-76843-a096548b-b017-49e7-9032-da2c7f2e505f-protected-53.ndjson",
+        "bytes": 4990720,
+        "sha256": "375d8e7fd3b5085d0b24c83db60c199c90e5057291d63212286100dbc298224d"
+      },
+      {
+        "file": "logs/cli/activity-2026-11-10-76843-a096548b-b017-49e7-9032-da2c7f2e505f-protected-18.ndjson",
+        "bytes": 4999279,
+        "sha256": "431bea1ea8632ba01ba73fbcd93d8eabe875b34930e739e3a3e1b1df0ab935f9"
+      },
+      {
+        "file": "logs/cli/activity-2026-11-10-76843-a096548b-b017-49e7-9032-da2c7f2e505f-protected-14.ndjson",
+        "bytes": 4999195,
+        "sha256": "f3ada652f369e5771bfd2decf39734456101960026c2c8ad363611764fa8b442"
+      },
+      {
+        "file": "logs/cli/activity-2026-11-10-76843-a096548b-b017-49e7-9032-da2c7f2e505f-protected-10.ndjson",
+        "bytes": 4998941,
+        "sha256": "0be440a264fe551885afe0267cfef399599cd5bb9adb861f9e0cc0b16aa5a56f"
+      },
+      {
+        "file": "logs/cli/activity-2026-11-10-76843-a096548b-b017-49e7-9032-da2c7f2e505f-protected-61.ndjson",
+        "bytes": 4104913,
+        "sha256": "56bba62169866420113dabd8d0e4c445abf641c1bf5cdba74e0fa78b9ac8e37f"
+      },
+      {
+        "file": "logs/cli/activity-2026-11-10-76843-a096548b-b017-49e7-9032-da2c7f2e505f-protected-49.ndjson",
+        "bytes": 4999970,
+        "sha256": "093292d212e1f66ec1812d30ebd486cd4a2961eb9e53093deb358f2db2ffced7"
+      },
+      {
+        "file": "logs/cli/activity-2026-11-10-76843-a096548b-b017-49e7-9032-da2c7f2e505f-protected-34.ndjson",
+        "bytes": 4999809,
+        "sha256": "0e3c649ea0f56d730f24b4d372d07c22aca6509c66c814dddea59c7fd4c7b301"
+      },
+      {
+        "file": "logs/cli/activity-2026-11-10-76843-a096548b-b017-49e7-9032-da2c7f2e505f-protected-57.ndjson",
+        "bytes": 4999875,
+        "sha256": "21d8edbff0204ef342324992201d858d266e9193076cd65492459395fc120eb6"
+      },
+      {
+        "file": "logs/cli/activity-2026-11-10-76843-a096548b-b017-49e7-9032-da2c7f2e505f-protected-6.ndjson",
+        "bytes": 4998513,
+        "sha256": "f27b40d9c1200159991b99df99ec329bdea453a234648ae9f0e8074d2afac306"
+      },
+      {
+        "file": "logs/cli/activity-2026-11-10-76843-a096548b-b017-49e7-9032-da2c7f2e505f-protected-26.ndjson",
+        "bytes": 4999675,
+        "sha256": "6f295fd1fff76b5a2786961dc8489775f22eed5ce9948ded8096cfed1cd5144a"
+      },
+      {
+        "file": "logs/cli/activity-2026-11-10-76843-a096548b-b017-49e7-9032-da2c7f2e505f-protected-45.ndjson",
+        "bytes": 4999492,
+        "sha256": "3bbd150dbc079bc2cc1bc0eafad1014cdf4e046463f5f87f39d67959324d444c"
+      },
+      {
+        "file": "logs/cli/activity-2026-11-10-76843-a096548b-b017-49e7-9032-da2c7f2e505f-protected-38.ndjson",
+        "bytes": 4999330,
+        "sha256": "9722471edcfc836ee80c54410f37203428f947afebc52c99fc54926b16a7521d"
+      },
+      {
+        "file": "logs/cli/activity-2026-11-10-76843-a096548b-b017-49e7-9032-da2c7f2e505f-protected-12.ndjson",
+        "bytes": 4999428,
+        "sha256": "9e14b618f5ae8e62b25e7c4e45d3760a71286870cd0302af5ab83404ec3377f2"
+      },
+      {
+        "file": "logs/cli/activity-2026-11-10-76843-a096548b-b017-49e7-9032-da2c7f2e505f-protected-47.ndjson",
+        "bytes": 4999404,
+        "sha256": "646848e8eacd9a50537f6406a2c4fa55a060b3f44d0ffc318ed9511bd32e2714"
+      },
+      {
+        "file": "logs/cli/activity-2026-11-10-76843-a096548b-b017-49e7-9032-da2c7f2e505f-protected-59.ndjson",
+        "bytes": 4987667,
+        "sha256": "476d989c0d27529d785e3f13b235cd89b52a1cb793942d7b41e09f5fc939ffd2"
+      },
+      {
+        "file": "logs/cli/activity-2026-11-10-76843-a096548b-b017-49e7-9032-da2c7f2e505f-protected-24.ndjson",
+        "bytes": 4999644,
+        "sha256": "4df1fbbcf2a51e1362b992920ed475b2dd8e398ec21dc13c8463e194351d3983"
+      },
+      {
+        "file": "logs/cli/activity-2026-11-10-76843-a096548b-b017-49e7-9032-da2c7f2e505f-protected-4.ndjson",
+        "bytes": 4999950,
+        "sha256": "f0ee1a865017e6fc40ae16c3f3b3c78b6386f6aa5da10471c3e7d61961c5a1c7"
+      },
+      {
+        "file": "logs/cli/activity-2026-11-10-76843-a096548b-b017-49e7-9032-da2c7f2e505f-protected-55.ndjson",
+        "bytes": 4989549,
+        "sha256": "e1d7a9f32dc2497af06091d03b98e0f60d340b98cfe010bb8e93150cb5bf16c7"
+      },
+      {
+        "file": "logs/cli/activity-2026-11-10-76843-a096548b-b017-49e7-9032-da2c7f2e505f-protected-8.ndjson",
+        "bytes": 4999727,
+        "sha256": "cca55b36e3b8a28a3e177d7b1258adc0513f945c4d347bb182888bf34302f7a3"
+      },
+      {
+        "file": "logs/cli/activity-2026-11-10-76843-a096548b-b017-49e7-9032-da2c7f2e505f-protected-28.ndjson",
+        "bytes": 4999688,
+        "sha256": "7f04cc0e4bf00a13a2aa8d01c4189189753e5886243885a12cf8aff7f6c92d86"
+      },
+      {
+        "file": "logs/cli/activity-2026-11-10-76843-a096548b-b017-49e7-9032-da2c7f2e505f-protected-36.ndjson",
+        "bytes": 4999913,
+        "sha256": "0b0a213c0aa385eb42fba1c811e8722c9e72301029f4096eee1cbec5738c2f27"
+      },
+      {
+        "file": "demo-fixtures.json",
+        "bytes": 11264,
+        "sha256": "ef82d7eb86165350142242b5c7093f68d40d5a1828e9478b5d69fc6793d272a8"
+      },
+      {
+        "file": "demo-steps.ndjson",
+        "bytes": 171449460,
+        "sha256": "f72e5a8dd79509d8d1bc0f2d29007e7402978243c6a66a26ba61f4fb1db789e5"
+      },
+      {
+        "file": "logs/cli-control/generation.json",
+        "bytes": 79,
+        "sha256": "59f634960eff29788c0351717cc0fadd50ec89d4e8287b2603bbd7997d352cec"
+      }
+    ],
+    "bytes": 470484781,
+    "verifiedAt": 1794300584318
+  },
+  "observerAttempts": [
+    {
+      "receipt": "mixed-two-pair-monitor-stale-receipt.json",
+      "sourceMatchesFinal": true,
+      "error": "fetch failed"
+    },
+    {
+      "receipt": "mixed-two-pair-monitor-transient-read.json",
+      "sourceMatchesFinal": true,
+      "error": "fetch failed"
+    }
+  ],
+  "sourceStableAcrossObservers": true
+}

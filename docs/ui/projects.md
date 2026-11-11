@@ -31,10 +31,9 @@ Source: `components/projects/projects-home.tsx`, `home/project-table.tsx`, `wher
 | [n] | Component | file:line | one line |
 |---|---|---|---|
 | 1 | PageHeader | projects-home.tsx:118 | Sticky title, description and the action row (wraps under 46rem) |
-| 2 | SimulationPicker | simulation.tsx:78 | Dev builds only (hidden in sim mode): Live host or a simulated host |
 | 3 | search Input | projects-home.tsx:126 | Filters by name, Store or machine; x and Escape clear it |
-| 4 | Refresh | projects-home.tsx:155 | Rereads the catalog; spins while loading; off when simulated |
-| 5 | New project | projects-home.tsx:157 | Opens the New project dialog; off when simulated |
+| 4 | Refresh | projects-home.tsx:155 | Rereads the catalog; spins while loading |
+| 5 | New project | projects-home.tsx:157 | Opens the New project dialog |
 | 6 | Group / Sort pills | projects-home.tsx:176 | None shows the count; By machine only when machines were read |
 | 7 | ProjectTable | project-table.tsx:41 | One glass table per group; each row opens the project page |
 | 8 | header row | project-table.tsx:45 | Shown at 44rem container width and up |
@@ -97,9 +96,6 @@ Loading                          Error
 | ######################### |    +----------------------------------+
 +---------------------------+
 
-Simulated note (dev simulation picked), above everything:
-( <flask> Simulated ) Mac, many Stores: sample data, not this machine.
-
 Empty                                           No match
 +-------------------------------------------+   +-------------------------------------------+
 |               <folder-open>               |   |              <folder-search>              |
@@ -114,8 +110,6 @@ Empty                                           No match
   host that cannot be reached titles it `The Connect host is not reachable`.
 - Empty (`projects-home.tsx:172`) shows instead of the Group/Sort bar; No match
   (`projects-home.tsx:192`) shows under it.
-- Simulated note: `SimulatedNote` (`simulation.tsx:101`) above everything when a dev simulation
-  is picked.
 
 ## Menus and dialogs
 
@@ -291,5 +285,4 @@ With no Sandboxes the main button reads `Delete project`; while working, `Deleti
 - Delete project has one opener: the sidebar's ProjectTree (`app-sidebar.tsx:494`), which is not
   rendered (`SHOW_PROJECT_TREE = false`, `app-sidebar.tsx:65`). So the dialog is unreachable today.
 - `storeNeedsWord` (`project-table.tsx:19`) is exported but used only in its own file.
-- Chats counts come from the chat list; the simulated `mac` host seeds no chats, so every row
-  shows `--` until a chat runs (the `1 * 1 working` above is illustrative).
+- Chat counts come only from actual saved chats.

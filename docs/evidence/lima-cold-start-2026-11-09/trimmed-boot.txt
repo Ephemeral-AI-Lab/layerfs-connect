@@ -1,0 +1,224 @@
+Startup finished in 1.570s (kernel) + 5.365s (userspace) = 6.936s 
+graphical.target reached after 4.223s in userspace.
+The time when unit became active or started is printed after the "@" character.
+The time the unit took to start is printed after the "+" character.
+
+cloud-final.service +1.001s
+└─cloud-config.service @4.002s +351ms
+  └─basic.target @4.002s
+    └─sockets.target @4.002s
+      └─lxd-installer.socket @3.988s +13ms
+        └─sysinit.target @3.985s
+          └─cloud-init.service @3.016s +968ms
+            └─systemd-networkd-wait-online.service @1.468s +1.546s
+              └─systemd-networkd.service @1.434s +24ms
+                └─network-pre.target @1.430s
+                  └─cloud-init-local.service @677ms +752ms
+                    └─systemd-remount-fs.service @339ms +17ms
+                      └─systemd-fsck-root.service @303ms +20ms
+                        └─systemd-journald.socket @267ms
+                          └─-.mount @253ms
+                            └─-.slice @252ms
+/mnt/lima-cidata/boot.Linux:
+00-check-rtc-and-wait-ntp.sh
+00-modprobe.sh
+00-reboot-if-required.sh
+00-systemd-user-group.sh
+04-persistent-data-volume.sh
+05-guest-home.sh
+05-lima-disks.sh
+05-lima-mounts.sh
+05-rosetta-volume.sh
+06-enable-mdns-on-systemd.sh
+06-etc-hosts.sh
+07-etc-environment.sh
+08-shell-prompt.sh
+09-host-dns-setup.sh
+10-alpine-cgroups.sh
+11-colorterm-environment.sh
+20-rootless-base.sh
+25-guestagent-base.sh
+26-host-services.sh
+30-install-packages.sh
+35-setup-packages.sh
+40-install-containerd.sh
+
+/mnt/lima-cidata/boot.essential.Linux:
+00-alpine-user-group.sh
+01-alpine-ash-as-bash.sh
+10-alpine-prep.sh
+#!/bin/sh
+
+# SPDX-FileCopyrightText: Copyright The Lima Authors
+# SPDX-License-Identifier: Apache-2.0
+
+test -f /etc/alpine-release || exit 0
+
+# Make sure that root is in the sudoers file.
+# This is needed to run the user provisioning scripts.
+SUDOERS=/etc/sudoers.d/00-root-user
+if [ ! -f $SUDOERS ]; then
+	echo "root ALL=(ALL) NOPASSWD:ALL" >$SUDOERS
+	chmod 660 $SUDOERS
+fi
+
+# Remove the user embedded in the image,
+# and use cloud-init for users and groups.
+if [ "$LIMA_CIDATA_USER" != "alpine" ]; then
+	if [ "$(id -u alpine 2>&1)" = "1000" ]; then
+		userdel alpine
+		rmdir /home/alpine
+		cloud-init clean --logs
+		reboot
+	fi
+fi
+#!/bin/sh
+
+# SPDX-FileCopyrightText: Copyright The Lima Authors
+# SPDX-License-Identifier: Apache-2.0
+
+# This script pretends that /bin/ash can be used as /bin/bash, so all following
+# cloud-init scripts can use `#!/bin/bash` and `set -o pipefail`.
+test -f /etc/alpine-release || exit 0
+
+# If bash already exists, do nothing.
+test -x /bin/bash && exit 0
+
+# Redirect bash to ash (built with CONFIG_ASH_BASH_COMPAT) and hope for the best :)
+# It does support `set -o pipefail`, but not `[[`.
+# /bin/bash can't be a symlink because /bin/ash is a symlink to /bin/busybox
+cat >/bin/bash <<'EOF'
+#!/bin/sh
+exec /bin/ash "$@"
+EOF
+chmod +x /bin/bash
+#!/bin/sh
+
+# SPDX-FileCopyrightText: Copyright The Lima Authors
+# SPDX-License-Identifier: Apache-2.0
+
+set -eux
+
+# This script prepares Alpine for lima; there is nothing in here for other distros.
+# The script is executed in plain mode too, as the host agent depends on bash, sudo,
+# and public key auth for checking the boot completion, and on sshd TCP forwarding
+# for forwarding static ports.
+test -f /etc/alpine-release || exit 0
+
+# Configure apk repos
+BRANCH=edge
+VERSION_ID=$(awk -F= '$1=="VERSION_ID" {print $2}' /etc/os-release)
+case ${VERSION_ID} in
+*_alpha* | *_beta*) BRANCH=edge ;;
+*.*.*) BRANCH=v${VERSION_ID%.*} ;;
+esac
+
+for REPO in main community; do
+	URL="https://dl-cdn.alpinelinux.org/alpine/${BRANCH}/${REPO}"
+	if ! grep -q "^${URL}$" /etc/apk/repositories; then
+		echo "${URL}" >>/etc/apk/repositories
+	fi
+done
+
+# Alpine comes with doas instead of sudo
+if ! command -v sudo >/dev/null 2>&1; then
+	apk add sudo
+fi
+
+# Alpine doesn't use PAM so we need to explicitly allow public key auth
+usermod -p '*' "${LIMA_CIDATA_USER}"
+
+# Alpine disables TCP forwarding, which is needed by the lima-guestagent
+sed -i 's/AllowTcpForwarding no/AllowTcpForwarding yes/g' /etc/ssh/sshd_config
+# Enable PAM so as to load /etc/environment via pam_env
+sed -i 's/#UsePAM no/UsePAM yes/g' /etc/ssh/sshd_config
+rc-service --ifstarted sshd reload
+
+# `limactl stop` tells acpid to powerdown
+rc-update add acpid
+rc-service acpid start
+# The top level settings are used as module
+# and base configuration.
+
+# A set of users which may be applied and/or used by various modules
+# when a 'default' entry is found it will reference the 'default_user'
+# from the distro configuration specified below
+users:
+  - default
+
+# If this is set, 'root' will not be able to ssh in and they
+# will get a message to login instead as the default $user
+disable_root: true
+
+# This will cause the set+update hostname module to not operate (if true)
+preserve_hostname: false
+
+# If you use datasource_list array, keep array items in a single line.
+# If you use multi line array, ds-identify script won't read array items.
+# Example datasource config
+# datasource:
+#   Ec2:
+#     metadata_urls: [ 'blah.com' ]
+#     timeout: 5 # (defaults to 50 seconds)
+#     max_wait: 10 # (defaults to 120 seconds)
+
+# The modules that run in the 'init' stage
+cloud_init_modules:
+  - seed_random
+  - bootcmd
+  - write_files
+  - growpart
+  - resizefs
+  - disk_setup
+  - mounts
+  - set_hostname
+  - update_hostname
+  - update_etc_hosts
+  - ca_certs
+  - rsyslog
+  - users_groups
+  - ssh
+  - set_passwords
+
+# The modules that run in the 'config' stage
+cloud_config_modules:
+  - wireguard
+  - snap
+  - ubuntu_autoinstall
+  - ssh_import_id
+  - keyboard
+  - locale
+  - grub_dpkg
+  - apt_pipelining
+  - apt_configure
+  - ubuntu_pro
+  - ntp
+  - timezone
+  - disable_ec2_metadata
+  - runcmd
+  - byobu
+
+# The modules that run in the 'final' stage
+cloud_final_modules:
+  - package_update_upgrade_install
+  - fan
+  - landscape
+  - lxd
+  - ubuntu_drivers
+  - write_files_deferred
+  - puppet
+  - chef
+  - ansible
+  - mcollective
+  - salt_minion
+  - reset_rmc
+  - scripts_vendor
+  - scripts_per_once
+  - scripts_per_boot
+  - scripts_per_instance
+  - scripts_user
+  - ssh_authkey_fingerprints
+  - keys_to_console
+  - install_hotplug
+  - phone_home
+  - final_message

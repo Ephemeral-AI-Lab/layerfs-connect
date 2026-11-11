@@ -1,0 +1,19 @@
+{
+  "checkedAt": "2026-11-10T12:08:21.933Z",
+  "privateHost": "http://127.0.0.1:56107",
+  "pid": 75773,
+  "totalRetainedRuns": 33,
+  "states": {
+    "completed": 23,
+    "stopped": 9,
+    "failed": 1
+  },
+  "activeRuns": 0,
+  "finalSourceLoaded": true,
+  "retainedStoppedRuns": "Nine deliberately stopped pre-performance attempts; not final verification failures.",
+  "retainedFailedRun": {
+    "id": "52b93166-3341-403f-8e93-8b06ff24eb68",
+    "expected": true,
+    "reason": "Stopped-machine preflight test; refused before Store creation."
+  }
+}

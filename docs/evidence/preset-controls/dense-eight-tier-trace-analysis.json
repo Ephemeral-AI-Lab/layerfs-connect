@@ -1,0 +1,658 @@
+{
+  "evidence": "/Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect/docs/evidence/preset-controls/dense-eight-tier-live.json",
+  "state": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/connect-dense-full-anpode",
+  "generation": "initial",
+  "completeTaskWindows": true,
+  "method": "Stream archive lines; retain only invocation metadata. Lifetimes are cli.started.started to cli.finished.ended, half-open intervals at millisecond resolution; no task-wrapper concurrency inference.",
+  "scope": "All demo.setup invocations in the current archive generation; history mutations must also fall inside their project's task window.",
+  "archives": 46,
+  "archiveBytesRead": 218378174,
+  "setupActions": {
+    "1239ad15-56b2-433b-a82e-55dab99ca7a2": {
+      "name": "demo.setup",
+      "label": "Setup studio demo (CLI)"
+    }
+  },
+  "malformedLines": 0,
+  "oversizedLines": 0,
+  "ignoredOtherGenerationEvents": 0,
+  "diagnostics": [],
+  "allSetup": {
+    "accounting": {
+      "uniqueInvocations": 54821,
+      "queued": 54821,
+      "started": 54821,
+      "finished": 54821,
+      "queuedEvents": 54821,
+      "startedEvents": 54821,
+      "finishedEvents": 54821,
+      "duplicateLifecycleRecords": 0,
+      "missingLifecycleInvocations": 0,
+      "failedInvocations": 0,
+      "stdinPresent": 41310,
+      "stdoutPresent": 54821,
+      "stderrPresent": 54821,
+      "bothOutputStreamsPresent": 54821,
+      "stdinTruncated": 0,
+      "stdoutTruncated": 0,
+      "stderrTruncated": 0,
+      "stdoutBytes": 77694427,
+      "stderrBytes": 3453,
+      "statuses": {
+        "success": 54821
+      }
+    },
+    "processes": {
+      "processes": 54821,
+      "firstStarted": 1794286848732,
+      "lastEnded": 1794287661180,
+      "elapsedMs": 812448,
+      "peak": 8,
+      "firstPeakAt": 1794286896943,
+      "totalProcessMs": 2400399,
+      "meanConcurrentProcesses": 2.954526,
+      "durationsMsByConcurrentProcessCount": {
+        "0": 20031,
+        "1": 409947,
+        "2": 76377,
+        "3": 55730,
+        "4": 40644,
+        "5": 20581,
+        "6": 17374,
+        "7": 73329,
+        "8": 98435
+      },
+      "percentOfElapsedByConcurrentProcessCount": {
+        "0": 2.465512,
+        "1": 50.458245,
+        "2": 9.400848,
+        "3": 6.859516,
+        "4": 5.002659,
+        "5": 2.533208,
+        "6": 2.138475,
+        "7": 9.025685,
+        "8": 12.115852
+      },
+      "invalidIntervals": 0,
+      "zeroDurationIntervals": 0,
+      "finalActiveProcesses": 0
+    }
+  },
+  "history": {
+    "accounting": {
+      "uniqueInvocations": 50834,
+      "queued": 50834,
+      "started": 50834,
+      "finished": 50834,
+      "queuedEvents": 50834,
+      "startedEvents": 50834,
+      "finishedEvents": 50834,
+      "duplicateLifecycleRecords": 0,
+      "missingLifecycleInvocations": 0,
+      "failedInvocations": 0,
+      "stdinPresent": 41310,
+      "stdoutPresent": 50834,
+      "stderrPresent": 50834,
+      "bothOutputStreamsPresent": 50834,
+      "stdinTruncated": 0,
+      "stdoutTruncated": 0,
+      "stderrTruncated": 0,
+      "stdoutBytes": 35344916,
+      "stderrBytes": 0,
+      "statuses": {
+        "success": 50834
+      }
+    },
+    "processes": {
+      "processes": 50834,
+      "firstStarted": 1794286896942,
+      "lastEnded": 1794287569913,
+      "elapsedMs": 672971,
+      "peak": 8,
+      "firstPeakAt": 1794286896943,
+      "totalProcessMs": 2268545,
+      "meanConcurrentProcesses": 3.37094,
+      "durationsMsByConcurrentProcessCount": {
+        "0": 12106,
+        "1": 278697,
+        "2": 76075,
+        "3": 55730,
+        "4": 40644,
+        "5": 20581,
+        "6": 17374,
+        "7": 73329,
+        "8": 98435
+      },
+      "percentOfElapsedByConcurrentProcessCount": {
+        "0": 1.798889,
+        "1": 41.412929,
+        "2": 11.30435,
+        "3": 8.281189,
+        "4": 6.039488,
+        "5": 3.05823,
+        "6": 2.581686,
+        "7": 10.896309,
+        "8": 14.62693
+      },
+      "invalidIntervals": 0,
+      "zeroDurationIntervals": 0,
+      "finalActiveProcesses": 0
+    },
+    "mutationsOutsideTaskWindows": 0,
+    "outsideWindowIds": []
+  },
+  "projects": [
+    {
+      "project": "demo-studio/website",
+      "machine": "native",
+      "tier": 8,
+      "taskStarted": 1794286896824,
+      "taskEnded": 1794287569914,
+      "taskElapsedMs": 673090,
+      "expectedHistoryCommands": 12271,
+      "actualHistoryCommands": 12271,
+      "countMatchesTask": true,
+      "operations": {
+        "branch.fork": 121,
+        "branch.merge": 78,
+        "branch.publish": 2094,
+        "file.write": 9978
+      },
+      "fileWritesMissingStdin": 0,
+      "accounting": {
+        "uniqueInvocations": 12271,
+        "queued": 12271,
+        "started": 12271,
+        "finished": 12271,
+        "queuedEvents": 12271,
+        "startedEvents": 12271,
+        "finishedEvents": 12271,
+        "duplicateLifecycleRecords": 0,
+        "missingLifecycleInvocations": 0,
+        "failedInvocations": 0,
+        "stdinPresent": 9978,
+        "stdoutPresent": 12271,
+        "stderrPresent": 12271,
+        "bothOutputStreamsPresent": 12271,
+        "stdinTruncated": 0,
+        "stdoutTruncated": 0,
+        "stderrTruncated": 0,
+        "stdoutBytes": 8516303,
+        "stderrBytes": 0,
+        "statuses": {
+          "success": 12271
+        }
+      },
+      "processes": {
+        "processes": 12271,
+        "firstStarted": 1794286896942,
+        "lastEnded": 1794287569913,
+        "elapsedMs": 672971,
+        "peak": 1,
+        "firstPeakAt": 1794286896942,
+        "totalProcessMs": 647187,
+        "meanConcurrentProcesses": 0.961686,
+        "durationsMsByConcurrentProcessCount": {
+          "0": 25784,
+          "1": 647187
+        },
+        "percentOfElapsedByConcurrentProcessCount": {
+          "0": 3.831369,
+          "1": 96.168631
+        },
+        "invalidIntervals": 0,
+        "zeroDurationIntervals": 0,
+        "finalActiveProcesses": 0
+      }
+    },
+    {
+      "project": "demo-studio/design",
+      "machine": "native",
+      "tier": 1,
+      "taskStarted": 1794286896849,
+      "taskEnded": 1794287089626,
+      "taskElapsedMs": 192777,
+      "expectedHistoryCommands": 2933,
+      "actualHistoryCommands": 2933,
+      "countMatchesTask": true,
+      "operations": {
+        "branch.fork": 34,
+        "branch.merge": 20,
+        "branch.publish": 499,
+        "file.write": 2380
+      },
+      "fileWritesMissingStdin": 0,
+      "accounting": {
+        "uniqueInvocations": 2933,
+        "queued": 2933,
+        "started": 2933,
+        "finished": 2933,
+        "queuedEvents": 2933,
+        "startedEvents": 2933,
+        "finishedEvents": 2933,
+        "duplicateLifecycleRecords": 0,
+        "missingLifecycleInvocations": 0,
+        "failedInvocations": 0,
+        "stdinPresent": 2380,
+        "stdoutPresent": 2933,
+        "stderrPresent": 2933,
+        "bothOutputStreamsPresent": 2933,
+        "stdinTruncated": 0,
+        "stdoutTruncated": 0,
+        "stderrTruncated": 0,
+        "stdoutBytes": 2043198,
+        "stderrBytes": 0,
+        "statuses": {
+          "success": 2933
+        }
+      },
+      "processes": {
+        "processes": 2933,
+        "firstStarted": 1794286896942,
+        "lastEnded": 1794287089625,
+        "elapsedMs": 192683,
+        "peak": 1,
+        "firstPeakAt": 1794286896942,
+        "totalProcessMs": 186059,
+        "meanConcurrentProcesses": 0.965622,
+        "durationsMsByConcurrentProcessCount": {
+          "0": 6624,
+          "1": 186059
+        },
+        "percentOfElapsedByConcurrentProcessCount": {
+          "0": 3.437771,
+          "1": 96.562229
+        },
+        "invalidIntervals": 0,
+        "zeroDurationIntervals": 0,
+        "finalActiveProcesses": 0
+      }
+    },
+    {
+      "project": "demo-services/gateway",
+      "machine": "docker",
+      "tier": 7,
+      "taskStarted": 1794286896856,
+      "taskEnded": 1794287285765,
+      "taskElapsedMs": 388909,
+      "expectedHistoryCommands": 9695,
+      "actualHistoryCommands": 9695,
+      "countMatchesTask": true,
+      "operations": {
+        "branch.fork": 97,
+        "branch.merge": 62,
+        "branch.publish": 1654,
+        "file.write": 7882
+      },
+      "fileWritesMissingStdin": 0,
+      "accounting": {
+        "uniqueInvocations": 9695,
+        "queued": 9695,
+        "started": 9695,
+        "finished": 9695,
+        "queuedEvents": 9695,
+        "startedEvents": 9695,
+        "finishedEvents": 9695,
+        "duplicateLifecycleRecords": 0,
+        "missingLifecycleInvocations": 0,
+        "failedInvocations": 0,
+        "stdinPresent": 7882,
+        "stdoutPresent": 9695,
+        "stderrPresent": 9695,
+        "bothOutputStreamsPresent": 9695,
+        "stdinTruncated": 0,
+        "stdoutTruncated": 0,
+        "stderrTruncated": 0,
+        "stdoutBytes": 6728292,
+        "stderrBytes": 0,
+        "statuses": {
+          "success": 9695
+        }
+      },
+      "processes": {
+        "processes": 9695,
+        "firstStarted": 1794286896942,
+        "lastEnded": 1794287285764,
+        "elapsedMs": 388822,
+        "peak": 1,
+        "firstPeakAt": 1794286896942,
+        "totalProcessMs": 369347,
+        "meanConcurrentProcesses": 0.949913,
+        "durationsMsByConcurrentProcessCount": {
+          "0": 19475,
+          "1": 369347
+        },
+        "percentOfElapsedByConcurrentProcessCount": {
+          "0": 5.008719,
+          "1": 94.991281
+        },
+        "invalidIntervals": 0,
+        "zeroDurationIntervals": 0,
+        "finalActiveProcesses": 0
+      }
+    },
+    {
+      "project": "demo-services/billing",
+      "machine": "docker",
+      "tier": 2,
+      "taskStarted": 1794286896877,
+      "taskEnded": 1794287051459,
+      "taskElapsedMs": 154582,
+      "expectedHistoryCommands": 3255,
+      "actualHistoryCommands": 3255,
+      "countMatchesTask": true,
+      "operations": {
+        "branch.fork": 37,
+        "branch.merge": 22,
+        "branch.publish": 554,
+        "file.write": 2642
+      },
+      "fileWritesMissingStdin": 0,
+      "accounting": {
+        "uniqueInvocations": 3255,
+        "queued": 3255,
+        "started": 3255,
+        "finished": 3255,
+        "queuedEvents": 3255,
+        "startedEvents": 3255,
+        "finishedEvents": 3255,
+        "duplicateLifecycleRecords": 0,
+        "missingLifecycleInvocations": 0,
+        "failedInvocations": 0,
+        "stdinPresent": 2642,
+        "stdoutPresent": 3255,
+        "stderrPresent": 3255,
+        "bothOutputStreamsPresent": 3255,
+        "stdinTruncated": 0,
+        "stdoutTruncated": 0,
+        "stderrTruncated": 0,
+        "stdoutBytes": 2258592,
+        "stderrBytes": 0,
+        "statuses": {
+          "success": 3255
+        }
+      },
+      "processes": {
+        "processes": 3255,
+        "firstStarted": 1794286896942,
+        "lastEnded": 1794287051458,
+        "elapsedMs": 154516,
+        "peak": 1,
+        "firstPeakAt": 1794286896942,
+        "totalProcessMs": 147235,
+        "meanConcurrentProcesses": 0.952879,
+        "durationsMsByConcurrentProcessCount": {
+          "0": 7281,
+          "1": 147235
+        },
+        "percentOfElapsedByConcurrentProcessCount": {
+          "0": 4.712133,
+          "1": 95.287867
+        },
+        "invalidIntervals": 0,
+        "zeroDurationIntervals": 0,
+        "finalActiveProcesses": 0
+      }
+    },
+    {
+      "project": "demo-build-cache/compiler",
+      "machine": "demo-build",
+      "tier": 6,
+      "taskStarted": 1794286896883,
+      "taskEnded": 1794287210577,
+      "taskElapsedMs": 313694,
+      "expectedHistoryCommands": 7763,
+      "actualHistoryCommands": 7763,
+      "countMatchesTask": true,
+      "operations": {
+        "branch.fork": 79,
+        "branch.merge": 50,
+        "branch.publish": 1324,
+        "file.write": 6310
+      },
+      "fileWritesMissingStdin": 0,
+      "accounting": {
+        "uniqueInvocations": 7763,
+        "queued": 7763,
+        "started": 7763,
+        "finished": 7763,
+        "queuedEvents": 7763,
+        "startedEvents": 7763,
+        "finishedEvents": 7763,
+        "duplicateLifecycleRecords": 0,
+        "missingLifecycleInvocations": 0,
+        "failedInvocations": 0,
+        "stdinPresent": 6310,
+        "stdoutPresent": 7763,
+        "stderrPresent": 7763,
+        "bothOutputStreamsPresent": 7763,
+        "stdinTruncated": 0,
+        "stdoutTruncated": 0,
+        "stderrTruncated": 0,
+        "stdoutBytes": 5423054,
+        "stderrBytes": 0,
+        "statuses": {
+          "success": 7763
+        }
+      },
+      "processes": {
+        "processes": 7763,
+        "firstStarted": 1794286896943,
+        "lastEnded": 1794287210576,
+        "elapsedMs": 313633,
+        "peak": 1,
+        "firstPeakAt": 1794286896943,
+        "totalProcessMs": 297544,
+        "meanConcurrentProcesses": 0.948701,
+        "durationsMsByConcurrentProcessCount": {
+          "0": 16089,
+          "1": 297544
+        },
+        "percentOfElapsedByConcurrentProcessCount": {
+          "0": 5.129881,
+          "1": 94.870119
+        },
+        "invalidIntervals": 0,
+        "zeroDurationIntervals": 0,
+        "finalActiveProcesses": 0
+      }
+    },
+    {
+      "project": "demo-build-cache/sdk",
+      "machine": "demo-build",
+      "tier": 3,
+      "taskStarted": 1794286896894,
+      "taskEnded": 1794287076999,
+      "taskElapsedMs": 180105,
+      "expectedHistoryCommands": 3899,
+      "actualHistoryCommands": 3899,
+      "countMatchesTask": true,
+      "operations": {
+        "branch.fork": 43,
+        "branch.merge": 26,
+        "branch.publish": 664,
+        "file.write": 3166
+      },
+      "fileWritesMissingStdin": 0,
+      "accounting": {
+        "uniqueInvocations": 3899,
+        "queued": 3899,
+        "started": 3899,
+        "finished": 3899,
+        "queuedEvents": 3899,
+        "startedEvents": 3899,
+        "finishedEvents": 3899,
+        "duplicateLifecycleRecords": 0,
+        "missingLifecycleInvocations": 0,
+        "failedInvocations": 0,
+        "stdinPresent": 3166,
+        "stdoutPresent": 3899,
+        "stderrPresent": 3899,
+        "bothOutputStreamsPresent": 3899,
+        "stdinTruncated": 0,
+        "stdoutTruncated": 0,
+        "stderrTruncated": 0,
+        "stdoutBytes": 2719052,
+        "stderrBytes": 0,
+        "statuses": {
+          "success": 3899
+        }
+      },
+      "processes": {
+        "processes": 3899,
+        "firstStarted": 1794286896943,
+        "lastEnded": 1794287076998,
+        "elapsedMs": 180055,
+        "peak": 1,
+        "firstPeakAt": 1794286896943,
+        "totalProcessMs": 171163,
+        "meanConcurrentProcesses": 0.950615,
+        "durationsMsByConcurrentProcessCount": {
+          "0": 8892,
+          "1": 171163
+        },
+        "percentOfElapsedByConcurrentProcessCount": {
+          "0": 4.938491,
+          "1": 95.061509
+        },
+        "invalidIntervals": 0,
+        "zeroDurationIntervals": 0,
+        "finalActiveProcesses": 0
+      }
+    },
+    {
+      "project": "demo-experiments/embeddings",
+      "machine": "demo-research",
+      "tier": 5,
+      "taskStarted": 1794286896901,
+      "taskEnded": 1794287156027,
+      "taskElapsedMs": 259126,
+      "expectedHistoryCommands": 6153,
+      "actualHistoryCommands": 6153,
+      "countMatchesTask": true,
+      "operations": {
+        "branch.fork": 64,
+        "branch.merge": 40,
+        "branch.publish": 1049,
+        "file.write": 5000
+      },
+      "fileWritesMissingStdin": 0,
+      "accounting": {
+        "uniqueInvocations": 6153,
+        "queued": 6153,
+        "started": 6153,
+        "finished": 6153,
+        "queuedEvents": 6153,
+        "startedEvents": 6153,
+        "finishedEvents": 6153,
+        "duplicateLifecycleRecords": 0,
+        "missingLifecycleInvocations": 0,
+        "failedInvocations": 0,
+        "stdinPresent": 5000,
+        "stdoutPresent": 6153,
+        "stderrPresent": 6153,
+        "bothOutputStreamsPresent": 6153,
+        "stdinTruncated": 0,
+        "stdoutTruncated": 0,
+        "stderrTruncated": 0,
+        "stdoutBytes": 4277982,
+        "stderrBytes": 0,
+        "statuses": {
+          "success": 6153
+        }
+      },
+      "processes": {
+        "processes": 6153,
+        "firstStarted": 1794286896943,
+        "lastEnded": 1794287156026,
+        "elapsedMs": 259083,
+        "peak": 1,
+        "firstPeakAt": 1794286896943,
+        "totalProcessMs": 245679,
+        "meanConcurrentProcesses": 0.948264,
+        "durationsMsByConcurrentProcessCount": {
+          "0": 13404,
+          "1": 245679
+        },
+        "percentOfElapsedByConcurrentProcessCount": {
+          "0": 5.173632,
+          "1": 94.826368
+        },
+        "invalidIntervals": 0,
+        "zeroDurationIntervals": 0,
+        "finalActiveProcesses": 0
+      }
+    },
+    {
+      "project": "demo-experiments/evaluation",
+      "machine": "demo-research",
+      "tier": 4,
+      "taskStarted": 1794286896933,
+      "taskEnded": 1794287112177,
+      "taskElapsedMs": 215244,
+      "expectedHistoryCommands": 4865,
+      "actualHistoryCommands": 4865,
+      "countMatchesTask": true,
+      "operations": {
+        "branch.fork": 52,
+        "branch.merge": 32,
+        "branch.publish": 829,
+        "file.write": 3952
+      },
+      "fileWritesMissingStdin": 0,
+      "accounting": {
+        "uniqueInvocations": 4865,
+        "queued": 4865,
+        "started": 4865,
+        "finished": 4865,
+        "queuedEvents": 4865,
+        "startedEvents": 4865,
+        "finishedEvents": 4865,
+        "duplicateLifecycleRecords": 0,
+        "missingLifecycleInvocations": 0,
+        "failedInvocations": 0,
+        "stdinPresent": 3952,
+        "stdoutPresent": 4865,
+        "stderrPresent": 4865,
+        "bothOutputStreamsPresent": 4865,
+        "stdinTruncated": 0,
+        "stdoutTruncated": 0,
+        "stderrTruncated": 0,
+        "stdoutBytes": 3378443,
+        "stderrBytes": 0,
+        "statuses": {
+          "success": 4865
+        }
+      },
+      "processes": {
+        "processes": 4865,
+        "firstStarted": 1794286896943,
+        "lastEnded": 1794287112176,
+        "elapsedMs": 215233,
+        "peak": 1,
+        "firstPeakAt": 1794286896943,
+        "totalProcessMs": 204331,
+        "meanConcurrentProcesses": 0.949348,
+        "durationsMsByConcurrentProcessCount": {
+          "0": 10902,
+          "1": 204331
+        },
+        "percentOfElapsedByConcurrentProcessCount": {
+          "0": 5.065208,
+          "1": 94.934792
+        },
+        "invalidIntervals": 0,
+        "zeroDurationIntervals": 0,
+        "finalActiveProcesses": 0
+      }
+    }
+  ],
+  "failureCount": 0,
+  "failureExamples": [],
+  "notes": [
+    "Zero-millisecond intervals cannot demonstrate overlap at this timestamp resolution.",
+    "Duration histograms include count=0 gaps between CLI processes.",
+    "Output presence is checked from stored text fields; stream bodies are not retained in analyzer memory.",
+    "No claim about unique Commit or Layer IDs is inferred solely from command count; use the run's separate graph verification."
+  ]
+}

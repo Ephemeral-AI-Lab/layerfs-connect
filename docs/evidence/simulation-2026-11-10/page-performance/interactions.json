@@ -1,0 +1,421 @@
+{
+  "target": "95F0E89164E0F5609C68BDCBD265966D",
+  "checks": [
+    {
+      "label": "Storage cards rendered",
+      "ms": 0
+    },
+    {
+      "label": "Storage search filters cards",
+      "ms": 14
+    },
+    {
+      "label": "Clear restores cards",
+      "ms": 21
+    },
+    {
+      "label": "storage 1280x820",
+      "overflow": false
+    },
+    {
+      "label": "storage 900x600",
+      "overflow": false
+    },
+    {
+      "label": "Store workspace navigation",
+      "ms": 105
+    },
+    {
+      "label": "Store real allocation counters",
+      "ms": 2860
+    },
+    {
+      "label": "Project Files load",
+      "ms": 1579
+    },
+    {
+      "label": "Project History graph loads",
+      "ms": 3737
+    },
+    {
+      "label": "History branch finder opens",
+      "ms": 1
+    },
+    {
+      "label": "Project Sandboxes opens",
+      "ms": 5
+    },
+    {
+      "label": "Project Storage real snapshot",
+      "ms": 2065
+    },
+    {
+      "label": "project-storage 1280x820",
+      "overflow": false
+    },
+    {
+      "label": "project-storage 900x600",
+      "overflow": false
+    },
+    {
+      "label": "Machines board navigation",
+      "ms": 106
+    },
+    {
+      "label": "machines 1280x820",
+      "overflow": false
+    },
+    {
+      "label": "machines 900x600",
+      "overflow": false
+    },
+    {
+      "label": "Native machine details",
+      "ms": 4
+    },
+    {
+      "label": "Presets page navigation",
+      "ms": 175
+    },
+    {
+      "label": "Preset script page loads",
+      "ms": 3790
+    },
+    {
+      "label": "preset-script 1280x820",
+      "overflow": false
+    },
+    {
+      "label": "preset-script 900x600",
+      "overflow": false
+    },
+    {
+      "label": "Preset script pagination",
+      "ms": 189
+    }
+  ],
+  "errors": [],
+  "requests": [
+    {
+      "path": "projects/sim-design-95eab4b69a4534e75666%2Fdesign-95eab4b69a4534e75666",
+      "method": "OPTIONS",
+      "at": 1794307346488
+    },
+    {
+      "path": "projects/sim-design-b2825dbc2f9300c9b76e%2Fdesign-b2825dbc2f9300c9b76e",
+      "method": "OPTIONS",
+      "at": 1794307346488
+    },
+    {
+      "path": "projects/sim-design-95eab4b69a4534e75666%2Fdesign-95eab4b69a4534e75666",
+      "method": "GET",
+      "at": 1794307346489
+    },
+    {
+      "path": "projects/sim-design-b2825dbc2f9300c9b76e%2Fdesign-b2825dbc2f9300c9b76e",
+      "method": "GET",
+      "at": 1794307346489
+    },
+    {
+      "path": "projects/sim-design-cc4672da074ef73c2c62%2Fdesign-cc4672da074ef73c2c62",
+      "method": "GET",
+      "at": 1794307346490
+    },
+    {
+      "path": "projects/sim-design-cc4672da074ef73c2c62%2Fdesign-cc4672da074ef73c2c62",
+      "method": "OPTIONS",
+      "at": 1794307346490
+    },
+    {
+      "path": "projects/sim-billing-811beba82547613faa48%2Fbilling-811beba82547613faa48",
+      "method": "OPTIONS",
+      "at": 1794307346734
+    },
+    {
+      "path": "projects/sim-billing-a4207d40fc7fc6f3f759%2Fbilling-a4207d40fc7fc6f3f759",
+      "method": "OPTIONS",
+      "at": 1794307346734
+    },
+    {
+      "path": "projects/sim-compiler-5b83d8ed94cff19d4c5a%2Fcompiler-5b83d8ed94cff19d4c5a",
+      "method": "OPTIONS",
+      "at": 1794307346734
+    },
+    {
+      "path": "projects/sim-compiler-f9fb9799c955c039fe3d%2Fcompiler-f9fb9799c955c039fe3d",
+      "method": "OPTIONS",
+      "at": 1794307346734
+    },
+    {
+      "path": "projects/sim-billing-811beba82547613faa48%2Fbilling-811beba82547613faa48",
+      "method": "GET",
+      "at": 1794307346734
+    },
+    {
+      "path": "projects/sim-billing-a4207d40fc7fc6f3f759%2Fbilling-a4207d40fc7fc6f3f759",
+      "method": "GET",
+      "at": 1794307346735
+    },
+    {
+      "path": "projects/sim-compiler-5b83d8ed94cff19d4c5a%2Fcompiler-5b83d8ed94cff19d4c5a",
+      "method": "GET",
+      "at": 1794307346735
+    },
+    {
+      "path": "projects/sim-compiler-f9fb9799c955c039fe3d%2Fcompiler-f9fb9799c955c039fe3d",
+      "method": "GET",
+      "at": 1794307346735
+    },
+    {
+      "path": "stores/sim-billing-811beba82547613faa48/stats",
+      "method": "OPTIONS",
+      "at": 1794307346995
+    },
+    {
+      "path": "stores/sim-billing-811beba82547613faa48/stats",
+      "method": "GET",
+      "at": 1794307347027
+    },
+    {
+      "path": "demo-presets",
+      "method": "GET",
+      "at": 1794307347250
+    },
+    {
+      "path": "stores/sim-billing-811beba82547613faa48/observations",
+      "method": "OPTIONS",
+      "at": 1794307349887
+    },
+    {
+      "path": "stores/sim-billing-811beba82547613faa48/observations",
+      "method": "GET",
+      "at": 1794307349890
+    },
+    {
+      "path": "projects/sim-billing-811beba82547613faa48%2Fbilling-811beba82547613faa48/branches?pos=0",
+      "method": "OPTIONS",
+      "at": 1794307350033
+    },
+    {
+      "path": "projects/sim-billing-811beba82547613faa48%2Fbilling-811beba82547613faa48/branches?pos=0",
+      "method": "GET",
+      "at": 1794307350063
+    },
+    {
+      "path": "storage",
+      "method": "GET",
+      "at": 1794307350063
+    },
+    {
+      "path": "projects/sim-billing-811beba82547613faa48%2Fbilling-811beba82547613faa48/fs?branch=main&path=%2F&pin=32346515e85488d7757b32a863e9f29e063bcc25e363a472cc40624c019a310506&pos=0",
+      "method": "OPTIONS",
+      "at": 1794307350716
+    },
+    {
+      "path": "projects/sim-billing-811beba82547613faa48%2Fbilling-811beba82547613faa48/fs?branch=main&path=%2F&pin=32346515e85488d7757b32a863e9f29e063bcc25e363a472cc40624c019a310506&pos=0",
+      "method": "GET",
+      "at": 1794307350822
+    },
+    {
+      "path": "projects/sim-billing-811beba82547613faa48%2Fbilling-811beba82547613faa48/file?branch=main&path=%2FREADME.md&pin=32346515e85488d7757b32a863e9f29e063bcc25e363a472cc40624c019a310506&line=1",
+      "method": "OPTIONS",
+      "at": 1794307351436
+    },
+    {
+      "path": "projects/sim-billing-811beba82547613faa48%2Fbilling-811beba82547613faa48/file?branch=main&path=%2FREADME.md&pin=32346515e85488d7757b32a863e9f29e063bcc25e363a472cc40624c019a310506&line=1",
+      "method": "GET",
+      "at": 1794307351439
+    },
+    {
+      "path": "projects/sim-billing-811beba82547613faa48%2Fbilling-811beba82547613faa48/history?pos=0",
+      "method": "OPTIONS",
+      "at": 1794307352015
+    },
+    {
+      "path": "projects/sim-billing-811beba82547613faa48%2Fbilling-811beba82547613faa48/history?pos=0",
+      "method": "GET",
+      "at": 1794307352075
+    },
+    {
+      "path": "projects/sim-billing-811beba82547613faa48%2Fbilling-811beba82547613faa48/history?branch=main",
+      "method": "OPTIONS",
+      "at": 1794307352165
+    },
+    {
+      "path": "projects/sim-billing-811beba82547613faa48%2Fbilling-811beba82547613faa48/history?branch=explore-multi-currency",
+      "method": "OPTIONS",
+      "at": 1794307352165
+    },
+    {
+      "path": "projects/sim-billing-811beba82547613faa48%2Fbilling-811beba82547613faa48/history?branch=main",
+      "method": "GET",
+      "at": 1794307352165
+    },
+    {
+      "path": "projects/sim-billing-811beba82547613faa48%2Fbilling-811beba82547613faa48/history?branch=explore-multi-currency",
+      "method": "GET",
+      "at": 1794307352165
+    },
+    {
+      "path": "projects/sim-billing-811beba82547613faa48%2Fbilling-811beba82547613faa48/history?branch=explore-subscriptions",
+      "method": "OPTIONS",
+      "at": 1794307352165
+    },
+    {
+      "path": "projects/sim-billing-811beba82547613faa48%2Fbilling-811beba82547613faa48/history?branch=explore-subscriptions",
+      "method": "GET",
+      "at": 1794307352166
+    },
+    {
+      "path": "projects/sim-billing-811beba82547613faa48%2Fbilling-811beba82547613faa48/history?branch=feature-adjustments",
+      "method": "GET",
+      "at": 1794307352166
+    },
+    {
+      "path": "projects/sim-billing-811beba82547613faa48%2Fbilling-811beba82547613faa48/history?branch=feature-adjustments",
+      "method": "OPTIONS",
+      "at": 1794307352166
+    },
+    {
+      "path": "demo-presets",
+      "method": "GET",
+      "at": 1794307352249
+    },
+    {
+      "path": "demo-presets",
+      "method": "OPTIONS",
+      "at": 1794307352250
+    },
+    {
+      "path": "projects/sim-billing-811beba82547613faa48%2Fbilling-811beba82547613faa48/history?branch=feature-discounts",
+      "method": "OPTIONS",
+      "at": 1794307353550
+    },
+    {
+      "path": "projects/sim-billing-811beba82547613faa48%2Fbilling-811beba82547613faa48/history?branch=feature-tax-policy",
+      "method": "OPTIONS",
+      "at": 1794307353551
+    },
+    {
+      "path": "projects/sim-billing-811beba82547613faa48%2Fbilling-811beba82547613faa48/history?branch=feature-discounts",
+      "method": "GET",
+      "at": 1794307353551
+    },
+    {
+      "path": "projects/sim-billing-811beba82547613faa48%2Fbilling-811beba82547613faa48/history?branch=feature-tax-policy",
+      "method": "GET",
+      "at": 1794307353551
+    },
+    {
+      "path": "projects/sim-billing-811beba82547613faa48%2Fbilling-811beba82547613faa48/history?branch=fix-payment-validation",
+      "method": "GET",
+      "at": 1794307353551
+    },
+    {
+      "path": "projects/sim-billing-811beba82547613faa48%2Fbilling-811beba82547613faa48/history?branch=integration-001",
+      "method": "GET",
+      "at": 1794307353551
+    },
+    {
+      "path": "projects/sim-billing-811beba82547613faa48%2Fbilling-811beba82547613faa48/history?branch=fix-payment-validation",
+      "method": "OPTIONS",
+      "at": 1794307353552
+    },
+    {
+      "path": "projects/sim-billing-811beba82547613faa48%2Fbilling-811beba82547613faa48/history?branch=integration-001",
+      "method": "OPTIONS",
+      "at": 1794307353552
+    },
+    {
+      "path": "storage",
+      "method": "GET",
+      "at": 1794307355033
+    },
+    {
+      "path": "projects/sim-billing-811beba82547613faa48%2Fbilling-811beba82547613faa48",
+      "method": "GET",
+      "at": 1794307355860
+    },
+    {
+      "path": "demo-presets",
+      "method": "GET",
+      "at": 1794307357249
+    },
+    {
+      "path": "projects/sim-billing-811beba82547613faa48%2Fbilling-811beba82547613faa48/stats?branch=main&pin=32346515e85488d7757b32a863e9f29e063bcc25e363a472cc40624c019a310506",
+      "method": "OPTIONS",
+      "at": 1794307357429
+    },
+    {
+      "path": "projects/sim-billing-811beba82547613faa48%2Fbilling-811beba82547613faa48/storage-history?branch=main&size=20&at=32346515e85488d7757b32a863e9f29e063bcc25e363a472cc40624c019a310506",
+      "method": "OPTIONS",
+      "at": 1794307357431
+    },
+    {
+      "path": "projects/sim-billing-811beba82547613faa48%2Fbilling-811beba82547613faa48/stats?branch=main&pin=32346515e85488d7757b32a863e9f29e063bcc25e363a472cc40624c019a310506",
+      "method": "GET",
+      "at": 1794307357433
+    },
+    {
+      "path": "projects/sim-billing-811beba82547613faa48%2Fbilling-811beba82547613faa48/storage-history?branch=main&size=20&at=32346515e85488d7757b32a863e9f29e063bcc25e363a472cc40624c019a310506",
+      "method": "GET",
+      "at": 1794307357433
+    },
+    {
+      "path": "machines",
+      "method": "OPTIONS",
+      "at": 1794307358107
+    },
+    {
+      "path": "machines",
+      "method": "GET",
+      "at": 1794307358143
+    },
+    {
+      "path": "demo-presets",
+      "method": "GET",
+      "at": 1794307358511
+    },
+    {
+      "path": "demo-presets/studio/script?offset=0&limit=100&kind=project&name=demo-studio%2Fwebsite&executionMode=mixed",
+      "method": "OPTIONS",
+      "at": 1794307358523
+    },
+    {
+      "path": "demo-presets/studio/script?offset=0&limit=100&kind=project&name=demo-studio%2Fwebsite&executionMode=mixed",
+      "method": "GET",
+      "at": 1794307358555
+    },
+    {
+      "path": "demo-presets",
+      "method": "GET",
+      "at": 1794307362249
+    },
+    {
+      "path": "demo-presets/studio/script?offset=100&limit=100&snapshot=8ec4a796-9a81-471f-af22-c6c9da3740ef&kind=project&name=demo-studio%2Fwebsite&executionMode=mixed",
+      "method": "OPTIONS",
+      "at": 1794307362898
+    },
+    {
+      "path": "demo-presets/studio/script?offset=100&limit=100&snapshot=8ec4a796-9a81-471f-af22-c6c9da3740ef&kind=project&name=demo-studio%2Fwebsite&executionMode=mixed",
+      "method": "GET",
+      "at": 1794307362900
+    }
+  ],
+  "search": {
+    "initial": 19,
+    "filtered": 5
+  },
+  "project": "sim-billing-811beba82547613faa48/billing-811beba82547613faa48",
+  "filesText": "ng Original\nStorage\n/\nsim-billing-811beba82547613faa48\n/\nbilling-811beba82547613faa48\nFiles\nHistory\nSandboxes\nStorage\nmain\n\nSaved 346515e8\n\ndata\ndocs\nexamples\npolicies\nproposals\nsrc\ntemplates\ni\nCHANGELOG.md\ni\nREADME.md\nnpm\npackage.json\ni\nREADME.md\n/README.md\n· 614 B · Layer\n346515e8\nLatest saved\nSaved versions\nCode\nCompare\nAttribution\nBlame\nRevisions\n1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11\n12\n13\n# Workshop invoice notebook\n\n\nA small invoice ledger with explicit integer-cent calculations, sample payments and reconciliation notes.\n\n\n## Purpose\nExplain a maker workshop’s invoices and payment boundaries with inspectable examples.\n\n\n## Explore\nBrowse the source, examples and documentation. The branch history records small file changes, merges into new release branches and publications to main. Exploration branches remain proposals.\n\n\n## Execution\nThis preset imports files and creates history through LayerFS CLI calls. It does not run this project's code, install dependencies or produce benchmark results.\n\n",
+  "scriptPage": "1–100 of 19,814 commands",
+  "scriptNextPage": "101–200 of 19,814 commands",
+  "metrics": {
+    "Nodes": 12344,
+    "LayoutCount": 267,
+    "RecalcStyleCount": 1971,
+    "JSHeapUsedSize": 67667252,
+    "JSHeapTotalSize": 137347072
+  },
+  "mutations": []
+}

@@ -1,4 +1,3 @@
-// The Machines page: machines (LayerFS 2.0), the Stores they hold, their Sandboxes and Workspaces, adding a machine, and the simulated hosts.
 export const computeZh: Record<string, string> = {
   "1 project": "1 个项目",
   "{n} projects": "{n} 个项目",
@@ -6,10 +5,6 @@ export const computeZh: Record<string, string> = {
   "Tool": "工具",
   "LayerFS logs in as root by default and turns off user namespaces on that host for everyone. Use a host you keep for this.": "LayerFS 默认以 root 登录，并会为该主机上的所有人关闭用户命名空间。请使用专门用于此用途的主机。",
   "Install {tool}": "安装 {tool}",
-  "Simulate a host": "模拟主机",
-  "Live host": "实际主机",
-  "Simulated": "模拟",
-  "{label}: sample data, not this machine.": "{label}：示例数据，不是本机。",
   "Platform: {platform}": "平台：{platform}",
   "Mac": "Mac",
   "Apple Container": "Apple Container",
@@ -33,9 +28,7 @@ export const computeZh: Record<string, string> = {
   "New machine": "新建机器",
   "Ready on this computer": "本机可创建",
   "{kind} VM": "{kind} 虚拟机",
-  "Mac, fresh home": "Mac，全新主目录",
   "Mac, five machines, one down": "Mac，五台机器，一台停机",
-  "Mac, many Stores": "Mac，许多存储",
   "Windows (Docker via WSL2)": "Windows（通过 WSL2 运行 Docker）",
   "Older LayerFS (no machines)": "旧版 LayerFS（没有机器）",
   "Machines": "机器",

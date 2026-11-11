@@ -28,11 +28,15 @@ export function groupChats(chats: ChatSummary[]): ChatGroup[] {
     if (chat.archived) continue
     const project = chatProject(chat)
     if (!project) scratch.push(chat)
-    else projects.set(project, [...(projects.get(project) ?? []), chat])
+    else {
+      const group = projects.get(project)
+      if (group) group.push(chat)
+      else projects.set(project, [chat])
+    }
   }
-  const newest = (list: ChatSummary[]) => Math.max(...list.map((c) => c.updated))
+  // Input already follows the sidebar's stable activity ordering. Re-sorting
+  // groups by live `updated` would make running projects jump on every step.
   const groups: ChatGroup[] = [...projects]
-    .sort((a, b) => newest(b[1]) - newest(a[1]))
     .map(([key, list]) => ({ key, kind: 'project', ...splitProjectKey(key), chats: list }))
   if (scratch.length) groups.push({ key: SCRATCH, kind: 'scratch', name: 'Scratch', store: '', chats: scratch })
   return groups

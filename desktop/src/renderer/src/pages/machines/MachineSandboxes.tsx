@@ -4,11 +4,11 @@ import { ArrowRight, ArrowUpRight, GitBranch, X } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 
-import { SandboxResources } from './SandboxResources'
-import { sampleSandboxUsage } from '@/layerfs/simulation/sandbox-metrics'
 
 import { Refusal } from '@/components/layerfs/Refusal'
 import { MoreButton } from '@/pages/storage/RowParts'
+import { Button } from '@/components/ui/button'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { clearingCall, opWords, stateLook } from '@/layerfs/states'
 import { shortDigest } from '@/layerfs/format'
@@ -24,18 +24,17 @@ export interface SandboxOps {
 
 interface Props {
   sandboxes: MachineSandbox[]
-  sampleMetrics?: boolean
   ops: SandboxOps
   onOpenProject?: (key: string, tab?: string) => void
 }
 
-export function MachineSandboxes({ sandboxes, ops, onOpenProject, sampleMetrics = false }: Props) {
+export function MachineSandboxes({ sandboxes, ops, onOpenProject }: Props) {
   return <div role="list" aria-label="Sandboxes" className="machine-sandbox-grid">
-    {sandboxes.map(b => <SandboxBox key={b.name} b={b} ops={ops} onOpenProject={onOpenProject} sampleMetrics={sampleMetrics} />)}
+    {sandboxes.map(b => <SandboxBox key={b.name} b={b} ops={ops} onOpenProject={onOpenProject} />)}
   </div>
 }
 
-function SandboxBox({ b, ops, onOpenProject, sampleMetrics }: { b: MachineSandbox; ops: SandboxOps; sampleMetrics: boolean; onOpenProject?: Props['onOpenProject'] }) {
+function SandboxBox({ b, ops, onOpenProject }: { b: MachineSandbox; ops: SandboxOps; onOpenProject?: Props['onOpenProject'] }) {
   const location = useLocation()
   const closing = useClose(b, ops)
   const ref = b.project ? projectRef(b.project) : null
@@ -72,7 +71,6 @@ function SandboxBox({ b, ops, onOpenProject, sampleMetrics }: { b: MachineSandbo
       <p className="machine-card-image" title={imageRef ? `Image: ${imageRef}` : `Image: ${image}`}><span>Image:</span> {image}</p>
       <span className="machine-card-kernel" title="Reported filesystem kernel"><span>Kernel</span> {kernel}</span>
     </div>
-    <SandboxResources usage={import.meta.env.DEV && sampleMetrics ? sampleSandboxUsage(b.name) : null} sample={import.meta.env.DEV && sampleMetrics} />
     <section className="machine-card-workspaces" aria-label={`Workspaces in ${b.name}`}>
       <h4>Workspaces <span aria-label={used === null ? 'Workspace count unknown' : `${used} of ${SANDBOX_CAPACITY} workspaces`}>{used ?? '—'} <span className="text-faint">/ {SANDBOX_CAPACITY}</span></span></h4>
       {used === 0 ? <p className="machine-card-empty">No workspaces mounted</p>
@@ -133,18 +131,30 @@ function useClose(b: MachineSandbox, ops: SandboxOps) {
 /** The card's menu: its project, and Close (Force close once a close was refused). */
 function SandboxMenu({ b, closing, onOpenProject }: { b: MachineSandbox; closing: ReturnType<typeof useClose>; onOpenProject?: Props['onOpenProject'] }) {
   const { busy, close, forceAllowed, uncertain } = closing
+  const [confirm, setConfirm] = useState(false)
   return (
+    <>
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <MoreButton label={`More for Sandbox ${b.name}`} className="-my-1 -mr-1.5 size-7 shrink-0" disabled={busy} />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="min-w-48">
         {b.project && onOpenProject && <DropdownMenuItem onSelect={() => onOpenProject(b.project!, 'sandboxes')}>{'Open project'}</DropdownMenuItem>}
-        <DropdownMenuItem variant="destructive" disabled={busy || b.state === 'gone'} onSelect={() => { if (forceAllowed && !window.confirm('Running commands receive SIGTERM, then SIGKILL after 5 seconds. Uncommitted changes are lost. Force close?')) return; if (b.name.startsWith('chat.') && !window.confirm(`Used by chat ${b.name.slice(5)}; closing ends its Workspace. Close?`)) return; void close(forceAllowed) }} title={forceAllowed ? 'Close even with Workspaces whose state LayerFS cannot learn' : 'Close this Sandbox'}>
+        <DropdownMenuItem variant="destructive" disabled={busy || (!!b.op && !b.op.uncertain)} onSelect={() => { if (uncertain) void close(false); else setConfirm(true) }}>
           <X />
-          {forceAllowed ? 'Force close' : uncertain ? 'Read Sandbox' : 'Close Sandbox'}
+          {forceAllowed ? 'Force delete Sandbox…' : uncertain ? 'Read Sandbox' : 'Delete Sandbox…'}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
+    <Dialog open={confirm} onOpenChange={setConfirm}>
+      <DialogContent>
+        <DialogHeader><DialogTitle>{forceAllowed ? 'Force delete Sandbox?' : 'Delete Sandbox?'}</DialogTitle><DialogDescription>
+          {forceAllowed ? `Force deleting ${b.name} discards uncommitted Workspace changes. Running commands receive SIGTERM, then SIGKILL after 5 seconds.` : `Delete ${b.name}? This stops and removes its runtime and frees its name. Committed project history is retained. Mounted Workspaces or running commands will prevent deletion.`}
+          {b.name.startsWith('chat.') && ` This Sandbox is used by chat ${b.name.slice(5)}; deletion ends its Workspace.`}
+        </DialogDescription></DialogHeader>
+        <div className="flex justify-end gap-2"><Button variant="ghost" onClick={() => setConfirm(false)}>Cancel</Button><Button variant="destructive" onClick={() => { setConfirm(false); void close(forceAllowed) }}>{forceAllowed ? 'Force delete Sandbox' : 'Delete Sandbox'}</Button></div>
+      </DialogContent>
+    </Dialog>
+    </>
   )
 }

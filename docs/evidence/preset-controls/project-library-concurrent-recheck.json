@@ -1,0 +1,2054 @@
+{
+  "state": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/connect-project-recheck-ixDLYo",
+  "cli": "/Users/yifanxu/.cache/layerfs-worktrees/layerfs-connect-image-ru-5b7a74044d64/artifacts/build-macos-0869ec2ceccc4286bd1bb80fb17161b3/layerfs",
+  "created": 1794283668237,
+  "method": "Independent fresh-home recheck of production eight-way execution, four final machines, two projects per store. No mutation retries.",
+  "runs": [
+    {
+      "concurrency": 8,
+      "started": 1794283668238,
+      "ok": false,
+      "error": {
+        "code": "Busy",
+        "message": "busy"
+      },
+      "ended": 1794283713953,
+      "operationMs": 45715,
+      "projectMs": 132,
+      "tasks": [
+        {
+          "id": "demo-studio/website",
+          "project": "demo-studio/website",
+          "machine": "native",
+          "state": "failed",
+          "completed": 0,
+          "total": 35,
+          "started": 1794283713817,
+          "ended": 1794283713878,
+          "error": "busy",
+          "errorCode": "Busy"
+        },
+        {
+          "id": "demo-studio/design",
+          "project": "demo-studio/design",
+          "machine": "native",
+          "state": "stopped",
+          "completed": 2,
+          "total": 35,
+          "started": 1794283713820,
+          "ended": 1794283713950,
+          "error": "Stopped before the next CLI step because another project failed. Inspect CLI Activity before rebuilding.",
+          "errorCode": "PresetStopped"
+        },
+        {
+          "id": "demo-services/gateway",
+          "project": "demo-services/gateway",
+          "machine": "docker",
+          "state": "stopped",
+          "completed": 1,
+          "total": 35,
+          "started": 1794283713823,
+          "ended": 1794283713923,
+          "error": "Stopped before the next CLI step because another project failed. Inspect CLI Activity before rebuilding.",
+          "errorCode": "PresetStopped"
+        },
+        {
+          "id": "demo-services/billing",
+          "project": "demo-services/billing",
+          "machine": "docker",
+          "state": "stopped",
+          "completed": 1,
+          "total": 35,
+          "started": 1794283713825,
+          "ended": 1794283713927,
+          "error": "Stopped before the next CLI step because another project failed. Inspect CLI Activity before rebuilding.",
+          "errorCode": "PresetStopped"
+        },
+        {
+          "id": "demo-build-cache/compiler",
+          "project": "demo-build-cache/compiler",
+          "machine": "demo-build",
+          "state": "stopped",
+          "completed": 2,
+          "total": 35,
+          "started": 1794283713827,
+          "ended": 1794283713920,
+          "error": "Stopped before the next CLI step because another project failed. Inspect CLI Activity before rebuilding.",
+          "errorCode": "PresetStopped"
+        },
+        {
+          "id": "demo-build-cache/sdk",
+          "project": "demo-build-cache/sdk",
+          "machine": "demo-build",
+          "state": "stopped",
+          "completed": 2,
+          "total": 35,
+          "started": 1794283713829,
+          "ended": 1794283713912,
+          "error": "Stopped before the next CLI step because another project failed. Inspect CLI Activity before rebuilding.",
+          "errorCode": "PresetStopped"
+        },
+        {
+          "id": "demo-experiments/embeddings",
+          "project": "demo-experiments/embeddings",
+          "machine": "demo-research",
+          "state": "stopped",
+          "completed": 2,
+          "total": 35,
+          "started": 1794283713832,
+          "ended": 1794283713913,
+          "error": "Stopped before the next CLI step because another project failed. Inspect CLI Activity before rebuilding.",
+          "errorCode": "PresetStopped"
+        },
+        {
+          "id": "demo-experiments/evaluation",
+          "project": "demo-experiments/evaluation",
+          "machine": "demo-research",
+          "state": "stopped",
+          "completed": 2,
+          "total": 35,
+          "started": 1794283713835,
+          "ended": 1794283713917,
+          "error": "Stopped before the next CLI step because another project failed. Inspect CLI Activity before rebuilding.",
+          "errorCode": "PresetStopped"
+        }
+      ],
+      "calls": [
+        {
+          "argv": [
+            "machine",
+            "list"
+          ],
+          "started": 1794283668288,
+          "phase": false,
+          "ok": true,
+          "ended": 1794283668372
+        },
+        {
+          "argv": [
+            "machine",
+            "platforms"
+          ],
+          "started": 1794283668373,
+          "phase": false,
+          "ok": true,
+          "ended": 1794283668532
+        },
+        {
+          "argv": [
+            "machine",
+            "get",
+            "native"
+          ],
+          "started": 1794283668533,
+          "phase": false,
+          "ok": true,
+          "ended": 1794283668543
+        },
+        {
+          "argv": [
+            "machine",
+            "get",
+            "docker"
+          ],
+          "started": 1794283668543,
+          "phase": false,
+          "ok": true,
+          "ended": 1794283668617
+        },
+        {
+          "argv": [
+            "machine",
+            "start",
+            "docker"
+          ],
+          "started": 1794283668618,
+          "phase": false,
+          "ok": true,
+          "ended": 1794283669135
+        },
+        {
+          "argv": [
+            "machine",
+            "list"
+          ],
+          "started": 1794283669136,
+          "phase": false,
+          "ok": true,
+          "ended": 1794283669251
+        },
+        {
+          "argv": [
+            "machine",
+            "create",
+            "demo-build",
+            "lima",
+            "--cpus",
+            "2",
+            "--memory",
+            "4G",
+            "--disk",
+            "20G"
+          ],
+          "started": 1794283669252,
+          "phase": false,
+          "ok": true,
+          "ended": 1794283690882
+        },
+        {
+          "argv": [
+            "machine",
+            "get",
+            "demo-build"
+          ],
+          "started": 1794283690882,
+          "phase": false,
+          "ok": true,
+          "ended": 1794283691030
+        },
+        {
+          "argv": [
+            "machine",
+            "get",
+            "demo-build"
+          ],
+          "started": 1794283691031,
+          "phase": false,
+          "ok": true,
+          "ended": 1794283691134
+        },
+        {
+          "argv": [
+            "machine",
+            "list"
+          ],
+          "started": 1794283691135,
+          "phase": false,
+          "ok": true,
+          "ended": 1794283691267
+        },
+        {
+          "argv": [
+            "machine",
+            "create",
+            "demo-research",
+            "lima",
+            "--cpus",
+            "2",
+            "--memory",
+            "4G",
+            "--disk",
+            "20G"
+          ],
+          "started": 1794283691268,
+          "phase": false,
+          "ok": true,
+          "ended": 1794283713057
+        },
+        {
+          "argv": [
+            "machine",
+            "get",
+            "demo-research"
+          ],
+          "started": 1794283713058,
+          "phase": false,
+          "ok": true,
+          "ended": 1794283713211
+        },
+        {
+          "argv": [
+            "machine",
+            "get",
+            "demo-research"
+          ],
+          "started": 1794283713211,
+          "phase": false,
+          "ok": true,
+          "ended": 1794283713320
+        },
+        {
+          "argv": [
+            "store",
+            "list"
+          ],
+          "started": 1794283713321,
+          "phase": false,
+          "ok": true,
+          "ended": 1794283713332
+        },
+        {
+          "argv": [
+            "store",
+            "list"
+          ],
+          "started": 1794283713324,
+          "phase": false,
+          "ok": true,
+          "ended": 1794283713335
+        },
+        {
+          "argv": [
+            "store",
+            "create",
+            "demo-studio"
+          ],
+          "started": 1794283713333,
+          "phase": false,
+          "ok": true,
+          "ended": 1794283713377
+        },
+        {
+          "argv": [
+            "store",
+            "create",
+            "demo-services"
+          ],
+          "started": 1794283713335,
+          "phase": false,
+          "ok": true,
+          "ended": 1794283713391
+        },
+        {
+          "argv": [
+            "store",
+            "get",
+            "demo-studio"
+          ],
+          "started": 1794283713378,
+          "phase": false,
+          "ok": true,
+          "ended": 1794283713387
+        },
+        {
+          "argv": [
+            "project",
+            "list",
+            "demo-studio",
+            "--page-size",
+            "1000",
+            "--page-pos",
+            "0"
+          ],
+          "started": 1794283713388,
+          "phase": false,
+          "ok": true,
+          "ended": 1794283713399
+        },
+        {
+          "argv": [
+            "store",
+            "get",
+            "demo-services"
+          ],
+          "started": 1794283713392,
+          "phase": false,
+          "ok": true,
+          "ended": 1794283713405
+        },
+        {
+          "argv": [
+            "project",
+            "init",
+            "demo-studio/website",
+            "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/connect-project-recheck-ixDLYo/demo-sources/demo-studio/website",
+            "--progress"
+          ],
+          "started": 1794283713403,
+          "phase": false,
+          "ok": true,
+          "ended": 1794283713472
+        },
+        {
+          "argv": [
+            "project",
+            "list",
+            "demo-services",
+            "--page-size",
+            "1000",
+            "--page-pos",
+            "0"
+          ],
+          "started": 1794283713407,
+          "phase": false,
+          "ok": true,
+          "ended": 1794283713414
+        },
+        {
+          "argv": [
+            "project",
+            "init",
+            "demo-services/gateway",
+            "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/connect-project-recheck-ixDLYo/demo-sources/demo-services/gateway",
+            "--progress"
+          ],
+          "started": 1794283713423,
+          "phase": false,
+          "ok": true,
+          "ended": 1794283713467
+        },
+        {
+          "argv": [
+            "project",
+            "list",
+            "demo-services",
+            "--page-size",
+            "1000",
+            "--page-pos",
+            "0"
+          ],
+          "started": 1794283713468,
+          "phase": false,
+          "ok": true,
+          "ended": 1794283713477
+        },
+        {
+          "argv": [
+            "project",
+            "list",
+            "demo-studio",
+            "--page-size",
+            "1000",
+            "--page-pos",
+            "0"
+          ],
+          "started": 1794283713474,
+          "phase": false,
+          "ok": true,
+          "ended": 1794283713482
+        },
+        {
+          "argv": [
+            "project",
+            "init",
+            "demo-services/billing",
+            "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/connect-project-recheck-ixDLYo/demo-sources/demo-services/billing",
+            "--progress"
+          ],
+          "started": 1794283713480,
+          "phase": false,
+          "ok": true,
+          "ended": 1794283713515
+        },
+        {
+          "argv": [
+            "project",
+            "init",
+            "demo-studio/design",
+            "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/connect-project-recheck-ixDLYo/demo-sources/demo-studio/design",
+            "--progress"
+          ],
+          "started": 1794283713486,
+          "phase": false,
+          "ok": true,
+          "ended": 1794283713519
+        },
+        {
+          "argv": [
+            "store",
+            "get",
+            "demo-services"
+          ],
+          "started": 1794283713517,
+          "phase": false,
+          "ok": true,
+          "ended": 1794283713525
+        },
+        {
+          "argv": [
+            "store",
+            "get",
+            "demo-studio"
+          ],
+          "started": 1794283713520,
+          "phase": false,
+          "ok": true,
+          "ended": 1794283713528
+        },
+        {
+          "argv": [
+            "store",
+            "push",
+            "demo-services",
+            "docker",
+            "--progress"
+          ],
+          "started": 1794283713526,
+          "phase": false,
+          "ok": true,
+          "ended": 1794283713629
+        },
+        {
+          "argv": [
+            "store",
+            "list"
+          ],
+          "started": 1794283713529,
+          "phase": false,
+          "ok": true,
+          "ended": 1794283713536
+        },
+        {
+          "argv": [
+            "store",
+            "create",
+            "demo-build-cache"
+          ],
+          "started": 1794283713537,
+          "phase": false,
+          "ok": true,
+          "ended": 1794283713554
+        },
+        {
+          "argv": [
+            "store",
+            "get",
+            "demo-build-cache"
+          ],
+          "started": 1794283713555,
+          "phase": false,
+          "ok": true,
+          "ended": 1794283713563
+        },
+        {
+          "argv": [
+            "project",
+            "list",
+            "demo-build-cache",
+            "--page-size",
+            "1000",
+            "--page-pos",
+            "0"
+          ],
+          "started": 1794283713564,
+          "phase": false,
+          "ok": true,
+          "ended": 1794283713571
+        },
+        {
+          "argv": [
+            "project",
+            "init",
+            "demo-build-cache/compiler",
+            "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/connect-project-recheck-ixDLYo/demo-sources/demo-build-cache/compiler",
+            "--progress"
+          ],
+          "started": 1794283713575,
+          "phase": false,
+          "ok": true,
+          "ended": 1794283713610
+        },
+        {
+          "argv": [
+            "project",
+            "list",
+            "demo-build-cache",
+            "--page-size",
+            "1000",
+            "--page-pos",
+            "0"
+          ],
+          "started": 1794283713611,
+          "phase": false,
+          "ok": true,
+          "ended": 1794283713619
+        },
+        {
+          "argv": [
+            "project",
+            "init",
+            "demo-build-cache/sdk",
+            "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/connect-project-recheck-ixDLYo/demo-sources/demo-build-cache/sdk",
+            "--progress"
+          ],
+          "started": 1794283713623,
+          "phase": false,
+          "ok": true,
+          "ended": 1794283713666
+        },
+        {
+          "argv": [
+            "store",
+            "list"
+          ],
+          "started": 1794283713630,
+          "phase": false,
+          "ok": true,
+          "ended": 1794283713644
+        },
+        {
+          "argv": [
+            "store",
+            "create",
+            "demo-experiments"
+          ],
+          "started": 1794283713645,
+          "phase": false,
+          "ok": true,
+          "ended": 1794283713663
+        },
+        {
+          "argv": [
+            "store",
+            "get",
+            "demo-experiments"
+          ],
+          "started": 1794283713664,
+          "phase": false,
+          "ok": true,
+          "ended": 1794283713673
+        },
+        {
+          "argv": [
+            "store",
+            "get",
+            "demo-build-cache"
+          ],
+          "started": 1794283713667,
+          "phase": false,
+          "ok": true,
+          "ended": 1794283713676
+        },
+        {
+          "argv": [
+            "project",
+            "list",
+            "demo-experiments",
+            "--page-size",
+            "1000",
+            "--page-pos",
+            "0"
+          ],
+          "started": 1794283713674,
+          "phase": false,
+          "ok": true,
+          "ended": 1794283713682
+        },
+        {
+          "argv": [
+            "store",
+            "push",
+            "demo-build-cache",
+            "demo-build",
+            "--progress"
+          ],
+          "started": 1794283713677,
+          "phase": false,
+          "ok": true,
+          "ended": 1794283713721
+        },
+        {
+          "argv": [
+            "project",
+            "init",
+            "demo-experiments/embeddings",
+            "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/connect-project-recheck-ixDLYo/demo-sources/demo-experiments/embeddings",
+            "--progress"
+          ],
+          "started": 1794283713686,
+          "phase": false,
+          "ok": true,
+          "ended": 1794283713718
+        },
+        {
+          "argv": [
+            "project",
+            "list",
+            "demo-experiments",
+            "--page-size",
+            "1000",
+            "--page-pos",
+            "0"
+          ],
+          "started": 1794283713719,
+          "phase": false,
+          "ok": true,
+          "ended": 1794283713728
+        },
+        {
+          "argv": [
+            "project",
+            "init",
+            "demo-experiments/evaluation",
+            "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/connect-project-recheck-ixDLYo/demo-sources/demo-experiments/evaluation",
+            "--progress"
+          ],
+          "started": 1794283713731,
+          "phase": false,
+          "ok": true,
+          "ended": 1794283713763
+        },
+        {
+          "argv": [
+            "store",
+            "get",
+            "demo-experiments"
+          ],
+          "started": 1794283713764,
+          "phase": false,
+          "ok": true,
+          "ended": 1794283713773
+        },
+        {
+          "argv": [
+            "store",
+            "push",
+            "demo-experiments",
+            "demo-research",
+            "--progress"
+          ],
+          "started": 1794283713774,
+          "phase": false,
+          "ok": true,
+          "ended": 1794283713815
+        },
+        {
+          "argv": [
+            "branch",
+            "fork",
+            "demo-studio/website",
+            "release-0.1",
+            "main"
+          ],
+          "started": 1794283713819,
+          "phase": true,
+          "ok": false,
+          "error": {
+            "code": "Busy",
+            "message": "busy"
+          },
+          "ended": 1794283713877
+        },
+        {
+          "argv": [
+            "branch",
+            "fork",
+            "demo-studio/design",
+            "release-0.1",
+            "main"
+          ],
+          "started": 1794283713821,
+          "phase": true,
+          "ok": true,
+          "ended": 1794283713874
+        },
+        {
+          "argv": [
+            "branch",
+            "fork",
+            "demo-services/gateway",
+            "release-0.1",
+            "main"
+          ],
+          "started": 1794283713824,
+          "phase": true,
+          "ok": true,
+          "ended": 1794283713921
+        },
+        {
+          "argv": [
+            "branch",
+            "fork",
+            "demo-services/billing",
+            "release-0.1",
+            "main"
+          ],
+          "started": 1794283713826,
+          "phase": true,
+          "ok": true,
+          "ended": 1794283713925
+        },
+        {
+          "argv": [
+            "branch",
+            "fork",
+            "demo-build-cache/compiler",
+            "release-0.1",
+            "main"
+          ],
+          "started": 1794283713828,
+          "phase": true,
+          "ok": true,
+          "ended": 1794283713862
+        },
+        {
+          "argv": [
+            "branch",
+            "fork",
+            "demo-build-cache/sdk",
+            "release-0.1",
+            "main"
+          ],
+          "started": 1794283713830,
+          "phase": true,
+          "ok": true,
+          "ended": 1794283713858
+        },
+        {
+          "argv": [
+            "branch",
+            "fork",
+            "demo-experiments/embeddings",
+            "release-0.1",
+            "main"
+          ],
+          "started": 1794283713834,
+          "phase": true,
+          "ok": true,
+          "ended": 1794283713866
+        },
+        {
+          "argv": [
+            "branch",
+            "fork",
+            "demo-experiments/evaluation",
+            "release-0.1",
+            "main"
+          ],
+          "started": 1794283713836,
+          "phase": true,
+          "ok": true,
+          "ended": 1794283713870
+        },
+        {
+          "argv": [
+            "file",
+            "write",
+            "demo-build-cache/sdk",
+            "release-0.1",
+            "/docs/project-map.md",
+            "--message",
+            "Add an orientation map for the project"
+          ],
+          "started": 1794283713859,
+          "phase": true,
+          "ok": true,
+          "ended": 1794283713910
+        },
+        {
+          "argv": [
+            "file",
+            "write",
+            "demo-build-cache/compiler",
+            "release-0.1",
+            "/docs/project-map.md",
+            "--message",
+            "Add an orientation map for the project"
+          ],
+          "started": 1794283713863,
+          "phase": true,
+          "ok": true,
+          "ended": 1794283713918
+        },
+        {
+          "argv": [
+            "file",
+            "write",
+            "demo-experiments/embeddings",
+            "release-0.1",
+            "/docs/project-map.md",
+            "--message",
+            "Add an orientation map for the project"
+          ],
+          "started": 1794283713867,
+          "phase": true,
+          "ok": true,
+          "ended": 1794283713913
+        },
+        {
+          "argv": [
+            "file",
+            "write",
+            "demo-experiments/evaluation",
+            "release-0.1",
+            "/docs/project-map.md",
+            "--message",
+            "Add an orientation map for the project"
+          ],
+          "started": 1794283713872,
+          "phase": true,
+          "ok": true,
+          "ended": 1794283713915
+        },
+        {
+          "argv": [
+            "file",
+            "write",
+            "demo-studio/design",
+            "release-0.1",
+            "/docs/project-map.md",
+            "--message",
+            "Add an orientation map for the project"
+          ],
+          "started": 1794283713876,
+          "phase": true,
+          "ok": true,
+          "ended": 1794283713947
+        },
+        {
+          "argv": [
+            "machine",
+            "list"
+          ],
+          "started": 1794283713956,
+          "phase": false,
+          "ok": true,
+          "ended": 1794283714111
+        },
+        {
+          "argv": [
+            "store",
+            "list"
+          ],
+          "started": 1794283714111,
+          "phase": false,
+          "ok": true,
+          "ended": 1794283714127
+        },
+        {
+          "argv": [
+            "sandbox",
+            "list",
+            "--page-size",
+            "1000",
+            "--page-pos",
+            "0"
+          ],
+          "started": 1794283714127,
+          "phase": false,
+          "ok": true,
+          "ended": 1794283714137
+        },
+        {
+          "argv": [
+            "store",
+            "list"
+          ],
+          "started": 1794283714150,
+          "phase": false,
+          "ok": true,
+          "ended": 1794283714165
+        },
+        {
+          "argv": [
+            "store",
+            "get",
+            "demo-studio"
+          ],
+          "started": 1794283714165,
+          "phase": false,
+          "ok": true,
+          "ended": 1794283714174
+        },
+        {
+          "argv": [
+            "store",
+            "list"
+          ],
+          "started": 1794283714174,
+          "phase": false,
+          "ok": true,
+          "ended": 1794283714195
+        },
+        {
+          "argv": [
+            "store",
+            "get",
+            "demo-services"
+          ],
+          "started": 1794283714195,
+          "phase": false,
+          "ok": true,
+          "ended": 1794283714203
+        },
+        {
+          "argv": [
+            "machine",
+            "get",
+            "docker"
+          ],
+          "started": 1794283714203,
+          "phase": false,
+          "ok": true,
+          "ended": 1794283714330
+        },
+        {
+          "argv": [
+            "store",
+            "list"
+          ],
+          "started": 1794283714330,
+          "phase": false,
+          "ok": true,
+          "ended": 1794283714347
+        },
+        {
+          "argv": [
+            "store",
+            "get",
+            "demo-build-cache"
+          ],
+          "started": 1794283714347,
+          "phase": false,
+          "ok": true,
+          "ended": 1794283714355
+        },
+        {
+          "argv": [
+            "machine",
+            "get",
+            "demo-build"
+          ],
+          "started": 1794283714355,
+          "phase": false,
+          "ok": true,
+          "ended": 1794283714461
+        },
+        {
+          "argv": [
+            "store",
+            "list"
+          ],
+          "started": 1794283714461,
+          "phase": false,
+          "ok": true,
+          "ended": 1794283714479
+        },
+        {
+          "argv": [
+            "store",
+            "get",
+            "demo-experiments"
+          ],
+          "started": 1794283714479,
+          "phase": false,
+          "ok": true,
+          "ended": 1794283714487
+        },
+        {
+          "argv": [
+            "machine",
+            "get",
+            "demo-research"
+          ],
+          "started": 1794283714487,
+          "phase": false,
+          "ok": true,
+          "ended": 1794283714592
+        },
+        {
+          "argv": [
+            "store",
+            "list"
+          ],
+          "started": 1794283714592,
+          "phase": false,
+          "ok": true,
+          "ended": 1794283714608
+        },
+        {
+          "argv": [
+            "store",
+            "get",
+            "demo-studio"
+          ],
+          "started": 1794283714608,
+          "phase": false,
+          "ok": true,
+          "ended": 1794283714617
+        },
+        {
+          "argv": [
+            "store",
+            "remove",
+            "demo-studio"
+          ],
+          "started": 1794283714617,
+          "phase": false,
+          "ok": true,
+          "ended": 1794283714632
+        },
+        {
+          "argv": [
+            "store",
+            "list"
+          ],
+          "started": 1794283714633,
+          "phase": false,
+          "ok": true,
+          "ended": 1794283714649
+        },
+        {
+          "argv": [
+            "store",
+            "get",
+            "demo-services"
+          ],
+          "started": 1794283714649,
+          "phase": false,
+          "ok": true,
+          "ended": 1794283714657
+        },
+        {
+          "argv": [
+            "store",
+            "remove",
+            "demo-services"
+          ],
+          "started": 1794283714658,
+          "phase": false,
+          "ok": true,
+          "ended": 1794283714680
+        },
+        {
+          "argv": [
+            "store",
+            "list"
+          ],
+          "started": 1794283714680,
+          "phase": false,
+          "ok": true,
+          "ended": 1794283714696
+        },
+        {
+          "argv": [
+            "store",
+            "get",
+            "demo-build-cache"
+          ],
+          "started": 1794283714696,
+          "phase": false,
+          "ok": true,
+          "ended": 1794283714708
+        },
+        {
+          "argv": [
+            "store",
+            "remove",
+            "demo-build-cache"
+          ],
+          "started": 1794283714708,
+          "phase": false,
+          "ok": true,
+          "ended": 1794283714726
+        },
+        {
+          "argv": [
+            "store",
+            "list"
+          ],
+          "started": 1794283714726,
+          "phase": false,
+          "ok": true,
+          "ended": 1794283714737
+        },
+        {
+          "argv": [
+            "store",
+            "get",
+            "demo-experiments"
+          ],
+          "started": 1794283714737,
+          "phase": false,
+          "ok": true,
+          "ended": 1794283714745
+        },
+        {
+          "argv": [
+            "store",
+            "remove",
+            "demo-experiments"
+          ],
+          "started": 1794283714746,
+          "phase": false,
+          "ok": true,
+          "ended": 1794283714763
+        },
+        {
+          "argv": [
+            "machine",
+            "list"
+          ],
+          "started": 1794283714764,
+          "phase": false,
+          "ok": true,
+          "ended": 1794283714897
+        },
+        {
+          "argv": [
+            "machine",
+            "get",
+            "demo-build"
+          ],
+          "started": 1794283714897,
+          "phase": false,
+          "ok": true,
+          "ended": 1794283715000
+        },
+        {
+          "argv": [
+            "machine",
+            "remove",
+            "demo-build"
+          ],
+          "started": 1794283715000,
+          "phase": false,
+          "ok": true,
+          "ended": 1794283715718
+        },
+        {
+          "argv": [
+            "machine",
+            "list"
+          ],
+          "started": 1794283715719,
+          "phase": false,
+          "ok": true,
+          "ended": 1794283715842
+        },
+        {
+          "argv": [
+            "machine",
+            "get",
+            "demo-research"
+          ],
+          "started": 1794283715842,
+          "phase": false,
+          "ok": true,
+          "ended": 1794283715939
+        },
+        {
+          "argv": [
+            "machine",
+            "remove",
+            "demo-research"
+          ],
+          "started": 1794283715940,
+          "phase": false,
+          "ok": true,
+          "ended": 1794283716122
+        },
+        {
+          "argv": [
+            "machine",
+            "get",
+            "docker"
+          ],
+          "started": 1794283716122,
+          "phase": false,
+          "ok": true,
+          "ended": 1794283716253
+        },
+        {
+          "argv": [
+            "store",
+            "list"
+          ],
+          "started": 1794283716253,
+          "phase": false,
+          "ok": true,
+          "ended": 1794283716262
+        },
+        {
+          "argv": [
+            "sandbox",
+            "list",
+            "--page-size",
+            "1000",
+            "--page-pos",
+            "0"
+          ],
+          "started": 1794283716262,
+          "phase": false,
+          "ok": true,
+          "ended": 1794283716270
+        },
+        {
+          "argv": [
+            "machine",
+            "stop",
+            "docker"
+          ],
+          "started": 1794283716270,
+          "phase": false,
+          "ok": true,
+          "ended": 1794283716746
+        },
+        {
+          "argv": [
+            "store",
+            "list"
+          ],
+          "started": 1794283716747,
+          "phase": false,
+          "ok": true,
+          "ended": 1794283716756
+        },
+        {
+          "argv": [
+            "sandbox",
+            "list",
+            "--page-size",
+            "1000",
+            "--page-pos",
+            "0"
+          ],
+          "started": 1794283716756,
+          "phase": false,
+          "ok": true,
+          "ended": 1794283716766
+        },
+        {
+          "argv": [
+            "machine",
+            "list"
+          ],
+          "started": 1794283716766,
+          "phase": false,
+          "ok": true,
+          "ended": 1794283716833
+        }
+      ],
+      "historyCalls": 13,
+      "peakHistoryCli": 8
+    }
+  ],
+  "speedup": null,
+  "cleanup": {
+    "preset": "studio",
+    "state": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/connect-project-recheck-ixDLYo",
+    "home": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/connect-project-recheck-ixDLYo/home-2",
+    "actionId": "267b88a4-f141-4683-ab3e-39f5f147a6f7",
+    "cleanup": {
+      "remove": {
+        "stores": [
+          "demo-build-cache",
+          "demo-experiments",
+          "demo-services",
+          "demo-studio"
+        ],
+        "sandboxes": [],
+        "machines": [
+          "demo-build",
+          "demo-research"
+        ],
+        "workspaces": []
+      },
+      "retainMachines": [],
+      "preserved": {
+        "machine": [],
+        "store": [],
+        "sandbox": []
+      },
+      "projects": 8,
+      "signature": "4bb83bbae909f9fa1e561910387689b45f08c92a2935fa7ccec8e390a4008588",
+      "verified": true,
+      "at": 1794283714149,
+      "remaining": [],
+      "unexpected": []
+    },
+    "activityUrl": "http://127.0.0.1:1025/#/activity?action=267b88a4-f141-4683-ab3e-39f5f147a6f7"
+  },
+  "ended": 1794283716837,
+  "activityVerification": {
+    "peakActualHistoryProcesses": 8,
+    "historyCalls": 13,
+    "allHistoryCapturedWithInputAndOutput": true,
+    "errors": [
+      {
+        "id": "a4d4b8fc-21a3-4c17-8efc-f05168afbee8",
+        "at": 1794283713819,
+        "status": "refused",
+        "binary": "/Users/yifanxu/.cache/layerfs-worktrees/layerfs-connect-image-ru-5b7a74044d64/artifacts/build-macos-0869ec2ceccc4286bd1bb80fb17161b3/layerfs",
+        "argv": [
+          "branch",
+          "fork",
+          "demo-studio/website",
+          "release-0.1",
+          "main"
+        ],
+        "stdin": null,
+        "mode": "real",
+        "ownerPid": 85333,
+        "started": 1794283713838,
+        "pid": 85653,
+        "identity": {
+          "version": "2.0.0",
+          "commit": "1edcf58caec2bf079a07891411a0151c9afa3e80",
+          "dirty": true,
+          "features": [
+            "machine",
+            "postgresql"
+          ]
+        },
+        "waitMs": 19,
+        "code": "Busy",
+        "message": "busy",
+        "exitCode": 125,
+        "signal": null,
+        "stdout": {
+          "text": "",
+          "truncated": false,
+          "bytes": 0
+        },
+        "stderr": {
+          "text": "{\"code\":\"Busy\",\"message\":\"busy\",\"detail\":null}\n",
+          "truncated": false,
+          "bytes": 47
+        },
+        "ended": 1794283713877,
+        "durationMs": 39
+      }
+    ],
+    "tasks": [
+      {
+        "project": "demo-studio/website",
+        "state": "failed",
+        "completed": 0,
+        "error": "busy",
+        "errorCode": "Busy"
+      },
+      {
+        "project": "demo-studio/design",
+        "state": "stopped",
+        "completed": 2,
+        "error": "Stopped before the next CLI step because another project failed. Inspect CLI Activity before rebuilding.",
+        "errorCode": "PresetStopped"
+      },
+      {
+        "project": "demo-services/gateway",
+        "state": "stopped",
+        "completed": 1,
+        "error": "Stopped before the next CLI step because another project failed. Inspect CLI Activity before rebuilding.",
+        "errorCode": "PresetStopped"
+      },
+      {
+        "project": "demo-services/billing",
+        "state": "stopped",
+        "completed": 1,
+        "error": "Stopped before the next CLI step because another project failed. Inspect CLI Activity before rebuilding.",
+        "errorCode": "PresetStopped"
+      },
+      {
+        "project": "demo-build-cache/compiler",
+        "state": "stopped",
+        "completed": 2,
+        "error": "Stopped before the next CLI step because another project failed. Inspect CLI Activity before rebuilding.",
+        "errorCode": "PresetStopped"
+      },
+      {
+        "project": "demo-build-cache/sdk",
+        "state": "stopped",
+        "completed": 2,
+        "error": "Stopped before the next CLI step because another project failed. Inspect CLI Activity before rebuilding.",
+        "errorCode": "PresetStopped"
+      },
+      {
+        "project": "demo-experiments/embeddings",
+        "state": "stopped",
+        "completed": 2,
+        "error": "Stopped before the next CLI step because another project failed. Inspect CLI Activity before rebuilding.",
+        "errorCode": "PresetStopped"
+      },
+      {
+        "project": "demo-experiments/evaluation",
+        "state": "stopped",
+        "completed": 2,
+        "error": "Stopped before the next CLI step because another project failed. Inspect CLI Activity before rebuilding.",
+        "errorCode": "PresetStopped"
+      }
+    ],
+    "historyInvocations": [
+      {
+        "id": "a4d4b8fc-21a3-4c17-8efc-f05168afbee8",
+        "at": 1794283713819,
+        "status": "refused",
+        "binary": "/Users/yifanxu/.cache/layerfs-worktrees/layerfs-connect-image-ru-5b7a74044d64/artifacts/build-macos-0869ec2ceccc4286bd1bb80fb17161b3/layerfs",
+        "argv": [
+          "branch",
+          "fork",
+          "demo-studio/website",
+          "release-0.1",
+          "main"
+        ],
+        "stdin": null,
+        "mode": "real",
+        "ownerPid": 85333,
+        "started": 1794283713838,
+        "pid": 85653,
+        "identity": {
+          "version": "2.0.0",
+          "commit": "1edcf58caec2bf079a07891411a0151c9afa3e80",
+          "dirty": true,
+          "features": [
+            "machine",
+            "postgresql"
+          ]
+        },
+        "waitMs": 19,
+        "code": "Busy",
+        "message": "busy",
+        "exitCode": 125,
+        "signal": null,
+        "stdout": {
+          "text": "",
+          "truncated": false,
+          "bytes": 0
+        },
+        "stderr": {
+          "text": "{\"code\":\"Busy\",\"message\":\"busy\",\"detail\":null}\n",
+          "truncated": false,
+          "bytes": 47
+        },
+        "ended": 1794283713877,
+        "durationMs": 39
+      },
+      {
+        "id": "f8412b52-1282-4e4c-a096-cfc3595c66f1",
+        "at": 1794283713822,
+        "status": "success",
+        "binary": "/Users/yifanxu/.cache/layerfs-worktrees/layerfs-connect-image-ru-5b7a74044d64/artifacts/build-macos-0869ec2ceccc4286bd1bb80fb17161b3/layerfs",
+        "argv": [
+          "branch",
+          "fork",
+          "demo-studio/design",
+          "release-0.1",
+          "main"
+        ],
+        "stdin": null,
+        "mode": "real",
+        "ownerPid": 85333,
+        "started": 1794283713839,
+        "pid": 85654,
+        "identity": {
+          "version": "2.0.0",
+          "commit": "1edcf58caec2bf079a07891411a0151c9afa3e80",
+          "dirty": true,
+          "features": [
+            "machine",
+            "postgresql"
+          ]
+        },
+        "waitMs": 17,
+        "exitCode": 0,
+        "signal": null,
+        "stdout": {
+          "text": "{\"kind\":\"Forked\",\"branch\":\"release-0.1\",\"base\":\"322ef64c582ab7d2d9c1ddeecdf2f21ca7407cca5d848855d84be6f5a05e07eb47\",\"head\":null}\n",
+          "truncated": false,
+          "bytes": 129
+        },
+        "stderr": {
+          "text": "",
+          "truncated": false,
+          "bytes": 0
+        },
+        "outputUnavailable": false,
+        "ended": 1794283713874,
+        "durationMs": 35
+      },
+      {
+        "id": "f3f1cb46-f9a2-49ea-932e-00e7687302b6",
+        "at": 1794283713824,
+        "status": "success",
+        "binary": "/Users/yifanxu/.cache/layerfs-worktrees/layerfs-connect-image-ru-5b7a74044d64/artifacts/build-macos-0869ec2ceccc4286bd1bb80fb17161b3/layerfs",
+        "argv": [
+          "branch",
+          "fork",
+          "demo-services/gateway",
+          "release-0.1",
+          "main"
+        ],
+        "stdin": null,
+        "mode": "real",
+        "ownerPid": 85333,
+        "started": 1794283713839,
+        "pid": 85655,
+        "identity": {
+          "version": "2.0.0",
+          "commit": "1edcf58caec2bf079a07891411a0151c9afa3e80",
+          "dirty": true,
+          "features": [
+            "machine",
+            "postgresql"
+          ]
+        },
+        "waitMs": 15,
+        "exitCode": 0,
+        "signal": null,
+        "stdout": {
+          "text": "{\"kind\":\"Forked\",\"branch\":\"release-0.1\",\"base\":\"328f512ece484a48b69cf3aaf14488c453ea8b01b4fb2869b49ccdfbfd70b20f68\",\"head\":null}\n",
+          "truncated": false,
+          "bytes": 129
+        },
+        "stderr": {
+          "text": "",
+          "truncated": false,
+          "bytes": 0
+        },
+        "outputUnavailable": false,
+        "ended": 1794283713921,
+        "durationMs": 82
+      },
+      {
+        "id": "8f661787-105c-4d44-9151-a4e02e11b0e3",
+        "at": 1794283713826,
+        "status": "success",
+        "binary": "/Users/yifanxu/.cache/layerfs-worktrees/layerfs-connect-image-ru-5b7a74044d64/artifacts/build-macos-0869ec2ceccc4286bd1bb80fb17161b3/layerfs",
+        "argv": [
+          "branch",
+          "fork",
+          "demo-services/billing",
+          "release-0.1",
+          "main"
+        ],
+        "stdin": null,
+        "mode": "real",
+        "ownerPid": 85333,
+        "started": 1794283713840,
+        "pid": 85656,
+        "identity": {
+          "version": "2.0.0",
+          "commit": "1edcf58caec2bf079a07891411a0151c9afa3e80",
+          "dirty": true,
+          "features": [
+            "machine",
+            "postgresql"
+          ]
+        },
+        "waitMs": 14,
+        "exitCode": 0,
+        "signal": null,
+        "stdout": {
+          "text": "{\"kind\":\"Forked\",\"branch\":\"release-0.1\",\"base\":\"320a950da35ec5fd5d9727ed15821857db26ffce528d9e2964ebd44167bda70c25\",\"head\":null}\n",
+          "truncated": false,
+          "bytes": 129
+        },
+        "stderr": {
+          "text": "",
+          "truncated": false,
+          "bytes": 0
+        },
+        "outputUnavailable": false,
+        "ended": 1794283713925,
+        "durationMs": 85
+      },
+      {
+        "id": "e443edb6-0399-4807-ac6c-3cc09b04ded3",
+        "at": 1794283713828,
+        "status": "success",
+        "binary": "/Users/yifanxu/.cache/layerfs-worktrees/layerfs-connect-image-ru-5b7a74044d64/artifacts/build-macos-0869ec2ceccc4286bd1bb80fb17161b3/layerfs",
+        "argv": [
+          "branch",
+          "fork",
+          "demo-build-cache/compiler",
+          "release-0.1",
+          "main"
+        ],
+        "stdin": null,
+        "mode": "real",
+        "ownerPid": 85333,
+        "started": 1794283713840,
+        "pid": 85658,
+        "identity": {
+          "version": "2.0.0",
+          "commit": "1edcf58caec2bf079a07891411a0151c9afa3e80",
+          "dirty": true,
+          "features": [
+            "machine",
+            "postgresql"
+          ]
+        },
+        "waitMs": 12,
+        "exitCode": 0,
+        "signal": null,
+        "stdout": {
+          "text": "{\"kind\":\"Forked\",\"branch\":\"release-0.1\",\"base\":\"32eb1eccefb11ed9911c8a2a6fc2d579d940bc42b195e879b5ec2d77bef1426376\",\"head\":null}\n",
+          "truncated": false,
+          "bytes": 129
+        },
+        "stderr": {
+          "text": "",
+          "truncated": false,
+          "bytes": 0
+        },
+        "outputUnavailable": false,
+        "ended": 1794283713861,
+        "durationMs": 21
+      },
+      {
+        "id": "16853b16-4ebb-41fb-9cf6-19f6c3d4fa9c",
+        "at": 1794283713831,
+        "status": "success",
+        "binary": "/Users/yifanxu/.cache/layerfs-worktrees/layerfs-connect-image-ru-5b7a74044d64/artifacts/build-macos-0869ec2ceccc4286bd1bb80fb17161b3/layerfs",
+        "argv": [
+          "branch",
+          "fork",
+          "demo-build-cache/sdk",
+          "release-0.1",
+          "main"
+        ],
+        "stdin": null,
+        "mode": "real",
+        "ownerPid": 85333,
+        "started": 1794283713840,
+        "pid": 85660,
+        "identity": {
+          "version": "2.0.0",
+          "commit": "1edcf58caec2bf079a07891411a0151c9afa3e80",
+          "dirty": true,
+          "features": [
+            "machine",
+            "postgresql"
+          ]
+        },
+        "waitMs": 9,
+        "exitCode": 0,
+        "signal": null,
+        "stdout": {
+          "text": "{\"kind\":\"Forked\",\"branch\":\"release-0.1\",\"base\":\"3248ee10fc477360d20214e826cb511b6670ded0221e8d5a8078b4521e2bb58b5f\",\"head\":null}\n",
+          "truncated": false,
+          "bytes": 129
+        },
+        "stderr": {
+          "text": "",
+          "truncated": false,
+          "bytes": 0
+        },
+        "outputUnavailable": false,
+        "ended": 1794283713857,
+        "durationMs": 17
+      },
+      {
+        "id": "2b37bbfd-cc76-4dfb-aec4-526195e216a1",
+        "at": 1794283713834,
+        "status": "success",
+        "binary": "/Users/yifanxu/.cache/layerfs-worktrees/layerfs-connect-image-ru-5b7a74044d64/artifacts/build-macos-0869ec2ceccc4286bd1bb80fb17161b3/layerfs",
+        "argv": [
+          "branch",
+          "fork",
+          "demo-experiments/embeddings",
+          "release-0.1",
+          "main"
+        ],
+        "stdin": null,
+        "mode": "real",
+        "ownerPid": 85333,
+        "started": 1794283713840,
+        "pid": 85661,
+        "identity": {
+          "version": "2.0.0",
+          "commit": "1edcf58caec2bf079a07891411a0151c9afa3e80",
+          "dirty": true,
+          "features": [
+            "machine",
+            "postgresql"
+          ]
+        },
+        "waitMs": 6,
+        "exitCode": 0,
+        "signal": null,
+        "stdout": {
+          "text": "{\"kind\":\"Forked\",\"branch\":\"release-0.1\",\"base\":\"320600d51356befbe12a9037f95021929fac47f52f89a4928e2edb307a1244aa50\",\"head\":null}\n",
+          "truncated": false,
+          "bytes": 129
+        },
+        "stderr": {
+          "text": "",
+          "truncated": false,
+          "bytes": 0
+        },
+        "outputUnavailable": false,
+        "ended": 1794283713865,
+        "durationMs": 25
+      },
+      {
+        "id": "60be789c-32c2-4524-a2b8-1716fe644cf9",
+        "at": 1794283713837,
+        "status": "success",
+        "binary": "/Users/yifanxu/.cache/layerfs-worktrees/layerfs-connect-image-ru-5b7a74044d64/artifacts/build-macos-0869ec2ceccc4286bd1bb80fb17161b3/layerfs",
+        "argv": [
+          "branch",
+          "fork",
+          "demo-experiments/evaluation",
+          "release-0.1",
+          "main"
+        ],
+        "stdin": null,
+        "mode": "real",
+        "ownerPid": 85333,
+        "started": 1794283713841,
+        "pid": 85664,
+        "identity": {
+          "version": "2.0.0",
+          "commit": "1edcf58caec2bf079a07891411a0151c9afa3e80",
+          "dirty": true,
+          "features": [
+            "machine",
+            "postgresql"
+          ]
+        },
+        "waitMs": 4,
+        "exitCode": 0,
+        "signal": null,
+        "stdout": {
+          "text": "{\"kind\":\"Forked\",\"branch\":\"release-0.1\",\"base\":\"32b76e865f34ba8d91f42cd0ab911fe516fb79990cfd30b63c06fbe498838aad44\",\"head\":null}\n",
+          "truncated": false,
+          "bytes": 129
+        },
+        "stderr": {
+          "text": "",
+          "truncated": false,
+          "bytes": 0
+        },
+        "outputUnavailable": false,
+        "ended": 1794283713870,
+        "durationMs": 29
+      },
+      {
+        "id": "0d00d42a-bb99-4e25-9727-f793e4a5c43f",
+        "at": 1794283713860,
+        "status": "success",
+        "binary": "/Users/yifanxu/.cache/layerfs-worktrees/layerfs-connect-image-ru-5b7a74044d64/artifacts/build-macos-0869ec2ceccc4286bd1bb80fb17161b3/layerfs",
+        "argv": [
+          "file",
+          "write",
+          "demo-build-cache/sdk",
+          "release-0.1",
+          "/docs/project-map.md",
+          "--message",
+          "Add an orientation map for the project"
+        ],
+        "stdin": {
+          "text": "# Where to begin\n\nMake HTTP client behavior explicit without requiring an online service.\n\nStart with README.md, then inspect docs/architecture.md and the example data.\n",
+          "truncated": false,
+          "bytes": 169
+        },
+        "mode": "real",
+        "ownerPid": 85333,
+        "started": 1794283713861,
+        "pid": 85669,
+        "identity": {
+          "version": "2.0.0",
+          "commit": "1edcf58caec2bf079a07891411a0151c9afa3e80",
+          "dirty": true,
+          "features": [
+            "machine",
+            "postgresql"
+          ]
+        },
+        "waitMs": 1,
+        "exitCode": 0,
+        "signal": null,
+        "stdout": {
+          "text": "{\"kind\":\"Committed\",\"branch\":\"release-0.1\",\"head\":\"1288b0ac9b9333f208fc33a64b8b943c1f5b5d4e2f44bde3e6317042ae8e725adb\",\"commit\":{\"id\":\"1288b0ac9b9333f208fc33a64b8b943c1f5b5d4e2f44bde3e6317042ae8e725adb\",\"branch\":\"release-0.1\",\"parent\":null,\"second_parent\":null,\"base\":\"3248ee10fc477360d20214e826cb511b6670ded0221e8d5a8078b4521e2bb58b5f\",\"root\":\"65953b86fb445d7cc0d874d9d1fe20fa4a637d6a9126a9c76fbb727659519ad2\",\"via\":\"fs\",\"message\":\"Add an orientation map for the project\",\"merged_from\":null,\"time\":1794283713978,\"logical\":3971,\"new_canonical\":2575,\"new_stored\":596,\"new_metadata\":428,\"displaced\":null,\"lww\":[],\"lww_truncated\":false}}\n",
+          "truncated": false,
+          "bytes": 635
+        },
+        "stderr": {
+          "text": "",
+          "truncated": false,
+          "bytes": 0
+        },
+        "outputUnavailable": false,
+        "ended": 1794283713910,
+        "durationMs": 49
+      },
+      {
+        "id": "491284af-4016-42d5-83b8-6bcd8f73141c",
+        "at": 1794283713863,
+        "status": "success",
+        "binary": "/Users/yifanxu/.cache/layerfs-worktrees/layerfs-connect-image-ru-5b7a74044d64/artifacts/build-macos-0869ec2ceccc4286bd1bb80fb17161b3/layerfs",
+        "argv": [
+          "file",
+          "write",
+          "demo-build-cache/compiler",
+          "release-0.1",
+          "/docs/project-map.md",
+          "--message",
+          "Add an orientation map for the project"
+        ],
+        "stdin": {
+          "text": "# Where to begin\n\nExplain a language front end through tiny source files and hand-worked examples.\n\nStart with README.md, then inspect docs/architecture.md and the example data.\n",
+          "truncated": false,
+          "bytes": 178
+        },
+        "mode": "real",
+        "ownerPid": 85333,
+        "started": 1794283713864,
+        "pid": 85670,
+        "identity": {
+          "version": "2.0.0",
+          "commit": "1edcf58caec2bf079a07891411a0151c9afa3e80",
+          "dirty": true,
+          "features": [
+            "machine",
+            "postgresql"
+          ]
+        },
+        "waitMs": 1,
+        "exitCode": 0,
+        "signal": null,
+        "stdout": {
+          "text": "{\"kind\":\"Committed\",\"branch\":\"release-0.1\",\"head\":\"12fd0fef680520e302b8157295764231748def24958f9e932d95da05a8046f3ca1\",\"commit\":{\"id\":\"12fd0fef680520e302b8157295764231748def24958f9e932d95da05a8046f3ca1\",\"branch\":\"release-0.1\",\"parent\":null,\"second_parent\":null,\"base\":\"32eb1eccefb11ed9911c8a2a6fc2d579d940bc42b195e879b5ec2d77bef1426376\",\"root\":\"79644f05c18ff1bc4969b0ff28a5a17d5360bd34f357455bf1cf570cce65de14\",\"via\":\"fs\",\"message\":\"Add an orientation map for the project\",\"merged_from\":null,\"time\":1794283713987,\"logical\":4557,\"new_canonical\":2467,\"new_stored\":565,\"new_metadata\":406,\"displaced\":null,\"lww\":[],\"lww_truncated\":false}}\n",
+          "truncated": false,
+          "bytes": 635
+        },
+        "stderr": {
+          "text": "",
+          "truncated": false,
+          "bytes": 0
+        },
+        "outputUnavailable": false,
+        "ended": 1794283713918,
+        "durationMs": 54
+      },
+      {
+        "id": "3d34be05-c276-4d48-ac59-716ab1fd2bcb",
+        "at": 1794283713868,
+        "status": "success",
+        "binary": "/Users/yifanxu/.cache/layerfs-worktrees/layerfs-connect-image-ru-5b7a74044d64/artifacts/build-macos-0869ec2ceccc4286bd1bb80fb17161b3/layerfs",
+        "argv": [
+          "file",
+          "write",
+          "demo-experiments/embeddings",
+          "release-0.1",
+          "/docs/project-map.md",
+          "--message",
+          "Add an orientation map for the project"
+        ],
+        "stdin": {
+          "text": "# Where to begin\n\nMake document retrieval inspectable from source text through rankings.\n\nStart with README.md, then inspect docs/architecture.md and the example data.\n",
+          "truncated": false,
+          "bytes": 168
+        },
+        "mode": "real",
+        "ownerPid": 85333,
+        "started": 1794283713869,
+        "pid": 85671,
+        "identity": {
+          "version": "2.0.0",
+          "commit": "1edcf58caec2bf079a07891411a0151c9afa3e80",
+          "dirty": true,
+          "features": [
+            "machine",
+            "postgresql"
+          ]
+        },
+        "waitMs": 1,
+        "exitCode": 0,
+        "signal": null,
+        "stdout": {
+          "text": "{\"kind\":\"Committed\",\"branch\":\"release-0.1\",\"head\":\"12bbbb823d5503d0b3ed3eb9a42ff5c28e323d79f539a14a0550bd5fdfe9599e1d\",\"commit\":{\"id\":\"12bbbb823d5503d0b3ed3eb9a42ff5c28e323d79f539a14a0550bd5fdfe9599e1d\",\"branch\":\"release-0.1\",\"parent\":null,\"second_parent\":null,\"base\":\"320600d51356befbe12a9037f95021929fac47f52f89a4928e2edb307a1244aa50\",\"root\":\"0c9b1d9e632c244f9a784eb966ead1521d405cdc225f82a9bb0e58196793cc13\",\"via\":\"fs\",\"message\":\"Add an orientation map for the project\",\"merged_from\":null,\"time\":1794283713948,\"logical\":3929,\"new_canonical\":2445,\"new_stored\":574,\"new_metadata\":408,\"displaced\":null,\"lww\":[],\"lww_truncated\":false}}\n",
+          "truncated": false,
+          "bytes": 635
+        },
+        "stderr": {
+          "text": "",
+          "truncated": false,
+          "bytes": 0
+        },
+        "outputUnavailable": false,
+        "ended": 1794283713912,
+        "durationMs": 43
+      },
+      {
+        "id": "411df5f4-753a-465c-85fd-94542c543e35",
+        "at": 1794283713873,
+        "status": "success",
+        "binary": "/Users/yifanxu/.cache/layerfs-worktrees/layerfs-connect-image-ru-5b7a74044d64/artifacts/build-macos-0869ec2ceccc4286bd1bb80fb17161b3/layerfs",
+        "argv": [
+          "file",
+          "write",
+          "demo-experiments/evaluation",
+          "release-0.1",
+          "/docs/project-map.md",
+          "--message",
+          "Add an orientation map for the project"
+        ],
+        "stdin": {
+          "text": "# Where to begin\n\nSeparate expected behavior and reviewer judgments from measured execution results.\n\nStart with README.md, then inspect docs/architecture.md and the example data.\n",
+          "truncated": false,
+          "bytes": 180
+        },
+        "mode": "real",
+        "ownerPid": 85333,
+        "started": 1794283713874,
+        "pid": 85673,
+        "identity": {
+          "version": "2.0.0",
+          "commit": "1edcf58caec2bf079a07891411a0151c9afa3e80",
+          "dirty": true,
+          "features": [
+            "machine",
+            "postgresql"
+          ]
+        },
+        "waitMs": 1,
+        "exitCode": 0,
+        "signal": null,
+        "stdout": {
+          "text": "{\"kind\":\"Committed\",\"branch\":\"release-0.1\",\"head\":\"121c18f7e52c0b6d9945e9e08f44c896d245ad6383565bb1f728fc4b2e16adf04c\",\"commit\":{\"id\":\"121c18f7e52c0b6d9945e9e08f44c896d245ad6383565bb1f728fc4b2e16adf04c\",\"branch\":\"release-0.1\",\"parent\":null,\"second_parent\":null,\"base\":\"32b76e865f34ba8d91f42cd0ab911fe516fb79990cfd30b63c06fbe498838aad44\",\"root\":\"61e0e7842b0b815a4d8cdb3407954200c43d5fdff5b4a7548efc1afe7b0e6783\",\"via\":\"fs\",\"message\":\"Add an orientation map for the project\",\"merged_from\":null,\"time\":1794283713950,\"logical\":4030,\"new_canonical\":2486,\"new_stored\":582,\"new_metadata\":425,\"displaced\":null,\"lww\":[],\"lww_truncated\":false}}\n",
+          "truncated": false,
+          "bytes": 635
+        },
+        "stderr": {
+          "text": "",
+          "truncated": false,
+          "bytes": 0
+        },
+        "outputUnavailable": false,
+        "ended": 1794283713914,
+        "durationMs": 40
+      },
+      {
+        "id": "c8201b7e-207c-4532-8705-5d6328762513",
+        "at": 1794283713876,
+        "status": "success",
+        "binary": "/Users/yifanxu/.cache/layerfs-worktrees/layerfs-connect-image-ru-5b7a74044d64/artifacts/build-macos-0869ec2ceccc4286bd1bb80fb17161b3/layerfs",
+        "argv": [
+          "file",
+          "write",
+          "demo-studio/design",
+          "release-0.1",
+          "/docs/project-map.md",
+          "--message",
+          "Add an orientation map for the project"
+        ],
+        "stdin": {
+          "text": "# Where to begin\n\nMake a consistent, readable interface without a framework dependency.\n\nStart with README.md, then inspect docs/architecture.md and the example data.\n",
+          "truncated": false,
+          "bytes": 167
+        },
+        "mode": "real",
+        "ownerPid": 85333,
+        "started": 1794283713877,
+        "pid": 85675,
+        "identity": {
+          "version": "2.0.0",
+          "commit": "1edcf58caec2bf079a07891411a0151c9afa3e80",
+          "dirty": true,
+          "features": [
+            "machine",
+            "postgresql"
+          ]
+        },
+        "waitMs": 1,
+        "exitCode": 0,
+        "signal": null,
+        "stdout": {
+          "text": "{\"kind\":\"Committed\",\"branch\":\"release-0.1\",\"head\":\"1294db4517c0d5da2d3246b151e01d82df20d26e6072a71440f58200152912c531\",\"commit\":{\"id\":\"1294db4517c0d5da2d3246b151e01d82df20d26e6072a71440f58200152912c531\",\"branch\":\"release-0.1\",\"parent\":null,\"second_parent\":null,\"base\":\"322ef64c582ab7d2d9c1ddeecdf2f21ca7407cca5d848855d84be6f5a05e07eb47\",\"root\":\"34aee8d6261b8d889889f508ae0743b44ad86312d83c93c28f266affc5952352\",\"via\":\"fs\",\"message\":\"Add an orientation map for the project\",\"merged_from\":null,\"time\":1794283713941,\"logical\":3812,\"new_canonical\":2578,\"new_stored\":607,\"new_metadata\":426,\"displaced\":null,\"lww\":[],\"lww_truncated\":false}}\n",
+          "truncated": false,
+          "bytes": 635
+        },
+        "stderr": {
+          "text": "",
+          "truncated": false,
+          "bytes": 0
+        },
+        "outputUnavailable": false,
+        "ended": 1794283713947,
+        "durationMs": 70
+      }
+    ]
+  }
+}

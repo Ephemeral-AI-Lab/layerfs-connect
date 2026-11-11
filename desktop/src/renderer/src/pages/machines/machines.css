@@ -70,11 +70,6 @@
 .machine-card-image > span { color: var(--foreground); }
 .machine-card-kernel { font-size: 11px; white-space: nowrap; }
 .machine-card-kernel > span { color: var(--muted-foreground); margin-right: 5px; }
-.machine-card-resources { margin-top: 14px; padding: 10px 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
-.machine-card-usage { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 12px; }
-.machine-card-usage dt { margin-bottom: 2px; font-size: 10px; line-height: 14px; color: var(--muted-foreground); }
-.machine-card-usage dd { font-size: 13px; line-height: 18px; }
-.machine-card-resources > p { margin-top: 4px; font-size: 10px; line-height: 14px; color: var(--muted-foreground); }
 .machine-card-workspaces { flex: 1; min-height: 0; margin-top: 12px; }
 .machine-card-workspaces h4 { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 6px; font-size: 12px; font-weight: 500; }
 .machine-card-workspaces h4 > span { font-family: var(--font-mono); font-size: 11px; }
@@ -107,17 +102,7 @@
 
 .machine-card-open { display: flex; align-items: center; gap: 6px; white-space: nowrap; }
 
-/* Numbers align first; the two histories and capacity bar share a 40px band. */
-.machine-card-usage > div { min-width: 0; }
-.machine-card-usage dd { font-variant-numeric: tabular-nums; white-space: nowrap; font-size: 12px; font-weight: 500; letter-spacing: -.02em; }
-.sandbox-metric-sparkline { display: block; width: 100%; height: 40px; margin-top: 5px; color: var(--link); }
-.sandbox-metric-no-history { display: flex; align-items: center; height: 40px; margin-top: 5px; font-size: 10px; color: var(--muted-foreground); }
-.sandbox-metric-disk-wrap { display: flex; align-items: center; height: 40px; margin-top: 5px; }
-.sandbox-metric-disk { width: 100%; height: 5px; overflow: hidden; border-radius: 2px; background: var(--muted); }
-.sandbox-metric-disk > span { display: block; height: 100%; border-radius: inherit; background: var(--link); }
-.machine-card-resources[data-metrics="sample"] > p { color: var(--warning); }
 
-.sandbox-metric-end-halo { fill: var(--card); }
 
 /* Machine overview: aligned allocations and inventory in a compact hardware panel. */
 .machine-board-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 400px)); gap: 20px; max-width: 1600px; align-items: stretch; }

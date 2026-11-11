@@ -1,0 +1,21 @@
+{
+  "retained_image": "prepared.raw",
+  "intermediate_images_removed": [
+    {
+      "file": "specialized-protocol2.raw",
+      "logical_bytes": 107374182400,
+      "allocated_bytes_before_unlink": 5134168064
+    },
+    {
+      "file": "preinstalled.raw",
+      "logical_bytes": 107374182400,
+      "allocated_bytes_before_unlink": 5123854336
+    },
+    {
+      "file": "trimmed.raw",
+      "logical_bytes": 107374182400,
+      "allocated_bytes_before_unlink": 5129142272
+    }
+  ],
+  "note": "All six owned Lima VMs and their private data disks removed through machine.remove; only the stopped prepared image and receipts retained."
+}

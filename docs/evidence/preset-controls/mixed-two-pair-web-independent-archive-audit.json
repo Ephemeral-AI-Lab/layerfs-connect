@@ -1,0 +1,873 @@
+{
+  "ok": true,
+  "at": 1794300599425,
+  "state": "/Users/yifanxu/.layerfs-connect-demo/studio",
+  "actionId": "af800596-6534-4b6f-a98e-3b07577ad028",
+  "historyCommands": 80986,
+  "workspaceSessionsVerified": 7536,
+  "sourceHashContinuity": true,
+  "operationTimings": {
+    "branch.fork": {
+      "count": 527,
+      "processMs": 10976,
+      "p50Ms": 19,
+      "p95Ms": 34,
+      "p99Ms": 63,
+      "maxMs": 152,
+      "totalAdmissionWaitMs": 2291,
+      "p95AdmissionWaitMs": 10
+    },
+    "file.write": {
+      "count": 26238,
+      "processMs": 1331096,
+      "p50Ms": 46,
+      "p95Ms": 81,
+      "p99Ms": 185,
+      "maxMs": 26309,
+      "totalAdmissionWaitMs": 105562,
+      "p95AdmissionWaitMs": 10
+    },
+    "branch.publish": {
+      "count": 8667,
+      "processMs": 180071,
+      "p50Ms": 16,
+      "p95Ms": 31,
+      "p99Ms": 65,
+      "maxMs": 6834,
+      "totalAdmissionWaitMs": 69048,
+      "p95AdmissionWaitMs": 9
+    },
+    "branch.merge": {
+      "count": 330,
+      "processMs": 12243,
+      "p50Ms": 35,
+      "p95Ms": 58,
+      "p99Ms": 103,
+      "maxMs": 192,
+      "totalAdmissionWaitMs": 991,
+      "p95AdmissionWaitMs": 8
+    },
+    "sandbox.create": {
+      "count": 8,
+      "processMs": 38100,
+      "p50Ms": 660,
+      "p95Ms": 9163,
+      "p99Ms": 9163,
+      "maxMs": 9195,
+      "totalAdmissionWaitMs": 48,
+      "p95AdmissionWaitMs": 5
+    },
+    "workspace.mount": {
+      "count": 7536,
+      "processMs": 308572,
+      "p50Ms": 36,
+      "p95Ms": 65,
+      "p99Ms": 175,
+      "maxMs": 3467,
+      "totalAdmissionWaitMs": 27912,
+      "p95AdmissionWaitMs": 10
+    },
+    "workspace.exec": {
+      "count": 15072,
+      "processMs": 1050632,
+      "p50Ms": 53,
+      "p95Ms": 101,
+      "p99Ms": 225,
+      "maxMs": 76135,
+      "totalAdmissionWaitMs": 67379,
+      "p95AdmissionWaitMs": 10
+    },
+    "workspace.commit": {
+      "count": 15072,
+      "processMs": 1284514,
+      "p50Ms": 60,
+      "p95Ms": 168,
+      "p99Ms": 244,
+      "maxMs": 43062,
+      "totalAdmissionWaitMs": 60142,
+      "p95AdmissionWaitMs": 10
+    },
+    "workspace.unmount": {
+      "count": 7536,
+      "processMs": 281167,
+      "p50Ms": 35,
+      "p95Ms": 60,
+      "p99Ms": 157,
+      "maxMs": 898,
+      "totalAdmissionWaitMs": 28144,
+      "p95AdmissionWaitMs": 10
+    }
+  },
+  "machineTimings": {
+    "docker": {
+      "workspace.mount": {
+        "count": 1920,
+        "processMs": 50211,
+        "p50Ms": 22,
+        "p95Ms": 47,
+        "p99Ms": 123,
+        "maxMs": 220,
+        "totalAdmissionWaitMs": 7517,
+        "p95AdmissionWaitMs": 10
+      },
+      "workspace.exec": {
+        "count": 3840,
+        "processMs": 218896,
+        "p50Ms": 52,
+        "p95Ms": 93,
+        "p99Ms": 204,
+        "maxMs": 604,
+        "totalAdmissionWaitMs": 15109,
+        "p95AdmissionWaitMs": 10
+      },
+      "workspace.commit": {
+        "count": 3840,
+        "processMs": 189552,
+        "p50Ms": 44,
+        "p95Ms": 85,
+        "p99Ms": 195,
+        "maxMs": 341,
+        "totalAdmissionWaitMs": 15929,
+        "p95AdmissionWaitMs": 11
+      },
+      "workspace.unmount": {
+        "count": 1920,
+        "processMs": 39809,
+        "p50Ms": 17,
+        "p95Ms": 38,
+        "p99Ms": 104,
+        "maxMs": 233,
+        "totalAdmissionWaitMs": 7997,
+        "p95AdmissionWaitMs": 11
+      }
+    },
+    "native": {
+      "workspace.mount": {
+        "count": 2256,
+        "processMs": 128892,
+        "p50Ms": 50,
+        "p95Ms": 84,
+        "p99Ms": 189,
+        "maxMs": 3467,
+        "totalAdmissionWaitMs": 6917,
+        "p95AdmissionWaitMs": 9
+      },
+      "workspace.exec": {
+        "count": 4512,
+        "processMs": 263458,
+        "p50Ms": 40,
+        "p95Ms": 69,
+        "p99Ms": 183,
+        "maxMs": 33787,
+        "totalAdmissionWaitMs": 23513,
+        "p95AdmissionWaitMs": 8
+      },
+      "workspace.commit": {
+        "count": 4512,
+        "processMs": 632216,
+        "p50Ms": 118,
+        "p95Ms": 208,
+        "p99Ms": 337,
+        "maxMs": 31109,
+        "totalAdmissionWaitMs": 17050,
+        "p95AdmissionWaitMs": 8
+      },
+      "workspace.unmount": {
+        "count": 2256,
+        "processMs": 113613,
+        "p50Ms": 45,
+        "p95Ms": 76,
+        "p99Ms": 182,
+        "maxMs": 898,
+        "totalAdmissionWaitMs": 6612,
+        "p95AdmissionWaitMs": 8
+      }
+    },
+    "demo-build": {
+      "workspace.mount": {
+        "count": 1728,
+        "processMs": 69366,
+        "p50Ms": 34,
+        "p95Ms": 64,
+        "p99Ms": 187,
+        "maxMs": 905,
+        "totalAdmissionWaitMs": 6950,
+        "p95AdmissionWaitMs": 10
+      },
+      "workspace.exec": {
+        "count": 3456,
+        "processMs": 348790,
+        "p50Ms": 67,
+        "p95Ms": 180,
+        "p99Ms": 284,
+        "maxMs": 76135,
+        "totalAdmissionWaitMs": 15689,
+        "p95AdmissionWaitMs": 11
+      },
+      "workspace.commit": {
+        "count": 3456,
+        "processMs": 267523,
+        "p50Ms": 57,
+        "p95Ms": 117,
+        "p99Ms": 217,
+        "maxMs": 43062,
+        "totalAdmissionWaitMs": 14224,
+        "p95AdmissionWaitMs": 10
+      },
+      "workspace.unmount": {
+        "count": 1728,
+        "processMs": 69057,
+        "p50Ms": 34,
+        "p95Ms": 66,
+        "p99Ms": 160,
+        "maxMs": 842,
+        "totalAdmissionWaitMs": 6922,
+        "p95AdmissionWaitMs": 11
+      }
+    },
+    "demo-research": {
+      "workspace.mount": {
+        "count": 1632,
+        "processMs": 60103,
+        "p50Ms": 34,
+        "p95Ms": 53,
+        "p99Ms": 81,
+        "maxMs": 224,
+        "totalAdmissionWaitMs": 6528,
+        "p95AdmissionWaitMs": 10
+      },
+      "workspace.exec": {
+        "count": 3264,
+        "processMs": 219488,
+        "p50Ms": 65,
+        "p95Ms": 95,
+        "p99Ms": 209,
+        "maxMs": 261,
+        "totalAdmissionWaitMs": 13068,
+        "p95AdmissionWaitMs": 10
+      },
+      "workspace.commit": {
+        "count": 3264,
+        "processMs": 195223,
+        "p50Ms": 56,
+        "p95Ms": 82,
+        "p99Ms": 199,
+        "maxMs": 268,
+        "totalAdmissionWaitMs": 12939,
+        "p95AdmissionWaitMs": 10
+      },
+      "workspace.unmount": {
+        "count": 1632,
+        "processMs": 58688,
+        "p50Ms": 34,
+        "p95Ms": 50,
+        "p99Ms": 75,
+        "maxMs": 223,
+        "totalAdmissionWaitMs": 6613,
+        "p95AdmissionWaitMs": 10
+      }
+    }
+  },
+  "projectTimings": {
+    "demo-services/gateway": {
+      "machine": "docker",
+      "operations": {
+        "workspace.mount": {
+          "count": 1440,
+          "processMs": 39148,
+          "p50Ms": 22,
+          "p95Ms": 54,
+          "p99Ms": 159,
+          "maxMs": 220,
+          "totalAdmissionWaitMs": 5385,
+          "p95AdmissionWaitMs": 10
+        },
+        "workspace.exec": {
+          "count": 2880,
+          "processMs": 168532,
+          "p50Ms": 52,
+          "p95Ms": 104,
+          "p99Ms": 217,
+          "maxMs": 604,
+          "totalAdmissionWaitMs": 10504,
+          "p95AdmissionWaitMs": 10
+        },
+        "workspace.commit": {
+          "count": 2880,
+          "processMs": 143635,
+          "p50Ms": 43,
+          "p95Ms": 97,
+          "p99Ms": 206,
+          "maxMs": 341,
+          "totalAdmissionWaitMs": 11278,
+          "p95AdmissionWaitMs": 11
+        },
+        "workspace.unmount": {
+          "count": 1440,
+          "processMs": 30949,
+          "p50Ms": 17,
+          "p95Ms": 41,
+          "p99Ms": 113,
+          "maxMs": 233,
+          "totalAdmissionWaitMs": 5738,
+          "p95AdmissionWaitMs": 10
+        }
+      }
+    },
+    "demo-studio/website": {
+      "machine": "native",
+      "operations": {
+        "workspace.mount": {
+          "count": 1824,
+          "processMs": 104686,
+          "p50Ms": 49,
+          "p95Ms": 84,
+          "p99Ms": 184,
+          "maxMs": 3467,
+          "totalAdmissionWaitMs": 5020,
+          "p95AdmissionWaitMs": 8
+        },
+        "workspace.exec": {
+          "count": 3648,
+          "processMs": 223919,
+          "p50Ms": 39,
+          "p95Ms": 73,
+          "p99Ms": 183,
+          "maxMs": 33787,
+          "totalAdmissionWaitMs": 19902,
+          "p95AdmissionWaitMs": 8
+        },
+        "workspace.commit": {
+          "count": 3648,
+          "processMs": 506001,
+          "p50Ms": 116,
+          "p95Ms": 204,
+          "p99Ms": 343,
+          "maxMs": 31109,
+          "totalAdmissionWaitMs": 13500,
+          "p95AdmissionWaitMs": 7
+        },
+        "workspace.unmount": {
+          "count": 1824,
+          "processMs": 93097,
+          "p50Ms": 45,
+          "p95Ms": 81,
+          "p99Ms": 182,
+          "maxMs": 898,
+          "totalAdmissionWaitMs": 4625,
+          "p95AdmissionWaitMs": 7
+        }
+      }
+    },
+    "demo-services/billing": {
+      "machine": "docker",
+      "operations": {
+        "workspace.mount": {
+          "count": 480,
+          "processMs": 11063,
+          "p50Ms": 21,
+          "p95Ms": 32,
+          "p99Ms": 49,
+          "maxMs": 177,
+          "totalAdmissionWaitMs": 2132,
+          "p95AdmissionWaitMs": 10
+        },
+        "workspace.exec": {
+          "count": 960,
+          "processMs": 50364,
+          "p50Ms": 52,
+          "p95Ms": 76,
+          "p99Ms": 99,
+          "maxMs": 208,
+          "totalAdmissionWaitMs": 4605,
+          "p95AdmissionWaitMs": 11
+        },
+        "workspace.commit": {
+          "count": 960,
+          "processMs": 45917,
+          "p50Ms": 46,
+          "p95Ms": 63,
+          "p99Ms": 78,
+          "maxMs": 214,
+          "totalAdmissionWaitMs": 4651,
+          "p95AdmissionWaitMs": 12
+        },
+        "workspace.unmount": {
+          "count": 480,
+          "processMs": 8860,
+          "p50Ms": 17,
+          "p95Ms": 26,
+          "p99Ms": 44,
+          "maxMs": 176,
+          "totalAdmissionWaitMs": 2259,
+          "p95AdmissionWaitMs": 11
+        }
+      }
+    },
+    "demo-studio/design": {
+      "machine": "native",
+      "operations": {
+        "workspace.mount": {
+          "count": 432,
+          "processMs": 24206,
+          "p50Ms": 51,
+          "p95Ms": 73,
+          "p99Ms": 195,
+          "maxMs": 247,
+          "totalAdmissionWaitMs": 1897,
+          "p95AdmissionWaitMs": 10
+        },
+        "workspace.exec": {
+          "count": 864,
+          "processMs": 39539,
+          "p50Ms": 42,
+          "p95Ms": 64,
+          "p99Ms": 155,
+          "maxMs": 223,
+          "totalAdmissionWaitMs": 3611,
+          "p95AdmissionWaitMs": 10
+        },
+        "workspace.commit": {
+          "count": 864,
+          "processMs": 126215,
+          "p50Ms": 129,
+          "p95Ms": 220,
+          "p99Ms": 319,
+          "maxMs": 1533,
+          "totalAdmissionWaitMs": 3550,
+          "p95AdmissionWaitMs": 10
+        },
+        "workspace.unmount": {
+          "count": 432,
+          "processMs": 20516,
+          "p50Ms": 45,
+          "p95Ms": 66,
+          "p99Ms": 111,
+          "maxMs": 215,
+          "totalAdmissionWaitMs": 1987,
+          "p95AdmissionWaitMs": 11
+        }
+      }
+    },
+    "demo-build-cache/compiler": {
+      "machine": "demo-build",
+      "operations": {
+        "workspace.mount": {
+          "count": 1152,
+          "processMs": 47701,
+          "p50Ms": 34,
+          "p95Ms": 75,
+          "p99Ms": 187,
+          "maxMs": 905,
+          "totalAdmissionWaitMs": 4613,
+          "p95AdmissionWaitMs": 10
+        },
+        "workspace.exec": {
+          "count": 2304,
+          "processMs": 277031,
+          "p50Ms": 72,
+          "p95Ms": 196,
+          "p99Ms": 317,
+          "maxMs": 76135,
+          "totalAdmissionWaitMs": 10716,
+          "p95AdmissionWaitMs": 11
+        },
+        "workspace.commit": {
+          "count": 2304,
+          "processMs": 195289,
+          "p50Ms": 56,
+          "p95Ms": 129,
+          "p99Ms": 225,
+          "maxMs": 43062,
+          "totalAdmissionWaitMs": 8778,
+          "p95AdmissionWaitMs": 10
+        },
+        "workspace.unmount": {
+          "count": 1152,
+          "processMs": 47685,
+          "p50Ms": 35,
+          "p95Ms": 79,
+          "p99Ms": 160,
+          "maxMs": 842,
+          "totalAdmissionWaitMs": 4437,
+          "p95AdmissionWaitMs": 11
+        }
+      }
+    },
+    "demo-build-cache/sdk": {
+      "machine": "demo-build",
+      "operations": {
+        "workspace.mount": {
+          "count": 576,
+          "processMs": 21665,
+          "p50Ms": 34,
+          "p95Ms": 51,
+          "p99Ms": 144,
+          "maxMs": 243,
+          "totalAdmissionWaitMs": 2337,
+          "p95AdmissionWaitMs": 10
+        },
+        "workspace.exec": {
+          "count": 1152,
+          "processMs": 71759,
+          "p50Ms": 58,
+          "p95Ms": 89,
+          "p99Ms": 215,
+          "maxMs": 289,
+          "totalAdmissionWaitMs": 4973,
+          "p95AdmissionWaitMs": 11
+        },
+        "workspace.commit": {
+          "count": 1152,
+          "processMs": 72234,
+          "p50Ms": 58,
+          "p95Ms": 89,
+          "p99Ms": 193,
+          "maxMs": 256,
+          "totalAdmissionWaitMs": 5446,
+          "p95AdmissionWaitMs": 11
+        },
+        "workspace.unmount": {
+          "count": 576,
+          "processMs": 21372,
+          "p50Ms": 33,
+          "p95Ms": 54,
+          "p99Ms": 158,
+          "maxMs": 224,
+          "totalAdmissionWaitMs": 2485,
+          "p95AdmissionWaitMs": 11
+        }
+      }
+    },
+    "demo-experiments/embeddings": {
+      "machine": "demo-research",
+      "operations": {
+        "workspace.mount": {
+          "count": 912,
+          "processMs": 33502,
+          "p50Ms": 34,
+          "p95Ms": 52,
+          "p99Ms": 76,
+          "maxMs": 224,
+          "totalAdmissionWaitMs": 3652,
+          "p95AdmissionWaitMs": 10
+        },
+        "workspace.exec": {
+          "count": 1824,
+          "processMs": 126851,
+          "p50Ms": 67,
+          "p95Ms": 99,
+          "p99Ms": 212,
+          "maxMs": 261,
+          "totalAdmissionWaitMs": 7049,
+          "p95AdmissionWaitMs": 11
+        },
+        "workspace.commit": {
+          "count": 1824,
+          "processMs": 109546,
+          "p50Ms": 56,
+          "p95Ms": 82,
+          "p99Ms": 199,
+          "maxMs": 268,
+          "totalAdmissionWaitMs": 6919,
+          "p95AdmissionWaitMs": 10
+        },
+        "workspace.unmount": {
+          "count": 912,
+          "processMs": 33393,
+          "p50Ms": 34,
+          "p95Ms": 50,
+          "p99Ms": 71,
+          "maxMs": 214,
+          "totalAdmissionWaitMs": 3611,
+          "p95AdmissionWaitMs": 10
+        }
+      }
+    },
+    "demo-experiments/evaluation": {
+      "machine": "demo-research",
+      "operations": {
+        "workspace.mount": {
+          "count": 720,
+          "processMs": 26601,
+          "p50Ms": 33,
+          "p95Ms": 54,
+          "p99Ms": 145,
+          "maxMs": 221,
+          "totalAdmissionWaitMs": 2876,
+          "p95AdmissionWaitMs": 10
+        },
+        "workspace.exec": {
+          "count": 1440,
+          "processMs": 92637,
+          "p50Ms": 62,
+          "p95Ms": 88,
+          "p99Ms": 201,
+          "maxMs": 254,
+          "totalAdmissionWaitMs": 6019,
+          "p95AdmissionWaitMs": 10
+        },
+        "workspace.commit": {
+          "count": 1440,
+          "processMs": 85677,
+          "p50Ms": 56,
+          "p95Ms": 83,
+          "p99Ms": 193,
+          "maxMs": 245,
+          "totalAdmissionWaitMs": 6020,
+          "p95AdmissionWaitMs": 10
+        },
+        "workspace.unmount": {
+          "count": 720,
+          "processMs": 25295,
+          "p50Ms": 33,
+          "p95Ms": 51,
+          "p99Ms": 73,
+          "maxMs": 223,
+          "totalAdmissionWaitMs": 3002,
+          "p95AdmissionWaitMs": 10
+        }
+      }
+    }
+  },
+  "setupCalls": 84996,
+  "archiveRecords": 270073,
+  "exactArgv": 80986,
+  "exactStdin": 26238,
+  "exactResults": 80986,
+  "archiveFailures": 0,
+  "truncated": 0,
+  "maxExecBodyBytes": 817,
+  "families": {
+    "branch.fork": 527,
+    "file.write": 26238,
+    "branch.publish": 8667,
+    "branch.merge": 330,
+    "sandbox.create": 8,
+    "workspace.mount": 7536,
+    "workspace.exec": 15072,
+    "workspace.commit": 15072,
+    "workspace.unmount": 7536
+  },
+  "uniqueCommitHeads": 41640,
+  "uniqueWorkspaceCommitHeads": 15072,
+  "savedGraph": {
+    "commits": 41640,
+    "sideBranches": 857,
+    "layers": 8675,
+    "workspaceCommits": 15072,
+    "filesVerified": 359,
+    "projects": {
+      "demo-services/gateway": {
+        "project": "demo-services/gateway",
+        "tier": 7,
+        "cycles": 30,
+        "branches": 160,
+        "commits": 7944,
+        "merges": 62,
+        "publications": 1654,
+        "layers": 1655,
+        "filesVerified": 45,
+        "publicationReceiptsVerified": true,
+        "workspaceRevisions": 2880,
+        "authoredRevisions": 7882
+      },
+      "demo-studio/website": {
+        "project": "demo-studio/website",
+        "tier": 8,
+        "cycles": 38,
+        "branches": 200,
+        "commits": 10056,
+        "merges": 78,
+        "publications": 2094,
+        "layers": 2095,
+        "filesVerified": 42,
+        "publicationReceiptsVerified": true,
+        "workspaceRevisions": 3648,
+        "authoredRevisions": 9978
+      },
+      "demo-services/billing": {
+        "project": "demo-services/billing",
+        "tier": 2,
+        "cycles": 10,
+        "branches": 60,
+        "commits": 2664,
+        "merges": 22,
+        "publications": 554,
+        "layers": 555,
+        "filesVerified": 46,
+        "publicationReceiptsVerified": true,
+        "workspaceRevisions": 960,
+        "authoredRevisions": 2642
+      },
+      "demo-studio/design": {
+        "project": "demo-studio/design",
+        "tier": 1,
+        "cycles": 9,
+        "branches": 55,
+        "commits": 2400,
+        "merges": 20,
+        "publications": 499,
+        "layers": 500,
+        "filesVerified": 44,
+        "publicationReceiptsVerified": true,
+        "workspaceRevisions": 864,
+        "authoredRevisions": 2380
+      },
+      "demo-build-cache/compiler": {
+        "project": "demo-build-cache/compiler",
+        "tier": 6,
+        "cycles": 24,
+        "branches": 130,
+        "commits": 6360,
+        "merges": 50,
+        "publications": 1324,
+        "layers": 1325,
+        "filesVerified": 46,
+        "publicationReceiptsVerified": true,
+        "workspaceRevisions": 2304,
+        "authoredRevisions": 6310
+      },
+      "demo-build-cache/sdk": {
+        "project": "demo-build-cache/sdk",
+        "tier": 3,
+        "cycles": 12,
+        "branches": 70,
+        "commits": 3192,
+        "merges": 26,
+        "publications": 664,
+        "layers": 665,
+        "filesVerified": 47,
+        "publicationReceiptsVerified": true,
+        "workspaceRevisions": 1152,
+        "authoredRevisions": 3166
+      },
+      "demo-experiments/embeddings": {
+        "project": "demo-experiments/embeddings",
+        "tier": 5,
+        "cycles": 19,
+        "branches": 105,
+        "commits": 5040,
+        "merges": 40,
+        "publications": 1049,
+        "layers": 1050,
+        "filesVerified": 45,
+        "publicationReceiptsVerified": true,
+        "workspaceRevisions": 1824,
+        "authoredRevisions": 5000
+      },
+      "demo-experiments/evaluation": {
+        "project": "demo-experiments/evaluation",
+        "tier": 4,
+        "cycles": 15,
+        "branches": 85,
+        "commits": 3984,
+        "merges": 32,
+        "publications": 829,
+        "layers": 830,
+        "filesVerified": 44,
+        "publicationReceiptsVerified": true,
+        "workspaceRevisions": 1440,
+        "authoredRevisions": 3952
+      }
+    }
+  },
+  "pool": {
+    "sandboxCount": 8,
+    "boxes": {
+      "demo-mix-website-1": {
+        "project": "demo-studio/website",
+        "machine": "native",
+        "state": "running",
+        "mounted": 0
+      },
+      "demo-mix-design-1": {
+        "project": "demo-studio/design",
+        "machine": "native",
+        "state": "running",
+        "mounted": 0
+      },
+      "demo-mix-embeddings-1": {
+        "project": "demo-experiments/embeddings",
+        "machine": "demo-research",
+        "state": "running",
+        "mounted": 0
+      },
+      "demo-mix-evaluation-1": {
+        "project": "demo-experiments/evaluation",
+        "machine": "demo-research",
+        "state": "running",
+        "mounted": 0
+      },
+      "demo-mix-compiler-1": {
+        "project": "demo-build-cache/compiler",
+        "machine": "demo-build",
+        "state": "running",
+        "mounted": 0
+      },
+      "demo-mix-sdk-1": {
+        "project": "demo-build-cache/sdk",
+        "machine": "demo-build",
+        "state": "running",
+        "mounted": 0
+      },
+      "demo-mix-gateway-1": {
+        "project": "demo-services/gateway",
+        "machine": "docker",
+        "state": "running",
+        "mounted": 0
+      },
+      "demo-mix-billing-1": {
+        "project": "demo-services/billing",
+        "machine": "docker",
+        "state": "running",
+        "mounted": 0
+      }
+    },
+    "perProject": {
+      "demo-services/gateway": {
+        "actualCliPeak": 3,
+        "conservativeMountedPeak": 2,
+        "sessions": 1440
+      },
+      "demo-studio/website": {
+        "actualCliPeak": 3,
+        "conservativeMountedPeak": 2,
+        "sessions": 1824
+      },
+      "demo-services/billing": {
+        "actualCliPeak": 3,
+        "conservativeMountedPeak": 2,
+        "sessions": 480
+      },
+      "demo-studio/design": {
+        "actualCliPeak": 2,
+        "conservativeMountedPeak": 2,
+        "sessions": 432
+      },
+      "demo-build-cache/compiler": {
+        "actualCliPeak": 3,
+        "conservativeMountedPeak": 2,
+        "sessions": 1152
+      },
+      "demo-build-cache/sdk": {
+        "actualCliPeak": 2,
+        "conservativeMountedPeak": 2,
+        "sessions": 576
+      },
+      "demo-experiments/embeddings": {
+        "actualCliPeak": 3,
+        "conservativeMountedPeak": 2,
+        "sessions": 912
+      },
+      "demo-experiments/evaluation": {
+        "actualCliPeak": 3,
+        "conservativeMountedPeak": 2,
+        "sessions": 720
+      }
+    }
+  },
+  "actualHistoryCliPeak": 12,
+  "historyMs": 973292,
+  "method": "Streaming persisted archive and final step journal; exact canonical recipe argv/body/input match and unique invocation lifecycle stages; saved project verification receipts and real sandbox.get output; mounted interval peak uses mount start through unmount finish as conservative bound."
+}

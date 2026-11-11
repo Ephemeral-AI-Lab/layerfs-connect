@@ -7,13 +7,8 @@
 .sandbox-page button:disabled { cursor: default; }
 .sb-header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; margin-bottom: 24px; }
 .sb-header h1 { display: flex; align-items: center; gap: 10px; margin: 0 0 7px; font-size: 20px; font-weight: 550; letter-spacing: -.5px; }
-.sb-simulation { display: inline-flex; align-items: center; gap: 5px; padding: 3px 7px; border: 1px solid var(--border); border-radius: 5px; color: var(--muted-foreground); font-size: 10px; font-weight: 450; letter-spacing: 0; }
 .sb-header p { display: flex; align-items: center; gap: 7px; font-size: 12px; color: var(--description); overflow-wrap: anywhere; }
 .sb-header-note { margin-left: 8px; color: var(--faint); }
-.sb-controls { display: flex; align-items: center; gap: 5px; }
-.sb-scenario { display: flex; align-items: center; position: relative; margin-right: 7px; }
-.sb-scenario select { appearance: none; background: transparent; padding: 7px 22px 7px 8px; border: none; border-radius: 5px; font: inherit; font-size: 12px; color: var(--description); cursor: pointer; }
-.sb-scenario svg { position: absolute; right: 5px; pointer-events: none; color: var(--faint); }
 .sb-toolbar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; padding-bottom: 14px; border-bottom: 1px solid var(--border); font-size: 11px; color: var(--muted-foreground); }
 .sb-facts, .sb-facts > span, .sb-filters, .sb-filters label { display: flex; align-items: center; gap: 7px; }
 .sb-facts, .sb-filters { gap: 16px; flex-wrap: wrap; }
@@ -98,11 +93,6 @@
 .sb-retired > span { margin-left: auto; font-size: 9px; color: var(--faint); }
 .sb-error-ink { color: var(--destructive) !important; }
 .sb-flow [data-dim=true] { opacity: .28; }
-.sb-playback { display: flex; align-items: center; gap: 16px; padding: 12px 0; border-top: 1px solid var(--border); font-size: 10px; color: var(--faint); }
-.sb-playback-state { display: flex; align-items: center; gap: 6px; min-width: 94px; }
-.sb-scrubber { display: flex; flex: 1; }
-.sb-scrubber input { width: 100%; height: 3px; accent-color: var(--primary); cursor: pointer; }
-.sb-time { flex-shrink: 0; font-variant-numeric: tabular-nums; }
 .sb-inspector { border: 1px solid var(--border); border-radius: 10px; overflow: hidden; margin-top: 8px; }
 .sb-inspector > header { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 11px 13px; }
 .sb-inspector h2 { font-size: 12px; font-weight: 550; overflow-wrap: anywhere; }

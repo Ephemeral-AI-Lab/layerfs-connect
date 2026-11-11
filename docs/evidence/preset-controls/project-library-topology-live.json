@@ -1,0 +1,283 @@
+{
+  "state": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/connect-project-library-topology-MjZcWy",
+  "note": "Full production Studio topology: native, Docker and two private Lima VMs; no sandboxes/workspaces.",
+  "cli": "/Users/yifanxu/.cache/layerfs-worktrees/layerfs-storage-visuals-09c001eb6d3a/artifacts/build-macos-3337f06266154844a7b6992c072635eb/layerfs",
+  "started": 1794278385495,
+  "setup": {
+    "preset": "studio",
+    "state": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/connect-project-library-topology-MjZcWy",
+    "home": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/connect-project-library-topology-MjZcWy/home-2",
+    "actionId": "ec7fc8fe-a3d6-4a65-9323-252b91d0d6eb",
+    "activityUrl": "http://127.0.0.1:1025/#/activity?action=ec7fc8fe-a3d6-4a65-9323-252b91d0d6eb",
+    "presetVerified": true,
+    "projects": 8
+  },
+  "verification": {
+    "preset": "studio",
+    "state": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/connect-project-library-topology-MjZcWy",
+    "home": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/connect-project-library-topology-MjZcWy/home-2",
+    "actionId": "00a2df81-b150-4f5c-9439-ecc331f4d019",
+    "activityUrl": "http://127.0.0.1:1025/#/activity?action=00a2df81-b150-4f5c-9439-ecc331f4d019",
+    "verified": true,
+    "projects": 8,
+    "setupActionId": "ec7fc8fe-a3d6-4a65-9323-252b91d0d6eb",
+    "cliInvocations": 689,
+    "cliInputOutputCaptured": true
+  },
+  "projects": {
+    "demo-studio/website": {
+      "seeded": true,
+      "verification": {
+        "project": "demo-studio/website",
+        "branches": 10,
+        "commits": 24,
+        "merges": 2,
+        "publications": 4,
+        "layers": 5,
+        "filesVerified": 28,
+        "publicationReceiptsVerified": true
+      }
+    },
+    "demo-services/gateway": {
+      "seeded": true,
+      "verification": {
+        "project": "demo-services/gateway",
+        "branches": 10,
+        "commits": 24,
+        "merges": 2,
+        "publications": 4,
+        "layers": 5,
+        "filesVerified": 31,
+        "publicationReceiptsVerified": true
+      }
+    },
+    "demo-services/billing": {
+      "seeded": true,
+      "verification": {
+        "project": "demo-services/billing",
+        "branches": 10,
+        "commits": 24,
+        "merges": 2,
+        "publications": 4,
+        "layers": 5,
+        "filesVerified": 32,
+        "publicationReceiptsVerified": true
+      }
+    },
+    "demo-studio/design": {
+      "seeded": true,
+      "verification": {
+        "project": "demo-studio/design",
+        "branches": 10,
+        "commits": 24,
+        "merges": 2,
+        "publications": 4,
+        "layers": 5,
+        "filesVerified": 30,
+        "publicationReceiptsVerified": true
+      }
+    },
+    "demo-build-cache/compiler": {
+      "seeded": true,
+      "verification": {
+        "project": "demo-build-cache/compiler",
+        "branches": 10,
+        "commits": 24,
+        "merges": 2,
+        "publications": 4,
+        "layers": 5,
+        "filesVerified": 32,
+        "publicationReceiptsVerified": true
+      }
+    },
+    "demo-experiments/embeddings": {
+      "seeded": true,
+      "verification": {
+        "project": "demo-experiments/embeddings",
+        "branches": 10,
+        "commits": 24,
+        "merges": 2,
+        "publications": 4,
+        "layers": 5,
+        "filesVerified": 31,
+        "publicationReceiptsVerified": true
+      }
+    },
+    "demo-build-cache/sdk": {
+      "seeded": true,
+      "verification": {
+        "project": "demo-build-cache/sdk",
+        "branches": 10,
+        "commits": 24,
+        "merges": 2,
+        "publications": 4,
+        "layers": 5,
+        "filesVerified": 33,
+        "publicationReceiptsVerified": true
+      }
+    },
+    "demo-experiments/evaluation": {
+      "seeded": true,
+      "verification": {
+        "project": "demo-experiments/evaluation",
+        "branches": 10,
+        "commits": 24,
+        "merges": 2,
+        "publications": 4,
+        "layers": 5,
+        "filesVerified": 30,
+        "publicationReceiptsVerified": true
+      }
+    }
+  },
+  "calls": {
+    "count": 689,
+    "allCaptured": true,
+    "sandboxOrWorkspace": [],
+    "errors": [],
+    "writes": 176,
+    "merges": 16,
+    "publications": 32,
+    "exactStdinVerified": 176,
+    "peakConcurrent": 2
+  },
+  "placements": {
+    "items": [
+      {
+        "name": "demo-build-cache",
+        "kind": "sqlite",
+        "machine": "demo-build",
+        "profile": "disposable",
+        "created": 1794278441761,
+        "sqlite": "3.53.2",
+        "last_transfer": {
+          "call": "store.push",
+          "from": "native",
+          "to": "demo-build",
+          "at": 1794278445540,
+          "bytes": 299008,
+          "sha256": "16d7d9aac20efe1e415fe21ca0bdbccaf40601659d68c3469df16c2b70c88541",
+          "heads": "217afd876973814b5483c70d4016266117f52b930dd8649fdf49750d1e7fdc71",
+          "retired": true
+        },
+        "projects": [
+          "compiler",
+          "sdk"
+        ],
+        "state": "idle"
+      },
+      {
+        "name": "demo-experiments",
+        "kind": "sqlite",
+        "machine": "demo-research",
+        "profile": "disposable",
+        "created": 1794278441915,
+        "sqlite": "3.53.2",
+        "last_transfer": {
+          "call": "store.push",
+          "from": "native",
+          "to": "demo-research",
+          "at": 1794278445621,
+          "bytes": 299008,
+          "sha256": "02b5d7207f4bbfbde0ab865da6e495b329512e6b5f004f821f8c13a71f556506",
+          "heads": "e80729f8533d8620f1e3523ff4b65ecda094ad9fd346654045ad7de366b25e7f",
+          "retired": true
+        },
+        "projects": [
+          "embeddings",
+          "evaluation"
+        ],
+        "state": "idle"
+      },
+      {
+        "name": "demo-services",
+        "kind": "sqlite",
+        "machine": "docker",
+        "profile": "disposable",
+        "created": 1794278437984,
+        "sqlite": "3.53.2",
+        "last_transfer": {
+          "call": "store.push",
+          "from": "native",
+          "to": "docker",
+          "at": 1794278441861,
+          "bytes": 299008,
+          "sha256": "3a19e0d6cd580321f1753956ddace4b054d3adcd9ea56b58fcf9bd84d18f64e7",
+          "heads": "03202a96e5309c76f5122cd232f3ab26be35ce163e427eb27e73a3187dbc62fa",
+          "retired": true
+        },
+        "projects": [
+          "billing",
+          "gateway"
+        ],
+        "state": "idle"
+      },
+      {
+        "name": "demo-studio",
+        "kind": "sqlite",
+        "machine": "native",
+        "profile": "disposable",
+        "created": 1794278437995,
+        "sqlite": "3.53.2",
+        "projects": [
+          "design",
+          "website"
+        ],
+        "state": "idle"
+      }
+    ]
+  },
+  "teardown": {
+    "preset": "studio",
+    "state": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/connect-project-library-topology-MjZcWy",
+    "home": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/connect-project-library-topology-MjZcWy/home-2",
+    "actionId": "25bb7c0d-ac8f-4419-8374-46716f2fbf5d",
+    "cleanup": {
+      "remove": {
+        "stores": [
+          "demo-build-cache",
+          "demo-experiments",
+          "demo-services",
+          "demo-studio"
+        ],
+        "sandboxes": [],
+        "machines": [
+          "demo-build",
+          "demo-research"
+        ],
+        "workspaces": []
+      },
+      "retainMachines": [],
+      "preserved": {
+        "machine": [],
+        "store": [],
+        "sandbox": []
+      },
+      "projects": 8,
+      "signature": "cfb01da72cf44607e732fb1fb2f907355279b20a1706c8bb98732a4bd6e9e22a",
+      "verified": true,
+      "at": 1794278462085,
+      "remaining": [],
+      "unexpected": []
+    },
+    "activityUrl": "http://127.0.0.1:1025/#/activity?action=25bb7c0d-ac8f-4419-8374-46716f2fbf5d"
+  },
+  "ended": 1794278465370,
+  "ok": true,
+  "cliIdentity": {
+    "version": "2.0.0",
+    "commit": "58c548b3e0a45f11880e3511bf1267d11e315415",
+    "dirty": true,
+    "features": [
+      "machine",
+      "postgresql"
+    ]
+  },
+  "timingsSeconds": {
+    "setup": 67.96,
+    "verification": 8.429,
+    "teardown": 3.288,
+    "total": 79.875
+  },
+  "timingScope": "setup includes machine provisioning, all eight projects, placement and automatic verification; additional verification and teardown measured separately; configured runtimes/images already available."
+}

@@ -3,6 +3,7 @@
 // browser preview (`pnpm web`) the page talks to its selected host directly,
 // at the address vite.web.config.ts puts in <meta name="lfs-host">.
 export type LayerfsReply = { status: number; body: unknown }
+import type { CliAction } from '../../../../../shared/cli-activity'
 export type LayerfsConnection = 'connecting' | 'connected' | 'reconnecting'
 export type LayerfsStreamMessage = { kind: 'event'; event: unknown } | { kind: 'connection'; state: LayerfsConnection }
 
@@ -11,7 +12,7 @@ const desktop = window.desktop?.layerfs
 const web = (() => {
   const meta = document.querySelector<HTMLMetaElement>('meta[name="lfs-host"]')
   try {
-    return meta ? (JSON.parse(meta.content) as { url: string; token: string; mode: 'sim' | 'real'; controlToken: string }) : null
+    return meta ? (JSON.parse(meta.content) as { url: string; token: string; controlToken: string }) : null
   } catch {
     return null
   }
@@ -21,29 +22,12 @@ const streamListeners = new Set<(message: LayerfsStreamMessage) => void>()
 let source: EventSource | null = null
 
 export const connectBridge = {
-  /** Which LayerFS the selected host runs. */
-  mode: (desktop?.mode ?? web?.mode ?? 'sim') as 'sim' | 'real',
-  webPreview: !desktop && !!web,
-  async switchPreviewMode(mode: 'sim' | 'real'): Promise<void> {
-    if (desktop || !web) throw new Error('Mode switching is available in the web preview.')
-    const res = await fetch(`/__lfs/mode?mode=${mode}`, {
-      method: 'POST', headers: { 'x-lfs-preview': web.controlToken }, signal: AbortSignal.timeout(35_000),
-    })
-    if (!res.ok) {
-      const body = await res.json() as { error?: string }
-      throw new Error(body.error || 'Could not start the selected preview mode.')
-    }
-    const url = new URL(window.location.href)
-    url.searchParams.set('mode', mode)
-    url.hash = '/'
-    window.location.assign(url.href)
-  },
-  async request(method: string, path: string, body?: unknown): Promise<LayerfsReply> {
-    if (desktop) return desktop.request(method, path, body)
+  async request(method: string, path: string, body?: unknown, action?: CliAction): Promise<LayerfsReply> {
+    if (desktop) return desktop.request(method, path, body, action)
     if (!web) throw new Error('No LayerFS host: run the desktop app or `pnpm web`.')
     const res = await fetch(`${web.url}${path}`, {
       method,
-      headers: { authorization: `Bearer ${web.token}`, ...(body === undefined ? {} : { 'content-type': 'application/json' }) },
+      headers: { authorization: `Bearer ${web.token}`, ...(body === undefined ? {} : { 'content-type': 'application/json' }), ...(action ? { 'x-lfs-action': encodeURIComponent(JSON.stringify(action)) } : {}) },
       body: body === undefined ? undefined : JSON.stringify(body),
     })
     return { status: res.status, body: await res.json().catch(() => ({})) }
@@ -69,7 +53,7 @@ export const connectBridge = {
   /** A new empty scratch folder for a chat: main makes it, or the preview's dev server (vite.web.config.ts). */
   async makeScratch(): Promise<string> {
     if (desktop) return desktop.makeScratch()
-    const res = await fetch(`/__lfs/scratch?mode=${connectBridge.mode}`, { method: 'POST', headers: { 'x-lfs-preview': web?.controlToken ?? '' } })
+    const res = await fetch(`/__lfs/scratch`, { method: 'POST', headers: { 'x-lfs-preview': web?.controlToken ?? '' } })
     if (!res.ok) throw new Error('Could not make a scratch folder.')
     return ((await res.json()) as { path: string }).path
   },

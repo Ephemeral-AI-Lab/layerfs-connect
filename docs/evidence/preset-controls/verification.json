@@ -1,0 +1,79 @@
+{
+  "date": "2026-11-09",
+  "state": "/tmp/connect-preset-controls-x6ez4z2y",
+  "runtime": {
+    "version": "2.0.0",
+    "commit": "833d04cf44e8e747929d50ab1170a48260d9381c"
+  },
+  "checks": {
+    "rootTests": 115,
+    "focusedHostTests": 34,
+    "desktopTypecheck": "PASS",
+    "desktopBuild": "PASS",
+    "diffWhitespace": "PASS"
+  },
+  "native": {
+    "uiResetAction": "3417c1f3-af15-450a-8205-3756c9694a80",
+    "uiResetCliInvocations": 31,
+    "uiResetInputOutputComplete": true,
+    "repeatRunCliInvocations": 9,
+    "repeatRunMutations": [],
+    "terminalDesktopReset": {
+      "actionId": "e30e424d-e604-4c24-b724-4efa8bd25adc",
+      "pageAction": "e30e424d-e604-4c24-b724-4efa8bd25adc",
+      "state": "completed",
+      "cliInvocations": 38,
+      "captured": true,
+      "oldFilesRemoved": true
+    },
+    "verify": {
+      "verified": true,
+      "projects": 2,
+      "inputOutputCaptured": true
+    }
+  },
+  "empty": {
+    "resetAction": "1a696136-6a74-4f54-8bbc-f7b6663469bb",
+    "resetCliInvocations": 1,
+    "inputOutputComplete": true,
+    "nativeLogsUnchanged": true,
+    "verified": true,
+    "projects": 0
+  },
+  "browser": {
+    "renderer": "actual renderer at http://127.0.0.1:1025/",
+    "host": "private test host; dedicated tab fetch routing during tests, no shared server takeover",
+    "viewports": [
+      "1280x820",
+      "900x600"
+    ],
+    "horizontalOverflowAt900": false,
+    "flows": [
+      "select all four presets",
+      "Native Run and Reset",
+      "Reset confirmation and Cancel",
+      "View CLI Activity navigates and expands actual action",
+      "Storage shows rebuilt Native store and projects",
+      "Empty Reset",
+      "cleared action link",
+      "return to original environment",
+      "activate inactive environment from View CLI Activity"
+    ],
+    "electronGui": "NOT_RUN",
+    "handoff": "Dedicated tab returned to unmodified preview connection on Presets; private fetch routing removed."
+  },
+  "unverified": [
+    "Studio real Docker/Lima provisioning",
+    "Starter real Docker provisioning",
+    "Sandbox creation and workspace mounting"
+  ],
+  "temporaryHosts": "shutdown performed at handoff; fixture cleanup retains logs and receipts",
+  "cleanup": {
+    "nativeOwnedResourcesRemaining": 0,
+    "emptyOwnedResourcesRemaining": 0,
+    "privateHostReceiptsRemoved": true,
+    "privateHostProcessesRemaining": 0,
+    "logsAndManifestsRetained": true,
+    "freeHostGB": 305.936
+  }
+}

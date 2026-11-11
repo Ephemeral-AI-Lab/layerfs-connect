@@ -1,0 +1,125 @@
+{
+  "date": "2026-11-10",
+  "result": "passed",
+  "scope": "Private full Studio content version 3; existing user Studio preserved.",
+  "liveEvidence": "dense-eight-tier-live.json",
+  "traceEvidence": "dense-eight-tier-trace-analysis.json",
+  "topology": {
+    "machines": 4,
+    "stores": 4,
+    "projects": 8,
+    "sandboxes": 0,
+    "workspaces": 0
+  },
+  "history": {
+    "commands": 50834,
+    "commits": 41640,
+    "sideBranches": 857,
+    "merges": 330,
+    "publications": 8667,
+    "mainLayers": 8675,
+    "peakCliProcesses": 8,
+    "meanConcurrentCliProcesses": 3.37094,
+    "allSetupCalls": 54821,
+    "failedCalls": 0,
+    "missingLifecycleRecords": 0,
+    "truncatedStreams": 0,
+    "fileWritesWithStdin": 41310
+  },
+  "timingMs": {
+    "preparation": 48107,
+    "history": 673090,
+    "verificationIncludingCapture": 92376,
+    "postVerificationEvidenceAndCleanup": 3741,
+    "total": 817314
+  },
+  "sizesBeforeCleanup": {
+    "activityBytes": 218280762,
+    "journalBytes": 88968031,
+    "manifestBytes": 10229
+  },
+  "cleanup": {
+    "remove": {
+      "stores": [
+        "demo-build-cache",
+        "demo-experiments",
+        "demo-services",
+        "demo-studio"
+      ],
+      "sandboxes": [],
+      "machines": [
+        "demo-build",
+        "demo-research"
+      ],
+      "workspaces": []
+    },
+    "retainMachines": [],
+    "preserved": {
+      "machine": [],
+      "store": [],
+      "sandbox": []
+    },
+    "projects": 8,
+    "signature": "3cc8e1ced89622733b42f6444c292c6cd3c28b6647b5eb8187f18aae53b8d780",
+    "verified": true,
+    "at": 1794287663172,
+    "remaining": [],
+    "unexpected": []
+  },
+  "checks": {
+    "rootTests": {
+      "passed": 175,
+      "failed": 0
+    },
+    "activityTests": {
+      "passed": 18,
+      "failed": 0,
+      "includes50000CommandCase": true
+    },
+    "nativeRegressionTests": {
+      "passed": 20,
+      "failed": 0,
+      "newLifecycleTestsFailedBeforeFix": 2
+    },
+    "desktopTypecheck": "passed",
+    "desktopBuild": "passed",
+    "browser": {
+      "sizes": [
+        [
+          1280,
+          820
+        ],
+        [
+          900,
+          600
+        ]
+      ],
+      "flows": [
+        "All eight tier targets rendered",
+        "Per-project script 100-row pagination: Next and Previous",
+        "Full plan download requested; artifact not inspected",
+        "Existing 686-call action paged to next 100",
+        "Selected CLI output and process details loaded",
+        "Verified native CLI selected; Studio reopened without Build or Reset"
+      ],
+      "console": "No application errors observed; favicon.ico 404",
+      "limitations": [
+        "Live dense progress was verified through runner receipts, not an interactive browser build",
+        "No Electron or packaged app verification"
+      ]
+    }
+  },
+  "runtime": {
+    "cli": "/Users/yifanxu/.cache/layerfs-worktrees/layerfs-macos-writer-adm-905cf46b6910/artifacts/build-macos-c19cfd0bbfac4770a6951bf33d2070e8/layerfs",
+    "linuxBundle": "/Users/yifanxu/.cache/layerfs-worktrees/layerfs-connect-image-ru-5b7a74044d64/linux-runtime/2.0.0/linux-aarch64",
+    "patches": [
+      "macos-writer-admission.patch",
+      "macos-store-lifecycle-admission.patch"
+    ],
+    "upstream": "Uncommitted isolated worktree; local sealed CLI and daemon pinned by preview"
+  },
+  "diskAtHandoff": {
+    "freeBytes": 237440057344,
+    "cleanupRequired": false
+  }
+}

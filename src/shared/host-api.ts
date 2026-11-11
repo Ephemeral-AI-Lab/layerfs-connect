@@ -74,8 +74,8 @@ export interface PlatformsView {
 // ---------- Deployment and status ----------
 
 /** GET /api/status: Connect on its one LayerFS 2.0 home. Machine power is manual; listing status starts nothing. */
-/** Which LayerFS the host runs on: the linked library, or the simulator (host/sim). */
-export type LayerfsMode = 'real' | 'sim'
+/** Connect uses the real LayerFS CLI. */
+export type LayerfsMode = 'real'
 
 export interface HostStatus {
   platform: 'linux' | 'macos' | 'windows'
@@ -422,10 +422,77 @@ export interface BranchInfo {
   parent: string | null
   forkedFrom: string | null
   state: 'open' | 'merged' | 'published' | string
-  commits: number
+  /** Null when history has not been scanned. */
+  commits: number | null
 }
 
+/** Exact CLI integer representation on the HTTP boundary. */
+export type StorageInteger = number | { $layerfs: 'i64-v1'; decimal: string }
+export interface SavedStorageRef { id: string; kind: 'Commit' | 'Layer'; branch: string | null; root?: string }
+export interface StorageHistoryPage { items: CommitInfo[]; head: SavedStorageRef | null; next: string | null }
+export interface StoreObservationStats {
+  fileMeasurements?: { observedAt: number; bytes: StorageInteger | null; walBytes: StorageInteger | null; incomingBytes: StorageInteger | null } | null
+  fileMeasurementError?: string
+  kind?: string
+  history_logical?: StorageInteger
+  canonical?: StorageInteger
+  stored?: StorageInteger
+  metadata?: StorageInteger
+  file?: StorageInteger
+  free?: StorageInteger | null
+  accounting_version?: number
+  data_pack_bytes?: StorageInteger
+  metadata_pack_bytes?: StorageInteger
+  database_overhead_bytes?: StorageInteger
+  free_page_bytes?: StorageInteger | null
+  database_page_bytes?: StorageInteger
+  composition_complete?: boolean
+  composition_reason?: string
+}
+export interface StorageReport {
+  scope: 'project' | 'store'
+  project?: string
+  name?: string
+  definition_version: 1
+  population_id: string
+  population: 'explicit_saved_snapshots'
+  snapshots: { project: string; branch: string; at: SavedStorageRef }[]
+  complete: boolean
+  reason?: string
+  examined_objects: StorageInteger
+  canonical_bytes_read: StorageInteger
+  referenced_canonical_bytes: StorageInteger | null
+  unique_canonical_bytes: StorageInteger | null
+  projects: { project: string; referenced_canonical_bytes: StorageInteger | null; exclusive_within_population_canonical_bytes: StorageInteger | null; shared_within_population_canonical_bytes: StorageInteger | null }[]
+  physical_bytes: null
+  reclaimable_bytes: null
+  physical_reason: string
+  selection: { scope: 'project_saved_revisions'; limit: number; selected: number; hasEarlier: boolean; head: SavedStorageRef | null }
+}
+export interface StoreStorageReport extends Omit<StorageReport, 'selection'> {
+  scope: 'store'
+  name: string
+  selection: { scope: 'store_main_heads'; limit: number; selected: number; availableProjects: number; excludedProjects: number; projects: string[] }
+}
+export interface StoreObservations {
+  version: 1
+  scope: 'store'
+  store: string
+  gapAfterMs: number
+  retentionDays: number
+  maxPoints: number
+  series: { identity: string; startedAt: number; points: { observedAt: number; stats: StoreObservationStats }[] }[]
+}
 export interface CommitInfo {
+  logical?: StorageInteger | null
+  savedKind?: 'commit' | 'layer'
+  ref?: SavedStorageRef | null
+  parentRef?: SavedStorageRef | null
+  sourceRef?: SavedStorageRef | null
+  timeStatus?: 'recorded' | 'unavailable'
+  newCanonical?: StorageInteger | null
+  newStored?: StorageInteger | null
+  newMetadata?: StorageInteger | null
   id: string
   branch: string
   message: string
@@ -514,10 +581,10 @@ export interface ProjectState {
   branches: BranchInfo[]
   layers: LayerInfo[]
   sandboxes: SandboxInfo[]
-  /** The newest Commit on any Branch, null before the first. */
+  /** Legacy history summary; null when history is not loaded. */
   last: CommitInfo | null
-  /** Commits on every Branch. */
-  commits: number
+  /** Total Commits; null when history is not scanned. */
+  commits: number | null
   /** The project's Store file (in its Docker volume) and its bytes with the WAL; null when unreadable. */
   store: { path: string | null; bytes: number | null }
   /** What the Store holds and what it costs (backend.store.project.get_storage); null when unreadable. */

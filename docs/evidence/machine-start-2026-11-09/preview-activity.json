@@ -1,0 +1,1171 @@
+[
+  {
+    "v": 1,
+    "id": "dca713e5-0ef7-4559-bce4-3c62315645c7",
+    "at": 1794231151783,
+    "seq": 49,
+    "generation": "initial",
+    "action": {
+      "id": "d0918ddb-a7cf-4a52-a403-ad6e61c6e034",
+      "name": "machine.create",
+      "label": "Create machine",
+      "page": "/machines",
+      "origin": "user"
+    },
+    "type": "cli.queued",
+    "invocationId": "1fad4ba6-1430-413d-ab51-c0225e356588",
+    "data": {
+      "binary": "/Users/yifanxu/Ephemeral-AI-Lab/layerfs-machine-start/target/debug/layerfs",
+      "argv": [
+        "machine",
+        "create",
+        "--cpus",
+        "2",
+        "--memory",
+        "4294967296",
+        "--disk",
+        "21474836480",
+        "--progress",
+        "--",
+        "startup-ui-ready",
+        "apple-container"
+      ],
+      "stdin": null,
+      "mode": "real",
+      "ownerPid": 7296
+    }
+  },
+  {
+    "v": 1,
+    "id": "45d20712-10c1-4724-9ce4-3f3374f71ae9",
+    "at": 1794231151784,
+    "seq": 50,
+    "generation": "initial",
+    "action": {
+      "id": "d0918ddb-a7cf-4a52-a403-ad6e61c6e034",
+      "name": "machine.create",
+      "label": "Create machine",
+      "page": "/machines",
+      "origin": "user"
+    },
+    "type": "cli.started",
+    "invocationId": "1fad4ba6-1430-413d-ab51-c0225e356588",
+    "data": {
+      "started": 1794231151784,
+      "pid": 7548,
+      "binary": "/Users/yifanxu/Ephemeral-AI-Lab/layerfs-machine-start/target/debug/layerfs",
+      "identity": {
+        "version": "2.0.0",
+        "commit": "833d04cf44e8e747929d50ab1170a48260d9381c",
+        "dirty": true,
+        "features": [
+          "machine",
+          "postgresql"
+        ]
+      },
+      "waitMs": 1
+    }
+  },
+  {
+    "v": 1,
+    "id": "ba561cfa-87be-475f-a2df-8b55e099fa05",
+    "at": 1794231151812,
+    "seq": 51,
+    "generation": "initial",
+    "action": {
+      "id": "d0918ddb-a7cf-4a52-a403-ad6e61c6e034",
+      "name": "machine.create",
+      "label": "Create machine",
+      "page": "/machines",
+      "origin": "user"
+    },
+    "type": "cli.progress",
+    "invocationId": "1fad4ba6-1430-413d-ab51-c0225e356588",
+    "data": {
+      "progress": {
+        "stage": "bundle-validation",
+        "state": "started"
+      }
+    }
+  },
+  {
+    "v": 1,
+    "id": "39db2949-ebf4-4992-afae-595a8945ed98",
+    "at": 1794231151812,
+    "seq": 52,
+    "generation": "initial",
+    "action": {
+      "id": "d0918ddb-a7cf-4a52-a403-ad6e61c6e034",
+      "name": "machine.create",
+      "label": "Create machine",
+      "page": "/machines",
+      "origin": "user"
+    },
+    "type": "cli.progress",
+    "invocationId": "1fad4ba6-1430-413d-ab51-c0225e356588",
+    "data": {
+      "progress": {
+        "stage": "bundle-validation",
+        "state": "completed",
+        "elapsed_ms": 0
+      }
+    }
+  },
+  {
+    "v": 1,
+    "id": "49f6797c-9e02-414f-9484-60ceb929ed80",
+    "at": 1794231151816,
+    "seq": 53,
+    "generation": "initial",
+    "action": {
+      "id": "d0918ddb-a7cf-4a52-a403-ad6e61c6e034",
+      "name": "machine.create",
+      "label": "Create machine",
+      "page": "/machines",
+      "origin": "user"
+    },
+    "type": "cli.progress",
+    "invocationId": "1fad4ba6-1430-413d-ab51-c0225e356588",
+    "data": {
+      "progress": {
+        "stage": "provider-and-worker",
+        "state": "started"
+      }
+    }
+  },
+  {
+    "v": 1,
+    "id": "61e1845c-3041-4328-89f8-fe42bf8a230a",
+    "at": 1794231152416,
+    "seq": 60,
+    "generation": "initial",
+    "action": {
+      "id": "6defae2c-31b9-4fb7-a937-9cb429f14bef",
+      "name": "machine.read",
+      "label": "Read machines",
+      "page": "/machines",
+      "origin": "background"
+    },
+    "type": "cli.queued",
+    "invocationId": "c82b3c96-ed77-4772-9c69-d41375310d94",
+    "data": {
+      "binary": "/Users/yifanxu/Ephemeral-AI-Lab/layerfs-machine-start/target/debug/layerfs",
+      "argv": [
+        "machine",
+        "status",
+        "--",
+        "startup-ui-ready"
+      ],
+      "stdin": null,
+      "mode": "real",
+      "ownerPid": 7296
+    }
+  },
+  {
+    "v": 1,
+    "id": "5d3417aa-3b03-4d68-820c-bbceed78f711",
+    "at": 1794231152424,
+    "seq": 65,
+    "generation": "initial",
+    "action": {
+      "id": "6defae2c-31b9-4fb7-a937-9cb429f14bef",
+      "name": "machine.read",
+      "label": "Read machines",
+      "page": "/machines",
+      "origin": "background"
+    },
+    "type": "cli.started",
+    "invocationId": "c82b3c96-ed77-4772-9c69-d41375310d94",
+    "data": {
+      "started": 1794231152424,
+      "pid": 7568,
+      "binary": "/Users/yifanxu/Ephemeral-AI-Lab/layerfs-machine-start/target/debug/layerfs",
+      "identity": {
+        "version": "2.0.0",
+        "commit": "833d04cf44e8e747929d50ab1170a48260d9381c",
+        "dirty": true,
+        "features": [
+          "machine",
+          "postgresql"
+        ]
+      },
+      "waitMs": 8
+    }
+  },
+  {
+    "v": 1,
+    "id": "f7e71ade-3a59-4c6e-98fa-2f641affaaa6",
+    "at": 1794231152433,
+    "seq": 67,
+    "generation": "initial",
+    "action": {
+      "id": "6defae2c-31b9-4fb7-a937-9cb429f14bef",
+      "name": "machine.read",
+      "label": "Read machines",
+      "page": "/machines",
+      "origin": "background"
+    },
+    "type": "cli.finished",
+    "invocationId": "c82b3c96-ed77-4772-9c69-d41375310d94",
+    "data": {
+      "status": "success",
+      "exitCode": 0,
+      "signal": null,
+      "stdout": {
+        "text": "{\"name\":\"startup-ui-ready\",\"platform\":\"apple-container\",\"state\":\"creating\",\"free_disk\":null,\"tool_version\":null,\"down_reason\":null,\"stores\":[],\"op\":{\"id\":\"op-27ec31b7996a7bdc\",\"name\":\"machine.create\",\"phase\":\"create\",\"started\":1794231151812,\"uncertain\":false}}\n",
+        "truncated": false,
+        "bytes": 261
+      },
+      "stderr": {
+        "text": "",
+        "truncated": false,
+        "bytes": 0
+      },
+      "outputUnavailable": false,
+      "ended": 1794231152433,
+      "durationMs": 9
+    }
+  },
+  {
+    "v": 1,
+    "id": "e2ce90f8-030a-4a23-8528-e0f954f17ebb",
+    "at": 1794231153412,
+    "seq": 69,
+    "generation": "initial",
+    "action": {
+      "id": "d0918ddb-a7cf-4a52-a403-ad6e61c6e034",
+      "name": "machine.create",
+      "label": "Create machine",
+      "page": "/machines",
+      "origin": "user"
+    },
+    "type": "cli.progress",
+    "invocationId": "1fad4ba6-1430-413d-ab51-c0225e356588",
+    "data": {
+      "progress": {
+        "stage": "provider-and-worker",
+        "state": "completed",
+        "elapsed_ms": 1596
+      }
+    }
+  },
+  {
+    "v": 1,
+    "id": "73a5b8e8-3c0a-4f7f-bd89-1717dfaa9400",
+    "at": 1794231153413,
+    "seq": 70,
+    "generation": "initial",
+    "action": {
+      "id": "d0918ddb-a7cf-4a52-a403-ad6e61c6e034",
+      "name": "machine.create",
+      "label": "Create machine",
+      "page": "/machines",
+      "origin": "user"
+    },
+    "type": "cli.progress",
+    "invocationId": "1fad4ba6-1430-413d-ab51-c0225e356588",
+    "data": {
+      "progress": {
+        "stage": "worker-compatibility",
+        "state": "started"
+      }
+    }
+  },
+  {
+    "v": 1,
+    "id": "a64fc092-e9e0-4cab-af86-444fea0875fd",
+    "at": 1794231153414,
+    "seq": 71,
+    "generation": "initial",
+    "action": {
+      "id": "d0918ddb-a7cf-4a52-a403-ad6e61c6e034",
+      "name": "machine.create",
+      "label": "Create machine",
+      "page": "/machines",
+      "origin": "user"
+    },
+    "type": "cli.progress",
+    "invocationId": "1fad4ba6-1430-413d-ab51-c0225e356588",
+    "data": {
+      "progress": {
+        "stage": "worker-compatibility",
+        "state": "completed",
+        "elapsed_ms": 1
+      }
+    }
+  },
+  {
+    "v": 1,
+    "id": "f8af5f9a-d1ce-4615-a800-b096be2e36fc",
+    "at": 1794231153416,
+    "seq": 72,
+    "generation": "initial",
+    "action": {
+      "id": "d0918ddb-a7cf-4a52-a403-ad6e61c6e034",
+      "name": "machine.create",
+      "label": "Create machine",
+      "page": "/machines",
+      "origin": "user"
+    },
+    "type": "cli.finished",
+    "invocationId": "1fad4ba6-1430-413d-ab51-c0225e356588",
+    "data": {
+      "status": "success",
+      "exitCode": 0,
+      "signal": null,
+      "stdout": {
+        "text": "{\"name\":\"startup-ui-ready\",\"platform\":\"apple-container\",\"backend\":\"namespaces\",\"supports\":{\"sqlite\":true,\"postgresql_sandbox\":true,\"reason\":null},\"state\":\"running\",\"cpus\":2,\"memory\":4294967296,\"disk\":21474836480,\"stores\":[],\"sandboxes\":[],\"os_image\":\"layerfs-machine:ba52f2abe48ffc54f163a4cd1d420e1eb2aa37dd417aff8093ab3b1e83f9db65\",\"error\":null}\n",
+        "truncated": false,
+        "bytes": 347
+      },
+      "stderr": {
+        "text": "{\"progress\":{\"stage\":\"bundle-validation\",\"state\":\"started\"}}\n{\"progress\":{\"stage\":\"bundle-validation\",\"state\":\"completed\",\"elapsed_ms\":0}}\n{\"progress\":{\"phase\":\"create\",\"machine\":\"startup-ui-ready\"}}\n{\"progress\":{\"stage\":\"provider-and-worker\",\"state\":\"started\"}}\n{\"progress\":{\"stage\":\"provider-and-worker\",\"state\":\"completed\",\"elapsed_ms\":1596}}\n{\"progress\":{\"stage\":\"worker-compatibility\",\"state\":\"started\"}}\n{\"progress\":{\"stage\":\"worker-compatibility\",\"state\":\"completed\",\"elapsed_ms\":1}}\n",
+        "truncated": false,
+        "bytes": 491
+      },
+      "outputUnavailable": false,
+      "ended": 1794231153416,
+      "durationMs": 1632
+    }
+  },
+  {
+    "v": 1,
+    "id": "ad5534f4-febc-4f5e-ba77-5238c2017d05",
+    "at": 1794231157386,
+    "seq": 80,
+    "generation": "initial",
+    "action": {
+      "id": "309b176a-c60e-4486-a73f-d72539d1e870",
+      "name": "machine.read",
+      "label": "Read machines",
+      "page": "/machines",
+      "origin": "background"
+    },
+    "type": "cli.queued",
+    "invocationId": "345564fe-598b-4a20-9250-57026b5ed7a0",
+    "data": {
+      "binary": "/Users/yifanxu/Ephemeral-AI-Lab/layerfs-machine-start/target/debug/layerfs",
+      "argv": [
+        "machine",
+        "status",
+        "--",
+        "startup-ui-ready"
+      ],
+      "stdin": null,
+      "mode": "real",
+      "ownerPid": 7296
+    }
+  },
+  {
+    "v": 1,
+    "id": "6d745652-3be1-4414-96ea-e1ce15ade635",
+    "at": 1794231157390,
+    "seq": 84,
+    "generation": "initial",
+    "action": {
+      "id": "309b176a-c60e-4486-a73f-d72539d1e870",
+      "name": "machine.read",
+      "label": "Read machines",
+      "page": "/machines",
+      "origin": "background"
+    },
+    "type": "cli.started",
+    "invocationId": "345564fe-598b-4a20-9250-57026b5ed7a0",
+    "data": {
+      "started": 1794231157390,
+      "pid": 7648,
+      "binary": "/Users/yifanxu/Ephemeral-AI-Lab/layerfs-machine-start/target/debug/layerfs",
+      "identity": {
+        "version": "2.0.0",
+        "commit": "833d04cf44e8e747929d50ab1170a48260d9381c",
+        "dirty": true,
+        "features": [
+          "machine",
+          "postgresql"
+        ]
+      },
+      "waitMs": 4
+    }
+  },
+  {
+    "v": 1,
+    "id": "c5fcfb66-82ba-4be0-a848-1d7e56f90f14",
+    "at": 1794231157516,
+    "seq": 88,
+    "generation": "initial",
+    "action": {
+      "id": "309b176a-c60e-4486-a73f-d72539d1e870",
+      "name": "machine.read",
+      "label": "Read machines",
+      "page": "/machines",
+      "origin": "background"
+    },
+    "type": "cli.finished",
+    "invocationId": "345564fe-598b-4a20-9250-57026b5ed7a0",
+    "data": {
+      "status": "success",
+      "exitCode": 0,
+      "signal": null,
+      "stdout": {
+        "text": "{\"name\":\"startup-ui-ready\",\"platform\":\"apple-container\",\"state\":\"running\",\"free_disk\":21121175552,\"tool_version\":\"container CLI version 1.6.1 (build: release, commit: unspeci)\",\"down_reason\":null,\"stores\":[]}\n",
+        "truncated": false,
+        "bytes": 209
+      },
+      "stderr": {
+        "text": "",
+        "truncated": false,
+        "bytes": 0
+      },
+      "outputUnavailable": false,
+      "ended": 1794231157516,
+      "durationMs": 126
+    }
+  },
+  {
+    "v": 1,
+    "id": "0a670ed1-fd6a-42e0-9f75-e743ba66b27c",
+    "at": 1794231162383,
+    "seq": 95,
+    "generation": "initial",
+    "action": {
+      "id": "8a215014-286b-44f0-8a8d-d59d3ab1aa7e",
+      "name": "machine.read",
+      "label": "Read machines",
+      "page": "/machines",
+      "origin": "background"
+    },
+    "type": "cli.queued",
+    "invocationId": "8c108e71-b282-4109-9e7e-fadf26a4a67c",
+    "data": {
+      "binary": "/Users/yifanxu/Ephemeral-AI-Lab/layerfs-machine-start/target/debug/layerfs",
+      "argv": [
+        "machine",
+        "status",
+        "--",
+        "startup-ui-ready"
+      ],
+      "stdin": null,
+      "mode": "real",
+      "ownerPid": 7296
+    }
+  },
+  {
+    "v": 1,
+    "id": "7be1802b-e5ed-4f4b-aea3-6ac042c76b8d",
+    "at": 1794231162385,
+    "seq": 99,
+    "generation": "initial",
+    "action": {
+      "id": "8a215014-286b-44f0-8a8d-d59d3ab1aa7e",
+      "name": "machine.read",
+      "label": "Read machines",
+      "page": "/machines",
+      "origin": "background"
+    },
+    "type": "cli.started",
+    "invocationId": "8c108e71-b282-4109-9e7e-fadf26a4a67c",
+    "data": {
+      "started": 1794231162385,
+      "pid": 7666,
+      "binary": "/Users/yifanxu/Ephemeral-AI-Lab/layerfs-machine-start/target/debug/layerfs",
+      "identity": {
+        "version": "2.0.0",
+        "commit": "833d04cf44e8e747929d50ab1170a48260d9381c",
+        "dirty": true,
+        "features": [
+          "machine",
+          "postgresql"
+        ]
+      },
+      "waitMs": 2
+    }
+  },
+  {
+    "v": 1,
+    "id": "4f162080-4340-4c3f-90a4-feadb8057d9d",
+    "at": 1794231162512,
+    "seq": 103,
+    "generation": "initial",
+    "action": {
+      "id": "8a215014-286b-44f0-8a8d-d59d3ab1aa7e",
+      "name": "machine.read",
+      "label": "Read machines",
+      "page": "/machines",
+      "origin": "background"
+    },
+    "type": "cli.finished",
+    "invocationId": "8c108e71-b282-4109-9e7e-fadf26a4a67c",
+    "data": {
+      "status": "success",
+      "exitCode": 0,
+      "signal": null,
+      "stdout": {
+        "text": "{\"name\":\"startup-ui-ready\",\"platform\":\"apple-container\",\"state\":\"running\",\"free_disk\":21121175552,\"tool_version\":\"container CLI version 1.6.1 (build: release, commit: unspeci)\",\"down_reason\":null,\"stores\":[]}\n",
+        "truncated": false,
+        "bytes": 209
+      },
+      "stderr": {
+        "text": "",
+        "truncated": false,
+        "bytes": 0
+      },
+      "outputUnavailable": false,
+      "ended": 1794231162512,
+      "durationMs": 127
+    }
+  },
+  {
+    "v": 1,
+    "id": "b404d35c-7008-41be-a388-5ea2f187ab60",
+    "at": 1794231167401,
+    "seq": 110,
+    "generation": "initial",
+    "action": {
+      "id": "c8f59b3b-ae6b-43cd-a4ba-2eacdf5cfe19",
+      "name": "machine.read",
+      "label": "Read machines",
+      "page": "/machines",
+      "origin": "background"
+    },
+    "type": "cli.queued",
+    "invocationId": "f625979c-0232-4d98-9424-0066736906f6",
+    "data": {
+      "binary": "/Users/yifanxu/Ephemeral-AI-Lab/layerfs-machine-start/target/debug/layerfs",
+      "argv": [
+        "machine",
+        "status",
+        "--",
+        "startup-ui-ready"
+      ],
+      "stdin": null,
+      "mode": "real",
+      "ownerPid": 7296
+    }
+  },
+  {
+    "v": 1,
+    "id": "f9429acc-3eaf-44ca-acce-66d7cc969c20",
+    "at": 1794231167403,
+    "seq": 114,
+    "generation": "initial",
+    "action": {
+      "id": "c8f59b3b-ae6b-43cd-a4ba-2eacdf5cfe19",
+      "name": "machine.read",
+      "label": "Read machines",
+      "page": "/machines",
+      "origin": "background"
+    },
+    "type": "cli.started",
+    "invocationId": "f625979c-0232-4d98-9424-0066736906f6",
+    "data": {
+      "started": 1794231167403,
+      "pid": 7685,
+      "binary": "/Users/yifanxu/Ephemeral-AI-Lab/layerfs-machine-start/target/debug/layerfs",
+      "identity": {
+        "version": "2.0.0",
+        "commit": "833d04cf44e8e747929d50ab1170a48260d9381c",
+        "dirty": true,
+        "features": [
+          "machine",
+          "postgresql"
+        ]
+      },
+      "waitMs": 2
+    }
+  },
+  {
+    "v": 1,
+    "id": "4110b2a7-a16a-4f67-b9cc-b9579c83a470",
+    "at": 1794231167544,
+    "seq": 118,
+    "generation": "initial",
+    "action": {
+      "id": "c8f59b3b-ae6b-43cd-a4ba-2eacdf5cfe19",
+      "name": "machine.read",
+      "label": "Read machines",
+      "page": "/machines",
+      "origin": "background"
+    },
+    "type": "cli.finished",
+    "invocationId": "f625979c-0232-4d98-9424-0066736906f6",
+    "data": {
+      "status": "success",
+      "exitCode": 0,
+      "signal": null,
+      "stdout": {
+        "text": "{\"name\":\"startup-ui-ready\",\"platform\":\"apple-container\",\"state\":\"running\",\"free_disk\":21121175552,\"tool_version\":\"container CLI version 1.6.1 (build: release, commit: unspeci)\",\"down_reason\":null,\"stores\":[]}\n",
+        "truncated": false,
+        "bytes": 209
+      },
+      "stderr": {
+        "text": "",
+        "truncated": false,
+        "bytes": 0
+      },
+      "outputUnavailable": false,
+      "ended": 1794231167544,
+      "durationMs": 141
+    }
+  },
+  {
+    "v": 1,
+    "id": "eab90700-fd66-4a07-890f-1786c4b95a22",
+    "at": 1794231172388,
+    "seq": 125,
+    "generation": "initial",
+    "action": {
+      "id": "ea6624de-8998-492a-8f79-7cadfa506ff0",
+      "name": "machine.read",
+      "label": "Read machines",
+      "page": "/machines",
+      "origin": "background"
+    },
+    "type": "cli.queued",
+    "invocationId": "de27f58a-03f9-4ef8-b2d3-31ab8f9fa81d",
+    "data": {
+      "binary": "/Users/yifanxu/Ephemeral-AI-Lab/layerfs-machine-start/target/debug/layerfs",
+      "argv": [
+        "machine",
+        "status",
+        "--",
+        "startup-ui-ready"
+      ],
+      "stdin": null,
+      "mode": "real",
+      "ownerPid": 7296
+    }
+  },
+  {
+    "v": 1,
+    "id": "386859aa-118a-4ebd-b2dd-cea38a95b332",
+    "at": 1794231172390,
+    "seq": 129,
+    "generation": "initial",
+    "action": {
+      "id": "ea6624de-8998-492a-8f79-7cadfa506ff0",
+      "name": "machine.read",
+      "label": "Read machines",
+      "page": "/machines",
+      "origin": "background"
+    },
+    "type": "cli.started",
+    "invocationId": "de27f58a-03f9-4ef8-b2d3-31ab8f9fa81d",
+    "data": {
+      "started": 1794231172390,
+      "pid": 7703,
+      "binary": "/Users/yifanxu/Ephemeral-AI-Lab/layerfs-machine-start/target/debug/layerfs",
+      "identity": {
+        "version": "2.0.0",
+        "commit": "833d04cf44e8e747929d50ab1170a48260d9381c",
+        "dirty": true,
+        "features": [
+          "machine",
+          "postgresql"
+        ]
+      },
+      "waitMs": 2
+    }
+  },
+  {
+    "v": 1,
+    "id": "432cf769-67f2-4c04-a29f-6bab39ca6dce",
+    "at": 1794231172524,
+    "seq": 133,
+    "generation": "initial",
+    "action": {
+      "id": "ea6624de-8998-492a-8f79-7cadfa506ff0",
+      "name": "machine.read",
+      "label": "Read machines",
+      "page": "/machines",
+      "origin": "background"
+    },
+    "type": "cli.finished",
+    "invocationId": "de27f58a-03f9-4ef8-b2d3-31ab8f9fa81d",
+    "data": {
+      "status": "success",
+      "exitCode": 0,
+      "signal": null,
+      "stdout": {
+        "text": "{\"name\":\"startup-ui-ready\",\"platform\":\"apple-container\",\"state\":\"running\",\"free_disk\":21121175552,\"tool_version\":\"container CLI version 1.6.1 (build: release, commit: unspeci)\",\"down_reason\":null,\"stores\":[]}\n",
+        "truncated": false,
+        "bytes": 209
+      },
+      "stderr": {
+        "text": "",
+        "truncated": false,
+        "bytes": 0
+      },
+      "outputUnavailable": false,
+      "ended": 1794231172524,
+      "durationMs": 134
+    }
+  },
+  {
+    "v": 1,
+    "id": "d5d5ebc6-e1cb-4bce-832d-b27ace3ccdf8",
+    "at": 1794231177380,
+    "seq": 140,
+    "generation": "initial",
+    "action": {
+      "id": "fe2fc15a-bc3f-417f-8cc3-cf342e743a86",
+      "name": "machine.read",
+      "label": "Read machines",
+      "page": "/machines",
+      "origin": "background"
+    },
+    "type": "cli.queued",
+    "invocationId": "28e9c9dc-1d0b-40d2-89dc-e4f77c2e2a3e",
+    "data": {
+      "binary": "/Users/yifanxu/Ephemeral-AI-Lab/layerfs-machine-start/target/debug/layerfs",
+      "argv": [
+        "machine",
+        "status",
+        "--",
+        "startup-ui-ready"
+      ],
+      "stdin": null,
+      "mode": "real",
+      "ownerPid": 7296
+    }
+  },
+  {
+    "v": 1,
+    "id": "10021cad-b66b-43e6-99c2-719c1dd706df",
+    "at": 1794231177381,
+    "seq": 144,
+    "generation": "initial",
+    "action": {
+      "id": "fe2fc15a-bc3f-417f-8cc3-cf342e743a86",
+      "name": "machine.read",
+      "label": "Read machines",
+      "page": "/machines",
+      "origin": "background"
+    },
+    "type": "cli.started",
+    "invocationId": "28e9c9dc-1d0b-40d2-89dc-e4f77c2e2a3e",
+    "data": {
+      "started": 1794231177381,
+      "pid": 7723,
+      "binary": "/Users/yifanxu/Ephemeral-AI-Lab/layerfs-machine-start/target/debug/layerfs",
+      "identity": {
+        "version": "2.0.0",
+        "commit": "833d04cf44e8e747929d50ab1170a48260d9381c",
+        "dirty": true,
+        "features": [
+          "machine",
+          "postgresql"
+        ]
+      },
+      "waitMs": 1
+    }
+  },
+  {
+    "v": 1,
+    "id": "986bb583-c9fc-4a19-9360-11ae6928ae89",
+    "at": 1794231177500,
+    "seq": 148,
+    "generation": "initial",
+    "action": {
+      "id": "fe2fc15a-bc3f-417f-8cc3-cf342e743a86",
+      "name": "machine.read",
+      "label": "Read machines",
+      "page": "/machines",
+      "origin": "background"
+    },
+    "type": "cli.finished",
+    "invocationId": "28e9c9dc-1d0b-40d2-89dc-e4f77c2e2a3e",
+    "data": {
+      "status": "success",
+      "exitCode": 0,
+      "signal": null,
+      "stdout": {
+        "text": "{\"name\":\"startup-ui-ready\",\"platform\":\"apple-container\",\"state\":\"running\",\"free_disk\":21121175552,\"tool_version\":\"container CLI version 1.6.1 (build: release, commit: unspeci)\",\"down_reason\":null,\"stores\":[]}\n",
+        "truncated": false,
+        "bytes": 209
+      },
+      "stderr": {
+        "text": "",
+        "truncated": false,
+        "bytes": 0
+      },
+      "outputUnavailable": false,
+      "ended": 1794231177500,
+      "durationMs": 119
+    }
+  },
+  {
+    "v": 1,
+    "id": "2e709f69-b9c2-4ef3-b9ec-c6abf2969cc2",
+    "at": 1794231182408,
+    "seq": 156,
+    "generation": "initial",
+    "action": {
+      "id": "4ee66399-8e98-43ba-a2c7-8d91a7616227",
+      "name": "machine.read",
+      "label": "Read machines",
+      "page": "/machines",
+      "origin": "background"
+    },
+    "type": "cli.queued",
+    "invocationId": "aab35672-4f09-426b-ad5e-f1e4549d48d8",
+    "data": {
+      "binary": "/Users/yifanxu/Ephemeral-AI-Lab/layerfs-machine-start/target/debug/layerfs",
+      "argv": [
+        "machine",
+        "status",
+        "--",
+        "startup-ui-ready"
+      ],
+      "stdin": null,
+      "mode": "real",
+      "ownerPid": 7296
+    }
+  },
+  {
+    "v": 1,
+    "id": "33365b16-c100-4c26-8c16-a2a6155206de",
+    "at": 1794231182412,
+    "seq": 162,
+    "generation": "initial",
+    "action": {
+      "id": "4ee66399-8e98-43ba-a2c7-8d91a7616227",
+      "name": "machine.read",
+      "label": "Read machines",
+      "page": "/machines",
+      "origin": "background"
+    },
+    "type": "cli.started",
+    "invocationId": "aab35672-4f09-426b-ad5e-f1e4549d48d8",
+    "data": {
+      "started": 1794231182412,
+      "pid": 7744,
+      "binary": "/Users/yifanxu/Ephemeral-AI-Lab/layerfs-machine-start/target/debug/layerfs",
+      "identity": {
+        "version": "2.0.0",
+        "commit": "833d04cf44e8e747929d50ab1170a48260d9381c",
+        "dirty": true,
+        "features": [
+          "machine",
+          "postgresql"
+        ]
+      },
+      "waitMs": 4
+    }
+  },
+  {
+    "v": 1,
+    "id": "d0108d42-8a32-422c-a40b-bc93073641e9",
+    "at": 1794231182541,
+    "seq": 166,
+    "generation": "initial",
+    "action": {
+      "id": "4ee66399-8e98-43ba-a2c7-8d91a7616227",
+      "name": "machine.read",
+      "label": "Read machines",
+      "page": "/machines",
+      "origin": "background"
+    },
+    "type": "cli.finished",
+    "invocationId": "aab35672-4f09-426b-ad5e-f1e4549d48d8",
+    "data": {
+      "status": "success",
+      "exitCode": 0,
+      "signal": null,
+      "stdout": {
+        "text": "{\"name\":\"startup-ui-ready\",\"platform\":\"apple-container\",\"state\":\"running\",\"free_disk\":21121175552,\"tool_version\":\"container CLI version 1.6.1 (build: release, commit: unspeci)\",\"down_reason\":null,\"stores\":[]}\n",
+        "truncated": false,
+        "bytes": 209
+      },
+      "stderr": {
+        "text": "",
+        "truncated": false,
+        "bytes": 0
+      },
+      "outputUnavailable": false,
+      "ended": 1794231182541,
+      "durationMs": 129
+    }
+  },
+  {
+    "v": 1,
+    "id": "7841e3fb-cff8-4d6c-b22d-eea178aebbf1",
+    "at": 1794231187375,
+    "seq": 173,
+    "generation": "initial",
+    "action": {
+      "id": "9f23e605-7ad9-4f59-b228-7902e89b6537",
+      "name": "machine.read",
+      "label": "Read machines",
+      "page": "/machines",
+      "origin": "background"
+    },
+    "type": "cli.queued",
+    "invocationId": "0b9f5867-0f4c-4b64-a05e-07eda333ae48",
+    "data": {
+      "binary": "/Users/yifanxu/Ephemeral-AI-Lab/layerfs-machine-start/target/debug/layerfs",
+      "argv": [
+        "machine",
+        "status",
+        "--",
+        "startup-ui-ready"
+      ],
+      "stdin": null,
+      "mode": "real",
+      "ownerPid": 7296
+    }
+  },
+  {
+    "v": 1,
+    "id": "d4396486-1604-4705-ad4e-8f4e452a5513",
+    "at": 1794231187376,
+    "seq": 177,
+    "generation": "initial",
+    "action": {
+      "id": "9f23e605-7ad9-4f59-b228-7902e89b6537",
+      "name": "machine.read",
+      "label": "Read machines",
+      "page": "/machines",
+      "origin": "background"
+    },
+    "type": "cli.started",
+    "invocationId": "0b9f5867-0f4c-4b64-a05e-07eda333ae48",
+    "data": {
+      "started": 1794231187376,
+      "pid": 7764,
+      "binary": "/Users/yifanxu/Ephemeral-AI-Lab/layerfs-machine-start/target/debug/layerfs",
+      "identity": {
+        "version": "2.0.0",
+        "commit": "833d04cf44e8e747929d50ab1170a48260d9381c",
+        "dirty": true,
+        "features": [
+          "machine",
+          "postgresql"
+        ]
+      },
+      "waitMs": 1
+    }
+  },
+  {
+    "v": 1,
+    "id": "e6cb8a77-9e99-4f83-a418-02eea3e5be87",
+    "at": 1794231187514,
+    "seq": 181,
+    "generation": "initial",
+    "action": {
+      "id": "9f23e605-7ad9-4f59-b228-7902e89b6537",
+      "name": "machine.read",
+      "label": "Read machines",
+      "page": "/machines",
+      "origin": "background"
+    },
+    "type": "cli.finished",
+    "invocationId": "0b9f5867-0f4c-4b64-a05e-07eda333ae48",
+    "data": {
+      "status": "success",
+      "exitCode": 0,
+      "signal": null,
+      "stdout": {
+        "text": "{\"name\":\"startup-ui-ready\",\"platform\":\"apple-container\",\"state\":\"running\",\"free_disk\":21121175552,\"tool_version\":\"container CLI version 1.6.1 (build: release, commit: unspeci)\",\"down_reason\":null,\"stores\":[]}\n",
+        "truncated": false,
+        "bytes": 209
+      },
+      "stderr": {
+        "text": "",
+        "truncated": false,
+        "bytes": 0
+      },
+      "outputUnavailable": false,
+      "ended": 1794231187514,
+      "durationMs": 138
+    }
+  },
+  {
+    "v": 1,
+    "id": "7bad0fa5-b41d-4067-8acc-a6dbd1764e38",
+    "at": 1794231192399,
+    "seq": 188,
+    "generation": "initial",
+    "action": {
+      "id": "a2360c24-2103-45e1-930a-00ba477af89a",
+      "name": "machine.read",
+      "label": "Read machines",
+      "page": "/machines",
+      "origin": "background"
+    },
+    "type": "cli.queued",
+    "invocationId": "3dbdd5f4-f6fd-4db2-b85c-9108c72812a8",
+    "data": {
+      "binary": "/Users/yifanxu/Ephemeral-AI-Lab/layerfs-machine-start/target/debug/layerfs",
+      "argv": [
+        "machine",
+        "status",
+        "--",
+        "startup-ui-ready"
+      ],
+      "stdin": null,
+      "mode": "real",
+      "ownerPid": 7296
+    }
+  },
+  {
+    "v": 1,
+    "id": "5402135b-13b0-4bd5-b7e9-1be12b31cbcd",
+    "at": 1794231192401,
+    "seq": 192,
+    "generation": "initial",
+    "action": {
+      "id": "a2360c24-2103-45e1-930a-00ba477af89a",
+      "name": "machine.read",
+      "label": "Read machines",
+      "page": "/machines",
+      "origin": "background"
+    },
+    "type": "cli.started",
+    "invocationId": "3dbdd5f4-f6fd-4db2-b85c-9108c72812a8",
+    "data": {
+      "started": 1794231192401,
+      "pid": 7796,
+      "binary": "/Users/yifanxu/Ephemeral-AI-Lab/layerfs-machine-start/target/debug/layerfs",
+      "identity": {
+        "version": "2.0.0",
+        "commit": "833d04cf44e8e747929d50ab1170a48260d9381c",
+        "dirty": true,
+        "features": [
+          "machine",
+          "postgresql"
+        ]
+      },
+      "waitMs": 2
+    }
+  },
+  {
+    "v": 1,
+    "id": "b56b94d2-3890-4dee-86c5-ac463ba13901",
+    "at": 1794231192528,
+    "seq": 196,
+    "generation": "initial",
+    "action": {
+      "id": "a2360c24-2103-45e1-930a-00ba477af89a",
+      "name": "machine.read",
+      "label": "Read machines",
+      "page": "/machines",
+      "origin": "background"
+    },
+    "type": "cli.finished",
+    "invocationId": "3dbdd5f4-f6fd-4db2-b85c-9108c72812a8",
+    "data": {
+      "status": "success",
+      "exitCode": 0,
+      "signal": null,
+      "stdout": {
+        "text": "{\"name\":\"startup-ui-ready\",\"platform\":\"apple-container\",\"state\":\"running\",\"free_disk\":21121175552,\"tool_version\":\"container CLI version 1.6.1 (build: release, commit: unspeci)\",\"down_reason\":null,\"stores\":[]}\n",
+        "truncated": false,
+        "bytes": 209
+      },
+      "stderr": {
+        "text": "",
+        "truncated": false,
+        "bytes": 0
+      },
+      "outputUnavailable": false,
+      "ended": 1794231192528,
+      "durationMs": 127
+    }
+  },
+  {
+    "v": 1,
+    "id": "2c838fcd-9e43-4364-b5d4-51680515e86e",
+    "at": 1794231196205,
+    "seq": 201,
+    "generation": "initial",
+    "action": {
+      "id": "8510359d-838f-4feb-ba47-2c7a0958d171",
+      "name": "machine.remove",
+      "label": "Remove machine",
+      "target": "startup-ui-ready",
+      "page": "/machines",
+      "origin": "user"
+    },
+    "type": "cli.queued",
+    "invocationId": "6d619695-8be7-458d-9bfb-397347083b4d",
+    "data": {
+      "binary": "/Users/yifanxu/Ephemeral-AI-Lab/layerfs-machine-start/target/debug/layerfs",
+      "argv": [
+        "machine",
+        "remove",
+        "--",
+        "startup-ui-ready"
+      ],
+      "stdin": null,
+      "mode": "real",
+      "ownerPid": 7296
+    }
+  },
+  {
+    "v": 1,
+    "id": "307d604a-b946-442b-ab9b-cb36c0b7c8b7",
+    "at": 1794231196206,
+    "seq": 202,
+    "generation": "initial",
+    "action": {
+      "id": "8510359d-838f-4feb-ba47-2c7a0958d171",
+      "name": "machine.remove",
+      "label": "Remove machine",
+      "target": "startup-ui-ready",
+      "page": "/machines",
+      "origin": "user"
+    },
+    "type": "cli.started",
+    "invocationId": "6d619695-8be7-458d-9bfb-397347083b4d",
+    "data": {
+      "started": 1794231196206,
+      "pid": 7875,
+      "binary": "/Users/yifanxu/Ephemeral-AI-Lab/layerfs-machine-start/target/debug/layerfs",
+      "identity": {
+        "version": "2.0.0",
+        "commit": "833d04cf44e8e747929d50ab1170a48260d9381c",
+        "dirty": true,
+        "features": [
+          "machine",
+          "postgresql"
+        ]
+      },
+      "waitMs": 1
+    }
+  },
+  {
+    "v": 1,
+    "id": "1deb8469-7e0f-43a5-a57a-0f63165e2590",
+    "at": 1794231196789,
+    "seq": 203,
+    "generation": "initial",
+    "action": {
+      "id": "8510359d-838f-4feb-ba47-2c7a0958d171",
+      "name": "machine.remove",
+      "label": "Remove machine",
+      "target": "startup-ui-ready",
+      "page": "/machines",
+      "origin": "user"
+    },
+    "type": "cli.finished",
+    "invocationId": "6d619695-8be7-458d-9bfb-397347083b4d",
+    "data": {
+      "status": "success",
+      "exitCode": 0,
+      "signal": null,
+      "stdout": {
+        "text": "{\"name\":\"startup-ui-ready\",\"removed\":true}\n",
+        "truncated": false,
+        "bytes": 43
+      },
+      "stderr": {
+        "text": "",
+        "truncated": false,
+        "bytes": 0
+      },
+      "outputUnavailable": false,
+      "ended": 1794231196789,
+      "durationMs": 583
+    }
+  }
+]

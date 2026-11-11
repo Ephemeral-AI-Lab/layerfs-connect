@@ -7,79 +7,6 @@ Opens from: Chat > History, Storage project > History, Trace checkpoint badges,
 `#/chat/<id>/history?branch=<name>&commit=<full-id>`, and equivalent child routes.
 The older renderer's History is described in [project-history.md](project-history.md).
 
-## Storage SDK comparison preview
-
-Source: `HistoryPreview.tsx`, `preview-model.ts`, `history-comparison.css`, `HistoryGraph.tsx`;
-shared viewers in `components/files/{FileDiff,FileAttributionDiff,FileBlame,CommitDetails}.tsx`.
-Development simulation uses the same local saved trees as Files. The labeled exit opens host
-history. Chats, other projects, real mode and production retain their existing History behavior.
-
-### History page: `/storage/shop/api/history`
-
-```text
-[1] History preview - Sample data - read-only                   [Browse host history]
-+-[2] History - main: project core -------------------------- [Branch v] [Now] -+
-|                   o----(3 commits)----o feature-login                        |
-|                  /                                                          |
-| main ===[]---[From]--[To]                                                     |
-|                  \---o fix-orders                                           |
-| Source publish branches and review branch have their own lanes.              |
-| Overview: saved topology and viewport                                        |
-+-[3] Selected commit / Net changes across N commits --------------------------+
-| Message and branch        [Use as base] [Details] [Open changes/comparison]   |
-+------------------------------------------------------------------------------+
-```
-
-The graph owns the page. Selecting a commit changes only its selection and summary; it does
-not open a file viewer. Use as base pins a saved ID; choose a destination and Open comparison.
-Open changes compares parent/base, or an empty tree for Init. A collapsed group compares its
-first parent's tree with its last grouped commit; Expand exposes intermediate commits.
-
-### Comparison page: `/storage/shop/api/history/diff`
-
-```text
-[4] [Back to History] / Branch comparison                 [Attribution example]
-+------------------------------------------------------------------------------+
-| [5] From [branch @ saved-id v] [Swap] To [branch @ saved-id v] [Clear base]     |
-| Commit message                          [Use as base] [Compare main] [Details]|
-+-[6] Changed files --------+-[7] Selected file --------------------------------+
-| [Find a path...]          | src/routes/login.js                              |
-| M CHANGELOG.md       4<-> | |Content| Attribution  Code  Blame                |
-| O src/routes/login.js 2<->|                                                  |
-|                          | Shared content or line-ownership comparison      |
-| Per page [5 v] [<] [>]    | from-id -> to-id                      Sample     |
-+--------------------------+--------------------------------------------------+
-```
-
-| [n] | Region | Behavior |
-|---|---|---|
-| 1 | Preview notice | Explicit local samples; no proposed SDK calls or writes; exit to host history |
-| 2 | Graph | Main publication chain, source publish edges and side branches; existing pan/zoom/overview; From/To marks |
-| 3 | Selection | Commit/group summary, pin base, inspect metadata, explicit navigation to comparison page |
-| 4 | Page navigation | Separate route and full comparison view at both desktop sizes; Back restores graph selection and position |
-| 5 | Endpoints | Saved IDs stay pinned; Swap reverses versions; Clear base restores parent comparison |
-| 6 | Changed paths | Added/Modified/Removed/Ownership-only; owner-change counts, search and page controls |
-| 7 | File view | Content diff, Attribution, destination Code or Blame; arrow/Home/End keyboard tab navigation |
-
-Attribution aligns the two saved blame results using content-diff line mappings. Before/after
-owner IDs are clickable. Unchanged text with different Commit/Layer ownership is explicitly
-highlighted; added/removed content is labeled separately. Unavailable attribution stays unknown.
-Ownership-only files remain in the changed-file list even when their content and inode match.
-The sample review branch reaches the same login text as main through a different history.
-Publishing itself does not change ownership: main blame follows its source Commit. Attribution
-means saved revision ownership; no human author or agent identity is inferred.
-
-Origin details show parent, operation, time, source and paths. Show this change opens that
-origin's parent comparison. Back to comparison restores the prior pair, path, view and scroll.
-The graph is kept mounted for navigation state but is not displayed on the comparison page.
-There is no split pane or graph behind the diff view at 1280x820 or 900x600.
-
-Hash-route query params `commit`, `from`, `branch`, `path`, `view` make comparisons shareable.
-Unknown saved IDs offer host history/reset. Empty diffs, filtered paths, absent destination files
-and binary content/attribution/blame have distinct states. The parent graph never scrolls
-horizontally with the page; file code and ownership tables may scroll inside their own pane.
-SDK proposals remain in `docs/sdk-branch-file-proposal.md`.
-
 ## Graph canvas
 
 ```text
@@ -199,3 +126,28 @@ Layers and side Commits use branch.commits; immutable parent pins resume paging.
 Changed paths use commit.diff cursors for every endpoint kind. Source Commit and
 source save time remain distinct from Layer parent and nullable publication time.
 Chat Files uses the same pinned saved-file browser as Storage.
+
+## Linked operations (2026-11-10)
+
+```text
++-- Checkpoint inspector ------------------+
+| [connect-op:op-…] Bash root call_… (exit 0)
+| Branch / ID / When                       |
+| [6] Produced by                          |
+|     ↗ workspace.commit created it        |
+|       write one · root · chat-…          |
+|     Referenced by 2 operations           |
+|     ↗ workspace.commit saved it unchanged|
++------------------------------------------+
+```
+
+| Region | Behavior |
+| --- | --- |
+| 6 | From the local catalog of this home's conversations (`GET /api/agent/versions`): producers (`created`, `published`) apart from references (fork, unchanged save, merge/publish inputs). None reads `No linked trace`. Links open the conversation's Trace at `?op=` |
+
+A link to a branch this view has not read yet (created while the conversation runs) reads
+the project's branches again, once per linked branch, then selects the version.
+
+`connect.session.<id>` branches are marked "conversation journal" in the branch finder and
+inspector: application data, never mounted, merged or published as code. An imported
+conversation saved under another Store name shows `saved as <origin>` through its binding.

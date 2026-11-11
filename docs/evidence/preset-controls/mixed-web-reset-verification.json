@@ -1,0 +1,504 @@
+{
+  "at": 1794298431910,
+  "job": {
+    "id": "c71a5ad6-0e26-4e2a-9849-0f865396454d",
+    "requestId": "47bc6859-5cbe-4065-ae1e-cff3afc92f61",
+    "fingerprint": "[\"studio\",\"environment-reset\",\"4a473e2e1aafc6582c47c6cc68749173d8d112c24e72e0570d8dd820b4ba153b\",false,true,\"mixed\"]",
+    "preset": "studio",
+    "command": "environment-reset",
+    "executionMode": "mixed",
+    "rebuild": false,
+    "actionId": "c087a96b-c0eb-4a2e-81b8-74d0b7cfc5c6",
+    "state": "completed",
+    "phase": "Environment is empty. Reset verified.",
+    "created": 1794298388391,
+    "historyCleared": true,
+    "actionIds": [
+      "c087a96b-c0eb-4a2e-81b8-74d0b7cfc5c6"
+    ],
+    "progress": {
+      "stage": "verifying",
+      "completed": 1,
+      "total": 1,
+      "label": "Empty environment verified"
+    },
+    "started": 1794298388990,
+    "cleanup": {
+      "home": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/connect-mixed-web-0oplwF/presets/studio/home-2",
+      "homeId": "97c1a961a4db32ddaccc75dd67a03b4b",
+      "remove": {
+        "stores": [
+          "demo-build-cache",
+          "demo-experiments",
+          "demo-services",
+          "demo-studio"
+        ],
+        "sandboxes": [
+          "demo-mix-billing-1",
+          "demo-mix-compiler-1",
+          "demo-mix-design-1",
+          "demo-mix-embeddings-1",
+          "demo-mix-evaluation-1",
+          "demo-mix-gateway-1",
+          "demo-mix-sdk-1",
+          "demo-mix-website-1"
+        ],
+        "machines": [
+          "demo-build",
+          "demo-research"
+        ],
+        "workspaces": []
+      },
+      "disconnect": [],
+      "unknownSandboxes": [],
+      "workspaceGroups": [
+        {
+          "sandbox": "demo-mix-billing-1",
+          "workspaces": []
+        },
+        {
+          "sandbox": "demo-mix-compiler-1",
+          "workspaces": []
+        },
+        {
+          "sandbox": "demo-mix-design-1",
+          "workspaces": []
+        },
+        {
+          "sandbox": "demo-mix-embeddings-1",
+          "workspaces": []
+        },
+        {
+          "sandbox": "demo-mix-evaluation-1",
+          "workspaces": []
+        },
+        {
+          "sandbox": "demo-mix-gateway-1",
+          "workspaces": []
+        },
+        {
+          "sandbox": "demo-mix-sdk-1",
+          "workspaces": []
+        },
+        {
+          "sandbox": "demo-mix-website-1",
+          "workspaces": []
+        }
+      ],
+      "startMachines": [],
+      "detectedMachines": [
+        {
+          "name": "demo-build",
+          "state": "running",
+          "platform": "lima"
+        },
+        {
+          "name": "demo-research",
+          "state": "running",
+          "platform": "lima"
+        },
+        {
+          "name": "docker",
+          "state": "running",
+          "platform": "docker"
+        },
+        {
+          "name": "native",
+          "state": "ready",
+          "platform": "native"
+        }
+      ],
+      "projects": 8,
+      "stopDocker": true,
+      "scope": "environment",
+      "signature": "4a473e2e1aafc6582c47c6cc68749173d8d112c24e72e0570d8dd820b4ba153b",
+      "actionId": "c087a96b-c0eb-4a2e-81b8-74d0b7cfc5c6",
+      "verified": true,
+      "completed": [
+        [
+          "sandbox",
+          "close",
+          "demo-mix-billing-1"
+        ],
+        [
+          "sandbox",
+          "close",
+          "demo-mix-compiler-1"
+        ],
+        [
+          "sandbox",
+          "close",
+          "demo-mix-design-1"
+        ],
+        [
+          "sandbox",
+          "close",
+          "demo-mix-embeddings-1"
+        ],
+        [
+          "sandbox",
+          "close",
+          "demo-mix-evaluation-1"
+        ],
+        [
+          "sandbox",
+          "close",
+          "demo-mix-gateway-1"
+        ],
+        [
+          "sandbox",
+          "close",
+          "demo-mix-sdk-1"
+        ],
+        [
+          "sandbox",
+          "close",
+          "demo-mix-website-1"
+        ],
+        [
+          "store",
+          "remove",
+          "demo-build-cache"
+        ],
+        [
+          "store",
+          "remove",
+          "demo-experiments"
+        ],
+        [
+          "store",
+          "remove",
+          "demo-services"
+        ],
+        [
+          "store",
+          "remove",
+          "demo-studio"
+        ],
+        [
+          "machine",
+          "remove",
+          "demo-build"
+        ],
+        [
+          "machine",
+          "remove",
+          "demo-research"
+        ],
+        [
+          "machine",
+          "stop",
+          "docker"
+        ]
+      ],
+      "remaining": [],
+      "warnings": [],
+      "at": 1794298388989,
+      "ended": 1794298393697
+    },
+    "ended": 1794298393706
+  },
+  "inventory": {
+    "store": {
+      "items": []
+    },
+    "machine": {
+      "machines": [
+        {
+          "name": "docker",
+          "platform": "docker",
+          "backend": "namespaces",
+          "supports": {
+            "sqlite": true,
+            "postgresql_sandbox": true,
+            "reason": null
+          },
+          "state": "stopped",
+          "cpus": null,
+          "memory": null,
+          "disk": null,
+          "stores": [],
+          "sandboxes": [],
+          "error": null
+        },
+        {
+          "name": "native",
+          "platform": "native",
+          "backend": "native",
+          "supports": {
+            "sqlite": true,
+            "postgresql_sandbox": true,
+            "reason": null
+          },
+          "state": "ready",
+          "cpus": null,
+          "memory": null,
+          "disk": null,
+          "stores": [],
+          "sandboxes": [],
+          "daemon": "/Users/yifanxu/.cache/layerfs-worktrees/layerfs-macos-writer-adm-905cf46b6910/artifacts/build-macos-b4035a8f06434f7e8e09c823dad9e32a/layerfs-daemon"
+        }
+      ]
+    },
+    "sandbox": {
+      "items": [],
+      "next_page_pos": null
+    }
+  },
+  "activity": {
+    "items": [
+      {
+        "id": "3fba330e-c7aa-41ab-8c56-072c9e4d5022",
+        "name": "host.background",
+        "label": "Background CLI call",
+        "origin": "background",
+        "at": 1794298431867,
+        "status": "success",
+        "invocationCount": 1,
+        "projects": [],
+        "invocations": []
+      },
+      {
+        "id": "40198f1a-d094-4ff4-8f50-be7c6fa1335e",
+        "name": "host.background",
+        "label": "Background CLI call",
+        "origin": "background",
+        "at": 1794298431796,
+        "status": "success",
+        "invocationCount": 1,
+        "projects": [],
+        "invocations": []
+      },
+      {
+        "id": "517c6c2a-5cdb-4370-bec4-3c071838dacc",
+        "name": "host.background",
+        "label": "Background CLI call",
+        "origin": "background",
+        "at": 1794298431780,
+        "status": "success",
+        "invocationCount": 1,
+        "projects": [],
+        "invocations": []
+      },
+      {
+        "id": "4752e1fb-bc93-4437-8c06-5e641cc23117",
+        "name": "host.background",
+        "label": "Background CLI call",
+        "origin": "background",
+        "at": 1794298397373,
+        "status": "success",
+        "invocationCount": 1,
+        "projects": [],
+        "invocations": []
+      },
+      {
+        "id": "25b7e7b8-90fb-4919-8339-5928bfb78114",
+        "name": "host.background",
+        "label": "Background CLI call",
+        "origin": "background",
+        "at": 1794298397361,
+        "status": "success",
+        "invocationCount": 1,
+        "projects": [],
+        "invocations": []
+      },
+      {
+        "id": "c087a96b-c0eb-4a2e-81b8-74d0b7cfc5c6",
+        "name": "environment.reset",
+        "label": "Reset LayerFS environment",
+        "target": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/connect-mixed-web-0oplwF/presets/studio/home-2",
+        "origin": "user",
+        "page": "/presets",
+        "at": 1794298388990,
+        "request": {
+          "status": 200,
+          "cleanup": {
+            "home": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/connect-mixed-web-0oplwF/presets/studio/home-2",
+            "homeId": "97c1a961a4db32ddaccc75dd67a03b4b",
+            "remove": {
+              "stores": [
+                "demo-build-cache",
+                "demo-experiments",
+                "demo-services",
+                "demo-studio"
+              ],
+              "sandboxes": [
+                "demo-mix-billing-1",
+                "demo-mix-compiler-1",
+                "demo-mix-design-1",
+                "demo-mix-embeddings-1",
+                "demo-mix-evaluation-1",
+                "demo-mix-gateway-1",
+                "demo-mix-sdk-1",
+                "demo-mix-website-1"
+              ],
+              "machines": [
+                "demo-build",
+                "demo-research"
+              ],
+              "workspaces": []
+            },
+            "disconnect": [],
+            "unknownSandboxes": [],
+            "workspaceGroups": [
+              {
+                "sandbox": "demo-mix-billing-1",
+                "workspaces": []
+              },
+              {
+                "sandbox": "demo-mix-compiler-1",
+                "workspaces": []
+              },
+              {
+                "sandbox": "demo-mix-design-1",
+                "workspaces": []
+              },
+              {
+                "sandbox": "demo-mix-embeddings-1",
+                "workspaces": []
+              },
+              {
+                "sandbox": "demo-mix-evaluation-1",
+                "workspaces": []
+              },
+              {
+                "sandbox": "demo-mix-gateway-1",
+                "workspaces": []
+              },
+              {
+                "sandbox": "demo-mix-sdk-1",
+                "workspaces": []
+              },
+              {
+                "sandbox": "demo-mix-website-1",
+                "workspaces": []
+              }
+            ],
+            "startMachines": [],
+            "detectedMachines": [
+              {
+                "name": "demo-build",
+                "state": "running",
+                "platform": "lima"
+              },
+              {
+                "name": "demo-research",
+                "state": "running",
+                "platform": "lima"
+              },
+              {
+                "name": "docker",
+                "state": "running",
+                "platform": "docker"
+              },
+              {
+                "name": "native",
+                "state": "ready",
+                "platform": "native"
+              }
+            ],
+            "projects": 8,
+            "stopDocker": true,
+            "scope": "environment",
+            "signature": "4a473e2e1aafc6582c47c6cc68749173d8d112c24e72e0570d8dd820b4ba153b",
+            "actionId": "c087a96b-c0eb-4a2e-81b8-74d0b7cfc5c6",
+            "verified": true,
+            "completed": [
+              [
+                "sandbox",
+                "close",
+                "demo-mix-billing-1"
+              ],
+              [
+                "sandbox",
+                "close",
+                "demo-mix-compiler-1"
+              ],
+              [
+                "sandbox",
+                "close",
+                "demo-mix-design-1"
+              ],
+              [
+                "sandbox",
+                "close",
+                "demo-mix-embeddings-1"
+              ],
+              [
+                "sandbox",
+                "close",
+                "demo-mix-evaluation-1"
+              ],
+              [
+                "sandbox",
+                "close",
+                "demo-mix-gateway-1"
+              ],
+              [
+                "sandbox",
+                "close",
+                "demo-mix-sdk-1"
+              ],
+              [
+                "sandbox",
+                "close",
+                "demo-mix-website-1"
+              ],
+              [
+                "store",
+                "remove",
+                "demo-build-cache"
+              ],
+              [
+                "store",
+                "remove",
+                "demo-experiments"
+              ],
+              [
+                "store",
+                "remove",
+                "demo-services"
+              ],
+              [
+                "store",
+                "remove",
+                "demo-studio"
+              ],
+              [
+                "machine",
+                "remove",
+                "demo-build"
+              ],
+              [
+                "machine",
+                "remove",
+                "demo-research"
+              ],
+              [
+                "machine",
+                "stop",
+                "docker"
+              ]
+            ],
+            "remaining": [],
+            "warnings": [],
+            "at": 1794298388989,
+            "ended": 1794298393697
+          }
+        },
+        "status": "success",
+        "invocationCount": 27,
+        "projects": [],
+        "invocations": []
+      }
+    ],
+    "next": null,
+    "warning": null,
+    "cleared": true,
+    "clearedAt": 1794298388825
+  },
+  "oldAction": {
+    "cleared": true,
+    "id": "b88bdaae-b02f-49da-85bd-4c8e8bc95533"
+  }
+}

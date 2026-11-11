@@ -1,0 +1,22 @@
+{
+  "root": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/lfs-pg-speed-hhzks73z",
+  "container": "lfs-pg-speed-1334c1a157",
+  "status": "cleaned",
+  "owner": "machine-start-artifacts",
+  "cli": "/Users/yifanxu/Ephemeral-AI-Lab/layerfs-machine-start/target/debug/layerfs",
+  "cli_sha256": "c6d7964d24044f7e4a6223516ce112b26b60c527fc4a52652779fdb1f925a2f1",
+  "bundle": "/Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect/.cache/layerfs-bundles/833d04cf44e8e747929d50ab1170a48260d9381c/2.0.0/linux-aarch64",
+  "providers": {},
+  "id": "c47300691e5a251b940132d1034725b3803745a8efafcfcae90826d37a8cbe56",
+  "container_start_ns": 241608292,
+  "port": 51317,
+  "bridge": {
+    "container": "lfs-pg-bridge-ac4604d93c",
+    "port": 52740,
+    "host": "192.168.64.1",
+    "status": "ready",
+    "exit": 0,
+    "output": "f470e29e44ac65db635413b88f8ff05cc20cff5979debab6b3362dedc6f034d9",
+    "error": ""
+  }
+}

@@ -1,0 +1,196 @@
+{
+  "scope": "diagnostic, cached engine; no cold-cache performance qualification",
+  "cli": "/Users/yifanxu/Ephemeral-AI-Lab/layerfs-machine-start/target/debug/layerfs",
+  "binary_sha256": "236b6be6eea567803496779a984ab8ae760ff13fcd5c67906e63bb895962cc67",
+  "bundle": "/Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect/.cache/layerfs-bundles/833d04cf44e8e747929d50ab1170a48260d9381c/2.0.0/linux-aarch64",
+  "root": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/machine-start-live-eefu37eg",
+  "steps": [
+    {
+      "home": "home-1",
+      "call": [
+        "store",
+        "create",
+        "proof1"
+      ],
+      "wall_ns": 1170994042,
+      "exit": 0
+    },
+    {
+      "home": "home-1",
+      "call": [
+        "machine",
+        "start",
+        "docker"
+      ],
+      "wall_ns": 29363292625,
+      "exit": 0
+    },
+    {
+      "home": "home-1",
+      "call": [
+        "machine",
+        "stop",
+        "docker"
+      ],
+      "wall_ns": 288126125,
+      "exit": 0
+    },
+    {
+      "home": "home-1",
+      "call": [
+        "store",
+        "remove",
+        "proof1"
+      ],
+      "wall_ns": 15327291,
+      "exit": 0
+    },
+    {
+      "home": "home-2",
+      "call": [
+        "store",
+        "create",
+        "proof2"
+      ],
+      "wall_ns": 20822875,
+      "exit": 0
+    },
+    {
+      "home": "home-2",
+      "call": [
+        "machine",
+        "start",
+        "docker"
+      ],
+      "wall_ns": 462407916,
+      "exit": 0
+    },
+    {
+      "home": "home-2",
+      "call": [
+        "project",
+        "init",
+        "proof2/app",
+        "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/machine-start-live-eefu37eg/source"
+      ],
+      "wall_ns": 31122958,
+      "exit": 0
+    },
+    {
+      "home": "home-2",
+      "call": [
+        "store",
+        "push",
+        "proof2",
+        "docker"
+      ],
+      "wall_ns": 63530125,
+      "exit": 0
+    },
+    {
+      "home": "home-2",
+      "call": [
+        "branch",
+        "fork",
+        "proof2/app",
+        "proof",
+        "main"
+      ],
+      "wall_ns": 33635250,
+      "exit": 0
+    },
+    {
+      "home": "home-2",
+      "call": [
+        "sandbox",
+        "create",
+        "proof2/app",
+        "verify",
+        "docker"
+      ],
+      "wall_ns": 3732107959,
+      "exit": 0
+    },
+    {
+      "home": "home-2",
+      "call": [
+        "workspace",
+        "mount",
+        "verify",
+        "proof",
+        "--name",
+        "proof"
+      ],
+      "wall_ns": 26400833,
+      "exit": 0
+    },
+    {
+      "home": "home-2",
+      "call": [
+        "workspace",
+        "exec",
+        "verify:proof",
+        "cat proof.txt"
+      ],
+      "wall_ns": 44970375,
+      "exit": 0
+    },
+    {
+      "home": "home-2",
+      "call": [
+        "workspace",
+        "unmount",
+        "verify:proof"
+      ],
+      "wall_ns": 17278917,
+      "exit": 0
+    },
+    {
+      "home": "home-2",
+      "call": [
+        "sandbox",
+        "close",
+        "verify"
+      ],
+      "wall_ns": 1966834708,
+      "exit": 0
+    },
+    {
+      "home": "home-2",
+      "call": [
+        "machine",
+        "stop",
+        "docker"
+      ],
+      "wall_ns": 377087042,
+      "exit": 0
+    },
+    {
+      "home": "home-2",
+      "call": [
+        "store",
+        "remove",
+        "proof2"
+      ],
+      "wall_ns": 9002000,
+      "exit": 125,
+      "error": "{\"code\":\"Unavailable\",\"message\":\"machine docker is not running; start it with `layerfs machine start docker`\",\"detail\":null}\n"
+    }
+  ],
+  "resources": [
+    {
+      "home": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/machine-start-live-eefu37eg/home-1",
+      "container": "lfs-b589f44e-docker",
+      "volume": "lfs-b589f44e-docker-data",
+      "cleaned": true
+    },
+    {
+      "home": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/machine-start-live-eefu37eg/home-2",
+      "container": "lfs-2599cecf-docker",
+      "volume": "lfs-2599cecf-docker-data",
+      "cleaned": true
+    }
+  ],
+  "verdict": "PASS",
+  "cleanup_note": "Initial removal was refused because the worker was stopped; started the owned worker, removed its Store, stopped it and removed its exact container and volume."
+}

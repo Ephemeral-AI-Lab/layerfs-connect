@@ -1,0 +1,175 @@
+{
+  "before": {
+    "at": "2026-11-10T10:26:59.613Z",
+    "sse10s": {
+      "bytes": 108687672,
+      "events": 721,
+      "byType": {
+        "cli-activity": {
+          "events": 298,
+          "bytes": 23542
+        },
+        "simulation": {
+          "events": 258,
+          "bytes": 73903
+        },
+        "chat": {
+          "events": 165,
+          "bytes": 108588772
+        }
+      }
+    },
+    "http": [
+      {
+        "path": "/api/agent/sessions",
+        "status": 200,
+        "ms": 47,
+        "bytes": 35791
+      },
+      {
+        "path": "/api/agent/sessions/00f74853-3e51-475e-b9f6-74a33029793a",
+        "status": 200,
+        "ms": 83,
+        "bytes": 2504879
+      },
+      {
+        "path": "/api/agent/sessions/00f74853-3e51-475e-b9f6-74a33029793a/trace?limit=50",
+        "status": 200,
+        "ms": 42,
+        "bytes": 37810
+      },
+      {
+        "path": "/api/agent/sessions",
+        "status": 200,
+        "ms": 6,
+        "bytes": 35791
+      },
+      {
+        "path": "/api/agent/sessions/00f74853-3e51-475e-b9f6-74a33029793a",
+        "status": 200,
+        "ms": 33,
+        "bytes": 2504879
+      },
+      {
+        "path": "/api/agent/sessions/00f74853-3e51-475e-b9f6-74a33029793a/trace?limit=50",
+        "status": 200,
+        "ms": 32,
+        "bytes": 37810
+      },
+      {
+        "path": "/api/agent/sessions",
+        "status": 200,
+        "ms": 4,
+        "bytes": 35791
+      },
+      {
+        "path": "/api/agent/sessions/00f74853-3e51-475e-b9f6-74a33029793a",
+        "status": 200,
+        "ms": 28,
+        "bytes": 2504879
+      },
+      {
+        "path": "/api/agent/sessions/00f74853-3e51-475e-b9f6-74a33029793a/trace?limit=50",
+        "status": 200,
+        "ms": 18,
+        "bytes": 37810
+      }
+    ]
+  },
+  "after": {
+    "at": "2026-11-10T10:40:46.170Z",
+    "sse10s": {
+      "bytes": 297498,
+      "events": 691,
+      "byType": {
+        "simulation": {
+          "events": 246,
+          "bytes": 70290
+        },
+        "chat-summary": {
+          "events": 158,
+          "bytes": 203140
+        },
+        "cli-activity": {
+          "events": 287,
+          "bytes": 22673
+        }
+      }
+    },
+    "http": [
+      {
+        "path": "/api/agent/sessions",
+        "status": 200,
+        "ms": 47,
+        "bytes": 69328
+      },
+      {
+        "path": "/api/agent/sessions/00f74853-3e51-475e-b9f6-74a33029793a",
+        "status": 200,
+        "ms": 38,
+        "bytes": 2504906
+      },
+      {
+        "path": "/api/agent/sessions/00f74853-3e51-475e-b9f6-74a33029793a/trace?limit=50",
+        "status": 200,
+        "ms": 37,
+        "bytes": 37810
+      },
+      {
+        "path": "/api/agent/sessions",
+        "status": 200,
+        "ms": 3,
+        "bytes": 69328
+      },
+      {
+        "path": "/api/agent/sessions/00f74853-3e51-475e-b9f6-74a33029793a",
+        "status": 200,
+        "ms": 17,
+        "bytes": 2504906
+      },
+      {
+        "path": "/api/agent/sessions/00f74853-3e51-475e-b9f6-74a33029793a/trace?limit=50",
+        "status": 200,
+        "ms": 25,
+        "bytes": 37810
+      },
+      {
+        "path": "/api/agent/sessions",
+        "status": 200,
+        "ms": 4,
+        "bytes": 69328
+      },
+      {
+        "path": "/api/agent/sessions/00f74853-3e51-475e-b9f6-74a33029793a",
+        "status": 200,
+        "ms": 14,
+        "bytes": 2504906
+      },
+      {
+        "path": "/api/agent/sessions/00f74853-3e51-475e-b9f6-74a33029793a/trace?limit=50",
+        "status": 200,
+        "ms": 25,
+        "bytes": 37810
+      }
+    ]
+  },
+  "trafficReductionPercent": 99.7262817442626,
+  "retainedHistories": {
+    "id": "00f74853-3e51-475e-b9f6-74a33029793a",
+    "status": 200,
+    "state": "idle",
+    "messages": 1272,
+    "bash": 600,
+    "children": 3,
+    "error": "Simulation stopped."
+  },
+  "childHistory": {
+    "status": 200,
+    "id": "a01-worker",
+    "state": "completed",
+    "messages": 810,
+    "bash": 400,
+    "turns": 5
+  },
+  "notes": "Same eight-template real Native workload; after run has more saved chats. CPU and page timing are observational, not a controlled throughput benchmark."
+}

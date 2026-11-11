@@ -1,0 +1,39 @@
+{
+  "root": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/lfs-lima-prepared-jo89nr_1",
+  "home": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/lfs-lima-prepared-jo89nr_1/home",
+  "cli": "/Users/yifanxu/Ephemeral-AI-Lab/layerfs-machine-start/target/debug/layerfs",
+  "bundle": "/Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect/.cache/layerfs-bundles/833d04cf44e8e747929d50ab1170a48260d9381c/2.0.0/linux-aarch64",
+  "cache": "/Users/yifanxu/.cache/layerfs-worktrees/layerfs-machine-start-c17e354c8815/image-cache",
+  "steps": [
+    {
+      "args": [
+        "store",
+        "create",
+        "proof"
+      ],
+      "wall_ns": 22945917,
+      "exit": 0,
+      "result": "{\"name\":\"proof\",\"kind\":\"sqlite\",\"machine\":\"native\",\"profile\":\"disposable\",\"created\":1794229568013,\"sqlite\":\"3.53.2\",\"projects\":[]}\n",
+      "events": ""
+    },
+    {
+      "args": [
+        "machine",
+        "create",
+        "lima",
+        "lima",
+        "--cpus",
+        "2",
+        "--memory",
+        "4G",
+        "--disk",
+        "20G",
+        "--progress"
+      ],
+      "wall_ns": 8638775916,
+      "exit": 0,
+      "result": "{\"name\":\"lima\",\"platform\":\"lima\",\"backend\":\"namespaces\",\"supports\":{\"sqlite\":true,\"postgresql_sandbox\":true,\"reason\":null},\"state\":\"running\",\"cpus\":2,\"memory\":4294967296,\"disk\":21474836480,\"stores\":[],\"sandboxes\":[]}\n",
+      "events": "{\"progress\":{\"stage\":\"bundle-validation\",\"state\":\"started\"}}\n{\"progress\":{\"stage\":\"bundle-validation\",\"state\":\"completed\",\"elapsed_ms\":0}}\n{\"progress\":{\"phase\":\"create\",\"machine\":\"lima\"}}\n{\"progress\":{\"stage\":\"provider-and-worker\",\"state\":\"started\"}}\n{\"progress\":{\"stage\":\"provider-and-worker\",\"state\":\"completed\",\"elapsed_ms\":8550}}\n{\"progress\":{\"stage\":\"worker-compatibility\",\"state\":\"started\"}}\n{\"progress\":{\"stage\":\"worker-compatibility\",\"state\":\"completed\",\"elapsed_ms\":8}}\n"
+    }
+  ]
+}

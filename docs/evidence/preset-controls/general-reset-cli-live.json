@@ -1,0 +1,109 @@
+{
+  "state": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/connect-general-reset-cli-317ddC",
+  "cli": "/Users/yifanxu/Ephemeral-AI-Lab/layerfs-machine-start/target/debug/layerfs",
+  "checks": [
+    "detected real resources outside fixture manifest",
+    "real CLI recursive cleanup verified; input and output captured",
+    "independent activity clear leaves empty resources unchanged"
+  ],
+  "plan": {
+    "home": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/connect-general-reset-cli-317ddC/home-2",
+    "homeId": "942d101a006494f3b6d71a744c08c3d7",
+    "remove": {
+      "stores": [
+        "demo-studio",
+        "outside-preset"
+      ],
+      "sandboxes": [
+        "demo-website",
+        "outside-sandbox"
+      ],
+      "machines": [],
+      "workspaces": [
+        "demo-website:feature",
+        "demo-website:fix",
+        "outside-sandbox:outside-workspace"
+      ]
+    },
+    "disconnect": [],
+    "unknownSandboxes": [],
+    "startMachines": [],
+    "projects": 2,
+    "stopDocker": false,
+    "scope": "environment",
+    "signature": "d8014e61c099429c26196c8665bc593093121f0fde3c2c2486beb4deed19c3ac"
+  },
+  "reset": {
+    "home": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/connect-general-reset-cli-317ddC/home-2",
+    "homeId": "942d101a006494f3b6d71a744c08c3d7",
+    "remove": {
+      "stores": [
+        "demo-studio",
+        "outside-preset"
+      ],
+      "sandboxes": [
+        "demo-website",
+        "outside-sandbox"
+      ],
+      "machines": [],
+      "workspaces": [
+        "demo-website:feature",
+        "demo-website:fix",
+        "outside-sandbox:outside-workspace"
+      ]
+    },
+    "disconnect": [],
+    "unknownSandboxes": [],
+    "startMachines": [],
+    "projects": 2,
+    "stopDocker": false,
+    "scope": "environment",
+    "signature": "d8014e61c099429c26196c8665bc593093121f0fde3c2c2486beb4deed19c3ac",
+    "actionId": "23831ffb-ee35-4a3e-a516-e27e49656c4e",
+    "verified": true,
+    "completed": [
+      [
+        "workspace",
+        "unmount",
+        "demo-website:feature",
+        "--discard"
+      ],
+      [
+        "workspace",
+        "unmount",
+        "demo-website:fix",
+        "--discard"
+      ],
+      [
+        "sandbox",
+        "close",
+        "demo-website"
+      ],
+      [
+        "workspace",
+        "unmount",
+        "outside-sandbox:outside-workspace",
+        "--discard"
+      ],
+      [
+        "sandbox",
+        "close",
+        "outside-sandbox"
+      ],
+      [
+        "store",
+        "remove",
+        "demo-studio"
+      ],
+      [
+        "store",
+        "remove",
+        "outside-preset"
+      ]
+    ],
+    "remaining": [],
+    "warnings": [],
+    "at": 1794271869312,
+    "ended": 1794271869930
+  }
+}

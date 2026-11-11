@@ -1,0 +1,22 @@
+{
+  "root": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/lfs-lima-prepared-9xc3hhsf",
+  "home": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/lfs-lima-prepared-9xc3hhsf/home",
+  "cli": "/Users/yifanxu/Ephemeral-AI-Lab/layerfs-machine-start/target/debug/layerfs",
+  "bundle": "/Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect/.cache/layerfs-bundles/833d04cf44e8e747929d50ab1170a48260d9381c/2.0.0/linux-aarch64",
+  "cache": "/Users/yifanxu/.cache/layerfs-worktrees/layerfs-machine-start-c17e354c8815/image-cache",
+  "steps": [
+    {
+      "args": [
+        "store",
+        "create",
+        "proof"
+      ],
+      "wall_ns": 2799284916,
+      "exit": 0,
+      "result": "{\"name\":\"proof\",\"kind\":\"sqlite\",\"machine\":\"native\",\"profile\":\"disposable\",\"created\":1794229236048,\"sqlite\":\"3.53.2\",\"projects\":[]}\n",
+      "events": ""
+    }
+  ],
+  "status": "FAILED_TIMEOUT",
+  "note": "Create exceeded 100s; offline syslog found ssh.socket/basic.target ordering cycle. Owned VM stopped for diagnosis."
+}

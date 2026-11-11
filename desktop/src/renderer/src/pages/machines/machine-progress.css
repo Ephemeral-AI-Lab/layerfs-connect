@@ -1,0 +1,42 @@
+.machine-progress {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 7px;
+  padding: 12px 0;
+  border-top: 1px solid var(--border);
+  color: var(--foreground);
+  font-size: 12px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.machine-progress[data-compact] { margin: 0 20px; }
+.machine-progress-heading { display: flex; align-items: start; justify-content: space-between; gap: 12px; min-width: 0; }
+.machine-progress-title { display: flex; align-items: center; gap: 7px; min-width: 0; font-weight: 550; }
+.machine-progress-title > svg { width: 14px; height: 14px; flex-shrink: 0; }
+.machine-progress[data-status="success"] .machine-progress-title > svg { color: var(--success); }
+.machine-progress[data-status="failed"] .machine-progress-title > svg { color: var(--destructive); }
+.machine-progress[data-status="uncertain"] .machine-progress-title > svg { color: var(--warning); }
+.machine-progress-elapsed, .machine-progress-step-time { flex-shrink: 0; color: var(--muted-foreground); font-variant-numeric: tabular-nums; }
+.machine-progress-current { padding-left: 21px; }
+.machine-progress-note { color: var(--muted-foreground); }
+.machine-progress-steps > summary, .machine-progress-error > summary { width: fit-content; max-width: 100%; cursor: pointer; color: var(--muted-foreground); border-radius: 3px; }
+.machine-progress-steps > summary { display: flex; align-items: center; gap: 5px; list-style: none; }
+.machine-progress-steps > summary::-webkit-details-marker { display: none; }
+.machine-progress-steps > summary > svg { width: 12px; height: 12px; flex-shrink: 0; transform: rotate(-90deg); }
+.machine-progress-steps[open] > summary > svg { transform: none; }
+.machine-progress-steps ul { display: flex; flex-direction: column; gap: 6px; margin-top: 7px; }
+.machine-progress-steps li { display: flex; align-items: start; gap: 7px; }
+.machine-progress-steps li > svg { width: 13px; height: 13px; flex-shrink: 0; margin-top: 3px; color: var(--muted-foreground); }
+.machine-progress-steps li > span:first-of-type { flex: 1; min-width: 0; }
+.machine-progress-error > div { margin-top: 6px; max-height: 160px; overflow-y: auto; }
+.machine-progress-activity { display: inline-flex; width: fit-content; max-width: 100%; align-items: center; gap: 4px; color: var(--muted-foreground); text-decoration: underline; text-underline-offset: 3px; }
+.machine-progress-activity > svg { width: 12px; height: 12px; flex-shrink: 0; }
+.machine-progress-activity:hover { color: var(--foreground); }
+.machine-progress summary:focus-visible, .machine-progress-activity:focus-visible { outline: 2px solid var(--ring); outline-offset: 3px; }
+.machine-progress-spinner { animation: machine-progress-spin 1.2s linear infinite; }
+@keyframes machine-progress-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .machine-progress-spinner { animation: none; } }
+@media (max-width: 400px) { .machine-progress[data-compact] { margin-right: 14px; margin-left: 14px; } }

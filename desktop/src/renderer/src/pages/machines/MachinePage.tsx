@@ -1,3 +1,5 @@
+import { MachineProgress } from '@/pages/machines/MachineProgress'
+import { useMachineProgress } from '@/layerfs/use-machine-progress'
 import { fill } from '@/lib/text'
 // One machine console: persistent hardware header, square Sandbox grid by
 // default, an alternate Stores view, and a disclosure for technical details.
@@ -9,6 +11,7 @@ import { attentionOf, MachineDialogs, MachineMenu, PowerButton, useMachineRun } 
 import { MachineData, machineStoreCount } from '@/pages/machines/MachineData'
 import { MachineDetails } from '@/pages/machines/MachineDetails'
 import { MachineSandboxes, type SandboxOps } from '@/pages/machines/MachineSandboxes'
+import { NewMachineSandbox } from '@/pages/machines/NewMachineSandbox'
 import { KindLabel } from '@/pages/machines/TargetParts'
 import { Button } from '@/components/ui/button'
 import { Empty } from '@/components/layerfs/States'
@@ -17,7 +20,7 @@ import { StateChip } from '@/components/layerfs/StateChip'
 import { Card } from '@/pages/storage/RowParts'
 import { Crumbs } from '@/components/layerfs/Crumbs'
 import { downReason, gib, kindLabel, machineState, type Os, sizeOf, storesOn } from '@/layerfs/compute'
-import type { MachineAction } from '@/layerfs/compute-sim'
+import type { MachineAction } from '@/layerfs/machine-actions'
 import { clearingCall } from '@/layerfs/states'
 import { cn } from '@/lib/utils'
 import type { MachineSandbox, MachinesView } from '@/layerfs/host-api'
@@ -31,6 +34,7 @@ interface Props {
   os: Os
   act: (action: MachineAction) => Promise<void>
   ops: SandboxOps
+  onChanged: () => void
   /** The Machines board. */
   onBack: () => void
   /** Back where this tab came from (another page), when it came from one. */
@@ -42,12 +46,13 @@ interface Props {
 const byProject = (sandboxes: MachineSandbox[]): MachineSandbox[] =>
   [...sandboxes].sort((a, b) => Number(!a.project) - Number(!b.project) || (a.project ?? '').localeCompare(b.project ?? '') || a.name.localeCompare(b.name, undefined, { numeric: true }))
 
-export function MachinePage({ name, view, os, act, ops, onBack, back: backTo, onOpenProject }: Props) {
-  const { run, pending, error } = useMachineRun(act)
+export function MachinePage({ name, view, os, act, ops, onChanged, onBack, back: backTo, onOpenProject }: Props) {
+  const { run, pending: localPending, error } = useMachineRun(act)
+  const startup = useMachineProgress(name)
+  const pending = localPending ?? (startup?.status === 'running' ? startup.kind : null)
   const [dialog, setDialog] = useState<'settings' | 'remove' | null>(null)
   const [tabParams, setTabParams] = useSearchParams()
   const requested = tabParams.get('view')
-  const sampleMetrics = import.meta.env.DEV && tabParams.get('metrics') === 'sample'
   const m = view.machines.find((x) => x.name === name)
   const back = <Crumbs back={backTo} items={[{ label: 'Machines', onClick: onBack, title: 'All machines' }, { label: name }]} />
   if (!m)
@@ -62,7 +67,7 @@ export function MachinePage({ name, view, os, act, ops, onBack, back: backTo, on
 
   const live = view.status[m.name]
   const state = machineState(m, live)
-  const reason = downReason(m, live)
+  const reason = startup?.status === 'running' ? null : downReason(m, live)
   const stores = storesOn(view, m)
   // a sandbox.list() that omits one still shows its name from the machine
   const sandboxes = byProject(m.sandboxes.map((b) => view.sandboxes.find((x) => x.name === b) ?? { name: b, machine: m.name, project: null, workspaces: null }))
@@ -72,7 +77,7 @@ export function MachinePage({ name, view, os, act, ops, onBack, back: backTo, on
   const storeCount = machineStoreCount(m, stores, view.postgresql ?? [])
   const part: Part = requested === 'stores' ? 'stores' : 'sandboxes'
   const setPart = (next: Part) => setTabParams(prev => { const params = new URLSearchParams(prev); params.set('view',next); return params }, { replace: true })
-  const attention = attentionOf(m, live)
+  const attention = startup?.status === 'running' ? null : attentionOf(m, live)
   // the disk bar says what is free; the size line leaves it out then
   const size = sizeOf(m, os, live)
   const calls = clearingCall('machine', m.name, state.op)
@@ -96,7 +101,7 @@ export function MachinePage({ name, view, os, act, ops, onBack, back: backTo, on
             <h1 className="truncate text-xl font-medium tracking-tight" title={m.name}>{m.name}</h1>
             <p className="mt-1 text-sm text-muted-foreground">{fill(kindLabel(m.platform))} · {fill(size.text, size.values)}</p>
           </div>
-          <StateChip entity="machine" state={state.state} op={state.op} />
+          {pending === 'start' ? <span className="text-sm font-medium">{m.platform === 'docker' ? 'Starting worker…' : 'Starting…'}</span> : <StateChip entity="machine" state={state.state} op={state.op} />}
         </header>
         <div className="machine-hardware-line">
           <dl className="machine-hardware" aria-label="Machine resources">
@@ -110,6 +115,7 @@ export function MachinePage({ name, view, os, act, ops, onBack, back: backTo, on
             </dd></div>}
           </dl>
         </div>
+        <MachineProgress name={name} />
         <details className="machine-technical" open={requested === 'details' ? true : undefined}>
           <summary><ChevronRight className="size-3.5" /> Technical details</summary>
           <div className="pt-4">
@@ -143,12 +149,7 @@ export function MachinePage({ name, view, os, act, ops, onBack, back: backTo, on
             </span>
           </div>
           <div className="flex shrink-0 items-center gap-2">
-            {import.meta.env.DEV && part === 'sandboxes' && <Button variant="ghost" size="sm" aria-pressed={sampleMetrics} onClick={() => setTabParams(prev => {
-              const params = new URLSearchParams(prev)
-              if (sampleMetrics) params.set('metrics', 'off')
-              else params.set('metrics', 'sample')
-              return params
-            }, { replace: true })}>{sampleMetrics ? 'Hide sample readings' : 'Preview sample readings'}</Button>}
+          {part === 'sandboxes' && <NewMachineSandbox machine={m} taken={view.sandboxes.map(b => b.name)} disabled={pending !== null || state.key !== 'running' || (m.platform === 'native' && os === 'win32')} onChanged={onChanged} />}
           <Button variant="outline" size="sm" className="machine-view-switch" onClick={() => setPart(part === 'sandboxes' ? 'stores' : 'sandboxes')}>
             {part === 'stores' && <ArrowLeft className="size-3.5" />}
             {part === 'sandboxes' ? `Stores ${storeCount}` : `Sandboxes ${sandboxes.length}`}
@@ -160,10 +161,10 @@ export function MachinePage({ name, view, os, act, ops, onBack, back: backTo, on
           <MachineData m={m} sqlite={stores} postgresql={view.postgresql ?? []} running={running} onOpenProject={onOpenProject} />
         ) : sandboxes.length === 0 ? (
           <Card index={1} className="p-2">
-            <p className="px-2 py-3 text-md text-muted-foreground">{m.platform === 'native' && os === 'win32' ? 'Native on Windows keeps records only; Sandboxes run on docker.' : 'Nothing runs here. Open a project’s Sandboxes tab to create one on this machine.'}</p>
+            <p className="px-2 py-3 text-md text-muted-foreground">{m.platform === 'native' && os === 'win32' ? 'Native on Windows keeps records only; Sandboxes run on docker.' : state.key !== 'running' ? 'Start this machine to create a Sandbox here.' : 'No Sandboxes yet. Create a Sandbox from a project on this machine or a supported PostgreSQL Store.'}</p>
           </Card>
         ) : (
-          <MachineSandboxes sampleMetrics={sampleMetrics} sandboxes={sandboxes} ops={ops} onOpenProject={onOpenProject} />
+          <MachineSandboxes sandboxes={sandboxes} ops={ops} onOpenProject={onOpenProject} />
         )}
       </section>
 

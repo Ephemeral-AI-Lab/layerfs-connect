@@ -1,0 +1,21 @@
+{
+  "desktop/src/renderer/src/layerfs/chat-refresh.ts": "6223072d0dc0c362f85e877c66ce617865b06cb52a7ee8de473158641cc12cb8",
+  "desktop/src/renderer/src/layerfs/chat-sharing.ts": "36c82f6fdba1a8b86936702fdbcffbfa9f3f42587f3cbf9861c14de777f293fa",
+  "desktop/src/renderer/src/layerfs/use-chat.ts": "104af6589f266e41074d61f634f0a4cdddafdb9be823dcaa739c69be4c33917f",
+  "desktop/src/renderer/src/layerfs/use-child.ts": "07ec4d9dae2f6dcf8cbbde493f806bcf24f077e5250ec346e883c429188de73f",
+  "desktop/src/renderer/src/layerfs/use-trace.ts": "9308a8841800c39e12916a27186d3f2b6a82014aa7f4fd3b72f2e1a0359a8d22",
+  "desktop/src/renderer/src/pages/chat/ChatPage.tsx": "8ee30415ac34685da7a044f31dd5dcb54f1b1bc52c405a9ad83ae7927e0ad571",
+  "desktop/src/renderer/src/pages/chat/FilesTab.tsx": "ef4b880248d02264273f4f5faa5ce5dd8c927ebbf43e1e03e1f3d3d8ed6de8cd",
+  "desktop/src/renderer/src/pages/chat/conversation/ConversationTab.tsx": "ea238d9a3a02a6283bee9635fef7bcc8f3730afc42aeababd5fbbb115881a15a",
+  "desktop/src/renderer/src/pages/chat/conversation/Transcript.tsx": "f5eabdcbdcf3d9b4d160c2b5a999ec487ded39a050bdeca977cac8aeaa1c222b",
+  "desktop/src/renderer/src/pages/chat/conversation/WorkBlock.tsx": "94272e58b8d972adcee3031330be3e95cb3476612e73b078342eafd555d3ba6e",
+  "desktop/src/renderer/src/pages/chat/conversation/scope.ts": "d3d5b4026f5acebb81c8152c2be53990d062afbbdad31c2eda22552abc4f46ab",
+  "desktop/src/renderer/src/pages/chat/conversation/steps/BashStep.tsx": "72e3d639535c7a4f2f2ca0b1196e5282b90b542536c2bed5cee12e4699cdac1f",
+  "desktop/src/renderer/src/pages/chat/conversation/steps/SubagentStep.tsx": "de77ffd8230d5cd0cbdd894a4c990bfa98c3d4b60ba926ff894a98b4be38635c",
+  "desktop/src/renderer/src/pages/chat/subagents/ChildConversation.tsx": "df1dfdb19b0c86a849ba416b79bef632106567f41665e92a9108da5f8818fe8f",
+  "desktop/src/renderer/src/pages/chat/history/HistoryTab.tsx": "17df12a7fffc229dd53ba7d9674cdec6d0c8719353a773eed02dd3be93825486",
+  "desktop/src/renderer/src/pages/chat/trace/TraceTab.tsx": "c374fcdd9913a6b2c7704d5191b8de482b7b760cf735013849d455113740107b",
+  "desktop/src/renderer/src/pages/chat/simulation/SimulationStatus.tsx": "b13e6e22d83c61c226eaf73308c45f2c73f01c0196c0fb1f2170407eaca0e6c6",
+  "docs/ui/chat.md": "1fc971a8c1897829c8a49d754c56ea3cb8fe314f5b625ebfffd32e80ff0def64",
+  "test/chat-refresh.test.mjs": "ede2abd0c93df0e55b85678cef9b4f129c44a065d4a2393d2e9f370bc40d086f"
+}

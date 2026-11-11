@@ -20,7 +20,6 @@ import { Segmented } from '@/components/motion'
 import { PageHeader } from '@/components/motion/page-header'
 import { Empty, LoadError, Loading } from '@/components/projects/states'
 import { Refusal } from '@/components/refusal'
-import { SIMULATED_REFUSAL, SimulationPicker, useSimulation } from '@/components/simulation'
 import { BucketCard } from '@/components/storage/bucket-card'
 import { ConfirmByName } from '@/components/storage/dialogs/confirm-by-name'
 import { DoctorBadge, DoctorFindings, useDoctor } from '@/components/storage/needs-attention'
@@ -33,9 +32,7 @@ import { StorePage } from '@/components/storage/store-page'
 import { focusOf } from '@/components/tabs/go'
 import { Button } from '@/components/ui/button'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
-import { SIMULATIONS } from '@/data/compute-sim'
 import { bytes } from '@/data/format'
-import { simStorage } from '@/data/home-sim'
 import { cardJob, jobCounts } from '@/data/job-progress'
 import { host, onHostEvent, onProjectsChanged } from '@/host/client'
 import { dismissJob, seedJobs, useStorageJobs } from '@/host/storage-jobs'
@@ -87,10 +84,6 @@ export function StoragePage({ catalog, onOpenProject, onAddProject, onOpenStore,
   const [listing, setListing] = useState<string | null>(null)
   const [newOpen, setNewOpen] = useState<null | NewStorePane>(null)
   const [failed, setFailed] = useState<unknown>(null)
-  // dev builds: a simulated host (shared with Machines and Projects) is drawn, and every action is refused here
-  const simId = useSimulation()
-  const simulated = simId ? SIMULATIONS[simId] : null
-  const live = <A extends unknown[]>(work: (...args: A) => void) => (...args: A) => (simulated ? setFailed(SIMULATED_REFUSAL) : work(...args))
   /** A menu action that answers at once (a pull starts a job): its refusal shows on the page. */
   const act = (work: () => Promise<unknown>) => {
     setFailed(null)
@@ -112,7 +105,7 @@ export function StoragePage({ catalog, onOpenProject, onAddProject, onOpenStore,
       }),
     [],
   )
-  const view = simulated ? simStorage(simulated) : storage.data
+  const view = storage.data
   const f = focusOf(focus)
   const detail = f?.kind === 'store' ? f.name : null
   // store.list carries state and op: a push the CLI started shows here (§8.9)
@@ -121,11 +114,10 @@ export function StoragePage({ catalog, onOpenProject, onAddProject, onOpenStore,
     changed()
     catalog.reload()
   }
-  // the view's jobs, with what events said since (a simulated host's are its own)
   useEffect(() => {
-    if (!simulated && storage.data) seedJobs(storage.data.jobs)
-  }, [simulated, storage.data])
-  const allJobs = simulated ? (view?.jobs ?? []) : known.jobs
+    if (storage.data) seedJobs(storage.data.jobs)
+  }, [storage.data])
+  const allJobs = known.jobs
   const jobOf = (store: string) => cardJob(allJobs, store, known.dismissed, now)
   const counts = jobCounts(allJobs, known.dismissed)
   /** The first card with a running job, else with a failed one: where the header's chip goes. */
@@ -145,25 +137,25 @@ export function StoragePage({ catalog, onOpenProject, onAddProject, onOpenStore,
   const ordered = [...sqlite.filter(inHome), ...sqlite.filter((s) => !inHome(s)).sort((a, b) => (a.machine ?? '').localeCompare(b.machine ?? '') || byName(a, b)), ...stores.filter((s) => s.kind === 'postgresql')]
   // Sandboxes by project key; when machines cannot be read the column is left out, nothing waits on it
   const sandboxes = useMemo(() => {
-    const read = simulated ? simulated.view : machinesRead.data
+    const read = machinesRead.data
     const m = read?.available ? read : null
     if (!m) return null
     const by = new Map<string, MachineSandbox[]>()
     for (const b of m.sandboxes) if (b.project) by.set(b.project, [...(by.get(b.project) ?? []), b])
     return by
-  }, [machinesRead.data, simulated])
+  }, [machinesRead.data])
   const actionsFor = (s: StoreRow) => ({
-    push: live(() => setDialog({ kind: 'push', store: s })),
-    pull: live(() => act(() => host.pullStore(s.name))),
-    move: live(() => setDialog({ kind: 'move', store: s })),
-    backup: live(() => setDialog({ kind: 'backup', store: s })),
-    backupTo: live((l: StoreBackupLink) => act(() => host.backupStore(s.name, l.bucket, l.file))),
-    restore: live((bucket: string, file: string) => setDialog({ kind: 'restore', bucket, file })),
-    remove: live(() => setRemoving(s)),
-    disconnect: live(() => setDropping({ kind: 'postgresql', name: s.name })),
-    start: live(() => act(() => host.startMachine(s.machine!))),
-    addProject: onAddProject && live(() => onAddProject(s.name)),
-    retry: live((j: StorageJob) => {
+    push: (() => setDialog({ kind: 'push', store: s })),
+    pull: (() => act(() => host.pullStore(s.name))),
+    move: (() => setDialog({ kind: 'move', store: s })),
+    backup: (() => setDialog({ kind: 'backup', store: s })),
+    backupTo: ((l: StoreBackupLink) => act(() => host.backupStore(s.name, l.bucket, l.file))),
+    restore: ((bucket: string, file: string) => setDialog({ kind: 'restore', bucket, file })),
+    remove: (() => setRemoving(s)),
+    disconnect: (() => setDropping({ kind: 'postgresql', name: s.name })),
+    start: (() => act(() => host.startMachine(s.machine!))),
+    addProject: onAddProject && (() => onAddProject(s.name)),
+    retry: ((j: StorageJob) => {
       dismissJob(j.id)
       act(() => retry(j))
     }),
@@ -189,7 +181,7 @@ export function StoragePage({ catalog, onOpenProject, onAddProject, onOpenStore,
           buckets={view?.buckets ?? []}
           job={jobOf(s.name)}
           sandboxes={sandboxes}
-          onOpenProject={onOpenProject && live((key: string) => onOpenProject(key))}
+          onOpenProject={onOpenProject && ((key: string) => onOpenProject(key))}
           onOpen={onOpenStore && ((newTab) => onOpenStore(s.name, newTab))}
           on={actionsFor(s)}
         />
@@ -253,7 +245,7 @@ export function StoragePage({ catalog, onOpenProject, onAddProject, onOpenStore,
             actions={actionsFor}
             onBack={() => onOpenStore?.(null)}
             back={back}
-            onOpenProject={onOpenProject && live((key: string) => onOpenProject(key, detail))}
+            onOpenProject={onOpenProject && ((key: string) => onOpenProject(key, detail))}
           />
         </div>
         {dialogs}
@@ -298,9 +290,8 @@ export function StoragePage({ catalog, onOpenProject, onAddProject, onOpenStore,
         }
         actions={
           <div className="flex items-center gap-2">
-            <SimulationPicker />
             {tab === 'stores' ? (
-              <Button size="sm" className="rounded-full px-3.5" onClick={live(() => setNewOpen('empty'))} title={t('An empty or restored SQLite Store, or a PostgreSQL database')}>
+              <Button size="sm" className="rounded-full px-3.5" onClick={(() => setNewOpen('empty'))} title={t('An empty or restored SQLite Store, or a PostgreSQL database')}>
                 <Plus />
                 {t('New Store')}
               </Button>
@@ -316,7 +307,7 @@ export function StoragePage({ catalog, onOpenProject, onAddProject, onOpenStore,
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="min-w-56">
                     {sqlite.map((s) => (
-                      <DropdownMenuItem key={s.name} disabled={s.state === 'down' || s.state === 'busy'} onSelect={live(() => setDialog({ kind: 'backup', store: s }))}>
+                      <DropdownMenuItem key={s.name} disabled={s.state === 'down' || s.state === 'busy'} onSelect={(() => setDialog({ kind: 'backup', store: s }))}>
                         {inHome(s) ? <House /> : <HardDrive />}
                         <span className="font-mono">{s.name}</span>
                         <span className="ml-auto text-[11px] text-muted-foreground">{inHome(s) ? t('Home') : s.machine}</span>
@@ -324,7 +315,7 @@ export function StoragePage({ catalog, onOpenProject, onAddProject, onOpenStore,
                     ))}
                   </DropdownMenuContent>
                 </DropdownMenu>
-                <Button size="sm" className="rounded-full px-3.5" onClick={live(() => setDialog({ kind: 'bucket' }))}>
+                <Button size="sm" className="rounded-full px-3.5" onClick={(() => setDialog({ kind: 'bucket' }))}>
                   <Plus />
                   {t('New bucket')}
                 </Button>
@@ -351,9 +342,9 @@ export function StoragePage({ catalog, onOpenProject, onAddProject, onOpenStore,
               <span className="ml-auto text-xs tabular-nums text-muted-foreground">
                 {tab === 'stores' && sqlite.length > 0 && t(sqlite.length === 1 ? '{size} in 1 sqlite Store' : '{size} in {n} sqlite Stores', { size: bytes(total), n: sqlite.length })}
               </span>
-              {!simulated && <DoctorBadge read={doctor} open={doctorOpen} onToggle={() => setDoctorOpen(!doctorOpen)} />}
+              {<DoctorBadge read={doctor} open={doctorOpen} onToggle={() => setDoctorOpen(!doctorOpen)} />}
             </div>
-            {doctorOpen && !simulated && <DoctorFindings read={doctor} />}
+            {doctorOpen && <DoctorFindings read={doctor} />}
 
             {tab === 'stores' ? (
               <>
@@ -363,7 +354,7 @@ export function StoragePage({ catalog, onOpenProject, onAddProject, onOpenStore,
                     title={t('No Stores yet')}
                     className="glass-liquid rounded-2xl border-solid"
                     action={
-                      <Button size="sm" variant="outline" className="rounded-full px-3.5" onClick={live(() => setNewOpen('empty'))}>
+                      <Button size="sm" variant="outline" className="rounded-full px-3.5" onClick={(() => setNewOpen('empty'))}>
                         <Plus /> {t('New Store')}
                       </Button>
                     }
@@ -383,7 +374,7 @@ export function StoragePage({ catalog, onOpenProject, onAddProject, onOpenStore,
                     title={t('No bucket connected')}
                     className="glass-liquid rounded-2xl border-solid"
                     action={
-                      <Button size="sm" variant="outline" className="rounded-full px-3.5" onClick={live(() => setDialog({ kind: 'bucket' }))}>
+                      <Button size="sm" variant="outline" className="rounded-full px-3.5" onClick={(() => setDialog({ kind: 'bucket' }))}>
                         <Plus /> {t('New bucket')}
                       </Button>
                     }
@@ -391,7 +382,7 @@ export function StoragePage({ catalog, onOpenProject, onAddProject, onOpenStore,
                     {t('No bucket connected. Connect an r2 or MinIO bucket to back Stores up.')}
                   </Empty>
                 ) : (
-                  view.buckets.map((b, i) => <BucketCard key={b.name} bucket={b} index={i} listing={listing === b.name} onList={live(() => void listBucket(b.name))} onRestore={live((file) => setDialog({ kind: 'restore', bucket: b.name, file }))} onDisconnect={live(() => setDropping({ kind: 'bucket', name: b.name }))} />)
+                  view.buckets.map((b, i) => <BucketCard key={b.name} bucket={b} index={i} listing={listing === b.name} onList={(() => void listBucket(b.name))} onRestore={((file) => setDialog({ kind: 'restore', bucket: b.name, file }))} onDisconnect={(() => setDropping({ kind: 'bucket', name: b.name }))} />)
                 )}
                 <p className="px-1 text-[11px] text-muted-foreground">{t('A restore always saves the Store in the home; push it to a machine afterwards.')}</p>
               </>

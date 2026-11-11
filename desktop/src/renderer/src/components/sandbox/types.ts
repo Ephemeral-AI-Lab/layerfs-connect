@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 
 // View data only. Resource inspection and execution stay outside these components.
 export type Outcome = 'ok' | 'error' | 'unknown'
-export interface Actor { id: string; name: string; task: string; parent: string | null; branch: string; workspace?: string }
+export interface Actor { id: string; name: string; task: string; parent: string | null; branch: string; workspace?: string; state?: string }
 export interface Workspace { id: string; name: string; branch: string; sandbox: string; users: string[]; path?: string; activity?: string; base?: string | null; baseLayer?: string | null; headMovedSinceMount?: boolean | null; dirty?: { inodes: number; entries: number } | null; pendingMerge?: boolean | null }
 export interface Activity {
   id: string; start: number; end: number; actor: string; method: string; branch: string
@@ -35,6 +35,5 @@ export interface SandboxDetailProps {
   highlightedConversation?: string
   initialTab?: SandboxTab
   controls?: ReactNode
-  simulation?: boolean
   notice?: string
 }

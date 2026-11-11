@@ -1,0 +1,241 @@
+{
+  "observedAt": "2026-11-10T09:38:40Z",
+  "runId": "a8d7c538-1a25-4efc-b969-37c3a9d68e7a",
+  "project": "sim-sdk-df464e9d065833082c40/sdk-df464e9d065833082c40",
+  "directory": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/layerfs-simulation-proof-kREJCH/simulations/a8d7c538-1a25-4efc-b969-37c3a9d68e7a",
+  "refusal": {
+    "code": "NotMounted",
+    "message": "saved Workspace is no longer mounted",
+    "step": "dense.008.b.session.002.mount"
+  },
+  "observedSequence": [
+    {
+      "at": "2026-11-10T09:38:40.179Z",
+      "type": "step.completed",
+      "step": "dense.008.a.write.2.exec",
+      "resultKind": "exit:0",
+      "activity": {
+        "id": "1cd5391a-3a9b-4eda-a1b4-639745bd6b49",
+        "actionId": "a8d7c538-1a25-4efc-b969-37c3a9d68e7a"
+      }
+    },
+    {
+      "at": "2026-11-10T09:38:40.179Z",
+      "type": "step.started",
+      "step": "dense.008.a.write.2",
+      "argv": [
+        "workspace",
+        "commit",
+        "sim-df464e9d065833082c40-1:a-008-001",
+        "--message",
+        "Revise requests examples: cycle 8, revision 562"
+      ]
+    },
+    {
+      "at": "2026-11-10T09:38:40.278Z",
+      "type": "step.completed",
+      "step": "dense.008.maintenance.write.6",
+      "resultKind": "Committed",
+      "activity": {
+        "id": "be034b29-7f12-45c5-b132-330302013f33",
+        "actionId": "a8d7c538-1a25-4efc-b969-37c3a9d68e7a"
+      }
+    },
+    {
+      "at": "2026-11-10T09:38:40.278Z",
+      "type": "step.started",
+      "step": "dense.008.maintenance.write.7",
+      "argv": [
+        "file",
+        "write",
+        "sim-sdk-df464e9d065833082c40/sdk-df464e9d065833082c40",
+        "validation-008",
+        "/docs/revision-validation-policy.json",
+        "--message",
+        "Revise validation policy: cycle 8, revision 350"
+      ]
+    },
+    {
+      "at": "2026-11-10T09:38:40.325Z",
+      "type": "step.completed",
+      "step": "dense.008.b.write.2",
+      "resultKind": "Committed",
+      "activity": {
+        "id": "3fc14444-cc32-4d3a-9681-37786da3bd76",
+        "actionId": "a8d7c538-1a25-4efc-b969-37c3a9d68e7a"
+      }
+    },
+    {
+      "at": "2026-11-10T09:38:40.326Z",
+      "type": "step.started",
+      "step": "dense.008.b.session.001.unmount",
+      "argv": [
+        "workspace",
+        "unmount",
+        "sim-df464e9d065833082c40-1:b-008-001"
+      ]
+    },
+    {
+      "at": "2026-11-10T09:38:40.416Z",
+      "type": "step.completed",
+      "step": "dense.008.maintenance.write.7",
+      "resultKind": "Committed",
+      "activity": {
+        "id": "92716997-b2db-4252-8635-cf80b4744d64",
+        "actionId": "a8d7c538-1a25-4efc-b969-37c3a9d68e7a"
+      }
+    },
+    {
+      "at": "2026-11-10T09:38:40.417Z",
+      "type": "step.started",
+      "step": "dense.008.maintenance.write.8",
+      "argv": [
+        "file",
+        "write",
+        "sim-sdk-df464e9d065833082c40/sdk-df464e9d065833082c40",
+        "validation-008",
+        "/docs/revision-validation-review.md",
+        "--message",
+        "Revise validation review: cycle 8, revision 351"
+      ]
+    },
+    {
+      "at": "2026-11-10T09:38:40.463Z",
+      "type": "step.completed",
+      "step": "dense.008.a.write.2",
+      "resultKind": "Committed",
+      "activity": {
+        "id": "66f09ef8-89cb-416f-872a-c8254bd51f43",
+        "actionId": "a8d7c538-1a25-4efc-b969-37c3a9d68e7a"
+      }
+    },
+    {
+      "at": "2026-11-10T09:38:40.463Z",
+      "type": "step.started",
+      "step": "dense.008.a.session.001.unmount",
+      "argv": [
+        "workspace",
+        "unmount",
+        "sim-df464e9d065833082c40-1:a-008-001"
+      ]
+    },
+    {
+      "at": "2026-11-10T09:38:40.499Z",
+      "type": "step.completed",
+      "step": "dense.008.b.session.001.unmount",
+      "resultKind": "Unmounted",
+      "activity": {
+        "id": "73932e18-35fb-4097-a3d5-77f3be1358d6",
+        "actionId": "a8d7c538-1a25-4efc-b969-37c3a9d68e7a"
+      }
+    },
+    {
+      "at": "2026-11-10T09:38:40.499Z",
+      "type": "step.started",
+      "step": "dense.008.b.session.002.mount",
+      "argv": [
+        "workspace",
+        "mount",
+        "sim-df464e9d065833082c40-1",
+        "pagination-008",
+        "--name",
+        "b-008-002"
+      ]
+    },
+    {
+      "at": "2026-11-10T09:38:40.556Z",
+      "type": "step.completed",
+      "step": "dense.008.maintenance.write.8",
+      "resultKind": "Committed",
+      "activity": {
+        "id": "9b055e6c-ac90-456f-bbed-173b725143a2",
+        "actionId": "a8d7c538-1a25-4efc-b969-37c3a9d68e7a"
+      }
+    },
+    {
+      "at": "2026-11-10T09:38:40.557Z",
+      "type": "step.started",
+      "step": "dense.008.maintenance.write.9",
+      "argv": [
+        "file",
+        "write",
+        "sim-sdk-df464e9d065833082c40/sdk-df464e9d065833082c40",
+        "validation-008",
+        "/docs/revision-validation-specification.json",
+        "--message",
+        "Revise validation specification: cycle 8, revision 352"
+      ]
+    },
+    {
+      "at": "2026-11-10T09:38:40.735Z",
+      "type": "step.completed",
+      "step": "dense.008.a.session.001.unmount",
+      "resultKind": "Unmounted",
+      "activity": {
+        "id": "b1d2b983-855c-410b-a1bb-49d136429717",
+        "actionId": "a8d7c538-1a25-4efc-b969-37c3a9d68e7a"
+      }
+    },
+    {
+      "at": "2026-11-10T09:38:40.745Z",
+      "type": "step.started",
+      "step": "dense.008.a.session.002.mount",
+      "argv": [
+        "workspace",
+        "mount",
+        "sim-df464e9d065833082c40-1",
+        "requests-008",
+        "--name",
+        "a-008-002"
+      ]
+    },
+    {
+      "at": "2026-11-10T09:38:40.746Z",
+      "type": "step.failed",
+      "step": "dense.008.b.session.002.mount",
+      "error": "saved Workspace is no longer mounted",
+      "code": "NotMounted",
+      "transport": "refusal",
+      "replayAllowed": false
+    },
+    {
+      "at": "2026-11-10T09:38:40.793Z",
+      "type": "step.completed",
+      "step": "dense.008.maintenance.write.9",
+      "resultKind": "Committed",
+      "activity": {
+        "id": "41a783e8-55df-4175-b0ae-da470da3d03a",
+        "actionId": "a8d7c538-1a25-4efc-b969-37c3a9d68e7a"
+      }
+    },
+    {
+      "at": "2026-11-10T09:38:40.855Z",
+      "type": "step.failed",
+      "step": "dense.008.a.session.002.mount",
+      "error": "saved Workspace is no longer mounted",
+      "replayAllowed": false
+    },
+    {
+      "at": "2026-11-10T09:38:40.894Z",
+      "type": "run.finished",
+      "error": "saved Workspace is no longer mounted"
+    }
+  ],
+  "findings": {
+    "prematureDependencies": 0,
+    "duplicateAttempts": 0,
+    "plannedMountNames": 576,
+    "confirmedDistinctWorkspaces": 338,
+    "remainingMountedRecords": 0,
+    "nextPeerMountCancelledBeforeSpawn": true,
+    "uncertainMutationsReplayed": false
+  },
+  "layerfsSource": {
+    "head": "1edcf58caec2bf079a07891411a0151c9afa3e80",
+    "artifactDirty": true,
+    "refresh": "control/crates/layerfs-sandbox/src/files.rs:253",
+    "unmount": "control/crates/layerfs-sandbox/src/workspace/serve.rs:264",
+    "filesUnchangedInPinnedWorktree": true
+  },
+  "schedulingCorrection": "A mount or unmount takes exclusive admission for its Sandbox; other workspace operations take shared admission. Unrelated Sandboxes and file operations remain parallel. No retry or LayerFS source change."
+}

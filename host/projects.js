@@ -6,7 +6,7 @@
 //   list          project.list(), each marked with the run that made it
 //   create/init   project.init(key, folder, { on_progress }) into an existing
 //                 Store; Connect keeps its own table of the Inits it started
-//   state         branch.list, commit.list per Branch, sandbox.list and
+//   state         branch.list metadata, sandbox.list and
 //                 store.status: the Store's facts, no Sandbox asked
 //   sandboxes     sandbox.list with each Sandbox's Workspaces (sandbox.get)
 //   createSandbox sandbox.create(key, name, machine, { image })
@@ -18,7 +18,8 @@
 // Every LayerFS call is made once; a refusal passes through with its code.
 // Saved reads are pinned and paged through project-reads.js. Store allocation
 // and project tree statistics are independent queries with separate scopes.
-import { projectReads } from './project-reads.js'
+import { projectReads, HISTORY_PAGE_SIZE } from './project-reads.js'
+import { StorageObservations } from './storage-observations.js'
 import { randomUUID } from 'node:crypto'
 import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync } from 'node:fs'
 import { isAbsolute, join } from 'node:path'
@@ -70,6 +71,7 @@ function keep(map, key, value, most) {
 }
 
 /** A 2.0 Commit record -> CommitInfo. */
+export const savedRef = (id, branch) => id ? { id, kind: isLayer(id) ? 'Layer' : 'Commit', branch: branch ?? '' } : null
 export const commitInfo = (c, branch) => ({
   id: c.id,
   branch: c.branch ?? c.ref?.branch ?? branch ?? '',
@@ -83,6 +85,14 @@ export const commitInfo = (c, branch) => ({
   sourceBranch: c.source_branch ?? null,
   sourceTime: c.source_time ?? null,
   logical: c.logical ?? null,
+  savedKind: isLayer(c.id) ? 'layer' : 'commit',
+  ref: c.ref ?? savedRef(c.id, c.branch ?? branch),
+  parentRef: c.parent_ref ?? savedRef(c.parent ?? c.base, c.branch ?? branch),
+  sourceRef: c.source_commit_ref ?? c.source_ref ?? savedRef(c.source_commit, c.source_branch),
+  timeStatus: c.time_status ?? (typeof c.time === 'number' ? 'recorded' : 'unavailable'),
+  newCanonical: c.new_canonical ?? null,
+  newStored: c.new_stored ?? null,
+  newMetadata: c.new_metadata ?? null,
 })
 
 /** An SDK `op` ({ id, name, phase, started, uncertain }), or null. */
@@ -131,6 +141,7 @@ export class Projects {
     this.daemon = daemon
     this.log = log
     this.lfs = client ?? layerfs(spec)
+    this.storageObservations = new StorageObservations(spec)
     /** Commit id -> its changed paths, or null when LayerFS cannot compare it */
     this.changes = new Map()
     /** Init job id -> ProjectInitJob: the Inits this host started (2.0 keeps no job registry) */
@@ -147,7 +158,7 @@ export class Projects {
     const platform = process.platform === 'darwin' ? 'macos' : process.platform === 'win32' ? 'windows' : 'linux'
     return {
       platform,
-      mode: this.spec.mode ?? 'real',
+      mode: 'real',
       layerfs: linkedVersion(),
       settings: { state: this.spec.state, home: this.spec.home, cli: this.spec.cli },
       daemon: this.daemon ? { recorded: !!(this.daemon.recorded || this.daemon.kept), why: this.daemon.why ?? null } : null,
@@ -279,7 +290,7 @@ export class Projects {
   }
 
   /**
-   * ProjectState from the Store alone: its Branches, their Commits, its
+   * ProjectState from the Store alone: its Branch metadata, its
    * Sandbox records and the Store file's size. No Sandbox is asked. While its
    * Store is busy (a push or pull) or unresolved, Store calls are refused
    * (Busy, Unresolved); while it is down none is made (U3): the page then gets what the
@@ -309,19 +320,15 @@ export class Projects {
         layers: [],
         sandboxes: sandboxes.map((s) => sandboxInfo(s)),
         last: null,
-        commits: 0,
+        commits: null,
         store: { path: null, bytes: status?.file?.exists ? (status.file.bytes ?? 0) + (status.file.wal_bytes ?? 0) : null },
         storage: null,
       }
     }
-    const byId = new Map()
-    await each(listed.filter((b) => b.name !== 'main'), WIDTH, async (b) => {
-      for (const c of await this.ownCommits(project, b, PAGE)) byId.set(c.id, c)
-    })
-    const branches = branchInfos(listed, byId)
+    // Every project tab needs this shell. History must never gate Files,
+    // Storage or Sandboxes; load saved revisions through their paged routes.
+    const branches = branchInfos(listed)
     const main = listed.find((b) => b.name === 'main')
-    let newest = null
-    for (const c of byId.values()) if (typeof c.time === 'number' && (!newest || c.time > newest.time)) newest = c
     const file = status?.file
     return {
       project: { ...this.summary(record, this.madeBy()), ...storeFacts },
@@ -329,8 +336,8 @@ export class Projects {
       // 2.0 lists none of main's Layers but its newest (§9 Q3)
       layers: main?.base ? [{ id: main.base, message: '', at: null, from: null }] : [],
       sandboxes: sandboxes.map((s) => sandboxInfo(s)),
-      last: newest ? commitInfo(newest) : null,
-      commits: byId.size,
+      last: null,
+      commits: null,
       store: { path: null, bytes: file?.exists ? (file.bytes ?? 0) + (file.wal_bytes ?? 0) : null },
       // the Store's totals have no 2.0 call (§9 Q4): summed from the Commits read
       storage: null,
@@ -401,7 +408,29 @@ export class Projects {
   async branches(key, query) { return projectReads.branches.call(this, key, query) }
   async fileQuery(key, query) { return projectReads.fileQuery.call(this, key, query) }
   async projectStats(key, query) { return projectReads.projectStats.call(this, key, query) }
-  async storeStats(name) { return this.lfs.store.stats(name) }
+  async storageHistory(key, query) { return projectReads.storageHistory.call(this, key, query) }
+  async storageReport(key, query) { return projectReads.storageReport.call(this, key, query) }
+  async storeStorageReport(name, query) { return projectReads.storeStorageReport.call(this, name, query) }
+  async storeStats(name) {
+    let stats = await this.lfs.store.stats(name)
+    if (stats.kind === 'sqlite') {
+      try {
+        const status = await this.lfs.store.status(name), file = status.file
+        stats = { ...stats, fileMeasurements: file?.exists === true ? { observedAt: Date.now(), bytes: file.bytes ?? null, walBytes: file.wal_bytes ?? null, incomingBytes: file.incoming_bytes ?? null } : null }
+        if (file?.unavailable || status.down_reason) stats.fileMeasurementError = file?.unavailable ?? status.down_reason
+      } catch (error) {
+        stats = { ...stats, fileMeasurements: null, fileMeasurementError: String(error.message ?? error) }
+      }
+    }
+    try {
+      await this.storageObservations.record(name, stats, await this.lfs.store.get(name))
+      return stats
+    } catch (error) {
+      // Measurement success remains visible even if local observation persistence fails.
+      return { ...stats, observationError: String(error.message ?? error) }
+    }
+  }
+  async storeObservations(name) { return this.storageObservations.read(name) }
 
   async commits(key, branch, limitText) {
     checkBranch(branch)
@@ -435,10 +464,18 @@ export class Projects {
 
   /** A Branch's own Commits (records), newest first: commit.list stops at the fork. */
   async ownCommits(project, branch, limit) {
-    const result = await this.lfs.branch.commits(project, branch.name, { page: 1, page_size: Math.min(PAGE, limit) })
-    const items = (result.items ?? []).map(c => ({ ...c, branch: c.branch ?? c.ref?.branch ?? branch.name }))
-    const boundary = items.findIndex(c => c.id === branch.forked_from)
-    return boundary < 0 ? items : items.slice(0, boundary)
+    const items = []
+    let at
+    while (items.length < limit) {
+      const result = await this.lfs.branch.commits(project, branch.name, { page: 1, page_size: Math.min(HISTORY_PAGE_SIZE, limit - items.length), ...(at ? { at_commit: at } : {}) })
+      const rows = (result.items ?? []).map(c => ({ ...c, branch: c.branch ?? c.ref?.branch ?? branch.name }))
+      const boundary = rows.findIndex(c => c.id === branch.forked_from)
+      items.push(...(boundary < 0 ? rows : rows.slice(0, boundary)))
+      const parent = rows.at(-1)?.parent
+      if (!result.has_more || boundary >= 0 || !parent || parent === branch.forked_from || parent === at || !rows.length) break
+      at = parent
+    }
+    return items
   }
 
   /** CommitInfo[] of records, each with its changed paths. */
@@ -505,14 +542,14 @@ export class Projects {
 }
 
 /** BranchInfo[] from branch.list records and the Commits read (by id). */
-export function branchInfos(listed, byId) {
-  const merges = [...byId.values()].filter((c) => c.via === 'merge')
+export function branchInfos(listed, byId = null) {
+  const merges = byId ? [...byId.values()].filter((c) => c.via === 'merge') : []
   return listed.map((b) => {
     if (b.name === 'main') return { name: 'main', head: b.base ?? null, parent: null, forkedFrom: null, state: 'open', commits: 0 }
     const head = b.head ?? null
-    const parent = b.forked_from ? (isLayer(b.forked_from) ? 'main' : (byId.get(b.forked_from)?.branch ?? null)) : null
-    let commits = 0
-    for (const c of byId.values()) if (c.branch === b.name) commits++
+    const parent = b.forked_from ? (isLayer(b.forked_from) ? 'main' : (byId?.get(b.forked_from)?.branch ?? null)) : null
+    let commits = byId ? 0 : null
+    if (byId) for (const c of byId.values()) if (c.branch === b.name) commits++
     // which Branches were published has no 2.0 read (§9 Q3): a Branch is open or merged
     const merged = !!head && merges.some((c) => c.branch !== b.name && (c.parent === head || c.second_parent === head || c.merged_from === head))
     return { name: b.name, head: head ?? b.base ?? null, parent, forkedFrom: b.forked_from ?? null, state: merged ? 'merged' : 'open', commits }

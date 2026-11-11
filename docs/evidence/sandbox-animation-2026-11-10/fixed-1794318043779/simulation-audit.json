@@ -1,0 +1,61 @@
+{
+  "audits": {
+    "62c84908-fcc1-4f05-b090-ba5e780f59bd": {
+      "id": "62c84908-fcc1-4f05-b090-ba5e780f59bd",
+      "template": "design",
+      "project": "sim-design-74d9cf77585e36f0cc8a/design-74d9cf77585e36f0cc8a",
+      "store": "sim-design-74d9cf77585e36f0cc8a",
+      "plannedCommands": 553,
+      "completedCommands": 633,
+      "conversations": 1,
+      "children": 1,
+      "reusedChildren": 1,
+      "collectedResults": 3,
+      "bashStepsVerified": 550,
+      "agentTurns": {
+        "c01-tokens/main": 2,
+        "c01-tokens/a01-worker": 1
+      },
+      "maxAgentTurns": 2,
+      "turnLimitVerified": true,
+      "packageIdentity": {
+        "algorithm": "sha256",
+        "manifestHashes": "84770b092d155f10d9b82089bfd642d925d2e896016c3f2b917910d9eeaafdb0",
+        "sourceFiles": 16,
+        "importedSource": "3576647ca85b0143b21ff083580da66d9e7c38e302bb392bcf65cd22a43a5306"
+      },
+      "checkedSandboxCount": 1,
+      "checkedWorkspaceCalls": 288,
+      "lifecycleAdmissionVerified": true,
+      "verification": {
+        "project": "sim-design-74d9cf77585e36f0cc8a/design-74d9cf77585e36f0cc8a",
+        "tier": 1,
+        "cycles": 1,
+        "branches": 15,
+        "commits": 288,
+        "merges": 4,
+        "publications": 59,
+        "layers": 60,
+        "filesVerified": 44,
+        "publicationReceiptsVerified": true
+      },
+      "workspaceSessions": 48
+    }
+  },
+  "concurrency": {
+    "peak": 1,
+    "simultaneousRunsProved": false,
+    "selectedRuns": 1
+  },
+  "binarySources": [
+    {
+      "version": "2.0.0",
+      "commit": "1edcf58caec2bf079a07891411a0151c9afa3e80",
+      "dirty": true,
+      "features": [
+        "machine",
+        "postgresql"
+      ]
+    }
+  ]
+}

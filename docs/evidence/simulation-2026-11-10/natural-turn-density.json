@@ -1,0 +1,138 @@
+{
+  "recordedAt": "2026-11-10T11:44:54.022Z",
+  "description": "Bash calls within natural user turns from compiled immutable plans. Both full batches were independently matched to actual persisted Pi prompts, Bash calls and receipts by completed live audits; all 16 histories were rechecked through the restored host API.",
+  "modes": {
+    "nonmixed": [
+      {
+        "project": "design",
+        "turns": 23,
+        "totalBashSteps": 2933,
+        "minBashSteps": 35,
+        "medianBashSteps": 113,
+        "maxBashSteps": 209
+      },
+      {
+        "project": "billing",
+        "turns": 30,
+        "totalBashSteps": 3255,
+        "minBashSteps": 35,
+        "medianBashSteps": 113,
+        "maxBashSteps": 209
+      },
+      {
+        "project": "sdk",
+        "turns": 43,
+        "totalBashSteps": 3899,
+        "minBashSteps": 35,
+        "medianBashSteps": 80,
+        "maxBashSteps": 129
+      },
+      {
+        "project": "evaluation",
+        "turns": 54,
+        "totalBashSteps": 4865,
+        "minBashSteps": 35,
+        "medianBashSteps": 80,
+        "maxBashSteps": 129
+      },
+      {
+        "project": "embeddings",
+        "turns": 70,
+        "totalBashSteps": 6153,
+        "minBashSteps": 35,
+        "medianBashSteps": 80,
+        "maxBashSteps": 129
+      },
+      {
+        "project": "compiler",
+        "turns": 97,
+        "totalBashSteps": 7763,
+        "minBashSteps": 35,
+        "medianBashSteps": 80,
+        "maxBashSteps": 113
+      },
+      {
+        "project": "gateway",
+        "turns": 121,
+        "totalBashSteps": 9695,
+        "minBashSteps": 35,
+        "medianBashSteps": 80,
+        "maxBashSteps": 113
+      },
+      {
+        "project": "website",
+        "turns": 153,
+        "totalBashSteps": 12271,
+        "minBashSteps": 35,
+        "medianBashSteps": 80,
+        "maxBashSteps": 113
+      }
+    ],
+    "mixed": [
+      {
+        "project": "design",
+        "turns": 23,
+        "totalBashSteps": 4662,
+        "minBashSteps": 36,
+        "medianBashSteps": 113,
+        "maxBashSteps": 401
+      },
+      {
+        "project": "billing",
+        "turns": 30,
+        "totalBashSteps": 5176,
+        "minBashSteps": 36,
+        "medianBashSteps": 113,
+        "maxBashSteps": 401
+      },
+      {
+        "project": "sdk",
+        "turns": 43,
+        "totalBashSteps": 6204,
+        "minBashSteps": 36,
+        "medianBashSteps": 113,
+        "maxBashSteps": 289
+      },
+      {
+        "project": "evaluation",
+        "turns": 54,
+        "totalBashSteps": 7746,
+        "minBashSteps": 36,
+        "medianBashSteps": 113,
+        "maxBashSteps": 289
+      },
+      {
+        "project": "embeddings",
+        "turns": 70,
+        "totalBashSteps": 9802,
+        "minBashSteps": 36,
+        "medianBashSteps": 113,
+        "maxBashSteps": 289
+      },
+      {
+        "project": "compiler",
+        "turns": 97,
+        "totalBashSteps": 12372,
+        "minBashSteps": 36,
+        "medianBashSteps": 112,
+        "maxBashSteps": 240
+      },
+      {
+        "project": "gateway",
+        "turns": 121,
+        "totalBashSteps": 15456,
+        "minBashSteps": 36,
+        "medianBashSteps": 112,
+        "maxBashSteps": 240
+      },
+      {
+        "project": "website",
+        "turns": 153,
+        "totalBashSteps": 19568,
+        "minBashSteps": 36,
+        "medianBashSteps": 112,
+        "maxBashSteps": 240
+      }
+    ]
+  }
+}

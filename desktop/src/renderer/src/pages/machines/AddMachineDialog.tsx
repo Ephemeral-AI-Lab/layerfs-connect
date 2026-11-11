@@ -1,4 +1,4 @@
-import { useElapsed } from '@/layerfs/use-elapsed'
+import { MachineProgress } from '@/pages/machines/MachineProgress'
 import { host } from '@/layerfs/client'
 import { fill } from '@/lib/text'
 // Add a machine (docs/ui/machines.md), the dialog New machine opens:
@@ -33,7 +33,7 @@ import {
   type VmKind,
   declares,
 } from '@/layerfs/compute'
-import type { MachineAction } from '@/layerfs/compute-sim'
+import type { MachineAction } from '@/layerfs/machine-actions'
 import { cn } from '@/lib/utils'
 import type { MachineInfo, MachinePlatformInfo } from '@/layerfs/host-api'
 
@@ -52,30 +52,35 @@ interface Props {
   onMade: (name: string) => void
   /** The linked LayerFS's version, for the bundle's folder. */
   layerfs?: string | null
+  onBusyChange?: (busy: boolean) => void
 }
 
 /** New machine's dialog: the platforms, each with its readiness and its form. */
 export function AddMachineDialog({ open, onOpenChange, onMade, ...rest }: Omit<Props, 'open' | 'onOpen'> & { open: boolean; onOpenChange: (open: boolean) => void }) {
   const [form, setForm] = useState<string | null>(null)
+  const [creating, setCreating] = useState(false)
   const change = (o: boolean) => {
+    if (creating && !o) return
     onOpenChange(o)
     if (!o) setForm(null)
   }
   return (
     <Dialog open={open} onOpenChange={change}>
-      <DialogContent className="max-h-[calc(100svh-32px)] overflow-y-auto sm:max-w-2xl">
+      <DialogContent showCloseButton={!creating} className="max-h-[calc(100svh-32px)] overflow-y-auto sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>{'Add a machine'}</DialogTitle>
           <DialogDescription>{'Create a VM on this computer.'}</DialogDescription>
         </DialogHeader>
-        <AddMachine {...rest} open={form} onOpen={setForm} onMade={(name) => (change(false), onMade(name))} />
+        <AddMachine {...rest} open={form} onOpen={setForm} onBusyChange={setCreating} onMade={(name) => { setCreating(false); setForm(null); onOpenChange(false); onMade(name) }} />
       </DialogContent>
     </Dialog>
   )
 }
 
-export function AddMachine({ platforms, machines, os, open, onOpen, act, onMade, layerfs = null }: Props) {
+export function AddMachine({ platforms, machines, os, open, onOpen, act, onMade, onBusyChange, layerfs = null }: Props) {
   const [help, setHelp] = useState<string | null>(null)
+  const [busy, setBusy] = useState(false)
+  const changeBusy = (value: boolean) => { setBusy(value); onBusyChange?.(value) }
   return (
     <div className="@container/add min-w-0 overflow-hidden rounded-lg-plus bg-card/50 ring-1 ring-foreground/8">
       {platforms.map((c, i) => {
@@ -102,7 +107,7 @@ export function AddMachine({ platforms, machines, os, open, onOpen, act, onMade,
                 </p>
               </div>
               {c.ready ? (
-                <Button size="sm" variant={expanded ? 'secondary' : 'outline'} className="h-7 shrink-0 rounded-md px-3 text-sm" aria-expanded={expanded} onClick={() => onOpen(expanded ? null : c.platform)}>
+                <Button size="sm" variant={expanded ? 'secondary' : 'outline'} className="h-7 shrink-0 rounded-md px-3 text-sm" disabled={busy} aria-expanded={expanded} onClick={() => onOpen(expanded ? null : c.platform)}>
                   {'Create'}
                 </Button>
               ) : tool ? (
@@ -124,7 +129,7 @@ export function AddMachine({ platforms, machines, os, open, onOpen, act, onMade,
             {expanded && c.ready && (
               <div className="px-4 pb-4 @min-[544px]/add:pl-13">
                 {isVmKind(c.platform) ? (
-                  <VmMachineForm kind={c.platform} machines={machines} platforms={platforms} act={act} onDone={(name) => (onOpen(null), onMade(name))} onCancel={() => onOpen(null)} />
+                  <VmMachineForm onBusyChange={changeBusy} kind={c.platform} machines={machines} platforms={platforms} act={act} onDone={(name) => (onOpen(null), onMade(name))} onCancel={() => onOpen(null)} />
                 ) : null}
               </div>
             )}
@@ -147,7 +152,7 @@ function useFirstFocus() {
 
 const ARCHIVE = 'archive'
 
-function VmMachineForm({ kind, machines, platforms, act, onDone, onCancel }: { kind: VmKind; machines: MachineInfo[]; platforms: MachinePlatformInfo[]; act: Props['act']; onDone: (name: string) => void; onCancel: () => void }) {
+function VmMachineForm({ kind, machines, platforms, act, onDone, onCancel, onBusyChange }: { onBusyChange: (busy: boolean) => void; kind: VmKind; machines: MachineInfo[]; platforms: MachinePlatformInfo[]; act: Props['act']; onDone: (name: string) => void; onCancel: () => void }) {
   const first = useFirstFocus()
   // the fields this platform's machine.create takes (machine.platforms options)
   const has = (option: string) => declares(platforms, kind, option)
@@ -158,9 +163,9 @@ function VmMachineForm({ kind, machines, platforms, act, onDone, onCancel }: { k
   const [tried, setTried] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<unknown>(null)
-  const elapsed = useElapsed(busy)
+  const [submittedName, setSubmittedName] = useState<string | null>(null)
   const [inspection, setInspection] = useState<string | null>(null)
-  const inspect = async () => { try { const answer = await host.inspectMachine(f.name.trim()); setInspection(`Observed ${new Date().toLocaleTimeString()}: ${answer.state ?? 'unknown'}`) } catch (e) { setInspection(e instanceof Error ? e.message : String(e)) } }
+  const inspect = async () => { try { const answer = await host.inspectMachine(submittedName ?? f.name.trim()); setInspection(`Observed ${new Date().toLocaleTimeString()}: ${answer.state ?? 'unknown'}`) } catch (e) { setInspection(e instanceof Error ? e.message : String(e)) } }
   const errors = vmErrors(f, machines)
   const shown: FormErrors<VmForm> = tried ? errors : {}
   const set = (key: keyof VmForm) => (e: React.ChangeEvent<HTMLInputElement>) => setF({ ...f, [key]: e.target.value })
@@ -168,26 +173,30 @@ function VmMachineForm({ kind, machines, platforms, act, onDone, onCancel }: { k
   const submit = async (e: React.FormEvent) => {
     e.preventDefault()
     setTried(true)
-    if (Object.keys(errors).length) return
+    if (busy || Object.keys(errors).length) return
     // checked once: while it is made, the machine list holds its name, which is not a clash
     setTried(false)
     setBusy(true)
+    onBusyChange(true)
+    setSubmittedName(f.name.trim())
     setError(null)
     const name = f.name.trim()
     const size = { ...(has('cpus') ? { cpus: Number(f.cpus) } : {}), ...(has('memory') ? { memory: parseSize(f.memory)! } : {}), ...(has('disk') ? { disk: parseSize(f.disk)! } : {}) }
     const image = has('image') && imageMode === ARCHIVE ? f.image.trim() : undefined
     try {
       await act({ kind: 'create', input: { platform: kind, name, ...size, ...(image ? { image } : {}) } })
-      onDone(name)
+      if (first.current?.isConnected) onDone(name)
     } catch (err) {
       setError(err)
     } finally {
       setBusy(false)
+      onBusyChange(false)
     }
   }
 
   return (
     <form noValidate onSubmit={(e) => void submit(e)} className="flex flex-col gap-3 rounded-lg-plus bg-card/70 p-3.5 ring-1 ring-foreground/8" aria-label={`New ${fill(kindLabel(kind))} machine`}>
+      <fieldset disabled={busy} className="contents">
       <div className="grid grid-cols-2 gap-3 @min-[544px]/add:grid-cols-4">
         <Field label={'Name'} error={say(shown, 'name')} className="col-span-2 @min-[544px]/add:col-span-1">
           <Input ref={first} value={f.name} onChange={set('name')} placeholder={suggested} aria-invalid={!!shown.name} autoComplete="off" spellCheck={false} className="h-8 text-md" />
@@ -211,7 +220,7 @@ function VmMachineForm({ kind, machines, platforms, act, onDone, onCancel }: { k
 
       <div className="grid grid-cols-1 gap-3 @min-[544px]/add:grid-cols-2">
         {has('image') && <Field label={'Sandbox image'} error={imageMode === ARCHIVE ? say(shown, 'image') : null}>
-          <Select value={imageMode} onValueChange={(v) => setImageMode(v === ARCHIVE ? ARCHIVE : 'default')}>
+          <Select disabled={busy} value={imageMode} onValueChange={(v) => setImageMode(v === ARCHIVE ? ARCHIVE : 'default')}>
             <SelectTrigger size="sm" className="h-8 w-full rounded-lg-plus text-md" aria-label={'Sandbox image'}>
               <SelectValue />
             </SelectTrigger>
@@ -230,8 +239,11 @@ function VmMachineForm({ kind, machines, platforms, act, onDone, onCancel }: { k
         )}
       </div>
 
-      {error !== null && <div className="flex flex-wrap gap-2 text-sm"><Button type="button" variant="outline" onClick={() => void inspect()}>Inspect current state</Button>{(error as { code?: string }).code === 'Unknown' && <Button type="button" variant="outline" onClick={() => { onCancel(); onDone(f.name.trim()) }}>View machine and removal options</Button>}{inspection && <p role="status">{inspection}</p>}</div>}
-      <FormButtons busy={busy} label={'Create'} busyLabel={`Creating… ${elapsed}s`} onCancel={onCancel} error={error} invalid={tried && Object.keys(errors).length > 0} />
+      </fieldset>
+      {submittedName && <MachineProgress name={submittedName} />}
+      {busy && <p className="text-xs text-muted-foreground">Keep this dialog open while the machine is being created.</p>}
+      {error !== null && <div className="flex flex-wrap gap-2 text-sm"><Button type="button" variant="outline" onClick={() => void inspect()}>Inspect current state</Button>{((error as { code?: string }).code === 'Unknown' || (error as { detail?: { vm_exists?: boolean } }).detail?.vm_exists === true) && <Button type="button" variant="outline" onClick={() => { onCancel(); onDone(submittedName ?? f.name.trim()) }}>View machine and removal options</Button>}{inspection && <p role="status">{inspection}</p>}</div>}
+      <FormButtons busy={busy} label={'Create'} busyLabel="Creating…" onCancel={onCancel} error={error} invalid={tried && Object.keys(errors).length > 0} />
     </form>
   )
 }

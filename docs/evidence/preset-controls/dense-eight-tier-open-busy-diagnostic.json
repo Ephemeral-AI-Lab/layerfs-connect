@@ -1,0 +1,283 @@
+{
+  "state": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/connect-dense-full-yvAmVT",
+  "cli": "/Users/yifanxu/.cache/layerfs-worktrees/layerfs-macos-writer-adm-905cf46b6910/artifacts/build-macos-02b03f77bf59405c827fc095bc618eb4/layerfs",
+  "linuxBundle": "/Users/yifanxu/.cache/layerfs-worktrees/layerfs-connect-image-ru-5b7a74044d64/linux-runtime/2.0.0/linux-aarch64",
+  "started": 1794286026381,
+  "scope": "Production Studio: four machines, four stores, eight unequal tiers concurrently on final machines. No sandboxes/workspaces. No command retries.",
+  "plans": [
+    {
+      "project": "demo-studio/website",
+      "machine": "native",
+      "tier": 8,
+      "commits": 10056,
+      "branches": 199,
+      "layers": 2095,
+      "commands": 12271
+    },
+    {
+      "project": "demo-studio/design",
+      "machine": "native",
+      "tier": 1,
+      "commits": 2400,
+      "branches": 54,
+      "layers": 500,
+      "commands": 2933
+    },
+    {
+      "project": "demo-services/gateway",
+      "machine": "docker",
+      "tier": 7,
+      "commits": 7944,
+      "branches": 159,
+      "layers": 1655,
+      "commands": 9695
+    },
+    {
+      "project": "demo-services/billing",
+      "machine": "docker",
+      "tier": 2,
+      "commits": 2664,
+      "branches": 59,
+      "layers": 555,
+      "commands": 3255
+    },
+    {
+      "project": "demo-build-cache/compiler",
+      "machine": "demo-build",
+      "tier": 6,
+      "commits": 6360,
+      "branches": 129,
+      "layers": 1325,
+      "commands": 7763
+    },
+    {
+      "project": "demo-build-cache/sdk",
+      "machine": "demo-build",
+      "tier": 3,
+      "commits": 3192,
+      "branches": 69,
+      "layers": 665,
+      "commands": 3899
+    },
+    {
+      "project": "demo-experiments/embeddings",
+      "machine": "demo-research",
+      "tier": 5,
+      "commits": 5040,
+      "branches": 104,
+      "layers": 1050,
+      "commands": 6153
+    },
+    {
+      "project": "demo-experiments/evaluation",
+      "machine": "demo-research",
+      "tier": 4,
+      "commits": 3984,
+      "branches": 84,
+      "layers": 830,
+      "commands": 4865
+    }
+  ],
+  "progress": {
+    "stage": "building",
+    "completed": 4,
+    "total": 50842,
+    "label": "Machine demo-research ready"
+  },
+  "tasks": [
+    {
+      "id": "demo-studio/website",
+      "project": "demo-studio/website",
+      "machine": "native",
+      "tier": 8,
+      "state": "failed",
+      "completed": 46,
+      "total": 12271,
+      "commits": 32,
+      "branches": 13,
+      "layers": 5,
+      "targetCommits": 10056,
+      "targetBranches": 200,
+      "targetLayers": 2095,
+      "started": 1794286072436,
+      "ended": 1794286074711,
+      "error": "Store open: Store busy before effect",
+      "errorCode": "Failed"
+    },
+    {
+      "id": "demo-studio/design",
+      "project": "demo-studio/design",
+      "machine": "native",
+      "tier": 1,
+      "state": "stopped",
+      "completed": 45,
+      "total": 2933,
+      "commits": 31,
+      "branches": 13,
+      "layers": 5,
+      "targetCommits": 2400,
+      "targetBranches": 55,
+      "targetLayers": 500,
+      "started": 1794286072456,
+      "ended": 1794286074712,
+      "error": "Stopped before the next CLI step because another project failed. Inspect CLI Activity before rebuilding.",
+      "errorCode": "PresetStopped"
+    },
+    {
+      "id": "demo-services/gateway",
+      "project": "demo-services/gateway",
+      "machine": "docker",
+      "tier": 7,
+      "state": "stopped",
+      "completed": 62,
+      "total": 9695,
+      "commits": 48,
+      "branches": 13,
+      "layers": 5,
+      "targetCommits": 7944,
+      "targetBranches": 160,
+      "targetLayers": 1655,
+      "started": 1794286072463,
+      "ended": 1794286074741,
+      "error": "Stopped before the next CLI step because another project failed. Inspect CLI Activity before rebuilding.",
+      "errorCode": "PresetStopped"
+    },
+    {
+      "id": "demo-services/billing",
+      "project": "demo-services/billing",
+      "machine": "docker",
+      "tier": 2,
+      "state": "stopped",
+      "completed": 61,
+      "total": 3255,
+      "commits": 47,
+      "branches": 13,
+      "layers": 5,
+      "targetCommits": 2664,
+      "targetBranches": 60,
+      "targetLayers": 555,
+      "started": 1794286072484,
+      "ended": 1794286074737,
+      "error": "Stopped before the next CLI step because another project failed. Inspect CLI Activity before rebuilding.",
+      "errorCode": "PresetStopped"
+    },
+    {
+      "id": "demo-build-cache/compiler",
+      "project": "demo-build-cache/compiler",
+      "machine": "demo-build",
+      "tier": 6,
+      "state": "stopped",
+      "completed": 62,
+      "total": 7763,
+      "commits": 48,
+      "branches": 13,
+      "layers": 5,
+      "targetCommits": 6360,
+      "targetBranches": 130,
+      "targetLayers": 1325,
+      "started": 1794286072491,
+      "ended": 1794286074727,
+      "error": "Stopped before the next CLI step because another project failed. Inspect CLI Activity before rebuilding.",
+      "errorCode": "PresetStopped"
+    },
+    {
+      "id": "demo-build-cache/sdk",
+      "project": "demo-build-cache/sdk",
+      "machine": "demo-build",
+      "tier": 3,
+      "state": "stopped",
+      "completed": 62,
+      "total": 3899,
+      "commits": 48,
+      "branches": 13,
+      "layers": 5,
+      "targetCommits": 3192,
+      "targetBranches": 70,
+      "targetLayers": 665,
+      "started": 1794286072510,
+      "ended": 1794286074738,
+      "error": "Stopped before the next CLI step because another project failed. Inspect CLI Activity before rebuilding.",
+      "errorCode": "PresetStopped"
+    },
+    {
+      "id": "demo-experiments/embeddings",
+      "project": "demo-experiments/embeddings",
+      "machine": "demo-research",
+      "tier": 5,
+      "state": "stopped",
+      "completed": 63,
+      "total": 6153,
+      "commits": 49,
+      "branches": 13,
+      "layers": 5,
+      "targetCommits": 5040,
+      "targetBranches": 105,
+      "targetLayers": 1050,
+      "started": 1794286072517,
+      "ended": 1794286074734,
+      "error": "Stopped before the next CLI step because another project failed. Inspect CLI Activity before rebuilding.",
+      "errorCode": "PresetStopped"
+    },
+    {
+      "id": "demo-experiments/evaluation",
+      "project": "demo-experiments/evaluation",
+      "machine": "demo-research",
+      "tier": 4,
+      "state": "stopped",
+      "completed": 65,
+      "total": 4865,
+      "commits": 51,
+      "branches": 13,
+      "layers": 5,
+      "targetCommits": 3984,
+      "targetBranches": 85,
+      "targetLayers": 830,
+      "started": 1794286072550,
+      "ended": 1794286074731,
+      "error": "Stopped before the next CLI step because another project failed. Inspect CLI Activity before rebuilding.",
+      "errorCode": "PresetStopped"
+    }
+  ],
+  "ok": false,
+  "error": {
+    "code": "Failed",
+    "message": "Store open: Store busy before effect",
+    "stack": "LayerFSError: Store open: Store busy before effect\n    at outcome (file:///Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect/host/cli/outcome.js:11:113)\n    at ChildProcess.<anonymous> (file:///Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect/host/cli/spawn.js:78:23)\n    at ChildProcess.wrapper (node:events:639:12)\n    at ChildProcess.emit (node:events:514:28)\n    at maybeClose (node:internal/child_process:1141:16)\n    at Socket.<anonymous> (node:internal/child_process:498:11)\n    at Socket.emit (node:events:514:28)\n    at Pipe.<anonymous> (node:net:362:12)"
+  },
+  "cleanup": {
+    "preset": "studio",
+    "state": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/connect-dense-full-yvAmVT",
+    "home": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/connect-dense-full-yvAmVT/home-2",
+    "actionId": "e92accbc-c93c-4258-8b4b-a62f0ec92433",
+    "cleanup": {
+      "remove": {
+        "stores": [
+          "demo-build-cache",
+          "demo-experiments",
+          "demo-services",
+          "demo-studio"
+        ],
+        "sandboxes": [],
+        "machines": [
+          "demo-build",
+          "demo-research"
+        ],
+        "workspaces": []
+      },
+      "retainMachines": [],
+      "preserved": {
+        "machine": [],
+        "store": [],
+        "sandbox": []
+      },
+      "projects": 8,
+      "signature": "d487ae90ad8b6739c81167296487b6c68ee6efd91c8693a9804c7a0268519f1c",
+      "verified": true,
+      "at": 1794286074898,
+      "remaining": [],
+      "unexpected": []
+    },
+    "activityUrl": "http://127.0.0.1:1025/#/activity?action=e92accbc-c93c-4258-8b4b-a62f0ec92433"
+  },
+  "ended": 1794286077146
+}

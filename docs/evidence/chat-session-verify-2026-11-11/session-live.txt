@@ -1,0 +1,16 @@
+{"root":"/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/lfc-sessions-live-q9a3p6","chat":"440dad9f-1d74-4bf7-abaa-8ff6d49c4bec","folder":"b7f8ea9d-6104-49cd-a470-8b3584c83827","operations":25,"folderOperations":14}
+✔ live: project-owned conversations, operations and reconstruction (10077.176708ms)
+{"root":"/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/lfc-sessions-move-En0g9p","chat":"d26ce162-8c4b-4bf5-8f01-a2c5165537d9","moved":{"store":"mv","from":"native","to":"docker","bytes":233472,"heads":"6d4945c25f9034750a3bdbf18a1d4658b62ffb3fc733fc3e4834ff4f3bf6c879"}}
+✔ live: a Store pushed to another machine rebuilds the conversation with unchanged references (2467.295667ms)
+{"root":"/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/lfc-sessions-hostshell-w6J5Hl","chat":"2a0818b8-d73e-4960-9afd-f6e242241b5e","runtime":"namespaces"}
+✔ live: a Docker-Sandbox chat runs bash on the host; its layerfs CLI calls and the save are recorded (9544.965958ms)
+{"root":"/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/lfc-sessions-backup-MurZ3a","chat":"c6bc1d77-2720-4b7e-a4f1-205e6b95758f","backup":{"bytes":237568,"sha256":"3103c9b00ad4994666b239f4623041b25004913f54a2f193d74542a1d9b030ef"}}
+✔ live: backup and restore into another home rebuilds the conversation; a renamed Store needs a binding (2067.845125ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 24233.044167

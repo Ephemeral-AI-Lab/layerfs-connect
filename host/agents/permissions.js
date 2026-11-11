@@ -89,6 +89,9 @@ export class ApprovalService {
       if (this.stopped.has(id)) throw fail(403, 'The session was stopped.')
       const input = {
         agent: request.agent, toolCallId: request.toolCallId, command: request.command,
+        // the conversation position its operations are attributed to (sessions/), when the tool knows it
+        ...(typeof request.entryId === 'string' ? { entryId: request.entryId } : {}),
+        ...(typeof request.nativeSessionId === 'string' ? { nativeSessionId: request.nativeSessionId } : {}),
         cwd: await this.manager.workspaceDirectory(id),
         ...(request.timeout === undefined ? {} : { timeout: request.timeout }),
       }

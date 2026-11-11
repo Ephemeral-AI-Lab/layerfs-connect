@@ -5,11 +5,37 @@ import { exactBytes } from '@/layerfs/exact-count'
 import type { CommitInfo } from '@/layerfs/host-api'
 import { historyApi } from '@/layerfs/history-api'
 import { branchLanes, graphNodes, layoutNodes, type BranchPage, type HistoryBranch, type Source } from './model'
-import { HistoryPreview } from './HistoryPreview'
-import { connectBridge } from '@/layerfs/bridge'
 import { HistoryComparison } from './HistoryComparison'
 import { HistoryGraph } from './HistoryGraph'
 import './history.css'
+import type { VersionLinkRow } from '@/layerfs/operations-api'
+
+const EFFECT: Record<string, string> = { created: 'created it', published: 'published it', referenced: 'referenced it', unchanged: 'saved it unchanged' }
+
+/** The known producing operation, kept apart from operations that only reference the version. */
+function VersionOperations({ commit, trace }: { commit: string; trace: HistoryTrace }) {
+  const [links, setLinks] = useState<{ producers: VersionLinkRow[]; references: VersionLinkRow[] } | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  useEffect(() => {
+    let live = true
+    setLinks(null); setError(null)
+    void trace.versionLinks!(commit).then(r => live && setLinks(r)).catch(e => live && setError(e.message))
+    return () => { live = false }
+  }, [commit, trace.versionLinks])
+  if (error) return <p role="alert" className="history-error">Operation links could not load: {error}</p>
+  if (!links) return <p>Finding linked operations…</p>
+  const row = (r: VersionLinkRow) => (
+    <li key={`${r.session_id}:${r.operation_id}:${r.role}:${r.branch_id}`}>
+      <Link className="history-trace-link" to={trace.operationHref!(r)}><ArrowUpRight size={14} />{r.method} {r.role === 'input' ? 'used it as input' : EFFECT[r.effect ?? ''] ?? 'linked it'}</Link>
+      <span className="history-op-meta">{r.title ?? 'Conversation'} · {r.agent_id ?? 'root'} · {r.branch_id}{r.inherited_from ? ' · inherited by a copy' : ''}{r.bound_from ? ` · saved as ${r.bound_from}` : ''}</span>
+    </li>
+  )
+  return <>
+    <h4>Produced by</h4>
+    {links.producers.length ? <ul className="history-ops">{links.producers.map(row)}</ul> : <p>No linked trace</p>}
+    {links.references.length > 0 && <><h4>Referenced by {links.references.length} {links.references.length === 1 ? 'operation' : 'operations'}</h4><ul className="history-ops">{links.references.slice(0, 20).map(row)}</ul></>}
+  </>
+}
 
 type View = { query: string; branch: string; selected: string | null; expanded: Set<string>; families: Set<string>; sides: Map<string, number>; top: number; left: number }
 const saved = new Map<string, View>()
@@ -20,6 +46,9 @@ export interface HistoryTrace {
   sources: Map<string, Source>
   findSource: (commit: string, signal: AbortSignal) => Promise<Map<string, Source>>
   href: (source: Source) => string
+  /** Recorded operations that produced or referenced a saved version (the conversations' journals). */
+  versionLinks?: (commit: string) => Promise<{ producers: VersionLinkRow[]; references: VersionLinkRow[] }>
+  operationHref?: (row: VersionLinkRow) => string
   childId?: string
   revision: unknown
   earlier: number
@@ -30,17 +59,14 @@ export interface HistoryTrace {
 const noSources = new Map<string, Source>()
 
 interface ProjectHistoryProps {
-  project: string; viewKey?: string; trace?: HistoryTrace; example?: boolean; tick?: number
+  project: string; viewKey?: string; trace?: HistoryTrace; tick?: number
 }
 export function ProjectHistory(props: ProjectHistoryProps) {
   const location = useLocation()
-  const [sample, setSample] = useState(false)
-  const available = import.meta.env.DEV && connectBridge.mode === 'sim' && props.project === 'shop/api' && !props.trace
-  if (available && sample) return <HistoryPreview project={props.project} onExit={() => setSample(false)} />
-  return <>{available && <div className="fp-preview-notice"><span>Browsing simulated CLI history</span><button onClick={() => setSample(true)}>Open labelled design preview</button></div>}{location.pathname.endsWith('/diff') ? <HistoryComparison project={props.project} /> : <HostProjectHistory {...props} />}</>
+  return location.pathname.endsWith('/diff') ? <HistoryComparison project={props.project} /> : <HostProjectHistory {...props} />
 }
 
-function HostProjectHistory({ project, viewKey = project, trace, example = false, tick = 0 }: ProjectHistoryProps) {
+function HostProjectHistory({ project, viewKey = project, trace, tick = 0 }: ProjectHistoryProps) {
   const key = `graph:${viewKey}`
   const childId = trace?.childId
   const [params, setParams] = useSearchParams()
@@ -88,7 +114,7 @@ function HostProjectHistory({ project, viewKey = project, trace, example = false
         result.branches.push(...more.branches); result.next = more.next
       }
       setBranches(result.branches); setBranchNext(result.next)
-      const names = result.branches.slice(0, 8)
+      const names = [...result.branches.filter(b => b.name === 'main'), ...result.branches.filter(b => b.name !== 'main')].slice(0, 8)
       const loaded: Record<string, BranchPage> = {}
       // Bound concurrent Store reads, irrespective of the number of forks.
       for (let i = 0; i < names.length; i += 4) {
@@ -139,6 +165,14 @@ function HostProjectHistory({ project, viewKey = project, trace, example = false
     const s = [...sources].find(([id, s]) => id === focusCommit || (s.row.callId ?? s.row.id) === focusCall)?.[0]
     if (focusCommit || s) writeView({ selected: focusCommit ?? s!, branch: focusBranch ?? viewRef.current.branch })
   }, [focusCommit, focusCall, focusBranch, trace?.revision]) // Sources arrive with the trace page.
+
+  // A link to a branch created after this view read its branches (a running conversation keeps forking) reads them again, once per branch.
+  const rereadFor = useRef<string | null>(null)
+  useEffect(() => {
+    if (!focusBranch || busy || branches.some(b => b.name === focusBranch) || rereadFor.current === focusBranch) return
+    rereadFor.current = focusBranch
+    setRevision(n => n + 1)
+  }, [focusBranch, busy, branches])
 
   // Resolve linked commits outside the first metadata page without asking the user to page manually.
   useEffect(() => {
@@ -192,10 +226,13 @@ function HostProjectHistory({ project, viewKey = project, trace, example = false
         {!selected ? <><h3>Explore history</h3><p>Select a checkpoint or a group to inspect it.</p><p>Fork and merge endpoints stay visible when checkpoints are collapsed.</p></> : <>
           <span className="history-eyebrow">{selected.kind === 'group' ? 'Checkpoint group' : selected.kind === 'layer' ? 'Layer on main' : 'Checkpoint'}</span>
           <h3>{selected.kind === 'group' ? selected.label : detail?.item.message || selected.label}</h3>
+          {selected.branch.startsWith('connect.session.') && <p>This branch holds a conversation's saved journal (application data). Connect never mounts, merges or publishes it as code.</p>}
           <dl><dt>Branch</dt><dd>{selected.branch}</dd><dt>{selected.kind === 'group' ? 'Checkpoints' : 'ID'}</dt><dd>{selected.kind === 'group' ? selected.commits.length : selected.id}</dd>{selectedCommit?.at && <><dt>When</dt><dd>{new Date(selectedCommit.at).toLocaleString()}</dd></>}</dl>
           {selected.kind === 'group' && <><button className="history-primary" onClick={() => writeView({ expanded: new Set([...view.expanded, selected.id]), selected: selected.commits[0].id })}>Expand {selected.commits.length} checkpoints</button><p>Expand to inspect each intermediate change.</p></>}
+          {trace?.versionLinks && selectedCommit && selected.kind !== 'group' ? <VersionOperations commit={selectedCommit.id} trace={trace} /> : <>
           {source && <Link className="history-trace-link" to={trace!.href(source)}><ArrowUpRight size={14} />View in Trace{source.checkpoint !== null ? ` · #${source.checkpoint}` : ''}</Link>}
           {trace && !source && selected.kind !== 'group' && <p>{finding ? 'Finding the producing Trace step…' : 'No linked trace in this chat or its agents.'}</p>}
+          </>}
           {sourceError && <p role="alert" className="history-error">Trace lookup failed: {sourceError}</p>}
           {selected.parent && !layout.points.has(selected.parent) && <p>Earlier parent is not loaded: <code>{short(selected.parent)}</code></p>}
           {selectedCommit?.sourceBranch && <p>Source Branch: {selectedCommit.sourceBranch}</p>}
@@ -227,7 +264,7 @@ function HostProjectHistory({ project, viewKey = project, trace, example = false
       <label className="history-search"><Search size={14} /><input autoFocus aria-label="Search history branches" placeholder="Find a branch…" value={view.query} onChange={e => writeView({ query: e.target.value })} /><button onClick={() => setBranchesOpen(false)} aria-label="Close branch finder"><X size={13} /></button></label>
       <div className="history-branch-list">{filtered.map(b => {
         const children = branches.filter(c => parents.get(c.name) === b.name).length
-        return <div className="history-branch" key={b.name}><button onClick={() => openBranch(b.name)} title={b.name}><GitBranch size={13} /><span>{b.name}</span>{busy === b.name && <LoaderCircle size={12} className="animate-spin" />}</button>{children > 0 && b.name !== 'main' && <button className="history-family" aria-expanded={!view.families.has(b.name)} aria-label={`${view.families.has(b.name) ? 'Expand' : 'Collapse'} ${b.name} family`} onClick={() => toggleFamily(b.name)}><ChevronRight size={12} />{children}</button>}</div>
+        return <div className="history-branch" key={b.name}><button onClick={() => openBranch(b.name)} title={b.name.startsWith('connect.session.') ? `${b.name} — a conversation's saved journal (application data, not code)` : b.name}><GitBranch size={13} /><span>{b.name}</span>{b.name.startsWith('connect.session.') && <em className="history-op-meta">conversation journal</em>}{busy === b.name && <LoaderCircle size={12} className="animate-spin" />}</button>{children > 0 && b.name !== 'main' && <button className="history-family" aria-expanded={!view.families.has(b.name)} aria-label={`${view.families.has(b.name) ? 'Expand' : 'Collapse'} ${b.name} family`} onClick={() => toggleFamily(b.name)}><ChevronRight size={12} />{children}</button>}</div>
       })}{!filtered.length && <p className="history-note">No branches match.</p>}
       {branchNext !== null && <button disabled={!!busy} onClick={() => { setBusy('branches'); void historyApi.branches(project, branchNext).then(r => { setBranches(b => [...new Map([...b, ...r.branches].map(x => [x.name, x])).values()]); setBranchNext(r.next) }).catch(e => setError(e.message)).finally(() => setBusy(null)) }}>Load more branches</button>}</div>
     </div>}
@@ -246,6 +283,6 @@ function HostProjectHistory({ project, viewKey = project, trace, example = false
       <span><i className="legend-bough" />Branch</span><span><i className="legend-merge" />Merge</span><span><i className="legend-publish" />Publish</span>
       <span className="history-legend-hint">Drag to pan · ⌘/Ctrl + scroll to zoom</span>
     </div>
-    <div className="history-footer"><span>{example ? 'Read-only sample · ' : ''}Saved Commit and Layer history · pinned pages</span>{trace && trace.earlier > 0 && <button disabled={trace.loadingOlder} onClick={() => void trace.loadEarlier()}>Load earlier Trace links</button>}{(trace?.error || sourceError) && <span role="alert">{trace?.error ?? sourceError}</span>}</div>
+    <div className="history-footer"><span>Saved Commit and Layer history · pinned pages</span>{trace && trace.earlier > 0 && <button disabled={trace.loadingOlder} onClick={() => void trace.loadEarlier()}>Load earlier Trace links</button>}{(trace?.error || sourceError) && <span role="alert">{trace?.error ?? sourceError}</span>}</div>
   </div>
 }

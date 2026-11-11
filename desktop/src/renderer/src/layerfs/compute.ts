@@ -69,7 +69,7 @@ export function machineState(m: MachineInfo, live?: MachineLive): { tone: Machin
 }
 
 /** Why a machine needs you or did not answer, in LayerFS's words (its status's reason, else its record's error); a plain stop is not a reason. */
-export const downReason = (m: MachineInfo, live?: MachineLive) => (m.state === 'stopped' ? null : (live?.down ?? m.error ?? null))
+export const downReason = (m: MachineInfo, live?: MachineLive) => (live?.down ?? m.error ?? null)
 
 /** Binary sizes as LayerFS gives them (8 GiB, 40 GiB). */
 export function gib(n: number | null | undefined): string {

@@ -1,12 +1,11 @@
 import { contextBridge, ipcRenderer } from 'electron'
+import type { CliAction } from '../../../shared/cli-activity'
 
 contextBridge.exposeInMainWorld('desktop', {
   platform: process.platform,
   layerfs: {
-    request: (method: string, path: string, body?: unknown) => ipcRenderer.invoke('layerfs:request', { method, path, body }),
+    request: (method: string, path: string, body?: unknown, action?: CliAction) => ipcRenderer.invoke('layerfs:request', { method, path, body, action }),
     subscribe: () => ipcRenderer.invoke('layerfs:subscribe'),
-    // the host's LayerFS, as main starts it (layerfs-host.ts)
-    mode: process.env.LAYERFS_CONNECT_MODE === 'real' ? 'real' : 'sim',
     chooseDirectory: (start?: string) => ipcRenderer.invoke('layerfs:choose-directory', start),
     makeScratch: () => ipcRenderer.invoke('layerfs:scratch'),
     onStream: (listener: (message: unknown) => void) => {

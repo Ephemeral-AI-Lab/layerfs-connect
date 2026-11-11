@@ -1,0 +1,9 @@
+{"command": ["workspace", "unmount", "verifybox:test"], "seconds": 0.032950639724731445, "exit": 0, "stdout": "{\"kind\":\"Unmounted\"}\n", "stderr": ""}
+{"command": ["sandbox", "close", "verifybox"], "seconds": 0.13282084465026855, "exit": 0, "stdout": "{\"kind\":\"Closed\",\"sandbox\":\"verifybox\",\"unknown\":[],\"closed\":\"verifybox\"}\n", "stderr": ""}
+{"command": ["store", "remove", "verify"], "seconds": 0.02279496192932129, "exit": 0, "stdout": "{\"removed\":\"verify\"}\n", "stderr": ""}
+{"command": ["machine", "remove", "matchedoptimized"], "seconds": 0.5386679172515869, "exit": 0, "stdout": "{\"name\":\"matchedoptimized\",\"removed\":true}\n", "stderr": ""}
+{"command": ["machine", "remove", "matchedstock"], "seconds": 0.5324039459228516, "exit": 0, "stdout": "{\"name\":\"matchedstock\",\"removed\":true}\n", "stderr": ""}
+{"command": ["machine", "remove", "specialized"], "seconds": 0.19980812072753906, "exit": 0, "stdout": "{\"name\":\"specialized\",\"removed\":true}\n", "stderr": ""}
+{"command": ["machine", "remove", "trimmed"], "seconds": 0.18922805786132812, "exit": 0, "stdout": "{\"name\":\"trimmed\",\"removed\":true}\n", "stderr": ""}
+{"command": ["machine", "remove", "preinstalled"], "seconds": 0.18912005424499512, "exit": 0, "stdout": "{\"name\":\"preinstalled\",\"removed\":true}\n", "stderr": ""}
+{"command": ["machine", "remove", "seed"], "seconds": 0.18327116966247559, "exit": 0, "stdout": "{\"name\":\"seed\",\"removed\":true}\n", "stderr": ""}

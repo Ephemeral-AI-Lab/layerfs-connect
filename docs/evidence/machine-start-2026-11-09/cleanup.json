@@ -1,0 +1,22 @@
+{
+  "selections": [
+    {
+      "path": "/Users/yifanxu/.cache/layerfs-worktrees/layerfs-machine-start-c17e354c8815/image-cache/layerfs/machine-images/builds/ba52f2abe48ffc54-7211949b/context",
+      "reason": "Owned completed or cancelled Apple image build context; image and receipts retained.",
+      "removed": true
+    },
+    {
+      "path": "/Users/yifanxu/.cache/layerfs-worktrees/layerfs-machine-start-c17e354c8815/image-cache/layerfs/machine-images/builds/ba52f2abe48ffc54-6a1433c1/context",
+      "reason": "Owned completed or cancelled Apple image build context; image and receipts retained.",
+      "removed": true
+    },
+    {
+      "path": "/Users/yifanxu/.cache/layerfs-worktrees/layerfs-machine-start-c17e354c8815/image-cache/layerfs/machine-images/objects/71e2e653d26bf580ec05dd5b9b12a1b7aaabd534a54b1cc9cb892be1e5afc59d",
+      "reason": "Owned image with diagnosed SSH ordering cycle, superseded by tested cf7e4430 image; failure logs retained.",
+      "removed": true
+    }
+  ],
+  "free_bytes_before": 299405336576,
+  "free_bytes_after": 305830789120,
+  "net_free_bytes_recovered": 6425452544
+}

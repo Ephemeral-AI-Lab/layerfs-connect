@@ -1,0 +1,34 @@
+{
+  "date": "2026-11-10",
+  "surface": "http://127.0.0.1:1025/?mac=1&images-check=combined#/machines/image-ui-1794278811",
+  "fixture_machine": "image-ui-1794278811",
+  "fixture_project": "image-ui-1794278811/app",
+  "checks": {
+    "discovered_digest_create": "PASS",
+    "pending_fields_disabled": "PASS",
+    "successful_create_closes_dialog": "PASS",
+    "delete_confirmation_and_inventory_refresh": "PASS",
+    "archive_create_without_explicit_digest": "PASS",
+    "imported_image_visible_on_reopen": "PASS",
+    "archive_sandbox_delete": "PASS"
+  },
+  "default_digest": "sha256:1d91885de27a20805af0d1b99602ace066f0514983613e391ee1f73ac8e7c2e9",
+  "custom_digest": "sha256:18959592d41bd40f27b442f227f416002d06297787b281be20225e3d0b70cba5",
+  "imported_option_label": "layerfs-proof:6dd79ef2736240d6",
+  "final_page_observation": {"empty": true, "sandboxCount": 0},
+  "layout": {
+    "viewport": [1280, 820],
+    "dialog_bounds": {"left": 416, "top": 172, "right": 864, "bottom": 648},
+    "horizontal_overflow": false,
+    "small_viewport": [900, 600],
+    "small_dialog_top": 16,
+    "small_dialog_bottom": 584,
+    "small_dialog_overflow_y": "auto"
+  },
+  "console": {
+    "historical_error_messages": 178,
+    "errors_since_2026_11_10_030600_utc": 0,
+    "historical_examples": ["CSP blob worker refusal", "Connection refused during earlier preview reload"]
+  },
+  "verification_method": "Actual browser controls, snapshots and read-only DOM observations; no API-created substitute for browser Sandbox creation"
+}

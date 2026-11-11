@@ -1,0 +1,3770 @@
+{
+  "version": 1,
+  "checkedAt": "2026-11-10T12:02:57.607Z",
+  "host": {
+    "url": "http://127.0.0.1:56107",
+    "pid": 75773
+  },
+  "previousPid": 30722,
+  "restartVerified": true,
+  "counts": {
+    "runs": 16,
+    "conversations": 78,
+    "children": 288,
+    "bashSteps": 131820,
+    "maxUserTurns": 6
+  },
+  "passed": true,
+  "runs": [
+    {
+      "mode": "filesystem",
+      "template": "design",
+      "runId": "9b033db8-efd5-4567-aec2-0131e4d6fadb",
+      "project": "sim-design-95eab4b69a4534e75666/design-95eab4b69a4534e75666",
+      "state": "completed",
+      "conversations": [
+        {
+          "id": "c01-tokens",
+          "main": {
+            "userTurns": 6,
+            "finalReplies": 6,
+            "bashSteps": 600,
+            "linkedCalls": 600,
+            "canonicalHistoryMatched": true,
+            "compiledTurnsMatched": true
+          },
+          "children": [
+            {
+              "id": "a01-worker",
+              "userTurns": 5,
+              "finalReplies": 5,
+              "bashSteps": 1045,
+              "linkedCalls": 1045,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            }
+          ]
+        },
+        {
+          "id": "c02-components",
+          "main": {
+            "userTurns": 4,
+            "finalReplies": 4,
+            "bashSteps": 452,
+            "linkedCalls": 452,
+            "canonicalHistoryMatched": true,
+            "compiledTurnsMatched": true
+          },
+          "children": [
+            {
+              "id": "a01-worker",
+              "userTurns": 4,
+              "finalReplies": 4,
+              "bashSteps": 418,
+              "linkedCalls": 418,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a02-worker",
+              "userTurns": 4,
+              "finalReplies": 4,
+              "bashSteps": 418,
+              "linkedCalls": 418,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "filesystem",
+      "template": "billing",
+      "runId": "1b2c27df-5329-4277-bf40-89541f537487",
+      "project": "sim-billing-a4207d40fc7fc6f3f759/billing-a4207d40fc7fc6f3f759",
+      "state": "completed",
+      "conversations": [
+        {
+          "id": "c01-invoices",
+          "main": {
+            "userTurns": 5,
+            "finalReplies": 5,
+            "bashSteps": 487,
+            "linkedCalls": 487,
+            "canonicalHistoryMatched": true,
+            "compiledTurnsMatched": true
+          },
+          "children": [
+            {
+              "id": "a01-worker",
+              "userTurns": 4,
+              "finalReplies": 4,
+              "bashSteps": 836,
+              "linkedCalls": 836,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            }
+          ]
+        },
+        {
+          "id": "c02-pricing",
+          "main": {
+            "userTurns": 3,
+            "finalReplies": 3,
+            "bashSteps": 339,
+            "linkedCalls": 339,
+            "canonicalHistoryMatched": true,
+            "compiledTurnsMatched": true
+          },
+          "children": [
+            {
+              "id": "a01-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 338,
+              "linkedCalls": 338,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a02-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 289,
+              "linkedCalls": 289,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            }
+          ]
+        },
+        {
+          "id": "c03-rounding",
+          "main": {
+            "userTurns": 3,
+            "finalReplies": 3,
+            "bashSteps": 339,
+            "linkedCalls": 339,
+            "canonicalHistoryMatched": true,
+            "compiledTurnsMatched": true
+          },
+          "children": [
+            {
+              "id": "a01-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 240,
+              "linkedCalls": 240,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a02-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 240,
+              "linkedCalls": 240,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a03-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 147,
+              "linkedCalls": 147,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "filesystem",
+      "template": "sdk",
+      "runId": "cb93f995-b23f-4625-8db5-bec41a2c81b1",
+      "project": "sim-sdk-e2ae14fbf6194bd39140/sdk-e2ae14fbf6194bd39140",
+      "state": "completed",
+      "conversations": [
+        {
+          "id": "c01-requests",
+          "main": {
+            "userTurns": 4,
+            "finalReplies": 4,
+            "bashSteps": 374,
+            "linkedCalls": 374,
+            "canonicalHistoryMatched": true,
+            "compiledTurnsMatched": true
+          },
+          "children": [
+            {
+              "id": "a01-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 338,
+              "linkedCalls": 338,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a02-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 289,
+              "linkedCalls": 289,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            }
+          ]
+        },
+        {
+          "id": "c02-pagination",
+          "main": {
+            "userTurns": 3,
+            "finalReplies": 3,
+            "bashSteps": 339,
+            "linkedCalls": 339,
+            "canonicalHistoryMatched": true,
+            "compiledTurnsMatched": true
+          },
+          "children": [
+            {
+              "id": "a01-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 240,
+              "linkedCalls": 240,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a02-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 240,
+              "linkedCalls": 240,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a03-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 147,
+              "linkedCalls": 147,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            }
+          ]
+        },
+        {
+          "id": "c03-validation",
+          "main": {
+            "userTurns": 3,
+            "finalReplies": 3,
+            "bashSteps": 339,
+            "linkedCalls": 339,
+            "canonicalHistoryMatched": true,
+            "compiledTurnsMatched": true
+          },
+          "children": [
+            {
+              "id": "a01-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 209,
+              "linkedCalls": 209,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a02-worker",
+              "userTurns": 2,
+              "finalReplies": 2,
+              "bashSteps": 129,
+              "linkedCalls": 129,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a03-worker",
+              "userTurns": 2,
+              "finalReplies": 2,
+              "bashSteps": 129,
+              "linkedCalls": 129,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a04-worker",
+              "userTurns": 2,
+              "finalReplies": 2,
+              "bashSteps": 160,
+              "linkedCalls": 160,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            }
+          ]
+        },
+        {
+          "id": "c04-requests",
+          "main": {
+            "userTurns": 3,
+            "finalReplies": 3,
+            "bashSteps": 339,
+            "linkedCalls": 339,
+            "canonicalHistoryMatched": true,
+            "compiledTurnsMatched": true
+          },
+          "children": [
+            {
+              "id": "a01-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 338,
+              "linkedCalls": 338,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a02-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 289,
+              "linkedCalls": 289,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "filesystem",
+      "template": "evaluation",
+      "runId": "a46f86ce-cc57-461a-bb08-b9585d8ca6f6",
+      "project": "sim-evaluation-a409ba191a25230138c7/evaluation-a409ba191a25230138c7",
+      "state": "completed",
+      "conversations": [
+        {
+          "id": "c01-queries",
+          "main": {
+            "userTurns": 5,
+            "finalReplies": 5,
+            "bashSteps": 487,
+            "linkedCalls": 487,
+            "canonicalHistoryMatched": true,
+            "compiledTurnsMatched": true
+          },
+          "children": [
+            {
+              "id": "a01-worker",
+              "userTurns": 4,
+              "finalReplies": 4,
+              "bashSteps": 418,
+              "linkedCalls": 418,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a02-worker",
+              "userTurns": 4,
+              "finalReplies": 4,
+              "bashSteps": 418,
+              "linkedCalls": 418,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            }
+          ]
+        },
+        {
+          "id": "c02-rubrics",
+          "main": {
+            "userTurns": 4,
+            "finalReplies": 4,
+            "bashSteps": 452,
+            "linkedCalls": 452,
+            "canonicalHistoryMatched": true,
+            "compiledTurnsMatched": true
+          },
+          "children": [
+            {
+              "id": "a01-worker",
+              "userTurns": 4,
+              "finalReplies": 4,
+              "bashSteps": 320,
+              "linkedCalls": 320,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a02-worker",
+              "userTurns": 4,
+              "finalReplies": 4,
+              "bashSteps": 320,
+              "linkedCalls": 320,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a03-worker",
+              "userTurns": 4,
+              "finalReplies": 4,
+              "bashSteps": 196,
+              "linkedCalls": 196,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            }
+          ]
+        },
+        {
+          "id": "c03-judgments",
+          "main": {
+            "userTurns": 4,
+            "finalReplies": 4,
+            "bashSteps": 452,
+            "linkedCalls": 452,
+            "canonicalHistoryMatched": true,
+            "compiledTurnsMatched": true
+          },
+          "children": [
+            {
+              "id": "a01-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 209,
+              "linkedCalls": 209,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a02-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 209,
+              "linkedCalls": 209,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a03-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 209,
+              "linkedCalls": 209,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a04-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 209,
+              "linkedCalls": 209,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            }
+          ]
+        },
+        {
+          "id": "c04-queries",
+          "main": {
+            "userTurns": 3,
+            "finalReplies": 3,
+            "bashSteps": 339,
+            "linkedCalls": 339,
+            "canonicalHistoryMatched": true,
+            "compiledTurnsMatched": true
+          },
+          "children": [
+            {
+              "id": "a01-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 338,
+              "linkedCalls": 338,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a02-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 289,
+              "linkedCalls": 289,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "filesystem",
+      "template": "embeddings",
+      "runId": "b198aff6-eb4e-43a7-9a5d-fc6dbeb0f9f6",
+      "project": "sim-embeddings-3f09a7e3327fc02970c7/embeddings-3f09a7e3327fc02970c7",
+      "state": "completed",
+      "conversations": [
+        {
+          "id": "c01-corpus",
+          "main": {
+            "userTurns": 5,
+            "finalReplies": 5,
+            "bashSteps": 487,
+            "linkedCalls": 487,
+            "canonicalHistoryMatched": true,
+            "compiledTurnsMatched": true
+          },
+          "children": [
+            {
+              "id": "a01-worker",
+              "userTurns": 4,
+              "finalReplies": 4,
+              "bashSteps": 418,
+              "linkedCalls": 418,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a02-worker",
+              "userTurns": 4,
+              "finalReplies": 4,
+              "bashSteps": 418,
+              "linkedCalls": 418,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            }
+          ]
+        },
+        {
+          "id": "c02-chunking",
+          "main": {
+            "userTurns": 4,
+            "finalReplies": 4,
+            "bashSteps": 452,
+            "linkedCalls": 452,
+            "canonicalHistoryMatched": true,
+            "compiledTurnsMatched": true
+          },
+          "children": [
+            {
+              "id": "a01-worker",
+              "userTurns": 4,
+              "finalReplies": 4,
+              "bashSteps": 320,
+              "linkedCalls": 320,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a02-worker",
+              "userTurns": 4,
+              "finalReplies": 4,
+              "bashSteps": 320,
+              "linkedCalls": 320,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a03-worker",
+              "userTurns": 4,
+              "finalReplies": 4,
+              "bashSteps": 196,
+              "linkedCalls": 196,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            }
+          ]
+        },
+        {
+          "id": "c03-provenance",
+          "main": {
+            "userTurns": 4,
+            "finalReplies": 4,
+            "bashSteps": 452,
+            "linkedCalls": 452,
+            "canonicalHistoryMatched": true,
+            "compiledTurnsMatched": true
+          },
+          "children": [
+            {
+              "id": "a01-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 209,
+              "linkedCalls": 209,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a02-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 209,
+              "linkedCalls": 209,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a03-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 209,
+              "linkedCalls": 209,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a04-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 209,
+              "linkedCalls": 209,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            }
+          ]
+        },
+        {
+          "id": "c04-corpus",
+          "main": {
+            "userTurns": 4,
+            "finalReplies": 4,
+            "bashSteps": 452,
+            "linkedCalls": 452,
+            "canonicalHistoryMatched": true,
+            "compiledTurnsMatched": true
+          },
+          "children": [
+            {
+              "id": "a01-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 209,
+              "linkedCalls": 209,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a02-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 209,
+              "linkedCalls": 209,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a03-worker",
+              "userTurns": 2,
+              "finalReplies": 2,
+              "bashSteps": 129,
+              "linkedCalls": 129,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a04-worker",
+              "userTurns": 2,
+              "finalReplies": 2,
+              "bashSteps": 129,
+              "linkedCalls": 129,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a05-worker",
+              "userTurns": 2,
+              "finalReplies": 2,
+              "bashSteps": 160,
+              "linkedCalls": 160,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            }
+          ]
+        },
+        {
+          "id": "c05-chunking",
+          "main": {
+            "userTurns": 3,
+            "finalReplies": 3,
+            "bashSteps": 339,
+            "linkedCalls": 339,
+            "canonicalHistoryMatched": true,
+            "compiledTurnsMatched": true
+          },
+          "children": [
+            {
+              "id": "a01-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 338,
+              "linkedCalls": 338,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a02-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 289,
+              "linkedCalls": 289,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "filesystem",
+      "template": "compiler",
+      "runId": "8cc75db9-91e9-4a2d-9d9d-6d9b311aa7d5",
+      "project": "sim-compiler-5b83d8ed94cff19d4c5a/compiler-5b83d8ed94cff19d4c5a",
+      "state": "completed",
+      "conversations": [
+        {
+          "id": "c01-grammar",
+          "main": {
+            "userTurns": 5,
+            "finalReplies": 5,
+            "bashSteps": 487,
+            "linkedCalls": 487,
+            "canonicalHistoryMatched": true,
+            "compiledTurnsMatched": true
+          },
+          "children": [
+            {
+              "id": "a01-worker",
+              "userTurns": 4,
+              "finalReplies": 4,
+              "bashSteps": 320,
+              "linkedCalls": 320,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a02-worker",
+              "userTurns": 4,
+              "finalReplies": 4,
+              "bashSteps": 320,
+              "linkedCalls": 320,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a03-worker",
+              "userTurns": 4,
+              "finalReplies": 4,
+              "bashSteps": 196,
+              "linkedCalls": 196,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            }
+          ]
+        },
+        {
+          "id": "c02-diagnostics",
+          "main": {
+            "userTurns": 4,
+            "finalReplies": 4,
+            "bashSteps": 452,
+            "linkedCalls": 452,
+            "canonicalHistoryMatched": true,
+            "compiledTurnsMatched": true
+          },
+          "children": [
+            {
+              "id": "a01-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 209,
+              "linkedCalls": 209,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a02-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 209,
+              "linkedCalls": 209,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a03-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 209,
+              "linkedCalls": 209,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a04-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 209,
+              "linkedCalls": 209,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            }
+          ]
+        },
+        {
+          "id": "c03-arithmetic",
+          "main": {
+            "userTurns": 4,
+            "finalReplies": 4,
+            "bashSteps": 452,
+            "linkedCalls": 452,
+            "canonicalHistoryMatched": true,
+            "compiledTurnsMatched": true
+          },
+          "children": [
+            {
+              "id": "a01-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 209,
+              "linkedCalls": 209,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a02-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 209,
+              "linkedCalls": 209,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a03-worker",
+              "userTurns": 2,
+              "finalReplies": 2,
+              "bashSteps": 129,
+              "linkedCalls": 129,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a04-worker",
+              "userTurns": 2,
+              "finalReplies": 2,
+              "bashSteps": 129,
+              "linkedCalls": 129,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a05-worker",
+              "userTurns": 2,
+              "finalReplies": 2,
+              "bashSteps": 160,
+              "linkedCalls": 160,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            }
+          ]
+        },
+        {
+          "id": "c04-grammar",
+          "main": {
+            "userTurns": 4,
+            "finalReplies": 4,
+            "bashSteps": 452,
+            "linkedCalls": 452,
+            "canonicalHistoryMatched": true,
+            "compiledTurnsMatched": true
+          },
+          "children": [
+            {
+              "id": "a01-worker",
+              "userTurns": 2,
+              "finalReplies": 2,
+              "bashSteps": 160,
+              "linkedCalls": 160,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a02-worker",
+              "userTurns": 2,
+              "finalReplies": 2,
+              "bashSteps": 160,
+              "linkedCalls": 160,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a03-worker",
+              "userTurns": 2,
+              "finalReplies": 2,
+              "bashSteps": 98,
+              "linkedCalls": 98,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a04-worker",
+              "userTurns": 2,
+              "finalReplies": 2,
+              "bashSteps": 160,
+              "linkedCalls": 160,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a05-worker",
+              "userTurns": 2,
+              "finalReplies": 2,
+              "bashSteps": 160,
+              "linkedCalls": 160,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a06-worker",
+              "userTurns": 2,
+              "finalReplies": 2,
+              "bashSteps": 98,
+              "linkedCalls": 98,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            }
+          ]
+        },
+        {
+          "id": "c05-diagnostics",
+          "main": {
+            "userTurns": 4,
+            "finalReplies": 4,
+            "bashSteps": 452,
+            "linkedCalls": 452,
+            "canonicalHistoryMatched": true,
+            "compiledTurnsMatched": true
+          },
+          "children": [
+            {
+              "id": "a01-worker",
+              "userTurns": 4,
+              "finalReplies": 4,
+              "bashSteps": 320,
+              "linkedCalls": 320,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a02-worker",
+              "userTurns": 4,
+              "finalReplies": 4,
+              "bashSteps": 320,
+              "linkedCalls": 320,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a03-worker",
+              "userTurns": 4,
+              "finalReplies": 4,
+              "bashSteps": 196,
+              "linkedCalls": 196,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            }
+          ]
+        },
+        {
+          "id": "c06-arithmetic",
+          "main": {
+            "userTurns": 4,
+            "finalReplies": 4,
+            "bashSteps": 452,
+            "linkedCalls": 452,
+            "canonicalHistoryMatched": true,
+            "compiledTurnsMatched": true
+          },
+          "children": [
+            {
+              "id": "a01-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 209,
+              "linkedCalls": 209,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a02-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 209,
+              "linkedCalls": 209,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a03-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 209,
+              "linkedCalls": 209,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a04-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 209,
+              "linkedCalls": 209,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "filesystem",
+      "template": "gateway",
+      "runId": "e2fd1add-b1d5-4579-959e-de0b9c8ddab3",
+      "project": "sim-gateway-c1f96d3221f2af0d2108/gateway-c1f96d3221f2af0d2108",
+      "state": "completed",
+      "conversations": [
+        {
+          "id": "c01-routes",
+          "main": {
+            "userTurns": 6,
+            "finalReplies": 6,
+            "bashSteps": 600,
+            "linkedCalls": 600,
+            "canonicalHistoryMatched": true,
+            "compiledTurnsMatched": true
+          },
+          "children": [
+            {
+              "id": "a01-worker",
+              "userTurns": 5,
+              "finalReplies": 5,
+              "bashSteps": 400,
+              "linkedCalls": 400,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a02-worker",
+              "userTurns": 5,
+              "finalReplies": 5,
+              "bashSteps": 400,
+              "linkedCalls": 400,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a03-worker",
+              "userTurns": 5,
+              "finalReplies": 5,
+              "bashSteps": 245,
+              "linkedCalls": 245,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            }
+          ]
+        },
+        {
+          "id": "c02-policies",
+          "main": {
+            "userTurns": 4,
+            "finalReplies": 4,
+            "bashSteps": 452,
+            "linkedCalls": 452,
+            "canonicalHistoryMatched": true,
+            "compiledTurnsMatched": true
+          },
+          "children": [
+            {
+              "id": "a01-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 209,
+              "linkedCalls": 209,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a02-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 209,
+              "linkedCalls": 209,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a03-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 209,
+              "linkedCalls": 209,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a04-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 209,
+              "linkedCalls": 209,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            }
+          ]
+        },
+        {
+          "id": "c03-limits",
+          "main": {
+            "userTurns": 4,
+            "finalReplies": 4,
+            "bashSteps": 452,
+            "linkedCalls": 452,
+            "canonicalHistoryMatched": true,
+            "compiledTurnsMatched": true
+          },
+          "children": [
+            {
+              "id": "a01-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 209,
+              "linkedCalls": 209,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a02-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 209,
+              "linkedCalls": 209,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a03-worker",
+              "userTurns": 2,
+              "finalReplies": 2,
+              "bashSteps": 129,
+              "linkedCalls": 129,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a04-worker",
+              "userTurns": 2,
+              "finalReplies": 2,
+              "bashSteps": 129,
+              "linkedCalls": 129,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a05-worker",
+              "userTurns": 2,
+              "finalReplies": 2,
+              "bashSteps": 160,
+              "linkedCalls": 160,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            }
+          ]
+        },
+        {
+          "id": "c04-routes",
+          "main": {
+            "userTurns": 5,
+            "finalReplies": 5,
+            "bashSteps": 565,
+            "linkedCalls": 565,
+            "canonicalHistoryMatched": true,
+            "compiledTurnsMatched": true
+          },
+          "children": [
+            {
+              "id": "a01-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 240,
+              "linkedCalls": 240,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a02-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 240,
+              "linkedCalls": 240,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a03-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 147,
+              "linkedCalls": 147,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a04-worker",
+              "userTurns": 2,
+              "finalReplies": 2,
+              "bashSteps": 160,
+              "linkedCalls": 160,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a05-worker",
+              "userTurns": 2,
+              "finalReplies": 2,
+              "bashSteps": 160,
+              "linkedCalls": 160,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a06-worker",
+              "userTurns": 2,
+              "finalReplies": 2,
+              "bashSteps": 98,
+              "linkedCalls": 98,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            }
+          ]
+        },
+        {
+          "id": "c05-policies",
+          "main": {
+            "userTurns": 4,
+            "finalReplies": 4,
+            "bashSteps": 452,
+            "linkedCalls": 452,
+            "canonicalHistoryMatched": true,
+            "compiledTurnsMatched": true
+          },
+          "children": [
+            {
+              "id": "a01-worker",
+              "userTurns": 2,
+              "finalReplies": 2,
+              "bashSteps": 160,
+              "linkedCalls": 160,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a02-worker",
+              "userTurns": 2,
+              "finalReplies": 2,
+              "bashSteps": 129,
+              "linkedCalls": 129,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a03-worker",
+              "userTurns": 2,
+              "finalReplies": 2,
+              "bashSteps": 129,
+              "linkedCalls": 129,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a04-worker",
+              "userTurns": 2,
+              "finalReplies": 2,
+              "bashSteps": 160,
+              "linkedCalls": 160,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a05-worker",
+              "userTurns": 2,
+              "finalReplies": 2,
+              "bashSteps": 129,
+              "linkedCalls": 129,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a06-worker",
+              "userTurns": 1,
+              "finalReplies": 1,
+              "bashSteps": 49,
+              "linkedCalls": 49,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a07-worker",
+              "userTurns": 1,
+              "finalReplies": 1,
+              "bashSteps": 80,
+              "linkedCalls": 80,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            }
+          ]
+        },
+        {
+          "id": "c06-limits",
+          "main": {
+            "userTurns": 4,
+            "finalReplies": 4,
+            "bashSteps": 452,
+            "linkedCalls": 452,
+            "canonicalHistoryMatched": true,
+            "compiledTurnsMatched": true
+          },
+          "children": [
+            {
+              "id": "a01-worker",
+              "userTurns": 4,
+              "finalReplies": 4,
+              "bashSteps": 320,
+              "linkedCalls": 320,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a02-worker",
+              "userTurns": 4,
+              "finalReplies": 4,
+              "bashSteps": 320,
+              "linkedCalls": 320,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a03-worker",
+              "userTurns": 4,
+              "finalReplies": 4,
+              "bashSteps": 196,
+              "linkedCalls": 196,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            }
+          ]
+        },
+        {
+          "id": "c07-routes",
+          "main": {
+            "userTurns": 4,
+            "finalReplies": 4,
+            "bashSteps": 452,
+            "linkedCalls": 452,
+            "canonicalHistoryMatched": true,
+            "compiledTurnsMatched": true
+          },
+          "children": [
+            {
+              "id": "a01-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 209,
+              "linkedCalls": 209,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a02-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 209,
+              "linkedCalls": 209,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a03-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 209,
+              "linkedCalls": 209,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a04-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 209,
+              "linkedCalls": 209,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "filesystem",
+      "template": "website",
+      "runId": "02f76fbc-0fb0-43c1-9146-34ee4656e678",
+      "project": "sim-website-1e4d745f8170d738e7ea/website-1e4d745f8170d738e7ea",
+      "state": "completed",
+      "conversations": [
+        {
+          "id": "c01-catalog",
+          "main": {
+            "userTurns": 6,
+            "finalReplies": 6,
+            "bashSteps": 600,
+            "linkedCalls": 600,
+            "canonicalHistoryMatched": true,
+            "compiledTurnsMatched": true
+          },
+          "children": [
+            {
+              "id": "a01-worker",
+              "userTurns": 5,
+              "finalReplies": 5,
+              "bashSteps": 400,
+              "linkedCalls": 400,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a02-worker",
+              "userTurns": 5,
+              "finalReplies": 5,
+              "bashSteps": 400,
+              "linkedCalls": 400,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a03-worker",
+              "userTurns": 5,
+              "finalReplies": 5,
+              "bashSteps": 245,
+              "linkedCalls": 245,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            }
+          ]
+        },
+        {
+          "id": "c02-delivery",
+          "main": {
+            "userTurns": 5,
+            "finalReplies": 5,
+            "bashSteps": 565,
+            "linkedCalls": 565,
+            "canonicalHistoryMatched": true,
+            "compiledTurnsMatched": true
+          },
+          "children": [
+            {
+              "id": "a01-worker",
+              "userTurns": 4,
+              "finalReplies": 4,
+              "bashSteps": 289,
+              "linkedCalls": 289,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a02-worker",
+              "userTurns": 4,
+              "finalReplies": 4,
+              "bashSteps": 289,
+              "linkedCalls": 289,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a03-worker",
+              "userTurns": 4,
+              "finalReplies": 4,
+              "bashSteps": 258,
+              "linkedCalls": 258,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a04-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 209,
+              "linkedCalls": 209,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            }
+          ]
+        },
+        {
+          "id": "c03-care",
+          "main": {
+            "userTurns": 5,
+            "finalReplies": 5,
+            "bashSteps": 565,
+            "linkedCalls": 565,
+            "canonicalHistoryMatched": true,
+            "compiledTurnsMatched": true
+          },
+          "children": [
+            {
+              "id": "a01-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 209,
+              "linkedCalls": 209,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a02-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 209,
+              "linkedCalls": 209,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a03-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 209,
+              "linkedCalls": 209,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a04-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 209,
+              "linkedCalls": 209,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a05-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 209,
+              "linkedCalls": 209,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            }
+          ]
+        },
+        {
+          "id": "c04-catalog",
+          "main": {
+            "userTurns": 4,
+            "finalReplies": 4,
+            "bashSteps": 452,
+            "linkedCalls": 452,
+            "canonicalHistoryMatched": true,
+            "compiledTurnsMatched": true
+          },
+          "children": [
+            {
+              "id": "a01-worker",
+              "userTurns": 2,
+              "finalReplies": 2,
+              "bashSteps": 160,
+              "linkedCalls": 160,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a02-worker",
+              "userTurns": 2,
+              "finalReplies": 2,
+              "bashSteps": 160,
+              "linkedCalls": 160,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a03-worker",
+              "userTurns": 2,
+              "finalReplies": 2,
+              "bashSteps": 98,
+              "linkedCalls": 98,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a04-worker",
+              "userTurns": 2,
+              "finalReplies": 2,
+              "bashSteps": 160,
+              "linkedCalls": 160,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a05-worker",
+              "userTurns": 2,
+              "finalReplies": 2,
+              "bashSteps": 160,
+              "linkedCalls": 160,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a06-worker",
+              "userTurns": 2,
+              "finalReplies": 2,
+              "bashSteps": 98,
+              "linkedCalls": 98,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            }
+          ]
+        },
+        {
+          "id": "c05-delivery",
+          "main": {
+            "userTurns": 5,
+            "finalReplies": 5,
+            "bashSteps": 565,
+            "linkedCalls": 565,
+            "canonicalHistoryMatched": true,
+            "compiledTurnsMatched": true
+          },
+          "children": [
+            {
+              "id": "a01-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 209,
+              "linkedCalls": 209,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a02-worker",
+              "userTurns": 2,
+              "finalReplies": 2,
+              "bashSteps": 129,
+              "linkedCalls": 129,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a03-worker",
+              "userTurns": 2,
+              "finalReplies": 2,
+              "bashSteps": 129,
+              "linkedCalls": 129,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a04-worker",
+              "userTurns": 2,
+              "finalReplies": 2,
+              "bashSteps": 160,
+              "linkedCalls": 160,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a05-worker",
+              "userTurns": 2,
+              "finalReplies": 2,
+              "bashSteps": 129,
+              "linkedCalls": 129,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a06-worker",
+              "userTurns": 2,
+              "finalReplies": 2,
+              "bashSteps": 129,
+              "linkedCalls": 129,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a07-worker",
+              "userTurns": 2,
+              "finalReplies": 2,
+              "bashSteps": 160,
+              "linkedCalls": 160,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            }
+          ]
+        },
+        {
+          "id": "c06-care",
+          "main": {
+            "userTurns": 5,
+            "finalReplies": 5,
+            "bashSteps": 565,
+            "linkedCalls": 565,
+            "canonicalHistoryMatched": true,
+            "compiledTurnsMatched": true
+          },
+          "children": [
+            {
+              "id": "a01-worker",
+              "userTurns": 2,
+              "finalReplies": 2,
+              "bashSteps": 129,
+              "linkedCalls": 129,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a02-worker",
+              "userTurns": 2,
+              "finalReplies": 2,
+              "bashSteps": 160,
+              "linkedCalls": 160,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a03-worker",
+              "userTurns": 2,
+              "finalReplies": 2,
+              "bashSteps": 129,
+              "linkedCalls": 129,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a04-worker",
+              "userTurns": 2,
+              "finalReplies": 2,
+              "bashSteps": 129,
+              "linkedCalls": 129,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a05-worker",
+              "userTurns": 2,
+              "finalReplies": 2,
+              "bashSteps": 160,
+              "linkedCalls": 160,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a06-worker",
+              "userTurns": 2,
+              "finalReplies": 2,
+              "bashSteps": 129,
+              "linkedCalls": 129,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a07-worker",
+              "userTurns": 2,
+              "finalReplies": 2,
+              "bashSteps": 129,
+              "linkedCalls": 129,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a08-worker",
+              "userTurns": 1,
+              "finalReplies": 1,
+              "bashSteps": 80,
+              "linkedCalls": 80,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            }
+          ]
+        },
+        {
+          "id": "c07-catalog",
+          "main": {
+            "userTurns": 5,
+            "finalReplies": 5,
+            "bashSteps": 565,
+            "linkedCalls": 565,
+            "canonicalHistoryMatched": true,
+            "compiledTurnsMatched": true
+          },
+          "children": [
+            {
+              "id": "a01-worker",
+              "userTurns": 5,
+              "finalReplies": 5,
+              "bashSteps": 400,
+              "linkedCalls": 400,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a02-worker",
+              "userTurns": 5,
+              "finalReplies": 5,
+              "bashSteps": 400,
+              "linkedCalls": 400,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a03-worker",
+              "userTurns": 5,
+              "finalReplies": 5,
+              "bashSteps": 245,
+              "linkedCalls": 245,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            }
+          ]
+        },
+        {
+          "id": "c08-delivery",
+          "main": {
+            "userTurns": 4,
+            "finalReplies": 4,
+            "bashSteps": 452,
+            "linkedCalls": 452,
+            "canonicalHistoryMatched": true,
+            "compiledTurnsMatched": true
+          },
+          "children": [
+            {
+              "id": "a01-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 209,
+              "linkedCalls": 209,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a02-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 209,
+              "linkedCalls": 209,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a03-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 209,
+              "linkedCalls": 209,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a04-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 209,
+              "linkedCalls": 209,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "mixed",
+      "template": "design",
+      "runId": "5dc8074e-9367-4cae-ba4f-8d77e3f932a3",
+      "project": "sim-design-6e3cc5fbca1dc3852127/design-6e3cc5fbca1dc3852127",
+      "state": "completed",
+      "conversations": [
+        {
+          "id": "c01-tokens",
+          "main": {
+            "userTurns": 6,
+            "finalReplies": 6,
+            "bashSteps": 601,
+            "linkedCalls": 601,
+            "canonicalHistoryMatched": true,
+            "compiledTurnsMatched": true
+          },
+          "children": [
+            {
+              "id": "a01-worker",
+              "userTurns": 5,
+              "finalReplies": 5,
+              "bashSteps": 2005,
+              "linkedCalls": 2005,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            }
+          ]
+        },
+        {
+          "id": "c02-components",
+          "main": {
+            "userTurns": 4,
+            "finalReplies": 4,
+            "bashSteps": 452,
+            "linkedCalls": 452,
+            "canonicalHistoryMatched": true,
+            "compiledTurnsMatched": true
+          },
+          "children": [
+            {
+              "id": "a01-worker",
+              "userTurns": 4,
+              "finalReplies": 4,
+              "bashSteps": 802,
+              "linkedCalls": 802,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a02-worker",
+              "userTurns": 4,
+              "finalReplies": 4,
+              "bashSteps": 802,
+              "linkedCalls": 802,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "mixed",
+      "template": "billing",
+      "runId": "67213c4e-42e9-4291-9227-32528b0b4010",
+      "project": "sim-billing-6db1e0c46b55eaaaa7bd/billing-6db1e0c46b55eaaaa7bd",
+      "state": "completed",
+      "conversations": [
+        {
+          "id": "c01-invoices",
+          "main": {
+            "userTurns": 5,
+            "finalReplies": 5,
+            "bashSteps": 488,
+            "linkedCalls": 488,
+            "canonicalHistoryMatched": true,
+            "compiledTurnsMatched": true
+          },
+          "children": [
+            {
+              "id": "a01-worker",
+              "userTurns": 4,
+              "finalReplies": 4,
+              "bashSteps": 1604,
+              "linkedCalls": 1604,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            }
+          ]
+        },
+        {
+          "id": "c02-pricing",
+          "main": {
+            "userTurns": 3,
+            "finalReplies": 3,
+            "bashSteps": 339,
+            "linkedCalls": 339,
+            "canonicalHistoryMatched": true,
+            "compiledTurnsMatched": true
+          },
+          "children": [
+            {
+              "id": "a01-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 690,
+              "linkedCalls": 690,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a02-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 513,
+              "linkedCalls": 513,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            }
+          ]
+        },
+        {
+          "id": "c03-rounding",
+          "main": {
+            "userTurns": 3,
+            "finalReplies": 3,
+            "bashSteps": 339,
+            "linkedCalls": 339,
+            "canonicalHistoryMatched": true,
+            "compiledTurnsMatched": true
+          },
+          "children": [
+            {
+              "id": "a01-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 720,
+              "linkedCalls": 720,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a02-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 336,
+              "linkedCalls": 336,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a03-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 147,
+              "linkedCalls": 147,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "mixed",
+      "template": "sdk",
+      "runId": "1edd4934-1ddf-47ce-b60b-0031a25c9003",
+      "project": "sim-sdk-ed568fe516f8a3171f67/sdk-ed568fe516f8a3171f67",
+      "state": "completed",
+      "conversations": [
+        {
+          "id": "c01-requests",
+          "main": {
+            "userTurns": 4,
+            "finalReplies": 4,
+            "bashSteps": 375,
+            "linkedCalls": 375,
+            "canonicalHistoryMatched": true,
+            "compiledTurnsMatched": true
+          },
+          "children": [
+            {
+              "id": "a01-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 690,
+              "linkedCalls": 690,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a02-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 513,
+              "linkedCalls": 513,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            }
+          ]
+        },
+        {
+          "id": "c02-pagination",
+          "main": {
+            "userTurns": 3,
+            "finalReplies": 3,
+            "bashSteps": 339,
+            "linkedCalls": 339,
+            "canonicalHistoryMatched": true,
+            "compiledTurnsMatched": true
+          },
+          "children": [
+            {
+              "id": "a01-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 720,
+              "linkedCalls": 720,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a02-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 336,
+              "linkedCalls": 336,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a03-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 147,
+              "linkedCalls": 147,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            }
+          ]
+        },
+        {
+          "id": "c03-validation",
+          "main": {
+            "userTurns": 3,
+            "finalReplies": 3,
+            "bashSteps": 339,
+            "linkedCalls": 339,
+            "canonicalHistoryMatched": true,
+            "compiledTurnsMatched": true
+          },
+          "children": [
+            {
+              "id": "a01-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 401,
+              "linkedCalls": 401,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a02-worker",
+              "userTurns": 2,
+              "finalReplies": 2,
+              "bashSteps": 161,
+              "linkedCalls": 161,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a03-worker",
+              "userTurns": 2,
+              "finalReplies": 2,
+              "bashSteps": 289,
+              "linkedCalls": 289,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a04-worker",
+              "userTurns": 2,
+              "finalReplies": 2,
+              "bashSteps": 352,
+              "linkedCalls": 352,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            }
+          ]
+        },
+        {
+          "id": "c04-requests",
+          "main": {
+            "userTurns": 3,
+            "finalReplies": 3,
+            "bashSteps": 339,
+            "linkedCalls": 339,
+            "canonicalHistoryMatched": true,
+            "compiledTurnsMatched": true
+          },
+          "children": [
+            {
+              "id": "a01-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 690,
+              "linkedCalls": 690,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a02-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 513,
+              "linkedCalls": 513,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "mixed",
+      "template": "evaluation",
+      "runId": "349c4cd4-6dce-43a0-8567-d0ab553993da",
+      "project": "sim-evaluation-4cc36ce7f450dfaf92c6/evaluation-4cc36ce7f450dfaf92c6",
+      "state": "completed",
+      "conversations": [
+        {
+          "id": "c01-queries",
+          "main": {
+            "userTurns": 5,
+            "finalReplies": 5,
+            "bashSteps": 488,
+            "linkedCalls": 488,
+            "canonicalHistoryMatched": true,
+            "compiledTurnsMatched": true
+          },
+          "children": [
+            {
+              "id": "a01-worker",
+              "userTurns": 4,
+              "finalReplies": 4,
+              "bashSteps": 802,
+              "linkedCalls": 802,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a02-worker",
+              "userTurns": 4,
+              "finalReplies": 4,
+              "bashSteps": 802,
+              "linkedCalls": 802,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            }
+          ]
+        },
+        {
+          "id": "c02-rubrics",
+          "main": {
+            "userTurns": 4,
+            "finalReplies": 4,
+            "bashSteps": 452,
+            "linkedCalls": 452,
+            "canonicalHistoryMatched": true,
+            "compiledTurnsMatched": true
+          },
+          "children": [
+            {
+              "id": "a01-worker",
+              "userTurns": 4,
+              "finalReplies": 4,
+              "bashSteps": 960,
+              "linkedCalls": 960,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a02-worker",
+              "userTurns": 4,
+              "finalReplies": 4,
+              "bashSteps": 448,
+              "linkedCalls": 448,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a03-worker",
+              "userTurns": 4,
+              "finalReplies": 4,
+              "bashSteps": 196,
+              "linkedCalls": 196,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            }
+          ]
+        },
+        {
+          "id": "c03-judgments",
+          "main": {
+            "userTurns": 4,
+            "finalReplies": 4,
+            "bashSteps": 452,
+            "linkedCalls": 452,
+            "canonicalHistoryMatched": true,
+            "compiledTurnsMatched": true
+          },
+          "children": [
+            {
+              "id": "a01-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 401,
+              "linkedCalls": 401,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a02-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 401,
+              "linkedCalls": 401,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a03-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 401,
+              "linkedCalls": 401,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a04-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 401,
+              "linkedCalls": 401,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            }
+          ]
+        },
+        {
+          "id": "c04-queries",
+          "main": {
+            "userTurns": 3,
+            "finalReplies": 3,
+            "bashSteps": 339,
+            "linkedCalls": 339,
+            "canonicalHistoryMatched": true,
+            "compiledTurnsMatched": true
+          },
+          "children": [
+            {
+              "id": "a01-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 690,
+              "linkedCalls": 690,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a02-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 513,
+              "linkedCalls": 513,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "mixed",
+      "template": "embeddings",
+      "runId": "7aeb2a4c-bac2-4394-9267-e9d892de3fbd",
+      "project": "sim-embeddings-08a631d2dce154154e55/embeddings-08a631d2dce154154e55",
+      "state": "completed",
+      "conversations": [
+        {
+          "id": "c01-corpus",
+          "main": {
+            "userTurns": 5,
+            "finalReplies": 5,
+            "bashSteps": 488,
+            "linkedCalls": 488,
+            "canonicalHistoryMatched": true,
+            "compiledTurnsMatched": true
+          },
+          "children": [
+            {
+              "id": "a01-worker",
+              "userTurns": 4,
+              "finalReplies": 4,
+              "bashSteps": 802,
+              "linkedCalls": 802,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a02-worker",
+              "userTurns": 4,
+              "finalReplies": 4,
+              "bashSteps": 802,
+              "linkedCalls": 802,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            }
+          ]
+        },
+        {
+          "id": "c02-chunking",
+          "main": {
+            "userTurns": 4,
+            "finalReplies": 4,
+            "bashSteps": 452,
+            "linkedCalls": 452,
+            "canonicalHistoryMatched": true,
+            "compiledTurnsMatched": true
+          },
+          "children": [
+            {
+              "id": "a01-worker",
+              "userTurns": 4,
+              "finalReplies": 4,
+              "bashSteps": 960,
+              "linkedCalls": 960,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a02-worker",
+              "userTurns": 4,
+              "finalReplies": 4,
+              "bashSteps": 448,
+              "linkedCalls": 448,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a03-worker",
+              "userTurns": 4,
+              "finalReplies": 4,
+              "bashSteps": 196,
+              "linkedCalls": 196,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            }
+          ]
+        },
+        {
+          "id": "c03-provenance",
+          "main": {
+            "userTurns": 4,
+            "finalReplies": 4,
+            "bashSteps": 452,
+            "linkedCalls": 452,
+            "canonicalHistoryMatched": true,
+            "compiledTurnsMatched": true
+          },
+          "children": [
+            {
+              "id": "a01-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 401,
+              "linkedCalls": 401,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a02-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 401,
+              "linkedCalls": 401,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a03-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 401,
+              "linkedCalls": 401,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a04-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 401,
+              "linkedCalls": 401,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            }
+          ]
+        },
+        {
+          "id": "c04-corpus",
+          "main": {
+            "userTurns": 4,
+            "finalReplies": 4,
+            "bashSteps": 452,
+            "linkedCalls": 452,
+            "canonicalHistoryMatched": true,
+            "compiledTurnsMatched": true
+          },
+          "children": [
+            {
+              "id": "a01-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 401,
+              "linkedCalls": 401,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a02-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 401,
+              "linkedCalls": 401,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a03-worker",
+              "userTurns": 2,
+              "finalReplies": 2,
+              "bashSteps": 161,
+              "linkedCalls": 161,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a04-worker",
+              "userTurns": 2,
+              "finalReplies": 2,
+              "bashSteps": 289,
+              "linkedCalls": 289,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a05-worker",
+              "userTurns": 2,
+              "finalReplies": 2,
+              "bashSteps": 352,
+              "linkedCalls": 352,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            }
+          ]
+        },
+        {
+          "id": "c05-chunking",
+          "main": {
+            "userTurns": 3,
+            "finalReplies": 3,
+            "bashSteps": 339,
+            "linkedCalls": 339,
+            "canonicalHistoryMatched": true,
+            "compiledTurnsMatched": true
+          },
+          "children": [
+            {
+              "id": "a01-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 690,
+              "linkedCalls": 690,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a02-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 513,
+              "linkedCalls": 513,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "mixed",
+      "template": "compiler",
+      "runId": "d5002a5d-a2f0-4972-97a4-63f48a6e7b7e",
+      "project": "sim-compiler-ce960d4292438be0f6ae/compiler-ce960d4292438be0f6ae",
+      "state": "completed",
+      "conversations": [
+        {
+          "id": "c01-grammar",
+          "main": {
+            "userTurns": 5,
+            "finalReplies": 5,
+            "bashSteps": 488,
+            "linkedCalls": 488,
+            "canonicalHistoryMatched": true,
+            "compiledTurnsMatched": true
+          },
+          "children": [
+            {
+              "id": "a01-worker",
+              "userTurns": 4,
+              "finalReplies": 4,
+              "bashSteps": 960,
+              "linkedCalls": 960,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a02-worker",
+              "userTurns": 4,
+              "finalReplies": 4,
+              "bashSteps": 448,
+              "linkedCalls": 448,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a03-worker",
+              "userTurns": 4,
+              "finalReplies": 4,
+              "bashSteps": 196,
+              "linkedCalls": 196,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            }
+          ]
+        },
+        {
+          "id": "c02-diagnostics",
+          "main": {
+            "userTurns": 4,
+            "finalReplies": 4,
+            "bashSteps": 452,
+            "linkedCalls": 452,
+            "canonicalHistoryMatched": true,
+            "compiledTurnsMatched": true
+          },
+          "children": [
+            {
+              "id": "a01-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 401,
+              "linkedCalls": 401,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a02-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 401,
+              "linkedCalls": 401,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a03-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 401,
+              "linkedCalls": 401,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a04-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 401,
+              "linkedCalls": 401,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            }
+          ]
+        },
+        {
+          "id": "c03-arithmetic",
+          "main": {
+            "userTurns": 4,
+            "finalReplies": 4,
+            "bashSteps": 452,
+            "linkedCalls": 452,
+            "canonicalHistoryMatched": true,
+            "compiledTurnsMatched": true
+          },
+          "children": [
+            {
+              "id": "a01-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 401,
+              "linkedCalls": 401,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a02-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 401,
+              "linkedCalls": 401,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a03-worker",
+              "userTurns": 2,
+              "finalReplies": 2,
+              "bashSteps": 161,
+              "linkedCalls": 161,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a04-worker",
+              "userTurns": 2,
+              "finalReplies": 2,
+              "bashSteps": 289,
+              "linkedCalls": 289,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a05-worker",
+              "userTurns": 2,
+              "finalReplies": 2,
+              "bashSteps": 352,
+              "linkedCalls": 352,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            }
+          ]
+        },
+        {
+          "id": "c04-grammar",
+          "main": {
+            "userTurns": 4,
+            "finalReplies": 4,
+            "bashSteps": 452,
+            "linkedCalls": 452,
+            "canonicalHistoryMatched": true,
+            "compiledTurnsMatched": true
+          },
+          "children": [
+            {
+              "id": "a01-worker",
+              "userTurns": 2,
+              "finalReplies": 2,
+              "bashSteps": 480,
+              "linkedCalls": 480,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a02-worker",
+              "userTurns": 2,
+              "finalReplies": 2,
+              "bashSteps": 224,
+              "linkedCalls": 224,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a03-worker",
+              "userTurns": 2,
+              "finalReplies": 2,
+              "bashSteps": 98,
+              "linkedCalls": 98,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a04-worker",
+              "userTurns": 2,
+              "finalReplies": 2,
+              "bashSteps": 480,
+              "linkedCalls": 480,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a05-worker",
+              "userTurns": 2,
+              "finalReplies": 2,
+              "bashSteps": 224,
+              "linkedCalls": 224,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a06-worker",
+              "userTurns": 2,
+              "finalReplies": 2,
+              "bashSteps": 98,
+              "linkedCalls": 98,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            }
+          ]
+        },
+        {
+          "id": "c05-diagnostics",
+          "main": {
+            "userTurns": 4,
+            "finalReplies": 4,
+            "bashSteps": 452,
+            "linkedCalls": 452,
+            "canonicalHistoryMatched": true,
+            "compiledTurnsMatched": true
+          },
+          "children": [
+            {
+              "id": "a01-worker",
+              "userTurns": 4,
+              "finalReplies": 4,
+              "bashSteps": 960,
+              "linkedCalls": 960,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a02-worker",
+              "userTurns": 4,
+              "finalReplies": 4,
+              "bashSteps": 448,
+              "linkedCalls": 448,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a03-worker",
+              "userTurns": 4,
+              "finalReplies": 4,
+              "bashSteps": 196,
+              "linkedCalls": 196,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            }
+          ]
+        },
+        {
+          "id": "c06-arithmetic",
+          "main": {
+            "userTurns": 4,
+            "finalReplies": 4,
+            "bashSteps": 452,
+            "linkedCalls": 452,
+            "canonicalHistoryMatched": true,
+            "compiledTurnsMatched": true
+          },
+          "children": [
+            {
+              "id": "a01-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 401,
+              "linkedCalls": 401,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a02-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 401,
+              "linkedCalls": 401,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a03-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 401,
+              "linkedCalls": 401,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a04-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 401,
+              "linkedCalls": 401,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "mixed",
+      "template": "gateway",
+      "runId": "6afb4182-f959-4619-b1d1-19c0ba554433",
+      "project": "sim-gateway-4cd19a94447fb537af6b/gateway-4cd19a94447fb537af6b",
+      "state": "completed",
+      "conversations": [
+        {
+          "id": "c01-routes",
+          "main": {
+            "userTurns": 6,
+            "finalReplies": 6,
+            "bashSteps": 601,
+            "linkedCalls": 601,
+            "canonicalHistoryMatched": true,
+            "compiledTurnsMatched": true
+          },
+          "children": [
+            {
+              "id": "a01-worker",
+              "userTurns": 5,
+              "finalReplies": 5,
+              "bashSteps": 1200,
+              "linkedCalls": 1200,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a02-worker",
+              "userTurns": 5,
+              "finalReplies": 5,
+              "bashSteps": 560,
+              "linkedCalls": 560,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a03-worker",
+              "userTurns": 5,
+              "finalReplies": 5,
+              "bashSteps": 245,
+              "linkedCalls": 245,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            }
+          ]
+        },
+        {
+          "id": "c02-policies",
+          "main": {
+            "userTurns": 4,
+            "finalReplies": 4,
+            "bashSteps": 452,
+            "linkedCalls": 452,
+            "canonicalHistoryMatched": true,
+            "compiledTurnsMatched": true
+          },
+          "children": [
+            {
+              "id": "a01-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 401,
+              "linkedCalls": 401,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a02-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 401,
+              "linkedCalls": 401,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a03-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 401,
+              "linkedCalls": 401,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a04-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 401,
+              "linkedCalls": 401,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            }
+          ]
+        },
+        {
+          "id": "c03-limits",
+          "main": {
+            "userTurns": 4,
+            "finalReplies": 4,
+            "bashSteps": 452,
+            "linkedCalls": 452,
+            "canonicalHistoryMatched": true,
+            "compiledTurnsMatched": true
+          },
+          "children": [
+            {
+              "id": "a01-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 401,
+              "linkedCalls": 401,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a02-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 401,
+              "linkedCalls": 401,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a03-worker",
+              "userTurns": 2,
+              "finalReplies": 2,
+              "bashSteps": 161,
+              "linkedCalls": 161,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a04-worker",
+              "userTurns": 2,
+              "finalReplies": 2,
+              "bashSteps": 289,
+              "linkedCalls": 289,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a05-worker",
+              "userTurns": 2,
+              "finalReplies": 2,
+              "bashSteps": 352,
+              "linkedCalls": 352,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            }
+          ]
+        },
+        {
+          "id": "c04-routes",
+          "main": {
+            "userTurns": 5,
+            "finalReplies": 5,
+            "bashSteps": 565,
+            "linkedCalls": 565,
+            "canonicalHistoryMatched": true,
+            "compiledTurnsMatched": true
+          },
+          "children": [
+            {
+              "id": "a01-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 720,
+              "linkedCalls": 720,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a02-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 336,
+              "linkedCalls": 336,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a03-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 147,
+              "linkedCalls": 147,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a04-worker",
+              "userTurns": 2,
+              "finalReplies": 2,
+              "bashSteps": 480,
+              "linkedCalls": 480,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a05-worker",
+              "userTurns": 2,
+              "finalReplies": 2,
+              "bashSteps": 224,
+              "linkedCalls": 224,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a06-worker",
+              "userTurns": 2,
+              "finalReplies": 2,
+              "bashSteps": 98,
+              "linkedCalls": 98,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            }
+          ]
+        },
+        {
+          "id": "c05-policies",
+          "main": {
+            "userTurns": 4,
+            "finalReplies": 4,
+            "bashSteps": 452,
+            "linkedCalls": 452,
+            "canonicalHistoryMatched": true,
+            "compiledTurnsMatched": true
+          },
+          "children": [
+            {
+              "id": "a01-worker",
+              "userTurns": 2,
+              "finalReplies": 2,
+              "bashSteps": 352,
+              "linkedCalls": 352,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a02-worker",
+              "userTurns": 2,
+              "finalReplies": 2,
+              "bashSteps": 161,
+              "linkedCalls": 161,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a03-worker",
+              "userTurns": 2,
+              "finalReplies": 2,
+              "bashSteps": 289,
+              "linkedCalls": 289,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a04-worker",
+              "userTurns": 2,
+              "finalReplies": 2,
+              "bashSteps": 352,
+              "linkedCalls": 352,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a05-worker",
+              "userTurns": 2,
+              "finalReplies": 2,
+              "bashSteps": 161,
+              "linkedCalls": 161,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a06-worker",
+              "userTurns": 1,
+              "finalReplies": 1,
+              "bashSteps": 49,
+              "linkedCalls": 49,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a07-worker",
+              "userTurns": 1,
+              "finalReplies": 1,
+              "bashSteps": 240,
+              "linkedCalls": 240,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            }
+          ]
+        },
+        {
+          "id": "c06-limits",
+          "main": {
+            "userTurns": 4,
+            "finalReplies": 4,
+            "bashSteps": 452,
+            "linkedCalls": 452,
+            "canonicalHistoryMatched": true,
+            "compiledTurnsMatched": true
+          },
+          "children": [
+            {
+              "id": "a01-worker",
+              "userTurns": 4,
+              "finalReplies": 4,
+              "bashSteps": 960,
+              "linkedCalls": 960,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a02-worker",
+              "userTurns": 4,
+              "finalReplies": 4,
+              "bashSteps": 448,
+              "linkedCalls": 448,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a03-worker",
+              "userTurns": 4,
+              "finalReplies": 4,
+              "bashSteps": 196,
+              "linkedCalls": 196,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            }
+          ]
+        },
+        {
+          "id": "c07-routes",
+          "main": {
+            "userTurns": 4,
+            "finalReplies": 4,
+            "bashSteps": 452,
+            "linkedCalls": 452,
+            "canonicalHistoryMatched": true,
+            "compiledTurnsMatched": true
+          },
+          "children": [
+            {
+              "id": "a01-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 401,
+              "linkedCalls": 401,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a02-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 401,
+              "linkedCalls": 401,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a03-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 401,
+              "linkedCalls": 401,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a04-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 401,
+              "linkedCalls": 401,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "mixed",
+      "template": "website",
+      "runId": "6e520e89-0388-4160-b501-f6c45ca36235",
+      "project": "sim-website-e4057582c79c1a9c889a/website-e4057582c79c1a9c889a",
+      "state": "completed",
+      "conversations": [
+        {
+          "id": "c01-catalog",
+          "main": {
+            "userTurns": 6,
+            "finalReplies": 6,
+            "bashSteps": 601,
+            "linkedCalls": 601,
+            "canonicalHistoryMatched": true,
+            "compiledTurnsMatched": true
+          },
+          "children": [
+            {
+              "id": "a01-worker",
+              "userTurns": 5,
+              "finalReplies": 5,
+              "bashSteps": 1200,
+              "linkedCalls": 1200,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a02-worker",
+              "userTurns": 5,
+              "finalReplies": 5,
+              "bashSteps": 560,
+              "linkedCalls": 560,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a03-worker",
+              "userTurns": 5,
+              "finalReplies": 5,
+              "bashSteps": 245,
+              "linkedCalls": 245,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            }
+          ]
+        },
+        {
+          "id": "c02-delivery",
+          "main": {
+            "userTurns": 5,
+            "finalReplies": 5,
+            "bashSteps": 565,
+            "linkedCalls": 565,
+            "canonicalHistoryMatched": true,
+            "compiledTurnsMatched": true
+          },
+          "children": [
+            {
+              "id": "a01-worker",
+              "userTurns": 4,
+              "finalReplies": 4,
+              "bashSteps": 641,
+              "linkedCalls": 641,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a02-worker",
+              "userTurns": 4,
+              "finalReplies": 4,
+              "bashSteps": 513,
+              "linkedCalls": 513,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a03-worker",
+              "userTurns": 4,
+              "finalReplies": 4,
+              "bashSteps": 450,
+              "linkedCalls": 450,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a04-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 401,
+              "linkedCalls": 401,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            }
+          ]
+        },
+        {
+          "id": "c03-care",
+          "main": {
+            "userTurns": 5,
+            "finalReplies": 5,
+            "bashSteps": 565,
+            "linkedCalls": 565,
+            "canonicalHistoryMatched": true,
+            "compiledTurnsMatched": true
+          },
+          "children": [
+            {
+              "id": "a01-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 401,
+              "linkedCalls": 401,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a02-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 401,
+              "linkedCalls": 401,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a03-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 401,
+              "linkedCalls": 401,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a04-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 401,
+              "linkedCalls": 401,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a05-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 401,
+              "linkedCalls": 401,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            }
+          ]
+        },
+        {
+          "id": "c04-catalog",
+          "main": {
+            "userTurns": 4,
+            "finalReplies": 4,
+            "bashSteps": 452,
+            "linkedCalls": 452,
+            "canonicalHistoryMatched": true,
+            "compiledTurnsMatched": true
+          },
+          "children": [
+            {
+              "id": "a01-worker",
+              "userTurns": 2,
+              "finalReplies": 2,
+              "bashSteps": 480,
+              "linkedCalls": 480,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a02-worker",
+              "userTurns": 2,
+              "finalReplies": 2,
+              "bashSteps": 224,
+              "linkedCalls": 224,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a03-worker",
+              "userTurns": 2,
+              "finalReplies": 2,
+              "bashSteps": 98,
+              "linkedCalls": 98,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a04-worker",
+              "userTurns": 2,
+              "finalReplies": 2,
+              "bashSteps": 480,
+              "linkedCalls": 480,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a05-worker",
+              "userTurns": 2,
+              "finalReplies": 2,
+              "bashSteps": 224,
+              "linkedCalls": 224,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a06-worker",
+              "userTurns": 2,
+              "finalReplies": 2,
+              "bashSteps": 98,
+              "linkedCalls": 98,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            }
+          ]
+        },
+        {
+          "id": "c05-delivery",
+          "main": {
+            "userTurns": 5,
+            "finalReplies": 5,
+            "bashSteps": 565,
+            "linkedCalls": 565,
+            "canonicalHistoryMatched": true,
+            "compiledTurnsMatched": true
+          },
+          "children": [
+            {
+              "id": "a01-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 401,
+              "linkedCalls": 401,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a02-worker",
+              "userTurns": 2,
+              "finalReplies": 2,
+              "bashSteps": 161,
+              "linkedCalls": 161,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a03-worker",
+              "userTurns": 2,
+              "finalReplies": 2,
+              "bashSteps": 289,
+              "linkedCalls": 289,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a04-worker",
+              "userTurns": 2,
+              "finalReplies": 2,
+              "bashSteps": 352,
+              "linkedCalls": 352,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a05-worker",
+              "userTurns": 2,
+              "finalReplies": 2,
+              "bashSteps": 161,
+              "linkedCalls": 161,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a06-worker",
+              "userTurns": 2,
+              "finalReplies": 2,
+              "bashSteps": 289,
+              "linkedCalls": 289,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a07-worker",
+              "userTurns": 2,
+              "finalReplies": 2,
+              "bashSteps": 352,
+              "linkedCalls": 352,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            }
+          ]
+        },
+        {
+          "id": "c06-care",
+          "main": {
+            "userTurns": 5,
+            "finalReplies": 5,
+            "bashSteps": 565,
+            "linkedCalls": 565,
+            "canonicalHistoryMatched": true,
+            "compiledTurnsMatched": true
+          },
+          "children": [
+            {
+              "id": "a01-worker",
+              "userTurns": 2,
+              "finalReplies": 2,
+              "bashSteps": 289,
+              "linkedCalls": 289,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a02-worker",
+              "userTurns": 2,
+              "finalReplies": 2,
+              "bashSteps": 352,
+              "linkedCalls": 352,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a03-worker",
+              "userTurns": 2,
+              "finalReplies": 2,
+              "bashSteps": 161,
+              "linkedCalls": 161,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a04-worker",
+              "userTurns": 2,
+              "finalReplies": 2,
+              "bashSteps": 289,
+              "linkedCalls": 289,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a05-worker",
+              "userTurns": 2,
+              "finalReplies": 2,
+              "bashSteps": 352,
+              "linkedCalls": 352,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a06-worker",
+              "userTurns": 2,
+              "finalReplies": 2,
+              "bashSteps": 161,
+              "linkedCalls": 161,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a07-worker",
+              "userTurns": 2,
+              "finalReplies": 2,
+              "bashSteps": 289,
+              "linkedCalls": 289,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a08-worker",
+              "userTurns": 1,
+              "finalReplies": 1,
+              "bashSteps": 112,
+              "linkedCalls": 112,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            }
+          ]
+        },
+        {
+          "id": "c07-catalog",
+          "main": {
+            "userTurns": 5,
+            "finalReplies": 5,
+            "bashSteps": 565,
+            "linkedCalls": 565,
+            "canonicalHistoryMatched": true,
+            "compiledTurnsMatched": true
+          },
+          "children": [
+            {
+              "id": "a01-worker",
+              "userTurns": 5,
+              "finalReplies": 5,
+              "bashSteps": 1200,
+              "linkedCalls": 1200,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a02-worker",
+              "userTurns": 5,
+              "finalReplies": 5,
+              "bashSteps": 560,
+              "linkedCalls": 560,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a03-worker",
+              "userTurns": 5,
+              "finalReplies": 5,
+              "bashSteps": 245,
+              "linkedCalls": 245,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            }
+          ]
+        },
+        {
+          "id": "c08-delivery",
+          "main": {
+            "userTurns": 4,
+            "finalReplies": 4,
+            "bashSteps": 452,
+            "linkedCalls": 452,
+            "canonicalHistoryMatched": true,
+            "compiledTurnsMatched": true
+          },
+          "children": [
+            {
+              "id": "a01-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 401,
+              "linkedCalls": 401,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a02-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 401,
+              "linkedCalls": 401,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a03-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 401,
+              "linkedCalls": 401,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            },
+            {
+              "id": "a04-worker",
+              "userTurns": 3,
+              "finalReplies": 3,
+              "bashSteps": 401,
+              "linkedCalls": 401,
+              "canonicalHistoryMatched": true,
+              "compiledTurnsMatched": true
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

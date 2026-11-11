@@ -7,11 +7,13 @@ import type { ChildRun } from '@/layerfs/agent-api'
 
 export interface TranscriptScope {
   chatId: string
-  children: ChildRun[]
   focus: string | null
   inChild: boolean
   childId?: string
 }
 
-export const ScopeContext = createContext<TranscriptScope>({ chatId: '', children: [], focus: null, inChild: false })
+export const ScopeContext = createContext<TranscriptScope>({ chatId: '', focus: null, inChild: false })
 export const useScope = () => useContext(ScopeContext)
+
+export const ScopeChildrenContext = createContext<ChildRun[]>([])
+export const useScopeChildren = () => useContext(ScopeChildrenContext)

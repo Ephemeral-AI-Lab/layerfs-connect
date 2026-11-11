@@ -1,0 +1,42 @@
+{
+  "state": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/connect-dense-pilot-mjchQ8",
+  "cli": "/Users/yifanxu/.cache/layerfs-worktrees/layerfs-macos-writer-adm-905cf46b6910/artifacts/build-macos-02b03f77bf59405c827fc095bc618eb4/layerfs",
+  "started": 1794285716150,
+  "scope": "Real lightest tier on Native, no sandboxes/workspaces. No command retries.",
+  "ok": false,
+  "error": {
+    "code": "PresetVerificationFailed",
+    "message": "demo-density-pilot/design: main file inventory does not match the recipe",
+    "stack": "Error: demo-density-pilot/design: main file inventory does not match the recipe\n    at fail (file:///Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect/tools/demo/project-verification.mjs:3:47)\n    at verifyProject (file:///Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect/tools/demo/project-verification.mjs:134:137)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async DemoRunner.verify (file:///Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect/tools/demo/runner.mjs:442:26)\n    at async file:///Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect/tools/demo/runner.mjs:544:28\n    at async DemoRunner.run (file:///Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect/tools/demo/runner.mjs:522:14)\n    at async file:///private/tmp/connect-density-pilot.mjs:7:18"
+  },
+  "cleanup": {
+    "preset": "studio",
+    "state": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/connect-dense-pilot-mjchQ8",
+    "home": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/connect-dense-pilot-mjchQ8/home-2",
+    "actionId": "14a30ecc-f5e7-4e05-b346-3dd89453692e",
+    "cleanup": {
+      "remove": {
+        "stores": [
+          "demo-density-pilot"
+        ],
+        "sandboxes": [],
+        "machines": [],
+        "workspaces": []
+      },
+      "retainMachines": [],
+      "preserved": {
+        "machine": [],
+        "store": [],
+        "sandbox": []
+      },
+      "projects": 1,
+      "signature": "0fa31327b5e95b537ab38947a63227850545d119ead57a7ab00ce1ef2f1557db",
+      "verified": true,
+      "at": 1794285865594,
+      "remaining": [],
+      "unexpected": []
+    },
+    "activityUrl": "http://127.0.0.1:1025/#/activity?action=14a30ecc-f5e7-4e05-b346-3dd89453692e"
+  },
+  "ended": 1794285865727
+}

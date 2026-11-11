@@ -1,0 +1,8 @@
+{
+  "url": "http://127.0.0.1:1025/?mac=1#/machines",
+  "width": 900,
+  "height": 600,
+  "progress": "Outcome needs inspection\n0.0s\n\nPreparing request…\n\nThe final result could not be confirmed. Inspect the current state before trying again.\n\nProgress updates are unavailable.\n\nReported error\nView CLI activity",
+  "activity": "#/activity?action=75c83165-1a65-4c97-b6e9-c78a5a74e1ea",
+  "disabledCreate": false
+}

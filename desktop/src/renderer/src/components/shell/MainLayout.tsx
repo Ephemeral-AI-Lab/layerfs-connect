@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils'
 import { ChromeActions } from './ChromeActions'
 import { LayoutContext } from './layout-context'
 import { Sidebar } from './Sidebar'
+import { PresetEnvironment } from '@/components/presets/PresetEnvironment'
 
 export function MainLayout() {
   const location = useLocation()
@@ -38,6 +39,7 @@ export function MainLayout() {
         <Sidebar width={width} open={sidebarOpen} dragging={dragging} onResizeStart={startDrag} />
         <ChromeActions sidebarWidth={width} dragging={dragging} />
         <main className="bg-content-area relative flex min-w-[400px] flex-1 flex-col overflow-hidden">
+          <PresetEnvironment />
           <div key={section} className="flex min-h-0 flex-1 animate-in fade-in-0 duration-150 flex-col">
             <Outlet />
           </div>

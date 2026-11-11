@@ -1,0 +1,234 @@
+diff --git a/docs/architecture/engine/store/backends.md b/docs/architecture/engine/store/backends.md
+index e1853446a9..cc8d1402a4 100644
+--- a/docs/architecture/engine/store/backends.md
++++ b/docs/architecture/engine/store/backends.md
+@@ -52,7 +52,7 @@ PostgreSQL runs them unchanged except the few it replaces in
+ | `Busy` | `Busy` | `Busy` | Another writer held the lock; not retried. |
+ | `Closed` | `Refused "Closed"` | `OwnershipUnavailable` | Store closed before this call's turn. |
+ | `Rejected` | `Refused "Rejected"` | `OwnershipUnavailable` | PostgreSQL refused a new connection. |
+-| `Cancelled` | `Refused "Cancelled"` | `OwnershipUnavailable` | A signal interrupted the Linux writer wait. |
++| `Cancelled` | `Refused "Cancelled"` | `OwnershipUnavailable` | A signal interrupted the SQLite writer wait. |
+ | `ReadOnly` | `Refused "ReadOnly"` | `ContinuityUnavailable` | Write on a read-only session. |
+ | `Capacity` | `Refused "Capacity"` | `Capacity("persistence")` | A bound or the disk margin was reached. |
+ | `Integrity` | `Malformed` | `Integrity("persistence")` | Stored or supplied data broke a rule. |
+@@ -97,8 +97,8 @@ it never queues behind a held lane.
+  SQLite write: Session::run(true, body)           any process, one host
+    1 admission.enter        in-process FIFO turn on this session
+    2 state mutex            the connection
+-   3 Writer::acquire        Linux: flock(LOCK_EX) on the Store's parent
+-                            directory; macOS: none     (skipped if nested)
++   3 Writer::acquire        Linux/macOS: flock(LOCK_EX) on the Store's
++                            parent directory     (skipped if nested)
+    4 BEGIN IMMEDIATE        SQLite's write lock; busy_timeout 0 -> Busy
+    5 body; COMMIT           or ROLLBACK; Unknown -> quarantine
+    6 finish_writer          release the flock
+@@ -116,16 +116,16 @@ it never queues behind a held lane.
+ | Rule | Enforced by |
+ | --- | --- |
+ | One write transaction at a time per session | `Admission` turn: [`admission.rs`](../../../../engine/crates/layerfs-persistence/src/backend/admission.rs) |
+-| One writer across processes on one Linux host | Directory `flock`: [`writer_admission.rs`](../../../../engine/crates/layerfs-persistence/src/backend/sqlite/lane/writer_admission.rs) |
++| One writer across processes on one Linux or macOS host | Directory `flock`: [`writer_admission.rs`](../../../../engine/crates/layerfs-persistence/src/backend/sqlite/lane/writer_admission.rs) |
+ | One writer in the SQLite file | `BEGIN IMMEDIATE` with `busy_timeout=0`: [`transaction.rs`](../../../../engine/crates/layerfs-persistence/src/backend/sqlite/session/transaction.rs) |
+ | One writer across PostgreSQL clients | `store_lane` row `FOR UPDATE`: [`profile.rs`](../../../../engine/crates/layerfs-persistence/src/backend/postgresql/session/profile.rs) |
+ | No busy handler, no retry | `busy_timeout` reads back 0; `Busy` is returned as is |
+ 
+ The lock is taken on a separate descriptor of the Store's directory, never on
+ the main, WAL or SHM file: closing a main-file descriptor would drop SQLite's
+-own POSIX locks. Several Store files in one directory share this lock. On
+-macOS `flock` conflicts with SQLite's locks, so there is no cross-process
+-writer wait: a second writer gets SQLite's `Busy`. Reads (`BEGIN`, or one
++own POSIX locks. Several Store files in one directory share this lock. Linux
++and macOS both use the directory descriptor, so neither takes an advisory
++lock on SQLite's own files. Reads (`BEGIN`, or one
+ implicit snapshot) take the turn but never the directory lock or the lane.
+ The publication lane holds steps 1 and 3 across several transactions; see
+ [History publication](history-publication.md#the-publish-lane).
+diff --git a/docs/architecture/glossary.md b/docs/architecture/glossary.md
+index 468af21e96..c7c9f13016 100644
+--- a/docs/architecture/glossary.md
++++ b/docs/architecture/glossary.md
+@@ -50,7 +50,7 @@ LayerFS (backend, install, scope), the row gives both.
+ | Platform | A machine's kind (`native`, `docker`, `apple-container`, `lima`). It fixes the Sandbox backend, the worker's address and what the support matrix allows. | [Machines: platforms and profiles](control/machines/platforms-and-profiles.md#platform) |
+ | Project | A named LayerStack in a Store, written `<store>/<project>`. | [Project Init](engine/project-init/README.md) |
+ | Publish | `branch.publish`: puts a Branch's head Commit on `main` as a new Layer. | [Store calls: branches](engine/store-calls/branches.md#publish) |
+-| Publish lane | The Store's admission turn plus its cross-process writer lock (the `flock` on the Store's directory on Linux; the `store_lane` row on PostgreSQL), held by a Commit across its head check, last merge step and publish. | [Store: history publication](engine/store/history-publication.md#the-publish-lane) |
++| Publish lane | The Store's admission turn plus its cross-process writer lock (the `flock` on the Store's directory on Linux and macOS; the `store_lane` row on PostgreSQL), held by a Commit across its head check, last merge step and publish. | [Store: history publication](engine/store/history-publication.md#the-publish-lane) |
+ | Reach | How a daemon on a machine dials a PostgreSQL Store: the URL rewritten for that platform and checked once at Sandbox create. | [Network: reach](control/network/reach.md) |
+ | Sandbox | One daemon started by a backend on a machine, plus the commands run in it. The daemon serves the Workspaces; the Sandbox runtime owns the commands. | [Sandboxes](control/sandboxes/README.md) |
+ | Save | A Storage write session: it accepts objects, packs them and `Save::finish` completes them while the Store stays open. | [Physical storage: saves](core/physical-storage/saves.md) |
+diff --git a/engine/crates/layerfs-persistence/src/backend/sqlite/lane/lane.rs b/engine/crates/layerfs-persistence/src/backend/sqlite/lane/lane.rs
+index 8c9e0b32a9..2cad0e8705 100644
+--- a/engine/crates/layerfs-persistence/src/backend/sqlite/lane/lane.rs
++++ b/engine/crates/layerfs-persistence/src/backend/sqlite/lane/lane.rs
+@@ -1,4 +1,4 @@
+-//! The Store's publication lane: one connection turn and, on Linux, the
++//! The Store's publication lane: one connection turn and, on Linux and macOS, the
+ //! cooperative writer lock, held by one thread across a short read-decide-write
+ //! sequence. Its own SQL work runs as ordinary transactions inside the held
+ //! turn; no other publication of any process can interleave.
+diff --git a/engine/crates/layerfs-persistence/src/backend/sqlite/lane/writer_admission.rs b/engine/crates/layerfs-persistence/src/backend/sqlite/lane/writer_admission.rs
+index f9ed78e2d9..a89b853c5b 100644
+--- a/engine/crates/layerfs-persistence/src/backend/sqlite/lane/writer_admission.rs
++++ b/engine/crates/layerfs-persistence/src/backend/sqlite/lane/writer_admission.rs
+@@ -1,7 +1,7 @@
+-//! Linux local-volume cooperative ownership before one SQLite write attempt.
++//! Local-volume cooperative ownership before one SQLite write attempt.
+ use crate::backend::records::BackendError;
+ use std::path::Path;
+-#[cfg(target_os = "linux")]
++#[cfg(any(target_os = "linux", target_os = "macos"))]
+ use {
+     nix::{
+         errno::Errno,
+@@ -11,13 +11,13 @@ use {
+ };
+ 
+ pub(crate) struct Writer {
+-    #[cfg(target_os = "linux")]
++    #[cfg(any(target_os = "linux", target_os = "macos"))]
+     lock: Flock<File>,
+ }
+ 
+ impl Writer {
+     pub(crate) fn acquire(path: &Path) -> Result<Self, BackendError> {
+-        #[cfg(target_os = "linux")]
++        #[cfg(any(target_os = "linux", target_os = "macos"))]
+         {
+             // Never open another FD to SQLite's main/WAL/SHM files here:
+             // closing any main-file FD cancels every process POSIX lock on
+@@ -47,13 +47,6 @@ impl Writer {
+                 Err(_) => Err(BackendError::Integrity),
+             }
+         }
+-        #[cfg(target_os = "macos")]
+-        {
+-            // Darwin's flock conflicts with SQLite's open-file locks. Host Init
+-            // is sole-owner; cross-session contention retains exact SQLite Busy.
+-            let _ = path;
+-            Ok(Self {})
+-        }
+         #[cfg(not(any(target_os = "linux", target_os = "macos")))]
+         {
+             let _ = path;
+@@ -67,7 +60,7 @@ impl Writer {
+     /// This is a single attempt, never a retry: no loop, sleep or busy handler
+     /// follows it here, and a caller must not wrap it in one.
+     pub(crate) fn try_acquire(path: &Path) -> Result<Option<Self>, BackendError> {
+-        #[cfg(target_os = "linux")]
++        #[cfg(any(target_os = "linux", target_os = "macos"))]
+         {
+             // The same independent directory description as `acquire`.
+             let directory = path
+@@ -89,15 +82,15 @@ impl Writer {
+                 Err(_) => Err(BackendError::Integrity),
+             }
+         }
+-        #[cfg(not(target_os = "linux"))]
++        #[cfg(not(any(target_os = "linux", target_os = "macos")))]
+         {
+-            // As `acquire`: no advisory lane off Linux.
++            // As `acquire`: unsupported platforms have no advisory lane.
+             Self::acquire(path).map(Some)
+         }
+     }
+ 
+     pub(crate) fn release(self) -> Result<(), Self> {
+-        #[cfg(target_os = "linux")]
++        #[cfg(any(target_os = "linux", target_os = "macos"))]
+         {
+             match self.lock.unlock() {
+                 Ok(file) => {
+@@ -107,7 +100,7 @@ impl Writer {
+                 Err((lock, _)) => Err(Self { lock }),
+             }
+         }
+-        #[cfg(not(target_os = "linux"))]
++        #[cfg(not(any(target_os = "linux", target_os = "macos")))]
+         {
+             Ok(())
+         }
+diff --git a/engine/crates/layerfs-persistence/tests/sqlite_lock_custody.rs b/engine/crates/layerfs-persistence/tests/sqlite_lock_custody.rs
+index e1d919c135..2c9c480002 100644
+--- a/engine/crates/layerfs-persistence/tests/sqlite_lock_custody.rs
++++ b/engine/crates/layerfs-persistence/tests/sqlite_lock_custody.rs
+@@ -1,6 +1,6 @@
+ //! Cooperative readiness must preserve SQLite's own POSIX lock custody.
+ //! Uses public Stores and an independently bounded raw SQLite writer process.
+-#![cfg(target_os = "linux")]
++#![cfg(any(target_os = "linux", target_os = "macos"))]
+ mod support;
+ use layerfs_content::{FinalizedObject, ObjectRole};
+ use layerfs_history::HistoryCatalogConfig;
+diff --git a/engine/crates/layerfs-persistence/tests/writer_admission.rs b/engine/crates/layerfs-persistence/tests/writer_admission.rs
+index eb9fce9fa5..1e6269c585 100644
+--- a/engine/crates/layerfs-persistence/tests/writer_admission.rs
++++ b/engine/crates/layerfs-persistence/tests/writer_admission.rs
+@@ -4,7 +4,7 @@ use layerfs_content::{FinalizedObject, ObjectRole};
+ use layerfs_history::HistoryCatalogConfig;
+ use layerfs_persistence::{PersistenceConfig, SqliteHandles, SqlitePersistenceProfile};
+ use layerfs_storage::{location::PackInfo, port::*, Storage, StoragePolicy};
+-#[cfg(target_os = "linux")]
++#[cfg(any(target_os = "linux", target_os = "macos"))]
+ use std::{
+     io::{Read, Write},
+     os::unix::net::{UnixListener, UnixStream},
+@@ -26,7 +26,7 @@ fn config(path: &Path) -> PersistenceConfig {
+ fn create(path: &Path) -> SqliteHandles {
+     SqliteHandles::create(config(path), StoragePolicy::frozen_default(), &authority()).unwrap()
+ }
+-#[cfg(target_os = "linux")]
++#[cfg(any(target_os = "linux", target_os = "macos"))]
+ fn open(path: &Path) -> SqliteHandles {
+     SqliteHandles::open_writable(
+         config(path),
+@@ -130,12 +130,12 @@ fn shared_session_reservation_waits_for_an_ordinary_public_read_owner() {
+     assert_eq!(after.rollbacks, before.rollbacks);
+ }
+ 
+-#[cfg(target_os = "linux")]
++#[cfg(any(target_os = "linux", target_os = "macos"))]
+ struct Held {
+     child: Child,
+     socket: UnixStream,
+ }
+-#[cfg(target_os = "linux")]
++#[cfg(any(target_os = "linux", target_os = "macos"))]
+ impl Held {
+     fn start(path: &Path, socket_path: &Path) -> Self {
+         let listener = UnixListener::bind(socket_path).unwrap();
+@@ -168,6 +168,8 @@ impl Held {
+                 }
+             }
+         };
++        // Darwin inherits the listener's nonblocking flag on accepted sockets.
++        socket.set_nonblocking(false).unwrap();
+         let mut held = Self { child, socket };
+         held.socket
+             .set_read_timeout(Some(Duration::from_secs(3)))
+@@ -193,7 +195,7 @@ impl Held {
+         }
+     }
+ }
+-#[cfg(target_os = "linux")]
++#[cfg(any(target_os = "linux", target_os = "macos"))]
+ impl Drop for Held {
+     fn drop(&mut self) {
+         let _ = self.child.kill();
+@@ -202,7 +204,7 @@ impl Drop for Held {
+ }
+ 
+ #[test]
+-#[cfg(target_os = "linux")]
++#[cfg(any(target_os = "linux", target_os = "macos"))]
+ fn another_process_admission_precedes_the_single_sqlite_begin() {
+     // Keep the owned AF_UNIX path below Darwin's sockaddr_un capacity.
+     let temp = support::Temp::new("wa");
+@@ -243,7 +245,7 @@ fn another_process_admission_precedes_the_single_sqlite_begin() {
+ }
+ 
+ #[test]
+-#[cfg(target_os = "linux")]
++#[cfg(any(target_os = "linux", target_os = "macos"))]
+ fn two_opened_handles_admit_eight_distinct_reservations_without_conflict() {
+     let temp = support::Temp::new("writer-admission-two-handles");
+     let path = temp.join("store.sqlite");

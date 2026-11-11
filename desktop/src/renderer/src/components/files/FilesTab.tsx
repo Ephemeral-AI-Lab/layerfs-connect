@@ -5,8 +5,6 @@ import { ChevronRight, FileText, Folder, FolderOpen, Link2, X } from 'lucide-rea
 import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { SavedFileExplorer } from './SavedFileExplorer'
-import { FileExplorerPreview } from './FileExplorerPreview'
-import { previewEntries } from './file-preview-data'
 import { SearchField } from './SearchField'
 import { explain } from '@/components/layerfs/States'
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -145,18 +143,16 @@ interface FilesTabProps {
   branches: BranchInfo[]
   /** Changes when the run moved on, so open folders and the file reload. */
   tick?: number
-  /** Dev aid: the Branch to open on. */
+  /** The Branch to open on. */
   initialBranch?: string
-  /** Renderer-only local fixtures for the SDK proposal visualization. */
-  preview?: boolean
 }
 
-export function FilesTab({ project, branches, tick = 0, initialBranch, preview = false }: FilesTabProps) {
+export function FilesTab({ project, branches, tick = 0, initialBranch }: FilesTabProps) {
   const [ref, setRef] = useState(() => (initialBranch && branches.some((b) => b.name === initialBranch) ? initialBranch : branches.find((b) => b.name === 'main')?.name ?? branches[0]?.name ?? 'main'))
   const [latest, setLatest] = useState<string | undefined>()
   const [more, setMore] = useState<Record<string, number | null>>({})
   const [dirs, setDirs] = useState<Map<string, Dir>>(new Map())
-  const [open, setOpen] = useState<Set<string>>(() => preview ? new Set(['/src', '/src/routes']) : new Set())
+  const [open, setOpen] = useState<Set<string>>(() => new Set())
   const [snapshot, setSnapshot] = useState('latest')
   const pin = snapshot === 'latest' ? latest ?? branches.find(b => b.name === ref)?.head ?? undefined : snapshot
   const [tabs, setTabs] = useState<string[]>([])
@@ -170,13 +166,13 @@ export function FilesTab({ project, branches, tick = 0, initialBranch, preview =
     (path: string, keep = false, pos = 0) => {
       const version = generation.current
       if (!keep) setDirs((all) => new Map(all).set(path, 'loading'))
-      const entriesRead = preview ? Promise.resolve(previewEntries(ref, snapshot, path)) : host.list(project, ref, path, pin, pos).then(p => { setMore(m => ({ ...m, [path]: p.next })); return p.items })
+      const entriesRead = host.list(project, ref, path, pin, pos).then(p => { setMore(m => ({ ...m, [path]: p.next })); return p.items })
       entriesRead.then(
         (entries) => { if (version === generation.current) setDirs((all) => new Map(all).set(path, pos ? [...(Array.isArray(all.get(path)) ? all.get(path) as FsEntry[] : []), ...entries] : entries)) },
         (e: unknown) => { if (version === generation.current) setDirs((all) => new Map(all).set(path, e instanceof Error ? e : new Error(String(e)))) },
       )
     },
-    [project, ref, preview, snapshot, pin],
+    [project, ref, snapshot, pin],
   )
   // A new ref starts from its root; the folders open stay open there.
   useEffect(() => {
@@ -198,12 +194,12 @@ export function FilesTab({ project, branches, tick = 0, initialBranch, preview =
   useEffect(() => {
     if (greeted.current || !(root instanceof Array)) return
     greeted.current = true
-    const readme = preview ? { path: '/src/routes/login.js' } : root.find((e) => e.kind === 'file' && /^readme(\.md|\.txt)?$/i.test(e.name))
+    const readme = root.find((e) => e.kind === 'file' && /^readme(\.md|\.txt)?$/i.test(e.name))
     if (readme && tabs.length === 0) {
       setTabs([readme.path])
       setActive(readme.path)
     }
-  }, [root, tabs.length, preview])
+  }, [root, tabs.length])
 
   const toggle = (path: string) => {
     const next = new Set(open)
@@ -265,8 +261,7 @@ export function FilesTab({ project, branches, tick = 0, initialBranch, preview =
               )}
             </SelectContent>
           </Select>
-          {!preview && <p className="fp-branch-context">Saved {shortId(pin)}{snapshot !== 'latest' && latest && latest !== snapshot ? ' · Newer version available' : ''}</p>}
-          {preview && <p className="fp-branch-context">{ref === 'main' ? 'Project core content' : 'Working branch · based on main'}</p>}
+          <p className="fp-branch-context">Saved {shortId(pin)}{snapshot !== 'latest' && latest && latest !== snapshot ? ' · Newer version available' : ''}</p>
           <SearchField label={t("Find in opened folders")} value={query} onChange={setQuery} size="sm" />
         </div>
         <div className="min-h-0 flex-1 overflow-y-auto px-1.5 py-1.5">
@@ -348,7 +343,7 @@ export function FilesTab({ project, branches, tick = 0, initialBranch, preview =
         </div>
 
         {active ? (
-          preview ? <FileExplorerPreview key={`${project}:${ref}:${active}`} project={project} branch={ref} path={active} snapshot={snapshot} onSnapshot={setSnapshot} onOpenFile={path => openFile({ path, name: path.split('/').at(-1)!, kind: 'file', size: null })} /> : <SavedFileExplorer key={`${project}:${ref}:${active}:${pin}`} project={project} branch={ref} path={active} pin={pin} onPin={setSnapshot} />
+          <SavedFileExplorer key={`${project}:${ref}:${active}:${pin}`} project={project} branch={ref} path={active} pin={pin} onPin={setSnapshot} />
         ) : (
           <div className="flex flex-1 flex-col items-center justify-center gap-2 px-4 text-center">
             <EmptyMark icon={FileText} />

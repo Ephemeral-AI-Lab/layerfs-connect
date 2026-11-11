@@ -1,0 +1,40 @@
+{
+  "started": 1794294924294,
+  "state": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/connect-large-project-ui-wHYXQk",
+  "scope": "Private native design tier:2400commits/55branches/500Layers. No user home changes.",
+  "ok": false,
+  "error": {
+    "message": "projects.lfs.discover is not a function",
+    "stack": "TypeError: projects.lfs.discover is not a function\n    at file:///private/tmp/connect-large-project-live.mjs:3:142"
+  },
+  "cleanup": {
+    "preset": "studio",
+    "state": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/connect-large-project-ui-wHYXQk",
+    "home": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/connect-large-project-ui-wHYXQk/home-2",
+    "actionId": "b6c63a88-4e33-47eb-9c27-a908d79ca5b8",
+    "cleanup": {
+      "remove": {
+        "stores": [
+          "demo-studio"
+        ],
+        "sandboxes": [],
+        "machines": [],
+        "workspaces": []
+      },
+      "retainMachines": [],
+      "preserved": {
+        "machine": [],
+        "store": [],
+        "sandbox": []
+      },
+      "projects": 1,
+      "signature": "f736887f40d758b9cbfcfa53fd15850089760fadeeeda55fab077c79ac9f2ba6",
+      "verified": true,
+      "at": 1794294970756,
+      "remaining": [],
+      "unexpected": []
+    },
+    "activityUrl": "http://127.0.0.1:1025/#/activity?action=b6c63a88-4e33-47eb-9c27-a908d79ca5b8"
+  },
+  "ended": 1794294970898
+}

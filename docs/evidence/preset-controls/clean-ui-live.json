@@ -1,0 +1,198 @@
+{
+  "state": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/connect-clean-preset-e2e-1V2H5z",
+  "checks": [
+    "actual preview loads private host with production fetch and EventSource transport",
+    "View script exposes actual build source and configuration-specific runnable command",
+    "first Build resets then creates real Native sandboxes/workspaces; truthful progress observed",
+    "activity phase links, one selected command, exact input/output and diagnostic tabs work",
+    "single Reset button empties selected private environment without rebuilding",
+    "Clear history overflow action clears logs independently"
+  ],
+  "progress": [
+    {
+      "at": 1794274457732,
+      "text": "Resetting, 1 of 1 steps",
+      "value": "2",
+      "max": "4"
+    },
+    {
+      "at": 1794274458724,
+      "text": "Building, 3 of 4 steps",
+      "value": "2.75",
+      "max": "4"
+    },
+    {
+      "at": 1794274460556,
+      "text": "Resetting, 1 of 4 steps",
+      "value": "1.25",
+      "max": "3"
+    }
+  ],
+  "errors": [],
+  "build": {
+    "id": "cdd394dc-87f3-43db-87b6-4aa013b50192",
+    "requestId": "156d5266-c8be-4e09-bea3-df6f7ce76e52",
+    "fingerprint": "[\"native\",\"environment-reset\",\"1b27e6fb9d9e369377f6eef9b439086742ee16142941a67eddc29d2bccab287a\",true,true]",
+    "preset": "native",
+    "command": "environment-reset",
+    "rebuild": true,
+    "actionId": "0da358ab-4c9d-47ec-8976-16a6da6b68d7",
+    "state": "completed",
+    "phase": "Environment reset verified. Selected preset rebuilt and verified.",
+    "created": 1794274457326,
+    "historyCleared": true,
+    "actionIds": [
+      "0da358ab-4c9d-47ec-8976-16a6da6b68d7",
+      "e80356dc-2b23-4897-818e-d7bf70a088fc"
+    ],
+    "progress": {
+      "stage": "verifying",
+      "completed": 1,
+      "total": 1,
+      "label": "Preset verified"
+    },
+    "started": 1794274457514,
+    "cleanup": {
+      "home": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/connect-clean-preset-e2e-1V2H5z/presets/native/home-2",
+      "homeId": "a99abbf8533549c2bfe49bf75483d6a1",
+      "remove": {
+        "stores": [],
+        "sandboxes": [],
+        "machines": [],
+        "workspaces": []
+      },
+      "disconnect": [],
+      "unknownSandboxes": [],
+      "startMachines": [],
+      "detectedMachines": [
+        {
+          "name": "docker",
+          "state": "stopped",
+          "platform": "docker"
+        },
+        {
+          "name": "native",
+          "state": "ready",
+          "platform": "native"
+        }
+      ],
+      "projects": 0,
+      "stopDocker": false,
+      "scope": "environment",
+      "signature": "1b27e6fb9d9e369377f6eef9b439086742ee16142941a67eddc29d2bccab287a",
+      "actionId": "0da358ab-4c9d-47ec-8976-16a6da6b68d7",
+      "verified": true,
+      "completed": [],
+      "remaining": [],
+      "warnings": [],
+      "at": 1794274457513,
+      "ended": 1794274457713
+    },
+    "rebuildActionId": "e80356dc-2b23-4897-818e-d7bf70a088fc",
+    "presetVerified": true,
+    "ended": 1794274458924
+  },
+  "reset": {
+    "id": "53ac6c97-45d9-42fd-b986-5d2959f4ae65",
+    "requestId": "a7ebee1c-1f95-4aa2-8d20-697a0c5196a2",
+    "fingerprint": "[\"native\",\"environment-reset\",\"70b7c4736600a214eb565700404225d62ec852da9a5f95e524eb4522de4bd802\",false,true]",
+    "preset": "native",
+    "command": "environment-reset",
+    "rebuild": false,
+    "actionId": "7593f689-c2f5-4eb8-a6dc-ea4a1137a13c",
+    "state": "completed",
+    "phase": "Environment is empty. Reset verified.",
+    "created": 1794274460281,
+    "historyCleared": true,
+    "actionIds": [
+      "7593f689-c2f5-4eb8-a6dc-ea4a1137a13c"
+    ],
+    "progress": {
+      "stage": "verifying",
+      "completed": 1,
+      "total": 1,
+      "label": "Empty environment verified"
+    },
+    "started": 1794274460404,
+    "cleanup": {
+      "home": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/connect-clean-preset-e2e-1V2H5z/presets/native/home-2",
+      "homeId": "a99abbf8533549c2bfe49bf75483d6a1",
+      "remove": {
+        "stores": [
+          "demo-studio"
+        ],
+        "sandboxes": [
+          "demo-website"
+        ],
+        "machines": [],
+        "workspaces": [
+          "demo-website:feature",
+          "demo-website:fix"
+        ]
+      },
+      "disconnect": [],
+      "unknownSandboxes": [],
+      "startMachines": [],
+      "detectedMachines": [
+        {
+          "name": "docker",
+          "state": "stopped",
+          "platform": "docker"
+        },
+        {
+          "name": "native",
+          "state": "ready",
+          "platform": "native"
+        }
+      ],
+      "projects": 2,
+      "stopDocker": false,
+      "scope": "environment",
+      "signature": "70b7c4736600a214eb565700404225d62ec852da9a5f95e524eb4522de4bd802",
+      "actionId": "7593f689-c2f5-4eb8-a6dc-ea4a1137a13c",
+      "verified": true,
+      "completed": [
+        [
+          "workspace",
+          "unmount",
+          "demo-website:feature",
+          "--discard"
+        ],
+        [
+          "workspace",
+          "unmount",
+          "demo-website:fix",
+          "--discard"
+        ],
+        [
+          "sandbox",
+          "close",
+          "demo-website"
+        ],
+        [
+          "store",
+          "remove",
+          "demo-studio"
+        ]
+      ],
+      "remaining": [],
+      "warnings": [],
+      "at": 1794274460403,
+      "ended": 1794274460814
+    },
+    "ended": 1794274460817
+  },
+  "final": {
+    "stores": 0,
+    "machines": [
+      {
+        "name": "docker",
+        "state": "stopped"
+      },
+      {
+        "name": "native",
+        "state": "ready"
+      }
+    ]
+  }
+}

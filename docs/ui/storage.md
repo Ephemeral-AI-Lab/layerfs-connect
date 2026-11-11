@@ -73,7 +73,7 @@ Route: `#/storage/:store`. Replaces the desktop Projects/Activity/Backups/Settin
             LayerFS Home - store/shop
 
 +-[3] Store storage breakdown -----------------------------------------------+
-| Placeholder on real hosts; labeled sample scenario in the web preview      |
+| Observed Store counters                                      Refresh      |
 +----------------------------------------------------------------------------+
 
 [4] Projects - 2                                          [Search projects...]
@@ -96,10 +96,8 @@ backups / shop - last saved 8h ago                         [Back up now]
 2. SQLite is in Home or on one machine; PostgreSQL uses a database target and
    Shared across machines. Routine status badges are omitted. Errors, stopped
    machines and active jobs remain visible with manual Start / retry controls.
-3. Real hosts keep the static placeholder. Development web previews show a
-   labeled simulated scenario with Hide sample / Show sample. Sample values are
-   independent of actual Store sizes. Reported physical SQLite bytes remain
-   beside the location. No project history graph appears.
+3. Store counters come from the real CLI. Read failures offer Retry and missing
+   counters say Not available. No illustrative measurements are displayed.
 4. Responsive project grid, reusing the board's ProjectTile; no carousel here.
    Search is scoped to this Store, with Clear search and empty Store states.
    Clicking a tile opens its existing project Files route. Add project creates
@@ -112,32 +110,6 @@ backups / shop - last saved 8h ago                         [Back up now]
 6. Native disclosure with session-only push/pull/move/backup jobs; clear empty text.
 7. Native disclosure with creation/location/file facts and removal/disconnection
    controls. Existing confirmation dialogs remain. No project graphs in details.
-
-### Store storage diagram simulation
-
-Source: `StoreBreakdown.tsx`. Based on `layerfs_v2_0_0` physical-storage docs:
-canonical content identity reuse, full/delta encoding, Zstandard compression
-where useful, and immutable payload/metadata packs.
-
-```text
-Full snapshots       Distinct objects       Encoded packs        SQLite file
-    12 GiB                3 GiB               1.125 GiB             1.5 GiB
-       =======> narrow ========> narrower ==========> slight increase
-              4.0x dedup       2.7x encoding        +384 MiB file space
-
-> File composition - sample 1.5 GiB
-  [Payload 1 GiB | Metadata 128 MiB | Tables/indexes 256 MiB | Free 128 MiB]
-```
-
-The compact ribbon follows the project-storage flow's visual structure. Its
-thickness uses one linear scale; badges explain each transition. Detailed file
-composition is collapsed by default in a native disclosure.
-Encoded packs include metadata packs; composition
-does not add those twice. File allocation includes database pages and WAL from the SQLite file. PostgreSQL shows
-only payload/metadata pack composition (1.125 GiB), with database overhead
-explicitly unmodeled. It never shows SQLite free-page stats.
-Store headers use 20px titles with a 4px location gap; section spacing is 18px,
-with 168px minimum project tiles. Flow labels use responsive grid columns.
 
 ## Desktop project files
 
@@ -197,12 +169,11 @@ Paths below are relative to `src/renderer/src/components/storage/` unless they s
 | 1 | PageHeader | storage-page.tsx:265 | sticky; "Storage"; badges once the view is read |
 | 2 | Segmented | storage-page.tsx:273 | tabs with counts: Stores (all Stores), Backups (buckets) |
 | 3 | JobsChip | job-progress.tsx:323 | hidden at 0; click: Stores tab, flash the card |
-| 4 | SimulationPicker | components/simulation.tsx:78 | dev builds only: Live host or a sample |
 | 5 | New Store | storage-page.tsx:303 | Stores tab only; opens New Store on Empty Store |
 | 6 | Refresh | storage-page.tsx:333 | rereads storage, machines and doctor |
-| 7 | Notice | storage-page.tsx:344 | a refused action (or simulated refusal); Dismiss clears it |
+| 7 | Notice | storage-page.tsx:344 | a refused action; Dismiss clears it |
 | 8 | summary | storage-page.tsx:352 | Stores tab, sqlite only: "{size} in {n} sqlite Stores" |
-| 9 | DoctorBadge | needs-attention.tsx:23 | `layerfs doctor`; opens [10]; hidden when simulated |
+| 9 | DoctorBadge | needs-attention.tsx:23 | `layerfs doctor`; opens [10] |
 | 10 | DoctorFindings | needs-attention.tsx:46 | severity chip, entity, message, `fix:` call |
 | 11 | cards grid | storage-page.tsx:145 | auto-fill, min 17.5rem; home, machines, PostgreSQL |
 | 12 | StoreCard | store-card.tsx:137 | click opens the Store page (Cmd/middle: new tab) |
@@ -536,9 +507,7 @@ Doctor badge: <spin> Doctor: checking...        disabled, grey
               <ok>   Doctor: nothing found      disabled, grey
               <steth> Doctor: 3 findings  >     amber; red when any finding is an error
               <steth> Doctor did not answer >   red; opens the refusal text instead of the card
-Simulated:    the sample host's Stores and buckets are drawn; doctor badge and findings hidden;
-              every action (and opening a project) shows [7] Refused:
-              "Simulated: This is sample data: nothing is sent to the host. Pick Live host to act."
+
 ```
 
 ## Menus and dialogs
@@ -750,7 +719,7 @@ Sandboxes and Storage; see [project.md](project.md). Store links remain on `/sto
 
 The Add bucket provider picker shows only entries with a supported connection
 request. Disabled Later LayerFS provider tiles are hidden. StoreBreakdown and
-Project statistics previews remain planned UI and are preserved by this cleanup.
+Project statistics use observed CLI counters only.
 
 ## CLI job custody and explicit recovery (phase 2, #146)
 
@@ -815,3 +784,155 @@ per path and symlinks are not followed. Allocation comes from store.stats and
 includes all projects/history. history_logical counts Commit and Layer records;
 it never drives a dedupe ratio or savings ring. Counters have distinct definitions and are not additive.
 File allocation includes database pages and WAL, PostgreSQL free is unavailable, and null Init hides its pill.
+
+## Real-only storage (2026-11-09)
+
+Store/project statistics use real CLI counters. Illustrative storage ribbons,
+file composition fixtures, sample Files/History explorers and all simulation
+pickers are removed. Read failures remain visible with Retry. Missing values
+show Not available. There is no local fake data fallback.
+
+## Desktop storage analysis (2026-11-10)
+
+The old `StoreVisuals.tsx` DiskFlow, SavedRing and main summary are the visual
+reference. Their old aggregate formulas are not reused. Current sources in the
+renderer: `components/storage/{StorageHistory,StagedStorageFlow,
+SavedRevisionAnalysis,StoreSnapshotAnalysis,StoreObservations,RealStorageVisuals}.tsx`,
+shared `real-storage.css`, and `pages/storage/StoreBreakdown.tsx`.
+
+```text
+PROJECT STORAGE                           [Branch v] [Last 10 / 20 revisions v]
+[1 main | latest immutable pin | whole saved file bytes | entry counts]
++--[2 From snapshots to stored data]---------------- [Analyze again]-+
+| Deduplication and compression                            (canonical reuse %) |
+| Referenced                  Unique data                     Encoded data    |
+| per-snapshot canonical      selected union                   measured repr.  |
+|         ════════ deduplication ═══════ encoding ═══════                      |
+|                                                                  [Replay]  |
+| > definitions, work/budget, exact pins, unavailable physical ownership        |
++----------------------------------------------------------------------------+
++--[3 Saved size + aligned Save bars]-------+ +--[4 Selected revision]-----------+
+| immutable revision selection             | | stats and Save additions         |
++------------------------------------------+ +---------------------------------+
+> Exact revision measurements   > Definitions                   View Store usage
+
+STORE STORAGE
++--[5 From objects to database pages]-----------------------------------------+
+| Canonical objects            Encoded packs                  Database pages  |
+|            ═════ encoding ═══════ overhead / free ═══════                    |
+|                                                                  [Replay]  |
++----------------------------------------------------------------------------+
+[Database composition + separately observed file lengths]
+[Observed growth]                         [Selected project snapshots]
+                                          [Explicit analysis and sharing bars]
+                                          [Selected-population flow + ring]
+```
+
+1. Always shows latest main independently of the history/analysis branch. Its
+   immutable `project.stats` counts and completeness are retained. Main raw bytes
+   are a whole saved file-tree measurement, never a deduplication numerator.
+2. With complete supported `payload_encoding`, all three stages and the ring
+   use the same selected WholeFile/Chunk record population. Referenced sums each
+   snapshot's distinct file-data canonical objects; unique counts their union;
+   encoded counts those selected objects' exact stored RAW-group record frames.
+   Shared group/pack framing, metadata groups and external delta-base dependency
+   storage are excluded. Distinct external direct base count is disclosed.
+   The ring is `(referenced - unique) / referenced`, unavailable for missing,
+   empty or inconsistent totals. Without complete payload accounting, the UI
+   falls back to two all-canonical deduplication stages and explains unavailable
+   encoding. Full canonical metrics remain inspectable with either presentation.
+   Neither stage nor ring ever substitutes global Store bytes.
+3. Revision history remains available below the dominant efficiency story.
+4. Inspector is adjacent on wide screens and stacks below 1050px. Branch/range
+   changes clear analysis; selecting a revision does not change latest main.
+5. Store-wide canonical allocation, encoded pack bytes (metadata already included)
+   and database-page allocation share Store scope. The last difference includes
+   overhead and free/slack, never an extra addition of legacy metadata. Store
+   deduplication is shown only for an explicit selected snapshot population.
+
+The bands and pillars use a common linear scale, including zero and ratios above
+one. Stages arrive 260ms apart with delayed count-ups; connection strokes traverse
+briefly and then stop. Replay repeats the explanation without re-running analysis.
+Reduced motion shows all final stages/ring immediately with no traveling strokes.
+Compression labels describe combined compression and delta encoding, not a separately
+measured codec-only effect. Exact tagged integers remain exact in all labels.
+
+History uses metadata-only pinned `branch.commits` pages; range controls choose
+10 or 20 revisions and earlier pages retain full immutable pins. Publications
+have no inferred Save additions or publication timestamp. Save metadata is a
+subset of stored additions; those acknowledgements are not net disk growth.
+Missing measurements leave gaps, and the inspection select/points/bars all
+select the same immutable revision. Root excluded; hard links count per path;
+symlinks are not followed; counts may be partial with their reason preserved.
+All byte labels retain exact wire integers; only bounded coordinates become numbers.
+
+Store composition stacks only complete version-1 non-overlapping parts that
+sum exactly to `database_page_bytes`. PostgreSQL incomplete composition remains
+explicit. Data packs are teal, metadata violet, overhead amber, free pale slate.
+Separately observed database/WAL/incoming file lengths are not additional page
+allocation. Legacy metadata overlaps stored bytes and must not be added to it.
+History logical includes Commit/Layer records and never drives a dedupe ratio.
+
+Observed Store growth uses host-persisted successful explicit reads and actual
+timestamps. Different identities/generations/homes/routes stay separate; gaps
+above the host's 30-minute threshold break lines. No earlier disk history is
+inferred. Recording failure preserves current counters with its retry message.
+Store project analysis selects at most 20 actual catalog projects' current main
+pins, captured individually when requested. All-canonical sharing bars are
+visibly labelled and shared bytes overlap across projects; they cannot be summed
+as Store allocation. Selection changes clear old reports. Project and Store analysis run only when explicitly requested. Changing the pinned
+branch/range clears the previous project report; neither analysis polls. Exact pins, scope, work and null physical/reclaimable totals remain
+inspectable. Existing project, backup, operation and Store detail controls remain.
+
+Named `--storage-*` tokens supply color; the app shell, routes and fonts remain.
+Supporting panels stack below 1050px; controls and legends adapt below 600px.
+
+Project direct links load only the main snapshot summary and a bounded pinned
+10/20-revision metadata page. Analyze revisions requests the staged analysis for
+that selection; Analyze again refreshes the same population. Query generation drops responses after navigation or population
+changes. Empty branches do not issue a report request; errors retain Retry.
+
+
+## Large-project progressive reads (2026-11-10)
+
+1. Shared project shell loads Branch names/heads and Sandbox records. It makes no
+   per-Branch history or diff scan. Aggregate Commit counts stay null when not read.
+2. Storage requests at most 20 saved metadata rows at one immutable pin. Load earlier
+   revisions resumes from the oldest row's parent; newer writes cannot shift pages.
+3. Selected-revision entry counts load for that revision. Full relationships and
+   changed paths belong to the selected History item, not the project shell.
+4. Canonical/encoding analysis runs only on Analyze revisions. Entering Storage,
+   changing Branch/range, or loading earlier metadata never starts that analysis.
+5. Reset and Build are independent controls; a read-budget error does not reset data.
+
+
+Large-project regression proof: [receipt](../evidence/preset-controls/large-project-progressive-verification.json).
+A real private 2,400-Commit/55-Branch/500-Layer fixture reproduced the old oversized
+history refusal; metadata-only shell, small history/storage pages, immutable
+continuation and selected-item details passed. Saved Studio was reset from Presets
+during browser checks; dense browser rendering and the Analyze click remain
+unverified against a rebuilt Studio. The reset was preserved.
+
+
+Follow-up browser verification passed after Studio was rebuilt: design Storage
+loaded 20 rows, Load earlier extended to40 without starting analysis, Analyze
+revisions completed the20-snapshot report, and changing Branch cleared it. The
+10,056-Commit website History rendered its bounded160-checkpoint initial view
+without Capacity or a Vite overlay. All interactions were reads; Studio preserved.
+
+### Inventory reads during navigation
+
+The board and focused Store derive project tile placement/count facts from the
+Storage page's existing Storage and machine reads. Opening a Store does not add
+another inventory subscription for those same tiles. Machine and doctor queries
+retain their last observed results while a fresh read runs. A project tile near
+the viewport still reads real project branch metadata; offscreen initialization
+does not erase its previously observed summary.
+
+Browser evidence for the 2026-11-10 navigation/read optimization is in
+[`page-performance/summary.json`](../evidence/simulation-2026-11-10/page-performance/summary.json).
+The same 45-second page sequence under live simulation load reduced observed API
+GETs from 70 to 39 and browser long tasks from 193 to 7. This measures the combined
+backend/renderer changes, with a larger real project catalog in the after sample.
+Search, Store entry, Files/README, History branch finding, Sandboxes and actual
+Storage measurements were exercised; screenshots cover 1280×820 and 900×600.

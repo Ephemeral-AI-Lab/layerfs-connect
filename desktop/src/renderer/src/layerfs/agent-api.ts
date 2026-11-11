@@ -1,6 +1,7 @@
 // Chats: the host's interactive Pi sessions under /api/agent (host/agents/routes.js).
 // Only what the sidebar and the new-chat page use; the conversation page adds more.
 import { call } from '@/layerfs/client'
+import type { Persistence, ToolOperations } from '@/layerfs/operations-api'
 
 export type ChatPhase =
   | 'idle' | 'preparing' | 'thinking' | 'tool' | 'approval' | 'children'
@@ -22,6 +23,7 @@ export interface ChatSummary {
   modelId: string | null
   error: string | null
   /** A scenario chat: the scripted run and the project it plays on. */
+  simulation?: { id: string; conversationId?: string } | null
   scenario?: { id: string; title: string; project: string; state: string; error: string | null } | null
 }
 
@@ -76,6 +78,8 @@ export interface ChatMessage {
   usage?: { input: number; output: number; cost: number }
   /** bash calls: what they did to LayerFS. */
   view?: StepView
+  /** The LayerFS operations this tool call recorded, with their saved-version links. */
+  operations?: ToolOperations
 }
 
 export interface ApprovalRequest {
@@ -131,6 +135,8 @@ export interface ChatDetail extends ChatSummary {
   usage?: { totalTokens: number; cost: number }
   recovery?: { required: boolean; canContinue: boolean }
   execution?: { phase: ChatPhase; startedAt: number | null; turns?: number; toolCalls?: number; retryAttempt?: number; retryMaxAttempts?: number; retryAt?: number; reason?: string }
+  /** Whether its journal is recorded locally or saved to its project (host/sessions/). */
+  persistence?: Persistence | null
 }
 
 export interface ChatModel {

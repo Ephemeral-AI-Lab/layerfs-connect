@@ -214,6 +214,33 @@ queued input, collapsible reasoning/tool output, slash commands, IME-aware
 shortcuts, workspace reuse, and context/token/cost display. Pi
 owns the model protocol, agent loop and session persistence.
 
+## Scripted project simulations
+
+Enter a simulation command in a new or existing main chat:
+
+```text
+/simulation --project website --machine native
+/simulation --project website --machine docker --mixed
+```
+
+`--project` selects one of the eight Studio project templates. Every invocation
+creates a fresh tagged SQLite Store and project, with saved Pi conversations and
+reusable child sessions. Independent simulations can run concurrently. Each project
+has at most eight conversations, and each conversation at most eight distinct
+subagents. Each main or child agent has at most ten conversation turns, with many
+explicit Bash steps within a turn. No model credentials or paid model calls are
+needed.
+
+The selected machine must already be running. Mixed mode includes short workspace
+sessions with two exec/commit pairs per mount; the default uses direct file calls.
+Agents execute the actual LayerFS steps through Bash. The reviewable scripts,
+dependency plan, resource ownership and execution journal
+are saved under `<state>/simulations/<run-id>/`. Completed runs retain their project
+and chat history. **Stop simulation** stops the whole run and preserves evidence.
+
+See [the simulation specification](docs/specs/simulation.md) for package layout,
+conversation profiles, execution rules and the bounded live verification tools.
+
 ## The UI
 
 The language control at the bottom of the sidebar switches between Simplified
@@ -343,7 +370,8 @@ details.
 
 ## Develop
 
-Needs Node 22.15 or later, pnpm, Docker and `jq`.
+Needs Node 24 or later, pnpm, and a pinned LayerFS CLI with its matching daemon.
+Docker is needed for Docker workloads.
 
 ```bash
 pnpm install
@@ -387,3 +415,42 @@ node tools/connect-run.mjs start tour merge
 Dev aids: `CONNECT_VIEW=<hash>` opens a page (`chat`, `projects/<project>[/<tab>]`, `storage`, `compute`); `CONNECT_SHOT=<file.png>` saves a
 screenshot once loaded, then quits (`CONNECT_SHOT_DELAY` waits longer;
 `CONNECT_EVAL=<js>` runs in the page first and prints its result).
+
+### Browser preview with real LayerFS
+
+```sh
+export LAYERFS_CONNECT_CLI=/absolute/path/to/layerfs
+export LAYERFS_CONNECT_DAEMON=/absolute/path/to/layerfs-daemon
+pnpm --dir desktop web
+```
+
+Open http://127.0.0.1:1025/. Preview uses a private temporary LayerFS home;
+set `LFS_STATE` to reuse a private preview root. Real resources start only through
+explicit actions. No simulation mode, seeded Example chat or fake-data fallback
+exists. Remove old `LAYERFS_CONNECT_MODE=sim` launch settings; they are rejected.
+
+### Real CLI demo presets
+
+Populate a dedicated demo home with real machines, stores, projects and history:
+
+```sh
+node tools/demo-fixtures.mjs presets
+node tools/demo-fixtures.mjs plan --preset studio
+node tools/demo-fixtures.mjs setup --preset studio
+node tools/demo-fixtures.mjs preview --preset studio
+node tools/demo-fixtures.mjs verify --preset studio
+```
+
+`reset` rebuilds fixture data while retaining VMs; `teardown` removes confirmed
+fixture-owned resources. `--via desktop` uses the existing desktop management
+routes, with CLI history seeding. Every run is correlated in CLI Activity.
+See [CLI demo presets](docs/cli-demo-fixtures.md) for lighter presets, capture
+verification, prerequisites and ownership/reset rules.
+
+Machine-local preview paths may also be set in ignored `desktop/.env.local`.
+`LFS_STATE` retains the preview home across restarts. `LAYERFS_BUNDLE` can select
+a sealed Linux bundle built from the same source as the pinned CLI, without
+replacing the shared cache used by other LayerFS installations. Explicit local
+preview pins (`LFS_STATE`, CLI, daemon, bundle and `XDG_CACHE_HOME`) take precedence
+over an inherited launch environment and reload through Vite. Other environment
+variables retain their normal shell precedence.

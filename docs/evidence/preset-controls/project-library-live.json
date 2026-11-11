@@ -1,0 +1,143 @@
+{
+  "state": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/connect-project-library-s5Hmbj",
+  "note": "All eight production content/history recipes, four private stores on native. VM/container placement not exercised here.",
+  "started": 1794277954433,
+  "setup": {
+    "preset": "native",
+    "state": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/connect-project-library-s5Hmbj",
+    "home": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/connect-project-library-s5Hmbj/home-2",
+    "actionId": "3dafcf39-d3be-48e2-b048-f7b16b5cfb3c",
+    "activityUrl": "http://127.0.0.1:1025/#/activity?action=3dafcf39-d3be-48e2-b048-f7b16b5cfb3c",
+    "presetVerified": true,
+    "projects": 8
+  },
+  "verification": {
+    "preset": "native",
+    "state": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/connect-project-library-s5Hmbj",
+    "home": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/connect-project-library-s5Hmbj/home-2",
+    "actionId": "a29b3567-61ea-42c9-87a5-1abcf3518b99",
+    "activityUrl": "http://127.0.0.1:1025/#/activity?action=a29b3567-61ea-42c9-87a5-1abcf3518b99",
+    "verified": true,
+    "projects": 8,
+    "setupActionId": "3dafcf39-d3be-48e2-b048-f7b16b5cfb3c",
+    "cliInvocations": 673,
+    "cliInputOutputCaptured": true
+  },
+  "projects": {
+    "demo-studio/website": {
+      "seeded": true,
+      "verification": {
+        "project": "demo-studio/website",
+        "branches": 10,
+        "commits": 24,
+        "merges": 2,
+        "publications": 4,
+        "layers": 5,
+        "filesVerified": 28,
+        "publicationReceiptsVerified": true
+      }
+    },
+    "demo-services/gateway": {
+      "seeded": true,
+      "verification": {
+        "project": "demo-services/gateway",
+        "branches": 10,
+        "commits": 24,
+        "merges": 2,
+        "publications": 4,
+        "layers": 5,
+        "filesVerified": 31,
+        "publicationReceiptsVerified": true
+      }
+    },
+    "demo-studio/design": {
+      "seeded": true,
+      "verification": {
+        "project": "demo-studio/design",
+        "branches": 10,
+        "commits": 24,
+        "merges": 2,
+        "publications": 4,
+        "layers": 5,
+        "filesVerified": 30,
+        "publicationReceiptsVerified": true
+      }
+    },
+    "demo-services/billing": {
+      "seeded": true,
+      "verification": {
+        "project": "demo-services/billing",
+        "branches": 10,
+        "commits": 24,
+        "merges": 2,
+        "publications": 4,
+        "layers": 5,
+        "filesVerified": 32,
+        "publicationReceiptsVerified": true
+      }
+    },
+    "demo-build-cache/compiler": {
+      "seeded": true,
+      "verification": {
+        "project": "demo-build-cache/compiler",
+        "branches": 10,
+        "commits": 24,
+        "merges": 2,
+        "publications": 4,
+        "layers": 5,
+        "filesVerified": 32,
+        "publicationReceiptsVerified": true
+      }
+    },
+    "demo-experiments/embeddings": {
+      "seeded": true,
+      "verification": {
+        "project": "demo-experiments/embeddings",
+        "branches": 10,
+        "commits": 24,
+        "merges": 2,
+        "publications": 4,
+        "layers": 5,
+        "filesVerified": 31,
+        "publicationReceiptsVerified": true
+      }
+    },
+    "demo-build-cache/sdk": {
+      "seeded": true,
+      "verification": {
+        "project": "demo-build-cache/sdk",
+        "branches": 10,
+        "commits": 24,
+        "merges": 2,
+        "publications": 4,
+        "layers": 5,
+        "filesVerified": 33,
+        "publicationReceiptsVerified": true
+      }
+    },
+    "demo-experiments/evaluation": {
+      "seeded": true,
+      "verification": {
+        "project": "demo-experiments/evaluation",
+        "branches": 10,
+        "commits": 24,
+        "merges": 2,
+        "publications": 4,
+        "layers": 5,
+        "filesVerified": 30,
+        "publicationReceiptsVerified": true
+      }
+    }
+  },
+  "calls": {
+    "count": 673,
+    "allCaptured": true,
+    "sandboxOrWorkspace": [],
+    "errors": [],
+    "writes": 176,
+    "merges": 16,
+    "publications": 32
+  },
+  "ended": 1794277977232,
+  "ok": true
+}

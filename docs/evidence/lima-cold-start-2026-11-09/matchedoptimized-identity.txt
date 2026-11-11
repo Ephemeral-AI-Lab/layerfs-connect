@@ -1,0 +1,26 @@
+10afbedec50b4f64b35d4019c8752268
+ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICz63gfrdkvRhGmcbU2fJ3k+12t+AT3wufI3Wazya413 root@lima-lfs-9db6904d-matchedoptimized
+Startup finished in 1.574s (kernel) + 2.138s (userspace) = 3.713s 
+graphical.target reached after 2.129s in userspace.
+1.223s systemd-networkd-wait-online.service
+ 849ms layerfs-image-boot.service
+ 433ms layerfs-image-identity.service
+ 263ms dev-vda1.device
+ 237ms apparmor.service
+ 143ms e2scrub_reap.service
+ 131ms systemd-resolved.service
+ 127ms user@501.service
+ 116ms rsyslog.service
+ 111ms systemd-binfmt.service
+  97ms systemd-udev-trigger.service
+  88ms systemd-networkd.service
+  64ms keyboard-setup.service
+  60ms lvm2-monitor.service
+  59ms systemd-timesyncd.service
+Result=success
+ActiveState=active
+
+Result=success
+ActiveState=active
+ext4   /dev/vdb1 /layerfs/data
+9250c5b93db8083d88d138869db2a7075e19a29b7a76dd16aeb03ac9fa948e9f

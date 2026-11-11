@@ -1,13 +1,10 @@
-// Host calls use one CLI process per attempt, for real and simulated modes.
+// Host calls use one real CLI process per attempt.
 import { existsSync } from 'node:fs'
-import { modeOf } from './config.js'
+import { requireRealBackend } from './config.js'
 import { client } from './cli/calls.js'
 import { execute } from './cli/spawn.js'
 import { discover, lastIdentity } from './cli/capabilities.js'
-export const backend = { mode: modeOf() }
-export async function loadBackend(mode = modeOf()) {
-  return { mode, client: (spec) => client({ ...spec, mode }), close: () => 0 }
-}
+requireRealBackend()
 export const doctorOf = async (spec) => { await discover(spec); return execute(spec, ['doctor'], { read: true }) }
 export const closeStores = () => 0 // Each CLI closes its Store before returning.
 export function layerfs(spec) { return spec.lfs ??= client(spec) }
@@ -86,7 +83,7 @@ export const workspacesOf = (lfs, sandbox, options) => sandboxObservation(lfs, s
 export const VIEW_WAIT_MS = 5000
 
 /** The most recently discovered binary identity, shown without a capability claim. */
-export const linkedVersion = () => lastIdentity?.version ?? (backend.mode === 'sim' ? '2.0.0 (simulated)' : null)
+export const linkedVersion = () => lastIdentity?.version ?? null
 
 /**
  * On macOS, records the native daemon (spec.daemon) on the home's `native`
@@ -97,7 +94,6 @@ export const linkedVersion = () => lastIdentity?.version ?? (backend.mode === 's
  * in its place (`replaced` names the old one). Answers what it did; never throws.
  */
 export async function recordNativeDaemon(spec) {
-  if (backend.mode === 'sim') return { recorded: false, why: 'simulated LayerFS' }
   const done = await importDaemon(spec)
   if (!done.kept) return done
   try {

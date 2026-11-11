@@ -1,0 +1,16 @@
+{
+  "root": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/connect-sse-recovery-dVVexL",
+  "runAction": "d22ac423-bf48-42e5-9981-014c075aa203",
+  "resetAction": "a0627ae4-829e-4195-b6f3-5c3526ac9854",
+  "originalStreamClosed": true,
+  "runningStreamClosed": true,
+  "resetCompleted": true,
+  "cliInvocations": 31,
+  "ioComplete": true,
+  "returnedToOriginal": true,
+  "date": "2026-11-09",
+  "typecheck": "PASS",
+  "desktopBuild": "PASS",
+  "rootTests": 119,
+  "cleanup": "Private host stopped; fixture data removed; logs retained."
+}

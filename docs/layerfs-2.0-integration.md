@@ -99,8 +99,9 @@ filed as a LayerFS question (§9). A live check on this Mac passes, covering:
     creates a Store; a Store that is down or busy refuses it.
 - **Sandbox image: the bundle's image.** Connect pins no digest. Add a machine's image field
   defaults to "the bundle's image" (no `image` option is sent), or takes an archive path or digest.
-  VMs use one image per machine; `docker` still needs an image recorded
-  (`machine.update("docker", {image})`) before its first Sandbox.
+  Per-Sandbox selection and caller-local archives now use the public image
+  inventory and artifact transport described in §9 Q18. Docker’s configured
+  machine image remains its worker-container image, separate from Sandbox roots.
 
 ## 4. API facts for the port
 
@@ -396,6 +397,50 @@ filed as a LayerFS question (§9). A live check on this Mac passes, covering:
     Sandbox usage. Machine inventory cards show those fields as "Not reported";
     real measurements need an upstream LayerFS telemetry API. Filesystem kind is
     available independently as the Sandbox's `route` (`fuse` / `nfs`).
+
+18. **Available Sandbox images on a selected machine** (implemented 2026-11-10).
+    LayerFS exposes the read-only `machine.images(name)` /
+    `layerfs machine images <name>` call; Connect uses
+    `GET /api/machines/:name/images`. Live runtime verification is recorded
+    in [sandbox image evidence](evidence/sandbox-images-2026-11-10/README.md).
+    - **Authoritative source:** the selected machine's effective Sandbox archive
+      and imported content-addressed archives, resolved by the same deployment
+      path used for Sandbox creation. Worker reads happen inside that machine.
+      Docker's worker-container image is separate; Docker Engine's image list
+      does not describe available Sandbox roots.
+    - **Result:** `{machine, mode: "host" | "archive", archive?, default_digest,
+      images: [{digest, tags, os?, architecture?}]}`. Shared config digests are
+      deduplicated and their tags merged. Tags are display labels; selections
+      submit the exact config digest. Native macOS returns `mode: "host"` and
+      no selectable images. Stopped/unreachable workers refuse `Unavailable`
+      without starting anything; a failed observation is never an empty list.
+    - **Selection:** Default omits the override and leaves resolution to LayerFS.
+      An explicit `sha256:<64 lowercase hex>` must identify an available image.
+      A multi-image archive without an effective default requires a digest.
+      Existing Sandbox records and unpacked roots alone do not prove availability.
+    - **Caller-local archives:** `sandbox.create` accepts
+      `{image: {archive: "/absolute/path", digest?: "sha256:…"}}`; the CLI also
+      accepts `--image-archive /absolute/path [--image sha256:…]`. LayerFS validates,
+      transports and prepares the artifact on the selected machine. The archive
+      can then be reused by digest after the caller's source file is removed.
+      Connect never parses archives, resolves guest paths or pulls registry tags.
+    - **Connect UI:** shared `SandboxImageFields` offers Default, discovered
+      images and Provide archive in both creation surfaces. Archive mode takes a
+      caller-local absolute path and optional full digest. macOS native hides
+      the controls. Loading and discovery failures are explicit, Retry repeats
+      only the read, and Default remains selectable after discovery failure.
+      Pending creation freezes inputs; Unknown requires Read Sandbox before
+      another action. Advertised creation progress is retained in CLI Activity.
+    - **Compatibility:** Connect checks the selected CLI's `help --json` table.
+      A CLI lacking `machine.images` gets an explicit `Unsupported` discovery
+      refusal, while ordinary default-image creation remains usable. Archive
+      transport requires the updated CLI and matching worker/runtime; older
+      workers report their refusal without automatic restart or fallback.
+    - **Sources:** `api/crates/layerfs-api/src/machine/images.rs`,
+      `control/crates/layerfs-sandbox/src/images.rs`, `image_choice.rs`,
+      `image_artifact.rs`, `deploy.rs` and `route.rs`, and the shared namespaces
+      rootfs archive reader. Connect's adapter maps canonical archive objects
+      to the public `image_archive` and optional `image` CLI options.
 
 ## 10. Owner decisions
 

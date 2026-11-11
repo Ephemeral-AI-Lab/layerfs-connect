@@ -1,0 +1,122 @@
+{
+  "version": 1,
+  "identity": "cf7e4430d91880d0b2c5a0315d89fa04f24b7bc2340ed64e89cd496f79a8f109",
+  "provider": "lima",
+  "work": "/Users/yifanxu/.cache/layerfs-worktrees/layerfs-machine-start-c17e354c8815/image-cache/layerfs/machine-images/builds/cf7e4430d91880d0-150472f6",
+  "bundle": "/Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect/.cache/layerfs-bundles/833d04cf44e8e747929d50ab1170a48260d9381c/2.0.0/linux-aarch64",
+  "base": "/Users/yifanxu/Library/Caches/lima/download/by-url-sha256/002fbe468673695a2206b26723b1a077a71629001a5b94efd8ea1580e1c3dd06/data",
+  "status": "sealed",
+  "steps": [
+    {
+      "stage": "seed-create",
+      "command": [
+        "limactl",
+        "create",
+        "--name",
+        "seed",
+        "--tty=false",
+        "-"
+      ],
+      "elapsed_ns": 4961429458,
+      "exit": 0
+    },
+    {
+      "stage": "seed-boot",
+      "command": [
+        "limactl",
+        "start",
+        "--tty=false",
+        "seed"
+      ],
+      "elapsed_ns": 13733841167,
+      "exit": 0
+    },
+    {
+      "stage": "install-bundle",
+      "bytes": 3210260480,
+      "elapsed_ns": 12586188166,
+      "exit": 0
+    },
+    {
+      "stage": "install-payload",
+      "bytes": 20480,
+      "elapsed_ns": 26692583,
+      "exit": 0
+    },
+    {
+      "stage": "worker-hello",
+      "command": [
+        "ssh",
+        "-F",
+        "/tmp/lfs-image-q6rai00s/seed/ssh.config",
+        "lima-seed",
+        "--",
+        "sudo -n -- sh -c 'python3 - <<'\"'\"'VERIFY'\"'\"'\nimport json, os, pathlib, secrets, socket, struct, subprocess, time\nsecret = secrets.token_hex(32)\npath = pathlib.Path('\"'\"'/tmp/layerfs-image-secret'\"'\"')\npath.write_text(secret)\npath.chmod(0o600)\nenv = dict(os.environ, LAYERFS_WORKER_LISTEN='\"'\"'127.0.0.1:7070'\"'\"', LAYERFS_WORKER_SECRET=str(path))\np = subprocess.Popen(['\"'\"'/layerfs/bundle/layerfs'\"'\"', '\"'\"'worker'\"'\"'], env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)\ntry:\n    deadline = time.monotonic() + 10\n    while True:\n        try:\n            s = socket.create_connection(('\"'\"'127.0.0.1'\"'\"', 7070), timeout=1)\n            break\n        except OSError:\n            if p.poll() is not None or time.monotonic() >= deadline:\n                raise RuntimeError('\"'\"'worker failed readiness'\"'\"')\n            time.sleep(.05)\n    with s:\n        s.settimeout(2)\n        body = json.dumps({'\"'\"'secret'\"'\"': secret}).encode()\n        s.sendall(struct.pack('\"'\"'>I'\"'\"', len(body)) + body)\n        def exact(n):\n            data = bytearray()\n            while len(data) < n:\n                chunk = s.recv(n - len(data))\n                if not chunk: raise RuntimeError('\"'\"'truncated worker hello'\"'\"')\n                data.extend(chunk)\n            return data\n        length = struct.unpack('\"'\"'>I'\"'\"', exact(4))[0]\n        if length > 4096: raise RuntimeError('\"'\"'oversized worker hello'\"'\"')\n        hello = json.loads(exact(length))\n        assert hello['\"'\"'ready'\"'\"'] is True\n        assert hello['\"'\"'protocol'\"'\"'] == 3\n        assert hello['\"'\"'bundle'\"'\"'] == '\"'\"'29b69e47719660bcdab3d6761e5e63f3833490b37c83867db089f6a7200d0d7d'\"'\"'\nfinally:\n    p.terminate()\n    p.wait(timeout=5)\n    path.unlink(missing_ok=True)\nVERIFY'"
+      ],
+      "elapsed_ns": 114201625,
+      "exit": 0
+    },
+    {
+      "stage": "prepare-boot",
+      "command": [
+        "ssh",
+        "-F",
+        "/tmp/lfs-image-q6rai00s/seed/ssh.config",
+        "lima-seed",
+        "--",
+        "sudo -n -- sh -c 'sh /opt/layerfs-image/prepare.sh'"
+      ],
+      "elapsed_ns": 1171011375,
+      "exit": 0
+    },
+    {
+      "stage": "sanitize-identity",
+      "command": [
+        "ssh",
+        "-F",
+        "/tmp/lfs-image-q6rai00s/seed/ssh.config",
+        "lima-seed",
+        "--",
+        "sudo -n -- sh -c 'python3 /opt/layerfs-image/sanitize.py'"
+      ],
+      "elapsed_ns": 722788458,
+      "exit": 0
+    },
+    {
+      "stage": "seed-stop",
+      "command": [
+        "limactl",
+        "stop",
+        "seed"
+      ],
+      "elapsed_ns": 1662778709,
+      "exit": 0
+    },
+    {
+      "stage": "flatten-image",
+      "command": [
+        "qemu-img",
+        "convert",
+        "-O",
+        "raw",
+        "/tmp/lfs-image-q6rai00s/seed/disk",
+        "/Users/yifanxu/.cache/layerfs-worktrees/layerfs-machine-start-c17e354c8815/image-cache/layerfs/machine-images/builds/cf7e4430d91880d0-150472f6/root.img.partial"
+      ],
+      "elapsed_ns": 4992857125,
+      "exit": 0
+    },
+    {
+      "stage": "seed-remove",
+      "command": [
+        "limactl",
+        "delete",
+        "--force",
+        "seed"
+      ],
+      "elapsed_ns": 743593333,
+      "exit": 0
+    }
+  ],
+  "lima_home": "/tmp/lfs-image-q6rai00s",
+  "mapping": "/Users/yifanxu/.cache/layerfs-worktrees/layerfs-machine-start-c17e354c8815/image-cache/layerfs/machine-images/lima/linux-aarch64/1d91885de27a20805af0d1b99602ace066f0514983613e391ee1f73ac8e7c2e9/current.json"
+}

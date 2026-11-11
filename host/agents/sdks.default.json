@@ -48,6 +48,11 @@
           "description": "remove one project from its Store"
         },
         {
+          "name": "project.storage_report",
+          "signature": "layerfs.project.storage_report(project, snapshots, { max_objects, max_canonical_bytes, include_encoding })",
+          "description": "bounded canonical reuse among one project's explicit immutable saved snapshots"
+        },
+        {
           "name": "branch.list",
           "signature": "layerfs.branch.list(project, { page_size, page_pos, page })",
           "description": "a project's Branches"
@@ -273,6 +278,11 @@
           "description": "resize a VM, or set a built-in machine's image, Docker socket and daemon"
         },
         {
+          "name": "machine.images",
+          "signature": "layerfs.machine.images(name)",
+          "description": "available Sandbox images on a machine"
+        },
+        {
           "name": "store.list",
           "signature": "layerfs.store.list()",
           "description": "every Store, from the home's records"
@@ -321,6 +331,11 @@
           "name": "store.disconnect",
           "signature": "layerfs.store.disconnect(name)",
           "description": "forget a PostgreSQL Store; its data stays"
+        },
+        {
+          "name": "store.storage_report",
+          "signature": "layerfs.store.storage_report(name, snapshots, { max_objects, max_canonical_bytes, include_encoding })",
+          "description": "bounded canonical sharing among explicit immutable saved snapshots"
         },
         {
           "name": "backup.connect",

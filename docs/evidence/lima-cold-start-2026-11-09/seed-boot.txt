@@ -1,0 +1,80 @@
+The time when unit became active or started is printed after the "@" character.
+The time the unit took to start is printed after the "+" character.
+
+cloud-final.service +1.712s
+└─multi-user.target @10.836s
+  └─lima-guestagent.service @12.471s
+    └─basic.target @4.291s
+      └─sockets.target @4.291s
+        └─snapd.socket @4.288s +2ms
+          └─sysinit.target @4.277s
+            └─systemd-resolved.service @11.684s +50ms
+              └─systemd-tmpfiles-setup.service @535ms +23ms
+                └─local-fs.target @503ms
+                  └─run-user-501.mount @12.051s
+                    └─local-fs-pre.target @320ms
+                      └─multipathd.service @280ms +39ms
+                        └─systemd-remount-fs.service @259ms +14ms
+                          └─systemd-fsck-root.service @202ms +51ms
+                            └─systemd-journald.socket @174ms
+                              └─system.slice @162ms
+                                └─-.slice @162ms
+Startup finished in 1.607s (kernel) + 12.555s (userspace) = 14.162s 
+graphical.target reached after 10.836s in userspace.
+total 3.0G
+-rw-r--r-- 1 yifanxu staff  939 Nov  4 06:24 bundle.json
+-rwxr-xr-x 1 yifanxu staff 182M Nov  4 06:24 layerfs
+-rwxr-xr-x 1 yifanxu staff 182M Nov  4 06:24 layerfs-daemon
+-rwxr-xr-x 1 yifanxu staff  11M Nov  4 06:24 layerfs-sandbox-helper
+-rw-r--r-- 1 yifanxu staff 2.6G Nov  4 06:24 sandbox-image.tar
+/etc/systemd/system/cloud-init.target.wants:
+total 0
+lrwxrwxrwx 1 root root 44 Oct 17 21:00 cloud-config.service -> /usr/lib/systemd/system/cloud-config.service
+lrwxrwxrwx 1 root root 43 Oct 17 21:00 cloud-final.service -> /usr/lib/systemd/system/cloud-final.service
+lrwxrwxrwx 1 root root 48 Oct 17 21:00 cloud-init-local.service -> /usr/lib/systemd/system/cloud-init-local.service
+lrwxrwxrwx 1 root root 42 Oct 17 21:00 cloud-init.service -> /usr/lib/systemd/system/cloud-init.service
+
+/etc/systemd/system/multi-user.target.wants:
+total 4.0K
+lrwxrwxrwx 1 root root 44 Oct 17 21:00 ModemManager.service -> /usr/lib/systemd/system/ModemManager.service
+lrwxrwxrwx 1 root root 38 Oct 17 21:00 apport.service -> /usr/lib/systemd/system/apport.service
+lrwxrwxrwx 1 root root 45 Oct 17 20:58 console-setup.service -> /usr/lib/systemd/system/console-setup.service
+lrwxrwxrwx 1 root root 36 Oct 17 20:58 cron.service -> /usr/lib/systemd/system/cron.service
+lrwxrwxrwx 1 root root 37 Oct 17 20:58 dmesg.service -> /usr/lib/systemd/system/dmesg.service
+lrwxrwxrwx 1 root root 40 Oct 17 20:58 e2scrub_reap.service -> /lib/systemd/system/e2scrub_reap.service
+lrwxrwxrwx 1 root root 43 Oct 17 21:02 grub-common.service -> /usr/lib/systemd/system/grub-common.service
+lrwxrwxrwx 1 root root 52 Oct 17 21:02 grub-initrd-fallback.service -> /usr/lib/systemd/system/grub-initrd-fallback.service
+lrwxrwxrwx 1 root root 43 Nov  9 20:24 lima-guestagent.service -> /etc/systemd/system/lima-guestagent.service
+lrwxrwxrwx 1 root root 44 Oct 17 21:00 lxd-installer.socket -> /usr/lib/systemd/system/lxd-installer.socket
+lrwxrwxrwx 1 root root 51 Oct 17 20:58 networkd-dispatcher.service -> /usr/lib/systemd/system/networkd-dispatcher.service
+lrwxrwxrwx 1 root root 45 Oct 17 21:00 open-vm-tools.service -> /usr/lib/systemd/system/open-vm-tools.service
+lrwxrwxrwx 1 root root 41 Oct 17 21:00 pollinate.service -> /usr/lib/systemd/system/pollinate.service
+lrwxrwxrwx 1 root root 40 Oct 17 20:58 remote-fs.target -> /usr/lib/systemd/system/remote-fs.target
+lrwxrwxrwx 1 root root 39 Oct 17 20:58 rsyslog.service -> /usr/lib/systemd/system/rsyslog.service
+lrwxrwxrwx 1 root root 45 Oct 17 21:00 secureboot-db.service -> /usr/lib/systemd/system/secureboot-db.service
+lrwxrwxrwx 1 root root 46 Oct 17 21:00 snapd.apparmor.service -> /usr/lib/systemd/system/snapd.apparmor.service
+lrwxrwxrwx 1 root root 48 Oct 17 21:00 snapd.autoimport.service -> /usr/lib/systemd/system/snapd.autoimport.service
+lrwxrwxrwx 1 root root 48 Oct 17 21:00 snapd.core-fixup.service -> /usr/lib/systemd/system/snapd.core-fixup.service
+lrwxrwxrwx 1 root root 62 Oct 17 21:00 snapd.recovery-chooser-trigger.service -> /usr/lib/systemd/system/snapd.recovery-chooser-trigger.service
+lrwxrwxrwx 1 root root 44 Oct 17 21:00 snapd.seeded.service -> /usr/lib/systemd/system/snapd.seeded.service
+lrwxrwxrwx 1 root root 37 Oct 17 21:00 snapd.service -> /usr/lib/systemd/system/snapd.service
+lrwxrwxrwx 1 root root 39 Oct 17 21:00 sysstat.service -> /usr/lib/systemd/system/sysstat.service
+lrwxrwxrwx 1 root root 44 Oct 17 06:39 systemd-networkd.service -> /lib/systemd/system/systemd-networkd.service
+lrwxrwxrwx 1 root root 46 Oct 17 20:58 ua-reboot-cmds.service -> /usr/lib/systemd/system/ua-reboot-cmds.service
+lrwxrwxrwx 1 root root 48 Oct 17 20:58 ubuntu-advantage.service -> /usr/lib/systemd/system/ubuntu-advantage.service
+lrwxrwxrwx 1 root root 35 Oct 17 21:00 ufw.service -> /usr/lib/systemd/system/ufw.service
+lrwxrwxrwx 1 root root 51 Oct 17 21:00 unattended-upgrades.service -> /usr/lib/systemd/system/unattended-upgrades.service
+network:
+  version: 2
+  ethernets:
+    eth0:
+      match:
+        macaddress: "52:55:55:70:d1:30"
+      nameservers:
+        addresses:
+        - 192.168.5.2
+      dhcp-identifier: "mac"
+      dhcp4: true
+      dhcp4-overrides:
+        route-metric: 200
+      set-name: "eth0"

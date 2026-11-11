@@ -595,3 +595,36 @@ configure the explicit pinned CLI (and matching daemon for incompatibility), the
 restart Connect. It never forwards raw startup stderr to the renderer. Other
 host exits retain the ordinary host-exited error; a runtime failure is not
 misrepresented as a binary configuration failure.
+
+## Saved-read admission follow-up (2026-11-10)
+
+The studio project's Storage tab exposed an intermittent `project stats`
+refusal: `Failed`, exit 125, `Os { code: 2, kind: NotFound, message: "No such
+file or directory" }`. Identical pinned requests succeeded immediately before
+and after it. Against the configured CLI (`833d04cf44e8e747929d50ab1170a48260d9381c`,
+dirty machine-start build), 100 reads with four concurrent processes against
+one native SQLite Store produced 12 refusals; 100 sequential reads produced none.
+The mix was project stats (two projects), store stats and branch list.
+
+Connect now admits saved reads one at a time per home and Store, before taking
+one of the four global process slots. The Store is taken from discovery's
+project positional or a Store-family target. Different Stores, unscoped inventory,
+mutations, workspace exec and cancellation keep their existing admission.
+Identical reads still share a single invocation. No call is retried or replayed;
+a refusal releases both queues. Admission entries are removed when drained.
+
+Verification: 100 mixed reads through the updated client, requested in batches
+of four, completed with zero failures. After reloading the web host, another 100
+authenticated HTTP reads with concurrency four all returned 200. The studio
+Storage tab displayed complete saved-tree statistics and Store counters. All 56
+focused adapter, activity, project-read, progress and preset tests passed.
+Regression coverage holds a Store read
+open, queues more than four followers, confirms another Store and a release
+command can run, and checks admission recovers after a refused launch.
+
+Upstream follow-up: identify and repair the exact filesystem race in LayerFS.
+The refusal supplies no path or operation. Store lease cleanup has a potentially
+racy stale-file removal, but that location has not been established as the
+source of this incident. Connect's queue contains concurrent page reads within
+one host process; it does not coordinate separate terminal/host processes or
+concurrent mutations. LayerFS sources and binaries are unchanged.

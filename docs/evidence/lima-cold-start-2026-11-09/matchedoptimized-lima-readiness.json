@@ -1,0 +1,72 @@
+[
+  {
+    "level": "info",
+    "msg": "[VZ] - vm state change: running",
+    "time": "2026-11-09T20:32:55+08:00"
+  },
+  {
+    "level": "info",
+    "msg": "SSH server does not seem to be running on vsock port, using usernet forwarder",
+    "time": "2026-11-09T20:33:00+08:00"
+  },
+  {
+    "level": "info",
+    "msg": "Waiting for the essential requirement 1 of 3: `ssh`",
+    "time": "2026-11-09T20:33:00+08:00"
+  },
+  {
+    "level": "info",
+    "msg": "The essential requirement 1 of 3 is satisfied",
+    "time": "2026-11-09T20:33:01+08:00"
+  },
+  {
+    "level": "info",
+    "msg": "Waiting for the essential requirement 2 of 3: `user session is ready for ssh`",
+    "time": "2026-11-09T20:33:01+08:00"
+  },
+  {
+    "level": "info",
+    "msg": "The essential requirement 2 of 3 is satisfied",
+    "time": "2026-11-09T20:33:01+08:00"
+  },
+  {
+    "level": "info",
+    "msg": "Waiting for the essential requirement 3 of 3: `Explicitly start ssh ControlMaster`",
+    "time": "2026-11-09T20:33:01+08:00"
+  },
+  {
+    "level": "info",
+    "msg": "The essential requirement 3 of 3 is satisfied",
+    "time": "2026-11-09T20:33:01+08:00"
+  },
+  {
+    "level": "info",
+    "msg": "Waiting for the guest agent to be running",
+    "time": "2026-11-09T20:33:01+08:00"
+  },
+  {
+    "level": "info",
+    "msg": "Guest agent is running",
+    "time": "2026-11-09T20:33:01+08:00"
+  },
+  {
+    "level": "info",
+    "msg": "Waiting for the final requirement 1 of 1: `boot scripts must have finished`",
+    "time": "2026-11-09T20:33:01+08:00"
+  },
+  {
+    "level": "info",
+    "msg": "The final requirement 1 of 1 is satisfied",
+    "time": "2026-11-09T20:33:01+08:00"
+  },
+  {
+    "level": "info",
+    "msg": "Forwarding TCP from 127.0.0.1:7070 to 127.0.0.1:53841",
+    "time": "2026-11-09T20:33:02+08:00"
+  },
+  {
+    "level": "info",
+    "msg": "Forwarding TCP from 127.0.0.1:33213 to 127.0.0.1:33213",
+    "time": "2026-11-09T20:33:14+08:00"
+  }
+]

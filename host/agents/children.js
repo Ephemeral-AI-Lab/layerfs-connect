@@ -1,6 +1,6 @@
 // A chat's subagents: each child run's numbers (tokens, cost, turns, tools,
 // time) and its own conversation, read from the child's Pi session file.
-import { existsSync, realpathSync, statSync } from 'node:fs'
+import { existsSync, realpathSync, statSync, openSync, readSync, closeSync } from 'node:fs'
 import { join, sep } from 'node:path'
 import { SessionManager } from '@earendil-works/pi-coding-agent'
 
@@ -10,6 +10,26 @@ import { withStepViews } from './step-views.js'
 import { chatTrace } from './trace.js'
 
 const stats = new Map()
+const traceIdentities = new Map()
+
+/** Session identity is in the first line; never load a full child history for the live graph. */
+export function childTraceIdentity(dir, file) {
+  if (!inside(dir, file)) return null
+  try {
+    const info = statSync(file), identity = `${info.dev}:${info.ino}`
+    const cached = traceIdentities.get(file)
+    if (cached?.identity === identity) return cached.agent
+    const fd = openSync(file, 'r'), buffer = Buffer.alloc(8192)
+    let size
+    try { size = readSync(fd, buffer, 0, buffer.length, 0) } finally { closeSync(fd) }
+    const header = JSON.parse(buffer.toString('utf8', 0, size).split('\n')[0])
+    if (header.type !== 'session' || typeof header.id !== 'string') return null
+    const agent = `child-${header.id}`
+    traceIdentities.set(file, { identity, agent })
+    if (traceIdentities.size > 500) traceIdentities.delete(traceIdentities.keys().next().value)
+    return agent
+  } catch { return null }
+}
 
 /** Whether `file` is a session file inside the chat's own folder (child files live there). */
 function inside(dir, file) {
@@ -33,6 +53,7 @@ function fileStats(file) {
     tokens: usage.input + usage.output,
     cost: usage.cost,
     turns: entries.filter((entry) => entry.type === 'message' && entry.message.role === 'assistant').length,
+    requestTurns: entries.filter((entry) => entry.type === 'message' && entry.message.role === 'user').length,
     toolCount: usage.toolCalls,
     startedAt: times.length ? Math.min(...times) : undefined,
     endedAt: times.length ? Math.max(...times) : undefined,
@@ -66,11 +87,15 @@ export function describeChildren(record, dir) {
     const task = child.task || args.tasks?.[index]?.task || args.chain?.[index]?.task || args.task
     let numbers = {}
     if (inside(dir, child.sessionFile)) {
-      try { numbers = fileStats(child.sessionFile) } catch { numbers = {} }
+      try {
+        const { requestTurns, ...measured } = fileStats(child.sessionFile)
+        numbers = record.simulation ? { ...measured, turns: requestTurns } : measured
+      } catch { numbers = {} }
     }
     const merged = { ...child, ...(task ? { task } : {}) }
     for (const [key, value] of Object.entries(numbers)) if (value !== undefined) merged[key] = value
     merged.conversation = inside(dir, child.sessionFile)
+    merged.traceAgent = childTraceIdentity(dir, child.sessionFile)
     return merged
   })
 }
@@ -85,7 +110,7 @@ export function childConversation(record, dir, childId) {
   if (!child) return null
   if (!child.conversation) return { child, messages: [] }
   const manager = SessionManager.open(child.sessionFile)
-  const messages = withStepViews(sessionTranscript(manager), join(dir, 'traces'), `child-${manager.getSessionId()}`)
+  const messages = withStepViews(sessionTranscript(manager, { running: ['running', 'pending', 'queued', 'paused'].includes(child.state) }), join(dir, 'traces'), `child-${manager.getSessionId()}`)
   return { child, messages }
 }
 

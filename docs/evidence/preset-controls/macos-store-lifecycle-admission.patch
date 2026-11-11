@@ -1,0 +1,282 @@
+diff --git a/docs/architecture/engine/store/backends.md b/docs/architecture/engine/store/backends.md
+--- a/docs/architecture/engine/store/backends.md
++++ b/docs/architecture/engine/store/backends.md
+@@ -130,6 +130,26 @@
+ The publication lane holds steps 1 and 3 across several transactions; see
+ [History publication](history-publication.md#the-publish-lane).
+ 
++SQLite connection lifecycle also takes this directory owner: before opening
++and applying/checking the profile (including the Disposable background
++connection), and around the last Session connection's close. WAL startup and
++last-close checkpoint/sidecar teardown can otherwise meet another process's
++writer before its ordinary transaction admission. This is a short lifecycle
++hold, not a hold over a Store call or the lifetime of an open Session. Read-only
++and diagnostic connection initialization uses the same hold; their subsequent
++reads remain independent of the writer lane.
++
++The background connection closes while the Session's main connection is still
++alive, so it is never the last connection. It must not reacquire the lane while
++the Session joins its thread: a quarantined Session can already retain that
++owner. The main connection closes before its retained/new lifecycle owner is
++released. If a destructor's single admission wait is interrupted or fails,
++it retains the connection until process exit instead of performing unadmitted
++teardown or retrying. Checked `seal` retains its explicit close/error result.
++Source: [`connection.rs`](../../../../engine/crates/layerfs-persistence/src/backend/sqlite/session/connection.rs),
++[`lifecycle.rs`](../../../../engine/crates/layerfs-persistence/src/backend/sqlite/session/lifecycle.rs),
++[`background.rs`](../../../../engine/crates/layerfs-persistence/src/backend/sqlite/session/background.rs).
++
+ ## Related
+ 
+ - [SQLite](sqlite.md#sessions) and [PostgreSQL](postgresql.md#connection-and-session): each engine's session.
+diff --git a/engine/crates/layerfs-persistence/src/backend/sqlite/session/connection.rs b/engine/crates/layerfs-persistence/src/backend/sqlite/session/connection.rs
+--- a/engine/crates/layerfs-persistence/src/backend/sqlite/session/connection.rs
++++ b/engine/crates/layerfs-persistence/src/backend/sqlite/session/connection.rs
+@@ -145,7 +145,8 @@
+     pub connects: u64,
+ }
+ pub(crate) struct State {
+-    pub(crate) connection: Connection,
++    pub(crate) connection: super::lifecycle::ConnectionSlot,
++    pub(crate) path: PathBuf,
+     pub(crate) quarantined: bool,
+     pub(crate) work: RefCell<SqlWork>,
+     pub(crate) writer_hold: Option<crate::backend::sqlite::lane::writer_admission::Writer>,
+@@ -205,6 +206,11 @@
+         if !cfg!(any(target_os = "macos", target_os = "linux")) {
+             return Err(BackendError::Integrity);
+         }
++        // Opening/configuring WAL can initialize shared state before any
++        // transaction. The same short owner excludes another writer or last
++        // close, including on read-only and diagnostic opens. Declared before
++        // the connection so error exits close SQLite before releasing it.
++        let lifecycle = crate::backend::sqlite::lane::writer_admission::Writer::acquire(path)?;
+         let flags = if writable {
+             OpenFlags::SQLITE_OPEN_READ_WRITE
+         } else {
+@@ -314,13 +320,17 @@
+         let background = (writable && selected == SqlitePersistenceProfile::Disposable)
+             .then(|| super::background::Checkpointer::start(path))
+             .transpose()?;
++        // Session::run takes its own writer ownership; never retain lifecycle
++        // ownership into those calls or acquire it again in background start.
++        drop(lifecycle);
+         Ok(Self {
+             diagnostic,
+             background,
+             admission: crate::backend::admission::Admission::default(),
+             path: path.to_path_buf(),
+             state: Mutex::new(State {
+-                connection,
++                connection: super::lifecycle::ConnectionSlot::new(connection),
++                path: path.to_path_buf(),
+                 quarantined: false,
+                 work,
+                 writer_hold: None,
+diff --git a/engine/crates/layerfs-persistence/src/backend/sqlite/session/background.rs b/engine/crates/layerfs-persistence/src/backend/sqlite/session/background.rs
+--- a/engine/crates/layerfs-persistence/src/backend/sqlite/session/background.rs
++++ b/engine/crates/layerfs-persistence/src/backend/sqlite/session/background.rs
+@@ -103,6 +103,9 @@
+ impl Drop for Checkpointer {
+     /// Ends the thread after its current pass and closes its connection,
+     /// before the session's own connection closes.
++    /// This connection is therefore never SQLite's last one: State still owns
++    /// the main connection. Do not reacquire its directory lane here; a
++    /// quarantined State may already retain it while this join completes.
+     fn drop(&mut self) {
+         self.wake.take();
+         if let Some(thread) = self.thread.take() {
+diff --git a/engine/crates/layerfs-persistence/src/backend/sqlite/session/lifecycle.rs b/engine/crates/layerfs-persistence/src/backend/sqlite/session/lifecycle.rs
+new file mode 100644
+--- /dev/null
++++ b/engine/crates/layerfs-persistence/src/backend/sqlite/session/lifecycle.rs
+@@ -0,0 +1,61 @@
++//! Connection custody at the last Session close, including quarantined owners.
++use super::connection::State;
++use crate::backend::sqlite::lane::writer_admission::Writer;
++use rusqlite::Connection;
++use std::ops::Deref;
++
++/// Allows checked seal and last-owner Drop to close before releasing admission.
++pub(crate) struct ConnectionSlot(Option<Connection>);
++
++impl ConnectionSlot {
++    pub(crate) fn new(connection: Connection) -> Self {
++        Self(Some(connection))
++    }
++
++    pub(crate) fn take(&mut self) -> Option<Connection> {
++        self.0.take()
++    }
++
++    pub(crate) fn restore(&mut self, connection: Connection) {
++        self.0 = Some(connection);
++    }
++
++    fn is_closed(&self) -> bool {
++        self.0.is_none()
++    }
++}
++
++impl Deref for ConnectionSlot {
++    type Target = Connection;
++
++    fn deref(&self) -> &Connection {
++        self.0.as_ref().expect("live Session connection")
++    }
++}
++
++impl Drop for State {
++    fn drop(&mut self) {
++        if self.connection.is_closed() {
++            return;
++        }
++        // An uncertain transaction already owns the lane. Taking it again
++        // through an independent directory descriptor would deadlock.
++        let writer = match self.writer_hold.take() {
++            Some(writer) => writer,
++            None => match Writer::acquire(&self.path) {
++                Ok(writer) => writer,
++                Err(_) => {
++                    // Drop cannot report a cancelled/failed admission. Retain
++                    // the SQLite connection until process exit instead of
++                    // attempting unadmitted WAL teardown or retrying the wait.
++                    std::mem::forget(self.connection.take());
++                    return;
++                }
++            },
++        };
++        // The background connection has already ended; this may be SQLite's
++        // last connection and can checkpoint/delete the WAL and SHM files.
++        drop(self.connection.take());
++        drop(writer);
++    }
++}
+diff --git a/engine/crates/layerfs-persistence/src/backend/sqlite/session/mod.rs b/engine/crates/layerfs-persistence/src/backend/sqlite/session/mod.rs
+--- a/engine/crates/layerfs-persistence/src/backend/sqlite/session/mod.rs
++++ b/engine/crates/layerfs-persistence/src/backend/sqlite/session/mod.rs
+@@ -2,6 +2,7 @@
+ pub(crate) mod background;
+ pub(crate) mod checkpoint;
+ pub(crate) mod connection;
++pub(crate) mod lifecycle;
+ pub(crate) mod prepared;
+ pub(crate) mod profile;
+ pub(crate) mod query;
+diff --git a/engine/crates/layerfs-persistence/src/backend/sqlite/lifecycle/seal.rs b/engine/crates/layerfs-persistence/src/backend/sqlite/lifecycle/seal.rs
+--- a/engine/crates/layerfs-persistence/src/backend/sqlite/lifecycle/seal.rs
++++ b/engine/crates/layerfs-persistence/src/backend/sqlite/lifecycle/seal.rs
+@@ -12,20 +12,17 @@
+         }
+         // The checkpoint thread ends and closes its connection first.
+         drop(self.background.take());
+-        let state = self
++        let mut state = self
+             .state
+             .into_inner()
+             .map_err(|_| PersistenceError::Uncertain)?;
+         if state.quarantined || !state.connection.is_autocommit() {
+             return Err(PersistenceError::Uncertain);
+         }
+-        #[cfg(target_os = "linux")]
+-        let state = {
+-            let mut state = state;
++        if state.writer_hold.is_none() {
+             state.writer_hold =
+                 Some(crate::backend::sqlite::lane::writer_admission::Writer::acquire(&self.path)?);
+-            state
+-        };
++        }
+         #[cfg(target_os = "macos")]
+         let identity = super::seal_allocation::Identity::capture(&self.path)?;
+         #[cfg(target_os = "macos")]
+@@ -40,13 +37,14 @@
+         if row.get::<i64>(0)? != 0 {
+             return Err(PersistenceError::Busy);
+         }
+-        state
+-            .connection
+-            .close()
+-            .map_err(|(_, error)| rows::error(error))?;
++        let connection = state.connection.take().ok_or(PersistenceError::Malformed)?;
++        if let Err((connection, error)) = connection.close() {
++            state.connection.restore(connection);
++            return Err(rows::error(error).into());
++        }
+         // SQLite has checked-closed before advisory ownership is released.
+         // Earlier error exits drop State.connection before its retained owner.
+-        if let Some(writer) = state.writer_hold {
++        if let Some(writer) = state.writer_hold.take() {
+             writer.release().map_err(|_| PersistenceError::Uncertain)?;
+         }
+         for suffix in ["-wal", "-shm", "-journal"] {
+diff --git a/engine/crates/layerfs-persistence/tests/writer_admission.rs b/engine/crates/layerfs-persistence/tests/writer_admission.rs
+--- a/engine/crates/layerfs-persistence/tests/writer_admission.rs
++++ b/engine/crates/layerfs-persistence/tests/writer_admission.rs
+@@ -246,6 +246,67 @@
+ 
+ #[test]
+ #[cfg(any(target_os = "linux", target_os = "macos"))]
++fn another_process_admission_precedes_read_only_connection_open() {
++    let temp = support::Temp::new("wa-open");
++    let path = temp.join("store.sqlite");
++    let original = create(&path);
++    let held = Held::start(&path, &temp.join("s"));
++    let (ready_tx, ready_rx) = mpsc::channel();
++    let (result_tx, result_rx) = mpsc::channel();
++    let opener = std::thread::spawn(move || {
++        ready_tx.send(()).unwrap();
++        let result = SqliteHandles::open_read_only(
++            config(&path),
++            &authority().binding_key,
++            authority().cursor_key,
++        )
++        .map(|handles| handles.profile().clone());
++        result_tx.send(result).unwrap();
++    });
++    ready_rx.recv_timeout(Duration::from_secs(2)).unwrap();
++    let premature = result_rx.recv_timeout(Duration::from_millis(100)).ok();
++    held.release();
++    let outcome = premature
++        .clone()
++        .unwrap_or_else(|| result_rx.recv_timeout(Duration::from_secs(3)).unwrap());
++    opener.join().unwrap();
++    assert!(
++        premature.is_none(),
++        "connection initialization bypassed its lifecycle owner"
++    );
++    assert_eq!(outcome.unwrap().busy_timeout, 0);
++    drop(original);
++}
++
++#[test]
++#[cfg(any(target_os = "linux", target_os = "macos"))]
++fn another_process_admission_precedes_last_connection_close() {
++    let temp = support::Temp::new("wa-close");
++    let path = temp.join("store.sqlite");
++    let handles = create(&path);
++    let held = Held::start(&path, &temp.join("s"));
++    let (ready_tx, ready_rx) = mpsc::channel();
++    let (result_tx, result_rx) = mpsc::channel();
++    let closer = std::thread::spawn(move || {
++        ready_tx.send(()).unwrap();
++        drop(handles);
++        result_tx.send(()).unwrap();
++    });
++    ready_rx.recv_timeout(Duration::from_secs(2)).unwrap();
++    let premature = result_rx.recv_timeout(Duration::from_millis(100)).ok();
++    held.release();
++    if premature.is_none() {
++        result_rx.recv_timeout(Duration::from_secs(3)).unwrap();
++    }
++    closer.join().unwrap();
++    assert!(
++        premature.is_none(),
++        "last connection close bypassed its lifecycle owner"
++    );
++}
++
++#[test]
++#[cfg(any(target_os = "linux", target_os = "macos"))]
+ fn two_opened_handles_admit_eight_distinct_reservations_without_conflict() {
+     let temp = support::Temp::new("writer-admission-two-handles");
+     let path = temp.join("store.sqlite");

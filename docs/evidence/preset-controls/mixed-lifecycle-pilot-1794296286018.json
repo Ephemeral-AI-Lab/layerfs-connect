@@ -1,0 +1,435 @@
+{
+  "state": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/connect-mixed-lifecycle-YkkBjz",
+  "home": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/connect-mixed-lifecycle-YkkBjz/home-2",
+  "evidence": "/Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect/docs/evidence/preset-controls/mixed-lifecycle-pilot-1794296286018.json",
+  "action": {
+    "id": "0b40097a-a103-4fa3-b501-8397f903c3e0",
+    "name": "demo.mixed-lifecycle-pilot",
+    "label": "Private mixed lifecycle capacity proof",
+    "origin": "user"
+  },
+  "started": 1794296286018,
+  "ok": true,
+  "checks": [
+    {
+      "name": "two-workspace-reused-session",
+      "machine": "mix-build-12461e",
+      "workspace": "mix-12461e-box-2:feature-0",
+      "file": {
+        "kind": "ok",
+        "snapshot": "feature-0@de44d2daf8f7",
+        "root": "ad86580a33fb208e71f6a0c61c854e79ddba7e18954123b7048b48f72a544624",
+        "path": "/proof-0.txt",
+        "text": "machine=mix-build-12461e workspace=0 revision=2\n",
+        "start_line": 1,
+        "end_line": 1,
+        "line_truncated": false,
+        "truncated": false,
+        "next_line": null,
+        "size": 48,
+        "at": {
+          "id": "12de44d2daf8f7050167e59b5b16db05307adfb23cf6494c14d514526656d70548",
+          "kind": "Commit",
+          "branch": "feature-0",
+          "root": "ad86580a33fb208e71f6a0c61c854e79ddba7e18954123b7048b48f72a544624"
+        }
+      }
+    },
+    {
+      "name": "two-workspace-reused-session",
+      "machine": "mix-research-12461e",
+      "workspace": "mix-12461e-box-3:feature-1",
+      "file": {
+        "kind": "ok",
+        "snapshot": "feature-1@85bc159d7cf8",
+        "root": "5ca2ce18c00606a673abb90f38a77949a9365fd3a3460787eb92f82fd1fb81bb",
+        "path": "/proof-1.txt",
+        "text": "machine=mix-research-12461e workspace=1 revision=2\n",
+        "start_line": 1,
+        "end_line": 1,
+        "line_truncated": false,
+        "truncated": false,
+        "next_line": null,
+        "size": 51,
+        "at": {
+          "id": "1285bc159d7cf806dd7bb10ed57164e9a7ced61ca3ecd39c2a06edf313566c5b0b",
+          "kind": "Commit",
+          "branch": "feature-1",
+          "root": "5ca2ce18c00606a673abb90f38a77949a9365fd3a3460787eb92f82fd1fb81bb"
+        }
+      }
+    },
+    {
+      "name": "two-workspace-reused-session",
+      "machine": "mix-build-12461e",
+      "workspace": "mix-12461e-box-2:feature-1",
+      "file": {
+        "kind": "ok",
+        "snapshot": "feature-1@bae5b8ef2ec0",
+        "root": "f5d5df726d6c02c0e0d021f264e0888b980ac47da9c34e43df6bf11207fb0af8",
+        "path": "/proof-1.txt",
+        "text": "machine=mix-build-12461e workspace=1 revision=2\n",
+        "start_line": 1,
+        "end_line": 1,
+        "line_truncated": false,
+        "truncated": false,
+        "next_line": null,
+        "size": 48,
+        "at": {
+          "id": "12bae5b8ef2ec0538471d6d332f495fc8d916694546714ec5ee41e1ab41009755d",
+          "kind": "Commit",
+          "branch": "feature-1",
+          "root": "f5d5df726d6c02c0e0d021f264e0888b980ac47da9c34e43df6bf11207fb0af8"
+        }
+      }
+    },
+    {
+      "name": "two-workspace-reused-session",
+      "machine": "mix-research-12461e",
+      "workspace": "mix-12461e-box-3:feature-0",
+      "file": {
+        "kind": "ok",
+        "snapshot": "feature-0@8f8e6ebd22ac",
+        "root": "3a30f0aa9431485a6e8d9a679f5af7cd55276986e1a0b080602f6017b32ad66f",
+        "path": "/proof-0.txt",
+        "text": "machine=mix-research-12461e workspace=0 revision=2\n",
+        "start_line": 1,
+        "end_line": 1,
+        "line_truncated": false,
+        "truncated": false,
+        "next_line": null,
+        "size": 51,
+        "at": {
+          "id": "128f8e6ebd22ac56885290722090f652754950fcbd1cf4d5a4a78ed2cc10ff8559",
+          "kind": "Commit",
+          "branch": "feature-0",
+          "root": "3a30f0aa9431485a6e8d9a679f5af7cd55276986e1a0b080602f6017b32ad66f"
+        }
+      }
+    },
+    {
+      "name": "two-workspace-reused-session",
+      "machine": "docker",
+      "workspace": "mix-12461e-box-1:feature-1",
+      "file": {
+        "kind": "ok",
+        "snapshot": "feature-1@c544a5876323",
+        "root": "16592795b67f521997f9d92f0d25a08136a29beaacf12dda3df39071e6291b40",
+        "path": "/proof-1.txt",
+        "text": "machine=docker workspace=1 revision=2\n",
+        "start_line": 1,
+        "end_line": 1,
+        "line_truncated": false,
+        "truncated": false,
+        "next_line": null,
+        "size": 38,
+        "at": {
+          "id": "12c544a587632393396eb41facbc927dfeec51d8e3a32ce5a942cd4555ae851a59",
+          "kind": "Commit",
+          "branch": "feature-1",
+          "root": "16592795b67f521997f9d92f0d25a08136a29beaacf12dda3df39071e6291b40"
+        }
+      }
+    },
+    {
+      "name": "two-workspace-reused-session",
+      "machine": "docker",
+      "workspace": "mix-12461e-box-1:feature-0",
+      "file": {
+        "kind": "ok",
+        "snapshot": "feature-0@7a3fd3154c28",
+        "root": "ac4ad0eca51387678ee9b28fc99bdb89cd117bba274b0143f90232215fe9544d",
+        "path": "/proof-0.txt",
+        "text": "machine=docker workspace=0 revision=2\n",
+        "start_line": 1,
+        "end_line": 1,
+        "line_truncated": false,
+        "truncated": false,
+        "next_line": null,
+        "size": 38,
+        "at": {
+          "id": "127a3fd3154c28472f2a548eb54955b75357964ac262aa1455735cf4316e8e60e7",
+          "kind": "Commit",
+          "branch": "feature-0",
+          "root": "ac4ad0eca51387678ee9b28fc99bdb89cd117bba274b0143f90232215fe9544d"
+        }
+      }
+    },
+    {
+      "name": "two-workspace-reused-session",
+      "machine": "native",
+      "workspace": "mix-12461e-box-0:feature-1",
+      "file": {
+        "kind": "ok",
+        "snapshot": "feature-1@e9636c98df1b",
+        "root": "9fe9dd0aab5f369643f58e610e042efc9386dc28d7780195559dbf174eae5035",
+        "path": "/proof-1.txt",
+        "text": "machine=native workspace=1 revision=2\n",
+        "start_line": 1,
+        "end_line": 1,
+        "line_truncated": false,
+        "truncated": false,
+        "next_line": null,
+        "size": 38,
+        "at": {
+          "id": "12e9636c98df1b55757647a5bca2cf7ba51d5e0c871845d9c507bc91524625e41c",
+          "kind": "Commit",
+          "branch": "feature-1",
+          "root": "9fe9dd0aab5f369643f58e610e042efc9386dc28d7780195559dbf174eae5035"
+        }
+      }
+    },
+    {
+      "name": "two-workspace-reused-session",
+      "machine": "native",
+      "workspace": "mix-12461e-box-0:feature-0",
+      "file": {
+        "kind": "ok",
+        "snapshot": "feature-0@cf5f7903683e",
+        "root": "05e419dc542e55e1c3ddff2e8d47ac5f18a252d18abd1adff81f9f9142969c67",
+        "path": "/proof-0.txt",
+        "text": "machine=native workspace=0 revision=2\n",
+        "start_line": 1,
+        "end_line": 1,
+        "line_truncated": false,
+        "truncated": false,
+        "next_line": null,
+        "size": 38,
+        "at": {
+          "id": "12cf5f7903683ed9384569192b0e786d5b4444164fef8f8f1b4f82ea9d329a5f99",
+          "kind": "Commit",
+          "branch": "feature-0",
+          "root": "05e419dc542e55e1c3ddff2e8d47ac5f18a252d18abd1adff81f9f9142969c67"
+        }
+      }
+    },
+    {
+      "name": "sixteen-mounted-workspaces",
+      "count": 16
+    },
+    {
+      "name": "seventeenth-workspace-refused",
+      "code": "Capacity",
+      "message": "Sandbox mix-12461e-box-0 already holds 16 Workspaces. Create a new Sandbox with `sandbox.create()` and mount there, or list this one's Workspaces with `sandbox.list_workspaces(\"mix-12461e-box-0\")` and unmount the ones you are done with (`workspace.unmount(ws)`)"
+    },
+    {
+      "name": "sixteen-requested-concurrent-execs",
+      "intervals": [
+        {
+          "n": 11,
+          "started": 1794296330095,
+          "ended": 1794296332139,
+          "exit_code": 0
+        },
+        {
+          "n": 2,
+          "started": 1794296330091,
+          "ended": 1794296332139,
+          "exit_code": 0
+        },
+        {
+          "n": 1,
+          "started": 1794296330091,
+          "ended": 1794296332143,
+          "exit_code": 0
+        },
+        {
+          "n": 4,
+          "started": 1794296330092,
+          "ended": 1794296332144,
+          "exit_code": 0
+        },
+        {
+          "n": 9,
+          "started": 1794296330094,
+          "ended": 1794296332144,
+          "exit_code": 0
+        },
+        {
+          "n": 10,
+          "started": 1794296330094,
+          "ended": 1794296332151,
+          "exit_code": 0
+        },
+        {
+          "n": 3,
+          "started": 1794296330092,
+          "ended": 1794296332151,
+          "exit_code": 0
+        },
+        {
+          "n": 7,
+          "started": 1794296330093,
+          "ended": 1794296332159,
+          "exit_code": 0
+        },
+        {
+          "n": 5,
+          "started": 1794296330093,
+          "ended": 1794296332165,
+          "exit_code": 0
+        },
+        {
+          "n": 15,
+          "started": 1794296330096,
+          "ended": 1794296334187,
+          "exit_code": 0
+        },
+        {
+          "n": 14,
+          "started": 1794296330095,
+          "ended": 1794296334188,
+          "exit_code": 0
+        },
+        {
+          "n": 12,
+          "started": 1794296330095,
+          "ended": 1794296334319,
+          "exit_code": 0
+        },
+        {
+          "n": 13,
+          "started": 1794296330095,
+          "ended": 1794296334323,
+          "exit_code": 0
+        },
+        {
+          "n": 6,
+          "started": 1794296330093,
+          "ended": 1794296334332,
+          "exit_code": 0
+        },
+        {
+          "n": 0,
+          "started": 1794296330091,
+          "ended": 1794296334339,
+          "exit_code": 0
+        },
+        {
+          "n": 8,
+          "started": 1794296330094,
+          "ended": 1794296334339,
+          "exit_code": 0
+        }
+      ]
+    },
+    {
+      "name": "sandbox-persists-after-unmount",
+      "machine": "native",
+      "state": "running",
+      "workspaceCount": 0
+    },
+    {
+      "name": "sandbox-persists-after-unmount",
+      "machine": "docker",
+      "state": "running",
+      "workspaceCount": 0
+    },
+    {
+      "name": "sandbox-persists-after-unmount",
+      "machine": "mix-build-12461e",
+      "state": "running",
+      "workspaceCount": 0
+    },
+    {
+      "name": "sandbox-persists-after-unmount",
+      "machine": "mix-research-12461e",
+      "state": "running",
+      "workspaceCount": 0
+    }
+  ],
+  "cleanup": {
+    "errors": [],
+    "inventory": {
+      "stores": [],
+      "sandboxes": [],
+      "machines": [
+        {
+          "name": "docker",
+          "platform": "docker",
+          "backend": "namespaces",
+          "supports": {
+            "sqlite": true,
+            "postgresql_sandbox": true,
+            "reason": null
+          },
+          "state": "stopped",
+          "cpus": null,
+          "memory": null,
+          "disk": null,
+          "stores": [],
+          "sandboxes": [],
+          "error": null
+        },
+        {
+          "name": "native",
+          "platform": "native",
+          "backend": "native",
+          "supports": {
+            "sqlite": true,
+            "postgresql_sandbox": true,
+            "reason": null
+          },
+          "state": "ready",
+          "cpus": null,
+          "memory": null,
+          "disk": null,
+          "stores": [],
+          "sandboxes": [],
+          "daemon": "/Users/yifanxu/.cache/layerfs-worktrees/layerfs-macos-writer-adm-905cf46b6910/artifacts/build-macos-b4035a8f06434f7e8e09c823dad9e32a/layerfs-daemon"
+        }
+      ]
+    },
+    "verified": true
+  },
+  "source": "Private disposable state, no user Studio resources adopted",
+  "initialDockerState": "stopped",
+  "functionalVerified": true,
+  "capture": {
+    "complete": true,
+    "expected": 196,
+    "count": 196,
+    "queued": 196,
+    "started": 196,
+    "finished": 196,
+    "outputCaptured": 196,
+    "failedCount": 1,
+    "truncatedCount": 0,
+    "expectedTruncated": 0,
+    "expectedInputMissing": [],
+    "expectedInputMissingCount": 0,
+    "missingIds": [],
+    "missingCount": 0,
+    "unexpectedIds": [],
+    "unexpectedCount": 0,
+    "incomplete": 0,
+    "warning": null
+  },
+  "logging": {
+    "peakPendingBytes": 36854,
+    "peakBufferedBytes": 7342186,
+    "peakReservedBytes": 7340032,
+    "recordsWritten": 622,
+    "writableWaits": 2,
+    "terminalDrops": 0,
+    "skippedProgress": 0,
+    "batches": 369,
+    "capacityBytes": 8000000,
+    "pendingBytes": 0,
+    "reservedBytes": 0,
+    "reservations": 0,
+    "waiting": 0
+  },
+  "capacityExec": {
+    "requested": 16,
+    "started": 16,
+    "actualCliPeak": 14,
+    "allSuccess": true
+  },
+  "ended": 1794296343951,
+  "savedContentValidation": {
+    "verified": true,
+    "files": 8,
+    "method": "Exact equality against retained real file.read receipts; final revision2, correct machine and workspace identity, nontruncated."
+  }
+}

@@ -1,0 +1,4 @@
+c01-tokens 97a576ca ops=2606 expected=2606 methods match receipt versions=1623 unlinked=0 links on ineligible=0 unresolved=0 non-cli=0 effects={"branch.fork/referenced/Layer":22,"file.write/created/Commit":852,"branch.publish/published/Layer":279,"branch.merge/created/Commit":12,"workspace.commit/created/Commit":480}
+c02-components 6c0e0437 ops=2056 expected=2056 methods match receipt versions=1276 unlinked=0 links on ineligible=0 unresolved=0 non-cli=0 effects={"branch.fork/referenced/Layer":12,"workspace.commit/created/Commit":384,"file.write/created/Commit":664,"branch.merge/created/Commit":8,"branch.publish/published/Layer":220}
+verification {"project":"sim-design-8c0269335d43d37a48ab/design-8c0269335d43d37a48ab","tier":1,"cycles":9,"branches":55,"commits":2400,"merges":20,"publications":499,"layers":500,"filesVerified":44,"publicationReceiptsVerified":true} state completed
+CROSSCHECK PASS

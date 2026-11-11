@@ -1,0 +1,192 @@
+{
+  "source": "/tmp/lima-prepared-check.json",
+  "home": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/lfs-lima-prepared-jo89nr_1/home",
+  "machine": "lima",
+  "marker": "ce8249c8b0cd48a4ab0cf7d3c9766636",
+  "steps": [
+    {
+      "args": [
+        "project",
+        "init",
+        "proof/app",
+        "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/lfs-lima-prepared-jo89nr_1/fixture"
+      ],
+      "wall_ns": 115150375,
+      "exit": 0
+    },
+    {
+      "args": [
+        "store",
+        "push",
+        "proof",
+        "lima"
+      ],
+      "wall_ns": 70349417,
+      "exit": 0
+    },
+    {
+      "args": [
+        "branch",
+        "fork",
+        "proof/app",
+        "verify",
+        "main"
+      ],
+      "wall_ns": 34895875,
+      "exit": 0
+    },
+    {
+      "args": [
+        "sandbox",
+        "create",
+        "proof/app",
+        "box",
+        "lima"
+      ],
+      "wall_ns": 6125487916,
+      "exit": 0
+    },
+    {
+      "args": [
+        "workspace",
+        "mount",
+        "box",
+        "verify",
+        "--name",
+        "verify"
+      ],
+      "wall_ns": 31870292,
+      "exit": 0
+    },
+    {
+      "args": [
+        "workspace",
+        "exec",
+        "box:verify",
+        "cat proof.txt && printf \"ce8249c8b0cd48a4ab0cf7d3c9766636\\n\" > result.txt"
+      ],
+      "wall_ns": 38911166,
+      "exit": 0
+    },
+    {
+      "args": [
+        "workspace",
+        "commit",
+        "box:verify",
+        "--message",
+        "Verify prepared machine persistence"
+      ],
+      "wall_ns": 34810084,
+      "exit": 0
+    },
+    {
+      "args": [
+        "file",
+        "read",
+        "proof/app",
+        "verify",
+        "/result.txt"
+      ],
+      "wall_ns": 24745208,
+      "exit": 0
+    },
+    {
+      "args": [
+        "workspace",
+        "unmount",
+        "box:verify"
+      ],
+      "wall_ns": 22400500,
+      "exit": 0
+    },
+    {
+      "args": [
+        "sandbox",
+        "close",
+        "box"
+      ],
+      "wall_ns": 959629958,
+      "exit": 0
+    },
+    {
+      "args": [
+        "machine",
+        "stop",
+        "lima"
+      ],
+      "wall_ns": 1788884292,
+      "exit": 0
+    },
+    {
+      "args": [
+        "machine",
+        "start",
+        "lima",
+        "--progress"
+      ],
+      "wall_ns": 8515590750,
+      "exit": 0
+    },
+    {
+      "args": [
+        "file",
+        "read",
+        "proof/app",
+        "verify",
+        "/result.txt"
+      ],
+      "wall_ns": 63247916,
+      "exit": 0
+    },
+    {
+      "args": [
+        "machine",
+        "start",
+        "lima",
+        "--progress"
+      ],
+      "wall_ns": 96468750,
+      "exit": 0
+    },
+    {
+      "args": [
+        "store",
+        "pull",
+        "proof"
+      ],
+      "wall_ns": 35363459,
+      "exit": 0
+    },
+    {
+      "args": [
+        "file",
+        "read",
+        "proof/app",
+        "verify",
+        "/result.txt"
+      ],
+      "wall_ns": 22614041,
+      "exit": 0
+    },
+    {
+      "args": [
+        "store",
+        "remove",
+        "proof"
+      ],
+      "wall_ns": 13208667,
+      "exit": 0
+    },
+    {
+      "args": [
+        "machine",
+        "remove",
+        "lima"
+      ],
+      "wall_ns": 798059167,
+      "exit": 0
+    }
+  ],
+  "status": "PASS",
+  "cleaned": true
+}

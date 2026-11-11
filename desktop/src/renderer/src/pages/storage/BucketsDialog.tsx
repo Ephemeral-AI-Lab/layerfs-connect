@@ -15,7 +15,6 @@ import { Archive, ArrowLeft, Database, HardDriveDownload, KeyRound, ListRestart,
 import { useEffect, useState } from 'react'
 
 import { Refusal } from '@/components/layerfs/Refusal'
-import { SIMULATED_REFUSAL } from '@/components/layerfs/Simulation'
 import { BACKUP } from '@/pages/storage/BucketCard'
 import { Chip } from '@/components/layerfs/Chips'
 import { Tile } from '@/pages/storage/StorageIcons'
@@ -57,8 +56,6 @@ interface BucketsModalProps {
   view: StorageView | undefined
   /** The bucket being listed now. */
   listing: string | null
-  /** A simulated host (dev builds): every action is refused here. */
-  simulated: boolean
   onList: (bucket: string) => void
   onRestore: (bucket: string, file: string) => void
   onDisconnect: (bucket: string) => void
@@ -68,7 +65,7 @@ interface BucketsModalProps {
   onConnected: () => void
 }
 
-export function BucketsModal({ open, onOpenChange, focus, view, listing, simulated, onList, onRestore, onDisconnect, onBackup, onConnected }: BucketsModalProps) {
+export function BucketsModal({ open, onOpenChange, focus, view, listing, onList, onRestore, onDisconnect, onBackup, onConnected }: BucketsModalProps) {
   const buckets = view?.buckets ?? []
   const [chosen, setChosen] = useState<BucketsFocus>(focus)
   useEffect(() => {
@@ -130,9 +127,9 @@ export function BucketsModal({ open, onOpenChange, focus, view, listing, simulat
           </aside>
           <section className="flex min-h-0 min-w-0 flex-col">
             {adding ? (
-              <AddBucket key="add" simulated={simulated} taken={buckets.map((b) => b.name)} onConnected={(name) => { onConnected(); setChosen(name) }} />
+              <AddBucket key="add" taken={buckets.map((b) => b.name)} onConnected={(name) => { onConnected(); setChosen(name) }} />
             ) : bucket ? (
-              <BucketPane key={bucket.name} bucket={bucket} view={view} listing={listing === bucket.name} simulated={simulated} onChanged={onConnected} onList={() => onList(bucket.name)} onRestore={(file) => onRestore(bucket.name, file)} onDisconnect={() => onDisconnect(bucket.name)} onBackup={(store, file) => onBackup(store, bucket.name, file)} />
+              <BucketPane key={bucket.name} bucket={bucket} view={view} listing={listing === bucket.name} onChanged={onConnected} onList={() => onList(bucket.name)} onRestore={(file) => onRestore(bucket.name, file)} onDisconnect={() => onDisconnect(bucket.name)} onBackup={(store, file) => onBackup(store, bucket.name, file)} />
             ) : null}
           </section>
         </div>
@@ -161,7 +158,7 @@ export function bucketPlace(url: string): { endpoint?: string; account?: string;
 const objectKey = (prefix: string, file: string) => `${prefix ? `${prefix}/` : ''}${file}/store.sqlite`
 
 /** One bucket: its SQLite files (each a whole Store's backup) with the move each needs, or Configure. */
-function BucketPane({ bucket: b, view, listing, simulated, onList, onRestore, onDisconnect, onBackup, onChanged }: { bucket: BucketRow; view: StorageView | undefined; listing: boolean; simulated: boolean; onList: () => void; onRestore: (file: string) => void; onDisconnect: () => void; onBackup: (store: string, file: string) => void; onChanged: () => void }) {
+function BucketPane({ bucket: b, view, listing, onList, onRestore, onDisconnect, onBackup, onChanged }: { bucket: BucketRow; view: StorageView | undefined; listing: boolean; onList: () => void; onRestore: (file: string) => void; onDisconnect: () => void; onBackup: (store: string, file: string) => void; onChanged: () => void }) {
   const [configuring, setConfiguring] = useState(false)
   const files = b.files
   const place = b.url ? bucketPlace(b.url) : null
@@ -191,7 +188,7 @@ function BucketPane({ bucket: b, view, listing, simulated, onList, onRestore, on
         </div>
       </header>
       {configuring ? (
-        <ConfigurePane key="configure" bucket={b} place={place} simulated={simulated} onDisconnect={onDisconnect} onChanged={onChanged} />
+        <ConfigurePane key="configure" bucket={b} place={place} onDisconnect={onDisconnect} onChanged={onChanged} />
       ) : (
         <div key="files" className="tab-panel min-h-0 flex-1 gap-0! overflow-y-auto px-5 py-4">
           {b.error && (
@@ -302,7 +299,7 @@ function FileRow({ file: f, path, first, known, onRestore, onBackup }: { file: B
 }
 
 /** Configure: where the bucket points (fixed by LayerFS), its keys (Connect's own can be replaced), its Stores, and Disconnect. */
-function ConfigurePane({ bucket: b, place, simulated, onDisconnect, onChanged }: { bucket: BucketRow; place: ReturnType<typeof bucketPlace>; simulated: boolean; onDisconnect: () => void; onChanged: () => void }) {
+function ConfigurePane({ bucket: b, place, onDisconnect, onChanged }: { bucket: BucketRow; place: ReturnType<typeof bucketPlace>; onDisconnect: () => void; onChanged: () => void }) {
   const [replacing, setReplacing] = useState(false)
   const [access, setAccess] = useState('')
   const [secret, setSecret] = useState('')
@@ -320,7 +317,6 @@ function ConfigurePane({ bucket: b, place, simulated, onDisconnect, onChanged }:
       ]
     : []
   const saveKeys = () => {
-    if (simulated) return setError(SIMULATED_REFUSAL)
     setBusy(true)
     setError(null)
     host
@@ -436,7 +432,7 @@ function ConfigurePane({ bucket: b, place, simulated, onDisconnect, onChanged }:
 }
 
 /** Add bucket: a provider, then its fields (or a pasted URL) and the keys. */
-function AddBucket({ simulated, taken, onConnected }: { simulated: boolean; taken: string[]; onConnected: (name: string) => void }) {
+function AddBucket({ taken, onConnected }: { taken: string[]; onConnected: (name: string) => void }) {
   const [entry, setEntry] = useState<ProviderEntry>(READY[0])
   const [byUrl, setByUrl] = useState(false)
   const [values, setValues] = useState<FieldValues>(() => Object.fromEntries(READY[0].fields.map((f) => [f.key, f.default ?? ''])))
@@ -461,7 +457,6 @@ function AddBucket({ simulated, taken, onConnected }: { simulated: boolean; take
   const urlHint = entry.id === 'r2' ? 'r2://<account>/<bucket>/<prefix>' : 'http://localhost:9000/<bucket>/<prefix>'
 
   const submit = () => {
-    if (simulated) return setError(SIMULATED_REFUSAL)
     setBusy(true)
     setError(null)
     const input = byUrl

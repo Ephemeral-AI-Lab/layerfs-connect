@@ -1,0 +1,143 @@
+{
+  "project": {
+    "definition_version": 1,
+    "population_id": "308c7c4ce8a9a385c720432b5e136d4a1d4a6cea097844d38a7a89268632733c",
+    "population": "explicit_saved_snapshots",
+    "snapshots": [
+      {
+        "project": "demo-studio/website",
+        "branch": "feature-auth",
+        "at": {
+          "id": "126d383ac741ebbd1fa520d391baa568021735dec5e54143f4b972db45e9b2efe8",
+          "kind": "Commit",
+          "branch": "feature-auth",
+          "root": "5f85cfe79b15193391b0998d7f3ebeab4b1a012222830c9b0b7c88b5392356db"
+        }
+      },
+      {
+        "project": "demo-studio/website",
+        "branch": "feature-auth",
+        "at": {
+          "id": "12bf9ec8bd0f86d1af7361ea7bfb31848312eb45be264637208114cff29821630e",
+          "kind": "Commit",
+          "branch": "feature-auth",
+          "root": "0c17157ec316abf071c3bdc9b85ab09d403fec9d12fe4be7912d877ac425ffaf"
+        }
+      }
+    ],
+    "complete": true,
+    "examined_objects": 26,
+    "canonical_bytes_read": 4597,
+    "referenced_canonical_bytes": 4597,
+    "unique_canonical_bytes": 3461,
+    "projects": [
+      {
+        "project": "demo-studio/website",
+        "referenced_canonical_bytes": 4597,
+        "exclusive_within_population_canonical_bytes": 3461,
+        "shared_within_population_canonical_bytes": 0
+      }
+    ],
+    "physical_bytes": null,
+    "reclaimable_bytes": null,
+    "physical_reason": "Canonical reachability within the supplied population does not attribute encoded packs, delta bases, database overhead or reclaimable disk bytes",
+    "payload_encoding": {
+      "definition_version": 1,
+      "population": "selected_payload_object_records",
+      "available": true,
+      "referenced_canonical_bytes": 1735,
+      "unique_canonical_bytes": 966,
+      "encoded_record_bytes": 724,
+      "external_direct_base_count": 0,
+      "dependency_closure_included": false,
+      "shared_framing_included": false
+    },
+    "scope": "project",
+    "project": "demo-studio/website",
+    "selection": {
+      "scope": "project_saved_revisions",
+      "limit": 20,
+      "selected": 2,
+      "hasEarlier": false,
+      "head": {
+        "id": "126d383ac741ebbd1fa520d391baa568021735dec5e54143f4b972db45e9b2efe8",
+        "kind": "Commit",
+        "branch": "feature-auth",
+        "root": "5f85cfe79b15193391b0998d7f3ebeab4b1a012222830c9b0b7c88b5392356db"
+      }
+    }
+  },
+  "store": {
+    "definition_version": 1,
+    "population_id": "3af98da435b938dd771eab5fcaabd02bcdc8c0134f76b3ec177ea25ef3d26414",
+    "population": "explicit_saved_snapshots",
+    "snapshots": [
+      {
+        "project": "demo-studio/design",
+        "branch": "main",
+        "at": {
+          "id": "323db88cca951443706271ef8a58d39416fb02f280b5f41dce39d610ced1c9d588",
+          "kind": "Layer",
+          "branch": "main",
+          "root": "aa7cac4d94f4438847851f0ec4b948724d9efc3aba2fd9e5a527f6f1cdc1fcb0"
+        }
+      },
+      {
+        "project": "demo-studio/website",
+        "branch": "main",
+        "at": {
+          "id": "32d7d70b288b7f29f4066dc225d9b3d363a6feb744cbf770a2a87e4cc7ffe0729d",
+          "kind": "Layer",
+          "branch": "main",
+          "root": "9c67e77b20c39aeb6d7327f824cfc3a3fe628e57f12f86b8f0c1d5e744d01bc7"
+        }
+      }
+    ],
+    "complete": true,
+    "examined_objects": 24,
+    "canonical_bytes_read": 4192,
+    "referenced_canonical_bytes": 4192,
+    "unique_canonical_bytes": 3571,
+    "projects": [
+      {
+        "project": "demo-studio/design",
+        "referenced_canonical_bytes": 2094,
+        "exclusive_within_population_canonical_bytes": 1473,
+        "shared_within_population_canonical_bytes": 621
+      },
+      {
+        "project": "demo-studio/website",
+        "referenced_canonical_bytes": 2098,
+        "exclusive_within_population_canonical_bytes": 1477,
+        "shared_within_population_canonical_bytes": 621
+      }
+    ],
+    "physical_bytes": null,
+    "reclaimable_bytes": null,
+    "physical_reason": "Canonical reachability within the supplied population does not attribute encoded packs, delta bases, database overhead or reclaimable disk bytes",
+    "payload_encoding": {
+      "definition_version": 1,
+      "population": "selected_payload_object_records",
+      "available": true,
+      "referenced_canonical_bytes": 1534,
+      "unique_canonical_bytes": 1259,
+      "encoded_record_bytes": 826,
+      "external_direct_base_count": 0,
+      "dependency_closure_included": false,
+      "shared_framing_included": false
+    },
+    "scope": "store",
+    "name": "demo-studio",
+    "selection": {
+      "scope": "store_main_heads",
+      "limit": 20,
+      "selected": 2,
+      "availableProjects": 2,
+      "excludedProjects": 0,
+      "projects": [
+        "demo-studio/design",
+        "demo-studio/website"
+      ]
+    }
+  }
+}

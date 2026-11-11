@@ -1,0 +1,7 @@
+{
+  "desktop/src/renderer/src/pages/chat/SandboxesTab.tsx": "df59f2c513b6be4b42f7700c40eeb6dc33b1ecc9bf87714e832c4ac3a9ad60f1",
+  "desktop/src/renderer/src/components/sandbox/ProjectSandboxes.tsx": "576a88915e34670e6bc39315a72068eea7ee91a128db464baa6a3b309304c29b",
+  "desktop/src/renderer/src/components/sandbox/SandboxMap.tsx": "720b97bf93c007c2f663afb567f5d7b6e999d717697ec0160385ec057bd06579",
+  "desktop/src/renderer/src/components/sandbox/sandbox-map.css": "8df52ab33be26e9b856f6fa7d56a2cc1802089a1145d10b495e4e8515ab99b2b",
+  "desktop/src/renderer/src/components/sandbox/HostSandboxDetail.tsx": "5a822aa506422618720c09ce7dc8568a8051d0aaf39ef918de28e5a40c2ba8d6"
+}

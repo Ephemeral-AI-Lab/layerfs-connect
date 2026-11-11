@@ -1,7 +1,6 @@
-// Saved discovery is generated from the pinned CLI, usable by offline parsers.
-// A configured real binary supplies its own table; never load the Node binding.
-import { readFileSync } from 'node:fs'
+// Parse commands against discovery from the configured, pinned real CLI.
+import { join } from 'node:path'
+import { APP, requireRealBackend } from '../config.js'
 import { discover } from './capabilities.js'
-export const table = process.env.LAYERFS_CONNECT_CLI
-  ? (await discover({ cli: process.env.LAYERFS_CONNECT_CLI })).calls
-  : JSON.parse(readFileSync(new URL('../sim/table.json', import.meta.url), 'utf8'))
+requireRealBackend()
+export const table = (await discover({ cli: process.env.LAYERFS_CONNECT_CLI || join(APP, 'runtime/bin/layerfs') })).calls

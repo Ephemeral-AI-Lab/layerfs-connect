@@ -10,11 +10,9 @@ import { fill } from '@/lib/text'
 // same tab, so Back returns to the board.
 // Stores are only linked here: Storage pushes, pulls and moves them. Machines
 // come with LayerFS 2.0; linked to an older LayerFS the page says so and shows
-// nothing else. Dev builds can draw it on a simulated host (data/compute-sim.ts).
 import { Plus, RotateCw, Server } from 'lucide-react'
-import { type CSSProperties, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { type CSSProperties, useLayoutEffect, useMemo, useRef, useState } from 'react'
 
-import { SimulatedNote, SimulationPicker, useSimulation } from '@/components/layerfs/Simulation'
 import { focusOf, go } from '@/layerfs/go'
 import { AddMachineDialog } from '@/pages/machines/AddMachineDialog'
 import { MachineTile } from '@/pages/machines/MachineCard'
@@ -24,7 +22,8 @@ import { PageHeader } from '@/components/layerfs/motion/page-header'
 import { Empty, LoadError, Loading } from '@/components/layerfs/States'
 import { Button } from '@/components/ui/button'
 import { addable, factsOf, type MachineKey, machineOrder, machineState, type Os } from '@/layerfs/compute'
-import { type MachineAction, type SimHost, simSandbox, simulate, SIMULATIONS, type SimId } from '@/layerfs/compute-sim'
+import type { MachineAction } from '@/layerfs/machine-actions'
+import { clearMachineProgress, performMachineStartup, useMachineStartups } from '@/layerfs/use-machine-progress'
 import { host } from '@/layerfs/client'
 import { useHostQuery, usePoll } from '@/layerfs/use-host'
 import { cn } from '@/lib/utils'
@@ -32,8 +31,6 @@ import type { MachinesView } from '@/layerfs/host-api'
 
 interface ComputePageProps {
   restoreScroll?: number
-  /** Draw a simulated host instead of asking this one (the harness). */
-  simulate?: SimId
   /** Opens a project's page by its key, at one of its tabs (a Sandbox's project link). */
   onOpenProject?: (key: string, tab?: string) => void
   /** The machine whose page shows (`machine:<name>`; go.ts); the board without one. */
@@ -54,79 +51,63 @@ const osOfWindow = (): Os => {
 const RANK: Record<MachineKey, number> = { needs: 0, busy: 1, running: 2, stopped: 3, unknown: 4 }
 
 /** The Machines page; App still names it ComputePage. */
-export function ComputePage({ simulate: given, onOpenProject, focus, onOpenMachine, back, restoreScroll }: ComputePageProps) {
+export function ComputePage({ onOpenProject, focus, onOpenMachine, back, restoreScroll }: ComputePageProps) {
   const scrollRef = useRef<HTMLDivElement>(null)
   const restored = useRef<string | null>(null)
-  const picked = useSimulation()
-  const sim = given ?? picked
-  // Another host picked: reset its simulated action state.
-  useEffect(() => {
-    setSim(null)
-  }, [sim])
-
-  const live = useHostQuery(() => (sim ? Promise.resolve(null) : host.machines()), [sim])
-  // a simulated host's actions change a copy in memory; the ref keeps the latest for actions in a row (a create, then a start)
-  const [simHost, setSimHost] = useState<SimHost | null>(null)
-  const simRef = useRef<SimHost | null>(null)
-  const setSim = (h: SimHost | null) => {
-    simRef.current = h
-    setSimHost(h)
-  }
-  const simulated = sim ? SIMULATIONS[sim] : null
-  const simNow = simulated ? (simHost ?? simulated) : null
-  const view: MachinesView | null | undefined = simNow ? simNow.view : live.data
-  const os: Os = simulated?.os ?? osOfWindow()
+  const live = useHostQuery(() => host.machines(), [], 'machines')
+  const view: MachinesView | null | undefined = live.data
+  const os: Os = osOfWindow()
 
   const [adding, setAdding] = useState(false)
+  const startups = useMachineStartups()
+  const starting = new Set(startups.filter(operation => operation.status === 'running').map(operation => operation.name))
   const available = view?.available ? view : null
   const f = focusOf(focus)
   const detail = f?.kind === 'machine' ? f.name : null
   const showMachine = (name: string | null, newTab = false) => (onOpenMachine ? onOpenMachine(name, newTab) : name ? go.machine(name) : undefined)
 
   const act = async (action: MachineAction) => {
-    if (simulated) {
-      setSim(simulate(simRef.current ?? simulated, action))
-      return
+    try {
+      if (action.kind === 'create') await performMachineStartup({ kind: 'create', name: action.input.name, platform: action.input.platform }, activity => host.createMachine(action.input, activity))
+      else if (action.kind === 'remove') { await host.removeMachine(action.name); clearMachineProgress(action.name) }
+      else if (action.kind === 'start') await performMachineStartup({ kind: 'start', name: action.name, platform: available?.machines.find(machine => machine.name === action.name)?.platform ?? 'unknown' }, activity => host.startMachine(action.name, activity))
+      else if (action.kind === 'stop') { await host.stopMachine(action.name); clearMachineProgress(action.name) }
+      else if (action.kind === 'close') await host.closeSandbox(action.sandbox, action.force)
+      else if (action.kind === 'unmount') await host.unmountWorkspace(action.ws, false)
+      else await host.updateMachine(action.name, action.changes)
+    } finally {
+      // A refusal can follow a real side effect (for example a worker protocol mismatch).
+      live.reload()
     }
-    if (action.kind === 'create') await host.createMachine(action.input)
-    else if (action.kind === 'remove') await host.removeMachine(action.name)
-    else if (action.kind === 'start') await host.startMachine(action.name)
-    else if (action.kind === 'stop') await host.stopMachine(action.name)
-    else if (action.kind === 'close') await host.closeSandbox(action.sandbox, action.force)
-    else if (action.kind === 'unmount') await host.unmountWorkspace(action.ws, false)
-    else await host.updateMachine(action.name, action.changes)
-    live.reload()
   }
   const ops: SandboxOps = {
-    read: async (name) => (simulated ? simSandbox(simRef.current ?? simulated, name) : host.sandbox(name)),
+    read: async (name) => host.sandbox(name),
     close: async (name, force) => {
-      if (simulated) return act({ kind: 'close', sandbox: name, force }).then(() => [])
-      const done = await host.closeSandbox(name, force)
-      live.reload()
-      return done.unknown ?? []
+      try {
+        const done = await host.closeSandbox(name, force)
+        return done.unknown ?? []
+      } finally { live.reload() }
     },
     unmount: (ws) => act({ kind: 'unmount', ws }),
   }
-  const refresh = () => (simulated ? setSim(null) : live.reload())
+  const refresh = () => live.reload()
 
-  // machine.list and sandbox.list carry state and op (§8.9); a simulated host is not read
-  usePoll(live.reload, undefined, !simulated)
+  usePoll(live.reload)
   useLayoutEffect(() => {
-    const key = `${sim ?? 'host'}:${detail ?? 'board'}:${restoreScroll}`
+    const key = `${detail ?? 'board'}:${restoreScroll}`
     if (!available || restored.current === key || restoreScroll === undefined) return
     restored.current = key
     if (scrollRef.current) scrollRef.current.scrollTop = restoreScroll
-  }, [available, restoreScroll, detail, sim])
+  }, [available, restoreScroll, detail])
   const facts = useMemo(() => (available ? factsOf(available) : null), [available])
   // failed, missing or unresolved: each gets a notice with what LayerFS says and the call that clears it
-  const machines = available ? machineOrder(available.machines).sort((a, b) => RANK[machineState(a, available.status[a.name]).key] - RANK[machineState(b, available.status[b.name]).key]) : []
+  const machines = available ? machineOrder(available.machines).sort((a, b) => (starting.has(a.name) ? RANK.busy : RANK[machineState(a, available.status[a.name]).key]) - (starting.has(b.name) ? RANK.busy : RANK[machineState(b, available.status[b.name]).key])) : []
 
   if (detail && available)
     return (
       <div className="h-svh min-w-0 overflow-y-auto" ref={scrollRef} data-machine-scroll>
         <div className="mx-auto flex min-w-0 flex-col gap-4 px-4 pt-1.5 pb-12 @min-[480px]/workspace:px-5">
-          {simulated && <SimulatedNote sim={simulated} />}
-          <MachinePage key={`${sim ?? 'live'}:${detail}`} name={detail} view={available} os={os} act={act} ops={ops} onBack={() => showMachine(null)} back={back} onOpenProject={onOpenProject} />
+          <MachinePage key={`${detail}`} name={detail} view={available} os={os} act={act} ops={ops} onChanged={live.reload} onBack={() => showMachine(null)} back={back} onOpenProject={onOpenProject} />
         </div>
       </div>
     )
@@ -139,7 +120,7 @@ export function ComputePage({ simulate: given, onOpenProject, focus, onOpenMachi
         title={'Machines'}
         actions={
           <div className="flex items-center gap-2">
-            {!given && <><DoctorAction target="host" label="Diagnose this host" /><SimulationPicker /></>}
+            <DoctorAction target="host" label="Diagnose this host" />
             {available && (
               <Button size="sm" className="rounded-full px-3.5" onClick={() => setAdding(true)}>
                 <Plus />
@@ -154,8 +135,7 @@ export function ComputePage({ simulate: given, onOpenProject, focus, onOpenMachi
         }
       />
       <div className="mx-auto flex min-w-0 flex-col gap-4 px-4 pt-2 pb-12 @min-[480px]/workspace:px-5">
-        {simulated && <SimulatedNote sim={simulated} />}
-        {view && !simulated && <StaleRead error={live.error} observedAt={live.observedAt} />}
+        {view && <StaleRead error={live.error} observedAt={live.observedAt} />}
         {available && Object.entries(available.readErrors ?? {}).map(([name, read]) => <p key={name} role="status" className="text-sm text-destructive">{name} could not be read ({new Date(read.at).toLocaleTimeString()}): {read.error.code}</p>)}
         {!view ? (
           live.error ? (
@@ -173,6 +153,7 @@ export function ComputePage({ simulate: given, onOpenProject, focus, onOpenMachi
               {[
                 <span className={cn(facts!.running > 0 && 'text-foreground')}>{`${facts!.running} running`}</span>,
                 <span>{`${facts!.stopped} stopped`}</span>,
+                starting.size > 0 && <span>{`${starting.size} ${starting.size === 1 ? 'startup' : 'startups'} in progress`}</span>,
                 facts!.busy > 0 && <span>{`${facts!.busy} creating or removing`}</span>,
                 facts!.unknown > 0 && <span>{`${facts!.unknown} unknown`}</span>,
                 <span>{fill(facts!.sandboxes === 1 ? '1 Sandbox' : '{n} Sandboxes', { n: facts!.sandboxes })}</span>,
@@ -197,12 +178,12 @@ export function ComputePage({ simulate: given, onOpenProject, focus, onOpenMachi
 
             <section className="machine-board-grid" aria-label={'Machines'}>
               {machines.map((m, i) => (
-                <MachineTile key={`${sim ?? 'live'}:${m.name}`} m={m} view={available} os={os} index={Math.min(i + 2, 12)} act={act} onOpen={(newTab) => showMachine(m.name, newTab)} />
+                <MachineTile key={`${m.name}`} m={m} view={available} os={os} index={Math.min(i + 2, 12)} act={act} onOpen={(newTab) => showMachine(m.name, newTab)} />
               ))}
             </section>
 
             <p className="px-1 pt-2 text-sm text-faint">{'Machine power is manual: a machine runs between Start and Stop, and nothing starts or stops one by itself. Reading this page starts nothing.'}</p>
-            <AddMachineDialog key={sim ?? 'live'} open={adding} onOpenChange={setAdding} platforms={addable(available.platforms)} machines={available.machines} os={os} act={act} onMade={showMachine} layerfs={available.layerfs} />
+            <AddMachineDialog open={adding} onOpenChange={setAdding} platforms={addable(available.platforms)} machines={available.machines} os={os} act={act} onMade={showMachine} layerfs={available.layerfs} />
           </>
         )}
       </div>

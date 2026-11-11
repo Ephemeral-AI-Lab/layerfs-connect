@@ -40,7 +40,7 @@ there is no duplicate New machine tile.
 
 | [n] | Component | Source | Behavior |
 |---|---|---|---|
-| 1 | PageHeader | MachinesPage.tsx | New machine, Refresh, existing development simulation picker |
+| 1 | PageHeader | MachinesPage.tsx | New machine, Refresh, Diagnose |
 | 2 | Facts | MachinesPage.tsx | Running/stopped, Sandbox and Workspace totals; attention counts |
 | 3 | MachineTile | MachineCard.tsx | Whole-card open; identity, allocations, inventory, Stores, disk and manual power |
 
@@ -161,7 +161,7 @@ Sandboxes is the default, including when the machine has Stores and no Sandboxes
 | 4 | View heading and switch | MachinePage.tsx | Sandboxes by default; Stores replaces the inventory below the header |
 | 5 | Square SandboxBox | MachineSandboxes.tsx | Name/project/menu, image subtitle, status/kernel, usage availability, workspace bindings |
 
-Card data above is illustrative. Actual cards use the current host or selected simulation.
+Card data above is illustrative. Actual cards use the current real host.
 CSS Grid uses auto-fill with a 360px minimum track, a 20px gap and a 400px card
 maximum, shrinking only when the available width is below 360px. The machine
 workbench is capped at 1760px. Each card keeps `aspect-ratio: 1`; rows wrap without stretching to content.
@@ -189,11 +189,7 @@ in the existing detail component. Sandbox resource readings are omitted unless
 usage data is supplied. No historical CPU/memory sparklines or empty metrics
 panels remain. Configured Machine resources stay in the header.
 
-Development builds offer Preview sample readings / Hide sample readings. Only
-explicit `?metrics=sample` enables the labelled current-value fixture; simulated
-mode no longer enables it automatically. The sample has CPU percentage,
-memory used/limit and disk used/total with a capacity bar. Production never
-shows fixtures. No Machine allocation is substituted for Sandbox usage.
+Sandbox resource metrics are omitted until an actual data source reports them.
 
 Kernel uses the Sandbox's reported `route` (`fuse` / `nfs`), falling back to its
 detail read, with "Not reported" when neither reports it.
@@ -318,7 +314,6 @@ Older LayerFS      +------------------------------------------------------------
                    |  Projects still run where this home keeps them; this page     |
                    |  fills in once Connect links LayerFS 2.0.                     |
                    +---------------------------------------------------------------+
-Simulated (dev)    (<flask> Simulated) Mac, fresh home: sample data, not this machine.
 Needs attention    In-card reason / refusal and View details; no duplicate board Notice.
                    Unresolved: Inspect: layerfs machine status <name>.
                    Full status and clearing calls remain on the machine page.
@@ -405,8 +400,6 @@ Remove: disabled while it holds Stores or Sandboxes, the reason under it.
 
 ## Notes
 
-- `ComputePage`'s `simulate` prop is never passed (App.tsx:230); the dev-only flask picker
-  (`SimulationPicker`, hidden when the host itself runs the simulator) is the only way in.
 - Unused exports (grep over `src/`): `PlatformBadge`, `StatePill` (target-parts.tsx);
   `readyKinds`, `platformOfSandbox`, `OS_OF` (data/compute.ts); `needsYou` (data/states.ts).
   `AddMachine`, `PlatformMark`, `SANDBOX_CAPACITY`, `KIND_SHORT`, `VM_KINDS` are used only in
@@ -419,9 +412,9 @@ Remove: disabled while it holds Stores or Sandboxes, the reason under it.
 Machines / native                 SANDBOXES / 01     [Stores / 02 ->]
   Sandbox api-dev ->  /machines/native/sandboxes/api-dev
 
-< native / api-dev                                (Simulation)
+< native / api-dev
 Parent machine: native ->
-[Overview] Workspaces Scratch Activity Diagnostics
+[Overview] Workspaces
   Shared components/sandbox/SandboxDetail and its panels
 ```
 
@@ -430,17 +423,8 @@ machine's selected `?view=` tab and scroll position. Direct detail URLs fall bac
 machine's Sandboxes view. The conversation embeds the same component with Project activity as
 its back label. See [sandbox.md](sandbox.md) for layout, states, ownership and verification.
 
-The new detail route is simulation-only. It preserves recorded project, machine, branch and
-mount paths, while unavailable scratch/log/runtime/agent data stays explicitly unrecorded.
-
-## Resource readings simplification
-
-Sandbox cards omit the resource block when LayerFS reports no usage. No empty
-CPU/memory/disk placeholders or historical sparklines are shown. In development,
-Preview sample readings explicitly enables `?metrics=sample`; samples are never
-enabled automatically by simulated mode. The sample shows current values and a
-disk capacity bar, labelled design preview. Hide sample readings restores the
-ordinary card. Configured Machine resources remain in the Machine header.
+The detail route reads the actual Sandbox and validates its parent machine. Missing
+runtime, log and agent data stays explicitly unavailable.
 
 ## CLI phase 2: shared Doctor and Stop (2026-11-09)
 
@@ -470,3 +454,167 @@ stopping and creating display elapsed time with no percentage. Mutation failures
 expose an explicit fresh-state inspection. Guest free space and configured
 allocation are labelled separately. Sandbox Workspace counts remain unknown until
 an on-demand detail read. Technical details contains the shared Doctor action.
+
+## Real-only machines (2026-11-09)
+
+```text
+Machines                         Diagnose | New machine | Refresh
++-----------------+  +-----------------+
+| native          |  | docker          |
+| reported facts  |  | reported facts  |
++-----------------+  +-----------------+
+```
+
+Only real `machine.list/status`, `store.list`, and `sandbox.list/get` observations
+populate cards and detail. No platform presets or sample metrics toggles exist.
+The standalone Sandbox route validates actual machine identity and reads the
+same host-backed detail as project pages. Missing metrics are omitted.
+
+Docker controls say Start worker / Stop worker. A stopped Docker card explains that
+the LayerFS worker can be stopped while Docker Desktop is running.
+
+## Power action reconciliation
+
+Start/Stop refresh the inventory after both success and refusal. A start can
+create a running worker and then refuse it for a protocol/bundle mismatch. The
+card must retain the refusal while showing the newly observed state; it must
+never replay Start automatically or continue presenting the earlier stopped
+state until the polling interval. Stopped machines also show reported provider
+diagnostics; a normal stop with no diagnostic shows no error.
+
+Verification (2026-11-09): 26 host tests and 4 production action-handler tests
+passed. Browser refusal injection verified one Start attempt, a fresh inventory
+read 6.6 ms later, Running / Stop worker, and the original protocol refusal
+still visible. Test interception was removed afterward; no real worker was restarted.
+
+The observed protocol-2 worker / protocol-3 CLI refusal requires a matching
+sealed Linux bundle before worker replacement. UI refresh does not repair that
+compatibility problem or automatically run the refusal's recovery commands.
+
+Machine Create and Start request CLI progress when discovery declares support.
+CLI Activity retains stage boundaries, state and elapsed milliseconds, including
+stages shorter than its ordinary progress sampling interval. Image preparation
+and compatibility remain LayerFS responsibilities. See
+[startup implementation and evidence](../machine-start-optimization.md).
+
+## Startup progress (current desktop renderer)
+
+Source: `MachineProgress.tsx`, `machine-progress.css`,
+`layerfs/use-machine-progress.ts`, `layerfs/machine-progress.ts`.
+Shared by the board card, machine console (below hardware), and Create form.
+
+```text
++-[1] Machine progress ----------------------------------------------+
+| (spinner) Starting machine                                 4.0s   |
+|           Starting machine and worker                            |
+| [v] 1 step completed                                             |
+|     (check) Checking runtime compatibility                  0.0s   |
+| [View CLI activity ->]                                           |
++-----------------------------------------------------------------+
+
++-[2] Completed ----------------------------------------------------+
+| (check) Startup completed                                   8.3s   |
+| [>] 3 steps completed                                             |
+| [View CLI activity ->]                                           |
++-----------------------------------------------------------------+
+
++-[3] Failed / uncertain -------------------------------------------+
+| (!) Startup needs attention                                1.8s   |
+|     Starting machine and worker - failed                          |
+| Review the reported error before trying again.                    |
+| [>] Reported error                                               |
+| [View CLI activity ->]                                           |
++-----------------------------------------------------------------+
+```
+
+| [n] | Component | Behavior |
+|---|---|---|
+| 1 | MachineProgress | Actual stages and elapsed time; completed stages disclosed |
+| 2 | MachineProgress | Completion only after successful CLI response; duration retained |
+| 3 | MachineProgress | Last stage and error retained; lost reply says outcome needs inspection |
+
+- Exact action ID correlates each request and its full recorded stage history.
+  Rapid stages stay in the completed disclosure; no percentages or guessed downloads.
+- Local startup state survives board/detail and CLI Activity navigation. Active
+  cards sort with busy machines; controls cannot submit another startup for that machine.
+- Checking runtime compatibility, preparing sandbox image (when emitted), starting
+  machine/worker, and verifying worker connection are the currently supported stages.
+- Create freezes submitted fields and platform selection. Its dialog stays open
+  until Create settles; navigating to CLI Activity does not cancel creation or
+  force navigation back when it completes.
+- Stale stopped notices are hidden during an active startup. Stop/Remove clears
+  the retained startup result only after success. Other observed inventory remains intact.
+- Recovery actions target the submitted name after a failed Create, including
+  when fields are edited. A known remaining VM links to removal options.
+- No automatic retry or cancellation. Stage announcements are polite; timer ticks
+  are outside live regions. Labels wrap at narrow widths; reduced motion stops spinning.
+- Older CLIs without stages show Preparing request while the request runs.
+  A progress-read failure says updates are unavailable and leaves the mutation alone.
+
+## Sandbox creation and deletion (current desktop renderer)
+
+Source: `NewMachineSandbox.tsx`, `MachinePage.tsx`, `MachineSandboxes.tsx`.
+
+```text
+Sandboxes · N                         [+ New Sandbox] [Stores N →]
+
++ New Sandbox ------------------------------------------------+
+| Project  [Choose eligible project                         v] |
+| Name     [project-1                                        ] |
+| Image    [Default image / available digest / Provide archive v]|
+| Machine: lima1                                              |
+|                                   [Cancel] [Create Sandbox] |
++-------------------------------------------------------------+
+
+Sandbox [...] → Delete Sandbox… → confirmation → Delete Sandbox
+                              → refusal → Force delete Sandbox…
+```
+
+- Machine is fixed. SQLite projects must share its Store placement; PostgreSQL
+  projects require `supports.postgresql_sandbox`. Loading, read errors with
+  Retry, and no eligible projects are explicit. Opening the dialog starts nothing.
+- Creation is disabled until the machine is running. Names are suggested against
+  the home inventory; LayerFS remains authoritative for validation and races.
+  Pending creation freezes fields and dismissal. Uncertain outcomes refresh the
+  inventory and prevent resubmission within the dialog; Read Sandbox explicitly
+  reads its state before further action.
+- Delete uses `sandbox.close`: removes runtime and record, frees the name, and
+  retains committed history. Confirmation identifies the Sandbox and chat use.
+  Mounted Workspaces or running commands refuse normal deletion; Force delete
+  then requires a separate confirmation about uncommitted changes and signals.
+  Gone records can be removed; live operations disable deletion. After Unknown,
+  Read Sandbox precedes another deletion attempt. Every close result refreshes inventory.
+
+### Sandbox image discovery
+
+```text
+Sandbox image [Default image                              v]
+              [digest/tag from this machine’s archive       ]
+              [Provide archive…                            ]
+Archive path  [/absolute/caller-local/sandbox-image.tar       ]
+Digest        [optional sha256:…                              ]
+```
+
+- Both machine and project creation use `SandboxImageFields`. Opening loads
+  `machine.images` for the selected machine; reads never start it or pull images.
+- Default omits the override. Discovered choices submit the exact digest.
+  Provide archive names a file on the Connect host, which LayerFS transfers and
+  prepares; an optional full digest chooses an image from that archive.
+- Changing machines resets the choice. macOS native has no image controls.
+- Loading, an empty archive and discovery refusal remain distinct. Retry only
+  repeats discovery; Default and Provide archive remain usable after refusal.
+  Relative paths and incomplete digests disable creation.
+
+- Sandbox creation requests advertised CLI progress, retained in CLI Activity.
+  Both creation surfaces prevent concurrent submissions and retain Unknown
+  outcomes with an explicit Read Sandbox action.
+
+- The creation dialog stays within the viewport and scrolls in archive mode,
+  including at 900×600. The project creation form wraps within its parent.
+
+### Cached page entry
+
+Machines and Storage share the `machines` query key. Returning to Machines shows
+the last observed inventory while the fresh read runs; initial loading and read
+errors remain visible when no observation exists. This changes no machine power,
+Sandbox lifecycle or manual Refresh behavior.

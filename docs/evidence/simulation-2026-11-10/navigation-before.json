@@ -1,0 +1,780 @@
+{
+  "at": "2026-11-10T10:30:46.501Z",
+  "host": "http://127.0.0.1:53849",
+  "target": "547BBE161541B95522509EFD745B038B",
+  "pages": [
+    {
+      "path": "/machines",
+      "navigationFrameMs": 100,
+      "frameGaps": [
+        53,
+        9,
+        192,
+        50,
+        9,
+        61,
+        8,
+        6,
+        6,
+        6,
+        18,
+        1,
+        1,
+        9,
+        9,
+        9,
+        8,
+        8,
+        8,
+        8,
+        8,
+        8,
+        8,
+        9,
+        8,
+        9,
+        8,
+        8,
+        8,
+        8,
+        8,
+        8,
+        9,
+        8,
+        8,
+        9,
+        8,
+        8,
+        8,
+        8,
+        145,
+        101,
+        139,
+        4,
+        94
+      ],
+      "heading": "Machines",
+      "domNodes": 730,
+      "loading": [
+        "Reading the machines"
+      ]
+    },
+    {
+      "path": "/storage",
+      "navigationFrameMs": 8,
+      "frameGaps": [
+        11,
+        6,
+        20,
+        2,
+        2,
+        8,
+        9,
+        9,
+        8,
+        9,
+        8,
+        8,
+        8,
+        8,
+        9,
+        9,
+        8,
+        9,
+        8,
+        8,
+        8,
+        9,
+        8,
+        9,
+        52,
+        2,
+        95,
+        71,
+        117,
+        4,
+        162,
+        2,
+        3,
+        8,
+        8,
+        8,
+        8,
+        9,
+        8,
+        8,
+        9,
+        8,
+        8,
+        9,
+        8
+      ],
+      "heading": "Storage",
+      "domNodes": 737,
+      "loading": [
+        "Reading the Stores"
+      ]
+    },
+    {
+      "path": "/activity",
+      "navigationFrameMs": 17,
+      "frameGaps": [
+        18,
+        3,
+        2,
+        8,
+        9,
+        8,
+        8,
+        8,
+        8,
+        9,
+        8,
+        58,
+        8,
+        8,
+        9,
+        8,
+        8,
+        8,
+        8,
+        9,
+        8,
+        8,
+        9,
+        8,
+        8,
+        8,
+        53,
+        2,
+        4,
+        9,
+        91,
+        2,
+        7,
+        8,
+        8,
+        9,
+        31,
+        2,
+        1,
+        9,
+        49,
+        69,
+        118,
+        108,
+        2
+      ],
+      "heading": "CLI Activity",
+      "domNodes": 744,
+      "loading": [
+        "Loading CLI activity…"
+      ]
+    },
+    {
+      "path": "/presets",
+      "navigationFrameMs": 12,
+      "frameGaps": [
+        13,
+        22,
+        4,
+        95,
+        8,
+        7,
+        10,
+        8,
+        9,
+        8,
+        9,
+        7,
+        9,
+        8,
+        11,
+        7,
+        12,
+        4,
+        9,
+        68,
+        59,
+        64,
+        44,
+        3,
+        2,
+        9,
+        9,
+        8,
+        8,
+        9,
+        8,
+        9,
+        8,
+        8,
+        7,
+        9,
+        8,
+        8,
+        9,
+        8,
+        9,
+        8,
+        8,
+        8,
+        8
+      ],
+      "heading": "Presets",
+      "domNodes": 971,
+      "loading": []
+    },
+    {
+      "path": "/settings/models",
+      "navigationFrameMs": 15,
+      "frameGaps": [
+        8,
+        8,
+        8,
+        27,
+        1,
+        14,
+        2,
+        5,
+        9,
+        8,
+        16,
+        1,
+        9,
+        8,
+        8,
+        7,
+        9,
+        8,
+        9,
+        65,
+        1,
+        8,
+        8,
+        8,
+        8,
+        8,
+        8,
+        8,
+        8,
+        30,
+        0,
+        3,
+        8,
+        8,
+        8,
+        8,
+        9,
+        7,
+        8,
+        8,
+        8,
+        9,
+        8,
+        8,
+        8
+      ],
+      "heading": "Providers & models",
+      "domNodes": 388,
+      "loading": []
+    },
+    {
+      "path": "/machines",
+      "navigationFrameMs": 17,
+      "frameGaps": [
+        5,
+        23,
+        13,
+        6,
+        5,
+        6,
+        6,
+        11,
+        11,
+        5,
+        11,
+        61,
+        44,
+        3,
+        5,
+        8,
+        8,
+        8,
+        9,
+        8,
+        8,
+        9,
+        8,
+        8,
+        8,
+        8,
+        8,
+        53,
+        2,
+        4,
+        8,
+        8,
+        7,
+        8,
+        9,
+        8,
+        8,
+        9,
+        8,
+        9,
+        8,
+        8,
+        91,
+        3,
+        70
+      ],
+      "heading": "Machines",
+      "domNodes": 730,
+      "loading": [
+        "Reading the machines"
+      ]
+    },
+    {
+      "path": "/storage",
+      "navigationFrameMs": 77,
+      "frameGaps": [
+        37,
+        64,
+        7,
+        6,
+        6,
+        6,
+        11,
+        34,
+        5,
+        7,
+        8,
+        9,
+        9,
+        8,
+        40,
+        68,
+        9,
+        8,
+        44,
+        3,
+        3,
+        8,
+        39,
+        35,
+        4,
+        174,
+        3,
+        4,
+        12,
+        7,
+        7,
+        7,
+        8,
+        8,
+        8,
+        8,
+        8,
+        8,
+        8,
+        9,
+        8,
+        8,
+        9,
+        8,
+        8
+      ],
+      "heading": "Storage",
+      "domNodes": 1396,
+      "loading": []
+    },
+    {
+      "path": "/activity",
+      "navigationFrameMs": 178,
+      "frameGaps": [
+        38,
+        124,
+        55,
+        58,
+        11,
+        127,
+        8,
+        7,
+        7,
+        7,
+        16,
+        3,
+        3,
+        7,
+        35,
+        60,
+        42,
+        2,
+        3,
+        8,
+        8,
+        9,
+        8,
+        7,
+        9,
+        8,
+        8,
+        9,
+        8,
+        8,
+        8,
+        8,
+        8,
+        151,
+        117,
+        4,
+        119,
+        36,
+        71,
+        63,
+        3,
+        4,
+        8,
+        8,
+        8
+      ],
+      "heading": "CLI Activity",
+      "domNodes": 744,
+      "loading": [
+        "Loading CLI activity…"
+      ]
+    }
+  ],
+  "reads": [
+    {
+      "path": "/api/agent/sessions",
+      "ms": 44,
+      "bytes": 0
+    },
+    {
+      "path": "/api/projects",
+      "ms": 44,
+      "bytes": 0
+    },
+    {
+      "path": "/api/demo-presets",
+      "ms": 46,
+      "bytes": 21822
+    },
+    {
+      "path": "/api/demo-presets",
+      "ms": 33,
+      "bytes": 0
+    },
+    {
+      "path": "/api/agent/sessions",
+      "ms": 51,
+      "bytes": 36282
+    },
+    {
+      "path": "/api/agent/models",
+      "ms": 82,
+      "bytes": 319430
+    },
+    {
+      "path": "/api/demo-presets",
+      "ms": 59,
+      "bytes": 21822
+    },
+    {
+      "path": "/api/agent/sessions",
+      "ms": 27,
+      "bytes": 36282
+    },
+    {
+      "path": "/api/agent/models",
+      "ms": 86,
+      "bytes": 319430
+    },
+    {
+      "path": "/api/projects",
+      "ms": 442,
+      "bytes": 3065
+    },
+    {
+      "path": "/api/projects",
+      "ms": 316,
+      "bytes": 3065
+    },
+    {
+      "path": "/api/machines",
+      "ms": 13,
+      "bytes": 0
+    },
+    {
+      "path": "/api/doctor",
+      "ms": 12,
+      "bytes": 0
+    },
+    {
+      "path": "/api/machines",
+      "ms": 1167,
+      "bytes": 4601
+    },
+    {
+      "path": "/api/projects",
+      "ms": 391,
+      "bytes": 3065
+    },
+    {
+      "path": "/api/doctor",
+      "ms": 683,
+      "bytes": 406
+    },
+    {
+      "path": "/api/projects",
+      "ms": 549,
+      "bytes": 3065
+    },
+    {
+      "path": "/api/machines",
+      "ms": 1183,
+      "bytes": 4601
+    },
+    {
+      "path": "/api/storage",
+      "ms": 1795,
+      "bytes": 3515
+    },
+    {
+      "path": "/api/cli-activity/state",
+      "ms": 1033,
+      "bytes": 0
+    },
+    {
+      "path": "/api/cli-activity",
+      "ms": 1042,
+      "bytes": 0
+    },
+    {
+      "path": "/api/cli-activity/state",
+      "ms": 1042,
+      "bytes": 0
+    },
+    {
+      "path": "/api/cli-activity",
+      "ms": 1048,
+      "bytes": 0
+    },
+    {
+      "path": "/api/cli-activity/state",
+      "ms": 1145,
+      "bytes": 537
+    },
+    {
+      "path": "/api/doctor",
+      "ms": 1331,
+      "bytes": 406
+    },
+    {
+      "path": "/api/demo-presets",
+      "ms": 515,
+      "bytes": 21822
+    },
+    {
+      "path": "/api/cli-activity/state",
+      "ms": 1405,
+      "bytes": 537
+    },
+    {
+      "path": "/api/demo-presets",
+      "ms": 65,
+      "bytes": 21822
+    },
+    {
+      "path": "/api/agent/models",
+      "ms": 42,
+      "bytes": 319430
+    },
+    {
+      "path": "/api/agent/models",
+      "ms": 45,
+      "bytes": 319430
+    },
+    {
+      "path": "/api/storage",
+      "ms": 2009,
+      "bytes": 3515
+    },
+    {
+      "path": "/api/demo-presets",
+      "ms": 847,
+      "bytes": 21822
+    },
+    {
+      "path": "/api/machines",
+      "ms": 961,
+      "bytes": 4601
+    },
+    {
+      "path": "/api/doctor",
+      "ms": 564,
+      "bytes": 406
+    },
+    {
+      "path": "/api/projects",
+      "ms": 564,
+      "bytes": 3065
+    },
+    {
+      "path": "/api/projects/sim-billing-811beba82547613faa48%2Fbilling-811beba82547613faa48",
+      "ms": 541,
+      "bytes": 0
+    },
+    {
+      "path": "/api/projects/sim-compiler-f9fb9799c955c039fe3d%2Fcompiler-f9fb9799c955c039fe3d",
+      "ms": 541,
+      "bytes": 0
+    },
+    {
+      "path": "/api/projects/sim-design-258e49ee8dd5fb3f37c6%2Fdesign-258e49ee8dd5fb3f37c6",
+      "ms": 541,
+      "bytes": 0
+    },
+    {
+      "path": "/api/projects/sim-design-6777c9d05e81ae79ede2%2Fdesign-6777c9d05e81ae79ede2",
+      "ms": 541,
+      "bytes": 0
+    },
+    {
+      "path": "/api/machines",
+      "ms": 1367,
+      "bytes": 4601
+    },
+    {
+      "path": "/api/storage",
+      "ms": 1775,
+      "bytes": 3517
+    },
+    {
+      "path": "/api/doctor",
+      "ms": 1522,
+      "bytes": 406
+    }
+  ],
+  "errors": [],
+  "longTasks": [
+    {
+      "at": 668.5,
+      "ms": 165
+    },
+    {
+      "at": 847.8000000119209,
+      "ms": 58
+    },
+    {
+      "at": 919.5,
+      "ms": 50
+    },
+    {
+      "at": 992.5,
+      "ms": 201
+    },
+    {
+      "at": 1416.6000000238419,
+      "ms": 116
+    },
+    {
+      "at": 1997.1000000238419,
+      "ms": 125
+    },
+    {
+      "at": 2141.399999976158,
+      "ms": 91
+    },
+    {
+      "at": 2241.899999976158,
+      "ms": 81
+    },
+    {
+      "at": 2323.100000023842,
+      "ms": 50
+    },
+    {
+      "at": 2384.5,
+      "ms": 60
+    },
+    {
+      "at": 2851.600000023842,
+      "ms": 50
+    },
+    {
+      "at": 2944.800000011921,
+      "ms": 50
+    },
+    {
+      "at": 3016.899999976158,
+      "ms": 100
+    },
+    {
+      "at": 3136.399999976158,
+      "ms": 130
+    },
+    {
+      "at": 4039.300000011921,
+      "ms": 103
+    },
+    {
+      "at": 4156.800000011921,
+      "ms": 90
+    },
+    {
+      "at": 4674.899999976158,
+      "ms": 50
+    },
+    {
+      "at": 5531.399999976158,
+      "ms": 54
+    },
+    {
+      "at": 6069.199999988079,
+      "ms": 170
+    },
+    {
+      "at": 6594.800000011921,
+      "ms": 55
+    },
+    {
+      "at": 6814.5,
+      "ms": 147
+    },
+    {
+      "at": 7142.899999976158,
+      "ms": 77
+    },
+    {
+      "at": 7234,
+      "ms": 53
+    },
+    {
+      "at": 7356.600000023842,
+      "ms": 63
+    },
+    {
+      "at": 7420.199999988079,
+      "ms": 51
+    },
+    {
+      "at": 7608.199999988079,
+      "ms": 88
+    },
+    {
+      "at": 8047.199999988079,
+      "ms": 92
+    },
+    {
+      "at": 8196.5,
+      "ms": 98
+    },
+    {
+      "at": 8316.600000023842,
+      "ms": 92
+    }
+  ]
+}

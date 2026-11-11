@@ -1,0 +1,138 @@
+{
+  "date": "2026-11-10",
+  "protocol": "15 seconds initial Machines then 6 seconds each Machines, Storage, Presets, Machines, Storage; actual web preview under eight live simulations",
+  "interpretation": "Combined backend/renderer fixes, not isolated performance contributions. Real catalog grew between samples. Before JS heap was not captured.",
+  "measurements": {
+    "before": {
+      "totalGETs": 70,
+      "longTasks": 193,
+      "longTaskMillis": 15051,
+      "routes": [
+        {
+          "route": "/machines",
+          "requests": {
+            "machines": 2,
+            "demo-presets": 3
+          },
+          "documentNodes": 825
+        },
+        {
+          "route": "/storage",
+          "requests": {
+            "storage": 4,
+            "machines": 2,
+            "doctor": 2,
+            "projects": 2,
+            "demo-presets": 3,
+            "projects/sim-billing-811beba82547613faa48%2Fbilling-811beba82547613faa48": 1,
+            "projects/sim-compiler-f9fb9799c955c039fe3d%2Fcompiler-f9fb9799c955c039fe3d": 1,
+            "projects/sim-design-258e49ee8dd5fb3f37c6%2Fdesign-258e49ee8dd5fb3f37c6": 1,
+            "projects/sim-design-6777c9d05e81ae79ede2%2Fdesign-6777c9d05e81ae79ede2": 1
+          },
+          "documentNodes": 1390
+        },
+        {
+          "route": "/presets",
+          "requests": {
+            "demo-presets": 10
+          },
+          "documentNodes": 963
+        },
+        {
+          "route": "/machines",
+          "requests": {
+            "machines": 3,
+            "demo-presets": 3
+          },
+          "documentNodes": 825
+        },
+        {
+          "route": "/storage",
+          "requests": {
+            "storage": 4,
+            "doctor": 2,
+            "projects": 2,
+            "projects/sim-billing-811beba82547613faa48%2Fbilling-811beba82547613faa48": 1,
+            "projects/sim-compiler-f9fb9799c955c039fe3d%2Fcompiler-f9fb9799c955c039fe3d": 1,
+            "projects/sim-design-258e49ee8dd5fb3f37c6%2Fdesign-258e49ee8dd5fb3f37c6": 1,
+            "projects/sim-design-6777c9d05e81ae79ede2%2Fdesign-6777c9d05e81ae79ede2": 1,
+            "machines": 1,
+            "demo-presets": 3
+          },
+          "documentNodes": 1390
+        }
+      ]
+    },
+    "after": {
+      "totalGETs": 39,
+      "longTasks": 7,
+      "longTaskMillis": 648,
+      "routes": [
+        {
+          "route": "/machines",
+          "requests": {
+            "demo-presets": 2,
+            "machines": 2
+          },
+          "documentNodes": 1321
+        },
+        {
+          "route": "/storage",
+          "requests": {
+            "storage": 2,
+            "machines": 1,
+            "doctor": 1,
+            "projects": 1,
+            "projects/sim-billing-811beba82547613faa48%2Fbilling-811beba82547613faa48": 1,
+            "projects/sim-billing-a4207d40fc7fc6f3f759%2Fbilling-a4207d40fc7fc6f3f759": 1,
+            "projects/sim-compiler-5b83d8ed94cff19d4c5a%2Fcompiler-5b83d8ed94cff19d4c5a": 1,
+            "projects/sim-compiler-f9fb9799c955c039fe3d%2Fcompiler-f9fb9799c955c039fe3d": 1,
+            "demo-presets": 1
+          },
+          "documentNodes": 2406
+        },
+        {
+          "route": "/presets",
+          "requests": {
+            "demo-presets": 3
+          },
+          "documentNodes": 1459
+        },
+        {
+          "route": "/machines",
+          "requests": {
+            "machines": 2,
+            "demo-presets": 1
+          },
+          "documentNodes": 1321
+        },
+        {
+          "route": "/storage",
+          "requests": {
+            "storage": 2,
+            "machines": 1,
+            "doctor": 1,
+            "projects": 1,
+            "projects/sim-billing-811beba82547613faa48%2Fbilling-811beba82547613faa48": 1,
+            "projects/sim-billing-a4207d40fc7fc6f3f759%2Fbilling-a4207d40fc7fc6f3f759": 1,
+            "projects/sim-compiler-5b83d8ed94cff19d4c5a%2Fcompiler-5b83d8ed94cff19d4c5a": 1,
+            "projects/sim-compiler-f9fb9799c955c039fe3d%2Fcompiler-f9fb9799c955c039fe3d": 1,
+            "demo-presets": 1
+          },
+          "documentNodes": 2406
+        }
+      ]
+    }
+  },
+  "sourceSha256": {
+    "desktop/src/renderer/src/layerfs/project-rows.ts": "eff3938a75e45fa4ce30ec08d9ab4d3039616439aaa216802dc4ee2cb05a3f0c",
+    "desktop/src/renderer/src/layerfs/demo-presets-api.ts": "67381b5428ec99b2204db2c56c7e7e831ae3a2a8e165fa6b58b5a9929543f141",
+    "desktop/src/renderer/src/pages/storage/StoragePage.tsx": "dae4b0bc30e0bae4c27402be178efd50bc186fd0702ba34a9c355e4f18a79d29",
+    "desktop/src/renderer/src/pages/storage/StorePage.tsx": "7405df73b47dddd074970b0754b99ff6a25c06c91b05dccf322211f6fde272ad",
+    "desktop/src/renderer/src/pages/storage/StoreSection.tsx": "1ad751416a97ad10ce4a79bbd005e85da4829722e109c0e3dd7abebf9e9c99c1",
+    "desktop/src/renderer/src/pages/storage/NeedsAttention.tsx": "cfdf18dc6d9955f9f7f5b0199dc8c682e3acd0c843cfd1e7f876d4dcf485812b",
+    "desktop/src/renderer/src/pages/machines/MachinesPage.tsx": "211ec4cebe8c8c32229929d1b731fc28a8164c5e288d7dc3f67191e6130fe124",
+    "desktop/src/renderer/src/pages/presets/PresetsPage.tsx": "e41728f0e952ab8b86eebf5fa3462b35a6b062592110496467638eaa2a916caf",
+    "desktop/src/renderer/src/components/presets/PresetEnvironment.tsx": "d58413be7c034f5ef10cbff395188a6f6a1c0c3c4af46ab5cee437fc51b8f2f9"
+  }
+}

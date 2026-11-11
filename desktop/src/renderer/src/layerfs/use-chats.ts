@@ -4,6 +4,7 @@
 import { useSyncExternalStore } from 'react'
 import { chatHost, type ChatSummary } from '@/layerfs/agent-api'
 import { onHostEvent } from '@/layerfs/client'
+import { ChatListIndex } from '@/layerfs/chat-list-state'
 
 interface ChatsState {
   chats: ChatSummary[]
@@ -15,8 +16,9 @@ let state: ChatsState = { chats: [], loaded: false, error: null }
 const listeners = new Set<() => void>()
 const deleted = new Set<string>()
 let started = false
-
-const newestFirst = (chats: ChatSummary[]) => [...chats].sort((a, b) => b.updated - a.updated)
+const index = new ChatListIndex()
+const pending = new Map<string, ChatSummary>()
+let timer: ReturnType<typeof setTimeout> | undefined
 
 function set(next: Partial<ChatsState>) {
   state = { ...state, ...next }
@@ -25,7 +27,7 @@ function set(next: Partial<ChatsState>) {
 
 function reload() {
   void chatHost.list().then(
-    (chats) => set({ chats: newestFirst(chats.filter((c) => !deleted.has(c.id))), loaded: true, error: null }),
+    (chats) => { index.merge(chats.filter(c => !deleted.has(c.id))); set({ chats: index.list(), loaded: true, error: null }) },
     (cause: Error) => set({ loaded: true, error: cause.message }),
   )
 }
@@ -33,14 +35,26 @@ function reload() {
 /** Adds or replaces one chat (a host event, or a chat this window just made). */
 export function upsertChat(chat: ChatSummary) {
   if (deleted.has(chat.id)) return
-  const { messages: _m, queued: _q, approvals: _a, ...summary } = chat as ChatSummary & Record<string, unknown>
-  set({ chats: newestFirst([summary as ChatSummary, ...state.chats.filter((c) => c.id !== chat.id)]) })
+  if (index.merge([chat])) set({ chats: index.list() })
+}
+
+function receive(chat: ChatSummary) {
+  if (deleted.has(chat.id)) return
+  const previous = pending.get(chat.id)
+  if (!previous || previous.updated <= chat.updated) pending.set(chat.id, chat)
+  if (timer) return
+  timer = setTimeout(() => {
+    timer = undefined
+    const updates = [...pending.values()]; pending.clear()
+    if (index.merge(updates)) set({ chats: index.list() })
+  }, 100)
 }
 
 export async function deleteChat(id: string) {
   await chatHost.remove(id)
   deleted.add(id)
-  set({ chats: state.chats.filter((c) => c.id !== id) })
+  pending.delete(id); index.remove(id)
+  set({ chats: index.list() })
 }
 
 export async function renameChat(id: string, title: string) {
@@ -55,7 +69,7 @@ function start() {
   if (started) return
   started = true
   onHostEvent((event) => {
-    if (event.type === 'chat') upsertChat(event.session)
+    if (event.type === 'chat' || event.type === 'chat-summary') receive(event.session)
   }, reload)
   reload()
 }

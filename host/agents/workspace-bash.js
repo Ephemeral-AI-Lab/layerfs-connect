@@ -11,7 +11,7 @@ export async function readBashConnection(file, signal) {
 }
 
 /** Pi retains its bash schema, output limits and renderer; the host owns execution. */
-export function createWorkspaceBashOperations({ approvalFile, agent, toolCallId }) {
+export function createWorkspaceBashOperations({ approvalFile, agent, toolCallId, entryId = null, nativeSessionId = null }) {
   return {
     async exec(command, cwd, { signal, timeout, onData }) {
       signal?.throwIfAborted()
@@ -19,7 +19,7 @@ export function createWorkspaceBashOperations({ approvalFile, agent, toolCallId 
       const response = await fetch(`${connection.url}/execute`, {
         method: 'POST',
         headers: { authorization: `Bearer ${connection.token}`, 'content-type': 'application/json' },
-        body: JSON.stringify({ sessionId: connection.sessionId, agent, toolCallId, command, cwd, ...(timeout === undefined ? {} : { timeout }) }),
+        body: JSON.stringify({ sessionId: connection.sessionId, agent, toolCallId, entryId, nativeSessionId, command, cwd, ...(timeout === undefined ? {} : { timeout }) }),
         signal,
       })
       if (!response.ok) {

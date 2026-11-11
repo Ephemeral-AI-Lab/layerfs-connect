@@ -1,0 +1,389 @@
+{
+  "provider": "docker",
+  "root": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/lfs-isolation-docker-5hwcc55l",
+  "source": "833d04cf44e8e747929d50ab1170a48260d9381c plus machine-start-artifacts working tree",
+  "cache": "installed immutable artifacts; no controlled host page-cache state",
+  "steps": [
+    {
+      "member": 0,
+      "args": [
+        "store",
+        "create",
+        "proof"
+      ],
+      "wall_ns": 19890084,
+      "exit": 0
+    },
+    {
+      "member": 1,
+      "args": [
+        "store",
+        "create",
+        "proof"
+      ],
+      "wall_ns": 19159000,
+      "exit": 0
+    },
+    {
+      "member": 0,
+      "args": [
+        "machine",
+        "start",
+        "docker",
+        "--progress"
+      ],
+      "wall_ns": 579684459,
+      "exit": 0,
+      "progress": "{\"progress\":{\"stage\":\"bundle-validation\",\"state\":\"started\"}}\n{\"progress\":{\"stage\":\"bundle-validation\",\"state\":\"completed\",\"elapsed_ms\":0}}\n{\"progress\":{\"stage\":\"sandbox-image\",\"state\":\"started\"}}\n{\"progress\":{\"stage\":\"sandbox-image\",\"state\":\"completed\",\"elapsed_ms\":75}}\n{\"progress\":{\"stage\":\"provider-and-worker\",\"state\":\"started\"}}\n{\"progress\":{\"stage\":\"provider-and-worker\",\"state\":\"completed\",\"elapsed_ms\":363}}\n{\"progress\":{\"stage\":\"worker-compatibility\",\"state\":\"started\"}}\n{\"progress\":{\"stage\":\"worker-compatibility\",\"state\":\"completed\",\"elapsed_ms\":3}}\n"
+    },
+    {
+      "member": 1,
+      "args": [
+        "machine",
+        "start",
+        "docker",
+        "--progress"
+      ],
+      "wall_ns": 810516667,
+      "exit": 0,
+      "progress": "{\"progress\":{\"stage\":\"bundle-validation\",\"state\":\"started\"}}\n{\"progress\":{\"stage\":\"bundle-validation\",\"state\":\"completed\",\"elapsed_ms\":0}}\n{\"progress\":{\"stage\":\"sandbox-image\",\"state\":\"started\"}}\n{\"progress\":{\"stage\":\"sandbox-image\",\"state\":\"completed\",\"elapsed_ms\":38}}\n{\"progress\":{\"stage\":\"provider-and-worker\",\"state\":\"started\"}}\n{\"progress\":{\"stage\":\"provider-and-worker\",\"state\":\"completed\",\"elapsed_ms\":656}}\n{\"progress\":{\"stage\":\"worker-compatibility\",\"state\":\"started\"}}\n{\"progress\":{\"stage\":\"worker-compatibility\",\"state\":\"completed\",\"elapsed_ms\":1}}\n"
+    },
+    {
+      "member": 0,
+      "args": [
+        "project",
+        "init",
+        "proof/app",
+        "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/lfs-isolation-docker-5hwcc55l/fixture-0"
+      ],
+      "wall_ns": 27760041,
+      "exit": 0
+    },
+    {
+      "member": 0,
+      "args": [
+        "store",
+        "push",
+        "proof",
+        "docker"
+      ],
+      "wall_ns": 74571250,
+      "exit": 0
+    },
+    {
+      "member": 0,
+      "args": [
+        "branch",
+        "fork",
+        "proof/app",
+        "verify",
+        "main"
+      ],
+      "wall_ns": 44064000,
+      "exit": 0
+    },
+    {
+      "member": 0,
+      "args": [
+        "sandbox",
+        "create",
+        "proof/app",
+        "box",
+        "docker"
+      ],
+      "wall_ns": 8860629375,
+      "exit": 0
+    },
+    {
+      "member": 0,
+      "args": [
+        "workspace",
+        "mount",
+        "box",
+        "verify",
+        "--name",
+        "verify"
+      ],
+      "wall_ns": 42375792,
+      "exit": 0
+    },
+    {
+      "member": 0,
+      "args": [
+        "workspace",
+        "exec",
+        "box:verify",
+        "cat proof.txt && printf \"5847751108284cc4a44e9e75687956ac\\n\" > result.txt"
+      ],
+      "wall_ns": 74837833,
+      "exit": 0
+    },
+    {
+      "member": 0,
+      "args": [
+        "workspace",
+        "commit",
+        "box:verify",
+        "--message",
+        "Verify independent private machine"
+      ],
+      "wall_ns": 29885833,
+      "exit": 0
+    },
+    {
+      "member": 0,
+      "args": [
+        "file",
+        "read",
+        "proof/app",
+        "verify",
+        "/result.txt"
+      ],
+      "wall_ns": 48924917,
+      "exit": 0
+    },
+    {
+      "member": 0,
+      "args": [
+        "workspace",
+        "unmount",
+        "box:verify"
+      ],
+      "wall_ns": 16082750,
+      "exit": 0
+    },
+    {
+      "member": 0,
+      "args": [
+        "sandbox",
+        "close",
+        "box"
+      ],
+      "wall_ns": 901524125,
+      "exit": 0
+    },
+    {
+      "member": 1,
+      "args": [
+        "project",
+        "init",
+        "proof/app",
+        "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/lfs-isolation-docker-5hwcc55l/fixture-1"
+      ],
+      "wall_ns": 45046083,
+      "exit": 0
+    },
+    {
+      "member": 1,
+      "args": [
+        "store",
+        "push",
+        "proof",
+        "docker"
+      ],
+      "wall_ns": 35851125,
+      "exit": 0
+    },
+    {
+      "member": 1,
+      "args": [
+        "branch",
+        "fork",
+        "proof/app",
+        "verify",
+        "main"
+      ],
+      "wall_ns": 46144833,
+      "exit": 0
+    },
+    {
+      "member": 1,
+      "args": [
+        "sandbox",
+        "create",
+        "proof/app",
+        "box",
+        "docker"
+      ],
+      "wall_ns": 5770058750,
+      "exit": 0
+    },
+    {
+      "member": 1,
+      "args": [
+        "workspace",
+        "mount",
+        "box",
+        "verify",
+        "--name",
+        "verify"
+      ],
+      "wall_ns": 20849125,
+      "exit": 0
+    },
+    {
+      "member": 1,
+      "args": [
+        "workspace",
+        "exec",
+        "box:verify",
+        "cat proof.txt && printf \"59cbca6396564aeda8675ba8d7ed41b0\\n\" > result.txt"
+      ],
+      "wall_ns": 46190208,
+      "exit": 0
+    },
+    {
+      "member": 1,
+      "args": [
+        "workspace",
+        "commit",
+        "box:verify",
+        "--message",
+        "Verify independent private machine"
+      ],
+      "wall_ns": 25769292,
+      "exit": 0
+    },
+    {
+      "member": 1,
+      "args": [
+        "file",
+        "read",
+        "proof/app",
+        "verify",
+        "/result.txt"
+      ],
+      "wall_ns": 16209750,
+      "exit": 0
+    },
+    {
+      "member": 1,
+      "args": [
+        "workspace",
+        "unmount",
+        "box:verify"
+      ],
+      "wall_ns": 12847458,
+      "exit": 0
+    },
+    {
+      "member": 1,
+      "args": [
+        "sandbox",
+        "close",
+        "box"
+      ],
+      "wall_ns": 529408250,
+      "exit": 0
+    },
+    {
+      "member": 0,
+      "args": [
+        "file",
+        "read",
+        "proof/app",
+        "verify",
+        "/result.txt"
+      ],
+      "wall_ns": 16599041,
+      "exit": 0
+    },
+    {
+      "member": 0,
+      "args": [
+        "store",
+        "pull",
+        "proof"
+      ],
+      "wall_ns": 35381666,
+      "exit": 0
+    },
+    {
+      "member": 0,
+      "args": [
+        "store",
+        "remove",
+        "proof"
+      ],
+      "wall_ns": 12360375,
+      "exit": 0
+    },
+    {
+      "member": 0,
+      "args": [
+        "machine",
+        "stop",
+        "docker"
+      ],
+      "wall_ns": 369023250,
+      "exit": 0
+    },
+    {
+      "member": 1,
+      "args": [
+        "file",
+        "read",
+        "proof/app",
+        "verify",
+        "/result.txt"
+      ],
+      "wall_ns": 57839625,
+      "exit": 0
+    },
+    {
+      "member": 1,
+      "args": [
+        "store",
+        "pull",
+        "proof"
+      ],
+      "wall_ns": 111079667,
+      "exit": 0
+    },
+    {
+      "member": 1,
+      "args": [
+        "store",
+        "remove",
+        "proof"
+      ],
+      "wall_ns": 12507875,
+      "exit": 0
+    },
+    {
+      "member": 1,
+      "args": [
+        "machine",
+        "stop",
+        "docker"
+      ],
+      "wall_ns": 748692625,
+      "exit": 0
+    }
+  ],
+  "members": [
+    {
+      "index": 0,
+      "home": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/lfs-isolation-docker-5hwcc55l/home-0",
+      "name": "docker",
+      "marker": "5847751108284cc4a44e9e75687956ac",
+      "vm_name": "lfs-5ffcf56a-docker",
+      "cleaned": true
+    },
+    {
+      "index": 1,
+      "home": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/lfs-isolation-docker-5hwcc55l/home-1",
+      "name": "docker",
+      "marker": "59cbca6396564aeda8675ba8d7ed41b0",
+      "vm_name": "lfs-cb652194-docker",
+      "cleaned": true
+    }
+  ],
+  "unique_endpoints": true,
+  "unique_worker_secrets": true,
+  "endpoints": [
+    "127.0.0.1:59358",
+    "127.0.0.1:59357"
+  ],
+  "status": "PASS"
+}

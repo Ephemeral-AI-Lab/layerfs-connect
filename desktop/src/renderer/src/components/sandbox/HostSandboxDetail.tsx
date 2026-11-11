@@ -2,7 +2,6 @@ import { DoctorAction } from '@/components/doctor/DoctorPanel'
 import { ArrowLeft } from 'lucide-react'
 import { useEffect, useState, type ReactNode } from 'react'
 import { LoadError, Loading } from '@/components/layerfs/States'
-import { connectBridge } from '@/layerfs/bridge'
 import { host } from '@/layerfs/client'
 import type { SandboxInfo } from '@/layerfs/host-api'
 import { useHostQuery } from '@/layerfs/use-host'
@@ -32,8 +31,8 @@ export function HostSandboxDetail({ name, project, machine, navigation, controls
   return <>
     {query.error && <div role="alert" className="mb-3 text-sm text-destructive">{query.error.message}</div>}
     {info.refusal && <div role="alert" className="mb-3 text-sm text-destructive">{info.refusal.code}: {info.refusal.message}</div>}
-    <SandboxDetail simulation={connectBridge.mode === 'sim'} key={name} snapshot={sandboxSnapshot(info, project, parent)} time={0} playing={false} observedAt={observedAt}
+    <SandboxDetail key={name} snapshot={sandboxSnapshot(info, project, parent)} time={0} playing={false} observedAt={observedAt}
       navigation={navigation} onRefresh={() => { query.reload(); machines.reload() }}
-      controls={<><DoctorAction target="sandbox" name={name} />{controls?.(info, query.reload)}</>} notice={connectBridge.mode === 'sim' ? 'Simulated CLI observation; no native resources are started.' : 'Current LayerFS resource state.'} />
+      controls={<><DoctorAction target="sandbox" name={name} />{controls?.(info, query.reload)}</>} notice={'Current LayerFS resource state.'} />
   </>
 }

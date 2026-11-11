@@ -1,0 +1,64 @@
+{
+  "ok": true,
+  "at": 1794300732085,
+  "state": "/Users/yifanxu/.layerfs-connect-demo/studio",
+  "executionMode": "mixed",
+  "mixedRecipeVersion": 2,
+  "workspacePolicy": "Mount a fresh workspace, execute and commit twice, then cleanly unmount. Keep sandboxes running.",
+  "counts": {
+    "projects": 8,
+    "stores": 4,
+    "machines": 4,
+    "historyCommands": 80986,
+    "workspaceSessions": 7536,
+    "workspaceCommits": 15072,
+    "authoredRevisions": 41310,
+    "workspacePercent": 36.485112563543936,
+    "setupCli": 84996,
+    "uniqueCommits": 41640,
+    "sideBranches": 857,
+    "mainLayers": 8675,
+    "savedFilesVerified": 359
+  },
+  "timing": {
+    "resetAndPreparationMs": 22213,
+    "historyMs": 973307,
+    "verificationAndFinalizationMs": 23888,
+    "readyMs": 1019408
+  },
+  "checks": {
+    "rootTestsPassed": 209,
+    "desktopTypecheck": "passed",
+    "desktopBuild": "passed",
+    "independentArchiveAudit": "passed",
+    "exactSixOperationLifecycleEveryWorkspace": true,
+    "cliFailures": 0,
+    "truncated": 0,
+    "sourceStable": true,
+    "web": "Mixed selector, actual Reset and build confirmation, per-project scripts and pagination, CLI Activity filtering/input/output/paging, live progress, Storage during build, final Ready, running sandbox with 0 mounted workspaces",
+    "ElectronLaunched": false
+  },
+  "resourcesAfterBuild": {
+    "retainedRunningSandboxes": 8,
+    "mountedWorkspaces": 0,
+    "maxSandboxesPerProject": 3,
+    "maxWorkspacesPerSandbox": 16,
+    "normalRecipeSandboxCountPerProject": 1,
+    "normalRecipeMountedWorkspacePeakPerProject": 2
+  },
+  "previousMixedReadyMs": 765459,
+  "readyIncreaseMs": 253949,
+  "qualification": "Observed runs on this machine, not a controlled performance benchmark. Two-pair sessions intentionally increase mount/unmount coverage.",
+  "receipts": [
+    "mixed-two-pair-web-build-live.json",
+    "mixed-two-pair-web-independent-archive-audit.json",
+    "mixed-two-pair-web-ui-verification.json"
+  ],
+  "archiveExport": {
+    "path": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/connect-mixed-two-pair-proof-pbhakgls",
+    "bytes": 470484781,
+    "files": 63,
+    "sha256Verified": true
+  },
+  "headroomBytes": 221398028288
+}

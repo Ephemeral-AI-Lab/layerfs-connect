@@ -1,0 +1,10 @@
+{
+  "startedAt": "2026-11-10T12:02:46.850Z",
+  "chatId": "274967a3-183a-42c7-af0a-23d28d267d6b",
+  "host": "http://127.0.0.1:56107",
+  "checks": [],
+  "exceptions": [],
+  "consoleErrors": [],
+  "writes": [],
+  "error": "Timed out waiting for restored main conversation on fresh host"
+}

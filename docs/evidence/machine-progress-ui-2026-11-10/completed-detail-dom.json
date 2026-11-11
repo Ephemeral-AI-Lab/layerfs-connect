@@ -1,0 +1,8 @@
+{
+  "url": "http://127.0.0.1:1025/?mac=1&progress-check=final1#/machines/progress-ui-1110",
+  "width": 900,
+  "height": 600,
+  "text": "Startup completed\n8.3s\n3 steps completed\nChecking runtime compatibility\n0.0s\nStarting machine and worker\n8.2s\nVerifying worker connection\n0.0s\nView CLI activity",
+  "expanded": true,
+  "activity": "#/activity?action=fd66630b-da0f-418c-a375-5ef56cb14599"
+}

@@ -1,0 +1,99 @@
+{
+  "at": "2026-11-10T11:05:31.639Z",
+  "state": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/layerfs-simulation-bash-7MQLVJ",
+  "evidence": "mixed-performance-full.json",
+  "rows": [
+    {
+      "project": "design",
+      "id": "5dc8074e-9367-4cae-ba4f-8d77e3f932a3",
+      "status": "running",
+      "immutableArtifactFiles": 82,
+      "immutableArtifactBytes": 18609005,
+      "planJsonBytes": 8763698,
+      "receiptSnapshotBytes": 682412,
+      "manifestBytes": 10812
+    },
+    {
+      "project": "billing",
+      "id": "67213c4e-42e9-4291-9227-32528b0b4010",
+      "status": "running",
+      "immutableArtifactFiles": 93,
+      "immutableArtifactBytes": 20618740,
+      "planJsonBytes": 9711962,
+      "receiptSnapshotBytes": 679774,
+      "manifestBytes": 12237
+    },
+    {
+      "project": "sdk",
+      "id": "1edd4934-1ddf-47ce-b60b-0031a25c9003",
+      "status": "running",
+      "immutableArtifactFiles": 112,
+      "immutableArtifactBytes": 24722154,
+      "planJsonBytes": 11651481,
+      "receiptSnapshotBytes": 877432,
+      "manifestBytes": 14851
+    },
+    {
+      "project": "evaluation",
+      "id": "349c4cd4-6dce-43a0-8567-d0ab553993da",
+      "status": "running",
+      "immutableArtifactFiles": 130,
+      "immutableArtifactBytes": 31010552,
+      "planJsonBytes": 14618941,
+      "receiptSnapshotBytes": 880584,
+      "manifestBytes": 17226
+    },
+    {
+      "project": "embeddings",
+      "id": "7aeb2a4c-bac2-4394-9267-e9d892de3fbd",
+      "status": "running",
+      "immutableArtifactFiles": 161,
+      "immutableArtifactBytes": 39309620,
+      "planJsonBytes": 18535005,
+      "receiptSnapshotBytes": 877742,
+      "manifestBytes": 21372
+    },
+    {
+      "project": "compiler",
+      "id": "d5002a5d-a2f0-4972-97a4-63f48a6e7b7e",
+      "status": "running",
+      "immutableArtifactFiles": 202,
+      "immutableArtifactBytes": 49730840,
+      "planJsonBytes": 23477367,
+      "receiptSnapshotBytes": 1053813,
+      "manifestBytes": 27161
+    },
+    {
+      "project": "gateway",
+      "id": "6afb4182-f959-4619-b1d1-19c0ba554433",
+      "status": "running",
+      "immutableArtifactFiles": 247,
+      "immutableArtifactBytes": 61543653,
+      "planJsonBytes": 28988300,
+      "receiptSnapshotBytes": 1047920,
+      "manifestBytes": 32676
+    },
+    {
+      "project": "website",
+      "id": "6e520e89-0388-4160-b501-f6c45ca36235",
+      "status": "running",
+      "immutableArtifactFiles": 305,
+      "immutableArtifactBytes": 77807756,
+      "planJsonBytes": 36653541,
+      "receiptSnapshotBytes": 1047930,
+      "manifestBytes": 40404
+    }
+  ],
+  "totals": {
+    "immutableArtifactBytes": 323352320,
+    "planJsonBytes": 152400295,
+    "receiptSnapshotBytes": 7147607,
+    "manifestBytes": 176739
+  },
+  "sourceFindings": {
+    "compiledFilesRetainedAt": "host/simulations/index.js:66",
+    "postWriteFilesReaders": 0,
+    "completedRunPlanAndReceiptsRetained": true,
+    "completedPiSessionObjectsRetainedUntilHostClose": true
+  }
+}

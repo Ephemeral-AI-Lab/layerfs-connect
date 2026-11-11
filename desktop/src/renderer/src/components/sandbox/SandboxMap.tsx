@@ -8,7 +8,7 @@ import './sandbox-map.css'
 type Selection = { kind: 'agent' | 'branch' | 'workspace' | 'sandbox' | 'event'; id: string }
 type Edge = { id: string; from: string; to: string; branch: string; active: boolean; result?: boolean; error?: boolean }
 type Path = Edge & { d: string }
-const stamp = (time: number) => `0:${Math.floor(time).toString().padStart(2, '0')}`
+const stamp = (time: number) => `${Math.floor(Math.max(0, time) / 60)}:${Math.floor(Math.max(0, time) % 60).toString().padStart(2, '0')}`
 const node = (kind: string, id: string) => `${kind}-${id}`
 
 export interface SandboxMapData {
@@ -19,13 +19,12 @@ export interface SandboxMapData {
   sandboxes: { name: string; machine?: string | null; backend?: string | null; state: string; refusal?: string; unread?: boolean }[]
   links: Record<string, string>
 }
-export function SandboxMap({ project, data, time = 0, playing = false, simulation = false, controls, playback, focusActorId, chatActorId, onOpenSandbox }: {
-  project: string; data: SandboxMapData; time?: number; playing?: boolean; simulation?: boolean
-  controls?: ReactNode; playback?: ReactNode; focusActorId?: string; chatActorId?: string
+export function SandboxMap({ project, data, time = 0, playing = false, controls, focusActorId, chatActorId, onOpenSandbox }: {
+  project: string; data: SandboxMapData; time?: number; playing?: boolean;
+  controls?: ReactNode; focusActorId?: string; chatActorId?: string
   onOpenSandbox?: (name: string) => void
 }) {
   const [collapsed, setCollapsed] = useState<string[]>([])
-  const [recent, setRecent] = useState(false)
   const [onlyChat, setOnlyChat] = useState(false)
   const [selection, setSelection] = useState<Selection | null>(null)
   const [hover, setHover] = useState<Selection | null>(null)
@@ -58,17 +57,18 @@ export function SandboxMap({ project, data, time = 0, playing = false, simulatio
     const w = workspaces.find(w => w.id === id)
     if (!w) return false
     const s = workspaceState(w, events, time)
-    return s.mounted || s.mounting || (recent && s.unmounted)
+    return s.mounted || s.mounting || (s.unmounted)
   }
   const edges: Edge[] = []
   for (const a of shownActors) {
     const origin = collapsed.includes(a.parent ?? '') ? a.parent! : a.id
     const calls = active.filter(e => e.actor === a.id)
     const justDone = completed.some(e => e.actor === a.id && time - e.end < 1.5)
-    edges.push({ id: `a-${a.id}`, from: node('agent', origin), to: node('branch', a.branch), branch: a.branch, active: calls.length > 0, result: justDone, error: completed.some(e => e.actor === a.id && time - e.end < 1.5 && e.outcome !== 'ok') })
+    if (a.branch) edges.push({ id: `a-${a.id}`, from: node('agent', origin), to: node('branch', a.branch), branch: a.branch, active: calls.length > 0, result: justDone, error: completed.some(e => e.actor === a.id && time - e.end < 1.5 && e.outcome !== 'ok') })
+    for (const call of calls.filter(e => !e.branch && e.sandbox)) edges.push({ id: `direct-${call.id}`, from: node('agent', origin), to: node('sandbox', call.sandbox!), branch: '', active: true })
   }
   for (const w of workspaces.filter(w => visibleWorkspace(w.id))) edges.push({ id: `w-${w.id}`, from: node('branch', w.branch), to: node('workspace', w.id), branch: w.branch, active: active.some(e => e.workspace === w.id), result: completed.some(e => e.workspace === w.id && time - e.end < 1.5), error: completed.some(e => e.workspace === w.id && time - e.end < 1.5 && e.outcome !== 'ok') })
-  for (const e of active.filter(e => !e.workspace && e.sandbox)) edges.push({ id: e.id, from: node('branch', e.branch), to: node('sandbox', e.sandbox!), branch: e.branch, active: true })
+  for (const e of active.filter(e => !e.workspace && e.sandbox && e.branch)) edges.push({ id: e.id, from: node('branch', e.branch), to: node('sandbox', e.sandbox!), branch: e.branch, active: true })
   const geometry = edges.map(e => `${e.id}:${e.from}:${e.to}`).join('|')
   const [paths, setPaths] = useState<Path[]>([])
 
@@ -95,14 +95,14 @@ export function SandboxMap({ project, data, time = 0, playing = false, simulatio
     return () => observer.disconnect()
     // Activity changes style only; geometry is remeasured when nodes or their sizes change.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [geometry, collapsed.join('|'), recent, onlyChat, data])
+  }, [geometry, collapsed.join('|'), onlyChat])
 
   function choose(kind: Selection['kind'], id: string) { setSelection(s => s?.kind === kind && s.id === id ? null : { kind, id }) }
   const dim = (kind: string, id: string) => focus && !related.has(node(kind, id)) ? 'true' : undefined
   const stateOf = (a: Actor) => {
     const running = active.find(e => e.actor === a.id)
     const last = completed.filter(e => e.actor === a.id).at(-1)
-    return running ? running.method === 'workspace.exec' ? 'Executing' : running.method.split('.')[1] === 'commit' ? 'Committing' : 'Calling' : last?.outcome === 'error' ? 'Needs attention' : time >= 32 ? 'Done' : a.id === 'explorer' && time >= 3 ? 'Done' : 'Thinking'
+    return running ? running.method === 'workspace.exec' ? 'Executing' : running.method.split('.')[1] === 'commit' ? 'Committing' : 'Calling' : last?.outcome === 'error' ? 'Needs attention' : a.state === 'error' || a.state === 'failed' ? 'Needs attention' : a.state === 'running' ? 'Working' : a.state === 'stopped' ? 'Stopped' : a.state === 'pending' || a.state === 'queued' ? 'Waiting' : a.state === 'idle' && !last ? 'Idle' : 'Done'
   }
   const actorRow = (a: Actor) => {
     const running = active.find(e => e.actor === a.id)
@@ -127,8 +127,8 @@ export function SandboxMap({ project, data, time = 0, playing = false, simulatio
   const selectedTitle = selectedEvent?.method ?? selectedActor?.name ?? selectedWorkspace?.id ?? (selection?.kind === 'branch' ? `Branch · ${selection.id}` : selection?.kind === 'sandbox' ? `Sandbox · ${selection.id}` : 'Activity')
 
   return <div className="sandbox-page" data-playing={playing}>
-    <header className="sb-header"><div><h1>Sandboxes {simulation && <span className="sb-simulation"><Radio size={11} /> Simulation</span>}</h1><p><Layers size={13} /><span>{project}</span><span className="sb-header-note">Project-wide activity</span></p></div>{controls}</header>
-    <div className="sb-toolbar"><div className="sb-facts"><span><Users size={13} />{roots.length} main agents</span><span>{actors.filter(a => a.parent).length} subagents</span><span>{data.sandboxes.length} sandboxes</span></div><div className="sb-filters">{chatActorId && <label><input type="checkbox" checked={onlyChat} onChange={e => setOnlyChat(e.target.checked)} />This chat</label>}{simulation && <label><input type="checkbox" checked={recent} onChange={e => setRecent(e.target.checked)} />Recent resources</label>}</div></div>
+    <header className="sb-header"><div><h1>Sandboxes </h1><p><Layers size={13} /><span>{project}</span><span className="sb-header-note">Project-wide activity</span></p></div>{controls}</header>
+    <div className="sb-toolbar"><div className="sb-facts"><span><Users size={13} />{roots.length} main agents</span><span>{actors.filter(a => a.parent).length} subagents</span><span>{data.sandboxes.length} sandboxes</span></div><div className="sb-filters">{chatActorId && <label><input type="checkbox" checked={onlyChat} onChange={e => setOnlyChat(e.target.checked)} />This chat</label>}</div></div>
     {empty ? <div className="sb-no-resources"><Empty icon={Box} title="No sandbox activity yet">Sandboxes created through the LayerFS SDK or CLI and the agents using them will appear here. </Empty></div> : <div className="sb-flow" ref={graph} onMouseLeave={() => setHover(null)} aria-label="Project agents, branches, and sandbox workspaces">
       <svg className="sb-connections" aria-hidden="true"><g>{paths.map(path => {
         const edge = edges.find(e => e.id === path.id)
@@ -136,12 +136,12 @@ export function SandboxMap({ project, data, time = 0, playing = false, simulatio
         const muted = focus && !related.has(path.from) && !related.has(path.to)
         return <g key={path.id} className={path.branch === 'search' ? 'sb-lane-a' : 'sb-lane-b'} data-dim={muted || undefined} data-result={edge?.result || undefined} data-error={edge?.error || undefined}>
           <path d={path.d} className="sb-wire" /><path d={path.d} className="sb-wire-lit" data-lit={lit || undefined} />
-          {lit && playing && <circle r="3" className="sb-packet"><animateMotion dur="1.6s" repeatCount="indefinite" path={path.d} keyPoints={edge?.result ? '1;0' : '0;1'} keyTimes="0;1" calcMode="linear" /></circle>}
+          {edge?.active && playing && <circle r="3" className="sb-packet" data-edge={path.id}><animateMotion dur="1.6s" repeatCount="indefinite" path={path.d} keyPoints="0;1" keyTimes="0;1" calcMode="linear" /></circle>}
         </g>
       })}</g></svg>
       <section className="sb-agents"><div className="sb-zone"><Users size={13} /><h2>Agents</h2><span>{shownActors.length}</span></div>
         {!roots.length && <p className="sb-box-empty">Agent activity is not reported by this resource snapshot.</p>}{roots.map(root => <div className="sb-agent-group" key={root.id}>
-          <div className="sb-group-heading"><button aria-label={`${collapsed.includes(root.id) ? 'Expand' : 'Collapse'} ${root.task}`} aria-expanded={!collapsed.includes(root.id)} onClick={() => setCollapsed(ids => ids.includes(root.id) ? ids.filter(id => id !== root.id) : [...ids, root.id])}>{collapsed.includes(root.id) ? <ChevronRight size={13} /> : <ChevronDown size={13} />}<span>{root.task}</span></button><span className="sb-group-tag">{root.id === chatActorId ? 'This chat' : simulation ? 'Example' : 'Chat'}</span></div>
+          <div className="sb-group-heading"><button aria-label={`${collapsed.includes(root.id) ? 'Expand' : 'Collapse'} ${root.task}`} aria-expanded={!collapsed.includes(root.id)} onClick={() => setCollapsed(ids => ids.includes(root.id) ? ids.filter(id => id !== root.id) : [...ids, root.id])}>{collapsed.includes(root.id) ? <ChevronRight size={13} /> : <ChevronDown size={13} />}<span>{root.task}</span></button><span className="sb-group-tag">{root.id === chatActorId ? 'This chat' : 'Chat'}</span></div>
           {actorRow(root)}{!collapsed.includes(root.id) && shownActors.filter(a => a.parent === root.id).map(actorRow)}
           {collapsed.includes(root.id) && <span className="sb-folded">{shownActors.filter(a => a.parent === root.id).length} subagents folded</span>}
         </div>)}
@@ -161,12 +161,12 @@ export function SandboxMap({ project, data, time = 0, playing = false, simulatio
           const creation = events.find(e => e.method === 'sandbox.create' && e.sandbox === box)
           const closure = completed.find(e => e.method === 'sandbox.close' && e.sandbox === box && e.outcome === 'ok')
           const creating = !!creation && time < creation.end
-          if (closure && !recent) return <div className="sb-retired" key={box}><Check size={13} />{box} closed<span>History preserved</span></div>
+          if (closure) return <div className="sb-retired" key={box}><Check size={13} />{box} closed<span>History preserved</span></div>
           const mounted = workspaces.filter(w => w.sandbox === box && workspaceState(w, events, time).mounted).length
           return <div className="sb-box" key={box} data-dim={dim('sandbox', box)}>
             <button className="sb-box-heading" data-flow-node={node('sandbox', box)} onClick={() => {
               choose('sandbox', box); setHover(null); onOpenSandbox?.(box)
-            }} title={`Open sandbox ${box} details`} aria-pressed={selection?.kind === 'sandbox' && selection.id === box}><Box size={16} /><strong>{box}</strong><span className="sb-status"><i data-live={creating || undefined} />{simulation ? closure ? 'Closed' : creating ? 'Creating' : 'Running' : record.state}</span></button>
+            }} title={`Open sandbox ${box} details`} aria-pressed={selection?.kind === 'sandbox' && selection.id === box}><Box size={16} /><strong>{box}</strong><span className="sb-status"><i data-live={creating || undefined} />{record.state}</span></button>
             <div className="sb-box-meta">{record.machine ?? record.backend ?? 'Machine unknown'}<span>{record.refusal || record.unread ? 'Workspaces unknown' : `${mounted} / 16 workspaces`}</span></div>{record.refusal && <p role="alert" className="sb-box-empty">{record.refusal}</p>}
             {workspaces.filter(w => w.sandbox === box && visibleWorkspace(w.id)).map(w => {
               const s = workspaceState(w, events, time)
@@ -175,7 +175,7 @@ export function SandboxMap({ project, data, time = 0, playing = false, simulatio
               return <button className="sb-workspace" key={w.id} data-flow-node={node('workspace', w.id)} data-dim={dim('workspace', w.id)} data-selected={selection?.kind === 'workspace' && selection.id === w.id || undefined} data-active={s.active.length > 0 || undefined} onClick={() => choose('workspace', w.id)} onMouseEnter={() => setHover({ kind: 'workspace', id: w.id })} onFocus={() => setHover({ kind: 'workspace', id: w.id })} onBlur={() => setHover(null)}>
                 <span className="sb-workspace-title"><Layers size={13} /><strong>{w.name}</strong><span className={warning ? 'sb-error-ink' : ''}>{s.mounting ? 'Mounting' : s.unmounted ? 'Unmounted' : warning ? s.last?.result.split(' · ')[0] : executing ? 'Executing' : s.active[0]?.method === 'workspace.unmount' ? 'Unmounting' : s.active.length ? 'Committing' : 'Mounted'}</span></span>
                 <span className="sb-workspace-branch"><GitBranch size={12} />{w.branch}<span>{w.users.length > 1 ? `${w.users.length} agents` : actors.find(a => a.id === w.users[0])?.name}</span></span>
-                <span className="sb-command"><Terminal size={12} /><span>{executing?.detail ?? (s.active[0]?.detail ?? (s.last?.method === 'workspace.exec' ? s.last.result.split('\n')[0] : s.unmounted ? 'Committed history kept' : s.last?.method === 'workspace.commit' && !warning ? 'Changes committed' : simulation ? 'Ready for commands' : 'Mounted workspace'))}</span>{executing && <span>{(time - executing.start).toFixed(1)}s</span>}</span>
+                <span className="sb-command"><Terminal size={12} /><span>{executing?.detail ?? (s.active[0]?.detail ?? (s.last?.method === 'workspace.exec' ? s.last.result.split('\n')[0] : s.unmounted ? 'Committed history kept' : s.last?.method === 'workspace.commit' && !warning ? 'Changes committed' : 'Mounted workspace'))}</span>{executing && <span>{(time - executing.start).toFixed(1)}s</span>}</span>
               </button>
             })}
             {!workspaces.some(w => w.sandbox === box && visibleWorkspace(w.id)) && <p className="sb-box-empty">{record.refusal ? 'Workspace status unavailable.' : record.unread ? 'Reading workspace status…' : creating ? 'Starting the workspace daemon…' : 'No mounted workspaces'}</p>}
@@ -183,14 +183,14 @@ export function SandboxMap({ project, data, time = 0, playing = false, simulatio
         })}
       </section>
     </div>}
-    {playback}
+
     <section className="sb-inspector" aria-label="Sandbox activity details"><header><h2>{selectedTitle}</h2>{selection ? <button aria-label="Clear selection" onClick={() => { setSelection(null); setHover(null) }}><X size={14} /></button> : <span>Select a node to follow its activity</span>}</header>
-      {selectedActor && <div className="sb-detail"><strong>{selectedActor.task}</strong><span>{selectedActor.workspace ? `Workspace · ${selectedActor.workspace}` : 'Branch access through SDK / CLI · No mounted workspace'}</span>{data.links[selectedActor.id] ? <Link to={data.links[selectedActor.id]}>Open conversation <ArrowUpRight size={12} /></Link> : <span>{simulation ? 'Scenario agent · simulated' : 'No linked conversation'}</span>}</div>}
+      {selectedActor && <div className="sb-detail"><strong>{selectedActor.task}</strong><span>{selectedActor.workspace ? `Workspace · ${selectedActor.workspace}` : 'Branch access through SDK / CLI · No mounted workspace'}</span>{data.links[selectedActor.id] ? <Link to={data.links[selectedActor.id]}>Open conversation <ArrowUpRight size={12} /></Link> : <span>{'No linked conversation'}</span>}{data.links[selectedActor.id] && <Link to={`${data.links[selectedActor.id]}/trace`}>Open Trace <ArrowUpRight size={12} /></Link>}</div>}
       {selectedWorkspace && <div className="sb-detail"><code>{selectedWorkspace.path ?? `/workspaces/${selectedWorkspace.name}`}</code><span>Branch · {selectedWorkspace.branch}</span><span>Used by {selectedWorkspace.users.length ? selectedWorkspace.users.map(id => actors.find(a => a.id === id)?.name).join(', ') : 'Unknown agents'}</span></div>}
       {selection?.kind === 'branch' && <div className="sb-detail"><span>Independent workspace views share this branch’s committed history.</span></div>}
       {selection?.kind === 'sandbox' && <div className="sb-detail"><span>Project · {project}</span><span>Machine · {data.sandboxes.find(b => b.name === selection.id)?.machine ?? 'Unknown'}</span><span>Lifecycle managed through SDK / CLI</span></div>}
-      {selectedEvent ? <div className="sb-event-detail"><div><span className="sb-event-method">{selectedEvent.method}</span><span>{actors.find(a => a.id === selectedEvent.actor)?.name} · {stamp(selectedEvent.start)} → {stamp(selectedEvent.end)}</span></div><code>{selectedEvent.detail}</code><pre className={time < selectedEvent.end ? '' : selectedEvent.outcome === 'error' ? 'sb-error-ink' : ''}>{time < selectedEvent.end ? 'In flight. Command output is available after execution ends.' : selectedEvent.result}</pre></div> : filteredEvents.length ? <div className="sb-event-list">{[...filteredEvents].reverse().map(e => <button key={e.id} onClick={() => choose('event', e.id)}><span className={`sb-event-icon ${e.end <= time && e.outcome === 'error' ? 'sb-error-ink' : ''}`}>{e.end > time ? <Radio size={13} /> : e.outcome === 'error' ? <CircleAlert size={13} /> : <Check size={13} />}</span><time>{stamp(e.start)}</time><strong>{e.method}</strong><span>{e.detail}</span><span className="sb-event-owner">{actors.find(a => a.id === e.actor)?.name}</span><ArrowRight size={12} /></button>)}</div> : <p className="sb-activity-empty">{empty ? simulation ? 'No simulated agents, sandboxes, or workspaces.' : 'No sandbox resources.' : simulation ? 'No calls for this selection yet.' : 'Activity events are not reported by this resource snapshot.'}</p>}
+      {selectedEvent ? <div className="sb-event-detail"><div><span className="sb-event-method">{selectedEvent.method}</span><span>{actors.find(a => a.id === selectedEvent.actor)?.name} · {stamp(selectedEvent.start)} → {stamp(selectedEvent.end)}</span></div><code>{selectedEvent.detail}</code><pre className={time < selectedEvent.end ? '' : selectedEvent.outcome === 'error' ? 'sb-error-ink' : ''}>{time < selectedEvent.end ? 'In flight. Command output is available after execution ends.' : selectedEvent.result}</pre></div> : filteredEvents.length ? <div className="sb-event-list">{filteredEvents.slice(-50).reverse().map(e => <button key={e.id} onClick={() => choose('event', e.id)}><span className={`sb-event-icon ${e.end <= time && e.outcome === 'error' ? 'sb-error-ink' : ''}`}>{e.end > time ? <Radio size={13} /> : e.outcome === 'error' ? <CircleAlert size={13} /> : <Check size={13} />}</span><time>{stamp(e.start)}</time><strong>{e.method}</strong><span>{e.detail}</span><span className="sb-event-owner">{actors.find(a => a.id === e.actor)?.name}</span><ArrowRight size={12} /></button>)}</div> : <p className="sb-activity-empty">{empty ? 'No sandbox resources.' : 'Activity events are not reported by this resource snapshot.'}</p>}
     </section>
-    <p className="sb-footnote">{simulation ? 'Simulated SDK / CLI activity. No agents, commands, or LayerFS resources are started.' : 'Current LayerFS resource state. Command activity and agent ownership are shown only when reported.'}</p>
+    <p className="sb-footnote">{'Current LayerFS resource state. Command activity and agent ownership are shown only when reported.'}</p>
   </div>
 }

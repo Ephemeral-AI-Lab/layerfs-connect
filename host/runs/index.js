@@ -19,6 +19,7 @@
 // not overload Docker. A scenario of several sessions starts a run per session as one
 // launch (run.js, Launch): they share one folder and play in it at once.
 import { EventEmitter } from 'node:events'
+import { withActivity } from '../activity/context.js'
 import { existsSync, readdirSync, readFileSync, renameSync, rmSync, statSync, writeFileSync } from 'node:fs'
 import { basename, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -300,7 +301,7 @@ export class RunManager extends EventEmitter {
       run.changed(true)
     }
     // each run's play ends once it has ended and cleaned up: then the next in the queue may play
-    Promise.all(runs.map((run) => run.play().catch((error) => run.fail(error.message)))).finally(() => this.playNext())
+    Promise.all(runs.map((run) => withActivity(run.activityContext, () => run.play().catch((error) => run.fail(error.message))))).finally(() => this.playNext())
   }
 
   /** Heavy launches playing now: not waiting their turn, not ended. */

@@ -10,3 +10,6 @@ playwright-report/
 *.tsbuildinfo
 *.log
 .DS_Store
+
+# Machine-local preview runtime paths and settings
+desktop/.env.local

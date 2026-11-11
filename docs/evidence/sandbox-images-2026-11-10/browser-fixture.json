@@ -1,0 +1,17 @@
+{
+  "name": "image-ui-1794278811",
+  "machine": "image-ui-1794278811",
+  "store": "image-ui-1794278811",
+  "project": "image-ui-1794278811/app",
+  "folder": "/tmp/image-ui-1794278811-source",
+  "home": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/lfs-desktop-web-4oV3rQ/home-2",
+  "cli": "/Users/yifanxu/.cache/layerfs-worktrees/layerfs-connect-image-ru-5b7a74044d64/artifacts/build-macos-25a2f109dd4442b38bc9088ec36dac99/layerfs",
+  "bundle": "/Users/yifanxu/.cache/layerfs-worktrees/layerfs-connect-image-ru-5b7a74044d64/linux-runtime/2.0.0/linux-aarch64",
+  "daemon": "/Users/yifanxu/.cache/layerfs-worktrees/layerfs-connect-image-ru-5b7a74044d64/artifacts/build-macos-25a2f109dd4442b38bc9088ec36dac99/layerfs-daemon",
+  "endpoint": "http://127.0.0.1:64308",
+  "cleaned": true,
+  "sandboxes_remaining": 0,
+  "store_remaining": false,
+  "machine_remaining": false,
+  "source_remaining": false
+}

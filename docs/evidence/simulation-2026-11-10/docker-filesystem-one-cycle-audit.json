@@ -1,0 +1,79 @@
+{
+  "status": "passed",
+  "mode": "filesystem",
+  "recordedAt": "2026-11-10T12:08:21.698693+00:00",
+  "sourceBatch": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/layerfs-simulation-bash-7MQLVJ/docker-filesystem-final.json",
+  "expectedRuns": 1,
+  "auditedRuns": 1,
+  "completedRuns": 1,
+  "runs": [
+    {
+      "id": "2e51b8b9-3e79-4593-9f4b-e2ae4c8e015e",
+      "template": "design",
+      "machine": "docker",
+      "state": "completed",
+      "project": "sim-design-a2d15c8d5d89369dfd8d/design-a2d15c8d5d89369dfd8d",
+      "store": "sim-design-a2d15c8d5d89369dfd8d",
+      "progress": {
+        "completed": 361,
+        "total": 361
+      }
+    }
+  ],
+  "audits": [
+    {
+      "id": "2e51b8b9-3e79-4593-9f4b-e2ae4c8e015e",
+      "template": "design",
+      "project": "sim-design-a2d15c8d5d89369dfd8d/design-a2d15c8d5d89369dfd8d",
+      "store": "sim-design-a2d15c8d5d89369dfd8d",
+      "plannedCommands": 361,
+      "completedCommands": 440,
+      "conversations": 1,
+      "children": 1,
+      "reusedChildren": 1,
+      "collectedResults": 3,
+      "bashStepsVerified": 357,
+      "agentTurns": {
+        "c01-tokens/main": 2,
+        "c01-tokens/a01-worker": 1
+      },
+      "maxAgentTurns": 2,
+      "turnLimitVerified": true,
+      "packageIdentity": {
+        "algorithm": "sha256",
+        "manifestHashes": "e60cb8c5be1579ce6b4e01ef590f3ad8da75a059baddeeb98a606049835f7228",
+        "sourceFiles": 16,
+        "importedSource": "3576647ca85b0143b21ff083580da66d9e7c38e302bb392bcf65cd22a43a5306"
+      },
+      "verification": {
+        "project": "sim-design-a2d15c8d5d89369dfd8d/design-a2d15c8d5d89369dfd8d",
+        "tier": 1,
+        "cycles": 1,
+        "branches": 15,
+        "commits": 288,
+        "merges": 4,
+        "publications": 59,
+        "layers": 60,
+        "filesVerified": 44,
+        "publicationReceiptsVerified": true
+      },
+      "workspaceSessions": 0
+    }
+  ],
+  "concurrency": {
+    "peak": 1,
+    "simultaneousRunsProved": false,
+    "selectedRuns": 1
+  },
+  "binarySources": [
+    {
+      "version": "2.0.0",
+      "commit": "1edcf58caec2bf079a07891411a0151c9afa3e80",
+      "dirty": true,
+      "features": [
+        "machine",
+        "postgresql"
+      ]
+    }
+  ]
+}

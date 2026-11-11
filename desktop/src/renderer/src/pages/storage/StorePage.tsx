@@ -7,7 +7,7 @@ import { StoreIcon } from '@/components/layerfs/identity/StoreIcon'
 import { Empty } from '@/components/layerfs/States'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { useProjectRows } from '@/layerfs/project-rows'
+import type { ProjectRowData } from '@/layerfs/project-rows'
 import { ago, bytes, when } from '@/layerfs/format'
 import { clearingCall } from '@/layerfs/states'
 import { go } from '@/layerfs/go'
@@ -15,7 +15,6 @@ import { JobActivity, JobSteps, OpPanel } from '@/pages/storage/JobProgress'
 import { canAddProject, Location, type StoreActions, StoreMenu } from '@/pages/storage/StoreCard'
 import { ProjectTile } from '@/pages/storage/StoreSection'
 import { StoreBreakdown } from '@/pages/storage/StoreBreakdown'
-import type { ProjectCatalog } from '@/layerfs/use-projects'
 import type { MachineSandbox, StorageJob, StorageView, StoreRow } from '@/layerfs/host-api'
 
 interface Props {
@@ -24,16 +23,15 @@ interface Props {
   job: StorageJob | undefined
   jobs: StorageJob[]
   sandboxes: Map<string, MachineSandbox[]> | null
-  catalog: ProjectCatalog
+  rows: ReadonlyMap<string, ProjectRowData>
   actions: (store: StoreRow) => StoreActions
   onBack: () => void
   back?: { label: string; onBack: () => void }
   onOpenProject?: (key: string) => void
 }
 
-export function StorePage({ name, view, job, jobs, sandboxes, catalog, actions, onBack, back, onOpenProject }: Props) {
+export function StorePage({ name, view, job, jobs, sandboxes, rows, actions, onBack, back, onOpenProject }: Props) {
   const [search, setSearch] = useState('')
-  const rows = useProjectRows(catalog)
   const s = view.stores.find(s => s.name === name)
   const crumbs = <Crumbs back={back ?? { label: 'Storage', onBack }} items={[{ label: 'Storage', onClick: onBack }, { label: name }]} />
   if (!s) return <div className="store-workspace">{crumbs}<Empty icon={HardDrive} title={`No Store named ${name}`}>It was removed or disconnected, or this home never had it.</Empty></div>
@@ -64,7 +62,7 @@ export function StorePage({ name, view, job, jobs, sandboxes, catalog, actions, 
     </div>}
     {job ? <JobSteps job={job} onRetry={on.retry && (() => on.retry!(job))} /> : s.state === 'busy' && s.op ? <OpPanel store={s} /> : null}
 
-    <StoreBreakdown name={s.name} postgresql={pg} tick={job?.ended} />
+    <StoreBreakdown name={s.name} postgresql={pg} tick={job?.ended} analysisProjects={s.projects} />
 
     <section aria-label={`Projects in ${s.name}`} className="store-workspace-projects">
       <div className="store-section-heading"><h2>Projects <span>· {s.projects.length}</span></h2>
@@ -72,7 +70,7 @@ export function StorePage({ name, view, job, jobs, sandboxes, catalog, actions, 
       </div>
       {shown.length ? <ul className="store-project-grid">{shown.map(name => {
         const key = `${s.name}/${name}`
-        return <li key={key}><ProjectTile project={{ key, name, row: rows.byKey.get(key) }} onOpen={onOpenProject} /></li>
+        return <li key={key}><ProjectTile project={{ key, name, row: rows.get(key) }} onOpen={onOpenProject} /></li>
       })}</ul> : <div className="store-workspace-empty"><p>{query ? `No projects match “${search.trim()}”.` : 'No projects yet.'}</p>
         {query ? <Button size="xs" variant="ghost" onClick={() => setSearch('')}>Clear search</Button> : <Button size="xs" variant="outline" disabled={!canAddProject(s, on)} onClick={on.addProject}><FolderPlus /> Add project</Button>}
       </div>}

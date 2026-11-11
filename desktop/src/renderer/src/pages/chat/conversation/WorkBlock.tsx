@@ -2,7 +2,7 @@
 // block. Open while it runs; folded afterwards to "Worked 1m 04s · 9 LayerFS
 // calls · 3 steps", with a ✗ when a step failed.
 import { Brain, ChevronRight, LoaderCircle, Wrench } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { memo, useEffect, useState } from 'react'
 import type { ChatMessage } from '@/layerfs/agent-api'
 import { duration } from '@/layerfs/call-labels'
 import { blockCalls, blockSpan, type TurnPart } from '@/layerfs/turns'
@@ -13,9 +13,10 @@ import { SubagentStep } from './steps/SubagentStep'
 
 type Work = Extract<TurnPart, { kind: 'work' }>
 
-export function WorkBlock({ work }: { work: Work }) {
+export const WorkBlock = memo(function WorkBlock({ work }: { work: Work }) {
   const { focus } = useScope()
   const [opened, setOpened] = useState<boolean | null>(null)
+  const [visibleStepLimit, setVisibleStepLimit] = useState(50)
   const holdsFocus = !!focus && work.items.some((i) => i.kind === 'step' && i.message.id === focus)
   const open = opened ?? (work.live || holdsFocus)
   // a step opened from the Trace opens its block, even one you folded
@@ -23,6 +24,18 @@ export function WorkBlock({ work }: { work: Work }) {
     if (holdsFocus) setOpened(true)
   }, [holdsFocus, focus])
   const steps = work.items.filter((i) => i.kind === 'step')
+  // Live turns can contain thousands of bash calls. Keep their newest work
+  // visible; revealing older steps is local viewing state, never data trimming.
+  const hiddenSteps = work.live && !holdsFocus ? Math.max(0, steps.length - visibleStepLimit) : 0
+  let firstVisible = 0
+  if (hiddenSteps) {
+    let skipped = 0
+    for (let index = 0; index < work.items.length; index++) {
+      if (work.items[index].kind === 'step') skipped++
+      if (skipped === hiddenSteps) { firstVisible = index + 1; break }
+    }
+  }
+  const visibleItems = work.items.slice(firstVisible)
   const calls = blockCalls(work.items)
   const span = blockSpan(work.items)
   const failed = steps.some((i) => i.kind === 'step' && (i.message.status === 'error' || i.message.view?.calls.some((c) => c.ok === false)))
@@ -32,9 +45,11 @@ export function WorkBlock({ work }: { work: Work }) {
     return work.items.map((item) => (item.kind === 'thinking' ? <Thinking key={item.id} text={item.text} live={item.live} /> : null))
   }
 
+  // recorded operations when the journal has them; otherwise the diagnostic trace's calls
+  const ops = steps.reduce((n, i) => n + (i.kind === 'step' ? i.message.operations?.count ?? 0 : 0), 0)
   const summary = [
     work.live ? 'Working' : span ? `Worked ${duration(span)}` : 'Worked',
-    calls.length ? `${calls.length} LayerFS ${calls.length === 1 ? 'call' : 'calls'}` : null,
+    ops ? `${ops} LayerFS ${ops === 1 ? 'operation' : 'operations'}` : calls.length ? `${calls.length} LayerFS ${calls.length === 1 ? 'call' : 'calls'}` : null,
     `${steps.length} ${steps.length === 1 ? 'step' : 'steps'}`,
   ].filter(Boolean).join(' · ')
 
@@ -53,7 +68,14 @@ export function WorkBlock({ work }: { work: Work }) {
       </button>
       {open && (
         <div className="ml-[7px] mt-1 flex flex-col gap-0.5 border-l border-[var(--border-default)] pl-3">
-          {work.items.map((item) =>
+          {hiddenSteps > 0 && <button
+            type="button"
+            className="self-start rounded-xs px-2 py-1.5 text-left text-12 text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+            onClick={() => setVisibleStepLimit(limit => limit + 50)}
+          >
+            Show earlier {Math.min(50, hiddenSteps)} {hiddenSteps === 1 ? 'step' : 'steps'} <span className="text-[var(--text-tertiary)]">· {hiddenSteps} hidden</span>
+          </button>}
+          {visibleItems.map((item) =>
             item.kind === 'thinking' ? (
               <Thinking key={item.id} text={item.text} live={item.live} />
             ) : item.message.toolName === 'bash' ? (
@@ -68,7 +90,13 @@ export function WorkBlock({ work }: { work: Work }) {
       )}
     </div>
   )
-}
+}, (previous, next) => {
+  const a = previous.work, b = next.work
+  return a.id === b.id && a.live === b.live && a.items.length === b.items.length && a.items.every((item, index) => {
+    const other = b.items[index]
+    return item.kind === 'step' ? other.kind === 'step' && item.message === other.message : other.kind === 'thinking' && item.id === other.id && item.text === other.text && item.live === other.live
+  })
+})
 
 /** The model's thinking: "Thought" folded, its text in grey when open. */
 function Thinking({ text, live }: { text: string; live: boolean }) {

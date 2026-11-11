@@ -1,29 +1,5 @@
 # Chat
 
-## Desktop example chat
-
-The rebuilt `desktop/` app provides a read-only preview at
-`#/chat/ui-example-chat`, opened from **Example chat** in the sidebar or
-**Explore an example chat** below the new-chat composer. It needs no model.
-
-```text
-Example · Add project search             Scenario UI preview · simulated
-Example - Add project search                   [1 subagent v]
-[Chat] [Files] [Sandbox] [Trace] [History]
-Chat:       request → inspection → write → failed check → fix → review → reply
-Trace:      expandable steps, two sample checkpoints, search, failure filter
-Header:     subagent catalog; open reviewer here or in the side panel
-Files:      shared LayerFS browser; sample main and search branches
-Sandbox:    animated project-wide agent / branch / workspace simulation
-Composer:   Read-only example · explore Chat, Trace, and Subagents above.
-```
-
-The example uses the regular Chat, Trace, and Subagents components. Messages,
-tool outputs, writes, and results are sample data; no commands, model requests,
-or filesystem operations run. Only requests for the reserved example session
-are handled locally (`desktop/src/renderer/src/layerfs/chat-sim.ts`); other
-sessions continue to use the host. Reloading restores the same example.
-
 ## Desktop chat files and Sandbox
 
 `#/chat/:id/files` browses the linked LayerFS project using the shared
@@ -45,11 +21,7 @@ LayerFS project files · read-only                       Open in Storage
 ```
 
 Directories expand on demand; files open in closeable tabs with line numbers
-and syntax highlighting. The example defaults to `search`; switching to
-`main` shows the earlier filter. On narrow layouts the tree stacks above the
-file. `#/chat/:id/sandboxes` opens the project-wide Sandbox simulation described in
-[sandbox.md](sandbox.md). Sandbox headings open the shared detail view with Overview and Workspaces. It never reads or creates real LayerFS resources.
-Chat drafts remain mounted across tabs.
+and syntax highlighting. There is no built-in example session. Files and Sandbox use the linked real project.
 
 ## Desktop agent navigation
 
@@ -58,7 +30,7 @@ Chat, Files, Sandbox and Trace remain conversation views.
 
 ```text
 +-[1] Header -------------------------------------------------------------------+
-| Add project search [2][<users> 2 subagents v]                 search - ui-example |
+| Add project search [2][<users> 2 subagents v]                 search - project |
 +-------------------------------------------------------------------------------+
 | [Chat] Files Sandbox Trace                                                   |
 |                                                                               |
@@ -120,7 +92,7 @@ Child routes stay `/chat/:id/subagents/:child`; `/chat/:id/subagents` keeps the
 overview and empty state. Child view tabs append `/files`, `/sandboxes`, or `/trace`.
 Chat uses the same transcript, composer, status and Stop components as the parent;
 child drafts have separate identities. Files use the shared project's browser,
-Sandbox shares the project-wide simulation, and Trace reads the child's own session
+Sandbox shares the real project resource map, and Trace reads the child's own session
 and SDK calls through `/api/agent/sessions/:id/children/:child/trace`.
 The composer explains that delegated runs do not accept follow-ups.
 `?aside=:child` restores side-panel selection, including
@@ -468,8 +440,7 @@ the agent before compacting" or "Start a conversation first"; /stop "Stop the cu
 
 See [chat-history.md](chat-history.md) for the current desktop History tab, its
 centered main graph, checkpoint grouping, branch families and two-way Trace links.
-The Example chat includes a separate dense sample history in addition to its
-two transcript checkpoints.
+History displays actual saved project checkpoints.
 
 ## Trace tab
 
@@ -767,46 +738,11 @@ and dialogs use solid surfaces in the fixed light theme. All draft, queue, IME, 
 stop and recovery behavior remains the existing chat behavior.
 
 
-## Pi context and lifecycle preview (desktop)
-
-Source: `pages/chat/conversation/PiContext.tsx`, `pi-preview.ts`, `ChatDock.tsx`.
-
-```text
-+-- Conversation -----------------------------------------------------+
-| Messages; compaction summaries appear once in a collapsed panel      |
-+--------------------------------------------------------------------+
-| [1] Example only: Pi lifecycle preview [Near context limit       v]  |
-|     Sample states only. No model requests or commands run.          |
-| [2] 184,616 / 200,000 tokens · 92%   [Configurations] [Compact now]      |
-|     =======================----                                    |
-|     > Compacted context   (when present; expandable summary)        |
-| [3] Retry 1 of 2 in 1s                          [Stop]               |
-|     503 · The model provider is temporarily overloaded.             |
-| [4] Composer                                                       |
-+--------------------------------------------------------------------+
-```
-
-1. `#/chat/ui-example-chat?policy=near-limit` opens the preview. Options:
-   original, near-limit, compacting, compacted, retrying, exhausted,
-   compact-failed. Saved policies supply preview budgets; disabled policies
-   still permit inspection of sample states, with an explanatory note.
-   Finish simulation advances compacting to compacted. Stop and Continue
-   only change local preview state. Retry stays paused for inspection.
-2. Live Pi context estimate, progress bar and manual compaction. Estimates
-   may be unavailable after compaction until another model response.
-   Summaries can be expanded; raw history remains preserved. Compaction
-   failures show an alert. Compact now is disabled during a run and hidden
-   for read-only delegated/scenario conversations.
-3. Live retry events supply attempt, maximum attempts, deadline and reason.
-   Countdown updates each second; Stop uses the existing cancellation flow.
-   Exhausted requests use the existing error and Continue flow.
-4. Example composer remains read-only; previews never invoke a model.
-
 ## Shared project tabs
 
 Files uses `components/files/ProjectFiles.tsx`; History uses `components/history/ProjectHistory.tsx`
 with trace enrichment from its chat wrapper. Sandbox uses the shared project resource map;
-Example chat alone supplies simulated playback. Storage project pages reuse these features.
+Storage project pages reuse these features. All content comes from real host observations.
 
 ## Unified sandbox navigation
 
@@ -856,3 +792,165 @@ closure without crashing and retains the confirmed cancellation, command exit
 and any separate partial-Commit error. The Workspace and Sandbox remain owned
 by the conversation. A transport failure is never a successful command or an
 automatic replay; output appears when the CLI command completes.
+
+## Real-only chat data (2026-11-09)
+
+Example chat, its reserved API interception, fabricated files/Trace/Subagents,
+and policy lifecycle playback are removed. Chat requires a real saved session.
+A missing session displays the host refusal. Model-free scripted scenarios remain
+available where they execute real LayerFS calls. Shared Files, History and Sandbox
+views use the linked project; no sample-data switches are present.
+
+## Desktop scripted simulation command
+
+Source: `desktop/src/renderer/src/pages/chat/simulation/` and
+`desktop/src/renderer/src/layerfs/simulation-command.ts`.
+
+```text
++-[1] New chat or main conversation composer ----------------------------------+
+| /simulation --project website --machine docker --mixed                       |
+| (Project) (Workspace)                                             [Send]     |
++------------------------------------------------------------------------------+
+ [2] Scripted simulation - fresh SQLite Store - no model required
+ [3] Simulation <run-id> - preparing                                  [Stop]
+
++-[4] Saved project conversation ----------------------------------------------+
+| Coordinator requests, delegation and real CLI tool results                    |
+| Simulation - running                                      [Stop simulation] |
++------------------------------------------------------------------------------+
+| Scripted conversation. /simulation starts a new run.                          |
++------------------------------------------------------------------------------+
+```
+
+| [n] | Component | Behavior |
+|---|---|---|
+| [1] | NewChatPage / ConversationTab | Intercepts `/simulation` before sending to a model; explicit preset project and machine required; `--mixed` defaults false, accepts bare switch or true/false |
+| [2] | NewChatPage | Model credentials are unnecessary for scripted simulation |
+| [3] | SimulationLaunchStatus | Shows setup state; POST once, poll status until the first saved main conversation exists, then open it; Stop applies to the entire run |
+| [4] | SimulationStatus | Saved conversation belongs to the fresh simulation project; existing subagent navigation opens reusable child transcripts; shows actual run state, completed/total command counts and run-wide Stop |
+
+Invalid arguments remain in the composer with an inline error. A status read
+failure shows Retry/Resume status and preserves the run ID; reconnecting never
+repeats setup. Start and stop failures keep an inline error with the next action.
+Normal messages in scripted conversations and delegated child replies remain
+blocked. Starting `/simulation` from a main chat creates an independent Store
+and project regardless of that chat's selected project, workspace or model.
+
+Typing `/sim` offers Simulation with a ready-to-edit command and inline syntax.
+Each invocation creates a tagged Store/project; labels use the host-returned
+project key. Launch setup is local to its composer, so a separate new chat can
+start another run while earlier simulations continue. After setup opens the
+saved conversation, its main composer can start another independent simulation.
+Interrupted runs are terminal evidence and never resume uncertain mutations.
+
+## Long live agent turns
+
+Source: `desktop/src/renderer/src/pages/chat/conversation/WorkBlock.tsx`.
+
+```text
+ [v Working - 684 steps]
+ | [Show earlier 50 steps - 634 hidden]                         [1]
+ | > layerfs branch fork ...
+ | > layerfs workspace mount ...
+ | > layerfs workspace exec ...                               [2]
+ | > layerfs workspace commit ...
+ | > layerfs workspace unmount ...
+```
+
+| [n] | Component | Behavior |
+|---|---|---|
+| [1] | WorkBlock | Live turns initially render the newest 50 tool steps; each click reveals 50 earlier steps; counters still describe the full turn |
+| [2] | BashStep | Explicit command, pending/success/failure state, expandable script and real output; Open in Trace keeps the actual tool call ID |
+
+Only local viewing changes; saved transcripts retain every step. Completed work
+folds normally, and opening a completed block exposes its full history. A focused
+Trace step must remain visible even when it falls outside the newest live steps.
+
+## Live chat refresh and tab responsiveness
+
+```text
+ [Lightweight chat summary] -> header and subagent navigation
+                 |
+                 +-> [Visible main Chat] -> one transcript read -> shared saved rows
+                 +-> [Visible child Chat] -> one child read -> shared saved rows
+                 +-> [Visible Trace/History] -> one trace page read
+                 +-> [Hidden retained tabs] -> keep local view; pause refresh
+```
+
+Simulation summaries refresh the selected transcript or trace at most once per
+1.5 seconds, with a single request in flight and one trailing refresh for event
+bursts. Saved message identity keeps completed work and Bash steps from rendering
+again for unrelated status changes. Child status has its own context, so it does
+not invalidate every Bash row. Hidden chats stop automatic scrolling and run-status
+polling; hidden Trace and History keep their local state without background reads.
+Files checks for newer saved versions at most once every three seconds while a
+chat runs, then reads the final state when it stops.
+
+## Recorded LayerFS operations (2026-11-10)
+
+Source: `components/layerfs/Operations.tsx`, `pages/chat/trace/OperationsView.tsx`,
+`layerfs/operations-api.ts`; host `host/sessions/` ([spec](../specs/chat-session-store.md),
+[record](../specs/chat-session-store-record.md)). Counts are saved-version links, not new
+Commits; no checkpoint number is an identity.
+
+```text
+Chat step (BashStep, open)                       Trace tab
++-----------------------------------------------+ +--[1]-----------------------------------------+
+| > Worked 2s · 2 LayerFS operations · 1 step   | | [Conversation][Operations (14)]  [2] Saved ▢ |
+|   v printf one > one.txt   2 ops · 1 link  ✓  | | [Agent v][Operation v][Project v][Status v]  |
+|     script / output ...                       | | [x] With saved-version links                 |
+|     [3] 2 LAYERFS OPERATIONS · 1 LINK         | | 14 operations · 11 links · 8 distinct        |
+|     ✓ workspace.exec  printf one…    Completed| | [4] ✓ branch.merge sdk-b + sdk-c → sdk-m     |
+|     ✓ workspace.commit  [chat-… · Created     | |       [sdk-m · Created Commit 12fb8… ↗]     |
+|        Commit 125b2… ↗]                       | | [5] branch.merge  Completed · sdk · tool     |
++-----------------------------------------------+ |  Result | Inputs (2) | Arguments | Receipt | |
+                                                  |  Execution  — Store/Project/Branch/full id   |
+                                                  +----------------------------------------------+
+```
+
+| Region | Behavior |
+| --- | --- |
+| 1 | Trace view switch: Conversation rows, or every recorded operation in journal order, paged from the newest |
+| 2 | Journal state: Recorded locally / Saved to project / Save unknown / Not saved / Ownership conflict; Save to project and Check saved state act explicitly |
+| 3 | One row per operation; link chips open History at the exact `commit`+`branch` (`&op=`); the method opens Trace `?op=` |
+| 4 | Filters: agent, operation, project, status, links only; coverage gaps (e.g. SDK calls inside a mounted Sandbox) are listed, never counted |
+| 5 | Inspector: typed outputs and inputs (full ids), exact arguments, receipt, error, execution and reconciliation facts |
+
+A tool row in Trace shows `N ops · M links` (`1 op` when one); failed tools keep earlier operations. A row
+without recorded operations (older chats) labels its trace writes as diagnostic, not a ledger.
+`?op=` focuses the owning tool row, or opens the Operations view when no row holds it.
+Verified with `desktop/tools/smoke-chat-operations.mjs` at 1280x820 and 900x600.
+
+2026-11-11: the Operations view follows the newest 100 until **Load earlier**; from then it
+holds one contiguous range from that start (`showing 1521–1724`), refreshed in place as new
+operations arrive, up to 1000 rows, with **Show the newest (N newer not in this view)** when
+newer rows fall outside it. A subagent's conversation shows its own tools' operations.
+
+Simulation chats (`/simulation`) record each compiled CLI call as a `cli` operation of the
+bash tool that ran it, with typed links (writes, workspace commits, forks, merges,
+publications). Their badge reads **Recorded locally (simulation run)**: the journal stays in
+this home and is not saved to the run's project, so the run's verified branch graph is
+unchanged; it has no save actions. Merge sources' kinds are read once the run stops.
+
+### Saved conversations and ownership (2026-11-10)
+
+```text
+New chat, project chosen
+| Works in a mounted LayerFS Workspace of a new branch of demo from sessions; ... |
+| [7] Find conversations saved in this project                                  |
+| +-- Saved in this project · 2 already here --------------------------------+ |
+| | b1e3408a-8   40 events · saved 11/11 07:40 · saved as other/p   [Import] | |
+| |   This conversation was saved as [other/p] → sessions/demo  [Import with  | |
+| |   this binding] Cancel                                                     | |
+| +--------------------------------------------------------------------------+ |
+Trace persistence badge in conflict: [Ownership conflict] [8] Take over ownership
+```
+
+| Region | Behavior |
+| --- | --- |
+| 7 | Reads the project's `connect.session.*` branches on request (verified manifests); Import rebuilds the conversation and opens it. A different saved Store/project asks for an explicit binding |
+| 8 | One owner per conversation: takeover rewrites the manifest owner and is refused when the branch holds history this conversation lacks (import it as a copy instead) |
+
+A chat whose Sandbox is a container or VM runs its bash on this host and drives the Workspace with
+`layerfs workspace exec "$LAYERFS_CONNECT_WS" …`; its step lists those CLI operations and the save.
+Verified with `desktop/tools/smoke-host-shell.mjs`.

@@ -1,0 +1,71 @@
+{
+  "date": "2026-11-10",
+  "scope": "One ready Studio library, 4 machines / 4 stores / 8 distinct projects; file/branch CLI only",
+  "checks": {
+    "root_tests_passed": 149,
+    "desktop_resource_tests_passed": 4,
+    "desktop_typecheck": "passed",
+    "desktop_build": "passed",
+    "diff_check": "passed"
+  },
+  "live": {
+    "source": "project-library-topology-live.json",
+    "machines": [
+      "native",
+      "docker",
+      "demo-build (Lima)",
+      "demo-research (Lima)"
+    ],
+    "projects": 8,
+    "unique_commits": 192,
+    "side_branches": 72,
+    "divergent_merges": 16,
+    "publications": 32,
+    "main_layers_including_initial_imports": 40,
+    "cli_invocations": 689,
+    "exact_file_write_stdin_verified": 176,
+    "peak_concurrent_invocations": 2,
+    "cli_errors": [],
+    "sandbox_workspace_setup_calls": [],
+    "private_teardown_verified": true,
+    "cli_identity": {
+      "version": "2.0.0",
+      "commit": "58c548b3e0a45f11880e3511bf1267d11e315415",
+      "dirty": true,
+      "features": [
+        "machine",
+        "postgresql"
+      ]
+    }
+  },
+  "browser": {
+    "viewports": [
+      "1280x820",
+      "900x600"
+    ],
+    "checks": [
+      "single library; no catalog/search/sandbox option",
+      "8 direct project View script buttons",
+      "project purposes and nine distinct retained branch names",
+      "old content stays Planned; Previous build commands labeled",
+      "website script 77 commands; evaluation script 79 commands",
+      "commit-list verification commands included in project scopes",
+      "project scripts exclude reset and other projects",
+      "full script includes shared reset and all projects; no sandbox creation",
+      "Copy commands feedback succeeds",
+      "no horizontal overflow",
+      "no new runtime errors or unhandled rejections observed during final control checks"
+    ],
+    "active_environment": "Studio"
+  },
+  "limits": [
+    "Existing user Studio home was not rebuilt/reset; new contents appear after Build projects.",
+    "Application source is materialized and verified, not executed by preset setup.",
+    "Native Electron window was not launched."
+  ],
+  "disk": {
+    "free_host_GB": 239.22,
+    "cargo_targets_allocated": false,
+    "test_VMs_and_private_stores_removed": true
+  }
+}

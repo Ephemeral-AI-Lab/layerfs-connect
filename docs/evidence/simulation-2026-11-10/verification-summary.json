@@ -1,0 +1,359 @@
+{
+  "version": 1,
+  "recordedAt": "2026-11-10T12:08:21.763233+00:00",
+  "overallStatus": "passed",
+  "privateState": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/layerfs-simulation-bash-7MQLVJ",
+  "privateLayerfsHome": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/layerfs-simulation-bash-7MQLVJ/home-2",
+  "batches": {
+    "native-filesystem-full": {
+      "status": "passed",
+      "expectedRuns": 8,
+      "auditedRuns": 8,
+      "completedRuns": 8,
+      "mode": "filesystem",
+      "concurrency": {
+        "peak": 4,
+        "simultaneousRunsProved": true,
+        "selectedRuns": 8
+      },
+      "evidence": "native-filesystem-full-audit.json",
+      "totals": {
+        "plannedCommands": 50858,
+        "completedCommands": 54779,
+        "bashStepsVerified": 50834,
+        "conversations": 39,
+        "children": 144
+      }
+    },
+    "native-filesystem-repeated": {
+      "status": "passed",
+      "expectedRuns": 2,
+      "auditedRuns": 2,
+      "completedRuns": 2,
+      "mode": "filesystem",
+      "concurrency": {
+        "peak": 3,
+        "simultaneousRunsProved": true,
+        "selectedRuns": 2
+      },
+      "evidence": "native-filesystem-repeated-audit.json",
+      "totals": {
+        "plannedCommands": 5872,
+        "completedCommands": 6382,
+        "bashStepsVerified": 5866,
+        "conversations": 4,
+        "children": 6
+      }
+    },
+    "native-mixed-full": {
+      "status": "passed",
+      "expectedRuns": 8,
+      "auditedRuns": 8,
+      "completedRuns": 8,
+      "mode": "mixed",
+      "concurrency": {
+        "peak": 4,
+        "simultaneousRunsProved": true,
+        "selectedRuns": 8
+      },
+      "evidence": "native-mixed-full-audit.json",
+      "totals": {
+        "plannedCommands": 81010,
+        "completedCommands": 84939,
+        "bashStepsVerified": 80986,
+        "conversations": 39,
+        "children": 144
+      }
+    },
+    "native-mixed-repeated": {
+      "status": "passed",
+      "expectedRuns": 2,
+      "auditedRuns": 2,
+      "completedRuns": 2,
+      "mode": "mixed",
+      "concurrency": {
+        "peak": 3,
+        "simultaneousRunsProved": true,
+        "selectedRuns": 2
+      },
+      "evidence": "native-mixed-repeated-audit.json",
+      "totals": {
+        "plannedCommands": 9330,
+        "completedCommands": 9842,
+        "bashStepsVerified": 9324,
+        "conversations": 4,
+        "children": 6
+      }
+    },
+    "docker-filesystem-one-cycle": {
+      "status": "passed",
+      "expectedRuns": 1,
+      "auditedRuns": 1,
+      "completedRuns": 1,
+      "mode": "filesystem",
+      "concurrency": {
+        "peak": 1,
+        "simultaneousRunsProved": false,
+        "selectedRuns": 1
+      },
+      "evidence": "docker-filesystem-one-cycle-audit.json",
+      "totals": {
+        "plannedCommands": 361,
+        "completedCommands": 440,
+        "bashStepsVerified": 357,
+        "conversations": 1,
+        "children": 1
+      }
+    },
+    "docker-mixed-one-cycle": {
+      "status": "passed",
+      "expectedRuns": 1,
+      "auditedRuns": 1,
+      "completedRuns": 1,
+      "mode": "mixed",
+      "concurrency": {
+        "peak": 1,
+        "simultaneousRunsProved": false,
+        "selectedRuns": 1
+      },
+      "evidence": "docker-mixed-one-cycle-audit.json",
+      "totals": {
+        "plannedCommands": 554,
+        "completedCommands": 634,
+        "bashStepsVerified": 550,
+        "conversations": 1,
+        "children": 1
+      }
+    },
+    "final-source-filesystem-three-cycle": {
+      "status": "passed",
+      "expectedRuns": 1,
+      "auditedRuns": 1,
+      "completedRuns": 1,
+      "mode": "filesystem",
+      "evidence": "final-source-filesystem-three-cycle-audit.json",
+      "concurrency": {
+        "peak": 2,
+        "simultaneousRunsProved": false,
+        "selectedRuns": 1
+      },
+      "totals": {
+        "plannedCommands": 1004,
+        "completedCommands": 1128,
+        "bashStepsVerified": 1001,
+        "conversations": 2,
+        "children": 3
+      }
+    },
+    "final-source-mixed-one-cycle": {
+      "status": "passed",
+      "expectedRuns": 1,
+      "auditedRuns": 1,
+      "completedRuns": 1,
+      "mode": "mixed",
+      "evidence": "final-source-mixed-one-cycle-audit.json",
+      "concurrency": {
+        "peak": 1,
+        "simultaneousRunsProved": false,
+        "selectedRuns": 1
+      },
+      "totals": {
+        "plannedCommands": 553,
+        "completedCommands": 633,
+        "bashStepsVerified": 550,
+        "conversations": 1,
+        "children": 1
+      }
+    }
+  },
+  "perProjectAuditedNativeFilesystem": [
+    {
+      "template": "design",
+      "conversations": 2,
+      "subagentSessions": 3,
+      "maxMainTurns": 6,
+      "maxChildTurns": 5,
+      "bashSteps": 2933,
+      "savedBranches": 55,
+      "savedCommits": 2400
+    },
+    {
+      "template": "billing",
+      "conversations": 3,
+      "subagentSessions": 6,
+      "maxMainTurns": 5,
+      "maxChildTurns": 4,
+      "bashSteps": 3255,
+      "savedBranches": 60,
+      "savedCommits": 2664
+    },
+    {
+      "template": "sdk",
+      "conversations": 4,
+      "subagentSessions": 11,
+      "maxMainTurns": 4,
+      "maxChildTurns": 3,
+      "bashSteps": 3899,
+      "savedBranches": 70,
+      "savedCommits": 3192
+    },
+    {
+      "template": "evaluation",
+      "conversations": 4,
+      "subagentSessions": 11,
+      "maxMainTurns": 5,
+      "maxChildTurns": 4,
+      "bashSteps": 4865,
+      "savedBranches": 85,
+      "savedCommits": 3984
+    },
+    {
+      "template": "embeddings",
+      "conversations": 5,
+      "subagentSessions": 16,
+      "maxMainTurns": 5,
+      "maxChildTurns": 4,
+      "bashSteps": 6153,
+      "savedBranches": 105,
+      "savedCommits": 5040
+    },
+    {
+      "template": "compiler",
+      "conversations": 6,
+      "subagentSessions": 25,
+      "maxMainTurns": 5,
+      "maxChildTurns": 4,
+      "bashSteps": 7763,
+      "savedBranches": 130,
+      "savedCommits": 6360
+    },
+    {
+      "template": "gateway",
+      "conversations": 7,
+      "subagentSessions": 32,
+      "maxMainTurns": 6,
+      "maxChildTurns": 5,
+      "bashSteps": 9695,
+      "savedBranches": 160,
+      "savedCommits": 7944
+    },
+    {
+      "template": "website",
+      "conversations": 8,
+      "subagentSessions": 40,
+      "maxMainTurns": 6,
+      "maxChildTurns": 5,
+      "bashSteps": 12271,
+      "savedBranches": 200,
+      "savedCommits": 10056
+    }
+  ],
+  "limits": {
+    "maxConversationsPerProject": 8,
+    "maxSubagentsPerConversation": 8,
+    "maxTurnsPerAgent": 10,
+    "observedMaxMainTurns": 6,
+    "observedMaxChildTurns": 5,
+    "maxConcurrentCLI": 12
+  },
+  "tests": {
+    "root": {
+      "passed": 229,
+      "failed": 0,
+      "skipped": 0,
+      "log": "root-tests.log"
+    },
+    "host": {
+      "passed": 418,
+      "failed": 0,
+      "skipped": 2,
+      "log": "host-tests.log"
+    },
+    "focusedMemoryRetention": {
+      "passed": 19,
+      "failed": 0,
+      "skipped": 0,
+      "log": "memory-fix-tests.log",
+      "note": "Focused tests overlap the host suite; do not add these as distinct coverage."
+    },
+    "desktopTypecheck": "passed",
+    "desktopBuild": "passed"
+  },
+  "performance": {
+    "sseBytesPer10Seconds": {
+      "before": 108687672,
+      "after": 297498,
+      "evidence": "backend-performance.json"
+    },
+    "pageProtocol45Seconds": {
+      "apiGETsBefore": 70,
+      "apiGETsAfter": 39,
+      "longTasksBefore": 193,
+      "longTasksAfter": 7,
+      "longTaskMillisBefore": 15051,
+      "longTaskMillisAfter": 648,
+      "evidence": "page-performance/summary.json"
+    },
+    "sidebar": {
+      "passed": true,
+      "runningAtStart": 18,
+      "samples": 20,
+      "durationMs": 10000,
+      "confirmedCommandsDuringCheck": 639,
+      "positionChanges": 0
+    },
+    "caveats": [
+      "Combined backend and renderer measurements; individual changes were not isolated.",
+      "The real Store/project catalog grew between before and after samples.",
+      "The before page sample did not record JavaScript heap; after-only heap is in page-performance/interactions.json."
+    ]
+  },
+  "pendingChecks": [],
+  "notes": [
+    "Successful batches retain fresh independent Stores, project names, saved Pi main/child histories, explicit Bash commands and CLI receipts.",
+    "plannedCommands includes setup and authored history; completedCommands additionally includes real verification reads.",
+    "Repeated batches select two independent runs of the same template; some run IDs also appear in a full batch, so totals must not be summed across batches.",
+    "Large original manifests/plans/journals/transcripts remain in the private state; this checked-in evidence keeps bounded summaries and logs.",
+    "Earlier interrupted/pre-performance attempts and the diagnosed Native lifecycle race are retained separately and are not passing final proofs."
+  ],
+  "restart": {
+    "passed": true,
+    "apiEvidence": "restored-api.json",
+    "browserEvidence": "chat-performance/restored/restore.json",
+    "counts": {
+      "runs": 16,
+      "conversations": 78,
+      "children": 288,
+      "bashSteps": 131820,
+      "maxUserTurns": 6
+    }
+  },
+  "coverage": {
+    "fullProfiles": [
+      "native"
+    ],
+    "focusedRemote": [
+      "docker"
+    ],
+    "browserWindowSizes": [
+      "1280x820",
+      "900x600"
+    ],
+    "notExercised": [
+      "Lima simulation execution",
+      "native Electron GUI",
+      "packaged macOS application"
+    ]
+  },
+  "naturalTurnDensity": "natural-turn-density.json",
+  "sourceEvidence": "source-hashes.json",
+  "sourceDifference": "Full production batches used the same final execution code except two lines releasing unused compiled.files strings. The private host was restarted afterward, all 16 full histories were verified, and fresh three-cycle filesystem and one-cycle Mixed runs passed with the retention fix loaded.",
+  "workspaceSessionsAuditedNativeMixed": 7536,
+  "negativePreflight": {
+    "passed": true,
+    "evidence": "stopped-machine-preflight.json",
+    "expectedFailedRun": "52b93166-3341-403f-8e93-8b06ff24eb68",
+    "storeCreated": false
+  },
+  "terminalStateEvidence": "final-host-state.json"
+}

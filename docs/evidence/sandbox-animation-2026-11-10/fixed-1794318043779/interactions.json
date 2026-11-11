@@ -1,0 +1,28 @@
+{
+  "checkedAt": "2026-11-10T13:44:43.982Z",
+  "checks": [
+    "The selected child route focuses its actual saved child identity; activity rows are bounded to fifty",
+    "Open Trace navigates to the selected child’s actual saved Trace",
+    "Sandbox detail → Workspaces reports zero mounted resources after the actual unmounts",
+    "Back restores the sandbox map and selected child"
+  ],
+  "errors": [],
+  "sizes": [
+    {
+      "width": 900,
+      "height": 600,
+      "overflow": false,
+      "playing": "false",
+      "packets": 0,
+      "agents": 2
+    },
+    {
+      "width": 1280,
+      "height": 820,
+      "overflow": false,
+      "playing": "false",
+      "packets": 0,
+      "agents": 2
+    }
+  ]
+}

@@ -1,0 +1,45 @@
+{
+  "checkedAt": "2026-11-10T13:10:08.703Z",
+  "url": "http://127.0.0.1:1025/#/chat/b0889690-0242-4c99-b184-808ae4355f38/subagents/a01-worker/sandboxes",
+  "reducedMotion": false,
+  "viewport": {
+    "width": 1512,
+    "height": 756
+  },
+  "runningChats": 0,
+  "samples": [
+    {
+      "at": 620318.1999999881,
+      "playing": "false",
+      "agentNodes": 0,
+      "workspaceNodes": 0,
+      "wires": 0,
+      "movingPackets": 0,
+      "motionElements": 0,
+      "animations": []
+    },
+    {
+      "at": 621120.2999999523,
+      "playing": "false",
+      "agentNodes": 0,
+      "workspaceNodes": 0,
+      "wires": 0,
+      "movingPackets": 0,
+      "motionElements": 0,
+      "animations": []
+    }
+  ],
+  "linkedChild": {
+    "state": "completed",
+    "turns": 5,
+    "successfulBashSteps": 2005,
+    "pendingBashSteps": 0
+  },
+  "conclusion": "Live sandbox animation is not wired in the current resource view. This completed child is correctly idle; source also supplies empty actor/event data and leaves playing false.",
+  "source": {
+    "resourceAdapter": "desktop/src/renderer/src/components/sandbox/ProjectSandboxes.tsx",
+    "renderer": "desktop/src/renderer/src/components/sandbox/SandboxMap.tsx",
+    "details": "desktop/src/renderer/src/components/sandbox/HostSandboxDetail.tsx"
+  },
+  "applicationChanges": false
+}

@@ -2,8 +2,10 @@
 // goes through Electron main (connect-bridge.ts); the host's token never
 // reaches the renderer.
 import { connectBridge } from '@/layerfs/bridge'
-import { exampleChatReply } from '@/layerfs/chat-sim'
-import type { BackupFile, CommitInfo, DemoDetail, DemoSummary, DoctorReport, FsEntry, HostEvent, HostStatus, MachinesView, NewMachine, NewProjectInput, ProjectInitJob, ProjectState, ProjectSummary, RefusalDetail, RunDetail, RunSummary, SandboxInfo, SandboxRecord, StorageJob, StorageView, TracePage } from '@/layerfs/host-api'
+import { desktopAction } from '@/layerfs/activity-action'
+import { ReadFlights } from '@/layerfs/read-flights'
+import type { CliAction } from '../../../../../shared/cli-activity'
+import type { BackupFile, CommitInfo, DemoDetail, DemoSummary, DoctorReport, FsEntry, HostEvent, HostStatus, MachineImages, MachinesView, NewMachine, NewProjectInput, ProjectInitJob, ProjectState, ProjectSummary, RefusalDetail, RunDetail, RunSummary, SandboxInfo, SandboxRecord, StorageJob, StorageView, TracePage } from '@/layerfs/host-api'
 
 /** A refused call: LayerFS's code, its text (naming any status or clearing call) and its detail (entity, phase, op, related). */
 export class HostError extends Error {
@@ -15,6 +17,7 @@ export class HostError extends Error {
     /** A layout 2 home's conversion refusal: the app shows the upgrade screen. */
     readonly conversion = false,
     readonly transport?: string,
+    readonly activityId?: string,
   ) {
     super(message)
   }
@@ -37,66 +40,26 @@ export function setConversion(refusal: HostError | null) {
 }
 
 
-/**
- * A read of one address in flight, or queued behind the one in flight.
- * Reads of an address go one at a time: callers while one runs share the next
- * (it starts when that one ends, so it sees what changed meanwhile). A read the
- * host is slow to answer (a project's state under load can take 45 s) then
- * holds one of the browser's six connections to the host, not all of them,
- * and every other call is not left waiting behind them.
- */
-interface Flight {
-  promise: Promise<unknown>
-  started: boolean
-}
-const flights = new Map<string, Flight>()
+const flights = new ReadFlights()
 
-function oneAtATime<T>(path: string, run: () => Promise<T>): Promise<T> {
-  const last = flights.get(path)
-  if (last && !last.started) return last.promise as Promise<T>
-  const flight: Flight = { promise: Promise.resolve(), started: false }
-  const begin = () => {
-    flight.started = true
-    return run()
-  }
-  flight.promise = (last ? last.promise.catch(() => undefined).then(begin) : begin()).finally(() => {
-    if (flights.get(path) === flight) flights.delete(path)
-  })
-  flights.set(path, flight)
-  return flight.promise as Promise<T>
+export function call<T>(method: string, path: string, body?: unknown, activity?: CliAction): Promise<T> {
+  const action = activity ?? desktopAction(method, path)
+  if (method === 'GET') return flights.read(path, () => send<T>(method, path, undefined, action), action.origin === 'user')
+  // A read started before a mutation cannot satisfy its later refresh.
+  flights.invalidate()
+  return send<T>(method, path, body, action).finally(() => flights.invalidate())
 }
 
-/**
- * Dev builds: a simulated host (components/simulation.tsx) answers the calls
- * about its sample home (`route`: a value, or an Error to refuse with) and can
- * add to a real answer (`extend`); every other call goes to the host.
- */
-export interface SimHook {
-  route: (method: string, path: string) => { value: unknown } | null
-  extend?: (method: string, path: string, value: unknown) => unknown
-}
-let sim: SimHook | null = null
-export const setSimHook = (hook: SimHook | null) => {
-  sim = hook
-}
-
-export function call<T>(method: string, path: string, body?: unknown): Promise<T> {
-  const answer = exampleChatReply(method, path) ?? sim?.route(method, path)
-  if (answer) return answer.value instanceof Error ? Promise.reject(answer.value) : Promise.resolve(answer.value as T)
-  const real = method === 'GET' ? oneAtATime(path, () => send<T>(method, path)) : send<T>(method, path, body)
-  return sim?.extend ? real.then((value) => (sim?.extend ? (sim.extend(method, path, value) as T) : value)) : real
-}
-
-async function send<T>(method: string, path: string, body?: unknown): Promise<T> {
+async function send<T>(method: string, path: string, body?: unknown, action?: CliAction): Promise<T> {
   let reply: { status: number; body: unknown }
   try {
-    reply = await connectBridge.request(method, path, body)
+    reply = await connectBridge.request(method, path, body, action)
   } catch (error) {
     throw new HostError('no-host', error instanceof Error ? error.message : String(error), 0)
   }
-  const value = (reply.body ?? {}) as { code?: string; message?: string; detail?: RefusalDetail; conversion?: boolean; transport?: string }
+  const value = (reply.body ?? {}) as { code?: string; message?: string; detail?: RefusalDetail; conversion?: boolean; transport?: string; activityId?: string }
   if (reply.status < 200 || reply.status >= 300) {
-    const error = new HostError(value.code ?? 'failed', value.message ?? `${method} ${path}: ${reply.status}`, reply.status, value.detail ?? null, value.conversion === true, value.transport)
+    const error = new HostError(value.code ?? 'failed', value.message ?? `${method} ${path}: ${reply.status}`, reply.status, value.detail ?? null, value.conversion === true, value.transport, value.activityId)
     if (error.conversion) setConversion(error)
     throw error
   }
@@ -128,15 +91,16 @@ export const host = {
   inspectMachine: (name: string) => call<{ state?: string; observedAt: number }>('GET', `/api/machines/${enc(name)}/inspect`),
   machines: () => call<MachinesView>('GET', '/api/machines'),
   /** A VM. */
-  createMachine: (input: NewMachine) => call<unknown>('POST', '/api/machines', input),
+  createMachine: (input: NewMachine, activity?: CliAction) => call<unknown>('POST', '/api/machines', input, activity),
   /** machine.start: a stopped machine and its worker (nothing else starts one, #535 D11). */
-  startMachine: (name: string) => call<unknown>('POST', `/api/machines/${enc(name)}/start`),
+  startMachine: (name: string, activity?: CliAction) => call<unknown>('POST', `/api/machines/${enc(name)}/start`, undefined, activity),
   /** machine.stop: refused InUse while Sandboxes run on it (detail.related names them). */
   stopMachine: (name: string) => call<unknown>('POST', `/api/machines/${enc(name)}/stop`),
   /** Removes a VM; refused InUse while it holds Stores or running Sandboxes. */
   removeMachine: (name: string) => call<unknown>('DELETE', `/api/machines/${enc(name)}`),
   /** A built-in's { image, docker, wsl }, or a VM's { cpus, memory }. */
   updateMachine: (name: string, changes: { image?: string; docker?: string; wsl?: string; cpus?: number; memory?: number }) => call<unknown>('POST', `/api/machines/${enc(name)}/update`, changes),
+  machineImages: (name: string) => call<MachineImages>('GET', `/api/machines/${enc(name)}/images`),
   projects: () => call<ProjectSummary[]>('GET', '/api/projects'),
   /** A new project: Init from `input.source` (absolute) or empty; into the existing Store `input.store` when given, else a new Store (layerfs#506). */
   createProject: (input: NewProjectInput) => call<ProjectInitJob>('POST', '/api/projects', input),
@@ -146,8 +110,8 @@ export const host = {
   project: (project: string) => call<ProjectState>('GET', `${at(project)}`),
   /** The project's recorded Sandboxes; opening detail reads Workspaces on demand. */
   projectSandboxes: (project: string) => call<SandboxInfo[]>('GET', `${at(project)}/sandboxes`),
-  /** A new Sandbox on `platform` (layerfs#529 sandbox.create({ platform })); left out, the home's default. */
-  createSandbox: (project: string, input: { name: string; image?: string; machine?: string }) => call<SandboxRecord>('POST', `${at(project)}/sandboxes`, input),
+  /** A Sandbox on its Store's machine, or the selected PostgreSQL machine; archives are caller-local files. */
+  createSandbox: (project: string, input: { name: string; image?: string | { archive: string; digest?: string }; machine?: string }) => call<SandboxRecord>('POST', `${at(project)}/sandboxes`, input),
   /** sandbox.close; `force` closes it with Workspaces whose state LayerFS cannot learn (listed in `unknown`). */
   closeSandbox: (name: string, force = false) => call<{ kind: string; closed: string; unknown: string[] }>('DELETE', `/api/sandboxes/${enc(name)}${q({ force: force ? '1' : undefined })}`),
   /** One Sandbox with its Workspaces (sandbox.get). */

@@ -1,0 +1,20 @@
+{
+  "hash": "9250c5b93db8083d88d138869db2a7075e19a29b7a76dd16aeb03ac9fa948e9f",
+  "version": "2.0.0",
+  "platform": "linux-aarch64",
+  "profile": "debug",
+  "image": "sha256:1d91885de27a20805af0d1b99602ace066f0514983613e391ee1f73ac8e7c2e9",
+  "saved_from": "sha256:afa1ef9c27294f9c7298820c06483e6fb1ddafc43a7cc7d6dec8cd2e67abf38e",
+  "source": {
+    "head": "833d04cf44e8e747929d50ab1170a48260d9381c",
+    "sha256": "7ed0ffa315e8d615ceebe5045b6a8a5b27cb4fbe23c33783fcd14f5dde3a74fb"
+  },
+  "toolchain": "1.85.1",
+  "files": {
+    "layerfs": "7150a2bb8ef0158d1aaa22a95bf47132931ce0b6e7e900719297e2f6288358bd",
+    "layerfs-daemon": "e834aaf1e7530fd8b59d194f05d87e851ee01abce2c73229a4281d471918d334",
+    "layerfs-sandbox-helper": "412419d3fff1869d1b72e427000a5cbbc9c7e7d254839c0fada8b2c53bb03447",
+    "sandbox-image.tar": "1dc21eb88836c2bfc1aa021fcf16c8e70f74d13e77d17f7669fe0d4b344394a9"
+  },
+  "at": "2026-11-08T21:44:09.308522+00:00"
+}

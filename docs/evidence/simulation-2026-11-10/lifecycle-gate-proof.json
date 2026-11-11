@@ -1,0 +1,86 @@
+{
+  "note": "Real full Mixed run after lifecycle admission fix; before later Bash and natural-turn changes. Full final source proof is separate.",
+  "state": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/layerfs-simulation-final-12Ew3R",
+  "runs": [
+    {
+      "id": "136f4dda-c078-4a2f-8628-fb3802ca23c1",
+      "template": "design",
+      "state": "completed",
+      "commands": 4665,
+      "workspaceSessions": 432,
+      "checkedSandboxCount": 1,
+      "checkedWorkspaceCalls": 2592,
+      "lifecycleAdmissionVerified": true
+    },
+    {
+      "id": "31838653-9be8-477c-987b-3f773f2d433a",
+      "template": "billing",
+      "state": "completed",
+      "commands": 5179,
+      "workspaceSessions": 480,
+      "checkedSandboxCount": 1,
+      "checkedWorkspaceCalls": 2880,
+      "lifecycleAdmissionVerified": true
+    },
+    {
+      "id": "722b153c-d959-47ad-ab2a-97bf81dacff4",
+      "template": "sdk",
+      "state": "completed",
+      "commands": 6207,
+      "workspaceSessions": 576,
+      "checkedSandboxCount": 1,
+      "checkedWorkspaceCalls": 3456,
+      "lifecycleAdmissionVerified": true
+    },
+    {
+      "id": "6414650a-892a-471c-b757-01a3e2b5a10c",
+      "template": "evaluation",
+      "state": "completed",
+      "commands": 7749,
+      "workspaceSessions": 720,
+      "checkedSandboxCount": 1,
+      "checkedWorkspaceCalls": 4320,
+      "lifecycleAdmissionVerified": true
+    },
+    {
+      "id": "92cfb7a0-b433-48fc-891e-fff204c2a4cd",
+      "template": "embeddings",
+      "state": "completed",
+      "commands": 9805,
+      "workspaceSessions": 912,
+      "checkedSandboxCount": 1,
+      "checkedWorkspaceCalls": 5472,
+      "lifecycleAdmissionVerified": true
+    },
+    {
+      "id": "62fd6ed6-793c-4b52-8798-b15eadd8de39",
+      "template": "compiler",
+      "state": "completed",
+      "commands": 12375,
+      "workspaceSessions": 1152,
+      "checkedSandboxCount": 1,
+      "checkedWorkspaceCalls": 6912,
+      "lifecycleAdmissionVerified": true
+    },
+    {
+      "id": "dd94ed37-2e3d-47a9-9255-48739745a592",
+      "template": "gateway",
+      "state": "completed",
+      "commands": 15459,
+      "workspaceSessions": 1440,
+      "checkedSandboxCount": 1,
+      "checkedWorkspaceCalls": 8640,
+      "lifecycleAdmissionVerified": true
+    },
+    {
+      "id": "50dfbbd8-561d-4eb5-8459-89875bb81c65",
+      "template": "website",
+      "state": "completed",
+      "commands": 19571,
+      "workspaceSessions": 1824,
+      "checkedSandboxCount": 1,
+      "checkedWorkspaceCalls": 10944,
+      "lifecycleAdmissionVerified": true
+    }
+  ]
+}

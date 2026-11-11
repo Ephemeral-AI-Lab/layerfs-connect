@@ -40,63 +40,9 @@ Storage: partial-history notice / totals unavailable; shared Store disk usage la
 
 Page wrappers own routes and chat context. Shared features never import page implementations.
 History reads project metadata without a chat; the chat wrapper alone supplies trace lookup/links.
-SandboxMap receives view data. Real projects use host resources; Example chat alone uses the
-simulation adapter in `layerfs/simulation/ProjectSandboxPreview.tsx`. Missing activity and agent
-ownership are described as unavailable, never filled with scenario data.
-Store disk bytes include all projects sharing that Store; project commit charts retain their scope.
+SandboxMap receives actual host observations. Missing activity, metrics and agent
+ownership remain explicitly unavailable. Files and History have no local fixture path.
 
-Storage `shop/api/history` in development simulation also previews saved-version comparisons.
-Its graph opens a separate `/history/diff` page with Back to History, From/To selectors,
-changed paths and shared Content/Attribution/Code/Blame views are specified in `chat-history.md` under Storage SDK comparison preview. It uses the same
-local saved trees as Files; the labeled exit control restores host-backed History.
-
-## Files SDK proposal preview (development simulation)
-
-Source: `components/files/FilesTab.tsx`, `FileExplorerPreview.tsx`, `file-preview-data.ts`, `files.css`.
-The development simulated `shop/api` Files view opens this local read-only preview by default.
-Other projects and real/production mode retain the host-backed Files view. The frame, branch
-picker, lazy directory tree, search and open file tabs are shared; no separate demo page exists.
-SDK proposal copy: `docs/sdk-branch-file-proposal.md`. No proposed SDK calls are made.
-
-```text
-[1] File history preview - Sample data - read-only          [Browse host files]
-+-[2] Files ----------------+-[3] Open files ---------------------------------+
-| [main                  v] | login.js [x]                                    |
-| Project core content      | src/routes/login.js               13 lines      |
-| [Find in opened folders]  | [4] Code Compare Attribution Blame Revisions    |
-| v src                     | [Latest v]                           [Commits] |
-|   v routes                | [5] a81e30f2 Publish structured login responses  |
-|       login.js            +-------------------------------+-[6] Commits ---+
-|       orders.js           | [7] Selected file view         | commit rows    |
-|   test                    |                               | [<] Page 1 [>] |
-|   assets                  | Code: saved content            |                |
-|   README.md               | Compare: source, swap, diff    | Selected commit|
-|   package.json            | Blame: owner per line          | ancestry, time |
-|                           | Attribution: compare owners   | changed paths  |
-|                           | Revisions: filter, rows, pages |                |
-|                           |                               | [Browse files] |
-+---------------------------+-------------------------------+----------------+
-| [8] Saved content - Project core                  Latest - a81e30f2 - 0644 |
-+----------------------------------------------------------------------------+
-```
-
-| [n] | Region | Behavior |
-|---|---|---|
-| 1 | Preview notice | Labels every fixture as sample data; exit opens the original host files, with a return control |
-| 2 | Shared Files sidebar | main is core content; side branches are based on main; switching branch resets to latest saved content |
-| 3 | Shared open files | Open/close tabs and search loaded folders; saved commit changes reload the same tree at that revision |
-| 4 | File views and saved commit | Arrow/Home/End keys move view tabs; saved selector includes inherited commits; Commits toggles inspector |
-| 5 | Last change | Opens the actual sample commit that changed this file, even if a later branch commit touched another file |
-| 6 | Commit inspector | Branch-own commit list with page/page-size controls; selected inherited details retain originating branch; Escape or close dismisses |
-| 7 | File body | Compare with previous/main/other branch/any saved commit, swap sides, expand changed paths; attribution compares both owners, including identical text; blame owners open details; revisions filter and page, open old content or compare with parent |
-| 8 | Status | Saved/historical content and pinned commit identity; no live Workspace overlay implied |
-
-Revisions distinguish file changes from all branch commits and include inherited provenance.
-Compare source/target IDs are pinned by local immutable fixtures. Diff +/- and status labels
-accompany colors. Binary files show size and revisions instead of code/blame; absent historical
-files explain absence and link to latest. Empty filters offer Clear filters. First/last page
-controls disable appropriately. At compact desktop sizes, commit details overlay the file
-body with a close control instead of squeezing the editor. No native desktop behavior is tested.
 
 ## Unified sandbox navigation
 
@@ -134,3 +80,35 @@ Saved ‹id›           path · size · saved ‹id›
 3. Binary and absent paths are file states. Clipped/partial/omitted data stays visible.
    Revision continuation repeats pin, traversal and page size, omitting page.
    Comparison and attribution use server rows; unknown owners remain Unknown.
+
+## Measured project Storage (2026-11-10)
+
+```text
+[Project saved tree · main ‹saved id› · Complete/Incomplete]
+[Saved size by revision]                              [Branch ▼]
+logical tree bytes across immutable saved revisions
+[Recorded Save stored-byte bars, when Commit rows exist]
+> Exact measurements                              [Load earlier]
+[Project canonical reuse · ‹full key›] [Analyze saved revisions]
+[Entire Store encoding / allocation / observed allocation]
+```
+
+Project tree counts and logical file bytes come from the same immutable main
+pin. History is independently selectable by branch and pinned while paging.
+Publication Layers have unknown Save additions and publication time; source
+Commit time is not substituted. Save metadata bytes are included in stored
+bytes. The Store charts below include all projects and retained history, with
+their scope visible. Shared components live in `components/storage/`; see the
+storage-analysis section of `storage.md` for accounting and observation rules.
+Project Storage automatically calls `project.storage_report` for up to 20 selected
+saved revisions. Store analysis is a separate action on the Store detail page;
+it compares selected projects' current main snapshots with its own scope.
+
+## Current storage layout (2026-11-10)
+
+The chart-first storage story supersedes the earlier saved-tree/Store panel order.
+Latest main raw file size and counts remain visible independently of selected branch.
+Automatically loaded bounded selected-revision analysis leads with referenced → unique → encoded stages
+and a canonical reuse ring; missing encoded accounting remains unknown. History and
+its selected-revision inspector follow. Global Store allocation is linked from the
+footer and appears on the Store page. See `storage.md` “Desktop storage analysis” for the current ASCII layout and accounting/animation rules.

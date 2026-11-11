@@ -1,0 +1,151 @@
+{
+  "parent": "833d04cf44e8e747929d50ab1170a48260d9381c",
+  "staged_tree": "84291eb9a06cd740236490d362c37ea99d4e212c",
+  "counter_sha256": "d3148db88f91b09eb74eb659b2f700209776a24d022f09774dc7bb38ea1eecf6",
+  "method": "production_loc.py from parent, identical snapshot scope, plus shipped guest identity.py and two systemd services; development preparation/sanitation tools excluded",
+  "snapshots": {
+    "before": {
+      "scopes": {
+        "core": {
+          "files": 248,
+          "lines": 39749,
+          "crates": {
+            "layerfs-content": 26489,
+            "layerfs-history": 1038,
+            "layerfs-storage": 9942,
+            "layerfs-telemetry": 2280
+          }
+        },
+        "engine": {
+          "files": 669,
+          "lines": 73079,
+          "crates": {
+            "layerfs-bridge": 4124,
+            "layerfs-daemon": 7528,
+            "layerfs-fuse": 3319,
+            "layerfs-mount-ports": 1296,
+            "layerfs-nfs": 3358,
+            "layerfs-overlay": 10101,
+            "layerfs-persistence": 17195,
+            "layerfs-project": 2381,
+            "layerfs-store-service": 14307,
+            "layerfs-workspace": 9470
+          }
+        },
+        "control": {
+          "files": 322,
+          "lines": 38072,
+          "crates": {
+            "layerfs-bucket": 3788,
+            "layerfs-control": 5351,
+            "layerfs-home": 1866,
+            "layerfs-machine": 1889,
+            "layerfs-platform": 2995,
+            "layerfs-sandbox": 7829,
+            "layerfs-sandbox-backend": 5789,
+            "layerfs-store": 8565
+          }
+        },
+        "reference": {
+          "files": 0,
+          "lines": 0,
+          "crates": {}
+        },
+        "api": {
+          "files": 114,
+          "lines": 4966,
+          "crates": {
+            "@layerfs/node": 162,
+            "layerfs-api": 3089,
+            "layerfs-cli": 1231,
+            "layerfs-node": 97,
+            "layerfs-python": 55,
+            "layerfs-python-package": 332
+          }
+        },
+        "dsh": {
+          "files": 0,
+          "lines": 0,
+          "crates": {}
+        }
+      },
+      "combined": 155866,
+      "guest_runtime": {},
+      "product_total": 155866
+    },
+    "after": {
+      "scopes": {
+        "core": {
+          "files": 248,
+          "lines": 39749,
+          "crates": {
+            "layerfs-content": 26489,
+            "layerfs-history": 1038,
+            "layerfs-storage": 9942,
+            "layerfs-telemetry": 2280
+          }
+        },
+        "engine": {
+          "files": 669,
+          "lines": 73079,
+          "crates": {
+            "layerfs-bridge": 4124,
+            "layerfs-daemon": 7528,
+            "layerfs-fuse": 3319,
+            "layerfs-mount-ports": 1296,
+            "layerfs-nfs": 3358,
+            "layerfs-overlay": 10101,
+            "layerfs-persistence": 17195,
+            "layerfs-project": 2381,
+            "layerfs-store-service": 14307,
+            "layerfs-workspace": 9470
+          }
+        },
+        "control": {
+          "files": 325,
+          "lines": 38511,
+          "crates": {
+            "layerfs-bucket": 3788,
+            "layerfs-control": 5354,
+            "layerfs-home": 1866,
+            "layerfs-machine": 2111,
+            "layerfs-platform": 3209,
+            "layerfs-sandbox": 7829,
+            "layerfs-sandbox-backend": 5789,
+            "layerfs-store": 8565
+          }
+        },
+        "reference": {
+          "files": 0,
+          "lines": 0,
+          "crates": {}
+        },
+        "api": {
+          "files": 114,
+          "lines": 4970,
+          "crates": {
+            "@layerfs/node": 162,
+            "layerfs-api": 3093,
+            "layerfs-cli": 1231,
+            "layerfs-node": 97,
+            "layerfs-python": 55,
+            "layerfs-python-package": 332
+          }
+        },
+        "dsh": {
+          "files": 0,
+          "lines": 0,
+          "crates": {}
+        }
+      },
+      "combined": 156309,
+      "guest_runtime": {
+        "identity.py": 65,
+        "identity.service": 11,
+        "boot.service": 12
+      },
+      "product_total": 156397
+    }
+  },
+  "delta": 531
+}

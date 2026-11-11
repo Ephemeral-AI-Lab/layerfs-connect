@@ -1,0 +1,101 @@
+{
+  "results": [
+    {
+      "name": "project: branch, analysis, older revision via bar",
+      "url": "http://127.0.0.1:1025/?mac=1&storage-layout=1#/storage/demo-studio/website/storage",
+      "width": 1280,
+      "overflow": false,
+      "panels": [
+        "Canonical reuse"
+      ],
+      "alerts": []
+    },
+    {
+      "name": "project width 900",
+      "url": "http://127.0.0.1:1025/?mac=1&storage-layout=1#/storage/demo-studio/website/storage",
+      "width": 900,
+      "overflow": false,
+      "panels": [
+        "Canonical reuse"
+      ],
+      "alerts": []
+    },
+    {
+      "name": "project width 768",
+      "url": "http://127.0.0.1:1025/?mac=1&storage-layout=1#/storage/demo-studio/website/storage",
+      "width": 768,
+      "overflow": false,
+      "panels": [
+        "Canonical reuse"
+      ],
+      "alerts": []
+    },
+    {
+      "name": "Store link and encoding",
+      "url": "http://127.0.0.1:1025/?mac=1&storage-layout=1#/storage/demo-studio",
+      "width": 1280,
+      "overflow": false,
+      "panels": [
+        "Observed storage growth",
+        "Project snapshot analysis"
+      ],
+      "alerts": []
+    },
+    {
+      "name": "Store selected projects analysis",
+      "url": "http://127.0.0.1:1025/?mac=1&storage-layout=1#/storage/demo-studio",
+      "width": 1280,
+      "overflow": false,
+      "panels": [
+        "Observed storage growth",
+        "Project snapshot analysis"
+      ],
+      "alerts": []
+    },
+    {
+      "name": "Store subset reanalysis",
+      "url": "http://127.0.0.1:1025/?mac=1&storage-layout=1#/storage/demo-studio",
+      "width": 1280,
+      "overflow": false,
+      "panels": [
+        "Observed storage growth",
+        "Project snapshot analysis"
+      ],
+      "alerts": []
+    },
+    {
+      "name": "Store width 900",
+      "url": "http://127.0.0.1:1025/?mac=1&storage-layout=1#/storage/demo-studio",
+      "width": 900,
+      "overflow": false,
+      "panels": [
+        "Observed storage growth",
+        "Project snapshot analysis"
+      ],
+      "alerts": []
+    },
+    {
+      "name": "Store width 768",
+      "url": "http://127.0.0.1:1025/?mac=1&storage-layout=1#/storage/demo-studio",
+      "width": 768,
+      "overflow": false,
+      "panels": [
+        "Observed storage growth",
+        "Project snapshot analysis"
+      ],
+      "alerts": []
+    },
+    {
+      "name": "reduced motion",
+      "animations": [
+        "none",
+        "none",
+        "none",
+        "none",
+        "none",
+        "none"
+      ]
+    }
+  ],
+  "errors": []
+}

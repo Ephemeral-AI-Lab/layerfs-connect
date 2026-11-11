@@ -1,0 +1,938 @@
+[
+  {
+    "receipt": "/Users/yifanxu/.cache/layerfs-worktrees/layerfs-machine-start-c17e354c8815/builds/cargo-macos-1354f78fe82c42e1893160a31ceb250a/receipt.json",
+    "details": {
+      "status": "failed",
+      "error": "Command exited 101; inspect /Users/yifanxu/.cache/layerfs-worktrees/layerfs-machine-start-c17e354c8815/builds/cargo-macos-1354f78fe82c42e1893160a31ceb250a/output.log",
+      "command": [
+        "cargo",
+        "+1.85.1",
+        "test",
+        "--manifest-path",
+        "Cargo.toml",
+        "--locked",
+        "--offline",
+        "-p",
+        "layerfs-platform",
+        "--test",
+        "guest_artifacts",
+        "-j",
+        "4"
+      ]
+    },
+    "test_summaries": [
+      "test result: FAILED. 0 passed; 2 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.17s"
+    ]
+  },
+  {
+    "receipt": "/Users/yifanxu/.cache/layerfs-worktrees/layerfs-machine-start-c17e354c8815/builds/cargo-macos-3af47aa114324e2f951c20f3e3b35e7b/receipt.json",
+    "details": {
+      "status": "passed",
+      "command": [
+        "cargo",
+        "+1.85.1",
+        "test",
+        "--manifest-path",
+        "Cargo.toml",
+        "--locked",
+        "--offline",
+        "-p",
+        "layerfs-machine",
+        "--features",
+        "machine",
+        "-j",
+        "4"
+      ],
+      "at": "2026-11-09T13:17:38.972808+00:00"
+    },
+    "test_summaries": [
+      "test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+      "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+      "test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.21s",
+      "test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.16s",
+      "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+      "test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s",
+      "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.02s",
+      "test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+    ]
+  },
+  {
+    "receipt": "/Users/yifanxu/.cache/layerfs-worktrees/layerfs-machine-start-c17e354c8815/builds/cargo-macos-4627a06066364e419b3ceafc39129b6b/receipt.json",
+    "details": {
+      "status": "passed",
+      "command": [
+        "cargo",
+        "+1.85.1",
+        "test",
+        "--manifest-path",
+        "Cargo.toml",
+        "--locked",
+        "--offline",
+        "-p",
+        "layerfs-platform",
+        "--no-run",
+        "-j",
+        "4"
+      ],
+      "at": "2026-11-09T12:39:56.456856+00:00"
+    },
+    "test_summaries": []
+  },
+  {
+    "receipt": "/Users/yifanxu/.cache/layerfs-worktrees/layerfs-machine-start-c17e354c8815/builds/cargo-macos-f1c3167bba7042b08146a0f2e57e9a14/receipt.json",
+    "details": {
+      "status": "passed",
+      "command": [
+        "cargo",
+        "+1.85.1",
+        "test",
+        "--manifest-path",
+        "Cargo.toml",
+        "--locked",
+        "--offline",
+        "-p",
+        "layerfs-api",
+        "--features",
+        "machine,postgresql",
+        "--test",
+        "calls_table",
+        "--test",
+        "progress_options",
+        "--test",
+        "worker_mismatch",
+        "--test",
+        "docker_default_image",
+        "--test",
+        "machine_power",
+        "--test",
+        "machine_refusal_order",
+        "-j",
+        "4"
+      ],
+      "at": "2026-11-09T13:16:45.018934+00:00"
+    },
+    "test_summaries": [
+      "test result: ok. 15 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.09s",
+      "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.63s",
+      "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.64s",
+      "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+      "test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+      "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s"
+    ]
+  },
+  {
+    "receipt": "/Users/yifanxu/.cache/layerfs-worktrees/layerfs-machine-start-c17e354c8815/builds/cargo-macos-d5fc8584a6e145a7bb86f7a20a7cfc35/receipt.json",
+    "details": {
+      "status": "passed",
+      "command": [
+        "cargo",
+        "+1.85.1",
+        "test",
+        "--manifest-path",
+        "Cargo.toml",
+        "--locked",
+        "--offline",
+        "-p",
+        "layerfs-api",
+        "--features",
+        "machine,postgresql",
+        "--test",
+        "machine_power",
+        "--test",
+        "worker_mismatch",
+        "-j",
+        "4"
+      ],
+      "at": "2026-11-09T13:39:44.991385+00:00"
+    },
+    "test_summaries": [
+      "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.66s",
+      "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s"
+    ]
+  },
+  {
+    "receipt": "/Users/yifanxu/.cache/layerfs-worktrees/layerfs-machine-start-c17e354c8815/builds/cargo-macos-e906befef13c42a68e3239a4ec922f7c/receipt.json",
+    "details": {
+      "status": "passed",
+      "command": [
+        "cargo",
+        "+1.85.1",
+        "test",
+        "--manifest-path",
+        "Cargo.toml",
+        "--locked",
+        "--offline",
+        "-p",
+        "layerfs-platform",
+        "--test",
+        "support",
+        "support_json_is_the_rendered_table",
+        "-j",
+        "4"
+      ],
+      "at": "2026-11-09T12:53:32.333628+00:00"
+    },
+    "test_summaries": [
+      "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 3 filtered out; finished in 0.00s"
+    ]
+  },
+  {
+    "receipt": "/Users/yifanxu/.cache/layerfs-worktrees/layerfs-machine-start-c17e354c8815/builds/cargo-macos-2e80deb37dc84bd18f01b5caeb7080d9/receipt.json",
+    "details": {
+      "status": "passed",
+      "command": [
+        "cargo",
+        "+1.85.1",
+        "build",
+        "--manifest-path",
+        "Cargo.toml",
+        "--locked",
+        "--offline",
+        "-p",
+        "layerfs-cli",
+        "--features",
+        "machine,postgresql",
+        "--bin",
+        "layerfs",
+        "-j",
+        "4"
+      ],
+      "at": "2026-11-09T13:11:30.273257+00:00"
+    },
+    "test_summaries": []
+  },
+  {
+    "receipt": "/Users/yifanxu/.cache/layerfs-worktrees/layerfs-machine-start-c17e354c8815/builds/cargo-macos-7e11d6553e804c5ca770621196dfca02/receipt.json",
+    "details": {
+      "status": "failed",
+      "error": "Command exited 101; inspect /Users/yifanxu/.cache/layerfs-worktrees/layerfs-machine-start-c17e354c8815/builds/cargo-macos-7e11d6553e804c5ca770621196dfca02/output.log",
+      "command": [
+        "cargo",
+        "+1.85.1",
+        "test",
+        "--manifest-path",
+        "Cargo.toml",
+        "--locked",
+        "--offline",
+        "-p",
+        "layerfs-machine",
+        "--features",
+        "machine",
+        "--test",
+        "start_compatibility",
+        "-j",
+        "4"
+      ]
+    },
+    "test_summaries": [
+      "test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 60.84s"
+    ]
+  },
+  {
+    "receipt": "/Users/yifanxu/.cache/layerfs-worktrees/layerfs-machine-start-c17e354c8815/builds/cargo-macos-41f9b56b0b3c4250a68a87355b99d9d5/receipt.json",
+    "details": {
+      "status": "passed",
+      "command": [
+        "cargo",
+        "+1.85.1",
+        "test",
+        "--manifest-path",
+        "Cargo.toml",
+        "--locked",
+        "--offline",
+        "-p",
+        "layerfs-platform",
+        "--test",
+        "machine_lima",
+        "--test",
+        "machine_spec",
+        "--test",
+        "guest_artifacts",
+        "-j",
+        "4"
+      ],
+      "at": "2026-11-09T13:26:25.750755+00:00"
+    },
+    "test_summaries": [
+      "test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.66s",
+      "test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.86s",
+      "test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+    ]
+  },
+  {
+    "receipt": "/Users/yifanxu/.cache/layerfs-worktrees/layerfs-machine-start-c17e354c8815/builds/cargo-macos-8d942b26e3ba422a8152af842d601f46/receipt.json",
+    "details": {
+      "status": "passed",
+      "command": [
+        "cargo",
+        "+1.85.1",
+        "test",
+        "--manifest-path",
+        "Cargo.toml",
+        "--locked",
+        "--offline",
+        "-p",
+        "layerfs-platform",
+        "--test",
+        "docker_image_cache",
+        "-j",
+        "4"
+      ],
+      "at": "2026-11-09T12:41:26.133754+00:00"
+    },
+    "test_summaries": [
+      "test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.79s"
+    ]
+  },
+  {
+    "receipt": "/Users/yifanxu/.cache/layerfs-worktrees/layerfs-machine-start-c17e354c8815/builds/cargo-macos-ade425d5e3e048149a8bec714738de2e/receipt.json",
+    "details": {
+      "status": "passed",
+      "command": [
+        "cargo",
+        "+1.85.1",
+        "test",
+        "--manifest-path",
+        "Cargo.toml",
+        "--locked",
+        "--offline",
+        "-p",
+        "layerfs-machine",
+        "--features",
+        "machine",
+        "--test",
+        "bundle_preflight",
+        "-j",
+        "4"
+      ],
+      "at": "2026-11-09T12:43:52.625330+00:00"
+    },
+    "test_summaries": [
+      "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+    ]
+  },
+  {
+    "receipt": "/Users/yifanxu/.cache/layerfs-worktrees/layerfs-machine-start-c17e354c8815/builds/cargo-macos-4dc8f1eb38a94d74b9af2abf91798d09/receipt.json",
+    "details": {
+      "status": "passed",
+      "command": [
+        "cargo",
+        "+1.85.1",
+        "build",
+        "--manifest-path",
+        "Cargo.toml",
+        "--locked",
+        "--offline",
+        "-p",
+        "layerfs-cli",
+        "--features",
+        "machine,postgresql",
+        "--bin",
+        "layerfs",
+        "-j",
+        "4"
+      ],
+      "at": "2026-11-09T13:41:43.507537+00:00"
+    },
+    "test_summaries": []
+  },
+  {
+    "receipt": "/Users/yifanxu/.cache/layerfs-worktrees/layerfs-machine-start-c17e354c8815/builds/cargo-macos-793d47c45abb45bdbe43ea8538f2c78f/receipt.json",
+    "details": {
+      "status": "passed",
+      "command": [
+        "cargo",
+        "+1.85.1",
+        "test",
+        "--manifest-path",
+        "Cargo.toml",
+        "--locked",
+        "--offline",
+        "-p",
+        "layerfs-machine",
+        "--features",
+        "machine",
+        "--test",
+        "start_compatibility",
+        "-j",
+        "4"
+      ],
+      "at": "2026-11-09T13:38:01.718070+00:00"
+    },
+    "test_summaries": [
+      "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.66s"
+    ]
+  },
+  {
+    "receipt": "/Users/yifanxu/.cache/layerfs-worktrees/layerfs-machine-start-c17e354c8815/builds/cargo-macos-a50a70944c3c478cbaa4aaf96058d096/receipt.json",
+    "details": {
+      "status": "passed",
+      "command": [
+        "cargo",
+        "+1.85.1",
+        "clippy",
+        "--manifest-path",
+        "Cargo.toml",
+        "--locked",
+        "--offline",
+        "-p",
+        "layerfs-machine",
+        "-p",
+        "layerfs-platform",
+        "-p",
+        "layerfs-api",
+        "-p",
+        "layerfs-cli",
+        "--all-targets",
+        "--features",
+        "machine,postgresql",
+        "-j",
+        "4",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "at": "2026-11-09T13:25:16.803019+00:00"
+    },
+    "test_summaries": []
+  },
+  {
+    "receipt": "/Users/yifanxu/.cache/layerfs-worktrees/layerfs-machine-start-c17e354c8815/builds/cargo-macos-7571bee95fc9467abbc0d3e99d67ff6a/receipt.json",
+    "details": {
+      "status": "passed",
+      "command": [
+        "cargo",
+        "+1.85.1",
+        "test",
+        "--manifest-path",
+        "Cargo.toml",
+        "--locked",
+        "--offline",
+        "-p",
+        "layerfs-machine",
+        "--features",
+        "machine",
+        "--test",
+        "image_reuse",
+        "-j",
+        "4"
+      ],
+      "at": "2026-11-09T13:09:02.404244+00:00"
+    },
+    "test_summaries": [
+      "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.94s"
+    ]
+  },
+  {
+    "receipt": "/Users/yifanxu/.cache/layerfs-worktrees/layerfs-machine-start-c17e354c8815/builds/cargo-macos-ba1dd325af2b4b8b9511c95f124415dd/receipt.json",
+    "details": {
+      "status": "passed",
+      "command": [
+        "cargo",
+        "+1.85.1",
+        "test",
+        "--manifest-path",
+        "Cargo.toml",
+        "--locked",
+        "--offline",
+        "-p",
+        "layerfs-cli",
+        "--features",
+        "machine,postgresql",
+        "--test",
+        "argv",
+        "--test",
+        "capabilities",
+        "--test",
+        "progress",
+        "-j",
+        "4"
+      ],
+      "at": "2026-11-09T13:19:34.348104+00:00"
+    },
+    "test_summaries": [
+      "test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.35s",
+      "test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s",
+      "test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.14s"
+    ]
+  },
+  {
+    "receipt": "/Users/yifanxu/.cache/layerfs-worktrees/layerfs-machine-start-c17e354c8815/builds/cargo-macos-13f67fcdce4743578e18f8bea65f3a8a/receipt.json",
+    "details": {
+      "status": "passed",
+      "command": [
+        "cargo",
+        "+1.85.1",
+        "build",
+        "--manifest-path",
+        "Cargo.toml",
+        "--locked",
+        "--offline",
+        "-p",
+        "layerfs-cli",
+        "--features",
+        "machine,postgresql",
+        "--bin",
+        "layerfs",
+        "-j",
+        "4"
+      ],
+      "at": "2026-11-09T13:45:08.903278+00:00"
+    },
+    "test_summaries": []
+  },
+  {
+    "receipt": "/Users/yifanxu/.cache/layerfs-worktrees/layerfs-machine-start-c17e354c8815/builds/cargo-macos-e8657b0cbd4f426498aa16024f93a03a/receipt.json",
+    "details": {
+      "status": "passed",
+      "command": [
+        "cargo",
+        "+1.85.1",
+        "test",
+        "--manifest-path",
+        "Cargo.toml",
+        "--locked",
+        "--offline",
+        "-p",
+        "layerfs-platform",
+        "-j",
+        "4"
+      ],
+      "at": "2026-11-09T13:06:57.114194+00:00"
+    },
+    "test_summaries": [
+      "test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+      "test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.78s",
+      "test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.74s",
+      "test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.73s",
+      "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+      "test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.95s",
+      "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+      "test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.53s",
+      "test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.85s",
+      "test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+      "test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.19s",
+      "test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.89s",
+      "test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.92s",
+      "test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+      "test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+      "test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+    ]
+  },
+  {
+    "receipt": "/Users/yifanxu/.cache/layerfs-worktrees/layerfs-machine-start-c17e354c8815/builds/cargo-macos-c97e56311979496493b2a689f66c4fc9/receipt.json",
+    "details": {
+      "status": "failed",
+      "error": "Command exited 101; inspect /Users/yifanxu/.cache/layerfs-worktrees/layerfs-machine-start-c17e354c8815/builds/cargo-macos-c97e56311979496493b2a689f66c4fc9/output.log",
+      "command": [
+        "cargo",
+        "+1.85.1",
+        "clippy",
+        "--manifest-path",
+        "Cargo.toml",
+        "--locked",
+        "--offline",
+        "-p",
+        "layerfs-machine",
+        "-p",
+        "layerfs-platform",
+        "-p",
+        "layerfs-api",
+        "-p",
+        "layerfs-cli",
+        "--all-targets",
+        "--features",
+        "machine,postgresql",
+        "-j",
+        "4",
+        "--",
+        "-D",
+        "warnings"
+      ]
+    },
+    "test_summaries": []
+  },
+  {
+    "receipt": "/Users/yifanxu/.cache/layerfs-worktrees/layerfs-machine-start-c17e354c8815/builds/cargo-macos-8a29770bf05e4c1bb625dcc8b9cc7146/receipt.json",
+    "details": {
+      "status": "passed",
+      "command": [
+        "cargo",
+        "+1.85.1",
+        "build",
+        "--manifest-path",
+        "Cargo.toml",
+        "--locked",
+        "--offline",
+        "-p",
+        "layerfs-cli",
+        "--features",
+        "machine,postgresql",
+        "--bin",
+        "layerfs",
+        "-j",
+        "4"
+      ],
+      "at": "2026-11-09T12:45:14.667205+00:00"
+    },
+    "test_summaries": []
+  },
+  {
+    "receipt": "/Users/yifanxu/.cache/layerfs-worktrees/layerfs-machine-start-c17e354c8815/builds/cargo-macos-b8af9d0cfcef4207b0e7b7e5ed66c4d0/receipt.json",
+    "details": {
+      "status": "passed",
+      "command": [
+        "cargo",
+        "+1.85.1",
+        "clippy",
+        "--manifest-path",
+        "Cargo.toml",
+        "--locked",
+        "--offline",
+        "-p",
+        "layerfs-machine",
+        "-p",
+        "layerfs-platform",
+        "-p",
+        "layerfs-api",
+        "-p",
+        "layerfs-cli",
+        "--all-targets",
+        "--features",
+        "machine,postgresql",
+        "-j",
+        "4",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "at": "2026-11-09T13:40:57.496015+00:00"
+    },
+    "test_summaries": []
+  },
+  {
+    "receipt": "/Users/yifanxu/.cache/layerfs-worktrees/layerfs-machine-start-c17e354c8815/builds/cargo-macos-4dae4a44ae9a4b1490ff58016b2ac33e/receipt.json",
+    "details": {
+      "status": "failed",
+      "error": "Command exited 101; inspect /Users/yifanxu/.cache/layerfs-worktrees/layerfs-machine-start-c17e354c8815/builds/cargo-macos-4dae4a44ae9a4b1490ff58016b2ac33e/output.log",
+      "command": [
+        "cargo",
+        "+1.85.1",
+        "test",
+        "--manifest-path",
+        "Cargo.toml",
+        "--locked",
+        "--offline",
+        "-p",
+        "layerfs-platform",
+        "--test",
+        "guest_artifacts",
+        "-j",
+        "4"
+      ]
+    },
+    "test_summaries": [
+      "test result: FAILED. 0 passed; 2 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.19s"
+    ]
+  },
+  {
+    "receipt": "/Users/yifanxu/.cache/layerfs-worktrees/layerfs-machine-start-c17e354c8815/builds/cargo-macos-190dbe0435a54d1e8f3cbf29324c1e35/receipt.json",
+    "details": {
+      "status": "passed",
+      "command": [
+        "cargo",
+        "+1.85.1",
+        "build",
+        "--manifest-path",
+        "Cargo.toml",
+        "--locked",
+        "--offline",
+        "-p",
+        "layerfs-cli",
+        "--features",
+        "machine,postgresql",
+        "--bin",
+        "layerfs",
+        "-j",
+        "4"
+      ],
+      "at": "2026-11-09T13:10:32.533197+00:00"
+    },
+    "test_summaries": []
+  },
+  {
+    "receipt": "/Users/yifanxu/.cache/layerfs-worktrees/layerfs-machine-start-c17e354c8815/builds/cargo-macos-fa62a5ed2d64410999d71baed1c10c11/receipt.json",
+    "details": {
+      "status": "passed",
+      "command": [
+        "cargo",
+        "+1.85.1",
+        "build",
+        "--manifest-path",
+        "Cargo.toml",
+        "--locked",
+        "--offline",
+        "-p",
+        "layerfs-cli",
+        "--features",
+        "machine,postgresql",
+        "--bin",
+        "layerfs",
+        "-j",
+        "4"
+      ],
+      "at": "2026-11-09T12:52:01.212608+00:00"
+    },
+    "test_summaries": []
+  },
+  {
+    "receipt": "/Users/yifanxu/.cache/layerfs-worktrees/layerfs-machine-start-c17e354c8815/builds/cargo-macos-7ec39d693e364359835c7ddc546b57bf/receipt.json",
+    "details": {
+      "status": "passed",
+      "command": [
+        "cargo",
+        "+1.85.1",
+        "test",
+        "--manifest-path",
+        "Cargo.toml",
+        "--locked",
+        "--offline",
+        "-p",
+        "layerfs-platform",
+        "--test",
+        "guest_artifacts",
+        "-j",
+        "4"
+      ],
+      "at": "2026-11-09T12:45:29.161087+00:00"
+    },
+    "test_summaries": [
+      "test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.29s"
+    ]
+  },
+  {
+    "receipt": "/Users/yifanxu/.cache/layerfs-worktrees/layerfs-machine-start-c17e354c8815/builds/cargo-macos-fede58e29a73493086dacdd88161a308/receipt.json",
+    "details": {
+      "status": "passed",
+      "command": [
+        "cargo",
+        "+1.85.1",
+        "build",
+        "--manifest-path",
+        "Cargo.toml",
+        "--locked",
+        "--offline",
+        "-p",
+        "layerfs-cli",
+        "--features",
+        "machine,postgresql",
+        "--bin",
+        "layerfs",
+        "-j",
+        "4"
+      ],
+      "at": "2026-11-09T12:59:31.163011+00:00"
+    },
+    "test_summaries": []
+  },
+  {
+    "receipt": "/Users/yifanxu/.cache/layerfs-worktrees/layerfs-machine-start-c17e354c8815/builds/cargo-macos-25ea1f78b26f40fca6dae63b10513dcc/receipt.json",
+    "details": {
+      "status": "passed",
+      "command": [
+        "cargo",
+        "+1.85.1",
+        "build",
+        "--manifest-path",
+        "Cargo.toml",
+        "--locked",
+        "--offline",
+        "-p",
+        "layerfs-cli",
+        "--features",
+        "machine,postgresql",
+        "--bin",
+        "layerfs",
+        "-j",
+        "4"
+      ],
+      "at": "2026-11-09T13:28:00.698951+00:00"
+    },
+    "test_summaries": []
+  },
+  {
+    "receipt": "/Users/yifanxu/.cache/layerfs-worktrees/layerfs-machine-start-c17e354c8815/builds/cargo-macos-54f14820c5c94d5999a9c7705884c15a/receipt.json",
+    "details": {
+      "status": "passed",
+      "command": [
+        "cargo",
+        "+1.85.1",
+        "test",
+        "--manifest-path",
+        "Cargo.toml",
+        "--locked",
+        "--offline",
+        "-p",
+        "layerfs-platform",
+        "--test",
+        "guest_artifacts",
+        "--test",
+        "machine_lima",
+        "-j",
+        "4"
+      ],
+      "at": "2026-11-09T13:43:48.242673+00:00"
+    },
+    "test_summaries": [
+      "test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 6.42s",
+      "test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 7.07s"
+    ]
+  },
+  {
+    "receipt": "/Users/yifanxu/.cache/layerfs-worktrees/layerfs-machine-start-c17e354c8815/builds/cargo-macos-259baf6a87a5480b8225237716fdd532/receipt.json",
+    "details": {
+      "status": "passed",
+      "command": [
+        "cargo",
+        "+1.85.1",
+        "clippy",
+        "--manifest-path",
+        "Cargo.toml",
+        "--locked",
+        "--offline",
+        "-p",
+        "layerfs-machine",
+        "-p",
+        "layerfs-platform",
+        "-p",
+        "layerfs-api",
+        "-p",
+        "layerfs-cli",
+        "--all-targets",
+        "--features",
+        "machine,postgresql",
+        "-j",
+        "4",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "at": "2026-11-09T12:49:55.053667+00:00"
+    },
+    "test_summaries": []
+  },
+  {
+    "receipt": "/Users/yifanxu/.cache/layerfs-worktrees/layerfs-machine-start-c17e354c8815/builds/cargo-macos-909ccc87f16a4b2e9e40bb1ada403ce4/receipt.json",
+    "details": {
+      "status": "passed",
+      "command": [
+        "cargo",
+        "+1.85.1",
+        "test",
+        "--manifest-path",
+        "Cargo.toml",
+        "--locked",
+        "--offline",
+        "-p",
+        "layerfs-machine",
+        "--features",
+        "machine",
+        "-j",
+        "4"
+      ],
+      "at": "2026-11-09T12:48:37.653577+00:00"
+    },
+    "test_summaries": [
+      "test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+      "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+      "test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.21s",
+      "test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.16s",
+      "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+      "test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s",
+      "test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+    ]
+  },
+  {
+    "receipt": "/Users/yifanxu/.cache/layerfs-worktrees/layerfs-machine-start-c17e354c8815/builds/cargo-macos-52b4f9b916a148a0b710f0335f408cb3/receipt.json",
+    "details": {
+      "status": "passed",
+      "command": [
+        "cargo",
+        "+1.85.1",
+        "clippy",
+        "--manifest-path",
+        "Cargo.toml",
+        "--locked",
+        "--offline",
+        "-p",
+        "layerfs-machine",
+        "-p",
+        "layerfs-platform",
+        "-p",
+        "layerfs-api",
+        "-p",
+        "layerfs-cli",
+        "--all-targets",
+        "--features",
+        "machine,postgresql",
+        "-j",
+        "4",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "at": "2026-11-09T13:44:20.670618+00:00"
+    },
+    "test_summaries": []
+  },
+  {
+    "receipt": "/Users/yifanxu/.cache/layerfs-worktrees/layerfs-machine-start-c17e354c8815/builds/cargo-macos-c650d347af594ca4aaaa8f1f5bfdc79a/receipt.json",
+    "details": {
+      "status": "failed",
+      "error": "Command exited 101; inspect /Users/yifanxu/.cache/layerfs-worktrees/layerfs-machine-start-c17e354c8815/builds/cargo-macos-c650d347af594ca4aaaa8f1f5bfdc79a/output.log",
+      "command": [
+        "cargo",
+        "+1.85.1",
+        "test",
+        "--manifest-path",
+        "Cargo.toml",
+        "--locked",
+        "--offline",
+        "-p",
+        "layerfs-platform",
+        "--test",
+        "guest_artifacts",
+        "-j",
+        "4"
+      ]
+    },
+    "test_summaries": [
+      "test result: FAILED. 1 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.18s"
+    ]
+  },
+  {
+    "receipt": "/Users/yifanxu/.cache/layerfs-worktrees/layerfs-machine-start-c17e354c8815/builds/cargo-macos-6f49609a7e3745308cb740c044cf106d/receipt.json",
+    "details": {
+      "status": "failed",
+      "error": "Command exited 101; inspect /Users/yifanxu/.cache/layerfs-worktrees/layerfs-machine-start-c17e354c8815/builds/cargo-macos-6f49609a7e3745308cb740c044cf106d/output.log",
+      "command": [
+        "cargo",
+        "+1.85.1",
+        "test",
+        "--manifest-path",
+        "Cargo.toml",
+        "--locked",
+        "--offline",
+        "-p",
+        "layerfs-platform",
+        "--test",
+        "guest_artifacts",
+        "-j",
+        "4"
+      ]
+    },
+    "test_summaries": [
+      "test result: FAILED. 1 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.77s"
+    ]
+  }
+]

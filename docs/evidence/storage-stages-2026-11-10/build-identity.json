@@ -1,0 +1,90 @@
+{
+  "bundle": "/Users/yifanxu/.cache/layerfs-worktrees/layerfs-storage-visuals-09c001eb6d3a/artifacts/build-macos-3337f06266154844a7b6992c072635eb",
+  "identity": {
+    "version": "2.0.0",
+    "commit": "58c548b3e0a45f11880e3511bf1267d11e315415",
+    "dirty": true,
+    "features": [
+      "machine",
+      "postgresql"
+    ]
+  },
+  "manifest": {
+    "version": 1,
+    "status": "sealed",
+    "build_id": "build-macos-3337f06266154844a7b6992c072635eb",
+    "at": "2026-11-10T02:25:42.964634+00:00",
+    "worktree_id": "layerfs-storage-visuals-09c001eb6d3a",
+    "platform": "macos",
+    "profile": "debug",
+    "source": {
+      "head": "58c548b3e0a45f11880e3511bf1267d11e315415",
+      "sha256": "571a01691ae192c48939e238c3bd030676903c60c34b1f0b51cd482ec6801481"
+    },
+    "toolchain": "1.85.1",
+    "images": {
+      "build": "sha256:378b799ef43343fc64008b6a5ef456dd6bf0cb8f6ea4cec72e7b42dfc17d2cd6",
+      "runtime": "sha256:afa1ef9c27294f9c7298820c06483e6fb1ddafc43a7cc7d6dec8cd2e67abf38e",
+      "sandbox": "sha256:afa1ef9c27294f9c7298820c06483e6fb1ddafc43a7cc7d6dec8cd2e67abf38e"
+    },
+    "command": [
+      "cargo",
+      "+1.85.1",
+      "build",
+      "--manifest-path",
+      "Cargo.toml",
+      "--locked",
+      "--offline",
+      "-p",
+      "layerfs-daemon",
+      "-p",
+      "layerfs-node",
+      "-p",
+      "layerfs-cli",
+      "-p",
+      "layerfs-sandbox-backend",
+      "-j",
+      "2",
+      "--features",
+      "layerfs-node/postgresql,layerfs-cli/postgresql"
+    ],
+    "files": {
+      "layerfs.node": "e62f0b9e9af26a3a1b7ffedd0c4e986ded486ba4c0b397a37db2ea506eb430db",
+      "layerfs": "99984e68d1b3a01b45da34971fd6c8c4bed5f168febfb55d1e3b0a1bcf08d3dc",
+      "layerfs-daemon": "e336c0a324d5b00cb384d801b06d25f84f20cedec04fd4256a911641625178b5",
+      "api/package.json": "ba520ca5da19295591003c689f8394cc5f325a7c9ffd393b54f15eab74f68310",
+      "api/node/LICENSE": "e20a92efe4b92c0460bd0c475395166e37b6450ed410af155fa0ed99d479f676",
+      "api/node/README.md": "06a6b09df47d137266e8c982dca9c240b95adf600c8c8185de32dc49734db2aa",
+      "api/node/package.json": "ceb844665ed0fe933fdbf272d9fe59cf36927d9da78ddf7752c87932907b21d7",
+      "api/node/test/coverage.mjs": "e5026d947fec0588abbd62467eb61a728dabda327a1f904af1513f436c1cd570",
+      "api/node/test/close.mjs": "cf3d487215737986bd47809f8b485513c894e6f6d584bc4e961b877ea7b501b6",
+      "api/node/test/contract.mjs": "658a4bb0fc20a7ab66269cbfe87d662514f080db8fd97b56c7f73ace09875727",
+      "api/node/test/progress.mjs": "37bc32fdf6ecf75de449e8f89713ecf0fbe2411610e6a84896edb4a047299bbf",
+      "api/node/test/doctor-targets.mjs": "4240110a4ff3215ac42119292cd9606b93589d6022979d6f056b9e9f4f37c92a",
+      "api/node/test/shell.mjs": "5929bde568fc8baa33e48af7ea7eb0101340e25a5a8e18172bf61669d4a3d9c3",
+      "api/node/test/package.mjs": "5d2e0475ac18cd3fa1a98dfdc9dca0b7abc87314abd6299d94573634551c2c69",
+      "api/node/test/values.mjs": "50526f523997c72960aebd543e0a22727083a91bae0287f5c15c623115cd1e79",
+      "api/node/test/native.mjs": "c74a88cb2ccd0a25faa049f3d856e4085f1e1350c653bf9cf74207ca8a1aea17",
+      "api/node/test/doctor.mjs": "facf8860603ef6a0844ab92659b053257f906ce3e92736caf4642b6ac9e6288e",
+      "api/node/test/branch-file.mjs": "b5cc12b2842ef1a6dcc3c1b3a15888e590ff25f263465876e7c5c7e6a70eec00",
+      "api/node/test/project_export.mjs": "c93f18c23c48f5e12fc4ffbfce2e2012fd24385ba0dd26466d9df6bb5455cb24",
+      "api/node/test/calls.mjs": "fe5e7fa9637accd7fc33b2ddd49f71c880f73392d1aeaa503412a81b041edb80",
+      "api/node/test/disabled-platforms.mjs": "2caede60cd6e07a7bf4148428e72c63cfe8343aff9bd32d52ffb61b2b207bb60",
+      "api/node/test/events.mjs": "768eba6f54ad5979d1c5f418be75450bb23a9d702ba41ea14af315d707dacb5a",
+      "api/node/examples/file-history.mjs": "aeeed6b3c83e2209fbc49f7d6bb5a4ffc823f530f398f5d8bbbcfe2ec6982a17",
+      "api/node/src/native.js": "7111d9bf989aa3837c73e3f7493302b2dcdd941601e560dbc7656e0d054e8012",
+      "api/node/src/index.js": "e6392ad9e1c71a26e7fca997d7295d36f2283ac21d22e2ded23cb09e18859879",
+      "api/node/src/values.js": "313447fbfaf296f8b9936a84768f42db0cc42ffeff49f5ef117679a21d581959",
+      "api/node/src/errors.js": "422face8099acc121ff1763b119bb040936462acbbba1105f00afceac3034d5a",
+      "api/node/src/index.d.ts": "79eaa377b2502bced8c56d67e8284d4d6505ac911e47c6ebf2efe780ed2df149",
+      "api/node/test/contract/cases.mjs": "09282e52001ff286663ca7b6644beb47f3d97e02dd1eca21fc1b12406d18327d",
+      "api/node/test/contract/driver.py": "69d167125eb05c88024ae9e37e1150aa610bc8c8cb2d241c19bfd2ab03ae58b0",
+      "api/node/test/types/sample.ts": "363847077c82af2230100fdb8cdf28a31fe70d1b6d0f4aa06325ba259e491819",
+      "api/node/test/branch-file/fixture.mjs": "b3af677835150054007d8ff436ae2b98bfe9a34a089d8f8a4639d323058c25d4",
+      "api/node/test/branch-file/inventory.mjs": "b32eda3e0a3295a448ad1d037ad3faca9696eb2387f62aec9369a9efad7047a9",
+      "api/node/test/branch-file/frontends.mjs": "7b9a069706a47c4e8bba18a3c400a4cf74b7205de8351d7cc8a22fe5825c23ac",
+      "api/node/test/verify/cells/cell.mjs": "7a944f014639a9f6efe8d905d5138bf9087c6b55bd7294be547a0aa6912137b3",
+      "api/node/test/verify/cells/workloads.mjs": "e22d812db8858758dc8cae491168b881bb81489663e43b8ebac115f9eec99f62"
+    }
+  }
+}

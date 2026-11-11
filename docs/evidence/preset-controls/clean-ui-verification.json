@@ -1,0 +1,41 @@
+{
+  "date": "2026-11-10",
+  "checks": {
+    "root_tests": {
+      "passed": 140,
+      "failed": 0
+    },
+    "desktop_typecheck": "passed",
+    "desktop_build": "passed",
+    "diff_check": "passed"
+  },
+  "browser": {
+    "viewports": [
+      "900x600",
+      "1280x820"
+    ],
+    "cli_command_viewer": {
+      "preset": "Native",
+      "commands": 45,
+      "phases": [
+        "Reset environment",
+        "Build preset",
+        "Verify result"
+      ],
+      "copy": "Copied feedback verified",
+      "stdin": "Expanded and verified exact sample text",
+      "terminal_entry": "Verified selected preset, private state and pinned binaries",
+      "horizontal_overflow": false
+    },
+    "other_flows": "See clean-ui-live.json for real private Native build/reset, progress, activity inspector and Clear history proof."
+  },
+  "limits": [
+    "Electron/native GUI not launched.",
+    "Live VM deletion and PostgreSQL disconnect covered by adapters, not live tests.",
+    "Legacy source-viewer assertion in clean-ui-live.json predates the CLI-list correction; CLI-list browser checks recorded here supersede it."
+  ],
+  "resources": {
+    "free_host_GB": 283.78,
+    "cargo_targets_allocated": false
+  }
+}

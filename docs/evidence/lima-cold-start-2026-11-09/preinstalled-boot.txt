@@ -1,0 +1,83 @@
+1.773s systemd-networkd-wait-online.service
+1.337s cloud-init.service
+1.031s cloud-final.service
+ 784ms cloud-init-local.service
+ 701ms cloud-config.service
+ 530ms snapd.seeded.service
+ 489ms snapd.service
+ 398ms apport.service
+ 378ms rsyslog.service
+ 277ms dev-vda1.device
+ 237ms udisks2.service
+ 212ms polkit.service
+ 203ms apparmor.service
+ 174ms grub-common.service
+ 166ms systemd-logind.service
+ 166ms e2scrub_reap.service
+ 164ms ModemManager.service
+ 151ms user@501.service
+ 124ms systemd-resolved.service
+  97ms dbus.service
+  93ms systemd-udev-trigger.service
+  72ms keyboard-setup.service
+Startup finished in 1.591s (kernel) + 6.424s (userspace) = 8.015s 
+graphical.target reached after 5.282s in userspace.
+The time when unit became active or started is printed after the "@" character.
+The time the unit took to start is printed after the "+" character.
+
+cloud-final.service +1.031s
+└─cloud-config.service @4.683s +701ms
+  └─basic.target @4.680s
+    └─sockets.target @4.680s
+      └─snapd.socket @4.678s +2ms
+        └─sysinit.target @4.664s
+          └─cloud-init.service @3.326s +1.337s
+            └─systemd-networkd-wait-online.service @1.551s +1.773s
+              └─systemd-networkd.service @1.518s +23ms
+                └─network-pre.target @1.515s
+                  └─cloud-init-local.service @729ms +784ms
+                    └─systemd-remount-fs.service @346ms +12ms
+                      └─systemd-fsck-root.service @301ms +24ms
+                        └─systemd-journald.socket @273ms
+                          └─-.mount @261ms
+                            └─-.slice @261ms
+[    7.940464] lima-lfs-9db6904d-preinstalled cloud-init[918]: LIMA 2026-11-09T20:25:53+08:00| Executing /mnt/lima-cidata/boot.Linux/30-install-packages.sh
+[    7.940993] lima-lfs-9db6904d-preinstalled cloud-init[918]: + INSTALL_IPTABLES=0
+[    7.940993] lima-lfs-9db6904d-preinstalled cloud-init[918]: + [  = 1 ]
+[    7.940993] lima-lfs-9db6904d-preinstalled cloud-init[918]: + [  = 1 ]
+[    7.940993] lima-lfs-9db6904d-preinstalled cloud-init[918]: + [ 0 -ne 0 ]
+[    7.940993] lima-lfs-9db6904d-preinstalled cloud-init[918]: + [ 0 -ne 0 ]
+[    7.940993] lima-lfs-9db6904d-preinstalled cloud-init[918]: + [ -d /mnt/lima-cidata/provision.dependency ]
+[    7.940993] lima-lfs-9db6904d-preinstalled cloud-init[918]: + [  = 1 ]
+[    7.940993] lima-lfs-9db6904d-preinstalled cloud-init[918]: + REMOUNT_VIRTIOFS=0
+[    7.941549] lima-lfs-9db6904d-preinstalled cloud-init[918]: + grep -qP \x7fELF
+[    7.941549] lima-lfs-9db6904d-preinstalled cloud-init[918]: + command -v apt-get
+[    7.941549] lima-lfs-9db6904d-preinstalled cloud-init[918]: + head -c 4 /usr/bin/apt-get
+[    7.942844] lima-lfs-9db6904d-preinstalled cloud-init[918]: + pkgs=
+[    7.942844] lima-lfs-9db6904d-preinstalled cloud-init[918]: + [ virtiofs = reverse-sshfs ]
+[    7.942844] lima-lfs-9db6904d-preinstalled cloud-init[918]: + [ 0 = 1 ]
+[    7.942844] lima-lfs-9db6904d-preinstalled cloud-init[918]: + [  = 1 ]
+[    7.942844] lima-lfs-9db6904d-preinstalled cloud-init[918]: + command -v rsync
+[    7.942844] lima-lfs-9db6904d-preinstalled cloud-init[918]: + [ -n  ]
+[    7.942844] lima-lfs-9db6904d-preinstalled cloud-init[918]: + [ 0 = 1 ]
+[    7.943332] lima-lfs-9db6904d-preinstalled cloud-init[918]: LIMA 2026-11-09T20:25:53+08:00| Executing /mnt/lima-cidata/boot.Linux/35-setup-packages.sh
+[    7.944288] lima-lfs-9db6904d-preinstalled cloud-init[918]: + [ virtiofs = reverse-sshfs ]
+[    7.944288] lima-lfs-9db6904d-preinstalled cloud-init[918]: + SETUP_DNS=0
+[    7.944288] lima-lfs-9db6904d-preinstalled cloud-init[918]: + [ -n 0 ]
+[    7.944288] lima-lfs-9db6904d-preinstalled cloud-init[918]: + [ 0 -ne 0 ]
+[    7.944288] lima-lfs-9db6904d-preinstalled cloud-init[918]: + [ -n 0 ]
+[    7.944288] lima-lfs-9db6904d-preinstalled cloud-init[918]: + [ 0 -ne 0 ]
+[    7.944288] lima-lfs-9db6904d-preinstalled cloud-init[918]: + [ 0 = 1 ]
+[    7.944981] lima-lfs-9db6904d-preinstalled cloud-init[918]: LIMA 2026-11-09T20:25:53+08:00| Executing /mnt/lima-cidata/boot.Linux/40-install-containerd.sh
+[    7.945704] lima-lfs-9db6904d-preinstalled cloud-init[918]: + : default
+[    7.945768] lima-lfs-9db6904d-preinstalled cloud-init[918]: + : overlayfs
+[    7.945827] lima-lfs-9db6904d-preinstalled cloud-init[918]: + '[' '' '!=' 1 ']'
+[    7.945888] lima-lfs-9db6904d-preinstalled cloud-init[918]: + '[' '' '!=' 1 ']'
+[    7.945888] lima-lfs-9db6904d-preinstalled cloud-init[918]: + exit 0
+[    7.946610] lima-lfs-9db6904d-preinstalled cloud-init[918]: LIMA 2026-11-09T20:25:53+08:00| Exiting with code 0
+[    7.955562] lima-lfs-9db6904d-preinstalled cloud-init[1217]: 256 SHA256:ljNeEmfTwxlQh2hUXLchvUUpPtSMwUvwAects30TLGg root@lima-lfs-9db6904d-preinstalled (ECDSA)
+[    7.959294] lima-lfs-9db6904d-preinstalled cloud-init[1226]: 256 SHA256:ysDiRHrqzl3zGRuPAKKwkvPttuLoCu8xxL6/ZBAYmXs root@lima-lfs-9db6904d-preinstalled (ED25519)
+[    7.963540] lima-lfs-9db6904d-preinstalled cloud-init[1239]: -----END SSH HOST KEY FINGERPRINTS-----
+[    7.964330] lima-lfs-9db6904d-preinstalled cloud-init[1241]: #############################################################
+[    7.972026] lima-lfs-9db6904d-preinstalled cloud-init[918]: Cloud-init v. 26.1-0ubuntu1~24.04.1 finished at Mon, 09 Nov 2026 12:25:53 +0000. Datasource DataSourceNoCloud [seed=/dev/vdc].  Up 7.96 seconds
+[    8.015903] lima-lfs-9db6904d-preinstalled systemd[1]: Finished cloud-final.service - Cloud-init: Final Stage.

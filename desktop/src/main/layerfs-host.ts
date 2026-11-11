@@ -4,13 +4,11 @@
 // channels (index.ts). Adapted from pi-desktop's electron/main/layerfs/host.ts.
 //
 // It starts on the first request, prints one ready line on stdout and exits
-// when its stdin closes, so it never outlives this process. It runs simulated
-// LayerFS unless LAYERFS_CONNECT_MODE=real, in a state folder of its own so it
-// can run beside the current Connect app.
+// when its stdin closes, so it never outlives this process.
 import { type ChildProcess, spawn } from 'node:child_process'
-import { homedir } from 'node:os'
 import { delimiter, join } from 'node:path'
 import { createInterface } from 'node:readline'
+import type { CliAction } from '../../../shared/cli-activity'
 
 export type LayerfsReply = { status: number; body: unknown }
 export type LayerfsConnection = 'connecting' | 'connected' | 'reconnecting'
@@ -21,7 +19,6 @@ type Endpoint = { url: string; token: string; mode: string }
 const READY_MS = 30_000
 const RECONNECT_MS = 2_000
 
-export const layerfsMode = (): 'sim' | 'real' => (process.env.LAYERFS_CONNECT_MODE === 'real' ? 'real' : 'sim')
 
 function log(line: string): void {
   console.error(`[layerfs/host] ${line.trimEnd()}`)
@@ -44,10 +41,7 @@ export class LayerfsHost {
   private start(): Promise<Endpoint> {
     if (this.closed) return Promise.reject(new Error('The LayerFS host is closed.'))
     this.endpoint ??= new Promise<Endpoint>((resolve, reject) => {
-      const mode = layerfsMode()
       const args = [join(this.hostDir, 'main.js')]
-      // Real mode keeps the host's own state (the user's LayerFS home); sim gets a folder of its own.
-      if (mode === 'sim') args.push('--state', join(homedir(), '.layerfs-connect-desktop-sim'))
       // System node, as the current app does: the real LayerFS addon is built for it, not for Electron.
       const node = process.env.LAYERFS_CONNECT_NODE || (this.runtimeBin ? join(this.runtimeBin, 'node') : 'node')
       const child = spawn(node, args, {
@@ -58,7 +52,6 @@ export class LayerfsHost {
             LAYERFS_CONNECT_CLI: process.env.LAYERFS_CONNECT_CLI || join(this.runtimeBin, 'layerfs'),
             LAYERFS_CONNECT_DAEMON: process.env.LAYERFS_CONNECT_DAEMON || join(this.runtimeBin, 'layerfs-daemon'),
           } : {}),
-          LAYERFS_CONNECT_MODE: mode,
           UV_THREADPOOL_SIZE: process.env.UV_THREADPOOL_SIZE || '16',
         },
         stdio: ['pipe', 'pipe', 'pipe'],
@@ -113,13 +106,14 @@ export class LayerfsHost {
   }
 
   /** One HTTP call to the host. A refusal resolves with its status; only a missing host rejects. */
-  async request(method: string, path: string, body?: unknown): Promise<LayerfsReply> {
+  async request(method: string, path: string, body?: unknown, action?: CliAction): Promise<LayerfsReply> {
     if (!path.startsWith('/api/')) throw new Error('LayerFS host paths start with /api/.')
     const { url, token } = await this.start()
     const res = await fetch(`${url}${path}`, {
       method,
       headers: {
         authorization: `Bearer ${token}`,
+        ...(action ? { 'x-lfs-action': encodeURIComponent(JSON.stringify(action)) } : {}),
         ...(body === undefined ? {} : { 'content-type': 'application/json' }),
       },
       body: body === undefined ? undefined : JSON.stringify(body),

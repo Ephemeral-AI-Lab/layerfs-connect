@@ -1,5 +1,9 @@
+import { simulationChatRoute } from './simulation-bridge.js'
+
 /** Agent HTTP routes share the host's authentication and event stream. */
 export async function agentRoute(manager, method, parts, body, query = new URLSearchParams()) {
+  const simulation = manager.simulations && simulationChatRoute(manager, method, parts)
+  if (simulation?.handled) return simulation.value
   const [group, id, action, requestId] = parts
   if (group === 'providers' && !id && method === 'POST') {
     await manager.models.configureProvider(body)
@@ -48,9 +52,17 @@ export async function agentRoute(manager, method, parts, body, query = new URLSe
   if (group === 'sdks' && !id && method === 'GET') return manager.sdkView()
   if (group === 'sdks' && !id && method === 'POST') return manager.setSdk(body ?? {})
   if (group === 'sdks' && id === 'config' && action === 'open' && method === 'POST') return manager.sdks.openConfig()
+  // project-owned conversations (sessions/): a saved version's linked operations, and saved conversations to rebuild
+  if (group === 'versions' && !id && method === 'GET') return manager.versionLinks(query.get('project'), query.get('commit'))
+  if (group === 'portable' && !id && method === 'GET') return manager.portableSessions(query.get('project'))
   if (group !== 'sessions') return undefined
   if (!id && method === 'GET') return manager.list()
   if (!id && method === 'POST') return body?.scenario ? manager.createScenario(body) : manager.create(body)
+  if (id === 'import' && !action && method === 'POST') return manager.importSession(body ?? {})
+  if (action === 'operations' && !requestId && method === 'GET') return manager.operations(id, Object.fromEntries(query))
+  if (action === 'operations' && requestId && method === 'GET') return manager.operation(id, requestId)
+  if (action === 'persistence' && method === 'GET') return manager.persistence(id)
+  if (action === 'persistence' && method === 'POST') return manager.persistence(id, body?.action)
   if (!action && method === 'GET') return manager.detail(id)
   if (!action && method === 'DELETE') return manager.remove(id)
   if (action === 'trace' && method === 'GET') return manager.trace(id, { before: query.get('before'), limit: query.get('limit') ?? undefined })

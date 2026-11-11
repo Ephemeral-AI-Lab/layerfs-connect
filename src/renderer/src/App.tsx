@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { projectKey, projectLabel, type ProjectSummary } from '@shared/host-api'
 
-import { SimStrip } from '@/components/mode-switch'
 import { AppSidebar, type NavId, type Selection } from '@/components/app-sidebar'
 import { ChatHome } from '@/components/chat/chat-home'
 import { discardSessionDraft } from '@/components/chat/chat-drafts'
@@ -185,7 +184,6 @@ export function App() {
     <TooltipProvider>
       <SidebarProvider open={sidebarOpen} onOpenChange={showSidebar} className="app-shell relative isolate min-h-svh w-full overflow-hidden">
         <AppSidebar selected={selected} projects={projects} onSelect={select} onNewProject={() => setNewProjectOpen(true)} onDeleteProject={setDeleteTarget} onDeleteChat={(chat, returnFocus) => setDeleteChatTarget({ chat, returnFocus })} onOpenChat={openChat} onNewChat={newProjectChat} onNewSession={newChat} settingsOpen={settingsOpen} onOpenSettings={() => settings.open()} />
-        <SimStrip />
         <div className="canvas relative z-10 flex h-svh min-w-0 flex-1 flex-col">
           <WindowBar />
           <main className="vt-page tab-body @container/workspace relative flex min-h-0 min-w-0 flex-1 flex-col">

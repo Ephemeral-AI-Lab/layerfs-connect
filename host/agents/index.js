@@ -11,7 +11,7 @@ import { AgentSetup, capabilityCatalog } from './capabilities.js'
 import { connectPrompt } from './prompt.js'
 import { mounted } from './workspaces.js'
 import { childrenFrom, sessionTranscript } from './transcript.js'
-import { childConversation, childTrace, describeChildren } from './children.js'
+import { childConversation, childTrace, describeChildren, childTraceIdentity } from './children.js'
 import { ApprovalService, permissionMode } from './permissions.js'
 import { CHECKPOINT_TYPE, checkpointFor, cloneSession } from './history.js'
 import { DEFAULT_LIMITS, idleExecution, OLD_DEFAULT_BASH_TIMEOUT_SECONDS, REMOVED_LIMITS, RUN_LIMIT_FIELDS, RunLimitSettings, runLimits, sessionUsage } from './runtime.js'
@@ -25,6 +25,7 @@ import { withStepViews } from './step-views.js'
 import { registerScenarioProvider, SCENARIO_PROVIDER } from './scenario-model.js'
 import { assertNativeControl, bindNativeInput, cancelNativeControls, currentNativeControl, nativeCommand, pendingNativeInput, runNativeControl, staleNativeControl } from './native-input.js'
 import { commandContextActions, commandForkTarget } from './command-context.js'
+import { ConversationSessions, withOperations, toolOperations } from '../sessions/index.js'
 
 const fail = (status, message) => Object.assign(new Error(message), { status })
 const needsRecovery = (record) => record.needsStop || record.workspace?.process || (record.workspace?.execution && !record.workspace.execution.finished) || record.children.some((child) => ['running', 'pending', 'queued', 'paused'].includes(child.state))
@@ -116,6 +117,17 @@ export class AgentManager extends EventEmitter {
     this.historyOperations = new Map()
     this.controlMutations = new Map()
     this.scenarioSetups = new Map()
+    // each conversation's journal and its saves to the project (sessions/); LayerFS calls go through the host's own client
+    this.sessions = new ConversationSessions({
+      dir: this.dir, state: this.state, lfs: () => this.projectWorkspaces?.lfs ?? null,
+      // a save-state change refreshes open views; `updated` is untouched, so the sidebar keeps its order
+      onStatus: (id) => {
+        const record = this.records.get(id)
+        if (record) this.emit('event', { type: 'chat-summary', session: this.summary(record), children: record.children.map(({ id, runId, agent, task, state, startedAt, endedAt, sessionFile }) => ({ id, runId, agent, task, state, startedAt, endedAt, conversation: Boolean(sessionFile) })) })
+      },
+    })
+    if (this.projectWorkspaces) this.projectWorkspaces.sessions = this.sessions
+    this.loading = true
     for (const entry of readdirSync(this.dir, { withFileTypes: true })) {
       if (!entry.isDirectory()) continue
       const file = join(this.dir, entry.name, 'chat.json')
@@ -150,9 +162,14 @@ export class AgentManager extends EventEmitter {
         record.execution.reason = 'The app closed with unfinished agent work. Continue to recover it, or stop it explicitly.'
       }
       this.records.set(record.id, record)
+      // a simulation's journal records its bash tools' CLI calls (simulations/trace.js); it stays local to this home
+      this.sessions.ensure(record)
       if (record.sessionFile && existsSync(record.sessionFile)) this.projectHistory(record, SessionManager.open(record.sessionFile))
       this.save(record.id)
     }
+    this.loading = false
+    // older chats are saved to their projects in the background, one at a time
+    void this.sessions.migrate([...this.records.values()].filter((r) => !r.simulation))
   }
 
   modelsSnapshot() { return { ...this.models.snapshot(), defaultCwd: this.defaultCwd } }
@@ -258,7 +275,10 @@ export class AgentManager extends EventEmitter {
     this.detail(id)
     const result = childConversation(record, join(this.dir, id), childId)
     if (!result) throw fail(404, 'This subagent is not part of the chat.')
-    return result
+    // each of the child's tool calls with its recorded operations, keyed by the child's own agent identity
+    const child = record.children.find((c) => c.id === childId)
+    const agent = childTraceIdentity(join(this.dir, id), child?.sessionFile) ?? `child-${childId}`
+    return { ...result, messages: withOperations(result.messages, this.sessions.byTool(id), agent) }
   }
 
   /** A page of the selected child's own session and LayerFS trace. */
@@ -267,7 +287,20 @@ export class AgentManager extends EventEmitter {
     this.detail(id)
     const result = childTrace(record, join(this.dir, id), childId, options)
     if (!result) throw fail(404, 'This subagent is not part of the chat.')
-    return result
+    const child = record.children.find((c) => c.id === childId)
+    return this.withOperations(record, result, childTraceIdentity(join(this.dir, id), child?.sessionFile) ?? `child-${childId}`)
+  }
+
+  /** Trace rows with each tool's recorded operations, and the journal's save state and coverage. */
+  withOperations(record, page, agent = 'root') {
+    const byTool = this.sessions.byTool(record.id)
+    for (const row of page.records) {
+      if ((row.kind !== 'tool' && row.kind !== 'subagent') || !row.callId) continue
+      const ops = byTool.get(`${agent}:${row.callId}`)
+      if (ops) row.operations = toolOperations(ops)
+    }
+    const ledger = this.sessions.operations(record, { limit: 1 })
+    return { ...page, operationAgent: agent, persistence: ledger.persistence, ledger: { counts: ledger.counts, coverage: ledger.coverage } }
   }
 
   output(id, artifactId, offset = 0) {
@@ -279,13 +312,83 @@ export class AgentManager extends EventEmitter {
   trace(id, { before = null, limit } = {}) {
     const record = this.record(id)
     const manager = this.live.get(id)?.session?.sessionManager ?? (record.sessionFile && existsSync(record.sessionFile) ? SessionManager.open(record.sessionFile) : null)
-    return chatTrace({ record, entries: manager ? manager.getBranch() : [], dir: join(this.dir, id), before, limit })
+    return this.withOperations(record, chatTrace({ record, entries: manager ? manager.getBranch() : [], dir: join(this.dir, id), before, limit }))
+  }
+
+  /** The conversation's LayerFS operations, filtered and paged (sessions/). */
+  operations(id, query = {}) {
+    const record = this.record(id)
+    return this.sessions.operations(record, query)
+  }
+
+  operation(id, operationId) {
+    const record = this.record(id)
+    return this.sessions.operation(record, operationId)
+  }
+
+  /** Save state; `save` flushes now, `reconcile` resolves unknown outcomes without replay. */
+  async persistence(id, action) {
+    const record = this.record(id)
+    if (record.simulation && action) throw fail(409, 'Simulation conversations are recorded locally and not saved to their project.')
+    if (action === 'save') return this.sessions.flush(record, { reason: 'explicit' })
+    if (action === 'reconcile') return this.sessions.reconcile(record)
+    if (action === 'adopt') return this.sessions.adopt(record)
+    if (action) throw fail(400, 'Unknown persistence action.')
+    return this.sessions.status(record)
+  }
+
+  /** Operations of this home's conversations that produced or referenced one saved version. */
+  versionLinks(project, commit) {
+    if (!project || !/^[0-9a-f]{40,}$/.test(commit ?? '')) throw fail(400, 'Name a project and a full saved-version id.')
+    return this.sessions.versionLinks([...this.records.values()], project, commit)
+  }
+
+  /** Conversations saved in a project's session branches. */
+  portableSessions(project) {
+    if (!project) throw fail(400, 'Name a project.')
+    return this.sessions.discover(project, new Set(this.records.keys()))
+  }
+
+  /** Rebuilds a saved conversation from its project into this home. */
+  async importSession({ project, sessionId, binding = null } = {}) {
+    if (!project || !sessionId) throw fail(400, 'Name a project and a saved conversation.')
+    if (this.records.has(sessionId)) throw fail(409, 'This conversation is already in this home.')
+    await this.projectEnvironment(project)
+    const result = await this.sessions.import(project, sessionId, { binding, exists: (id) => this.records.has(id) })
+    const meta = result.meta
+    const chatDir = result.chatDir
+    const record = {
+      id: sessionId, title: meta.title || 'Imported conversation', cwd: this.defaultCwd, project,
+      ...(meta.runs ? { runs: meta.runs } : {}),
+      created: meta.created ?? Date.now(), updated: Date.now(), state: 'idle', error: null,
+      archived: !!meta.archived, archivedAt: meta.archivedAt ?? null, limits: runLimits(meta.limits ?? {}, this.runLimits.get()), execution: idleExecution(), usage: sessionUsage(),
+      permissionMode: permissionMode(meta.permissionMode), approvals: [],
+      provider: meta.provider ?? null, modelId: meta.modelId ?? null, thinkingLevel: meta.thinkingLevel ?? 'off',
+      messages: [], children: (meta.children ?? []).map((c) => ({ ...c, sessionFile: c.sessionFile ? join(chatDir, c.sessionFile) : undefined })),
+      tools: setupTools(this.setup.get()).main, sessionFile: meta.sessionFile ? join(chatDir, meta.sessionFile) : null,
+      forkedFrom: meta.forkedFrom ?? null,
+      imported: { from: project, branch: result.branch, binding: result.binding, missingArtifacts: result.missing.length },
+      // the code branch moved with the Store; its Sandbox and mount are runtime and start fresh
+      workspace: meta.workspace && mounted({ project, runs: meta.runs }) ? { ...this.projectWorkspaces?.initial(sessionId), ...meta.workspace, state: 'pending', sandbox: null, handle: null, path: null } : null,
+    }
+    this.records.set(sessionId, record)
+    if (record.sessionFile && existsSync(record.sessionFile)) this.projectHistory(record, SessionManager.open(record.sessionFile))
+    this.changed(sessionId, true)
+    return { session: this.detail(sessionId), missingArtifacts: result.missing, binding: result.binding }
   }
 
   /** A chat's Live: its newest LayerFS calls and what it holds in LayerFS now (trace.js chatLive). Not `live`: that is the open chats' Map. */
   liveView(id) {
     const record = this.record(id)
-    return chatLive(join(this.dir, id, 'traces'), { running: record.state === 'running' })
+    const dir = join(this.dir, id)
+    const children = record.children ?? []
+    return {
+      ...chatLive(join(dir, 'traces'), { running: record.state === 'running' || children.some(child => ['running', 'pending', 'queued', 'paused'].includes(child.state)) }),
+      actors: [
+        { id: 'root', name: 'Main', childId: null, task: record.title, state: record.state },
+        ...children.map(child => ({ id: childTraceIdentity(dir, child.sessionFile) ?? `pending-${child.id}`, childId: child.id, name: child.agent ?? child.id, task: child.task ?? '', state: child.state })),
+      ],
+    }
   }
 
   record(id) {
@@ -425,10 +528,11 @@ export class AgentManager extends EventEmitter {
     // ephemeral: a restored record has no trustworthy estimate until opened.
     return {
       ...detail,
-      // each bash call with what it did to LayerFS (step-views.js); not saved with the record
-      messages: withStepViews(record.messages, join(this.dir, id, 'traces')),
+      // each bash call with what it did to LayerFS (step-views.js), and each tool's recorded operations (sessions/); not saved with the record
+      messages: withOperations(withStepViews(record.messages, join(this.dir, id, 'traces')), this.sessions.byTool(id)),
       children: describeChildren(record, join(this.dir, id)),
       workspace: workspaceSummary(record.workspace),
+      persistence: this.sessions.status(record),
       queued: (active?.queued ?? []).map(({ id, text, mode, message }) => ({ id, text, mode, attachments: message.details?.connectAttachments ?? [] })),
       contextUsage: active?.session?.getContextUsage() ?? null,
       execution: this.execution(id),
@@ -436,17 +540,28 @@ export class AgentManager extends EventEmitter {
     }
   }
 
-  save(id) {
-    this.detail(id)
+  save(id, { project = true } = {}) {
+    if (project) this.detail(id)
     const file = join(this.dir, id, 'chat.json')
-    writeFileSync(`${file}.tmp`, JSON.stringify(this.record(id)), { mode: 0o600 })
+    const record = this.record(id)
+    // Simulation Pi files already own the complete append-only history. Persist
+    // their pointer and metadata, then reconstruct the view on restart.
+    const saved = record.simulation && record.sessionFile && existsSync(record.sessionFile) ? { ...record, messages: [] } : record
+    writeFileSync(`${file}.tmp`, JSON.stringify(saved), { mode: 0o600 })
     renameSync(`${file}.tmp`, file)
+    // the journal captures settings and Pi lines, then saves to the project at the next quiet boundary
+    // (an older chat is saved to its project when it is next opened or saved explicitly, not on load or a settings change)
+    if (!record.simulation && !this.loading && (this.live.has(id) || this.sessions.journal(id).state.store)) this.sessions.schedule(record)
   }
 
-  changed(id, persist = false) {
+  changed(id, persist = false, { summaryOnly = false } = {}) {
     const record = this.record(id)
     record.updated = Math.max(Date.now(), record.updated + 1)
-    if (persist) this.save(id)
+    if (persist) this.save(id, { project: !summaryOnly })
+    if (summaryOnly) {
+      this.emit('event', { type: 'chat-summary', session: this.summary(record), children: record.children.map(({ id, runId, agent, task, state, startedAt, endedAt, sessionFile }) => ({ id, runId, agent, task, state, startedAt, endedAt, conversation: Boolean(sessionFile) })) })
+      return
+    }
     const session = this.detail(id)
     const metadata = (attachments) => attachments?.map(({ data, ...attachment }) => attachment)
     this.emit('event', { type: 'chat', session: {
@@ -538,8 +653,9 @@ export class AgentManager extends EventEmitter {
     const cwd = resolve(input.cwd || this.defaultCwd)
     if (!statSync(cwd).isDirectory()) throw fail(400, 'Choose a working directory.')
     if (input.project) await this.projectEnvironment(input.project)
-    // a project chat runs bash in its folder unless it copies a chat that has a mount
-    const runs = input.project ? (input.runs === 'mount' ? 'mount' : 'folder') : undefined
+    // a new project chat runs bash in a mounted Workspace of its own code branch
+    // (docs/specs/chat-session-store.md); a folder chat stays one only when asked or copied
+    const runs = input.project ? (input.runs === 'folder' ? 'folder' : 'mount') : undefined
     if (runs === 'mount' && !this.projectWorkspaces) throw fail(503, 'LayerFS workspaces are not available in this host.')
     const selected = { ...this.models.snapshot().selected, ...input }
     const record = {
@@ -554,12 +670,14 @@ export class AgentManager extends EventEmitter {
     }
     mkdirSync(join(this.dir, id), { recursive: true })
     this.records.set(id, record)
+    this.sessions.ensure(record)
     if (publish) this.changed(id, true)
     else this.save(id)
     return this.detail(id)
   }
 
   async open(id, { history = false, setup, sessionStartEvent, parentSession } = {}) {
+    if (this.record(id).simulation) throw fail(409, 'Scripted simulation sessions are managed by their simulation runner.')
     const record = this.record(id)
     this.checkHistoryAvailable(id, history)
     this.checkProjectAvailable(record.project)
@@ -569,6 +687,11 @@ export class AgentManager extends EventEmitter {
     active.opening = (async () => {
       const runDir = join(this.dir, id)
       if (mounted(record)) await this.prepareWorkspace(id, { history })
+      // a native Sandbox runs commands on this host with Connect's instrumented CLI and package (workspaces.js sandboxEnv);
+      // a container Sandbox cannot see them, so its own LayerFS calls are an explicit coverage gap
+      // a container/VM Sandbox: bash runs on this host and drives the Workspace through Connect's recorded CLI
+      const hostShell = mounted(record) && !!this.projectWorkspaces?.hostShell?.(record)
+      if (mounted(record) && !record.simulation && !hostShell && record.workspace?.runtime !== 'native') this.sessions.gap(id, `Commands in this conversation's ${record.workspace?.runtime ?? 'container'} Sandbox run where Connect's instrumented LayerFS CLI and package are not available. Connect records each command and its save; LayerFS SDK or CLI calls made inside that Sandbox are not recorded.`, 'sandbox-sdk')
       const controlCwd = mounted(record) ? runDir : record.cwd
       const mergeChildren = (children) => {
         for (const child of children) {
@@ -595,7 +718,7 @@ export class AgentManager extends EventEmitter {
         return active.childRefresh
       }
       const extensions = await createConnectExtensions({
-        cwd: controlCwd, agentDir: this.agentDir, runDir, workspace: mounted(record), allowNestedSubagents: leadsAllowed(this.setup.get()), setup: this.setup.get(),
+        cwd: controlCwd, agentDir: this.agentDir, runDir, workspace: mounted(record), hostShell, allowNestedSubagents: leadsAllowed(this.setup.get()), setup: this.setup.get(),
         // a scenario chat's bash plays in its scenario's folder (scenarios.js)
         env: record.scenario && this.scenarios ? await this.scenarios.env(record) : record.project ? this.shellEnv(record.project) : {},
         sdk: { prompt: this.sdks.prompts() },
@@ -618,8 +741,10 @@ export class AgentManager extends EventEmitter {
               message.details = { ...message.details, ...active.pendingPromptDetails }
               active.pendingPromptDetails = null
             }
-            const checkpoint = mounted(record) ? await this.projectWorkspaces.checkpoint(record, () => this.changed(id, true)) : null
+            // a restore boundary: its intent reaches the session branch before the save, its receipt after (sessions/)
+            const checkpoint = mounted(record) ? await this.projectWorkspaces.checkpoint(record, () => this.changed(id, true), { beforeDispatch: () => this.sessions.flush(record) }) : null
             active.session.sessionManager.appendCustomEntry(CHECKPOINT_TYPE, { checkpoint })
+            if (checkpoint) this.sessions.schedule(record, 0)
           } catch (error) { if (error.code !== 'stopping') active.checkpointError = error.message; throw error }
         },
         onSubagentEvent: (event) => {
@@ -639,7 +764,7 @@ export class AgentManager extends EventEmitter {
         extensionFactories: [...extensions.extensionFactories, { name: 'connect-run-guard', hidden: true, factory: (pi) => pi.on('before_agent_start', (_event, ctx) => {
           try { assertNativeControl(active) } catch (error) { ctx.abort(); throw error }
         }) }],
-        appendSystemPrompt: [connectPrompt({ ...record, project: mounted(record) ? record.project : null }, extensions.tools)],
+        appendSystemPrompt: [connectPrompt({ ...record, project: mounted(record) ? record.project : null, hostShell: hostShell }, extensions.tools)],
       })
       await resourceLoader.reload()
       const errors = resourceLoader.getExtensions().errors
@@ -1108,7 +1233,8 @@ export class AgentManager extends EventEmitter {
     await this.closeHistorySession(record.id)
     const runDir = join(this.dir, record.id)
     manager = cloneSession(record.sessionFile, mounted(record) ? runDir : record.cwd, runDir)
-    if (mounted(record)) await this.projectWorkspaces.restore(record, target.checkpoint, () => this.changed(record.id, true))
+    // the restored code branch forks from the boundary's saved reference; the boundary names the entry it restores before
+    if (mounted(record)) await this.projectWorkspaces.restore(record, target.checkpoint, () => this.changed(record.id, true), { session_id: record.id, entry_id: entryId, position: 'before', workspace_ref: target.checkpoint.workspace_ref ?? null })
     if (target.entry.parentId === null) manager.resetLeaf()
     else manager.branch(target.entry.parentId)
     // branch/resetLeaf alone are in-memory. A state-only child makes the chosen cursor survive restart.
@@ -1154,6 +1280,8 @@ export class AgentManager extends EventEmitter {
         }, { publish: false })
         const copy = this.record(copyId)
         copy.forkedFrom = { sessionId: id, ...(entryId ? { entryId } : {}) }
+        // inherited operations keep their source identities; new ones belong to the copy
+        this.sessions.copy(id, copyId, { entryId: entryId ?? null, position: entryId ? position : null })
         if (mounted(copy)) await this.projectWorkspaces.fork(copy, checkpoint, () => this.save(copyId))
         const runDir = join(this.dir, copyId)
         const manager = cloneSession(record.sessionFile, mounted(copy) ? runDir : copy.cwd, runDir)
@@ -1166,6 +1294,8 @@ export class AgentManager extends EventEmitter {
         copy.sessionFile = manager.getSessionFile()
         this.projectHistory(copy, manager)
         this.changed(copyId, true)
+        // a copy is a new conversation of the project: saved there now, not when it is next opened
+        this.sessions.schedule(copy, 0)
         return { session: this.detail(copyId), ...(target ? { draft: target.draft, attachments: target.attachments } : {}) }
       } catch (error) {
         const copy = this.records.get(copyId)
@@ -1174,6 +1304,7 @@ export class AgentManager extends EventEmitter {
             if (mounted(copy)) await this.projectWorkspaces.release(copy, () => this.save(copyId))
             this.permissions.forget(copyId)
             this.records.delete(copyId)
+            this.sessions.forget(copyId)
             rmSync(join(this.dir, copyId), { recursive: true })
           } catch (cleanupError) {
             copy.needsStop = true
@@ -1190,6 +1321,7 @@ export class AgentManager extends EventEmitter {
   stop(id, { history = false, reason, releaseWorkspace = false } = {}) {
     this.checkHistoryAvailable(id, history, true)
     const record = this.record(id)
+    if (record.simulation && this.simulations) return Promise.resolve(this.simulations.stop(record.simulation.id)).then(() => this.detail(id))
     const previousStop = this.stopping.get(id)
     if (previousStop?.pending || previousStop?.removing) {
       const active = this.live.get(id) ?? this.controlMutations.get(id)?.active
@@ -1365,6 +1497,8 @@ export class AgentManager extends EventEmitter {
       this.stopping.delete(id)
       this.permissions.forget(id)
       this.records.delete(id)
+      // the local copy goes; a session branch saved in the project is separate history and stays
+      this.sessions.forget(id)
       rmSync(join(this.dir, id), { recursive: true })
       return { id }
     } finally {
@@ -1385,6 +1519,8 @@ export class AgentManager extends EventEmitter {
         await active.session.extensionRunner.emit({ type: 'session_shutdown', reason: 'quit' })
         active.session.dispose()
       }))
+      // scheduled journal saves run before the host exits; their failures stay in each journal's status
+      await this.sessions.drain(this.records)
       const failures = results.filter((result) => result.status === 'rejected').map((result) => result.reason)
       if (failures.length) throw new AggregateError(failures, failures.map((error) => error.message).join('; '))
       this.live.clear()

@@ -1,0 +1,7 @@
+{
+  "passed": true,
+  "id": "52b93166-3341-403f-8e93-8b06ff24eb68",
+  "state": "failed",
+  "error": "Machine docker is not ready for a SQLite simulation. Start a supported machine and launch a new simulation.",
+  "storeStatus": "planned"
+}

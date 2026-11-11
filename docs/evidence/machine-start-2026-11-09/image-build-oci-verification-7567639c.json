@@ -1,0 +1,40 @@
+{
+  "work": "/Users/yifanxu/.cache/layerfs-worktrees/layerfs-machine-start-c17e354c8815/image-cache/layerfs/machine-images/builds/oci-verification-7567639c",
+  "provider": "apple-container",
+  "steps": [
+    {
+      "stage": "oci-check-create",
+      "command": [
+        "container",
+        "run",
+        "--detach",
+        "--name",
+        "lfs-image-check-da7a63280c0a",
+        "--cpus",
+        "2",
+        "--memory",
+        "2G",
+        "layerfs-machine:ba52f2abe48ffc54f163a4cd1d420e1eb2aa37dd417aff8093ab3b1e83f9db65",
+        "sh",
+        "-c",
+        "trap 'exit 0' TERM; sleep infinity & wait"
+      ],
+      "elapsed_ns": 926119334,
+      "exit": 0
+    },
+    {
+      "stage": "oci-worker-hello",
+      "command": [
+        "container",
+        "exec",
+        "lfs-image-check-da7a63280c0a",
+        "sh",
+        "-c",
+        "python3 - <<'VERIFY'\nimport json, os, pathlib, secrets, socket, struct, subprocess, time\nsecret = secrets.token_hex(32)\npath = pathlib.Path('/tmp/layerfs-image-secret')\npath.write_text(secret)\npath.chmod(0o600)\nenv = dict(os.environ, LAYERFS_WORKER_LISTEN='127.0.0.1:7070', LAYERFS_WORKER_SECRET=str(path))\np = subprocess.Popen(['/layerfs/bundle/layerfs', 'worker'], env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)\ntry:\n    deadline = time.monotonic() + 10\n    while True:\n        try:\n            s = socket.create_connection(('127.0.0.1', 7070), timeout=1)\n            break\n        except OSError:\n            if p.poll() is not None or time.monotonic() >= deadline:\n                raise RuntimeError('worker failed readiness')\n            time.sleep(.05)\n    with s:\n        s.settimeout(2)\n        body = json.dumps({'secret': secret}).encode()\n        s.sendall(struct.pack('>I', len(body)) + body)\n        def exact(n):\n            data = bytearray()\n            while len(data) < n:\n                chunk = s.recv(n - len(data))\n                if not chunk: raise RuntimeError('truncated worker hello')\n                data.extend(chunk)\n            return data\n        length = struct.unpack('>I', exact(4))[0]\n        if length > 4096: raise RuntimeError('oversized worker hello')\n        hello = json.loads(exact(length))\n        assert hello['ready'] is True\n        assert hello['protocol'] == 3\n        assert hello['bundle'] == '29b69e47719660bcdab3d6761e5e63f3833490b37c83867db089f6a7200d0d7d'\nfinally:\n    p.terminate()\n    p.wait(timeout=5)\n    path.unlink(missing_ok=True)\nVERIFY"
+      ],
+      "elapsed_ns": 65059000,
+      "exit": 127
+    }
+  ],
+  "verification_container": "lfs-image-check-da7a63280c0a"
+}

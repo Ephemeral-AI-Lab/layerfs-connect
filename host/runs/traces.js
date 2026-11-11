@@ -27,6 +27,7 @@ export function traceCall(line, agent) {
     branch: pick('branch'),
     sandbox: pick('sandbox'),
     path: pick('path'),
+    ws: pick('ws'),
     commit: typeof line.commit === 'string' ? line.commit : null,
     // a call that changes the project's store: what it did (the Trace tab lists them)
     ...(WRITES[line.method] ? writeNote(line) : {}),

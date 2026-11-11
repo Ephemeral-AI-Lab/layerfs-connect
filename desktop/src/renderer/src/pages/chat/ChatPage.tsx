@@ -31,7 +31,7 @@ export function ChatPage() {
   const traceVisited = useRef(false)
   if (current === 'history') historyVisited.current = true
   if (current === 'trace') traceVisited.current = true
-  const { chat, error, take } = useChat(id)
+  const { chat, error, take } = useChat(id, current === 'chat' && !viewingChildren)
   const selected = chat?.children.find(item => item.id === child)
   const asideId = params.get('aside')
   const base = `/chat/${encodeURIComponent(id)}`
@@ -92,8 +92,8 @@ export function ChatPage() {
               <ChildConversation key={selected.id} chat={chat} child={selected} onChange={take} shown={current === 'chat'} />
             </div>}
             {(!viewingChildren || selected) && <>
-              {historyVisited.current && <div className={current === 'history' ? 'flex min-h-0 min-w-0 flex-1 flex-col' : 'hidden'}><HistoryTab key={`${chat.id}:${selected?.id ?? 'main'}`} chat={chat} childId={selected?.id} /></div>}
-              {traceVisited.current && <div className={current === 'trace' ? 'flex min-h-0 min-w-0 flex-1 flex-col' : 'hidden'}><TraceTab key={`${chat.id}:${selected?.id ?? 'main'}`} chat={chat} childId={selected?.id} /></div>}
+              {historyVisited.current && <div className={current === 'history' ? 'flex min-h-0 min-w-0 flex-1 flex-col' : 'hidden'}><HistoryTab key={`${chat.id}:${selected?.id ?? 'main'}`} chat={chat} childId={selected?.id} shown={current === 'history'} /></div>}
+              {traceVisited.current && <div className={current === 'trace' ? 'flex min-h-0 min-w-0 flex-1 flex-col' : 'hidden'}><TraceTab key={`${chat.id}:${selected?.id ?? 'main'}`} chat={chat} childId={selected?.id} shown={current === 'trace'} /></div>}
               {current === 'files' && <ChatFilesTab key={chat.id} chat={chat} />}
               {current === 'sandboxes' && <SandboxesTab chat={chat} childId={selected?.id} />}
             </>}

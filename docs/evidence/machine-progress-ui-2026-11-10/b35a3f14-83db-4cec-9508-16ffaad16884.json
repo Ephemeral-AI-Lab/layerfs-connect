@@ -1,0 +1,324 @@
+{
+  "items": [
+    {
+      "id": "b35a3f14-83db-4cec-9508-16ffaad16884",
+      "name": "machine.create",
+      "label": "Create machine",
+      "target": "progress-refused-1110",
+      "page": "/machines",
+      "origin": "user",
+      "at": 1794273586388,
+      "invocations": [
+        {
+          "id": "220091c8-1566-4fcc-8aaf-13fcd8b72cdb",
+          "at": 1794273586388,
+          "status": "refused",
+          "binary": "/Users/yifanxu/.cache/layerfs-worktrees/layerfs-storage-visuals-09c001eb6d3a/artifacts/build-macos-67ba57e5600747e997463a33696f7d1d/layerfs",
+          "argv": [
+            "machine",
+            "create",
+            "--cpus",
+            "2",
+            "--memory",
+            "4294967296",
+            "--disk",
+            "4294967296",
+            "--image",
+            "/private/tmp/lfs-progress-no-image.tar",
+            "--progress",
+            "--",
+            "progress-refused-1110",
+            "apple-container"
+          ],
+          "stdin": null,
+          "mode": "real",
+          "ownerPid": 67308,
+          "started": 1794273586389,
+          "pid": 72597,
+          "identity": {
+            "version": "2.0.0",
+            "commit": "58c548b3e0a45f11880e3511bf1267d11e315415",
+            "dirty": true,
+            "features": [
+              "machine",
+              "postgresql"
+            ]
+          },
+          "waitMs": 1,
+          "progress": {
+            "stage": "provider-and-worker",
+            "state": "failed",
+            "elapsed_ms": 1766
+          },
+          "code": "Failed",
+          "message": "copying /private/tmp into the guest's /layerfs/image failed (guest exit status: 0, host tar exit status: 1): ",
+          "exitCode": 125,
+          "signal": null,
+          "stdout": {
+            "text": "",
+            "truncated": false,
+            "bytes": 0
+          },
+          "stderr": {
+            "text": "{\"progress\":{\"stage\":\"bundle-validation\",\"state\":\"started\"}}\n{\"progress\":{\"stage\":\"bundle-validation\",\"state\":\"completed\",\"elapsed_ms\":0}}\n{\"progress\":{\"phase\":\"create\",\"machine\":\"progress-refused-1110\"}}\n{\"progress\":{\"stage\":\"provider-and-worker\",\"state\":\"started\"}}\n{\"progress\":{\"stage\":\"provider-and-worker\",\"state\":\"failed\",\"elapsed_ms\":1766}}\n{\"code\":\"Failed\",\"message\":\"copying /private/tmp into the guest's /layerfs/image failed (guest exit status: 0, host tar exit status: 1): \",\"detail\":{\"missing\":[],\"vm_exists\":true}}\n",
+            "truncated": false,
+            "bytes": 529
+          },
+          "ended": 1794273588295,
+          "durationMs": 1906
+        }
+      ],
+      "events": [
+        {
+          "v": 1,
+          "id": "d68faa95-4914-4a61-a1a0-e6f2bf13ef85",
+          "at": 1794273586388,
+          "seq": 2735,
+          "generation": "c22079cd-1464-42c4-9c5a-5d3e88d6f98d",
+          "action": {
+            "id": "b35a3f14-83db-4cec-9508-16ffaad16884",
+            "name": "machine.create",
+            "label": "Create machine",
+            "target": "progress-refused-1110",
+            "page": "/machines",
+            "origin": "user"
+          },
+          "type": "action.received",
+          "data": {}
+        },
+        {
+          "v": 1,
+          "id": "0a08fe62-555d-4fb5-9f5c-34e42230b8c0",
+          "at": 1794273586388,
+          "seq": 2736,
+          "generation": "c22079cd-1464-42c4-9c5a-5d3e88d6f98d",
+          "action": {
+            "id": "b35a3f14-83db-4cec-9508-16ffaad16884",
+            "name": "machine.create",
+            "label": "Create machine",
+            "target": "progress-refused-1110",
+            "page": "/machines",
+            "origin": "user"
+          },
+          "type": "cli.queued",
+          "invocationId": "220091c8-1566-4fcc-8aaf-13fcd8b72cdb",
+          "data": {
+            "binary": "/Users/yifanxu/.cache/layerfs-worktrees/layerfs-storage-visuals-09c001eb6d3a/artifacts/build-macos-67ba57e5600747e997463a33696f7d1d/layerfs",
+            "argv": [
+              "machine",
+              "create",
+              "--cpus",
+              "2",
+              "--memory",
+              "4294967296",
+              "--disk",
+              "4294967296",
+              "--image",
+              "/private/tmp/lfs-progress-no-image.tar",
+              "--progress",
+              "--",
+              "progress-refused-1110",
+              "apple-container"
+            ],
+            "stdin": null,
+            "mode": "real",
+            "ownerPid": 67308
+          }
+        },
+        {
+          "v": 1,
+          "id": "a83c89fd-2fe0-46e6-a65b-4dc9155ed68c",
+          "at": 1794273586389,
+          "seq": 2737,
+          "generation": "c22079cd-1464-42c4-9c5a-5d3e88d6f98d",
+          "action": {
+            "id": "b35a3f14-83db-4cec-9508-16ffaad16884",
+            "name": "machine.create",
+            "label": "Create machine",
+            "target": "progress-refused-1110",
+            "page": "/machines",
+            "origin": "user"
+          },
+          "type": "cli.started",
+          "invocationId": "220091c8-1566-4fcc-8aaf-13fcd8b72cdb",
+          "data": {
+            "started": 1794273586389,
+            "pid": 72597,
+            "binary": "/Users/yifanxu/.cache/layerfs-worktrees/layerfs-storage-visuals-09c001eb6d3a/artifacts/build-macos-67ba57e5600747e997463a33696f7d1d/layerfs",
+            "identity": {
+              "version": "2.0.0",
+              "commit": "58c548b3e0a45f11880e3511bf1267d11e315415",
+              "dirty": true,
+              "features": [
+                "machine",
+                "postgresql"
+              ]
+            },
+            "waitMs": 1
+          }
+        },
+        {
+          "v": 1,
+          "id": "6be1d353-e6f4-4e6e-8c01-3a8001a1269f",
+          "at": 1794273586522,
+          "seq": 2743,
+          "generation": "c22079cd-1464-42c4-9c5a-5d3e88d6f98d",
+          "action": {
+            "id": "b35a3f14-83db-4cec-9508-16ffaad16884",
+            "name": "machine.create",
+            "label": "Create machine",
+            "target": "progress-refused-1110",
+            "page": "/machines",
+            "origin": "user"
+          },
+          "type": "cli.progress",
+          "invocationId": "220091c8-1566-4fcc-8aaf-13fcd8b72cdb",
+          "data": {
+            "progress": {
+              "stage": "bundle-validation",
+              "state": "started"
+            }
+          }
+        },
+        {
+          "v": 1,
+          "id": "8e3c0b06-e67a-4dd3-acb8-e80f1d9958ce",
+          "at": 1794273586522,
+          "seq": 2744,
+          "generation": "c22079cd-1464-42c4-9c5a-5d3e88d6f98d",
+          "action": {
+            "id": "b35a3f14-83db-4cec-9508-16ffaad16884",
+            "name": "machine.create",
+            "label": "Create machine",
+            "target": "progress-refused-1110",
+            "page": "/machines",
+            "origin": "user"
+          },
+          "type": "cli.progress",
+          "invocationId": "220091c8-1566-4fcc-8aaf-13fcd8b72cdb",
+          "data": {
+            "progress": {
+              "stage": "bundle-validation",
+              "state": "completed",
+              "elapsed_ms": 0
+            }
+          }
+        },
+        {
+          "v": 1,
+          "id": "35588977-5573-4997-813c-bf62cf09f247",
+          "at": 1794273586526,
+          "seq": 2745,
+          "generation": "c22079cd-1464-42c4-9c5a-5d3e88d6f98d",
+          "action": {
+            "id": "b35a3f14-83db-4cec-9508-16ffaad16884",
+            "name": "machine.create",
+            "label": "Create machine",
+            "target": "progress-refused-1110",
+            "page": "/machines",
+            "origin": "user"
+          },
+          "type": "cli.progress",
+          "invocationId": "220091c8-1566-4fcc-8aaf-13fcd8b72cdb",
+          "data": {
+            "progress": {
+              "stage": "provider-and-worker",
+              "state": "started"
+            }
+          }
+        },
+        {
+          "v": 1,
+          "id": "540e101b-28c4-4c3d-a988-f467b7288e81",
+          "at": 1794273588293,
+          "seq": 2783,
+          "generation": "c22079cd-1464-42c4-9c5a-5d3e88d6f98d",
+          "action": {
+            "id": "b35a3f14-83db-4cec-9508-16ffaad16884",
+            "name": "machine.create",
+            "label": "Create machine",
+            "target": "progress-refused-1110",
+            "page": "/machines",
+            "origin": "user"
+          },
+          "type": "cli.progress",
+          "invocationId": "220091c8-1566-4fcc-8aaf-13fcd8b72cdb",
+          "data": {
+            "progress": {
+              "stage": "provider-and-worker",
+              "state": "failed",
+              "elapsed_ms": 1766
+            }
+          }
+        },
+        {
+          "v": 1,
+          "id": "573fae8b-330b-4c63-a26c-cff5acf7a975",
+          "at": 1794273588295,
+          "seq": 2784,
+          "generation": "c22079cd-1464-42c4-9c5a-5d3e88d6f98d",
+          "action": {
+            "id": "b35a3f14-83db-4cec-9508-16ffaad16884",
+            "name": "machine.create",
+            "label": "Create machine",
+            "target": "progress-refused-1110",
+            "page": "/machines",
+            "origin": "user"
+          },
+          "type": "cli.finished",
+          "invocationId": "220091c8-1566-4fcc-8aaf-13fcd8b72cdb",
+          "data": {
+            "status": "refused",
+            "code": "Failed",
+            "message": "copying /private/tmp into the guest's /layerfs/image failed (guest exit status: 0, host tar exit status: 1): ",
+            "exitCode": 125,
+            "signal": null,
+            "stdout": {
+              "text": "",
+              "truncated": false,
+              "bytes": 0
+            },
+            "stderr": {
+              "text": "{\"progress\":{\"stage\":\"bundle-validation\",\"state\":\"started\"}}\n{\"progress\":{\"stage\":\"bundle-validation\",\"state\":\"completed\",\"elapsed_ms\":0}}\n{\"progress\":{\"phase\":\"create\",\"machine\":\"progress-refused-1110\"}}\n{\"progress\":{\"stage\":\"provider-and-worker\",\"state\":\"started\"}}\n{\"progress\":{\"stage\":\"provider-and-worker\",\"state\":\"failed\",\"elapsed_ms\":1766}}\n{\"code\":\"Failed\",\"message\":\"copying /private/tmp into the guest's /layerfs/image failed (guest exit status: 0, host tar exit status: 1): \",\"detail\":{\"missing\":[],\"vm_exists\":true}}\n",
+              "truncated": false,
+              "bytes": 529
+            },
+            "ended": 1794273588295,
+            "durationMs": 1906
+          }
+        },
+        {
+          "v": 1,
+          "id": "bffae9c8-8e0c-4dcd-a426-39429580ccc6",
+          "at": 1794273588295,
+          "seq": 2785,
+          "generation": "c22079cd-1464-42c4-9c5a-5d3e88d6f98d",
+          "action": {
+            "id": "b35a3f14-83db-4cec-9508-16ffaad16884",
+            "name": "machine.create",
+            "label": "Create machine",
+            "target": "progress-refused-1110",
+            "page": "/machines",
+            "origin": "user"
+          },
+          "type": "action.finished",
+          "data": {
+            "status": 500,
+            "error": true,
+            "code": "Failed"
+          }
+        }
+      ],
+      "request": {
+        "status": 500,
+        "error": true,
+        "code": "Failed"
+      },
+      "status": "failed"
+    }
+  ],
+  "next": null,
+  "warning": null,
+  "cleared": true,
+  "clearedAt": 1794272333427
+}

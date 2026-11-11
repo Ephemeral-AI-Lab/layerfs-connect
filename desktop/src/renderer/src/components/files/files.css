@@ -11,18 +11,12 @@
 
 /* Hallmark · component: file inspector · theme: Connect semantic tokens.
  * Default/hover/focus/pressed/disabled, existing host loading/error and empty/complete states. */
-.fp-preview-shell { display: flex; flex: 1; flex-direction: column; min-height: 0; min-width: 0; gap: 10px; }
-.fp-preview-notice { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; flex-shrink: 0; font-size: 11px; color: var(--muted-foreground); }
-.fp-preview-notice > span { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
-.fp-preview-notice strong { color: var(--foreground); font-weight: 500; }
-.fp-preview-notice button { border-radius: 5px; padding: 4px 6px; white-space: nowrap; }
-.fp-preview-notice button:hover { background: var(--surface-hover); color: var(--foreground); }
 .fp-branch-context { padding-left: 2px; color: var(--muted-foreground); font-size: 10px; line-height: 1.4; }
 .fp-explorer { display: flex; flex-direction: column; flex: 1; min-height: 0; min-width: 0; overflow: hidden; font-size: 12px; }
-.fp-explorer button, .fp-explorer select, .fp-explorer input, .fp-preview-notice button { outline-offset: 2px; }
-.fp-explorer :is(button, select, input, summary):focus-visible, .fp-preview-notice button:focus-visible { outline: 2px solid var(--ring); outline-offset: -2px; }
+.fp-explorer button, .fp-explorer select, .fp-explorer input { outline-offset: 2px; }
+.fp-explorer :is(button, select, input, summary):focus-visible { outline: 2px solid var(--ring); outline-offset: -2px; }
 .fp-explorer button { cursor: pointer; transition: background-color 120ms ease, color 120ms ease; }
-.fp-explorer button:active, .fp-preview-notice button:active { background: var(--surface-pressed); }
+.fp-explorer button:active { background: var(--surface-pressed); }
 .fp-explorer button:disabled { opacity: .4; cursor: not-allowed; }
 .fp-explorer select { min-width: 0; max-width: 100%; cursor: pointer; background: var(--card); color: var(--foreground); border: 1px solid var(--border); border-radius: 5px; padding: 5px 7px; font-size: 11px; }
 .fp-explorer h2, .fp-explorer h3 { font-style: normal; }

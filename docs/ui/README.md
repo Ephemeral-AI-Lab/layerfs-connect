@@ -9,7 +9,7 @@ The LayerFS model the pages show (machines, Stores, Sandboxes, Workspaces) is dr
 
 | File | Surface |
 |---|---|
-| [shell.md](shell.md) | Window layout, sidebar, window bar, sim strip, mode chip, global overlays |
+| [shell.md](shell.md) | Window layout, sidebar, window bar and global overlays |
 | [chat.md](chat.md) | New chat, open chat (header, transcript, composer), Trace, subagent view, chat dialogs |
 | [projects.md](projects.md) | Projects list, New project dialog, Delete project dialog |
 | [project.md](project.md) | Desktop project page: header, Files, History, Sandboxes, Storage tabs |
@@ -20,6 +20,8 @@ The LayerFS model the pages show (machines, Stores, Sandboxes, Workspaces) is dr
 | [machines.md](machines.md) | Machines board, machine card, machine page, Add machine |
 | [storage.md](storage.md) | Storage board (Stores, Backups), Store card, bucket card, Store page, dialogs |
 | [settings.md](settings.md) | Settings dialog and every section |
+| [cli-activity.md](cli-activity.md) | Desktop actions, CLI input/output, retained activity |
+| [presets.md](presets.md) | Real CLI preset selection, Run, Reset and active demo environment |
 
 ## Conventions
 
@@ -51,13 +53,11 @@ Each file follows this order:
 # <Surface>
 Source: <files>     Opens from: <how the user gets here>
 
-## <View>                 one diagram per view, sample data from the `mac` simulated world
+## <View>                 one diagram per view, illustrative names for real resources
 legend table:   [n] | Component | file:line | one line
 ## States                 loading / empty / error / busy ... as mini diagrams or one line each
 ## Menus and dialogs      a diagram per menu or dialog
 ## Notes                  at most a few lines: hidden flags, dev-only parts, known gaps
 ```
 
-Sample data: the simulated `mac` world (`host/sim/seed.js`): machines `native`, `docker`, `lima1`
-(running), `lima2` (stopped); Stores `shop` (native: `api`, `web`), `lab` (lima1: `notes`), `team`
-(PostgreSQL: `crm`); bucket `backups`; Sandbox `api-dev` with Workspace `feature-login`.
+Diagrams use illustrative names; the application displays only actual host data.

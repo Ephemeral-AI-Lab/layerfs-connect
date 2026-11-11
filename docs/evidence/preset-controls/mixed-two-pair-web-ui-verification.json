@@ -1,0 +1,92 @@
+{
+  "at": 1794300297876,
+  "buildJob": "c7120f3c-222e-4725-875a-726604781211",
+  "buildAction": "af800596-6534-4b6f-a98e-3b07577ad028",
+  "flows": [
+    {
+      "flow": "Mixed selection and actual Reset and build confirmation",
+      "passed": true
+    },
+    {
+      "flow": "Per-project design script shows mount, two exec/commit pairs, unmount, then a fresh workspace name",
+      "passed": true,
+      "firstWorkspace": "demo-mix-design-1:a-001-001",
+      "nextWorkspace": "demo-mix-design-1:a-001-002"
+    },
+    {
+      "flow": "Script Next pagination",
+      "passed": true,
+      "page1": "1\u2013100 of 4,765",
+      "page2": "101\u2013200 of 4,765"
+    },
+    {
+      "flow": "Shell bodies folded initially",
+      "passed": true
+    },
+    {
+      "flow": "Live progress and project status",
+      "passed": true
+    },
+    {
+      "flow": "Progress CLI Activity button navigates to operation",
+      "passed": true
+    },
+    {
+      "flow": "Build action Project filter includes workspace lifecycle",
+      "passed": true,
+      "project": "demo-studio/design"
+    },
+    {
+      "flow": "Selected unmount command shows full CLI input and output",
+      "passed": true,
+      "output": {
+        "kind": "Unmounted"
+      }
+    },
+    {
+      "flow": "CLI Activity Next 100 keeps command metadata bounded",
+      "passed": true,
+      "renderedCommands": 100
+    },
+    {
+      "flow": "Large project Storage page opens while build runs",
+      "passed": true,
+      "project": "demo-studio/design",
+      "automaticHistoryRows": 20
+    },
+    {
+      "flow": "Ready status after full build",
+      "passed": true,
+      "projects": 8,
+      "elapsedMs": 1019408
+    },
+    {
+      "flow": "Completed Storage overview",
+      "passed": true,
+      "stores": 4,
+      "projects": 8,
+      "sandboxesPerProject": 1,
+      "alerts": []
+    },
+    {
+      "flow": "Open design sandbox details",
+      "passed": true,
+      "sandbox": "demo-mix-design-1",
+      "state": "running",
+      "mountedWorkspaces": 0
+    }
+  ],
+  "viewport": {
+    "width": 900,
+    "height": 600,
+    "bodyWidth": 900
+  },
+  "alertsDuringCheckedFlows": [],
+  "verificationScope": "Actual renderer at port 1025; full Studio Mixed rebuild Ready; Electron not launched.",
+  "finalViewport": {
+    "width": 1280,
+    "height": 820,
+    "bodyWidth": 1280
+  },
+  "console": "Only pre-build preview restart errors were observed on reused tab; no later error entries."
+}

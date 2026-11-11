@@ -1,0 +1,13 @@
+{
+  "build_id": "build-macos-67ba57e5600747e997463a33696f7d1d",
+  "platform": "macos",
+  "source": {
+    "head": "58c548b3e0a45f11880e3511bf1267d11e315415",
+    "sha256": "09739fa77421cee7d2deea04a631bcb2e9d888900a4ff2c4c1ee8a6a35d205f6"
+  },
+  "files": {
+    "layerfs.node": "03587add3dc123b605869bc5c03d22cdc9fad19078b5cd169c4602bfb0da02c1",
+    "layerfs": "93e0c201d8fbf613c66cb4f5911c7c70a850a3942e976350aa73a9dc799652c2",
+    "layerfs-daemon": "5de983f921d5f0fd9c725ec9bf4a1ff0528a71e56bb06e21b4a331caa5de5015"
+  }
+}

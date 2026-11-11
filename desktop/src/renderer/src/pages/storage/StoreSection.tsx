@@ -5,9 +5,8 @@ import { useCallback, useEffect, useId, useRef, useState } from 'react'
 
 import { LfsProject } from '@/components/layerfs/LfsIcons'
 import type { ProjectRowData } from '@/layerfs/project-rows'
-import { useSimulation } from '@/components/layerfs/Simulation'
 import { host, onProjectsChanged } from '@/layerfs/client'
-import { useHostQuery } from '@/layerfs/use-host'
+import { lastAnswer, useHostQuery } from '@/layerfs/use-host'
 import { BACKUP } from '@/pages/storage/BucketCard'
 import { Chip } from '@/components/layerfs/Chips'
 import { StoreIcon } from '@/components/layerfs/identity/StoreIcon'
@@ -19,7 +18,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { ago, bytes } from '@/layerfs/format'
 import { clearingCall } from '@/layerfs/states'
 import { cn } from '@/lib/utils'
-import type { BucketRow, DoctorFinding, StorageJob, StorageView, StoreRow } from '@/layerfs/host-api'
+import type { BucketRow, DoctorFinding, ProjectState, StorageJob, StorageView, StoreRow } from '@/layerfs/host-api'
 
 export interface StoreProject {
   key: string
@@ -127,7 +126,6 @@ function ProjectCarousel({ projects, store, onOpen }: { projects: StoreProject[]
 export function ProjectTile({ project: p, onOpen }: { project: StoreProject; onOpen?: (key: string) => void }) {
   const tile = useRef<HTMLButtonElement>(null)
   const [visible, setVisible] = useState(false)
-  const simulation = useSimulation()
   useEffect(() => {
     const observer = new IntersectionObserver(entries => {
       if (entries.some(e => e.isIntersecting)) { setVisible(true); observer.disconnect() }
@@ -136,10 +134,10 @@ export function ProjectTile({ project: p, onOpen }: { project: StoreProject; onO
     return () => observer.disconnect()
   }, [])
   const branches = useHostQuery(async () => {
-    if (!visible) return null
+    if (!visible) return lastAnswer<{ count: number | null; storage: ProjectState['storage'] }>(`project-tile-summary:${p.key}`) ?? null
     const state = await host.project(p.key)
     return { count: state.storage === null && (state.project.storeDown || state.project.refusal) ? null : state.branches.length, storage: state.storage }
-  }, [visible, p.key, simulation], `project-tile-summary:${simulation ?? 'host'}:${p.key}`)
+  }, [visible, p.key], `project-tile-summary:${p.key}`)
   useEffect(() => onProjectsChanged(() => { if (visible) branches.reload() }), [visible, branches.reload])
   const count = (n: number | null | undefined, singular: string, plural: string) => `${n ?? '—'} ${n === 1 ? singular : plural}`
   const machines = p.row?.project.kind === 'postgresql' ? p.row.runs?.map(r => r.machine) : null

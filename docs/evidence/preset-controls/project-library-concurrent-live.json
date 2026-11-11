@@ -1,0 +1,190 @@
+{
+  "state": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/connect-project-library-concurrent-Zu0cw0",
+  "note": "Full production Studio topology: all stores placed first, then eight concurrent project histories across native, Docker and both Lima VMs; no sandboxes/workspaces.",
+  "cli": "/Users/yifanxu/.cache/layerfs-worktrees/layerfs-connect-image-ru-5b7a74044d64/artifacts/build-macos-0869ec2ceccc4286bd1bb80fb17161b3/layerfs",
+  "started": 1794282597132,
+  "ok": false,
+  "error": {
+    "message": "Service(History(Busy))",
+    "code": "Unknown",
+    "stack": "LayerFSError: Service(History(Busy))\n    at outcome (file:///Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect/host/cli/outcome.js:11:113)\n    at ChildProcess.<anonymous> (file:///Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect/host/cli/spawn.js:78:23)\n    at ChildProcess.wrapper (node:events:639:12)\n    at ChildProcess.emit (node:events:514:28)\n    at maybeClose (node:internal/child_process:1141:16)\n    at Socket.<anonymous> (node:internal/child_process:498:11)\n    at Socket.emit (node:events:514:28)\n    at Pipe.<anonymous> (node:net:362:12)"
+  },
+  "failedSetup": {
+    "actionId": "e516e622-48ae-45e1-ae2d-c484e9f9b183",
+    "phase": "Service(History(Busy))",
+    "progress": {
+      "stage": "building",
+      "completed": 8,
+      "total": 16,
+      "label": "demo-services/billing history stopped",
+      "tasks": [
+        {
+          "id": "demo-studio/website",
+          "project": "demo-studio/website",
+          "machine": "native",
+          "state": "failed",
+          "completed": 1,
+          "total": 35,
+          "started": 1794282643015,
+          "ended": 1794282643083,
+          "error": "Service(History(Busy))"
+        },
+        {
+          "id": "demo-studio/design",
+          "project": "demo-studio/design",
+          "machine": "native",
+          "state": "failed",
+          "completed": 2,
+          "total": 35,
+          "started": 1794282643017,
+          "ended": 1794282643102,
+          "error": "Stopped before the next CLI step because another project failed. Inspect CLI Activity before rebuilding."
+        },
+        {
+          "id": "demo-services/gateway",
+          "project": "demo-services/gateway",
+          "machine": "docker",
+          "state": "failed",
+          "completed": 2,
+          "total": 35,
+          "started": 1794282643019,
+          "ended": 1794282643134,
+          "error": "Stopped before the next CLI step because another project failed. Inspect CLI Activity before rebuilding."
+        },
+        {
+          "id": "demo-services/billing",
+          "project": "demo-services/billing",
+          "machine": "docker",
+          "state": "failed",
+          "completed": 2,
+          "total": 35,
+          "started": 1794282643020,
+          "ended": 1794282643136,
+          "error": "Stopped before the next CLI step because another project failed. Inspect CLI Activity before rebuilding."
+        },
+        {
+          "id": "demo-build-cache/compiler",
+          "project": "demo-build-cache/compiler",
+          "machine": "demo-build",
+          "state": "failed",
+          "completed": 2,
+          "total": 35,
+          "started": 1794282643023,
+          "ended": 1794282643096,
+          "error": "Stopped before the next CLI step because another project failed. Inspect CLI Activity before rebuilding."
+        },
+        {
+          "id": "demo-build-cache/sdk",
+          "project": "demo-build-cache/sdk",
+          "machine": "demo-build",
+          "state": "failed",
+          "completed": 2,
+          "total": 35,
+          "started": 1794282643026,
+          "ended": 1794282643094,
+          "error": "Stopped before the next CLI step because another project failed. Inspect CLI Activity before rebuilding."
+        },
+        {
+          "id": "demo-experiments/embeddings",
+          "project": "demo-experiments/embeddings",
+          "machine": "demo-research",
+          "state": "failed",
+          "completed": 2,
+          "total": 35,
+          "started": 1794282643027,
+          "ended": 1794282643105,
+          "error": "Stopped before the next CLI step because another project failed. Inspect CLI Activity before rebuilding."
+        },
+        {
+          "id": "demo-experiments/evaluation",
+          "project": "demo-experiments/evaluation",
+          "machine": "demo-research",
+          "state": "failed",
+          "completed": 2,
+          "total": 35,
+          "started": 1794282643030,
+          "ended": 1794282643100,
+          "error": "Stopped before the next CLI step because another project failed. Inspect CLI Activity before rebuilding."
+        }
+      ]
+    }
+  },
+  "calls": {
+    "count": 66,
+    "allCaptured": true,
+    "historyCalls": 16,
+    "peakConcurrentHistoryCLI": 8,
+    "failures": [
+      {
+        "id": "df68e821-14a4-45e0-8815-eafc599ed95e",
+        "argv": [
+          "file",
+          "write",
+          "demo-studio/website",
+          "release-0.1",
+          "/docs/project-map.md",
+          "--message",
+          "Add an orientation map for the project"
+        ],
+        "status": "refused",
+        "code": "Unknown",
+        "message": "Service(History(Busy))",
+        "started": 1794282643041,
+        "ended": 1794282643079
+      }
+    ]
+  },
+  "cliIdentity": {
+    "version": "2.0.0",
+    "commit": "1edcf58caec2bf079a07891411a0151c9afa3e80",
+    "dirty": true,
+    "features": [
+      "machine",
+      "postgresql"
+    ]
+  },
+  "placementBarrierVerified": true,
+  "teardown": {
+    "preset": "studio",
+    "state": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/connect-project-library-concurrent-Zu0cw0",
+    "home": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/connect-project-library-concurrent-Zu0cw0/home-2",
+    "actionId": "9c4966f0-6077-4e71-a7e1-2104bc52f5c1",
+    "cleanup": {
+      "remove": {
+        "stores": [
+          "demo-build-cache",
+          "demo-experiments",
+          "demo-services",
+          "demo-studio"
+        ],
+        "sandboxes": [],
+        "machines": [
+          "demo-build",
+          "demo-research"
+        ],
+        "workspaces": []
+      },
+      "retainMachines": [],
+      "preserved": {
+        "machine": [],
+        "store": [],
+        "sandbox": []
+      },
+      "projects": 8,
+      "signature": "bb76fb8e40946bb2946be865598569b05bc6148b59586105f5dcba8c76d51141",
+      "verified": true,
+      "at": 1794282844706,
+      "remaining": [],
+      "unexpected": []
+    },
+    "activityUrl": "http://127.0.0.1:1025/#/activity?action=9c4966f0-6077-4e71-a7e1-2104bc52f5c1"
+  },
+  "observedOutcome": {
+    "workloadPassed": false,
+    "placementBarrierVerified": true,
+    "peakConcurrentHistoryCLI": 8,
+    "actualCLIFailures": 1,
+    "siblingScriptsStopped": 7,
+    "note": "Raw first-run task snapshots label stopped siblings failed; task-state semantics were refined afterward and verified by unit tests. Actual CLI failure count comes from invocation records."
+  }
+}

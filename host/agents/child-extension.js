@@ -1,17 +1,20 @@
 import { writeShims } from '../runs/shim.js'
 import { mkdirSync } from 'node:fs'
-import { dirname, join } from 'node:path'
+import { basename, dirname, join } from 'node:path'
+import { CONTEXT_ENV, OPS_ENV, toolEntry } from '../sessions/recorder.js'
+import { hostShellSection } from './prompt.js'
 import { createBashToolDefinition, createLocalBashOperations } from '@earendil-works/pi-coding-agent'
 import { createWorkspaceBashOperations, readBashConnection } from './workspace-bash.js'
 import { instructionPrompt, readProjectInstructions, workspaceInstructions } from './context.js'
 import { captureToolOutput } from './tool-output.js'
+import { activityEnv } from '../activity/context.js'
 
 /** How the worker and lead definitions (extensions.js) begin; a child tells which it is by its system prompt. */
 export const WORKER_MARK = 'You are a focused worker in LayerFS Connect.'
 export const LEAD_MARK = 'You are a team lead in LayerFS Connect.'
 
 /** The same bash implementation is loaded by the parent and every Pi child. */
-export function createConnectBashExtension({ cwd, env, traceDir, runDir = dirname(traceDir), agent = null, approvalFile, workspace = false, instructions = '', defaultBashTimeoutSeconds = 120, projectInstructions = { main: true, worker: true, lead: true }, sdk = {} }) {
+export function createConnectBashExtension({ cwd, env, traceDir, runDir = dirname(traceDir), agent = null, approvalFile, workspace = false, hostShell = false, instructions = '', defaultBashTimeoutSeconds = 120, projectInstructions = { main: true, worker: true, lead: true }, sdk = {} }) {
   return (pi) => {
     mkdirSync(traceDir, { recursive: true })
     if (!workspace && env?.LAYERFS_CONNECT_CLI) writeShims({ cli: env.LAYERFS_CONNECT_CLI }, runDir)
@@ -24,7 +27,9 @@ export function createConnectBashExtension({ cwd, env, traceDir, runDir = dirnam
         const withFiles = projectInstructions[kind] !== false
         const files = !withFiles ? [] : workspace ? await workspaceInstructions(approvalFile) : await readProjectInstructions(ctx.cwd)
         const context = instructionPrompt(files, instructions)
-        const location = workspace && agent !== 'root'
+        const location = workspace && agent !== 'root' && hostShell
+          ? hostShellSection('the conversation branch')
+          : workspace && agent !== 'root'
           ? "Connect executes every bash command in this conversation's mounted LayerFS FUSE Workspace, shared with the parent agent and subagents. Pi's local cwd is a host control directory, not the project filesystem. Each bash command starts in the Workspace root (use cd within a command for subdirectories) and is serialized and auto-committed to the session branch when it finishes; .gitignore does not exclude files from LayerFS commits, so write temporary scratch data to /tmp or remove temporary workspace files before exiting. Processes are stopped with their process group when a command ends. Do not switch execution to the host or manipulate LayerFS mounts. Pi's fullOutputPath is a host log that container bash cannot read; redirect large output to a workspace file or /tmp if you need to inspect it."
           : ''
         const note = withFiles ? 'Project root instructions above are loaded automatically; do not waste a bash call re-reading root AGENTS.md. Before changing files in subdirectories, use bash to check for additional AGENTS.override.md, AGENTS.md, or CLAUDE.md instructions in those directories.' : ''
@@ -55,8 +60,10 @@ export function createConnectBashExtension({ cwd, env, traceDir, runDir = dirnam
           }
           signal?.throwIfAborted()
         }
+        // the conversation position this tool call's LayerFS operations belong to (sessions/recorder.js)
+        const context = { session_id: basename(runDir), agent_id: name, native_session_id: ctx.sessionManager.getSessionId(), entry_id: toolEntry(ctx.sessionManager, toolCallId), tool_call_id: toolCallId }
         const output = captureToolOutput(runDir, name, toolCallId, workspace
-          ? createWorkspaceBashOperations({ approvalFile, agent: name, toolCallId })
+          ? createWorkspaceBashOperations({ approvalFile, agent: name, toolCallId, entryId: context.entry_id, nativeSessionId: context.native_session_id })
           : createLocalBashOperations())
         const tool = createBashToolDefinition(ctx.cwd, {
           operations: output.operations,
@@ -66,11 +73,14 @@ export function createConnectBashExtension({ cwd, env, traceDir, runDir = dirnam
             env: {
               ...Object.fromEntries(Object.entries(spawn.env).filter(([key]) => !key.startsWith('LAYERFS_'))),
               ...env,
+              ...(env?.LAYERFS_CONNECT_ACTIVITY_STATE ? activityEnv(env.LAYERFS_CONNECT_ACTIVITY_STATE) : {}),
               ...(env?.LAYERFS_CONNECT_CLI ? { PATH: `${join(runDir, 'bin')}:${spawn.env.PATH ?? process.env.PATH ?? ''}` } : {}),
               LAYERFS_CONNECT_EXECS: join(dirname(traceDir), 'exec-launches'),
               LAYERFS_TRACE: join(traceDir, `${name}.jsonl`),
               LAYERFS_TRACE_STEP: `${name}:${toolCallId}`,
               LAYERFS_TRACE_START: '1',
+              [OPS_ENV]: join(runDir, 'journal', 'ops'),
+              [CONTEXT_ENV]: JSON.stringify(context),
             },
           }) } : {}),
         })

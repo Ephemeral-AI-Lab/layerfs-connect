@@ -1,0 +1,7892 @@
+[
+  {
+    "at": "2026-11-10T13:29:00.552Z",
+    "state": "preparing",
+    "progress": {
+      "completed": 0,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/storage"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:00.763Z",
+    "state": "preparing",
+    "progress": {
+      "completed": 0,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/storage"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:00.998Z",
+    "state": "preparing",
+    "progress": {
+      "completed": 0,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/storage"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:01.257Z",
+    "state": "preparing",
+    "progress": {
+      "completed": 0,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/storage"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:01.459Z",
+    "state": "preparing",
+    "progress": {
+      "completed": 0,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/storage"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:01.670Z",
+    "state": "running",
+    "progress": {
+      "completed": 4,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e/sandboxes"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:01.875Z",
+    "state": "running",
+    "progress": {
+      "completed": 4,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e/sandboxes"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:02.078Z",
+    "state": "running",
+    "progress": {
+      "completed": 4,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e/sandboxes"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:02.280Z",
+    "state": "running",
+    "progress": {
+      "completed": 4,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": true,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e/sandboxes",
+      "playing": "false",
+      "hidden": false,
+      "reducedMotion": false,
+      "agentNodes": 0,
+      "workspaceNodes": 0,
+      "wires": 0,
+      "litWires": 0,
+      "packets": 0,
+      "motionElements": 0,
+      "visiblePackets": 0,
+      "cssAnimations": [],
+      "activeNodes": 0,
+      "sandboxCount": 0,
+      "mountedLabels": []
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:02.482Z",
+    "state": "running",
+    "progress": {
+      "completed": 4,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": true,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e/sandboxes",
+      "playing": "true",
+      "hidden": false,
+      "reducedMotion": false,
+      "agentNodes": 1,
+      "workspaceNodes": 0,
+      "wires": 1,
+      "litWires": 1,
+      "packets": 1,
+      "motionElements": 1,
+      "visiblePackets": 1,
+      "cssAnimations": [
+        {
+          "name": "sb-breathe",
+          "state": "running",
+          "time": 175.0149999651125
+        }
+      ],
+      "activeNodes": 2,
+      "sandboxCount": 0,
+      "mountedLabels": []
+    },
+    "movement": {
+      "edge": "a-f447eae7-41d1-4509-aafc-4167bb54854e/root",
+      "from": {
+        "x": 313.63836669921875,
+        "y": 151.03428649902344
+      },
+      "to": {
+        "x": 313.63836669921875,
+        "y": 151.03428649902344
+      },
+      "distance": 0,
+      "unchangedPath": true
+    }
+  },
+  {
+    "at": "2026-11-10T13:29:02.829Z",
+    "state": "running",
+    "progress": {
+      "completed": 9,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": true,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e/sandboxes",
+      "playing": "true",
+      "hidden": false,
+      "reducedMotion": false,
+      "agentNodes": 1,
+      "workspaceNodes": 0,
+      "wires": 1,
+      "litWires": 1,
+      "packets": 1,
+      "motionElements": 1,
+      "visiblePackets": 1,
+      "cssAnimations": [
+        {
+          "name": "sb-breathe",
+          "state": "running",
+          "time": 533.2809999651124
+        }
+      ],
+      "activeNodes": 2,
+      "sandboxCount": 0,
+      "mountedLabels": []
+    },
+    "movement": {
+      "edge": "a-f447eae7-41d1-4509-aafc-4167bb54854e/root",
+      "from": {
+        "x": 313.63836669921875,
+        "y": 151.03428649902344
+      },
+      "to": {
+        "x": 313.63836669921875,
+        "y": 151.03428649902344
+      },
+      "distance": 0,
+      "unchangedPath": true
+    }
+  },
+  {
+    "at": "2026-11-10T13:29:03.143Z",
+    "state": "running",
+    "progress": {
+      "completed": 9,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": true,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e/sandboxes",
+      "playing": "false",
+      "hidden": false,
+      "reducedMotion": false,
+      "agentNodes": 1,
+      "workspaceNodes": 0,
+      "wires": 1,
+      "litWires": 1,
+      "packets": 0,
+      "motionElements": 0,
+      "visiblePackets": 0,
+      "cssAnimations": [],
+      "activeNodes": 0,
+      "sandboxCount": 0,
+      "mountedLabels": []
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:03.345Z",
+    "state": "running",
+    "progress": {
+      "completed": 9,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": true,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e/sandboxes",
+      "playing": "false",
+      "hidden": false,
+      "reducedMotion": false,
+      "agentNodes": 1,
+      "workspaceNodes": 0,
+      "wires": 1,
+      "litWires": 1,
+      "packets": 0,
+      "motionElements": 0,
+      "visiblePackets": 0,
+      "cssAnimations": [],
+      "activeNodes": 0,
+      "sandboxCount": 0,
+      "mountedLabels": []
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:03.547Z",
+    "state": "running",
+    "progress": {
+      "completed": 9,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": true,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e/sandboxes",
+      "playing": "false",
+      "hidden": false,
+      "reducedMotion": false,
+      "agentNodes": 1,
+      "workspaceNodes": 0,
+      "wires": 1,
+      "litWires": 1,
+      "packets": 0,
+      "motionElements": 0,
+      "visiblePackets": 0,
+      "cssAnimations": [],
+      "activeNodes": 0,
+      "sandboxCount": 0,
+      "mountedLabels": []
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:03.750Z",
+    "state": "running",
+    "progress": {
+      "completed": 9,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": true,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e/sandboxes",
+      "playing": "true",
+      "hidden": false,
+      "reducedMotion": false,
+      "agentNodes": 1,
+      "workspaceNodes": 0,
+      "wires": 1,
+      "litWires": 1,
+      "packets": 1,
+      "motionElements": 1,
+      "visiblePackets": 1,
+      "cssAnimations": [
+        {
+          "name": "sb-breathe",
+          "state": "running",
+          "time": 159.17399995575465
+        }
+      ],
+      "activeNodes": 2,
+      "sandboxCount": 0,
+      "mountedLabels": []
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:04.082Z",
+    "state": "running",
+    "progress": {
+      "completed": 24,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": true,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e/sandboxes",
+      "playing": "false",
+      "hidden": false,
+      "reducedMotion": false,
+      "agentNodes": 1,
+      "workspaceNodes": 0,
+      "wires": 1,
+      "litWires": 1,
+      "packets": 0,
+      "motionElements": 0,
+      "visiblePackets": 0,
+      "cssAnimations": [],
+      "activeNodes": 0,
+      "sandboxCount": 0,
+      "mountedLabels": []
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:04.287Z",
+    "state": "running",
+    "progress": {
+      "completed": 24,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": true,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e/sandboxes",
+      "playing": "false",
+      "hidden": false,
+      "reducedMotion": false,
+      "agentNodes": 1,
+      "workspaceNodes": 0,
+      "wires": 1,
+      "litWires": 1,
+      "packets": 0,
+      "motionElements": 0,
+      "visiblePackets": 0,
+      "cssAnimations": [],
+      "activeNodes": 0,
+      "sandboxCount": 0,
+      "mountedLabels": []
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:04.489Z",
+    "state": "running",
+    "progress": {
+      "completed": 24,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": true,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e/sandboxes",
+      "playing": "true",
+      "hidden": false,
+      "reducedMotion": false,
+      "agentNodes": 1,
+      "workspaceNodes": 0,
+      "wires": 1,
+      "litWires": 1,
+      "packets": 1,
+      "motionElements": 1,
+      "visiblePackets": 1,
+      "cssAnimations": [
+        {
+          "name": "sb-breathe",
+          "state": "running",
+          "time": 141.65299996184189
+        }
+      ],
+      "activeNodes": 2,
+      "sandboxCount": 0,
+      "mountedLabels": []
+    },
+    "movement": {
+      "edge": "a-f447eae7-41d1-4509-aafc-4167bb54854e/root",
+      "from": {
+        "x": 336.8590087890625,
+        "y": 198.311279296875
+      },
+      "to": {
+        "x": 338.7090759277344,
+        "y": 206.61514282226562
+      },
+      "distance": 8.507461305577968,
+      "unchangedPath": true
+    }
+  },
+  {
+    "at": "2026-11-10T13:29:04.784Z",
+    "state": "running",
+    "progress": {
+      "completed": 24,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": true,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e/sandboxes",
+      "playing": "false",
+      "hidden": false,
+      "reducedMotion": false,
+      "agentNodes": 1,
+      "workspaceNodes": 0,
+      "wires": 1,
+      "litWires": 1,
+      "packets": 0,
+      "motionElements": 0,
+      "visiblePackets": 0,
+      "cssAnimations": [],
+      "activeNodes": 0,
+      "sandboxCount": 0,
+      "mountedLabels": []
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:04.986Z",
+    "state": "running",
+    "progress": {
+      "completed": 24,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": true,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e/sandboxes",
+      "playing": "false",
+      "hidden": false,
+      "reducedMotion": false,
+      "agentNodes": 1,
+      "workspaceNodes": 0,
+      "wires": 1,
+      "litWires": 1,
+      "packets": 0,
+      "motionElements": 0,
+      "visiblePackets": 0,
+      "cssAnimations": [],
+      "activeNodes": 0,
+      "sandboxCount": 0,
+      "mountedLabels": []
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:05.192Z",
+    "state": "running",
+    "progress": {
+      "completed": 38,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": true,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e/sandboxes",
+      "playing": "true",
+      "hidden": false,
+      "reducedMotion": false,
+      "agentNodes": 1,
+      "workspaceNodes": 0,
+      "wires": 1,
+      "litWires": 1,
+      "packets": 1,
+      "motionElements": 1,
+      "visiblePackets": 1,
+      "cssAnimations": [
+        {
+          "name": "sb-breathe",
+          "state": "running",
+          "time": 83.12599995732306
+        }
+      ],
+      "activeNodes": 2,
+      "sandboxCount": 0,
+      "mountedLabels": []
+    },
+    "movement": {
+      "edge": "a-f447eae7-41d1-4509-aafc-4167bb54854e/root",
+      "from": {
+        "x": 352.4777526855469,
+        "y": 262.4199523925781
+      },
+      "to": {
+        "x": 355.7578430175781,
+        "y": 270.26959228515625
+      },
+      "distance": 8.507399075477696,
+      "unchangedPath": true
+    }
+  },
+  {
+    "at": "2026-11-10T13:29:05.487Z",
+    "state": "running",
+    "progress": {
+      "completed": 38,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": true,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e/sandboxes",
+      "playing": "false",
+      "hidden": false,
+      "reducedMotion": false,
+      "agentNodes": 1,
+      "workspaceNodes": 0,
+      "wires": 1,
+      "litWires": 1,
+      "packets": 0,
+      "motionElements": 0,
+      "visiblePackets": 0,
+      "cssAnimations": [],
+      "activeNodes": 0,
+      "sandboxCount": 0,
+      "mountedLabels": []
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:05.689Z",
+    "state": "running",
+    "progress": {
+      "completed": 38,
+      "total": 553
+    },
+    "actualInFlight": [
+      {
+        "step": "dense.001.a.write.1",
+        "method": "workspace.commit",
+        "actor": "a01-worker",
+        "started": "2026-11-10T13:29:05.685Z",
+        "overlapConfirmed": true
+      }
+    ],
+    "dom": {
+      "viewReady": true,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e/sandboxes",
+      "playing": "false",
+      "hidden": false,
+      "reducedMotion": false,
+      "agentNodes": 1,
+      "workspaceNodes": 0,
+      "wires": 1,
+      "litWires": 1,
+      "packets": 0,
+      "motionElements": 0,
+      "visiblePackets": 0,
+      "cssAnimations": [
+        {
+          "state": "running",
+          "time": 0
+        }
+      ],
+      "activeNodes": 0,
+      "sandboxCount": 0,
+      "mountedLabels": []
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:05.977Z",
+    "state": "running",
+    "progress": {
+      "completed": 38,
+      "total": 553
+    },
+    "actualInFlight": [
+      {
+        "step": "dense.001.a.write.1",
+        "method": "workspace.commit",
+        "actor": "a01-worker",
+        "started": "2026-11-10T13:29:05.685Z",
+        "overlapConfirmed": true
+      }
+    ],
+    "dom": {
+      "viewReady": true,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e/sandboxes",
+      "playing": "true",
+      "hidden": false,
+      "reducedMotion": false,
+      "agentNodes": 1,
+      "workspaceNodes": 0,
+      "wires": 1,
+      "litWires": 1,
+      "packets": 0,
+      "motionElements": 0,
+      "visiblePackets": 0,
+      "cssAnimations": [],
+      "activeNodes": 1,
+      "sandboxCount": 0,
+      "mountedLabels": []
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:06.206Z",
+    "state": "running",
+    "progress": {
+      "completed": 44,
+      "total": 553
+    },
+    "actualInFlight": [
+      {
+        "step": "dense.001.a.write.1",
+        "method": "workspace.commit",
+        "actor": "a01-worker",
+        "started": "2026-11-10T13:29:05.685Z",
+        "overlapConfirmed": true
+      }
+    ],
+    "dom": {
+      "viewReady": true,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e/subagents/a01-worker/sandboxes",
+      "playing": "true",
+      "hidden": false,
+      "reducedMotion": false,
+      "agentNodes": 2,
+      "workspaceNodes": 0,
+      "wires": 2,
+      "litWires": 2,
+      "packets": 1,
+      "motionElements": 1,
+      "visiblePackets": 1,
+      "cssAnimations": [
+        {
+          "name": "sb-breathe",
+          "state": "running",
+          "time": 83.30100000457463
+        }
+      ],
+      "activeNodes": 2,
+      "sandboxCount": 0,
+      "mountedLabels": []
+    },
+    "movement": {
+      "edge": "a-f447eae7-41d1-4509-aafc-4167bb54854e/child-01a1c5a5-e2ad-7677-ac5c-da0601f10604",
+      "from": {
+        "x": 337.4642333984375,
+        "y": 275.3165588378906
+      },
+      "to": {
+        "x": 337.4642333984375,
+        "y": 275.3165588378906
+      },
+      "distance": 0,
+      "unchangedPath": true
+    }
+  },
+  {
+    "at": "2026-11-10T13:29:06.508Z",
+    "state": "running",
+    "progress": {
+      "completed": 44,
+      "total": 553
+    },
+    "actualInFlight": [
+      {
+        "step": "dense.001.a.write.2",
+        "method": "workspace.commit",
+        "actor": "a01-worker",
+        "started": "2026-11-10T13:29:06.446Z",
+        "overlapConfirmed": true
+      }
+    ],
+    "dom": {
+      "viewReady": true,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e/subagents/a01-worker/sandboxes",
+      "playing": "false",
+      "hidden": false,
+      "reducedMotion": false,
+      "agentNodes": 2,
+      "workspaceNodes": 0,
+      "wires": 2,
+      "litWires": 2,
+      "packets": 0,
+      "motionElements": 0,
+      "visiblePackets": 0,
+      "cssAnimations": [
+        {
+          "state": "running",
+          "time": 0
+        },
+        {
+          "state": "running",
+          "time": 0
+        },
+        {
+          "state": "running",
+          "time": 0
+        }
+      ],
+      "activeNodes": 0,
+      "sandboxCount": 0,
+      "mountedLabels": []
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:06.712Z",
+    "state": "running",
+    "progress": {
+      "completed": 44,
+      "total": 553
+    },
+    "actualInFlight": [
+      {
+        "step": "dense.001.a.session.002.mount",
+        "method": "workspace.mount",
+        "actor": "a01-worker",
+        "started": "2026-11-10T13:29:06.680Z",
+        "overlapConfirmed": true
+      }
+    ],
+    "dom": {
+      "viewReady": true,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e/subagents/a01-worker/sandboxes",
+      "playing": "true",
+      "hidden": false,
+      "reducedMotion": false,
+      "agentNodes": 2,
+      "workspaceNodes": 0,
+      "wires": 2,
+      "litWires": 2,
+      "packets": 1,
+      "motionElements": 1,
+      "visiblePackets": 1,
+      "cssAnimations": [
+        {
+          "state": "running",
+          "time": 125.00700001055343
+        },
+        {
+          "state": "running",
+          "time": 125.00700001055343
+        },
+        {
+          "state": "running",
+          "time": 125.00700001055343
+        },
+        {
+          "name": "sb-breathe",
+          "state": "running",
+          "time": 75.9319999642667
+        }
+      ],
+      "activeNodes": 2,
+      "sandboxCount": 0,
+      "mountedLabels": []
+    },
+    "movement": {
+      "edge": "a-f447eae7-41d1-4509-aafc-4167bb54854e/child-01a1c5a5-e2ad-7677-ac5c-da0601f10604",
+      "from": {
+        "x": 350.324951171875,
+        "y": 322.9588928222656
+      },
+      "to": {
+        "x": 353.1104736328125,
+        "y": 330.0364074707031
+      },
+      "distance": 7.605941689181866,
+      "unchangedPath": true
+    }
+  },
+  {
+    "at": "2026-11-10T13:29:07.006Z",
+    "state": "running",
+    "progress": {
+      "completed": 44,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": true,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e/subagents/a01-worker/sandboxes",
+      "playing": "true",
+      "hidden": false,
+      "reducedMotion": false,
+      "agentNodes": 2,
+      "workspaceNodes": 0,
+      "wires": 2,
+      "litWires": 1,
+      "packets": 1,
+      "motionElements": 1,
+      "visiblePackets": 1,
+      "cssAnimations": [
+        {
+          "state": "running",
+          "time": 33.3769999699669
+        },
+        {
+          "name": "sb-breathe",
+          "state": "running",
+          "time": 367.6319999642672
+        }
+      ],
+      "activeNodes": 2,
+      "sandboxCount": 0,
+      "mountedLabels": []
+    },
+    "movement": {
+      "edge": "a-f447eae7-41d1-4509-aafc-4167bb54854e/child-01a1c5a5-e2ad-7677-ac5c-da0601f10604",
+      "from": {
+        "x": 362.4678039550781,
+        "y": 343.55377197265625
+      },
+      "to": {
+        "x": 313.56268310546875,
+        "y": 232.02418518066406
+      },
+      "distance": 121.78078491825964,
+      "unchangedPath": true
+    }
+  },
+  {
+    "at": "2026-11-10T13:29:07.314Z",
+    "state": "running",
+    "progress": {
+      "completed": 53,
+      "total": 553
+    },
+    "actualInFlight": [
+      {
+        "step": "dense.001.a.session.002.unmount",
+        "method": "workspace.unmount",
+        "actor": "a01-worker",
+        "started": "2026-11-10T13:29:07.260Z",
+        "overlapConfirmed": true
+      }
+    ],
+    "dom": {
+      "viewReady": true,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e/subagents/a01-worker/sandboxes",
+      "playing": "true",
+      "hidden": false,
+      "reducedMotion": false,
+      "agentNodes": 2,
+      "workspaceNodes": 0,
+      "wires": 2,
+      "litWires": 1,
+      "packets": 1,
+      "motionElements": 1,
+      "visiblePackets": 1,
+      "cssAnimations": [
+        {
+          "name": "sb-breathe",
+          "state": "running",
+          "time": 675.8319999642665
+        }
+      ],
+      "activeNodes": 2,
+      "sandboxCount": 0,
+      "mountedLabels": []
+    },
+    "movement": {
+      "edge": "a-f447eae7-41d1-4509-aafc-4167bb54854e/child-01a1c5a5-e2ad-7677-ac5c-da0601f10604",
+      "from": {
+        "x": 326.7911682128906,
+        "y": 243.9138946533203
+      },
+      "to": {
+        "x": 329.7131042480469,
+        "y": 250.33612060546875
+      },
+      "distance": 7.0556853936377815,
+      "unchangedPath": true
+    }
+  },
+  {
+    "at": "2026-11-10T13:29:07.609Z",
+    "state": "running",
+    "progress": {
+      "completed": 53,
+      "total": 553
+    },
+    "actualInFlight": [
+      {
+        "step": "dense.001.a.session.003.mount",
+        "method": "workspace.mount",
+        "actor": "a01-worker",
+        "started": "2026-11-10T13:29:07.486Z",
+        "overlapConfirmed": true
+      }
+    ],
+    "dom": {
+      "viewReady": true,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e/subagents/a01-worker/sandboxes",
+      "playing": "true",
+      "hidden": false,
+      "reducedMotion": false,
+      "agentNodes": 2,
+      "workspaceNodes": 1,
+      "wires": 2,
+      "litWires": 1,
+      "packets": 1,
+      "motionElements": 1,
+      "visiblePackets": 1,
+      "cssAnimations": [
+        {
+          "name": "sb-breathe",
+          "state": "running",
+          "time": 975.9319999642671
+        }
+      ],
+      "activeNodes": 3,
+      "sandboxCount": 1,
+      "mountedLabels": [
+        "native\nWorkspaces unknown"
+      ]
+    },
+    "movement": {
+      "edge": "a-f447eae7-41d1-4509-aafc-4167bb54854e/child-01a1c5a5-e2ad-7677-ac5c-da0601f10604",
+      "from": {
+        "x": 335.14862060546875,
+        "y": 266.7417907714844
+      },
+      "to": {
+        "x": 337.11517333984375,
+        "y": 273.9766540527344
+      },
+      "distance": 7.497371296358298,
+      "unchangedPath": true
+    }
+  },
+  {
+    "at": "2026-11-10T13:29:07.904Z",
+    "state": "running",
+    "progress": {
+      "completed": 53,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": true,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e/subagents/a01-worker/sandboxes",
+      "playing": "true",
+      "hidden": false,
+      "reducedMotion": false,
+      "agentNodes": 2,
+      "workspaceNodes": 0,
+      "wires": 3,
+      "litWires": 2,
+      "packets": 2,
+      "motionElements": 2,
+      "visiblePackets": 2,
+      "cssAnimations": [
+        {
+          "name": "sb-breathe",
+          "state": "running",
+          "time": 1267.531999964267
+        }
+      ],
+      "activeNodes": 2,
+      "sandboxCount": 1,
+      "mountedLabels": [
+        "native\nWorkspaces unknown"
+      ]
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:08.129Z",
+    "state": "running",
+    "progress": {
+      "completed": 53,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": true,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e/subagents/a01-worker/sandboxes",
+      "playing": "false",
+      "hidden": false,
+      "reducedMotion": false,
+      "agentNodes": 2,
+      "workspaceNodes": 1,
+      "wires": 3,
+      "litWires": 2,
+      "packets": 0,
+      "motionElements": 0,
+      "visiblePackets": 0,
+      "cssAnimations": [],
+      "activeNodes": 0,
+      "sandboxCount": 1,
+      "mountedLabels": [
+        "native\nWorkspaces unknown"
+      ]
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:08.334Z",
+    "state": "running",
+    "progress": {
+      "completed": 59,
+      "total": 553
+    },
+    "actualInFlight": [
+      {
+        "step": "dense.001.a.session.003.unmount",
+        "method": "workspace.unmount",
+        "actor": "a01-worker",
+        "started": "2026-11-10T13:29:08.317Z",
+        "overlapConfirmed": true
+      }
+    ],
+    "dom": {
+      "viewReady": true,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e/subagents/a01-worker/sandboxes",
+      "playing": "true",
+      "hidden": false,
+      "reducedMotion": false,
+      "agentNodes": 2,
+      "workspaceNodes": 1,
+      "wires": 3,
+      "litWires": 2,
+      "packets": 2,
+      "motionElements": 2,
+      "visiblePackets": 2,
+      "cssAnimations": [
+        {
+          "name": "sb-breathe",
+          "state": "running",
+          "time": 157.4549999786541
+        }
+      ],
+      "activeNodes": 3,
+      "sandboxCount": 1,
+      "mountedLabels": [
+        "native\nWorkspaces unknown"
+      ]
+    },
+    "movement": {
+      "edge": "a-f447eae7-41d1-4509-aafc-4167bb54854e/child-01a1c5a5-e2ad-7677-ac5c-da0601f10604",
+      "from": {
+        "x": 351.0083923339844,
+        "y": 324.83856201171875
+      },
+      "to": {
+        "x": 353.69549560546875,
+        "y": 331.3284606933594
+      },
+      "distance": 7.024194536712573,
+      "unchangedPath": true
+    }
+  },
+  {
+    "at": "2026-11-10T13:29:08.635Z",
+    "state": "running",
+    "progress": {
+      "completed": 59,
+      "total": 553
+    },
+    "actualInFlight": [
+      {
+        "step": "dense.001.a.write.7",
+        "method": "workspace.commit",
+        "actor": "a01-worker",
+        "started": "2026-11-10T13:29:08.589Z",
+        "overlapConfirmed": true
+      }
+    ],
+    "dom": {
+      "viewReady": true,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e/subagents/a01-worker/sandboxes",
+      "playing": "true",
+      "hidden": false,
+      "reducedMotion": false,
+      "agentNodes": 2,
+      "workspaceNodes": 0,
+      "wires": 3,
+      "litWires": 2,
+      "packets": 2,
+      "motionElements": 2,
+      "visiblePackets": 2,
+      "cssAnimations": [
+        {
+          "name": "sb-breathe",
+          "state": "running",
+          "time": 458.35499997865446
+        }
+      ],
+      "activeNodes": 2,
+      "sandboxCount": 1,
+      "mountedLabels": [
+        "native\nWorkspaces unknown"
+      ]
+    },
+    "movement": {
+      "edge": "a-f447eae7-41d1-4509-aafc-4167bb54854e/child-01a1c5a5-e2ad-7677-ac5c-da0601f10604",
+      "from": {
+        "x": 364.7967529296875,
+        "y": 344.8970642089844
+      },
+      "to": {
+        "x": 316.2679748535156,
+        "y": 232.59390258789062
+      },
+      "distance": 122.33986436014978,
+      "unchangedPath": true
+    }
+  },
+  {
+    "at": "2026-11-10T13:29:08.929Z",
+    "state": "running",
+    "progress": {
+      "completed": 59,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": true,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e/subagents/a01-worker/sandboxes",
+      "playing": "true",
+      "hidden": false,
+      "reducedMotion": false,
+      "agentNodes": 2,
+      "workspaceNodes": 1,
+      "wires": 3,
+      "litWires": 2,
+      "packets": 2,
+      "motionElements": 2,
+      "visiblePackets": 2,
+      "cssAnimations": [
+        {
+          "name": "sb-breathe",
+          "state": "running",
+          "time": 749.9549999786534
+        }
+      ],
+      "activeNodes": 3,
+      "sandboxCount": 1,
+      "mountedLabels": [
+        "native\nWorkspaces unknown"
+      ]
+    },
+    "movement": {
+      "edge": "a-f447eae7-41d1-4509-aafc-4167bb54854e/child-01a1c5a5-e2ad-7677-ac5c-da0601f10604",
+      "from": {
+        "x": 327.427490234375,
+        "y": 245.17323303222656
+      },
+      "to": {
+        "x": 330.44580078125,
+        "y": 252.20883178710938
+      },
+      "distance": 7.655706916874852,
+      "unchangedPath": true
+    }
+  },
+  {
+    "at": "2026-11-10T13:29:09.228Z",
+    "state": "running",
+    "progress": {
+      "completed": 59,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": true,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e/subagents/a01-worker/sandboxes",
+      "playing": "true",
+      "hidden": false,
+      "reducedMotion": false,
+      "agentNodes": 2,
+      "workspaceNodes": 1,
+      "wires": 3,
+      "litWires": 2,
+      "packets": 2,
+      "motionElements": 2,
+      "visiblePackets": 2,
+      "cssAnimations": [
+        {
+          "state": "running",
+          "time": 0
+        },
+        {
+          "state": "running",
+          "time": 0
+        },
+        {
+          "state": "running",
+          "time": 0
+        },
+        {
+          "state": "running",
+          "time": 0
+        },
+        {
+          "name": "sb-breathe",
+          "state": "running",
+          "time": 1049.9189999786545
+        }
+      ],
+      "activeNodes": 3,
+      "sandboxCount": 1,
+      "mountedLabels": [
+        "native\nWorkspaces unknown"
+      ]
+    },
+    "movement": {
+      "edge": "a-f447eae7-41d1-4509-aafc-4167bb54854e/child-01a1c5a5-e2ad-7677-ac5c-da0601f10604",
+      "from": {
+        "x": 334.75714111328125,
+        "y": 265.3741455078125
+      },
+      "to": {
+        "x": 334.75714111328125,
+        "y": 265.3741455078125
+      },
+      "distance": 0,
+      "unchangedPath": true
+    }
+  },
+  {
+    "at": "2026-11-10T13:29:09.526Z",
+    "state": "running",
+    "progress": {
+      "completed": 70,
+      "total": 553
+    },
+    "actualInFlight": [
+      {
+        "step": "dense.001.a.write.10",
+        "method": "workspace.commit",
+        "actor": "a01-worker",
+        "started": "2026-11-10T13:29:09.471Z",
+        "overlapConfirmed": true
+      }
+    ],
+    "dom": {
+      "viewReady": true,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e/subagents/a01-worker/sandboxes",
+      "playing": "false",
+      "hidden": false,
+      "reducedMotion": false,
+      "agentNodes": 2,
+      "workspaceNodes": 1,
+      "wires": 3,
+      "litWires": 2,
+      "packets": 0,
+      "motionElements": 0,
+      "visiblePackets": 0,
+      "cssAnimations": [
+        {
+          "state": "running",
+          "time": 141.62699999986296
+        },
+        {
+          "state": "running",
+          "time": 141.62699999986296
+        },
+        {
+          "state": "running",
+          "time": 141.62699999986296
+        },
+        {
+          "state": "running",
+          "time": 141.62699999986296
+        }
+      ],
+      "activeNodes": 0,
+      "sandboxCount": 1,
+      "mountedLabels": [
+        "native\nWorkspaces unknown"
+      ]
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:09.729Z",
+    "state": "running",
+    "progress": {
+      "completed": 70,
+      "total": 553
+    },
+    "actualInFlight": [
+      {
+        "step": "dense.001.a.session.006.mount",
+        "method": "workspace.mount",
+        "actor": "a01-worker",
+        "started": "2026-11-10T13:29:09.711Z",
+        "overlapConfirmed": true
+      }
+    ],
+    "dom": {
+      "viewReady": true,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e/subagents/a01-worker/sandboxes",
+      "playing": "false",
+      "hidden": false,
+      "reducedMotion": false,
+      "agentNodes": 2,
+      "workspaceNodes": 0,
+      "wires": 2,
+      "litWires": 1,
+      "packets": 0,
+      "motionElements": 0,
+      "visiblePackets": 0,
+      "cssAnimations": [],
+      "activeNodes": 0,
+      "sandboxCount": 1,
+      "mountedLabels": [
+        "native\nWorkspaces unknown"
+      ]
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:09.931Z",
+    "state": "running",
+    "progress": {
+      "completed": 70,
+      "total": 553
+    },
+    "actualInFlight": [
+      {
+        "step": "dense.001.a.write.11",
+        "method": "workspace.commit",
+        "actor": "a01-worker",
+        "started": "2026-11-10T13:29:09.902Z",
+        "overlapConfirmed": true
+      }
+    ],
+    "dom": {
+      "viewReady": true,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e/subagents/a01-worker/sandboxes",
+      "playing": "false",
+      "hidden": false,
+      "reducedMotion": false,
+      "agentNodes": 2,
+      "workspaceNodes": 0,
+      "wires": 2,
+      "litWires": 1,
+      "packets": 0,
+      "motionElements": 0,
+      "visiblePackets": 0,
+      "cssAnimations": [],
+      "activeNodes": 0,
+      "sandboxCount": 1,
+      "mountedLabels": [
+        "native\nWorkspaces unknown"
+      ]
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:10.135Z",
+    "state": "running",
+    "progress": {
+      "completed": 70,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": true,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e/subagents/a01-worker/sandboxes",
+      "playing": "true",
+      "hidden": false,
+      "reducedMotion": false,
+      "agentNodes": 2,
+      "workspaceNodes": 1,
+      "wires": 3,
+      "litWires": 2,
+      "packets": 2,
+      "motionElements": 2,
+      "visiblePackets": 2,
+      "cssAnimations": [
+        {
+          "name": "sb-breathe",
+          "state": "running",
+          "time": 125.01300000967497
+        }
+      ],
+      "activeNodes": 3,
+      "sandboxCount": 1,
+      "mountedLabels": [
+        "native\nWorkspaces unknown"
+      ]
+    },
+    "movement": {
+      "edge": "a-f447eae7-41d1-4509-aafc-4167bb54854e/child-01a1c5a5-e2ad-7677-ac5c-da0601f10604",
+      "from": {
+        "x": 358.5618896484375,
+        "y": 339.6467590332031
+      },
+      "to": {
+        "x": 364.15374755859375,
+        "y": 344.59326171875
+      },
+      "distance": 7.4657058410775505,
+      "unchangedPath": true
+    }
+  },
+  {
+    "at": "2026-11-10T13:29:10.430Z",
+    "state": "running",
+    "progress": {
+      "completed": 70,
+      "total": 553
+    },
+    "actualInFlight": [
+      {
+        "step": "dense.001.a.session.007.mount",
+        "method": "workspace.mount",
+        "actor": "a01-worker",
+        "started": "2026-11-10T13:29:10.400Z",
+        "overlapConfirmed": true
+      }
+    ],
+    "dom": {
+      "viewReady": true,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e/subagents/a01-worker/sandboxes",
+      "playing": "true",
+      "hidden": false,
+      "reducedMotion": false,
+      "agentNodes": 2,
+      "workspaceNodes": 1,
+      "wires": 3,
+      "litWires": 2,
+      "packets": 2,
+      "motionElements": 2,
+      "visiblePackets": 2,
+      "cssAnimations": [
+        {
+          "state": "running",
+          "time": 33.280999953857915
+        },
+        {
+          "state": "running",
+          "time": 41.60099997650768
+        },
+        {
+          "state": "running",
+          "time": 33.280999953857915
+        },
+        {
+          "state": "running",
+          "time": 33.280999953857915
+        },
+        {
+          "state": "running",
+          "time": 33.280999953857915
+        },
+        {
+          "name": "sb-breathe",
+          "state": "running",
+          "time": 416.61300000967395
+        }
+      ],
+      "activeNodes": 3,
+      "sandboxCount": 1,
+      "mountedLabels": [
+        "native\nWorkspaces unknown"
+      ]
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:10.728Z",
+    "state": "running",
+    "progress": {
+      "completed": 81,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": true,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e/subagents/a01-worker/sandboxes",
+      "playing": "false",
+      "hidden": false,
+      "reducedMotion": false,
+      "agentNodes": 2,
+      "workspaceNodes": 1,
+      "wires": 3,
+      "litWires": 2,
+      "packets": 0,
+      "motionElements": 0,
+      "visiblePackets": 0,
+      "cssAnimations": [],
+      "activeNodes": 0,
+      "sandboxCount": 1,
+      "mountedLabels": [
+        "native\nWorkspaces unknown"
+      ]
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:10.938Z",
+    "state": "running",
+    "progress": {
+      "completed": 81,
+      "total": 553
+    },
+    "actualInFlight": [
+      {
+        "step": "dense.001.a.write.14",
+        "method": "workspace.commit",
+        "actor": "a01-worker",
+        "started": "2026-11-10T13:29:10.830Z",
+        "overlapConfirmed": true
+      }
+    ],
+    "dom": {
+      "viewReady": true,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e/subagents/a01-worker/sandboxes",
+      "playing": "false",
+      "hidden": false,
+      "reducedMotion": false,
+      "agentNodes": 2,
+      "workspaceNodes": 1,
+      "wires": 3,
+      "litWires": 2,
+      "packets": 0,
+      "motionElements": 0,
+      "visiblePackets": 0,
+      "cssAnimations": [],
+      "activeNodes": 0,
+      "sandboxCount": 1,
+      "mountedLabels": [
+        "native\nWorkspaces unknown"
+      ]
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:11.141Z",
+    "state": "running",
+    "progress": {
+      "completed": 81,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": true,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e/subagents/a01-worker/sandboxes",
+      "playing": "false",
+      "hidden": false,
+      "reducedMotion": false,
+      "agentNodes": 2,
+      "workspaceNodes": 1,
+      "wires": 3,
+      "litWires": 2,
+      "packets": 0,
+      "motionElements": 0,
+      "visiblePackets": 0,
+      "cssAnimations": [],
+      "activeNodes": 0,
+      "sandboxCount": 1,
+      "mountedLabels": [
+        "native\nWorkspaces unknown"
+      ]
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:11.345Z",
+    "state": "running",
+    "progress": {
+      "completed": 81,
+      "total": 553
+    },
+    "actualInFlight": [
+      {
+        "step": "dense.001.a.write.15",
+        "method": "workspace.commit",
+        "actor": "a01-worker",
+        "started": "2026-11-10T13:29:11.260Z",
+        "overlapConfirmed": true
+      }
+    ],
+    "dom": {
+      "viewReady": true,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e/subagents/a01-worker/sandboxes",
+      "playing": "false",
+      "hidden": false,
+      "reducedMotion": false,
+      "agentNodes": 2,
+      "workspaceNodes": 1,
+      "wires": 3,
+      "litWires": 2,
+      "packets": 0,
+      "motionElements": 0,
+      "visiblePackets": 0,
+      "cssAnimations": [
+        {
+          "state": "running",
+          "time": 8.322000008355701
+        }
+      ],
+      "activeNodes": 0,
+      "sandboxCount": 1,
+      "mountedLabels": [
+        "native\nWorkspaces unknown"
+      ]
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:11.548Z",
+    "state": "running",
+    "progress": {
+      "completed": 81,
+      "total": 553
+    },
+    "actualInFlight": [
+      {
+        "step": "dense.001.a.write.16",
+        "method": "workspace.commit",
+        "actor": "a01-worker",
+        "started": "2026-11-10T13:29:11.484Z",
+        "overlapConfirmed": true
+      }
+    ],
+    "dom": {
+      "viewReady": true,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e/subagents/a01-worker/sandboxes",
+      "playing": "true",
+      "hidden": false,
+      "reducedMotion": false,
+      "agentNodes": 2,
+      "workspaceNodes": 1,
+      "wires": 3,
+      "litWires": 2,
+      "packets": 2,
+      "motionElements": 2,
+      "visiblePackets": 2,
+      "cssAnimations": [
+        {
+          "state": "running",
+          "time": 142.5800000022157
+        },
+        {
+          "state": "running",
+          "time": 149.9849999843157
+        },
+        {
+          "state": "running",
+          "time": 142.5800000022157
+        },
+        {
+          "state": "running",
+          "time": 142.5800000022157
+        },
+        {
+          "state": "running",
+          "time": 142.5800000022157
+        },
+        {
+          "state": "running",
+          "time": 142.5800000022157
+        },
+        {
+          "state": "running",
+          "time": 142.5800000022157
+        },
+        {
+          "name": "sb-breathe",
+          "state": "running",
+          "time": 41.656999982240706
+        }
+      ],
+      "activeNodes": 3,
+      "sandboxCount": 1,
+      "mountedLabels": [
+        "native\nWorkspaces unknown"
+      ]
+    },
+    "movement": {
+      "edge": "a-f447eae7-41d1-4509-aafc-4167bb54854e/child-01a1c5a5-e2ad-7677-ac5c-da0601f10604",
+      "from": {
+        "x": 351.75762939453125,
+        "y": 326.7919616699219
+      },
+      "to": {
+        "x": 355.19677734375,
+        "y": 334.3462219238281
+      },
+      "distance": 8.300276296627917,
+      "unchangedPath": true
+    }
+  },
+  {
+    "at": "2026-11-10T13:29:11.868Z",
+    "state": "running",
+    "progress": {
+      "completed": 91,
+      "total": 553
+    },
+    "actualInFlight": [
+      {
+        "step": "dense.001.a.write.17.exec",
+        "method": "workspace.exec",
+        "actor": "a01-worker",
+        "started": "2026-11-10T13:29:11.838Z",
+        "overlapConfirmed": true
+      }
+    ],
+    "dom": {
+      "viewReady": true,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e/subagents/a01-worker/sandboxes",
+      "playing": "true",
+      "hidden": false,
+      "reducedMotion": false,
+      "agentNodes": 2,
+      "workspaceNodes": 0,
+      "wires": 3,
+      "litWires": 2,
+      "packets": 2,
+      "motionElements": 2,
+      "visiblePackets": 2,
+      "cssAnimations": [
+        {
+          "state": "running",
+          "time": 99.98199996147328
+        },
+        {
+          "name": "sb-breathe",
+          "state": "running",
+          "time": 366.65699998224176
+        }
+      ],
+      "activeNodes": 2,
+      "sandboxCount": 1,
+      "mountedLabels": [
+        "native\nWorkspaces unknown"
+      ]
+    },
+    "movement": {
+      "edge": "a-f447eae7-41d1-4509-aafc-4167bb54854e/child-01a1c5a5-e2ad-7677-ac5c-da0601f10604",
+      "from": {
+        "x": 367.456298828125,
+        "y": 345.6526184082031
+      },
+      "to": {
+        "x": 318.7049255371094,
+        "y": 233.8199005126953
+      },
+      "distance": 121.99693926347572,
+      "unchangedPath": true
+    }
+  },
+  {
+    "at": "2026-11-10T13:29:12.162Z",
+    "state": "running",
+    "progress": {
+      "completed": 91,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": true,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e/subagents/a01-worker/sandboxes",
+      "playing": "true",
+      "hidden": false,
+      "reducedMotion": false,
+      "agentNodes": 2,
+      "workspaceNodes": 1,
+      "wires": 3,
+      "litWires": 2,
+      "packets": 2,
+      "motionElements": 2,
+      "visiblePackets": 2,
+      "cssAnimations": [
+        {
+          "state": "running",
+          "time": 133.3599999818027
+        },
+        {
+          "name": "sb-breathe",
+          "state": "running",
+          "time": 658.3569999822423
+        }
+      ],
+      "activeNodes": 3,
+      "sandboxCount": 1,
+      "mountedLabels": [
+        "native\nWorkspaces unknown"
+      ]
+    },
+    "movement": {
+      "edge": "a-f447eae7-41d1-4509-aafc-4167bb54854e/child-01a1c5a5-e2ad-7677-ac5c-da0601f10604",
+      "from": {
+        "x": 328.31884765625,
+        "y": 247.06607055664062
+      },
+      "to": {
+        "x": 331.15997314453125,
+        "y": 254.13746643066406
+      },
+      "distance": 7.620802690485896,
+      "unchangedPath": true
+    }
+  },
+  {
+    "at": "2026-11-10T13:29:12.457Z",
+    "state": "running",
+    "progress": {
+      "completed": 91,
+      "total": 553
+    },
+    "actualInFlight": [
+      {
+        "step": "dense.001.a.session.009.unmount",
+        "method": "workspace.unmount",
+        "actor": "a01-worker",
+        "started": "2026-11-10T13:29:12.343Z",
+        "overlapConfirmed": true
+      }
+    ],
+    "dom": {
+      "viewReady": true,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e/subagents/a01-worker/sandboxes",
+      "playing": "true",
+      "hidden": false,
+      "reducedMotion": false,
+      "agentNodes": 2,
+      "workspaceNodes": 1,
+      "wires": 3,
+      "litWires": 2,
+      "packets": 2,
+      "motionElements": 2,
+      "visiblePackets": 2,
+      "cssAnimations": [
+        {
+          "name": "sb-breathe",
+          "state": "running",
+          "time": 949.9569999822413
+        }
+      ],
+      "activeNodes": 3,
+      "sandboxCount": 1,
+      "mountedLabels": [
+        "native\nWorkspaces unknown"
+      ]
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:12.752Z",
+    "state": "running",
+    "progress": {
+      "completed": 91,
+      "total": 553
+    },
+    "actualInFlight": [
+      {
+        "step": "dense.001.a.session.010.mount",
+        "method": "workspace.mount",
+        "actor": "a01-worker",
+        "started": "2026-11-10T13:29:12.560Z",
+        "overlapConfirmed": true
+      }
+    ],
+    "dom": {
+      "viewReady": true,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e/subagents/a01-worker/sandboxes",
+      "playing": "false",
+      "hidden": false,
+      "reducedMotion": false,
+      "agentNodes": 2,
+      "workspaceNodes": 0,
+      "wires": 2,
+      "litWires": 1,
+      "packets": 0,
+      "motionElements": 0,
+      "visiblePackets": 0,
+      "cssAnimations": [],
+      "activeNodes": 0,
+      "sandboxCount": 1,
+      "mountedLabels": [
+        "native\nWorkspaces unknown"
+      ]
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:12.956Z",
+    "state": "running",
+    "progress": {
+      "completed": 98,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": true,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e/subagents/a01-worker/sandboxes",
+      "playing": "true",
+      "hidden": false,
+      "reducedMotion": false,
+      "agentNodes": 2,
+      "workspaceNodes": 0,
+      "wires": 3,
+      "litWires": 2,
+      "packets": 2,
+      "motionElements": 2,
+      "visiblePackets": 2,
+      "cssAnimations": [
+        {
+          "name": "sb-breathe",
+          "state": "running",
+          "time": 124.07099996078763
+        }
+      ],
+      "activeNodes": 2,
+      "sandboxCount": 1,
+      "mountedLabels": [
+        "native\nWorkspaces unknown"
+      ]
+    },
+    "movement": {
+      "edge": "a-f447eae7-41d1-4509-aafc-4167bb54854e/child-01a1c5a5-e2ad-7677-ac5c-da0601f10604",
+      "from": {
+        "x": 346.3544616699219,
+        "y": 310.2437438964844
+      },
+      "to": {
+        "x": 348.55224609375,
+        "y": 317.6507263183594
+      },
+      "distance": 7.7261662531676585,
+      "unchangedPath": true
+    }
+  },
+  {
+    "at": "2026-11-10T13:29:13.251Z",
+    "state": "running",
+    "progress": {
+      "completed": 98,
+      "total": 553
+    },
+    "actualInFlight": [
+      {
+        "step": "dense.001.a.write.20",
+        "method": "workspace.commit",
+        "actor": "a01-worker",
+        "started": "2026-11-10T13:29:13.238Z",
+        "overlapConfirmed": true
+      }
+    ],
+    "dom": {
+      "viewReady": true,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e/subagents/a01-worker/sandboxes",
+      "playing": "true",
+      "hidden": false,
+      "reducedMotion": false,
+      "agentNodes": 2,
+      "workspaceNodes": 1,
+      "wires": 3,
+      "litWires": 2,
+      "packets": 2,
+      "motionElements": 2,
+      "visiblePackets": 2,
+      "cssAnimations": [
+        {
+          "state": "running",
+          "time": 58.36499996008371
+        },
+        {
+          "state": "running",
+          "time": 166.7290000034498
+        },
+        {
+          "name": "sb-breathe",
+          "state": "running",
+          "time": 425.0709999607878
+        }
+      ],
+      "activeNodes": 3,
+      "sandboxCount": 1,
+      "mountedLabels": [
+        "native\nWorkspaces unknown"
+      ]
+    },
+    "movement": {
+      "edge": "a-f447eae7-41d1-4509-aafc-4167bb54854e/child-01a1c5a5-e2ad-7677-ac5c-da0601f10604",
+      "from": {
+        "x": 354.8945617675781,
+        "y": 333.7725830078125
+      },
+      "to": {
+        "x": 359.3749084472656,
+        "y": 340.646240234375
+      },
+      "distance": 8.20491743032565,
+      "unchangedPath": true
+    }
+  },
+  {
+    "at": "2026-11-10T13:29:13.555Z",
+    "state": "running",
+    "progress": {
+      "completed": 98,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": true,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e/subagents/a01-worker/sandboxes",
+      "playing": "true",
+      "hidden": false,
+      "reducedMotion": false,
+      "agentNodes": 2,
+      "workspaceNodes": 1,
+      "wires": 3,
+      "litWires": 2,
+      "packets": 2,
+      "motionElements": 2,
+      "visiblePackets": 2,
+      "cssAnimations": [
+        {
+          "name": "sb-breathe",
+          "state": "running",
+          "time": 724.4709999607882
+        }
+      ],
+      "activeNodes": 3,
+      "sandboxCount": 1,
+      "mountedLabels": [
+        "native\nWorkspaces unknown"
+      ]
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:13.851Z",
+    "state": "running",
+    "progress": {
+      "completed": 98,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": true,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e/subagents/a01-worker/sandboxes",
+      "playing": "false",
+      "hidden": false,
+      "reducedMotion": false,
+      "agentNodes": 2,
+      "workspaceNodes": 1,
+      "wires": 3,
+      "litWires": 2,
+      "packets": 0,
+      "motionElements": 0,
+      "visiblePackets": 0,
+      "cssAnimations": [],
+      "activeNodes": 0,
+      "sandboxCount": 1,
+      "mountedLabels": [
+        "native\nWorkspaces unknown"
+      ]
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:14.055Z",
+    "state": "running",
+    "progress": {
+      "completed": 106,
+      "total": 553
+    },
+    "actualInFlight": [
+      {
+        "step": "dense.001.a.write.22",
+        "method": "workspace.commit",
+        "actor": "a01-worker",
+        "started": "2026-11-10T13:29:13.971Z",
+        "overlapConfirmed": true
+      }
+    ],
+    "dom": {
+      "viewReady": true,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e/subagents/a01-worker/sandboxes",
+      "playing": "false",
+      "hidden": false,
+      "reducedMotion": false,
+      "agentNodes": 2,
+      "workspaceNodes": 1,
+      "wires": 3,
+      "litWires": 2,
+      "packets": 0,
+      "motionElements": 0,
+      "visiblePackets": 0,
+      "cssAnimations": [],
+      "activeNodes": 0,
+      "sandboxCount": 1,
+      "mountedLabels": [
+        "native\nWorkspaces unknown"
+      ]
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:14.260Z",
+    "state": "running",
+    "progress": {
+      "completed": 106,
+      "total": 553
+    },
+    "actualInFlight": [
+      {
+        "step": "dense.001.a.session.012.mount",
+        "method": "workspace.mount",
+        "actor": "a01-worker",
+        "started": "2026-11-10T13:29:14.242Z",
+        "overlapConfirmed": true
+      }
+    ],
+    "dom": {
+      "viewReady": true,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e/subagents/a01-worker/sandboxes",
+      "playing": "false",
+      "hidden": false,
+      "reducedMotion": true,
+      "agentNodes": 2,
+      "workspaceNodes": 1,
+      "wires": 3,
+      "litWires": 2,
+      "packets": 0,
+      "motionElements": 0,
+      "visiblePackets": 0,
+      "cssAnimations": [],
+      "activeNodes": 0,
+      "sandboxCount": 1,
+      "mountedLabels": [
+        "native\nWorkspaces unknown"
+      ]
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:14.464Z",
+    "state": "running",
+    "progress": {
+      "completed": 106,
+      "total": 553
+    },
+    "actualInFlight": [
+      {
+        "step": "dense.001.a.write.23",
+        "method": "workspace.commit",
+        "actor": "a01-worker",
+        "started": "2026-11-10T13:29:14.436Z",
+        "overlapConfirmed": true
+      }
+    ],
+    "dom": {
+      "viewReady": true,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e/subagents/a01-worker/sandboxes",
+      "playing": "true",
+      "hidden": false,
+      "reducedMotion": true,
+      "agentNodes": 2,
+      "workspaceNodes": 1,
+      "wires": 3,
+      "litWires": 2,
+      "packets": 2,
+      "motionElements": 2,
+      "visiblePackets": 0,
+      "cssAnimations": [],
+      "activeNodes": 3,
+      "sandboxCount": 1,
+      "mountedLabels": [
+        "native\nWorkspaces unknown"
+      ]
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:14.672Z",
+    "state": "running",
+    "progress": {
+      "completed": 106,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": true,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e/subagents/a01-worker/sandboxes",
+      "playing": "false",
+      "hidden": false,
+      "reducedMotion": true,
+      "agentNodes": 2,
+      "workspaceNodes": 1,
+      "wires": 3,
+      "litWires": 2,
+      "packets": 0,
+      "motionElements": 0,
+      "visiblePackets": 0,
+      "cssAnimations": [],
+      "activeNodes": 0,
+      "sandboxCount": 1,
+      "mountedLabels": [
+        "native\nWorkspaces unknown"
+      ]
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:14.876Z",
+    "state": "running",
+    "progress": {
+      "completed": 106,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": true,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e/subagents/a01-worker/sandboxes",
+      "playing": "false",
+      "hidden": false,
+      "reducedMotion": true,
+      "agentNodes": 2,
+      "workspaceNodes": 1,
+      "wires": 3,
+      "litWires": 2,
+      "packets": 0,
+      "motionElements": 0,
+      "visiblePackets": 0,
+      "cssAnimations": [],
+      "activeNodes": 0,
+      "sandboxCount": 1,
+      "mountedLabels": [
+        "native\nWorkspaces unknown"
+      ]
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:15.082Z",
+    "state": "running",
+    "progress": {
+      "completed": 115,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": true,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e/subagents/a01-worker/sandboxes",
+      "playing": "false",
+      "hidden": false,
+      "reducedMotion": true,
+      "agentNodes": 2,
+      "workspaceNodes": 1,
+      "wires": 3,
+      "litWires": 2,
+      "packets": 0,
+      "motionElements": 0,
+      "visiblePackets": 0,
+      "cssAnimations": [],
+      "activeNodes": 0,
+      "sandboxCount": 1,
+      "mountedLabels": [
+        "native\nWorkspaces unknown"
+      ]
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:15.285Z",
+    "state": "running",
+    "progress": {
+      "completed": 115,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": true,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e/subagents/a01-worker/sandboxes",
+      "playing": "true",
+      "hidden": false,
+      "reducedMotion": true,
+      "agentNodes": 2,
+      "workspaceNodes": 1,
+      "wires": 3,
+      "litWires": 2,
+      "packets": 2,
+      "motionElements": 2,
+      "visiblePackets": 0,
+      "cssAnimations": [],
+      "activeNodes": 3,
+      "sandboxCount": 1,
+      "mountedLabels": [
+        "native\nWorkspaces unknown"
+      ]
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:15.489Z",
+    "state": "running",
+    "progress": {
+      "completed": 115,
+      "total": 553
+    },
+    "actualInFlight": [
+      {
+        "step": "dense.001.a.write.26",
+        "method": "workspace.commit",
+        "actor": "a01-worker",
+        "started": "2026-11-10T13:29:15.432Z",
+        "overlapConfirmed": true
+      }
+    ],
+    "dom": {
+      "viewReady": true,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e/subagents/a01-worker/sandboxes",
+      "playing": "true",
+      "hidden": false,
+      "reducedMotion": true,
+      "agentNodes": 2,
+      "workspaceNodes": 1,
+      "wires": 3,
+      "litWires": 2,
+      "packets": 2,
+      "motionElements": 2,
+      "visiblePackets": 0,
+      "cssAnimations": [],
+      "activeNodes": 3,
+      "sandboxCount": 1,
+      "mountedLabels": [
+        "native\nWorkspaces unknown"
+      ]
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:15.693Z",
+    "state": "running",
+    "progress": {
+      "completed": 115,
+      "total": 553
+    },
+    "actualInFlight": [
+      {
+        "step": "dense.001.a.session.014.mount",
+        "method": "workspace.mount",
+        "actor": "a01-worker",
+        "started": "2026-11-10T13:29:15.686Z",
+        "overlapConfirmed": true
+      }
+    ],
+    "dom": {
+      "viewReady": true,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e/subagents/a01-worker/sandboxes",
+      "playing": "true",
+      "hidden": false,
+      "reducedMotion": true,
+      "agentNodes": 2,
+      "workspaceNodes": 1,
+      "wires": 3,
+      "litWires": 2,
+      "packets": 2,
+      "motionElements": 2,
+      "visiblePackets": 0,
+      "cssAnimations": [],
+      "activeNodes": 3,
+      "sandboxCount": 1,
+      "mountedLabels": [
+        "native\nWorkspaces unknown"
+      ]
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:15.897Z",
+    "state": "running",
+    "progress": {
+      "completed": 115,
+      "total": 553
+    },
+    "actualInFlight": [
+      {
+        "step": "dense.001.a.write.27",
+        "method": "workspace.commit",
+        "actor": "a01-worker",
+        "started": "2026-11-10T13:29:15.865Z",
+        "overlapConfirmed": true
+      }
+    ],
+    "dom": {
+      "viewReady": true,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e/subagents/a01-worker/sandboxes",
+      "playing": "true",
+      "hidden": false,
+      "reducedMotion": true,
+      "agentNodes": 2,
+      "workspaceNodes": 1,
+      "wires": 3,
+      "litWires": 2,
+      "packets": 2,
+      "motionElements": 2,
+      "visiblePackets": 0,
+      "cssAnimations": [],
+      "activeNodes": 3,
+      "sandboxCount": 1,
+      "mountedLabels": [
+        "native\nWorkspaces unknown"
+      ]
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:16.135Z",
+    "state": "running",
+    "progress": {
+      "completed": 124,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": true,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e/subagents/a01-worker/sandboxes",
+      "playing": "false",
+      "hidden": false,
+      "reducedMotion": true,
+      "agentNodes": 2,
+      "workspaceNodes": 1,
+      "wires": 0,
+      "litWires": 0,
+      "packets": 0,
+      "motionElements": 0,
+      "visiblePackets": 0,
+      "cssAnimations": [],
+      "activeNodes": 3,
+      "sandboxCount": 1,
+      "mountedLabels": [
+        "nativeWorkspaces unknown"
+      ]
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:16.338Z",
+    "state": "running",
+    "progress": {
+      "completed": 124,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": true,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e/subagents/a01-worker/sandboxes",
+      "playing": "false",
+      "hidden": false,
+      "reducedMotion": true,
+      "agentNodes": 2,
+      "workspaceNodes": 1,
+      "wires": 0,
+      "litWires": 0,
+      "packets": 0,
+      "motionElements": 0,
+      "visiblePackets": 0,
+      "cssAnimations": [],
+      "activeNodes": 3,
+      "sandboxCount": 1,
+      "mountedLabels": [
+        "nativeWorkspaces unknown"
+      ]
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:16.540Z",
+    "state": "running",
+    "progress": {
+      "completed": 124,
+      "total": 553
+    },
+    "actualInFlight": [
+      {
+        "step": "dense.001.a.session.014.unmount",
+        "method": "workspace.unmount",
+        "actor": "a01-worker",
+        "started": "2026-11-10T13:29:16.404Z",
+        "overlapConfirmed": true
+      }
+    ],
+    "dom": {
+      "viewReady": true,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e/subagents/a01-worker/sandboxes",
+      "playing": "false",
+      "hidden": false,
+      "reducedMotion": true,
+      "agentNodes": 2,
+      "workspaceNodes": 1,
+      "wires": 0,
+      "litWires": 0,
+      "packets": 0,
+      "motionElements": 0,
+      "visiblePackets": 0,
+      "cssAnimations": [],
+      "activeNodes": 3,
+      "sandboxCount": 1,
+      "mountedLabels": [
+        "nativeWorkspaces unknown"
+      ]
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:16.744Z",
+    "state": "running",
+    "progress": {
+      "completed": 124,
+      "total": 553
+    },
+    "actualInFlight": [
+      {
+        "step": "dense.001.a.session.015.mount",
+        "method": "workspace.mount",
+        "actor": "a01-worker",
+        "started": "2026-11-10T13:29:16.632Z",
+        "overlapConfirmed": true
+      }
+    ],
+    "dom": {
+      "viewReady": true,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e/subagents/a01-worker/sandboxes",
+      "playing": "false",
+      "hidden": false,
+      "reducedMotion": true,
+      "agentNodes": 2,
+      "workspaceNodes": 1,
+      "wires": 0,
+      "litWires": 0,
+      "packets": 0,
+      "motionElements": 0,
+      "visiblePackets": 0,
+      "cssAnimations": [],
+      "activeNodes": 3,
+      "sandboxCount": 1,
+      "mountedLabels": [
+        "nativeWorkspaces unknown"
+      ]
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:16.947Z",
+    "state": "running",
+    "progress": {
+      "completed": 124,
+      "total": 553
+    },
+    "actualInFlight": [
+      {
+        "step": "dense.001.a.write.29.exec",
+        "method": "workspace.exec",
+        "actor": "a01-worker",
+        "started": "2026-11-10T13:29:16.859Z",
+        "overlapConfirmed": true
+      }
+    ],
+    "dom": {
+      "viewReady": true,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e/subagents/a01-worker/sandboxes",
+      "playing": "false",
+      "hidden": false,
+      "reducedMotion": true,
+      "agentNodes": 2,
+      "workspaceNodes": 1,
+      "wires": 0,
+      "litWires": 0,
+      "packets": 0,
+      "motionElements": 0,
+      "visiblePackets": 0,
+      "cssAnimations": [],
+      "activeNodes": 3,
+      "sandboxCount": 1,
+      "mountedLabels": [
+        "nativeWorkspaces unknown"
+      ]
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:17.175Z",
+    "state": "running",
+    "progress": {
+      "completed": 128,
+      "total": 553
+    },
+    "actualInFlight": [
+      {
+        "step": "dense.001.a.write.29",
+        "method": "workspace.commit",
+        "actor": "a01-worker",
+        "started": "2026-11-10T13:29:17.165Z",
+        "overlapConfirmed": true
+      }
+    ],
+    "dom": {
+      "viewReady": true,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e/subagents/a01-worker/sandboxes",
+      "playing": "false",
+      "hidden": false,
+      "reducedMotion": true,
+      "agentNodes": 2,
+      "workspaceNodes": 1,
+      "wires": 0,
+      "litWires": 0,
+      "packets": 0,
+      "motionElements": 0,
+      "visiblePackets": 0,
+      "cssAnimations": [],
+      "activeNodes": 3,
+      "sandboxCount": 1,
+      "mountedLabels": [
+        "nativeWorkspaces unknown"
+      ]
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:17.379Z",
+    "state": "running",
+    "progress": {
+      "completed": 128,
+      "total": 553
+    },
+    "actualInFlight": [
+      {
+        "step": "dense.001.a.write.30.exec",
+        "method": "workspace.exec",
+        "actor": "a01-worker",
+        "started": "2026-11-10T13:29:17.344Z",
+        "overlapConfirmed": true
+      }
+    ],
+    "dom": {
+      "viewReady": true,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e/subagents/a01-worker/sandboxes",
+      "playing": "false",
+      "hidden": false,
+      "reducedMotion": false,
+      "agentNodes": 2,
+      "workspaceNodes": 1,
+      "wires": 0,
+      "litWires": 0,
+      "packets": 0,
+      "motionElements": 0,
+      "visiblePackets": 0,
+      "cssAnimations": [],
+      "activeNodes": 3,
+      "sandboxCount": 1,
+      "mountedLabels": [
+        "nativeWorkspaces unknown"
+      ]
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:17.609Z",
+    "state": "running",
+    "progress": {
+      "completed": 128,
+      "total": 553
+    },
+    "actualInFlight": [
+      {
+        "step": "dense.001.a.write.30",
+        "method": "workspace.commit",
+        "actor": "a01-worker",
+        "started": "2026-11-10T13:29:17.588Z",
+        "overlapConfirmed": true
+      }
+    ],
+    "dom": {
+      "viewReady": true,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e/subagents/a01-worker/sandboxes",
+      "playing": "false",
+      "hidden": false,
+      "reducedMotion": false,
+      "agentNodes": 2,
+      "workspaceNodes": 1,
+      "wires": 0,
+      "litWires": 0,
+      "packets": 0,
+      "motionElements": 0,
+      "visiblePackets": 0,
+      "cssAnimations": [],
+      "activeNodes": 3,
+      "sandboxCount": 1,
+      "mountedLabels": [
+        "nativeWorkspaces unknown"
+      ]
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:17.815Z",
+    "state": "running",
+    "progress": {
+      "completed": 128,
+      "total": 553
+    },
+    "actualInFlight": [
+      {
+        "step": "dense.001.a.write.30",
+        "method": "workspace.commit",
+        "actor": "a01-worker",
+        "started": "2026-11-10T13:29:17.588Z",
+        "overlapConfirmed": true
+      }
+    ],
+    "dom": {
+      "viewReady": true,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e/subagents/a01-worker/sandboxes",
+      "playing": "false",
+      "hidden": false,
+      "reducedMotion": false,
+      "agentNodes": 2,
+      "workspaceNodes": 1,
+      "wires": 0,
+      "litWires": 0,
+      "packets": 0,
+      "motionElements": 0,
+      "visiblePackets": 0,
+      "cssAnimations": [],
+      "activeNodes": 3,
+      "sandboxCount": 1,
+      "mountedLabels": [
+        "nativeWorkspaces unknown"
+      ]
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:18.018Z",
+    "state": "running",
+    "progress": {
+      "completed": 128,
+      "total": 553
+    },
+    "actualInFlight": [
+      {
+        "step": "dense.001.a.session.016.mount",
+        "method": "workspace.mount",
+        "actor": "a01-worker",
+        "started": "2026-11-10T13:29:18.007Z",
+        "overlapConfirmed": true
+      }
+    ],
+    "dom": {
+      "viewReady": true,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e/subagents/a01-worker/sandboxes",
+      "playing": "false",
+      "hidden": false,
+      "reducedMotion": false,
+      "agentNodes": 2,
+      "workspaceNodes": 1,
+      "wires": 0,
+      "litWires": 0,
+      "packets": 0,
+      "motionElements": 0,
+      "visiblePackets": 0,
+      "cssAnimations": [],
+      "activeNodes": 3,
+      "sandboxCount": 1,
+      "mountedLabels": [
+        "nativeWorkspaces unknown"
+      ]
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:18.223Z",
+    "state": "running",
+    "progress": {
+      "completed": 134,
+      "total": 553
+    },
+    "actualInFlight": [
+      {
+        "step": "dense.001.a.write.31",
+        "method": "workspace.commit",
+        "actor": "a01-worker",
+        "started": "2026-11-10T13:29:18.198Z",
+        "overlapConfirmed": true
+      }
+    ],
+    "dom": {
+      "viewReady": true,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e/subagents/a01-worker/sandboxes",
+      "playing": "false",
+      "hidden": false,
+      "reducedMotion": false,
+      "agentNodes": 2,
+      "workspaceNodes": 1,
+      "wires": 0,
+      "litWires": 0,
+      "packets": 0,
+      "motionElements": 0,
+      "visiblePackets": 0,
+      "cssAnimations": [],
+      "activeNodes": 3,
+      "sandboxCount": 1,
+      "mountedLabels": [
+        "nativeWorkspaces unknown"
+      ]
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:18.427Z",
+    "state": "running",
+    "progress": {
+      "completed": 134,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": true,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e/subagents/a01-worker/sandboxes",
+      "playing": "false",
+      "hidden": false,
+      "reducedMotion": false,
+      "agentNodes": 2,
+      "workspaceNodes": 1,
+      "wires": 0,
+      "litWires": 0,
+      "packets": 0,
+      "motionElements": 0,
+      "visiblePackets": 0,
+      "cssAnimations": [],
+      "activeNodes": 3,
+      "sandboxCount": 1,
+      "mountedLabels": [
+        "nativeWorkspaces unknown"
+      ]
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:18.631Z",
+    "state": "running",
+    "progress": {
+      "completed": 134,
+      "total": 553
+    },
+    "actualInFlight": [
+      {
+        "step": "dense.001.a.session.016.unmount",
+        "method": "workspace.unmount",
+        "actor": "a01-worker",
+        "started": "2026-11-10T13:29:18.623Z",
+        "overlapConfirmed": true
+      }
+    ],
+    "dom": {
+      "viewReady": true,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e/subagents/a01-worker/sandboxes",
+      "playing": "false",
+      "hidden": false,
+      "reducedMotion": false,
+      "agentNodes": 2,
+      "workspaceNodes": 1,
+      "wires": 0,
+      "litWires": 0,
+      "packets": 0,
+      "motionElements": 0,
+      "visiblePackets": 0,
+      "cssAnimations": [],
+      "activeNodes": 3,
+      "sandboxCount": 1,
+      "mountedLabels": [
+        "nativeWorkspaces unknown"
+      ]
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:18.834Z",
+    "state": "running",
+    "progress": {
+      "completed": 134,
+      "total": 553
+    },
+    "actualInFlight": [
+      {
+        "step": "dense.001.a.write.33.exec",
+        "method": "workspace.exec",
+        "actor": "a01-worker",
+        "started": "2026-11-10T13:29:18.826Z",
+        "overlapConfirmed": true
+      }
+    ],
+    "dom": {
+      "viewReady": true,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e/subagents/a01-worker/sandboxes",
+      "playing": "false",
+      "hidden": false,
+      "reducedMotion": false,
+      "agentNodes": 2,
+      "workspaceNodes": 1,
+      "wires": 0,
+      "litWires": 0,
+      "packets": 0,
+      "motionElements": 0,
+      "visiblePackets": 0,
+      "cssAnimations": [],
+      "activeNodes": 3,
+      "sandboxCount": 1,
+      "mountedLabels": [
+        "nativeWorkspaces unknown"
+      ]
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:19.038Z",
+    "state": "running",
+    "progress": {
+      "completed": 134,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": true,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e/subagents/a01-worker/sandboxes",
+      "playing": "false",
+      "hidden": false,
+      "reducedMotion": false,
+      "agentNodes": 2,
+      "workspaceNodes": 1,
+      "wires": 0,
+      "litWires": 0,
+      "packets": 0,
+      "motionElements": 0,
+      "visiblePackets": 0,
+      "cssAnimations": [],
+      "activeNodes": 3,
+      "sandboxCount": 1,
+      "mountedLabels": [
+        "nativeWorkspaces unknown"
+      ]
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:19.245Z",
+    "state": "running",
+    "progress": {
+      "completed": 142,
+      "total": 553
+    },
+    "actualInFlight": [
+      {
+        "step": "dense.001.a.write.34",
+        "method": "workspace.commit",
+        "actor": "a01-worker",
+        "started": "2026-11-10T13:29:19.185Z",
+        "overlapConfirmed": true
+      }
+    ],
+    "dom": {
+      "viewReady": true,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e/subagents/a01-worker/sandboxes",
+      "playing": "false",
+      "hidden": false,
+      "reducedMotion": false,
+      "agentNodes": 2,
+      "workspaceNodes": 1,
+      "wires": 0,
+      "litWires": 0,
+      "packets": 0,
+      "motionElements": 0,
+      "visiblePackets": 0,
+      "cssAnimations": [],
+      "activeNodes": 3,
+      "sandboxCount": 1,
+      "mountedLabels": [
+        "nativeWorkspaces unknown"
+      ]
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:19.449Z",
+    "state": "running",
+    "progress": {
+      "completed": 142,
+      "total": 553
+    },
+    "actualInFlight": [
+      {
+        "step": "dense.001.a.session.018.mount",
+        "method": "workspace.mount",
+        "actor": "a01-worker",
+        "started": "2026-11-10T13:29:19.441Z",
+        "overlapConfirmed": true
+      }
+    ],
+    "dom": {
+      "viewReady": true,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e/subagents/a01-worker/sandboxes",
+      "playing": "false",
+      "hidden": false,
+      "reducedMotion": false,
+      "agentNodes": 2,
+      "workspaceNodes": 1,
+      "wires": 0,
+      "litWires": 0,
+      "packets": 0,
+      "motionElements": 0,
+      "visiblePackets": 0,
+      "cssAnimations": [],
+      "activeNodes": 3,
+      "sandboxCount": 1,
+      "mountedLabels": [
+        "nativeWorkspaces unknown"
+      ]
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:19.651Z",
+    "state": "running",
+    "progress": {
+      "completed": 142,
+      "total": 553
+    },
+    "actualInFlight": [
+      {
+        "step": "dense.001.a.write.35",
+        "method": "workspace.commit",
+        "actor": "a01-worker",
+        "started": "2026-11-10T13:29:19.626Z",
+        "overlapConfirmed": true
+      }
+    ],
+    "dom": {
+      "viewReady": true,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e/subagents/a01-worker/sandboxes",
+      "playing": "false",
+      "hidden": false,
+      "reducedMotion": false,
+      "agentNodes": 2,
+      "workspaceNodes": 1,
+      "wires": 0,
+      "litWires": 0,
+      "packets": 0,
+      "motionElements": 0,
+      "visiblePackets": 0,
+      "cssAnimations": [],
+      "activeNodes": 3,
+      "sandboxCount": 1,
+      "mountedLabels": [
+        "nativeWorkspaces unknown"
+      ]
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:19.873Z",
+    "state": "running",
+    "progress": {
+      "completed": 142,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": true,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e/subagents/a01-worker/sandboxes",
+      "playing": "false",
+      "hidden": false,
+      "reducedMotion": false,
+      "agentNodes": 2,
+      "workspaceNodes": 1,
+      "wires": 0,
+      "litWires": 0,
+      "packets": 0,
+      "motionElements": 0,
+      "visiblePackets": 0,
+      "cssAnimations": [],
+      "activeNodes": 3,
+      "sandboxCount": 1,
+      "mountedLabels": [
+        "nativeWorkspaces unknown"
+      ]
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:20.077Z",
+    "state": "running",
+    "progress": {
+      "completed": 142,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": true,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e/subagents/a01-worker/sandboxes",
+      "playing": "false",
+      "hidden": false,
+      "reducedMotion": false,
+      "agentNodes": 2,
+      "workspaceNodes": 1,
+      "wires": 0,
+      "litWires": 0,
+      "packets": 0,
+      "motionElements": 0,
+      "visiblePackets": 0,
+      "cssAnimations": [],
+      "activeNodes": 3,
+      "sandboxCount": 1,
+      "mountedLabels": [
+        "nativeWorkspaces unknown"
+      ]
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:20.342Z",
+    "state": "running",
+    "progress": {
+      "completed": 152,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": true,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e/subagents/a01-worker/sandboxes",
+      "playing": "false",
+      "hidden": false,
+      "reducedMotion": false,
+      "agentNodes": 2,
+      "workspaceNodes": 1,
+      "wires": 0,
+      "litWires": 0,
+      "packets": 0,
+      "motionElements": 0,
+      "visiblePackets": 0,
+      "cssAnimations": [],
+      "activeNodes": 3,
+      "sandboxCount": 1,
+      "mountedLabels": [
+        "nativeWorkspaces unknown"
+      ]
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:20.546Z",
+    "state": "running",
+    "progress": {
+      "completed": 152,
+      "total": 553
+    },
+    "actualInFlight": [
+      {
+        "step": "dense.001.a.write.38.exec",
+        "method": "workspace.exec",
+        "actor": "a01-worker",
+        "started": "2026-11-10T13:29:20.531Z",
+        "overlapConfirmed": true
+      }
+    ],
+    "dom": {
+      "viewReady": true,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e/subagents/a01-worker/sandboxes",
+      "playing": "false",
+      "hidden": false,
+      "reducedMotion": false,
+      "agentNodes": 2,
+      "workspaceNodes": 1,
+      "wires": 0,
+      "litWires": 0,
+      "packets": 0,
+      "motionElements": 0,
+      "visiblePackets": 0,
+      "cssAnimations": [],
+      "activeNodes": 3,
+      "sandboxCount": 1,
+      "mountedLabels": [
+        "nativeWorkspaces unknown"
+      ]
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:20.749Z",
+    "state": "running",
+    "progress": {
+      "completed": 152,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": true,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e/subagents/a01-worker/sandboxes",
+      "playing": "false",
+      "hidden": false,
+      "reducedMotion": false,
+      "agentNodes": 2,
+      "workspaceNodes": 1,
+      "wires": 0,
+      "litWires": 0,
+      "packets": 0,
+      "motionElements": 0,
+      "visiblePackets": 0,
+      "cssAnimations": [],
+      "activeNodes": 3,
+      "sandboxCount": 1,
+      "mountedLabels": [
+        "nativeWorkspaces unknown"
+      ]
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:20.954Z",
+    "state": "running",
+    "progress": {
+      "completed": 152,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": true,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e/subagents/a01-worker/sandboxes",
+      "playing": "false",
+      "hidden": false,
+      "reducedMotion": false,
+      "agentNodes": 2,
+      "workspaceNodes": 1,
+      "wires": 0,
+      "litWires": 0,
+      "packets": 0,
+      "motionElements": 0,
+      "visiblePackets": 0,
+      "cssAnimations": [],
+      "activeNodes": 3,
+      "sandboxCount": 1,
+      "mountedLabels": [
+        "nativeWorkspaces unknown"
+      ]
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:21.157Z",
+    "state": "running",
+    "progress": {
+      "completed": 152,
+      "total": 553
+    },
+    "actualInFlight": [
+      {
+        "step": "dense.001.a.write.39",
+        "method": "workspace.commit",
+        "actor": "a01-worker",
+        "started": "2026-11-10T13:29:21.060Z",
+        "overlapConfirmed": true
+      }
+    ],
+    "dom": {
+      "viewReady": true,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e/subagents/a01-worker/sandboxes",
+      "playing": "false",
+      "hidden": false,
+      "reducedMotion": false,
+      "agentNodes": 2,
+      "workspaceNodes": 1,
+      "wires": 0,
+      "litWires": 0,
+      "packets": 0,
+      "motionElements": 0,
+      "visiblePackets": 0,
+      "cssAnimations": [],
+      "activeNodes": 3,
+      "sandboxCount": 1,
+      "mountedLabels": [
+        "nativeWorkspaces unknown"
+      ]
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:21.448Z",
+    "state": "running",
+    "progress": {
+      "completed": 161,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": true,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e/subagents/a01-worker/sandboxes",
+      "playing": "false",
+      "hidden": false,
+      "reducedMotion": false,
+      "agentNodes": 2,
+      "workspaceNodes": 1,
+      "wires": 0,
+      "litWires": 0,
+      "packets": 0,
+      "motionElements": 0,
+      "visiblePackets": 0,
+      "cssAnimations": [],
+      "activeNodes": 3,
+      "sandboxCount": 1,
+      "mountedLabels": [
+        "nativeWorkspaces unknown"
+      ]
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:21.652Z",
+    "state": "running",
+    "progress": {
+      "completed": 161,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": true,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e/subagents/a01-worker/sandboxes",
+      "playing": "false",
+      "hidden": false,
+      "reducedMotion": false,
+      "agentNodes": 2,
+      "workspaceNodes": 1,
+      "wires": 0,
+      "litWires": 0,
+      "packets": 0,
+      "motionElements": 0,
+      "visiblePackets": 0,
+      "cssAnimations": [],
+      "activeNodes": 3,
+      "sandboxCount": 1,
+      "mountedLabels": [
+        "nativeWorkspaces unknown"
+      ]
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:21.857Z",
+    "state": "running",
+    "progress": {
+      "completed": 161,
+      "total": 553
+    },
+    "actualInFlight": [
+      {
+        "step": "dense.001.a.write.41",
+        "method": "workspace.commit",
+        "actor": "a01-worker",
+        "started": "2026-11-10T13:29:21.788Z",
+        "overlapConfirmed": true
+      }
+    ],
+    "dom": {
+      "viewReady": true,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e/subagents/a01-worker/sandboxes",
+      "playing": "false",
+      "hidden": false,
+      "reducedMotion": false,
+      "agentNodes": 2,
+      "workspaceNodes": 1,
+      "wires": 0,
+      "litWires": 0,
+      "packets": 0,
+      "motionElements": 0,
+      "visiblePackets": 0,
+      "cssAnimations": [],
+      "activeNodes": 3,
+      "sandboxCount": 1,
+      "mountedLabels": [
+        "nativeWorkspaces unknown"
+      ]
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:22.061Z",
+    "state": "running",
+    "progress": {
+      "completed": 161,
+      "total": 553
+    },
+    "actualInFlight": [
+      {
+        "step": "dense.001.a.write.42",
+        "method": "workspace.commit",
+        "actor": "a01-worker",
+        "started": "2026-11-10T13:29:22.042Z",
+        "overlapConfirmed": true
+      }
+    ],
+    "dom": {
+      "viewReady": true,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e/subagents/a01-worker/sandboxes",
+      "playing": "false",
+      "hidden": false,
+      "reducedMotion": false,
+      "agentNodes": 2,
+      "workspaceNodes": 1,
+      "wires": 0,
+      "litWires": 0,
+      "packets": 0,
+      "motionElements": 0,
+      "visiblePackets": 0,
+      "cssAnimations": [],
+      "activeNodes": 3,
+      "sandboxCount": 1,
+      "mountedLabels": [
+        "nativeWorkspaces unknown"
+      ]
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:22.265Z",
+    "state": "running",
+    "progress": {
+      "completed": 161,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": true,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e/subagents/a01-worker/sandboxes",
+      "playing": "false",
+      "hidden": false,
+      "reducedMotion": false,
+      "agentNodes": 2,
+      "workspaceNodes": 1,
+      "wires": 0,
+      "litWires": 0,
+      "packets": 0,
+      "motionElements": 0,
+      "visiblePackets": 0,
+      "cssAnimations": [],
+      "activeNodes": 3,
+      "sandboxCount": 1,
+      "mountedLabels": [
+        "nativeWorkspaces unknown"
+      ]
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:22.532Z",
+    "state": "running",
+    "progress": {
+      "completed": 169,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": true,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e/subagents/a01-worker/sandboxes",
+      "playing": "false",
+      "hidden": false,
+      "reducedMotion": false,
+      "agentNodes": 2,
+      "workspaceNodes": 1,
+      "wires": 0,
+      "litWires": 0,
+      "packets": 0,
+      "motionElements": 0,
+      "visiblePackets": 0,
+      "cssAnimations": [],
+      "activeNodes": 3,
+      "sandboxCount": 1,
+      "mountedLabels": [
+        "nativeWorkspaces unknown"
+      ]
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:22.736Z",
+    "state": "running",
+    "progress": {
+      "completed": 169,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": true,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e/subagents/a01-worker/sandboxes",
+      "playing": "false",
+      "hidden": false,
+      "reducedMotion": false,
+      "agentNodes": 2,
+      "workspaceNodes": 1,
+      "wires": 0,
+      "litWires": 0,
+      "packets": 0,
+      "motionElements": 0,
+      "visiblePackets": 0,
+      "cssAnimations": [],
+      "activeNodes": 3,
+      "sandboxCount": 1,
+      "mountedLabels": [
+        "nativeWorkspaces unknown"
+      ]
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:22.939Z",
+    "state": "running",
+    "progress": {
+      "completed": 169,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": true,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e/subagents/a01-worker/sandboxes",
+      "playing": "false",
+      "hidden": false,
+      "reducedMotion": false,
+      "agentNodes": 2,
+      "workspaceNodes": 1,
+      "wires": 0,
+      "litWires": 0,
+      "packets": 0,
+      "motionElements": 0,
+      "visiblePackets": 0,
+      "cssAnimations": [],
+      "activeNodes": 3,
+      "sandboxCount": 1,
+      "mountedLabels": [
+        "nativeWorkspaces unknown"
+      ]
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:23.142Z",
+    "state": "running",
+    "progress": {
+      "completed": 169,
+      "total": 553
+    },
+    "actualInFlight": [
+      {
+        "step": "dense.001.a.write.44",
+        "method": "workspace.commit",
+        "actor": "a01-worker",
+        "started": "2026-11-10T13:29:23.087Z",
+        "overlapConfirmed": true
+      }
+    ],
+    "dom": {
+      "viewReady": true,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e/subagents/a01-worker/sandboxes",
+      "playing": "false",
+      "hidden": false,
+      "reducedMotion": false,
+      "agentNodes": 2,
+      "workspaceNodes": 1,
+      "wires": 0,
+      "litWires": 0,
+      "packets": 0,
+      "motionElements": 0,
+      "visiblePackets": 0,
+      "cssAnimations": [],
+      "activeNodes": 3,
+      "sandboxCount": 1,
+      "mountedLabels": [
+        "nativeWorkspaces unknown"
+      ]
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:23.345Z",
+    "state": "running",
+    "progress": {
+      "completed": 169,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": true,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e/subagents/a01-worker/sandboxes",
+      "playing": "false",
+      "hidden": false,
+      "reducedMotion": false,
+      "agentNodes": 2,
+      "workspaceNodes": 1,
+      "wires": 0,
+      "litWires": 0,
+      "packets": 0,
+      "motionElements": 0,
+      "visiblePackets": 0,
+      "cssAnimations": [],
+      "activeNodes": 3,
+      "sandboxCount": 1,
+      "mountedLabels": [
+        "nativeWorkspaces unknown"
+      ]
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:23.551Z",
+    "state": "running",
+    "progress": {
+      "completed": 176,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": true,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e/subagents/a01-worker/sandboxes",
+      "playing": "false",
+      "hidden": false,
+      "reducedMotion": false,
+      "agentNodes": 2,
+      "workspaceNodes": 1,
+      "wires": 0,
+      "litWires": 0,
+      "packets": 0,
+      "motionElements": 0,
+      "visiblePackets": 0,
+      "cssAnimations": [],
+      "activeNodes": 3,
+      "sandboxCount": 1,
+      "mountedLabels": [
+        "nativeWorkspaces unknown"
+      ]
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:23.804Z",
+    "state": "running",
+    "progress": {
+      "completed": 176,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": true,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e/subagents/a01-worker/sandboxes",
+      "playing": "false",
+      "hidden": false,
+      "reducedMotion": false,
+      "agentNodes": 2,
+      "workspaceNodes": 1,
+      "wires": 0,
+      "litWires": 0,
+      "packets": 0,
+      "motionElements": 0,
+      "visiblePackets": 0,
+      "cssAnimations": [],
+      "activeNodes": 3,
+      "sandboxCount": 1,
+      "mountedLabels": [
+        "nativeWorkspaces unknown"
+      ]
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:24.010Z",
+    "state": "running",
+    "progress": {
+      "completed": 176,
+      "total": 553
+    },
+    "actualInFlight": [
+      {
+        "step": "dense.001.a.session.023.unmount",
+        "method": "workspace.unmount",
+        "actor": "a01-worker",
+        "started": "2026-11-10T13:29:23.979Z",
+        "overlapConfirmed": true
+      }
+    ],
+    "dom": {
+      "viewReady": true,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e/subagents/a01-worker/sandboxes",
+      "playing": "false",
+      "hidden": false,
+      "reducedMotion": false,
+      "agentNodes": 2,
+      "workspaceNodes": 1,
+      "wires": 0,
+      "litWires": 0,
+      "packets": 0,
+      "motionElements": 0,
+      "visiblePackets": 0,
+      "cssAnimations": [],
+      "activeNodes": 3,
+      "sandboxCount": 1,
+      "mountedLabels": [
+        "nativeWorkspaces unknown"
+      ]
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:24.214Z",
+    "state": "running",
+    "progress": {
+      "completed": 176,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": true,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e/subagents/a01-worker/sandboxes",
+      "playing": "false",
+      "hidden": false,
+      "reducedMotion": false,
+      "agentNodes": 2,
+      "workspaceNodes": 1,
+      "wires": 0,
+      "litWires": 0,
+      "packets": 0,
+      "motionElements": 0,
+      "visiblePackets": 0,
+      "cssAnimations": [],
+      "activeNodes": 3,
+      "sandboxCount": 1,
+      "mountedLabels": [
+        "nativeWorkspaces unknown"
+      ]
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:24.453Z",
+    "state": "running",
+    "progress": {
+      "completed": 176,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": true,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e/subagents/a01-worker/sandboxes",
+      "playing": "false",
+      "hidden": false,
+      "reducedMotion": false,
+      "agentNodes": 2,
+      "workspaceNodes": 1,
+      "wires": 0,
+      "litWires": 0,
+      "packets": 0,
+      "motionElements": 0,
+      "visiblePackets": 0,
+      "cssAnimations": [],
+      "activeNodes": 3,
+      "sandboxCount": 1,
+      "mountedLabels": [
+        "nativeWorkspaces unknown"
+      ]
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:24.657Z",
+    "state": "running",
+    "progress": {
+      "completed": 185,
+      "total": 553
+    },
+    "actualInFlight": [
+      {
+        "step": "dense.001.a.session.024.unmount",
+        "method": "workspace.unmount",
+        "actor": "a01-worker",
+        "started": "2026-11-10T13:29:24.653Z",
+        "overlapConfirmed": true
+      }
+    ],
+    "dom": {
+      "viewReady": true,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e/subagents/a01-worker/sandboxes",
+      "playing": "false",
+      "hidden": false,
+      "reducedMotion": false,
+      "agentNodes": 2,
+      "workspaceNodes": 1,
+      "wires": 0,
+      "litWires": 0,
+      "packets": 0,
+      "motionElements": 0,
+      "visiblePackets": 0,
+      "cssAnimations": [],
+      "activeNodes": 3,
+      "sandboxCount": 1,
+      "mountedLabels": [
+        "nativeWorkspaces unknown"
+      ]
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:24.894Z",
+    "state": "running",
+    "progress": {
+      "completed": 185,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": true,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e/subagents/a01-worker/sandboxes",
+      "playing": "false",
+      "hidden": false,
+      "reducedMotion": false,
+      "agentNodes": 2,
+      "workspaceNodes": 1,
+      "wires": 0,
+      "litWires": 0,
+      "packets": 0,
+      "motionElements": 0,
+      "visiblePackets": 0,
+      "cssAnimations": [],
+      "activeNodes": 3,
+      "sandboxCount": 1,
+      "mountedLabels": [
+        "nativeWorkspaces unknown"
+      ]
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:25.098Z",
+    "state": "running",
+    "progress": {
+      "completed": 185,
+      "total": 553
+    },
+    "actualInFlight": [
+      {
+        "step": "dense.001.a.write.50.exec",
+        "method": "workspace.exec",
+        "actor": "a01-worker",
+        "started": "2026-11-10T13:29:25.076Z",
+        "overlapConfirmed": true
+      }
+    ],
+    "dom": {
+      "viewReady": true,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e/subagents/a01-worker/sandboxes",
+      "playing": "false",
+      "hidden": false,
+      "reducedMotion": false,
+      "agentNodes": 2,
+      "workspaceNodes": 1,
+      "wires": 0,
+      "litWires": 0,
+      "packets": 0,
+      "motionElements": 0,
+      "visiblePackets": 0,
+      "cssAnimations": [],
+      "activeNodes": 3,
+      "sandboxCount": 1,
+      "mountedLabels": [
+        "nativeWorkspaces unknown"
+      ]
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:25.303Z",
+    "state": "running",
+    "progress": {
+      "completed": 185,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": true,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e/subagents/a01-worker/sandboxes",
+      "playing": "false",
+      "hidden": false,
+      "reducedMotion": false,
+      "agentNodes": 2,
+      "workspaceNodes": 1,
+      "wires": 0,
+      "litWires": 0,
+      "packets": 0,
+      "motionElements": 0,
+      "visiblePackets": 0,
+      "cssAnimations": [],
+      "activeNodes": 3,
+      "sandboxCount": 1,
+      "mountedLabels": [
+        "nativeWorkspaces unknown"
+      ]
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:25.551Z",
+    "state": "running",
+    "progress": {
+      "completed": 185,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": true,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e/subagents/a01-worker/sandboxes",
+      "playing": "false",
+      "hidden": false,
+      "reducedMotion": false,
+      "agentNodes": 2,
+      "workspaceNodes": 1,
+      "wires": 0,
+      "litWires": 0,
+      "packets": 0,
+      "motionElements": 0,
+      "visiblePackets": 0,
+      "cssAnimations": [],
+      "activeNodes": 3,
+      "sandboxCount": 1,
+      "mountedLabels": [
+        "nativeWorkspaces unknown"
+      ]
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:25.757Z",
+    "state": "running",
+    "progress": {
+      "completed": 195,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": true,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e/subagents/a01-worker/sandboxes",
+      "playing": "false",
+      "hidden": false,
+      "reducedMotion": false,
+      "agentNodes": 2,
+      "workspaceNodes": 1,
+      "wires": 0,
+      "litWires": 0,
+      "packets": 0,
+      "motionElements": 0,
+      "visiblePackets": 0,
+      "cssAnimations": [],
+      "activeNodes": 3,
+      "sandboxCount": 1,
+      "mountedLabels": [
+        "nativeWorkspaces unknown"
+      ]
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:25.961Z",
+    "state": "running",
+    "progress": {
+      "completed": 195,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": true,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e/subagents/a01-worker/sandboxes",
+      "playing": "false",
+      "hidden": false,
+      "reducedMotion": false,
+      "agentNodes": 2,
+      "workspaceNodes": 1,
+      "wires": 0,
+      "litWires": 0,
+      "packets": 0,
+      "motionElements": 0,
+      "visiblePackets": 0,
+      "cssAnimations": [],
+      "activeNodes": 3,
+      "sandboxCount": 1,
+      "mountedLabels": [
+        "nativeWorkspaces unknown"
+      ]
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:26.165Z",
+    "state": "running",
+    "progress": {
+      "completed": 195,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": true,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e/subagents/a01-worker/sandboxes",
+      "playing": "false",
+      "hidden": false,
+      "reducedMotion": false,
+      "agentNodes": 2,
+      "workspaceNodes": 1,
+      "wires": 0,
+      "litWires": 0,
+      "packets": 0,
+      "motionElements": 0,
+      "visiblePackets": 0,
+      "cssAnimations": [],
+      "activeNodes": 3,
+      "sandboxCount": 1,
+      "mountedLabels": [
+        "nativeWorkspaces unknown"
+      ]
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:26.369Z",
+    "state": "running",
+    "progress": {
+      "completed": 195,
+      "total": 553
+    },
+    "actualInFlight": [
+      {
+        "step": "dense.001.a.write.53",
+        "method": "workspace.commit",
+        "actor": "a01-worker",
+        "started": "2026-11-10T13:29:26.291Z",
+        "overlapConfirmed": true
+      }
+    ],
+    "dom": {
+      "viewReady": true,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e/subagents/a01-worker/sandboxes",
+      "playing": "false",
+      "hidden": false,
+      "reducedMotion": false,
+      "agentNodes": 2,
+      "workspaceNodes": 1,
+      "wires": 0,
+      "litWires": 0,
+      "packets": 0,
+      "motionElements": 0,
+      "visiblePackets": 0,
+      "cssAnimations": [],
+      "activeNodes": 3,
+      "sandboxCount": 1,
+      "mountedLabels": [
+        "nativeWorkspaces unknown"
+      ]
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:26.573Z",
+    "state": "running",
+    "progress": {
+      "completed": 195,
+      "total": 553
+    },
+    "actualInFlight": [
+      {
+        "step": "dense.001.a.write.54",
+        "method": "workspace.commit",
+        "actor": "a01-worker",
+        "started": "2026-11-10T13:29:26.526Z",
+        "overlapConfirmed": true
+      }
+    ],
+    "dom": {
+      "viewReady": true,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e/subagents/a01-worker/sandboxes",
+      "playing": "false",
+      "hidden": false,
+      "reducedMotion": false,
+      "agentNodes": 2,
+      "workspaceNodes": 1,
+      "wires": 0,
+      "litWires": 0,
+      "packets": 0,
+      "motionElements": 0,
+      "visiblePackets": 0,
+      "cssAnimations": [],
+      "activeNodes": 3,
+      "sandboxCount": 1,
+      "mountedLabels": [
+        "nativeWorkspaces unknown"
+      ]
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:26.778Z",
+    "state": "running",
+    "progress": {
+      "completed": 204,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": true,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e/subagents/a01-worker/sandboxes",
+      "playing": "false",
+      "hidden": false,
+      "reducedMotion": false,
+      "agentNodes": 2,
+      "workspaceNodes": 1,
+      "wires": 0,
+      "litWires": 0,
+      "packets": 0,
+      "motionElements": 0,
+      "visiblePackets": 0,
+      "cssAnimations": [],
+      "activeNodes": 3,
+      "sandboxCount": 1,
+      "mountedLabels": [
+        "nativeWorkspaces unknown"
+      ]
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:26.984Z",
+    "state": "running",
+    "progress": {
+      "completed": 204,
+      "total": 553
+    },
+    "actualInFlight": [
+      {
+        "step": "dense.001.a.write.55",
+        "method": "workspace.commit",
+        "actor": "a01-worker",
+        "started": "2026-11-10T13:29:26.971Z",
+        "overlapConfirmed": true
+      }
+    ],
+    "dom": {
+      "viewReady": true,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e/subagents/a01-worker/sandboxes",
+      "playing": "false",
+      "hidden": false,
+      "reducedMotion": false,
+      "agentNodes": 2,
+      "workspaceNodes": 1,
+      "wires": 0,
+      "litWires": 0,
+      "packets": 0,
+      "motionElements": 0,
+      "visiblePackets": 0,
+      "cssAnimations": [],
+      "activeNodes": 3,
+      "sandboxCount": 1,
+      "mountedLabels": [
+        "nativeWorkspaces unknown"
+      ]
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:27.188Z",
+    "state": "running",
+    "progress": {
+      "completed": 204,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:27.392Z",
+    "state": "running",
+    "progress": {
+      "completed": 204,
+      "total": 553
+    },
+    "actualInFlight": [
+      {
+        "step": "dense.001.a.session.028.unmount",
+        "method": "workspace.unmount",
+        "actor": "a01-worker",
+        "started": "2026-11-10T13:29:27.374Z",
+        "overlapConfirmed": true
+      }
+    ],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:27.598Z",
+    "state": "running",
+    "progress": {
+      "completed": 204,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:27.803Z",
+    "state": "running",
+    "progress": {
+      "completed": 213,
+      "total": 553
+    },
+    "actualInFlight": [
+      {
+        "step": "dense.001.a.write.58.exec",
+        "method": "workspace.exec",
+        "actor": "a01-worker",
+        "started": "2026-11-10T13:29:27.800Z",
+        "overlapConfirmed": true
+      }
+    ],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:28.006Z",
+    "state": "running",
+    "progress": {
+      "completed": 213,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:28.208Z",
+    "state": "running",
+    "progress": {
+      "completed": 213,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:28.411Z",
+    "state": "running",
+    "progress": {
+      "completed": 213,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:28.615Z",
+    "state": "running",
+    "progress": {
+      "completed": 213,
+      "total": 553
+    },
+    "actualInFlight": [
+      {
+        "step": "dense.001.a.write.60",
+        "method": "workspace.commit",
+        "actor": "a01-worker",
+        "started": "2026-11-10T13:29:28.551Z",
+        "overlapConfirmed": true
+      }
+    ],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:28.820Z",
+    "state": "running",
+    "progress": {
+      "completed": 222,
+      "total": 553
+    },
+    "actualInFlight": [
+      {
+        "step": "dense.001.a.session.031.mount",
+        "method": "workspace.mount",
+        "actor": "a01-worker",
+        "started": "2026-11-10T13:29:28.805Z",
+        "overlapConfirmed": true
+      }
+    ],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:29.023Z",
+    "state": "running",
+    "progress": {
+      "completed": 222,
+      "total": 553
+    },
+    "actualInFlight": [
+      {
+        "step": "dense.001.a.write.61",
+        "method": "workspace.commit",
+        "actor": "a01-worker",
+        "started": "2026-11-10T13:29:28.996Z",
+        "overlapConfirmed": true
+      }
+    ],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:29.228Z",
+    "state": "running",
+    "progress": {
+      "completed": 222,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:29.436Z",
+    "state": "running",
+    "progress": {
+      "completed": 222,
+      "total": 553
+    },
+    "actualInFlight": [
+      {
+        "step": "dense.001.a.session.031.unmount",
+        "method": "workspace.unmount",
+        "actor": "a01-worker",
+        "started": "2026-11-10T13:29:29.405Z",
+        "overlapConfirmed": true
+      }
+    ],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:29.640Z",
+    "state": "running",
+    "progress": {
+      "completed": 222,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:29.844Z",
+    "state": "running",
+    "progress": {
+      "completed": 231,
+      "total": 553
+    },
+    "actualInFlight": [
+      {
+        "step": "dense.001.a.write.64.exec",
+        "method": "workspace.exec",
+        "actor": "a01-worker",
+        "started": "2026-11-10T13:29:29.836Z",
+        "overlapConfirmed": true
+      }
+    ],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:30.047Z",
+    "state": "running",
+    "progress": {
+      "completed": 231,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:30.253Z",
+    "state": "running",
+    "progress": {
+      "completed": 231,
+      "total": 553
+    },
+    "actualInFlight": [
+      {
+        "step": "dense.001.a.session.033.mount",
+        "method": "workspace.mount",
+        "actor": "a01-worker",
+        "started": "2026-11-10T13:29:30.201Z",
+        "overlapConfirmed": true
+      }
+    ],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:30.458Z",
+    "state": "running",
+    "progress": {
+      "completed": 231,
+      "total": 553
+    },
+    "actualInFlight": [
+      {
+        "step": "dense.001.a.write.65",
+        "method": "workspace.commit",
+        "actor": "a01-worker",
+        "started": "2026-11-10T13:29:30.425Z",
+        "overlapConfirmed": true
+      }
+    ],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:30.660Z",
+    "state": "running",
+    "progress": {
+      "completed": 231,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:30.865Z",
+    "state": "running",
+    "progress": {
+      "completed": 240,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:31.093Z",
+    "state": "running",
+    "progress": {
+      "completed": 240,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:31.297Z",
+    "state": "running",
+    "progress": {
+      "completed": 240,
+      "total": 553
+    },
+    "actualInFlight": [
+      {
+        "step": "dense.001.a.write.68.exec",
+        "method": "workspace.exec",
+        "actor": "a01-worker",
+        "started": "2026-11-10T13:29:31.288Z",
+        "overlapConfirmed": true
+      }
+    ],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:31.501Z",
+    "state": "running",
+    "progress": {
+      "completed": 240,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:31.705Z",
+    "state": "running",
+    "progress": {
+      "completed": 240,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:31.911Z",
+    "state": "running",
+    "progress": {
+      "completed": 248,
+      "total": 553
+    },
+    "actualInFlight": [
+      {
+        "step": "dense.001.a.write.69",
+        "method": "workspace.commit",
+        "actor": "a01-worker",
+        "started": "2026-11-10T13:29:31.821Z",
+        "overlapConfirmed": true
+      }
+    ],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:32.115Z",
+    "state": "running",
+    "progress": {
+      "completed": 248,
+      "total": 553
+    },
+    "actualInFlight": [
+      {
+        "step": "dense.001.a.write.70",
+        "method": "workspace.commit",
+        "actor": "a01-worker",
+        "started": "2026-11-10T13:29:32.075Z",
+        "overlapConfirmed": true
+      }
+    ],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:32.323Z",
+    "state": "running",
+    "progress": {
+      "completed": 248,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:32.527Z",
+    "state": "running",
+    "progress": {
+      "completed": 248,
+      "total": 553
+    },
+    "actualInFlight": [
+      {
+        "step": "dense.001.a.session.036.mount",
+        "method": "workspace.mount",
+        "actor": "a01-worker",
+        "started": "2026-11-10T13:29:32.330Z",
+        "overlapConfirmed": true
+      }
+    ],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:32.731Z",
+    "state": "running",
+    "progress": {
+      "completed": 248,
+      "total": 553
+    },
+    "actualInFlight": [
+      {
+        "step": "dense.001.a.session.036.mount",
+        "method": "workspace.mount",
+        "actor": "a01-worker",
+        "started": "2026-11-10T13:29:32.330Z",
+        "overlapConfirmed": true
+      }
+    ],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:33.120Z",
+    "state": "running",
+    "progress": {
+      "completed": 252,
+      "total": 553
+    },
+    "actualInFlight": [
+      {
+        "step": "dense.001.a.session.036.mount",
+        "method": "workspace.mount",
+        "actor": "a01-worker",
+        "started": "2026-11-10T13:29:32.330Z",
+        "overlapConfirmed": true
+      }
+    ],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:33.324Z",
+    "state": "running",
+    "progress": {
+      "completed": 252,
+      "total": 553
+    },
+    "actualInFlight": [
+      {
+        "step": "dense.001.a.write.71.exec",
+        "method": "workspace.exec",
+        "actor": "a01-worker",
+        "started": "2026-11-10T13:29:33.182Z",
+        "overlapConfirmed": true
+      }
+    ],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:33.531Z",
+    "state": "running",
+    "progress": {
+      "completed": 252,
+      "total": 553
+    },
+    "actualInFlight": [
+      {
+        "step": "dense.001.a.write.71.exec",
+        "method": "workspace.exec",
+        "actor": "a01-worker",
+        "started": "2026-11-10T13:29:33.182Z",
+        "overlapConfirmed": true
+      }
+    ],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:33.736Z",
+    "state": "running",
+    "progress": {
+      "completed": 252,
+      "total": 553
+    },
+    "actualInFlight": [
+      {
+        "step": "dense.001.a.write.71.exec",
+        "method": "workspace.exec",
+        "actor": "a01-worker",
+        "started": "2026-11-10T13:29:33.182Z",
+        "overlapConfirmed": true
+      }
+    ],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:34.645Z",
+    "state": "running",
+    "progress": {
+      "completed": 254,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:34.864Z",
+    "state": "running",
+    "progress": {
+      "completed": 254,
+      "total": 553
+    },
+    "actualInFlight": [
+      {
+        "step": "dense.001.a.write.72.exec",
+        "method": "workspace.exec",
+        "actor": "a01-worker",
+        "started": "2026-11-10T13:29:34.854Z",
+        "overlapConfirmed": true
+      }
+    ],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:35.070Z",
+    "state": "running",
+    "progress": {
+      "completed": 257,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:35.274Z",
+    "state": "running",
+    "progress": {
+      "completed": 257,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:35.485Z",
+    "state": "running",
+    "progress": {
+      "completed": 257,
+      "total": 553
+    },
+    "actualInFlight": [
+      {
+        "step": "dense.001.a.write.73",
+        "method": "workspace.commit",
+        "actor": "a01-worker",
+        "started": "2026-11-10T13:29:35.389Z",
+        "overlapConfirmed": true
+      }
+    ],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:35.689Z",
+    "state": "running",
+    "progress": {
+      "completed": 257,
+      "total": 553
+    },
+    "actualInFlight": [
+      {
+        "step": "dense.001.a.write.73",
+        "method": "workspace.commit",
+        "actor": "a01-worker",
+        "started": "2026-11-10T13:29:35.389Z",
+        "overlapConfirmed": true
+      }
+    ],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:35.893Z",
+    "state": "running",
+    "progress": {
+      "completed": 257,
+      "total": 553
+    },
+    "actualInFlight": [
+      {
+        "step": "dense.001.a.write.73",
+        "method": "workspace.commit",
+        "actor": "a01-worker",
+        "started": "2026-11-10T13:29:35.389Z",
+        "overlapConfirmed": true
+      }
+    ],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:36.135Z",
+    "state": "running",
+    "progress": {
+      "completed": 260,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:36.357Z",
+    "state": "running",
+    "progress": {
+      "completed": 260,
+      "total": 553
+    },
+    "actualInFlight": [
+      {
+        "step": "dense.001.a.write.74",
+        "method": "workspace.commit",
+        "actor": "a01-worker",
+        "started": "2026-11-10T13:29:36.292Z",
+        "overlapConfirmed": true
+      }
+    ],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:36.564Z",
+    "state": "running",
+    "progress": {
+      "completed": 260,
+      "total": 553
+    },
+    "actualInFlight": [
+      {
+        "step": "dense.001.a.session.038.mount",
+        "method": "workspace.mount",
+        "actor": "a01-worker",
+        "started": "2026-11-10T13:29:36.543Z",
+        "overlapConfirmed": true
+      }
+    ],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:36.768Z",
+    "state": "running",
+    "progress": {
+      "completed": 260,
+      "total": 553
+    },
+    "actualInFlight": [
+      {
+        "step": "dense.001.a.write.75",
+        "method": "workspace.commit",
+        "actor": "a01-worker",
+        "started": "2026-11-10T13:29:36.736Z",
+        "overlapConfirmed": true
+      }
+    ],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:36.984Z",
+    "state": "running",
+    "progress": {
+      "completed": 260,
+      "total": 553
+    },
+    "actualInFlight": [
+      {
+        "step": "dense.001.a.write.76",
+        "method": "workspace.commit",
+        "actor": "a01-worker",
+        "started": "2026-11-10T13:29:36.981Z",
+        "overlapConfirmed": true
+      }
+    ],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:37.192Z",
+    "state": "running",
+    "progress": {
+      "completed": 268,
+      "total": 553
+    },
+    "actualInFlight": [
+      {
+        "step": "dense.001.a.write.76",
+        "method": "workspace.commit",
+        "actor": "a01-worker",
+        "started": "2026-11-10T13:29:36.981Z",
+        "overlapConfirmed": true
+      }
+    ],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:37.398Z",
+    "state": "running",
+    "progress": {
+      "completed": 268,
+      "total": 553
+    },
+    "actualInFlight": [
+      {
+        "step": "dense.001.a.write.76",
+        "method": "workspace.commit",
+        "actor": "a01-worker",
+        "started": "2026-11-10T13:29:36.981Z",
+        "overlapConfirmed": true
+      }
+    ],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:37.603Z",
+    "state": "running",
+    "progress": {
+      "completed": 268,
+      "total": 553
+    },
+    "actualInFlight": [
+      {
+        "step": "dense.001.a.write.76",
+        "method": "workspace.commit",
+        "actor": "a01-worker",
+        "started": "2026-11-10T13:29:36.981Z",
+        "overlapConfirmed": true
+      }
+    ],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:37.808Z",
+    "state": "running",
+    "progress": {
+      "completed": 268,
+      "total": 553
+    },
+    "actualInFlight": [
+      {
+        "step": "dense.001.a.write.76",
+        "method": "workspace.commit",
+        "actor": "a01-worker",
+        "started": "2026-11-10T13:29:36.981Z",
+        "overlapConfirmed": true
+      }
+    ],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:38.015Z",
+    "state": "running",
+    "progress": {
+      "completed": 268,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:38.664Z",
+    "state": "running",
+    "progress": {
+      "completed": 269,
+      "total": 553
+    },
+    "actualInFlight": [
+      {
+        "step": "dense.001.a.session.038.unmount",
+        "method": "workspace.unmount",
+        "actor": "a01-worker",
+        "started": "2026-11-10T13:29:38.662Z",
+        "overlapConfirmed": true
+      }
+    ],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:38.882Z",
+    "state": "running",
+    "progress": {
+      "completed": 269,
+      "total": 553
+    },
+    "actualInFlight": [
+      {
+        "step": "dense.001.a.write.77.exec",
+        "method": "workspace.exec",
+        "actor": "a01-worker",
+        "started": "2026-11-10T13:29:38.860Z",
+        "overlapConfirmed": true
+      }
+    ],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:39.086Z",
+    "state": "running",
+    "progress": {
+      "completed": 269,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:39.292Z",
+    "state": "running",
+    "progress": {
+      "completed": 274,
+      "total": 553
+    },
+    "actualInFlight": [
+      {
+        "step": "dense.001.a.write.78",
+        "method": "workspace.commit",
+        "actor": "a01-worker",
+        "started": "2026-11-10T13:29:39.204Z",
+        "overlapConfirmed": true
+      }
+    ],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:39.498Z",
+    "state": "running",
+    "progress": {
+      "completed": 274,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:39.701Z",
+    "state": "running",
+    "progress": {
+      "completed": 274,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:39.906Z",
+    "state": "running",
+    "progress": {
+      "completed": 274,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:40.110Z",
+    "state": "running",
+    "progress": {
+      "completed": 274,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:40.315Z",
+    "state": "running",
+    "progress": {
+      "completed": 278,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:40.519Z",
+    "state": "running",
+    "progress": {
+      "completed": 278,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:40.724Z",
+    "state": "running",
+    "progress": {
+      "completed": 278,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:40.929Z",
+    "state": "running",
+    "progress": {
+      "completed": 278,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:41.154Z",
+    "state": "running",
+    "progress": {
+      "completed": 278,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:41.360Z",
+    "state": "running",
+    "progress": {
+      "completed": 286,
+      "total": 553
+    },
+    "actualInFlight": [
+      {
+        "step": "dense.001.b.write.2",
+        "method": "workspace.commit",
+        "actor": "a01-worker",
+        "started": "2026-11-10T13:29:41.287Z",
+        "overlapConfirmed": true
+      }
+    ],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:41.564Z",
+    "state": "running",
+    "progress": {
+      "completed": 286,
+      "total": 553
+    },
+    "actualInFlight": [
+      {
+        "step": "dense.001.b.session.002.mount",
+        "method": "workspace.mount",
+        "actor": "a01-worker",
+        "started": "2026-11-10T13:29:41.538Z",
+        "overlapConfirmed": true
+      }
+    ],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:41.769Z",
+    "state": "running",
+    "progress": {
+      "completed": 286,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:41.973Z",
+    "state": "running",
+    "progress": {
+      "completed": 286,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:42.178Z",
+    "state": "running",
+    "progress": {
+      "completed": 286,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:42.395Z",
+    "state": "running",
+    "progress": {
+      "completed": 290,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:42.602Z",
+    "state": "running",
+    "progress": {
+      "completed": 290,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:42.806Z",
+    "state": "running",
+    "progress": {
+      "completed": 290,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:43.010Z",
+    "state": "running",
+    "progress": {
+      "completed": 290,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:43.214Z",
+    "state": "running",
+    "progress": {
+      "completed": 290,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:43.437Z",
+    "state": "running",
+    "progress": {
+      "completed": 292,
+      "total": 553
+    },
+    "actualInFlight": [
+      {
+        "step": "dense.001.b.write.4",
+        "method": "workspace.commit",
+        "actor": "a01-worker",
+        "started": "2026-11-10T13:29:43.348Z",
+        "overlapConfirmed": true
+      }
+    ],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:43.641Z",
+    "state": "running",
+    "progress": {
+      "completed": 292,
+      "total": 553
+    },
+    "actualInFlight": [
+      {
+        "step": "dense.001.b.session.003.mount",
+        "method": "workspace.mount",
+        "actor": "a01-worker",
+        "started": "2026-11-10T13:29:43.617Z",
+        "overlapConfirmed": true
+      }
+    ],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:43.848Z",
+    "state": "running",
+    "progress": {
+      "completed": 292,
+      "total": 553
+    },
+    "actualInFlight": [
+      {
+        "step": "dense.001.b.write.5",
+        "method": "workspace.commit",
+        "actor": "a01-worker",
+        "started": "2026-11-10T13:29:43.802Z",
+        "overlapConfirmed": true
+      }
+    ],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:44.051Z",
+    "state": "running",
+    "progress": {
+      "completed": 292,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:44.256Z",
+    "state": "running",
+    "progress": {
+      "completed": 292,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:44.462Z",
+    "state": "running",
+    "progress": {
+      "completed": 302,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:44.667Z",
+    "state": "running",
+    "progress": {
+      "completed": 302,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:44.873Z",
+    "state": "running",
+    "progress": {
+      "completed": 302,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:45.078Z",
+    "state": "running",
+    "progress": {
+      "completed": 302,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:45.283Z",
+    "state": "running",
+    "progress": {
+      "completed": 302,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:45.489Z",
+    "state": "running",
+    "progress": {
+      "completed": 304,
+      "total": 553
+    },
+    "actualInFlight": [
+      {
+        "step": "dense.001.b.write.8",
+        "method": "workspace.commit",
+        "actor": "a01-worker",
+        "started": "2026-11-10T13:29:45.440Z",
+        "overlapConfirmed": true
+      }
+    ],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:45.694Z",
+    "state": "running",
+    "progress": {
+      "completed": 304,
+      "total": 553
+    },
+    "actualInFlight": [
+      {
+        "step": "dense.001.b.session.005.mount",
+        "method": "workspace.mount",
+        "actor": "a01-worker",
+        "started": "2026-11-10T13:29:45.692Z",
+        "overlapConfirmed": true
+      }
+    ],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:45.898Z",
+    "state": "running",
+    "progress": {
+      "completed": 304,
+      "total": 553
+    },
+    "actualInFlight": [
+      {
+        "step": "dense.001.b.write.9",
+        "method": "workspace.commit",
+        "actor": "a01-worker",
+        "started": "2026-11-10T13:29:45.875Z",
+        "overlapConfirmed": true
+      }
+    ],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:46.102Z",
+    "state": "running",
+    "progress": {
+      "completed": 304,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:46.307Z",
+    "state": "running",
+    "progress": {
+      "completed": 304,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:46.513Z",
+    "state": "running",
+    "progress": {
+      "completed": 313,
+      "total": 553
+    },
+    "actualInFlight": [
+      {
+        "step": "dense.001.b.write.11.exec",
+        "method": "workspace.exec",
+        "actor": "a01-worker",
+        "started": "2026-11-10T13:29:46.505Z",
+        "overlapConfirmed": true
+      }
+    ],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:46.717Z",
+    "state": "running",
+    "progress": {
+      "completed": 313,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:46.923Z",
+    "state": "running",
+    "progress": {
+      "completed": 313,
+      "total": 553
+    },
+    "actualInFlight": [
+      {
+        "step": "dense.001.b.write.12",
+        "method": "workspace.commit",
+        "actor": "a01-worker",
+        "started": "2026-11-10T13:29:46.860Z",
+        "overlapConfirmed": true
+      }
+    ],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:47.128Z",
+    "state": "running",
+    "progress": {
+      "completed": 313,
+      "total": 553
+    },
+    "actualInFlight": [
+      {
+        "step": "dense.001.b.write.12",
+        "method": "workspace.commit",
+        "actor": "a01-worker",
+        "started": "2026-11-10T13:29:46.860Z",
+        "overlapConfirmed": true
+      }
+    ],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:47.332Z",
+    "state": "running",
+    "progress": {
+      "completed": 313,
+      "total": 553
+    },
+    "actualInFlight": [
+      {
+        "step": "dense.001.b.write.12",
+        "method": "workspace.commit",
+        "actor": "a01-worker",
+        "started": "2026-11-10T13:29:46.860Z",
+        "overlapConfirmed": true
+      }
+    ],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:47.610Z",
+    "state": "running",
+    "progress": {
+      "completed": 316,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:47.833Z",
+    "state": "running",
+    "progress": {
+      "completed": 316,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:48.039Z",
+    "state": "running",
+    "progress": {
+      "completed": 316,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:48.243Z",
+    "state": "running",
+    "progress": {
+      "completed": 316,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:48.448Z",
+    "state": "running",
+    "progress": {
+      "completed": 316,
+      "total": 553
+    },
+    "actualInFlight": [
+      {
+        "step": "dense.001.b.session.007.mount",
+        "method": "workspace.mount",
+        "actor": "a01-worker",
+        "started": "2026-11-10T13:29:48.437Z",
+        "overlapConfirmed": true
+      }
+    ],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:48.676Z",
+    "state": "running",
+    "progress": {
+      "completed": 320,
+      "total": 553
+    },
+    "actualInFlight": [
+      {
+        "step": "dense.001.b.write.13",
+        "method": "workspace.commit",
+        "actor": "a01-worker",
+        "started": "2026-11-10T13:29:48.624Z",
+        "overlapConfirmed": true
+      }
+    ],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:48.882Z",
+    "state": "running",
+    "progress": {
+      "completed": 320,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:49.086Z",
+    "state": "running",
+    "progress": {
+      "completed": 320,
+      "total": 553
+    },
+    "actualInFlight": [
+      {
+        "step": "dense.001.b.session.007.unmount",
+        "method": "workspace.unmount",
+        "actor": "a01-worker",
+        "started": "2026-11-10T13:29:49.057Z",
+        "overlapConfirmed": true
+      }
+    ],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:49.290Z",
+    "state": "running",
+    "progress": {
+      "completed": 320,
+      "total": 553
+    },
+    "actualInFlight": [
+      {
+        "step": "dense.001.b.session.008.mount",
+        "method": "workspace.mount",
+        "actor": "a01-worker",
+        "started": "2026-11-10T13:29:49.159Z",
+        "overlapConfirmed": true
+      }
+    ],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:49.495Z",
+    "state": "running",
+    "progress": {
+      "completed": 320,
+      "total": 553
+    },
+    "actualInFlight": [
+      {
+        "step": "dense.001.b.session.008.mount",
+        "method": "workspace.mount",
+        "actor": "a01-worker",
+        "started": "2026-11-10T13:29:49.159Z",
+        "overlapConfirmed": true
+      }
+    ],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:49.859Z",
+    "state": "running",
+    "progress": {
+      "completed": 324,
+      "total": 553
+    },
+    "actualInFlight": [
+      {
+        "step": "dense.001.b.session.008.mount",
+        "method": "workspace.mount",
+        "actor": "a01-worker",
+        "started": "2026-11-10T13:29:49.159Z",
+        "overlapConfirmed": true
+      }
+    ],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:50.080Z",
+    "state": "running",
+    "progress": {
+      "completed": 324,
+      "total": 553
+    },
+    "actualInFlight": [
+      {
+        "step": "dense.001.b.write.15",
+        "method": "workspace.commit",
+        "actor": "a01-worker",
+        "started": "2026-11-10T13:29:50.040Z",
+        "overlapConfirmed": true
+      }
+    ],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:50.285Z",
+    "state": "running",
+    "progress": {
+      "completed": 324,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:50.489Z",
+    "state": "running",
+    "progress": {
+      "completed": 324,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:50.693Z",
+    "state": "running",
+    "progress": {
+      "completed": 324,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:51.395Z",
+    "state": "running",
+    "progress": {
+      "completed": 332,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:51.615Z",
+    "state": "running",
+    "progress": {
+      "completed": 332,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:51.821Z",
+    "state": "running",
+    "progress": {
+      "completed": 332,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:52.034Z",
+    "state": "running",
+    "progress": {
+      "completed": 340,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:52.268Z",
+    "state": "running",
+    "progress": {
+      "completed": 340,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:52.474Z",
+    "state": "running",
+    "progress": {
+      "completed": 340,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:52.679Z",
+    "state": "running",
+    "progress": {
+      "completed": 340,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:52.884Z",
+    "state": "running",
+    "progress": {
+      "completed": 340,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:53.658Z",
+    "state": "running",
+    "progress": {
+      "completed": 342,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:53.881Z",
+    "state": "running",
+    "progress": {
+      "completed": 342,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:54.085Z",
+    "state": "running",
+    "progress": {
+      "completed": 342,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:54.291Z",
+    "state": "running",
+    "progress": {
+      "completed": 350,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:54.499Z",
+    "state": "running",
+    "progress": {
+      "completed": 350,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:54.704Z",
+    "state": "running",
+    "progress": {
+      "completed": 350,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:54.908Z",
+    "state": "running",
+    "progress": {
+      "completed": 350,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:55.115Z",
+    "state": "running",
+    "progress": {
+      "completed": 350,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:55.895Z",
+    "state": "running",
+    "progress": {
+      "completed": 361,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:56.116Z",
+    "state": "running",
+    "progress": {
+      "completed": 361,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:56.329Z",
+    "state": "running",
+    "progress": {
+      "completed": 366,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:56.534Z",
+    "state": "running",
+    "progress": {
+      "completed": 366,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:56.740Z",
+    "state": "running",
+    "progress": {
+      "completed": 366,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:56.945Z",
+    "state": "running",
+    "progress": {
+      "completed": 366,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:57.150Z",
+    "state": "running",
+    "progress": {
+      "completed": 366,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:57.461Z",
+    "state": "running",
+    "progress": {
+      "completed": 370,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:57.682Z",
+    "state": "running",
+    "progress": {
+      "completed": 370,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:57.887Z",
+    "state": "running",
+    "progress": {
+      "completed": 370,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:58.092Z",
+    "state": "running",
+    "progress": {
+      "completed": 370,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:58.299Z",
+    "state": "running",
+    "progress": {
+      "completed": 370,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:58.959Z",
+    "state": "running",
+    "progress": {
+      "completed": 371,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:59.182Z",
+    "state": "running",
+    "progress": {
+      "completed": 371,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:59.387Z",
+    "state": "running",
+    "progress": {
+      "completed": 371,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:59.593Z",
+    "state": "running",
+    "progress": {
+      "completed": 379,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:29:59.805Z",
+    "state": "running",
+    "progress": {
+      "completed": 379,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:30:00.010Z",
+    "state": "running",
+    "progress": {
+      "completed": 379,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:30:00.216Z",
+    "state": "running",
+    "progress": {
+      "completed": 379,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:30:00.423Z",
+    "state": "running",
+    "progress": {
+      "completed": 379,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:30:00.629Z",
+    "state": "running",
+    "progress": {
+      "completed": 383,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:30:00.835Z",
+    "state": "running",
+    "progress": {
+      "completed": 383,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:30:01.040Z",
+    "state": "running",
+    "progress": {
+      "completed": 383,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:30:01.245Z",
+    "state": "running",
+    "progress": {
+      "completed": 383,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:30:01.449Z",
+    "state": "running",
+    "progress": {
+      "completed": 383,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:30:01.658Z",
+    "state": "running",
+    "progress": {
+      "completed": 395,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:30:01.863Z",
+    "state": "running",
+    "progress": {
+      "completed": 395,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:30:02.067Z",
+    "state": "running",
+    "progress": {
+      "completed": 395,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:30:02.273Z",
+    "state": "running",
+    "progress": {
+      "completed": 395,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:30:02.478Z",
+    "state": "running",
+    "progress": {
+      "completed": 395,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:30:02.748Z",
+    "state": "running",
+    "progress": {
+      "completed": 400,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:30:02.968Z",
+    "state": "running",
+    "progress": {
+      "completed": 400,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:30:03.173Z",
+    "state": "running",
+    "progress": {
+      "completed": 400,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:30:03.381Z",
+    "state": "running",
+    "progress": {
+      "completed": 400,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:30:03.589Z",
+    "state": "running",
+    "progress": {
+      "completed": 400,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:30:03.794Z",
+    "state": "running",
+    "progress": {
+      "completed": 405,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:30:03.998Z",
+    "state": "running",
+    "progress": {
+      "completed": 405,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:30:04.204Z",
+    "state": "running",
+    "progress": {
+      "completed": 405,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:30:04.409Z",
+    "state": "running",
+    "progress": {
+      "completed": 405,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:30:04.616Z",
+    "state": "running",
+    "progress": {
+      "completed": 405,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:30:04.995Z",
+    "state": "running",
+    "progress": {
+      "completed": 411,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:30:05.214Z",
+    "state": "running",
+    "progress": {
+      "completed": 411,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:30:05.418Z",
+    "state": "running",
+    "progress": {
+      "completed": 411,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:30:05.624Z",
+    "state": "running",
+    "progress": {
+      "completed": 411,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:30:05.839Z",
+    "state": "running",
+    "progress": {
+      "completed": 422,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:30:06.043Z",
+    "state": "running",
+    "progress": {
+      "completed": 422,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:30:06.249Z",
+    "state": "running",
+    "progress": {
+      "completed": 422,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:30:06.456Z",
+    "state": "running",
+    "progress": {
+      "completed": 422,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:30:06.662Z",
+    "state": "running",
+    "progress": {
+      "completed": 422,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:30:07.269Z",
+    "state": "running",
+    "progress": {
+      "completed": 431,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:30:07.473Z",
+    "state": "running",
+    "progress": {
+      "completed": 431,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:30:07.678Z",
+    "state": "running",
+    "progress": {
+      "completed": 431,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:30:07.994Z",
+    "state": "running",
+    "progress": {
+      "completed": 432,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:30:08.199Z",
+    "state": "running",
+    "progress": {
+      "completed": 432,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:30:08.404Z",
+    "state": "running",
+    "progress": {
+      "completed": 432,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:30:08.609Z",
+    "state": "running",
+    "progress": {
+      "completed": 432,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:30:08.833Z",
+    "state": "running",
+    "progress": {
+      "completed": 432,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:30:09.481Z",
+    "state": "running",
+    "progress": {
+      "completed": 442,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:30:09.703Z",
+    "state": "running",
+    "progress": {
+      "completed": 442,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:30:09.910Z",
+    "state": "running",
+    "progress": {
+      "completed": 442,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:30:10.115Z",
+    "state": "running",
+    "progress": {
+      "completed": 451,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:30:10.320Z",
+    "state": "running",
+    "progress": {
+      "completed": 451,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:30:10.525Z",
+    "state": "running",
+    "progress": {
+      "completed": 451,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:30:10.734Z",
+    "state": "running",
+    "progress": {
+      "completed": 451,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:30:10.944Z",
+    "state": "running",
+    "progress": {
+      "completed": 451,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:30:11.751Z",
+    "state": "running",
+    "progress": {
+      "completed": 461,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/activity"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:30:11.979Z",
+    "state": "running",
+    "progress": {
+      "completed": 461,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/presets"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:30:12.184Z",
+    "state": "running",
+    "progress": {
+      "completed": 461,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/presets"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:30:12.396Z",
+    "state": "running",
+    "progress": {
+      "completed": 468,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/presets"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:30:12.602Z",
+    "state": "running",
+    "progress": {
+      "completed": 468,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/presets"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:30:12.808Z",
+    "state": "running",
+    "progress": {
+      "completed": 468,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/presets"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:30:13.013Z",
+    "state": "running",
+    "progress": {
+      "completed": 468,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/presets"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:30:13.221Z",
+    "state": "running",
+    "progress": {
+      "completed": 468,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/presets"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:30:13.430Z",
+    "state": "running",
+    "progress": {
+      "completed": 480,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/presets"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:30:13.636Z",
+    "state": "running",
+    "progress": {
+      "completed": 480,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:30:13.842Z",
+    "state": "running",
+    "progress": {
+      "completed": 480,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:30:14.047Z",
+    "state": "running",
+    "progress": {
+      "completed": 480,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:30:14.252Z",
+    "state": "running",
+    "progress": {
+      "completed": 480,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:30:14.463Z",
+    "state": "running",
+    "progress": {
+      "completed": 493,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:30:14.674Z",
+    "state": "running",
+    "progress": {
+      "completed": 493,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:30:14.880Z",
+    "state": "running",
+    "progress": {
+      "completed": 493,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:30:15.087Z",
+    "state": "running",
+    "progress": {
+      "completed": 493,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:30:15.292Z",
+    "state": "running",
+    "progress": {
+      "completed": 493,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:30:15.500Z",
+    "state": "running",
+    "progress": {
+      "completed": 505,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:30:15.706Z",
+    "state": "running",
+    "progress": {
+      "completed": 505,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:30:15.911Z",
+    "state": "running",
+    "progress": {
+      "completed": 505,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:30:16.117Z",
+    "state": "running",
+    "progress": {
+      "completed": 505,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:30:16.323Z",
+    "state": "running",
+    "progress": {
+      "completed": 505,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:30:16.530Z",
+    "state": "running",
+    "progress": {
+      "completed": 519,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:30:16.752Z",
+    "state": "running",
+    "progress": {
+      "completed": 519,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:30:16.958Z",
+    "state": "running",
+    "progress": {
+      "completed": 519,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:30:17.166Z",
+    "state": "running",
+    "progress": {
+      "completed": 519,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:30:17.372Z",
+    "state": "running",
+    "progress": {
+      "completed": 519,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:30:17.579Z",
+    "state": "running",
+    "progress": {
+      "completed": 532,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:30:17.786Z",
+    "state": "running",
+    "progress": {
+      "completed": 532,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:30:17.992Z",
+    "state": "running",
+    "progress": {
+      "completed": 532,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:30:18.199Z",
+    "state": "running",
+    "progress": {
+      "completed": 532,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:30:18.407Z",
+    "state": "running",
+    "progress": {
+      "completed": 532,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:30:18.615Z",
+    "state": "running",
+    "progress": {
+      "completed": 545,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:30:18.821Z",
+    "state": "running",
+    "progress": {
+      "completed": 545,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:30:19.028Z",
+    "state": "running",
+    "progress": {
+      "completed": 545,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:30:19.234Z",
+    "state": "running",
+    "progress": {
+      "completed": 545,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:30:19.442Z",
+    "state": "running",
+    "progress": {
+      "completed": 545,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:30:19.649Z",
+    "state": "verifying",
+    "progress": {
+      "completed": 553,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:30:19.857Z",
+    "state": "verifying",
+    "progress": {
+      "completed": 553,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:30:20.067Z",
+    "state": "verifying",
+    "progress": {
+      "completed": 553,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:30:20.277Z",
+    "state": "verifying",
+    "progress": {
+      "completed": 553,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:30:20.487Z",
+    "state": "verifying",
+    "progress": {
+      "completed": 553,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e"
+    },
+    "movement": null
+  },
+  {
+    "at": "2026-11-10T13:30:20.703Z",
+    "state": "completed",
+    "progress": {
+      "completed": 553,
+      "total": 553
+    },
+    "actualInFlight": [],
+    "dom": {
+      "viewReady": false,
+      "hash": "#/chat/f447eae7-41d1-4509-aafc-4167bb54854e"
+    },
+    "movement": null
+  }
+]

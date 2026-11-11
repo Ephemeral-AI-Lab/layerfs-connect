@@ -16,13 +16,18 @@ import { registerExec } from '../agents/exec-cancel.js'
 import { randomUUID } from 'node:crypto'
 import { Scope, SCOPE_ENV } from './scope.js'
 import { traced } from './trace-line.js'
+import { activityRecorder } from '../activity/recorder.js'
+
+// process.exit does not drain asynchronous writes; flush the private writer first.
+const activity = activityRecorder(process.env.LAYERFS_CONNECT_ACTIVITY_STATE)
+async function exitWithActivity(code) { await activity?.flush(); process.exit(code) }
 
 const [native, ...argv] = process.argv.slice(2)
 const spec = table.find((c) => c.family === argv[0] && c.call === argv[1]?.replaceAll('-', '_'))
 if (!spec) {
   const discovery = ['help', '--version', '--help', '-h'].includes(argv[0]) || argv.includes('--help') || argv.includes('-h')
   const done = await execute({ cli: native, home: process.env.LAYERFS_HOME }, argv, { passthrough: true, discovery })
-  process.exit(done.exit_code ?? 1)
+  await exitWithActivity(done.exit_code ?? 1)
 }
 
 /** The exit code this command ends with: a streamed exec's is its command's. */
@@ -96,13 +101,22 @@ for (let i = 2; i < argv.length; i++) {
   at.push(i)
 }
 const named = Object.fromEntries(spec.args.map((a, k) => [a.name, argv[at[k]]]).filter(([, v]) => v !== undefined))
+// the command's option flags, as a conversation's operation records them
+const settings = {}
+for (let i = 2; i < argv.length && argv[i] !== '--'; i++) {
+  const word = argv[i]
+  if (!word.startsWith('--') || at.includes(i)) continue
+  const [flag, inline] = word.slice(2).split(/=(.*)/s)
+  const name = flag === 'from' ? 'from_file' : flag.replaceAll('-', '_')
+  settings[name] = inline !== undefined ? inline : takesValue(`--${flag}`) ? argv[++i] : true
+}
 const op = `${spec.family}.${spec.call}`
 const finish = (call) => call.then(() => exitCode, (error) => { console.error(stringify({ code: error.code ?? 'Unknown', message: error.message, detail: error.detail ?? null })); return error.transport === 'usage-incompatible' ? 2 : 125 })
-if (!process.env[SCOPE_ENV]) process.exit(await finish(traced(op, named, async () => exec(argv, op))))
+if (!process.env[SCOPE_ENV]) await exitWithActivity(await finish(traced(op, { ...settings, ...named }, async () => exec(argv, op), process.env, 'cli')))
 
 const scope = Scope.open(process.env[SCOPE_ENV])
 const out = [...argv]
-const call = scope.call(op, named, (sent, args) => traced(sent, args, async () => {
+const call = scope.call(op, named, (sent, args) => traced(sent, { ...settings, ...args }, async () => {
   const target = table.find((c) => `${c.family}.${c.call}` === sent)
   const words = target.args.map((a) => args[a.name]).filter((v) => v !== undefined)
   // a publish becomes the fork of the next trunk: its own command line
@@ -119,5 +133,5 @@ const call = scope.call(op, named, (sent, args) => traced(sent, args, async () =
     }
   }
   return exec(out.filter((w) => w !== undefined), op)
-}))
-process.exit(await finish(call))
+}, process.env, 'cli'))
+await exitWithActivity(await finish(call))

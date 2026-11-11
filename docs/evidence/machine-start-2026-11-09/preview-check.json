@@ -1,0 +1,25 @@
+{
+  "proof": {
+    "name": "startup-ui-ready",
+    "created": {
+      "name": "startup-ui-ready",
+      "platform": "apple-container",
+      "backend": "namespaces",
+      "supports": {
+        "sqlite": true,
+        "postgresql_sandbox": true,
+        "reason": null
+      },
+      "state": "running",
+      "cpus": 2,
+      "memory": 4294967296,
+      "disk": 21474836480,
+      "stores": [],
+      "sandboxes": [],
+      "os_image": "layerfs-machine:ba52f2abe48ffc54f163a4cd1d420e1eb2aa37dd417aff8093ab3b1e83f9db65",
+      "error": null
+    },
+    "milliseconds": 1640.199999988079
+  },
+  "cardText": "startup-ui-readyApple Container · Linux namespacesCPU2 coresMemory4 GiBDisk capacity20 GiBSandboxes0Workspaces0Local Stores0StoresNone on this machineDisk19.7 GiB free (guest) · 20 GiB allocatedRunningStop"
+}

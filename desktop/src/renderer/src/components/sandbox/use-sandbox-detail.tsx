@@ -4,7 +4,7 @@ import { ArrowUpRight } from 'lucide-react'
 import { workspaceState } from './model'
 import type { SandboxDetailProps, WorkspaceTab } from './types'
 
-export function useSandboxDetailModel({ snapshot: s, time, playing, observedAt: observed, highlightedConversation, initialTab, simulation = false }: SandboxDetailProps) {
+export function useSandboxDetailModel({ snapshot: s, time, playing, observedAt: observed, highlightedConversation, initialTab }: SandboxDetailProps) {
   const [tab, setTab] = useState<SandboxDetailProps['initialTab']>(initialTab)
   const currentTab = tab === 'workspaces' ? 'workspaces' : 'overview'
   const [selectedWorkspace, setSelectedWorkspace] = useState<string | null>(null)
@@ -46,7 +46,7 @@ export function useSandboxDetailModel({ snapshot: s, time, playing, observedAt: 
   function actorName(id: string) { return s.actors.find(a => a.id === id)?.name ?? 'Unknown' }
   function actorLink(id: string) { return s.links[id] ? <Link to={s.links[id]}>{actorName(id)}<ArrowUpRight size={11} /></Link> : <span>{actorName(id)} <small>Scenario agent</small></span> }
 
-  return { s, time, playing, observed, simulation, highlightedConversation, tab: currentTab, openTab,
+  return { s, time, playing, observed, highlightedConversation, tab: currentTab, openTab,
     selectedWorkspace, setSelectedWorkspace, workspaceTab, setWorkspaceTab, eventId, setEventId,
     workspaces, events, started, active, completed, closed, creating, closing,
     state, mounted, workspacesKnown, shownWorkspaces, selected, selectedState,

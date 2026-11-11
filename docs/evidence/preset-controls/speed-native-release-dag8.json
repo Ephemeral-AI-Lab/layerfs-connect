@@ -1,0 +1,114 @@
+{
+  "version": 1,
+  "fixtureProfile": "Disposable: fresh private LayerFS home, authored fixture data only; no user Studio resources adopted.",
+  "diagnostic": true,
+  "numericEligibility": "INCOMPLETE: OS and worker cache states are uncontrolled. Timing is exploratory; functional verification and cleanup have separate verdicts.",
+  "cache": "Uncontrolled warm host caches; fresh private LayerFS home; no cold-cache or statistical performance claim.",
+  "source": {
+    "runner.mjs": "c9160e822e824fc153ba11cd474ad55f54e70ad1288a7be2f9162aacb8860b8d",
+    "recipe.mjs": "18096e86814ad2badcca64435effef91a2919673eb526f43af0efa5429bda72c",
+    "dense-recipe.mjs": "f3d814e3cdadaae356ff688460f1e6ec4326e54bcec7caf761da8aa798777122",
+    "project-verification.mjs": "a179608b9f55e5f295e321c3625a30b6acf6f3de8568df433ad1df9a1b0474a3",
+    "history-scheduler.mjs": "ddf477b4acd7332017bb4ffb564789da1dfa8b172e845147e88eb161b359a602",
+    "drivers.mjs": "1114100b8e62153fdd88361c677fed9fa13c81fd73b8dc56a03e540b1db1d6d8"
+  },
+  "binarySha256": {
+    "cli": "571032b596aa33e5f6c7fcb2690f23ec3c92f76365957f58b9121ca2c13e3445",
+    "daemon": "466c32557b9ec717483f5736eb9d6f41e1616b106305dca178879cb50643f302"
+  },
+  "linuxBundle": "/Users/yifanxu/.cache/layerfs-worktrees/layerfs-connect-image-ru-5b7a74044d64/linux-runtime/2.0.0/linux-aarch64",
+  "state": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/connect-history-benchmark-xeEK16",
+  "cli": "/Users/yifanxu/.cache/layerfs-worktrees/layerfs-macos-writer-adm-905cf46b6910/artifacts/build-macos-b4035a8f06434f7e8e09c823dad9e32a/layerfs",
+  "daemon": "/Users/yifanxu/.cache/layerfs-worktrees/layerfs-macos-writer-adm-905cf46b6910/artifacts/build-macos-b4035a8f06434f7e8e09c823dad9e32a/layerfs-daemon",
+  "scope": "native",
+  "schedule": "parallel",
+  "concurrency": 8,
+  "storeConcurrency": 3,
+  "projectConcurrency": 3,
+  "cycles": 1,
+  "historyBudgetMs": 120000,
+  "started": 1794289512468,
+  "ok": false,
+  "expected": [
+    {
+      "project": "demo-studio/design",
+      "machine": "native",
+      "commands": 357,
+      "commits": 288,
+      "layers": 60
+    }
+  ],
+  "progress": {
+    "stage": "building",
+    "completed": 277,
+    "total": 359,
+    "historyCompleted": 275,
+    "historyTotal": 357,
+    "label": "History scheduling stopped; all dispatched commands have settled",
+    "tasks": [
+      {
+        "id": "demo-studio/design",
+        "project": "demo-studio/design",
+        "machine": "native",
+        "tier": 1,
+        "state": "failed",
+        "completed": 275,
+        "total": 357,
+        "commits": 248,
+        "branches": 14,
+        "layers": 18,
+        "targetCommits": 288,
+        "targetBranches": 15,
+        "targetLayers": 60,
+        "started": 1794289512780,
+        "ended": 1794289516117,
+        "error": "head moved: MovedState { expected_head: Some(CommitId(12c93fa278716c06d06f39fd318a1fe1eae6c8bf00c39397baed91a011cde83e92)), actual_head: Some(CommitId(126ce3b239cd2d0467d1309484349bb86be699d89eb23731342088ed7e5d7b3a9c)), expected_base: LayerId(323ae383de48c0de53245838dba5f5a34d747d1645d5ed4710e5c523dc66832fbc), actual_base: LayerId(323ae383de48c0de53245838dba5f5a34d747d1645d5ed4710e5c523dc66832fbc) }",
+        "errorCode": "HeadMoved"
+      }
+    ]
+  },
+  "error": {
+    "code": "HeadMoved",
+    "message": "head moved: MovedState { expected_head: Some(CommitId(12c93fa278716c06d06f39fd318a1fe1eae6c8bf00c39397baed91a011cde83e92)), actual_head: Some(CommitId(126ce3b239cd2d0467d1309484349bb86be699d89eb23731342088ed7e5d7b3a9c)), expected_base: LayerId(323ae383de48c0de53245838dba5f5a34d747d1645d5ed4710e5c523dc66832fbc), actual_base: LayerId(323ae383de48c0de53245838dba5f5a34d747d1645d5ed4710e5c523dc66832fbc) }",
+    "stack": "LayerFSError: head moved: MovedState { expected_head: Some(CommitId(12c93fa278716c06d06f39fd318a1fe1eae6c8bf00c39397baed91a011cde83e92)), actual_head: Some(CommitId(126ce3b239cd2d0467d1309484349bb86be699d89eb23731342088ed7e5d7b3a9c)), expected_base: LayerId(323ae383de48c0de53245838dba5f5a34d747d1645d5ed4710e5c523dc66832fbc), actual_base: LayerId(323ae383de48c0de53245838dba5f5a34d747d1645d5ed4710e5c523dc66832fbc) }\n    at outcome (file:///Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect/host/cli/outcome.js:11:113)\n    at ChildProcess.<anonymous> (file:///Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect/host/cli/spawn.js:78:23)\n    at ChildProcess.wrapper (node:events:639:12)\n    at ChildProcess.emit (node:events:514:28)\n    at maybeClose (node:internal/child_process:1141:16)\n    at ChildProcess._handle.onexit (node:internal/child_process:306:5)"
+  },
+  "cleanup": {
+    "preset": "studio",
+    "state": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/connect-history-benchmark-xeEK16",
+    "home": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/connect-history-benchmark-xeEK16/home-2",
+    "actionId": "32d03c16-b7a1-4ee4-b210-ca03a5179f44",
+    "cleanup": {
+      "remove": {
+        "stores": [
+          "demo-studio"
+        ],
+        "sandboxes": [],
+        "machines": [],
+        "workspaces": []
+      },
+      "retainMachines": [],
+      "preserved": {
+        "machine": [],
+        "store": [],
+        "sandbox": []
+      },
+      "projects": 1,
+      "signature": "f432f6d1bd46ea29fd16c5915a494bdd3eeacff5caeed380ac5909faa46a6c96",
+      "verified": true,
+      "at": 1794289516215,
+      "remaining": [],
+      "unexpected": []
+    },
+    "activityUrl": "http://127.0.0.1:1025/#/activity?action=32d03c16-b7a1-4ee4-b210-ca03a5179f44"
+  },
+  "sourceAfter": {
+    "runner.mjs": "c9160e822e824fc153ba11cd474ad55f54e70ad1288a7be2f9162aacb8860b8d",
+    "recipe.mjs": "18096e86814ad2badcca64435effef91a2919673eb526f43af0efa5429bda72c",
+    "dense-recipe.mjs": "f3d814e3cdadaae356ff688460f1e6ec4326e54bcec7caf761da8aa798777122",
+    "project-verification.mjs": "a179608b9f55e5f295e321c3625a30b6acf6f3de8568df433ad1df9a1b0474a3",
+    "history-scheduler.mjs": "ddf477b4acd7332017bb4ffb564789da1dfa8b172e845147e88eb161b359a602",
+    "drivers.mjs": "1114100b8e62153fdd88361c677fed9fa13c81fd73b8dc56a03e540b1db1d6d8"
+  },
+  "sourceStable": true,
+  "ended": 1794289516358
+}

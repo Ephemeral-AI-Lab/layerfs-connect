@@ -1,0 +1,247 @@
+{
+  "ok": true,
+  "at": 1794298036265,
+  "state": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/connect-mixed-web-0oplwF/presets/studio",
+  "actionId": "b88bdaae-b02f-49da-85bd-4c8e8bc95533",
+  "historyCommands": 66542,
+  "setupCalls": 70552,
+  "archiveRecords": 226741,
+  "exactArgv": 66542,
+  "exactStdin": 26238,
+  "exactResults": 66542,
+  "archiveFailures": 0,
+  "truncated": 0,
+  "maxExecBodyBytes": 817,
+  "families": {
+    "branch.fork": 527,
+    "file.write": 26238,
+    "branch.publish": 8667,
+    "branch.merge": 330,
+    "sandbox.create": 8,
+    "workspace.mount": 314,
+    "workspace.exec": 15072,
+    "workspace.commit": 15072,
+    "workspace.unmount": 314
+  },
+  "uniqueCommitHeads": 41640,
+  "uniqueWorkspaceCommitHeads": 15072,
+  "savedGraph": {
+    "commits": 41640,
+    "sideBranches": 857,
+    "layers": 8675,
+    "workspaceCommits": 15072,
+    "filesVerified": 359,
+    "projects": {
+      "demo-studio/website": {
+        "project": "demo-studio/website",
+        "tier": 8,
+        "cycles": 38,
+        "branches": 200,
+        "commits": 10056,
+        "merges": 78,
+        "publications": 2094,
+        "layers": 2095,
+        "filesVerified": 42,
+        "publicationReceiptsVerified": true,
+        "workspaceRevisions": 3648,
+        "authoredRevisions": 9978
+      },
+      "demo-services/gateway": {
+        "project": "demo-services/gateway",
+        "tier": 7,
+        "cycles": 30,
+        "branches": 160,
+        "commits": 7944,
+        "merges": 62,
+        "publications": 1654,
+        "layers": 1655,
+        "filesVerified": 45,
+        "publicationReceiptsVerified": true,
+        "workspaceRevisions": 2880,
+        "authoredRevisions": 7882
+      },
+      "demo-services/billing": {
+        "project": "demo-services/billing",
+        "tier": 2,
+        "cycles": 10,
+        "branches": 60,
+        "commits": 2664,
+        "merges": 22,
+        "publications": 554,
+        "layers": 555,
+        "filesVerified": 46,
+        "publicationReceiptsVerified": true,
+        "workspaceRevisions": 960,
+        "authoredRevisions": 2642
+      },
+      "demo-studio/design": {
+        "project": "demo-studio/design",
+        "tier": 1,
+        "cycles": 9,
+        "branches": 55,
+        "commits": 2400,
+        "merges": 20,
+        "publications": 499,
+        "layers": 500,
+        "filesVerified": 44,
+        "publicationReceiptsVerified": true,
+        "workspaceRevisions": 864,
+        "authoredRevisions": 2380
+      },
+      "demo-build-cache/compiler": {
+        "project": "demo-build-cache/compiler",
+        "tier": 6,
+        "cycles": 24,
+        "branches": 130,
+        "commits": 6360,
+        "merges": 50,
+        "publications": 1324,
+        "layers": 1325,
+        "filesVerified": 46,
+        "publicationReceiptsVerified": true,
+        "workspaceRevisions": 2304,
+        "authoredRevisions": 6310
+      },
+      "demo-build-cache/sdk": {
+        "project": "demo-build-cache/sdk",
+        "tier": 3,
+        "cycles": 12,
+        "branches": 70,
+        "commits": 3192,
+        "merges": 26,
+        "publications": 664,
+        "layers": 665,
+        "filesVerified": 47,
+        "publicationReceiptsVerified": true,
+        "workspaceRevisions": 1152,
+        "authoredRevisions": 3166
+      },
+      "demo-experiments/embeddings": {
+        "project": "demo-experiments/embeddings",
+        "tier": 5,
+        "cycles": 19,
+        "branches": 105,
+        "commits": 5040,
+        "merges": 40,
+        "publications": 1049,
+        "layers": 1050,
+        "filesVerified": 45,
+        "publicationReceiptsVerified": true,
+        "workspaceRevisions": 1824,
+        "authoredRevisions": 5000
+      },
+      "demo-experiments/evaluation": {
+        "project": "demo-experiments/evaluation",
+        "tier": 4,
+        "cycles": 15,
+        "branches": 85,
+        "commits": 3984,
+        "merges": 32,
+        "publications": 829,
+        "layers": 830,
+        "filesVerified": 44,
+        "publicationReceiptsVerified": true,
+        "workspaceRevisions": 1440,
+        "authoredRevisions": 3952
+      }
+    }
+  },
+  "pool": {
+    "sandboxCount": 8,
+    "boxes": {
+      "demo-mix-website-1": {
+        "project": "demo-studio/website",
+        "machine": "native",
+        "state": "running",
+        "mounted": 0
+      },
+      "demo-mix-design-1": {
+        "project": "demo-studio/design",
+        "machine": "native",
+        "state": "running",
+        "mounted": 0
+      },
+      "demo-mix-evaluation-1": {
+        "project": "demo-experiments/evaluation",
+        "machine": "demo-research",
+        "state": "running",
+        "mounted": 0
+      },
+      "demo-mix-compiler-1": {
+        "project": "demo-build-cache/compiler",
+        "machine": "demo-build",
+        "state": "running",
+        "mounted": 0
+      },
+      "demo-mix-gateway-1": {
+        "project": "demo-services/gateway",
+        "machine": "docker",
+        "state": "running",
+        "mounted": 0
+      },
+      "demo-mix-sdk-1": {
+        "project": "demo-build-cache/sdk",
+        "machine": "demo-build",
+        "state": "running",
+        "mounted": 0
+      },
+      "demo-mix-embeddings-1": {
+        "project": "demo-experiments/embeddings",
+        "machine": "demo-research",
+        "state": "running",
+        "mounted": 0
+      },
+      "demo-mix-billing-1": {
+        "project": "demo-services/billing",
+        "machine": "docker",
+        "state": "running",
+        "mounted": 0
+      }
+    },
+    "perProject": {
+      "demo-studio/website": {
+        "actualCliPeak": 3,
+        "conservativeMountedPeak": 2,
+        "sessions": 76
+      },
+      "demo-services/gateway": {
+        "actualCliPeak": 3,
+        "conservativeMountedPeak": 2,
+        "sessions": 60
+      },
+      "demo-services/billing": {
+        "actualCliPeak": 3,
+        "conservativeMountedPeak": 2,
+        "sessions": 20
+      },
+      "demo-studio/design": {
+        "actualCliPeak": 2,
+        "conservativeMountedPeak": 2,
+        "sessions": 18
+      },
+      "demo-build-cache/compiler": {
+        "actualCliPeak": 3,
+        "conservativeMountedPeak": 2,
+        "sessions": 48
+      },
+      "demo-build-cache/sdk": {
+        "actualCliPeak": 3,
+        "conservativeMountedPeak": 2,
+        "sessions": 24
+      },
+      "demo-experiments/embeddings": {
+        "actualCliPeak": 3,
+        "conservativeMountedPeak": 2,
+        "sessions": 38
+      },
+      "demo-experiments/evaluation": {
+        "actualCliPeak": 3,
+        "conservativeMountedPeak": 2,
+        "sessions": 30
+      }
+    }
+  },
+  "actualHistoryCliPeak": 12,
+  "historyMs": 708100,
+  "method": "Streaming persisted archive and final step journal; exact canonical recipe argv/body/input match and unique invocation lifecycle stages; saved project verification receipts and real sandbox.get output; mounted interval peak uses mount start through unmount finish as conservative bound."
+}

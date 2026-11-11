@@ -285,7 +285,7 @@ export function NewProjectDialog({ open, onOpenChange, onCreated, initialFolder 
             {busy && (
               <div role="status" className="mt-4 rounded-xl border border-primary/10 bg-primary/[0.04] px-3.5 py-3">
                 <p className="flex items-center gap-2 text-xs font-medium"><LoaderCircle className="size-3.5 animate-spin text-primary" />{posting && !job ? t("Starting project…") : job ? t(STEPS[job.step] ?? job.step) : t("Creating project…")}</p>
-                {counts && <p className="mt-1.5 pl-5.5 text-[11px] text-muted-foreground tabular-nums">{t("{count} files · {size}", {count: counts.files, size: bytes(counts.bytes)})}</p>}
+                {counts && <p className="mt-1.5 pl-5.5 text-[11px] text-muted-foreground tabular-nums">{t("{count} files · {size}", {count: counts.files ?? '—', size: bytes(counts.bytes)})}</p>}
               </div>
             )}
             {made && (

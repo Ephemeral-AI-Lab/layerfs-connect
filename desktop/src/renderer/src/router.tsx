@@ -9,6 +9,8 @@ import { PiPoliciesPage } from '@/pages/settings/PiPoliciesPage'
 import { ModelsPage } from '@/pages/settings/ModelsPage'
 import { ToolsPage, AgentsPage, HooksPage } from '@/pages/settings/CapabilitiesPage'
 import { StorageRoute } from '@/pages/storage/StorageRoute'
+import { PresetsPage } from '@/pages/presets/PresetsPage'
+import { CliActivityPage } from '@/pages/activity/CliActivityPage'
 
 // Hash routes, as in Cindy: the shell stays mounted and only the outlet swaps.
 export const router = createHashRouter([
@@ -20,6 +22,8 @@ export const router = createHashRouter([
       // a chat and its tabs (/trace, /subagents, /subagents/:child): one route, so the page stays mounted between them
       { path: 'chat/:id/*', element: <ChatPage /> },
       { path: 'machines', element: <MachinesRoute /> },
+      { path: 'activity', element: <CliActivityPage /> },
+      { path: 'presets', element: <PresetsPage /> },
       { path: 'machines/:name', element: <MachinesRoute /> },
       { path: 'machines/:name/sandboxes/:sandbox', element: <SandboxDetailPage /> },
       { path: 'storage', element: <StorageRoute /> },

@@ -1,0 +1,403 @@
+{
+  "provider": "apple-container",
+  "root": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/lfs-isolation-apple-container-ombrt6ef",
+  "source": "833d04cf44e8e747929d50ab1170a48260d9381c plus machine-start-artifacts working tree",
+  "cache": "installed immutable artifacts; no controlled host page-cache state",
+  "steps": [
+    {
+      "member": 0,
+      "args": [
+        "store",
+        "create",
+        "proof"
+      ],
+      "wall_ns": 73385583,
+      "exit": 0
+    },
+    {
+      "member": 1,
+      "args": [
+        "store",
+        "create",
+        "proof"
+      ],
+      "wall_ns": 19763917,
+      "exit": 0
+    },
+    {
+      "member": 1,
+      "args": [
+        "machine",
+        "create",
+        "machine",
+        "apple-container",
+        "--cpus",
+        "2",
+        "--memory",
+        "4G",
+        "--disk",
+        "20G",
+        "--progress"
+      ],
+      "wall_ns": 2077199334,
+      "exit": 0,
+      "progress": "{\"progress\":{\"stage\":\"bundle-validation\",\"state\":\"started\"}}\n{\"progress\":{\"stage\":\"bundle-validation\",\"state\":\"completed\",\"elapsed_ms\":0}}\n{\"progress\":{\"phase\":\"create\",\"machine\":\"machine\"}}\n{\"progress\":{\"stage\":\"provider-and-worker\",\"state\":\"started\"}}\n{\"progress\":{\"stage\":\"provider-and-worker\",\"state\":\"completed\",\"elapsed_ms\":2032}}\n{\"progress\":{\"stage\":\"worker-compatibility\",\"state\":\"started\"}}\n{\"progress\":{\"stage\":\"worker-compatibility\",\"state\":\"completed\",\"elapsed_ms\":2}}\n"
+    },
+    {
+      "member": 0,
+      "args": [
+        "machine",
+        "create",
+        "machine",
+        "apple-container",
+        "--cpus",
+        "2",
+        "--memory",
+        "4G",
+        "--disk",
+        "20G",
+        "--progress"
+      ],
+      "wall_ns": 2102665500,
+      "exit": 0,
+      "progress": "{\"progress\":{\"stage\":\"bundle-validation\",\"state\":\"started\"}}\n{\"progress\":{\"stage\":\"bundle-validation\",\"state\":\"completed\",\"elapsed_ms\":0}}\n{\"progress\":{\"phase\":\"create\",\"machine\":\"machine\"}}\n{\"progress\":{\"stage\":\"provider-and-worker\",\"state\":\"started\"}}\n{\"progress\":{\"stage\":\"provider-and-worker\",\"state\":\"completed\",\"elapsed_ms\":2060}}\n{\"progress\":{\"stage\":\"worker-compatibility\",\"state\":\"started\"}}\n{\"progress\":{\"stage\":\"worker-compatibility\",\"state\":\"completed\",\"elapsed_ms\":1}}\n"
+    },
+    {
+      "member": 0,
+      "args": [
+        "project",
+        "init",
+        "proof/app",
+        "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/lfs-isolation-apple-container-ombrt6ef/fixture-0"
+      ],
+      "wall_ns": 47416625,
+      "exit": 0
+    },
+    {
+      "member": 0,
+      "args": [
+        "store",
+        "push",
+        "proof",
+        "machine"
+      ],
+      "wall_ns": 45761709,
+      "exit": 0
+    },
+    {
+      "member": 0,
+      "args": [
+        "branch",
+        "fork",
+        "proof/app",
+        "verify",
+        "main"
+      ],
+      "wall_ns": 34227542,
+      "exit": 0
+    },
+    {
+      "member": 0,
+      "args": [
+        "sandbox",
+        "create",
+        "proof/app",
+        "box",
+        "machine"
+      ],
+      "wall_ns": 3228433833,
+      "exit": 0
+    },
+    {
+      "member": 0,
+      "args": [
+        "workspace",
+        "mount",
+        "box",
+        "verify",
+        "--name",
+        "verify"
+      ],
+      "wall_ns": 39631792,
+      "exit": 0
+    },
+    {
+      "member": 0,
+      "args": [
+        "workspace",
+        "exec",
+        "box:verify",
+        "cat proof.txt && printf \"0e7c9f46e6f94474a0df9253426218e7\\n\" > result.txt"
+      ],
+      "wall_ns": 32967417,
+      "exit": 0
+    },
+    {
+      "member": 0,
+      "args": [
+        "workspace",
+        "commit",
+        "box:verify",
+        "--message",
+        "Verify independent private machine"
+      ],
+      "wall_ns": 23590125,
+      "exit": 0
+    },
+    {
+      "member": 0,
+      "args": [
+        "file",
+        "read",
+        "proof/app",
+        "verify",
+        "/result.txt"
+      ],
+      "wall_ns": 16288875,
+      "exit": 0
+    },
+    {
+      "member": 0,
+      "args": [
+        "workspace",
+        "unmount",
+        "box:verify"
+      ],
+      "wall_ns": 12054875,
+      "exit": 0
+    },
+    {
+      "member": 0,
+      "args": [
+        "sandbox",
+        "close",
+        "box"
+      ],
+      "wall_ns": 2114766750,
+      "exit": 0
+    },
+    {
+      "member": 1,
+      "args": [
+        "project",
+        "init",
+        "proof/app",
+        "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/lfs-isolation-apple-container-ombrt6ef/fixture-1"
+      ],
+      "wall_ns": 40314625,
+      "exit": 0
+    },
+    {
+      "member": 1,
+      "args": [
+        "store",
+        "push",
+        "proof",
+        "machine"
+      ],
+      "wall_ns": 47471333,
+      "exit": 0
+    },
+    {
+      "member": 1,
+      "args": [
+        "branch",
+        "fork",
+        "proof/app",
+        "verify",
+        "main"
+      ],
+      "wall_ns": 32849542,
+      "exit": 0
+    },
+    {
+      "member": 1,
+      "args": [
+        "sandbox",
+        "create",
+        "proof/app",
+        "box",
+        "machine"
+      ],
+      "wall_ns": 4856970209,
+      "exit": 0
+    },
+    {
+      "member": 1,
+      "args": [
+        "workspace",
+        "mount",
+        "box",
+        "verify",
+        "--name",
+        "verify"
+      ],
+      "wall_ns": 135221166,
+      "exit": 0
+    },
+    {
+      "member": 1,
+      "args": [
+        "workspace",
+        "exec",
+        "box:verify",
+        "cat proof.txt && printf \"a84a27953ce84727953c26b7ba5db7ce\\n\" > result.txt"
+      ],
+      "wall_ns": 103868625,
+      "exit": 0
+    },
+    {
+      "member": 1,
+      "args": [
+        "workspace",
+        "commit",
+        "box:verify",
+        "--message",
+        "Verify independent private machine"
+      ],
+      "wall_ns": 34318666,
+      "exit": 0
+    },
+    {
+      "member": 1,
+      "args": [
+        "file",
+        "read",
+        "proof/app",
+        "verify",
+        "/result.txt"
+      ],
+      "wall_ns": 25362292,
+      "exit": 0
+    },
+    {
+      "member": 1,
+      "args": [
+        "workspace",
+        "unmount",
+        "box:verify"
+      ],
+      "wall_ns": 18944166,
+      "exit": 0
+    },
+    {
+      "member": 1,
+      "args": [
+        "sandbox",
+        "close",
+        "box"
+      ],
+      "wall_ns": 1940315875,
+      "exit": 0
+    },
+    {
+      "member": 0,
+      "args": [
+        "file",
+        "read",
+        "proof/app",
+        "verify",
+        "/result.txt"
+      ],
+      "wall_ns": 54568209,
+      "exit": 0
+    },
+    {
+      "member": 0,
+      "args": [
+        "store",
+        "pull",
+        "proof"
+      ],
+      "wall_ns": 42449750,
+      "exit": 0
+    },
+    {
+      "member": 0,
+      "args": [
+        "store",
+        "remove",
+        "proof"
+      ],
+      "wall_ns": 69358750,
+      "exit": 0
+    },
+    {
+      "member": 0,
+      "args": [
+        "machine",
+        "remove",
+        "machine"
+      ],
+      "wall_ns": 1734246750,
+      "exit": 0
+    },
+    {
+      "member": 1,
+      "args": [
+        "file",
+        "read",
+        "proof/app",
+        "verify",
+        "/result.txt"
+      ],
+      "wall_ns": 23597333,
+      "exit": 0
+    },
+    {
+      "member": 1,
+      "args": [
+        "store",
+        "pull",
+        "proof"
+      ],
+      "wall_ns": 53765209,
+      "exit": 0
+    },
+    {
+      "member": 1,
+      "args": [
+        "store",
+        "remove",
+        "proof"
+      ],
+      "wall_ns": 12078834,
+      "exit": 0
+    },
+    {
+      "member": 1,
+      "args": [
+        "machine",
+        "remove",
+        "machine"
+      ],
+      "wall_ns": 689357625,
+      "exit": 0
+    }
+  ],
+  "members": [
+    {
+      "index": 0,
+      "home": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/lfs-isolation-apple-container-ombrt6ef/home-0",
+      "name": "machine",
+      "marker": "0e7c9f46e6f94474a0df9253426218e7",
+      "vm_name": "lfs-f563a3c1-machine",
+      "cleaned": true
+    },
+    {
+      "index": 1,
+      "home": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/lfs-isolation-apple-container-ombrt6ef/home-1",
+      "name": "machine",
+      "marker": "a84a27953ce84727953c26b7ba5db7ce",
+      "vm_name": "lfs-90559b02-machine",
+      "cleaned": true
+    }
+  ],
+  "unique_endpoints": true,
+  "unique_worker_secrets": true,
+  "endpoints": [
+    "127.0.0.1:59322",
+    "127.0.0.1:59321"
+  ],
+  "status": "PASS"
+}

@@ -9,9 +9,7 @@
 // go to stderr. It exits when stdin closes or on SIGTERM. While it serves,
 // <state>/host.json (owner-only) holds the same url and token and its pid,
 // so tools on this machine can drive the running app's host
-// (tools/connect-run.mjs); it is removed at exit. LAYERFS_CONNECT_MODE=sim
-// runs it on the simulator (config.js, layerfs.js) in its own state folder;
-// scenario runs and scenario chats need real LayerFS and are off there.
+// (tools/connect-run.mjs); it is removed at exit.
 import { readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { dirname } from 'node:path'
@@ -20,10 +18,14 @@ import { closeStores, recordNativeDaemon } from './layerfs.js'
 import { AgentManager } from './agents/index.js'
 import { Projects } from './projects.js'
 import { AgentWorkspaces } from './agents/workspaces.js'
-import { createHostServer, listen, newToken } from './server.js'
+import { createHostServer, listen, newToken, runtimeBusy } from './server.js'
 import { Machines } from './machines.js'
 import { Storage } from './storage.js'
 import { DoctorManager } from './doctor/manager.js'
+import { configureActivity } from './activity/recorder.js'
+import { PresetManager } from './demo-presets/manager.js'
+import { SimulationManager } from './simulations/index.js'
+import { simulationChatAdapter, reconcileSimulationChats } from './agents/simulation-bridge.js'
 
 /** How long shutdown may take before the process exits anyway. */
 const CLOSE_MS = 30_000
@@ -74,9 +76,11 @@ function liveOwner(file) {
 async function main() {
   const args = parseArgs(process.argv.slice(2))
   const spec = args.state ? resolveSpec(args.state) : resolveSpec()
+  const activity = configureActivity(spec.state)
+  const monitor = process.env.LAYERFS_CONNECT_PRESET_MONITOR === '1'
   // §5: the native machine's daemon, once per home (a value already recorded is kept)
-  const daemon = await recordNativeDaemon(spec)
-  if (!daemon.recorded && !daemon.kept && daemon.why !== 'not macOS' && spec.mode !== 'sim') log(`[host] the native daemon is not recorded: ${daemon.why}`)
+  const daemon = monitor ? { recorded: false, kept: false, why: 'read-only preset monitor' } : await recordNativeDaemon(spec)
+  if (!daemon.recorded && !daemon.kept && daemon.why !== 'not macOS') log(`[host] the native daemon is not recorded: ${daemon.why}`)
   if (daemon.replaced) log(`[host] the recorded native daemon ${daemon.replaced} is not there; recorded ${spec.daemon}`)
   const engine = { runs: null, error: 'loading' }
   const projects = new Projects({ spec, runs: () => engine.runs, daemon, log })
@@ -85,31 +89,25 @@ async function main() {
   projects.storeJoin = () => storage.projectJoin()
   // a session's project is a project key, `<store>/<project>`
   // a scenario chat plays its script on the scenario engine's folder and scope (agents/scenarios.js)
-  const scenarios = spec.mode === 'sim' ? null : await import('./agents/scenarios.js')
+  const scenarios = await import('./agents/scenarios.js')
     .then(({ AgentScenarios }) => new AgentScenarios({ spec }).ready())
     .catch((error) => {
       log(`[host] scenario chats are off: ${error?.message ?? error}`)
       return null
     })
   // agents' shells get the home, the trace settings and the project key only (§8 step 8), and the native CLI on PATH
-  const shellEnv = (key) => ({ ...layerfsEnv(spec), LAYERFS_CONNECT_PROJECT: key, ...(spec.cli ? { LAYERFS_CONNECT_CLI: spec.cli, PATH: `${dirname(spec.cli)}:${process.env.PATH ?? ''}` } : {}) })
+  const shellEnv = (key) => ({ ...layerfsEnv(spec), LAYERFS_CONNECT_ACTIVITY_STATE: spec.state, LAYERFS_CONNECT_PROJECT: key, ...(spec.cli ? { LAYERFS_CONNECT_CLI: spec.cli, PATH: `${dirname(spec.cli)}:${process.env.PATH ?? ''}` } : {}) })
   const agents = await AgentManager.create({ state: spec.state, projectEnvironment: (key) => projects.recordOf(key), shellEnv, projectWorkspaces: new AgentWorkspaces({ projects }), scenarios })
+  const simulations = new SimulationManager({ state: spec.state, spec, agents: simulationChatAdapter(agents) })
+  agents.simulations = simulations
+  reconcileSimulationChats(agents, simulations)
   const doctor = new DoctorManager({ spec })
   const token = newToken()
   // Compute's "Move to…" starts a job in Storage's table, so its progress shows there
   const machines = new Machines({ spec, place: (store, machine) => storage.place(store, machine) })
-  // sim mode: the world's preset and its reset, which every page then reads again
-  const sim = spec.mode === 'sim'
-    ? await import('./sim/index.js').then((m) => ({
-        info: () => m.info(spec.home),
-        reset: (preset) => {
-          const done = m.reset(spec.home, preset)
-          storage.changed()
-          return done
-        },
-      }))
-    : null
-  const server = createHostServer({ token, projects, storage, machines, doctor, sim, agents: () => agents, runs: () => engine.runs, runsError: () => engine.error, log })
+  const dependencies = { token, projects, storage, machines, doctor, activity, simulations, readOnly: monitor, agents: () => agents, runs: () => engine.runs, runsError: () => engine.error, log }
+  const presets = process.env.LAYERFS_CONNECT_PRESET_CHILD ? null : new PresetManager({ spec, entry: join(APP, 'host', 'main.js'), originalBusy: () => runtimeBusy(dependencies) })
+  const server = createHostServer({ ...dependencies, presets })
 
   const endpoint = join(spec.state, 'host.json')
   let owned = false
@@ -121,7 +119,10 @@ async function main() {
         log('[host] shutdown took too long; exiting')
         process.exit(1)
       }, CLOSE_MS).unref()
+      presets?.endStreams()
       await new Promise((resolve) => server.close(() => resolve()))
+      await presets?.close()
+      await simulations.close()
       storage.close()
       let clean = true
       await agents.close().catch((error) => {
@@ -139,6 +140,7 @@ async function main() {
         log(`[host] closing the Stores: ${error?.message ?? error}`)
       }
       if (owned) rmSync(endpoint, { force: true })
+      await activity.flush()
       process.exit(clean ? 0 : 1)
     })()
     return closing
@@ -149,15 +151,15 @@ async function main() {
   process.stdin.on('close', () => void shutdown('stdin closed'))
   process.stdin.resume()
 
-  Object.assign(engine, spec.mode === 'sim' ? { runs: null, error: 'Scenario runs need real LayerFS: switch Connect to Real to play them.' } : await loadRuns(spec, projects))
+  if (!monitor) Object.assign(engine, await loadRuns(spec, projects))
   const url = await listen(server, args.port)
   // a second host (another app window on the same state) leaves the first one's file alone
   if (!liveOwner(endpoint)) {
     writeFileSync(endpoint, JSON.stringify({ url, token, pid: process.pid }), { mode: 0o600 })
     owned = true
   }
-  process.stdout.write(`${JSON.stringify({ ready: true, url, token, mode: spec.mode })}\n`)
-  log(`[host] listening on ${url} (${spec.mode === 'sim' ? 'simulated LayerFS, ' : ''}state ${spec.state}, LayerFS home ${spec.home})`)
+  process.stdout.write(`${JSON.stringify({ ready: true, url, token, mode: 'real' })}\n`)
+  log(`[host] listening on ${url} (state ${spec.state}, LayerFS home ${spec.home})`)
 }
 
 main().catch((error) => {

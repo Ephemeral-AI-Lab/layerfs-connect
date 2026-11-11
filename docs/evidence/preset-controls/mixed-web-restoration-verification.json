@@ -1,0 +1,130 @@
+{
+  "at": 1794298583779,
+  "active": "studio",
+  "state": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/lfs-desktop-web-4oV3rQ",
+  "studioState": "/Users/yifanxu/.layerfs-connect-demo/studio",
+  "mode": {
+    "sandboxes": false,
+    "executionMode": "filesystem"
+  },
+  "ready": true,
+  "before": [
+    "demo-build-cache/compiler",
+    "demo-build-cache/sdk",
+    "demo-experiments/embeddings",
+    "demo-experiments/evaluation",
+    "demo-services/billing",
+    "demo-services/gateway",
+    "demo-studio/design",
+    "demo-studio/website"
+  ],
+  "after": [
+    "demo-build-cache/compiler",
+    "demo-build-cache/sdk",
+    "demo-experiments/embeddings",
+    "demo-experiments/evaluation",
+    "demo-services/billing",
+    "demo-services/gateway",
+    "demo-studio/design",
+    "demo-studio/website"
+  ],
+  "unchanged": true,
+  "stats": {
+    "demo-build-cache": {
+      "status": 200,
+      "data": {
+        "name": "demo-build-cache",
+        "history_logical": 169091920,
+        "canonical": 45258244,
+        "stored": 3932626,
+        "metadata": 13440194,
+        "file": 14659584,
+        "free": 0,
+        "init": null,
+        "kind": "sqlite",
+        "store_id": "27e2c44f15c0e1a31bed27a9cca8d64ec0d198a0fee5783cd49b7dfa49532c3f",
+        "store_generation": 1794295177027,
+        "fileMeasurements": {
+          "observedAt": 1794298583560,
+          "bytes": 14659584,
+          "walBytes": 0,
+          "incomingBytes": 0
+        }
+      }
+    },
+    "demo-experiments": {
+      "status": 200,
+      "data": {
+        "name": "demo-experiments",
+        "history_logical": 157819273,
+        "canonical": 41167344,
+        "stored": 3716582,
+        "metadata": 12707693,
+        "file": 13860864,
+        "free": 0,
+        "init": null,
+        "kind": "sqlite",
+        "store_id": "40d630810299242d64c8ecede6040208eae67f7ab119c546b1dc2154d9cadacf",
+        "store_generation": 1794295177090,
+        "fileMeasurements": {
+          "observedAt": 1794298583629,
+          "bytes": 13860864,
+          "walBytes": 0,
+          "incomingBytes": 0
+        }
+      }
+    },
+    "demo-services": {
+      "status": 200,
+      "data": {
+        "name": "demo-services",
+        "history_logical": 173870975,
+        "canonical": 49242414,
+        "stored": 4359232,
+        "metadata": 14849418,
+        "file": 16199680,
+        "free": 0,
+        "init": null,
+        "kind": "sqlite",
+        "store_id": "2bb7c494cbbf484ce25b0f5039c9ff8dc002e5d63186e55c15570d5b9724036c",
+        "store_generation": 1794295176922,
+        "fileMeasurements": {
+          "observedAt": 1794298583716,
+          "bytes": 16199680,
+          "walBytes": 0,
+          "incomingBytes": 0
+        }
+      }
+    },
+    "demo-studio": {
+      "status": 200,
+      "data": {
+        "name": "demo-studio",
+        "history_logical": 212313410,
+        "canonical": 54111533,
+        "stored": 5084598,
+        "metadata": 17313713,
+        "file": 18903040,
+        "free": 0,
+        "accounting_version": 1,
+        "data_pack_bytes": 1589327,
+        "metadata_pack_bytes": 3495271,
+        "database_overhead_bytes": 13818442,
+        "free_page_bytes": 0,
+        "database_page_bytes": 18903040,
+        "composition_complete": true,
+        "init": null,
+        "kind": "sqlite",
+        "store_id": "fdd3825b0a66ea955b51ed935a1cf5cd85fba5b2cbc875268e7cb4cd6257f862",
+        "store_generation": 1794295176908,
+        "fileMeasurements": {
+          "observedAt": 1794298583770,
+          "bytes": 18903040,
+          "walBytes": 0,
+          "incomingBytes": 0
+        }
+      }
+    }
+  },
+  "allStoreReadsOk": true
+}

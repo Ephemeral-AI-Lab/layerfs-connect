@@ -82,7 +82,7 @@ export function useHostQuery<T>(load: () => Promise<T>, deps: unknown[], key?: s
 export function useHostEvents(listener: (event: RunEvent) => void) {
   const current = useRef(listener)
   current.current = listener
-  useEffect(() => onHostEvent((e) => { if (e.type !== 'storage-job' && e.type !== 'storage' && e.type !== 'chat') current.current(e) }), [])
+  useEffect(() => onHostEvent((e) => { if (e.type !== 'storage-job' && e.type !== 'storage' && e.type !== 'chat' && e.type !== 'chat-summary') current.current(e) }), [])
 }
 
 /** Calls `listener` for Storage's events while mounted: each job sample and each `storage` view change. */

@@ -75,7 +75,7 @@ test('projects: list, state and Commits read 2.0 calls with the key first', asyn
   const p = new Projects({ spec: s, client: lfs, log: () => {} })
   assert.deepEqual((await p.list()).map((x) => x.key), ['s1/app'])
   const st = await p.state('s1/app')
-  assert.deepEqual(st.branches.map((b) => [b.name, b.parent, b.commits]), [['main', null, 0], ['work', 'main', 2]])
+  assert.deepEqual(st.branches.map((b) => [b.name, b.parent, b.commits]), [['main', null, 0], ['work', 'main', null]])
   assert.equal(st.store.bytes, 120)
   // Project state never invents Store totals from a bounded Commit page.
   assert.equal(st.storage, null)
@@ -425,4 +425,16 @@ test('a down Store: the project page makes no Store call, and gets the down reas
   assert.equal(branchCalls, 0)
   assert.deepEqual([st.project.storeState, st.project.storeDown, st.project.refusal], ['down', 'machine lima1 is not running', null])
   assert.deepEqual(st.branches, [])
+})
+
+test('stopped machines retain provider diagnostics without changing their SDK state', async () => {
+  const s = spec()
+  try {
+    const lfs = fake()
+    lfs.machine.list = async () => ({ machines: [{ name: 'docker', platform: 'docker', state: 'stopped' }] })
+    lfs.machine.status = async name => ({ name, state: 'stopped', down_reason: 'Docker Engine socket does not answer', tool_version: null, free_disk: null })
+    const view = await new Machines({ spec: s, client: lfs }).view()
+    assert.equal(view.machines[0].state, 'stopped')
+    assert.equal(view.status.docker.down, 'Docker Engine socket does not answer')
+  } finally { rmSync(s.state, { recursive: true, force: true }) }
 })

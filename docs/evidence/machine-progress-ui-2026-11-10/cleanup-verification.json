@@ -1,0 +1,21 @@
+{
+  "records_remaining": {
+    "progress-ui-1110": false,
+    "progress-refused-1110": false,
+    "progress-failure-1110": false
+  },
+  "provider_resources_remaining": {
+    "lima": [],
+    "lima_disks": [],
+    "apple": [],
+    "apple_volumes": []
+  },
+  "lima_data_disk_absent": "lfs96c0e9a3",
+  "untouched": [
+    "native",
+    "docker",
+    "demo-build",
+    "demo-research"
+  ],
+  "uncertain_missing_archive_request_not_replayed": true
+}

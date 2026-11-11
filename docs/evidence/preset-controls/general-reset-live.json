@@ -1,0 +1,232 @@
+{
+  "state": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/connect-general-reset-live-ka60il",
+  "cli": "/Users/yifanxu/Ephemeral-AI-Lab/layerfs-machine-start/target/debug/layerfs",
+  "checks": [
+    "detected resources outside fixture manifest",
+    "Machines page API remains readable during reset",
+    "recursive real CLI cleanup, empty inventory, inputs/outputs captured",
+    "independent history clear leaves resources unchanged",
+    "optional rebuild verified after general cleanup",
+    "private test environment left empty"
+  ],
+  "setup": {
+    "id": "95ac75c3-e665-4ec8-a7f9-f4287dcf4209",
+    "requestId": "live-native-setup",
+    "fingerprint": "[\"native\",\"setup\",true,null,null,null]",
+    "preset": "native",
+    "command": "setup",
+    "environment": "native",
+    "actionId": "97d5ae35-3786-48fe-8db1-d12e6d6aaab6",
+    "state": "completed",
+    "phase": "Preset is ready and verified",
+    "created": 1794271907954,
+    "historyCleared": false,
+    "started": 1794271908025,
+    "presetVerified": true,
+    "ended": 1794271909277
+  },
+  "plan": {
+    "home": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/connect-general-reset-live-ka60il/presets/native/home-2",
+    "homeId": "2c1cd695748665a7f9872239413a9ef3",
+    "remove": {
+      "stores": [
+        "demo-studio",
+        "outside-preset"
+      ],
+      "sandboxes": [
+        "demo-website",
+        "outside-sandbox"
+      ],
+      "machines": [],
+      "workspaces": [
+        "demo-website:feature",
+        "demo-website:fix",
+        "outside-sandbox:outside-workspace"
+      ]
+    },
+    "disconnect": [],
+    "unknownSandboxes": [],
+    "startMachines": [],
+    "projects": 2,
+    "stopDocker": false,
+    "scope": "environment",
+    "signature": "755b3d0526341be48634efe1b8b5e41d289688e95e5f2d76cb9b41b8dd390ba3",
+    "environment": "native"
+  },
+  "reset": {
+    "id": "377e8ffa-8f23-4a62-a9f7-02e907eddcb3",
+    "requestId": "live-general-reset",
+    "fingerprint": "[\"native\",\"environment-reset\",\"755b3d0526341be48634efe1b8b5e41d289688e95e5f2d76cb9b41b8dd390ba3\",false,true]",
+    "preset": "native",
+    "command": "environment-reset",
+    "rebuild": false,
+    "actionId": "6db7659e-05cd-4e27-bed3-0c8da85e36e6",
+    "state": "completed",
+    "phase": "Environment is empty. Reset verified.",
+    "created": 1794271909734,
+    "historyCleared": true,
+    "started": 1794271909908,
+    "cleanup": {
+      "home": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/connect-general-reset-live-ka60il/presets/native/home-2",
+      "homeId": "2c1cd695748665a7f9872239413a9ef3",
+      "remove": {
+        "stores": [
+          "demo-studio",
+          "outside-preset"
+        ],
+        "sandboxes": [
+          "demo-website",
+          "outside-sandbox"
+        ],
+        "machines": [],
+        "workspaces": [
+          "demo-website:fix",
+          "demo-website:feature",
+          "outside-sandbox:outside-workspace"
+        ]
+      },
+      "disconnect": [],
+      "unknownSandboxes": [],
+      "startMachines": [],
+      "projects": 2,
+      "stopDocker": false,
+      "scope": "environment",
+      "signature": "755b3d0526341be48634efe1b8b5e41d289688e95e5f2d76cb9b41b8dd390ba3",
+      "actionId": "6db7659e-05cd-4e27-bed3-0c8da85e36e6",
+      "verified": true,
+      "completed": [
+        [
+          "workspace",
+          "unmount",
+          "demo-website:fix",
+          "--discard"
+        ],
+        [
+          "workspace",
+          "unmount",
+          "demo-website:feature",
+          "--discard"
+        ],
+        [
+          "sandbox",
+          "close",
+          "demo-website"
+        ],
+        [
+          "workspace",
+          "unmount",
+          "outside-sandbox:outside-workspace",
+          "--discard"
+        ],
+        [
+          "sandbox",
+          "close",
+          "outside-sandbox"
+        ],
+        [
+          "store",
+          "remove",
+          "demo-studio"
+        ],
+        [
+          "store",
+          "remove",
+          "outside-preset"
+        ]
+      ],
+      "remaining": [],
+      "warnings": [],
+      "at": 1794271909907,
+      "ended": 1794271910473
+    },
+    "ended": 1794271910475
+  },
+  "rebuild": {
+    "id": "d3fafd0f-d40b-40a6-a836-facb410cceb4",
+    "requestId": "live-reset-rebuild",
+    "fingerprint": "[\"native\",\"environment-reset\",\"5622bfcbd605438227cefc47d5a9922c665e341b32277c1ac57c8f59cb79c00a\",true,false]",
+    "preset": "native",
+    "command": "environment-reset",
+    "rebuild": true,
+    "actionId": "2bd23098-ac3b-4383-b586-a9d3acab7794",
+    "state": "completed",
+    "phase": "Environment reset verified. Selected preset rebuilt and verified.",
+    "created": 1794271910879,
+    "historyCleared": true,
+    "started": 1794271910968,
+    "cleanup": {
+      "home": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/connect-general-reset-live-ka60il/presets/native/home-2",
+      "homeId": "2c1cd695748665a7f9872239413a9ef3",
+      "remove": {
+        "stores": [],
+        "sandboxes": [],
+        "machines": [],
+        "workspaces": []
+      },
+      "disconnect": [],
+      "unknownSandboxes": [],
+      "startMachines": [],
+      "projects": 0,
+      "stopDocker": false,
+      "scope": "environment",
+      "signature": "5622bfcbd605438227cefc47d5a9922c665e341b32277c1ac57c8f59cb79c00a",
+      "actionId": "2bd23098-ac3b-4383-b586-a9d3acab7794",
+      "verified": true,
+      "completed": [],
+      "remaining": [],
+      "warnings": [],
+      "at": 1794271910967,
+      "ended": 1794271911116
+    },
+    "rebuildActionId": "cd72df23-1d45-4180-99ae-22305b3377f7",
+    "presetVerified": true,
+    "ended": 1794271912510
+  },
+  "final": {
+    "id": "509d633f-3549-4464-8e9f-f51ff614c5e1",
+    "requestId": "live-final-empty",
+    "fingerprint": "[\"native\",\"environment-reset\",\"099fedd3dcb7446d6fb242163a8212faac658766ddbb62e6e415cac6895e5b28\",false,false]",
+    "preset": "native",
+    "command": "environment-reset",
+    "rebuild": false,
+    "actionId": "7aa1ddb5-7a99-4ecd-a3b4-8da2ce4e8aca",
+    "state": "completed",
+    "phase": "Environment is empty. Reset verified.",
+    "created": 1794271912818,
+    "historyCleared": true,
+    "started": 1794271913032,
+    "cleanup": {
+      "home": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/connect-general-reset-live-ka60il/presets/native/home-2",
+      "homeId": "2c1cd695748665a7f9872239413a9ef3",
+      "remove": {
+        "stores": [
+          "demo-studio"
+        ],
+        "sandboxes": [],
+        "machines": [],
+        "workspaces": []
+      },
+      "disconnect": [],
+      "unknownSandboxes": [],
+      "startMachines": [],
+      "projects": 2,
+      "stopDocker": false,
+      "scope": "environment",
+      "signature": "099fedd3dcb7446d6fb242163a8212faac658766ddbb62e6e415cac6895e5b28",
+      "actionId": "7aa1ddb5-7a99-4ecd-a3b4-8da2ce4e8aca",
+      "verified": true,
+      "completed": [
+        [
+          "store",
+          "remove",
+          "demo-studio"
+        ]
+      ],
+      "remaining": [],
+      "warnings": [],
+      "at": 1794271913032,
+      "ended": 1794271913270
+    },
+    "ended": 1794271913272
+  }
+}

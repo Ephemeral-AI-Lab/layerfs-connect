@@ -1,0 +1,8 @@
+{
+  "url": "http://127.0.0.1:1025/?mac=1&progress-check=final1#/machines",
+  "width": 900,
+  "height": 600,
+  "text": "Startup needs attention\n1.9s\n\nStarting machine and worker · failed\n\nReview the reported error before trying again.\n\n1 step completed\nReported error\nView CLI activity",
+  "form": "Name\nCPUs\nMemory\nDisk\nHolds its Stores\nSandbox image\nChoose an archive…\nThe bundle’s image\nChoose an archive…\nArchive path or digest\nStartup needs attention\n1.9s\n\nStarting machine and worker · failed\n\nReview the reported error before trying again.\n\n1 step completed\nReported error\nView CLI activity\nInspect current state\nView machine and removal options\nCreate\nCancel\n\nLayerFS refusal\n\nView CLI activity\n\nFailed: copying /private/tmp into the guest's /layerfs/image failed (guest exit status: 0, host tar exit status: 1):\n\nmissing: []\n\nvm_exists: true",
+  "activity": "#/activity?action=b35a3f14-83db-4cec-9508-16ffaad16884"
+}

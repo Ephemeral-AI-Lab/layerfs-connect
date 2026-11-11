@@ -1,0 +1,28 @@
+{
+  "version": 1,
+  "identity": "ba52f2abe48ffc54f163a4cd1d420e1eb2aa37dd417aff8093ab3b1e83f9db65",
+  "provider": "apple-container",
+  "work": "/Users/yifanxu/.cache/layerfs-worktrees/layerfs-machine-start-c17e354c8815/image-cache/layerfs/machine-images/builds/ba52f2abe48ffc54-7211949b",
+  "bundle": "/Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect/.cache/layerfs-bundles/833d04cf44e8e747929d50ab1170a48260d9381c/2.0.0/linux-aarch64",
+  "base": "docker.io/library/debian@sha256:f6b08b09a05725f9431502d3b5714f5c4576e82c1a84fa1debe0c24a7e0c3ec4",
+  "status": "sealed",
+  "steps": [
+    {
+      "stage": "oci-build",
+      "command": [
+        "container",
+        "build",
+        "--progress",
+        "plain",
+        "--output",
+        "type=oci,compression=uncompressed",
+        "--tag",
+        "layerfs-machine:ba52f2abe48ffc54f163a4cd1d420e1eb2aa37dd417aff8093ab3b1e83f9db65",
+        "/Users/yifanxu/.cache/layerfs-worktrees/layerfs-machine-start-c17e354c8815/image-cache/layerfs/machine-images/builds/ba52f2abe48ffc54-7211949b/context"
+      ],
+      "elapsed_ns": 63001073000,
+      "exit": 0
+    }
+  ],
+  "mapping": "/Users/yifanxu/.cache/layerfs-worktrees/layerfs-machine-start-c17e354c8815/image-cache/layerfs/machine-images/apple-container/linux-aarch64/1d91885de27a20805af0d1b99602ace066f0514983613e391ee1f73ac8e7c2e9/current.json"
+}

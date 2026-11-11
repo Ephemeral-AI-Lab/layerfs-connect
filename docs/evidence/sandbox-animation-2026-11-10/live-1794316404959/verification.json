@@ -1,0 +1,47 @@
+{
+  "checkedAt": "2026-11-10T13:14:23.299Z",
+  "id": "a86a0663-cf4e-41d6-ba9b-3f4b9a71f3ae",
+  "project": "sim-design-10b80046b2e95ddb8051/design-10b80046b2e95ddb8051",
+  "chatId": "53e4cea8-c1e2-44e0-9e00-6812b4745a54",
+  "browserUrl": "http://127.0.0.1:1025/#/chat/53e4cea8-c1e2-44e0-9e00-6812b4745a54/subagents/a01-worker/sandboxes",
+  "configuration": {
+    "project": "design",
+    "machine": "native",
+    "cycles": 1,
+    "mixed": true
+  },
+  "simulation": {
+    "state": "completed",
+    "plannedCommands": 553,
+    "capturedCLI": 633,
+    "agentBashSteps": 550,
+    "workspaceSessions": 48,
+    "lifecycleAdmissionVerified": true
+  },
+  "animation": {
+    "samples": 281,
+    "visibleDuringRealCalls": 76,
+    "overlappingMethods": [
+      "workspace.exec",
+      "workspace.commit",
+      "workspace.mount",
+      "workspace.unmount"
+    ],
+    "observedPackets": 0,
+    "observedAgentNodes": 0,
+    "observedWires": 0,
+    "observedWorkspaceNodes": 0,
+    "playingValues": [
+      "false"
+    ],
+    "reducedMotion": [
+      false
+    ],
+    "allSamplesVisible": true,
+    "working": false
+  },
+  "exceptions": [],
+  "consoleErrors": [],
+  "sourceBatch": "/Users/yifanxu/.layerfs-connect-demo/studio/animation-proof-a86a0663-cf4e-41d6-ba9b-3f4b9a71f3ae.json",
+  "applicationChanges": false
+}

@@ -194,48 +194,48 @@ not create a sandbox, and automatic model review does not enforce filesystem
 or network isolation. Project commands use their LayerFS container workspace
 under all three modes; local-folder commands retain direct host execution.
 
+## Project simulations (`simulations/`)
+
+`POST /api/simulations` accepts `{ project, machine, mixed }`, where `project` is
+a preset template name. It prepares an independent run package and returns its
+`id`, `state`, newly tagged `project` key and, after setup, first saved `sessionId`.
+`GET /api/simulations` lists runs; `GET /api/simulations/:id` reads one run;
+`POST /api/simulations/:id/stop` stops admission and drains its active tasks.
+The existing event stream forwards `{ type: 'simulation', run }` progress updates.
+
+Each run owns a fresh SQLite Store and project. Shared CLI admission bounds
+concurrent runs while every run retains independent branches, workspace handles,
+receipts and Pi sessions. A private scripted provider drives actual Pi tools for
+explicit Bash execution, delegation and collection of confirmed child results.
+Saved subagents are reused inside their parent conversation. Many execution steps
+share a conversation turn; each main or child session has at most ten turns.
+No model network is used.
+
+`agents/simulation-bridge.js` publishes those Pi transcripts into the normal
+project-bound chat records and child APIs. Simulation chats reject ordinary model
+messages and history mutations; their Stop controls address the owning run.
+Restart preserves interrupted evidence and never automatically replays mutations.
+See [the specification](../docs/specs/simulation.md) for the generated package and
+verification contract.
+
 ## Where LayerFS comes from
 
-Connect links the one LayerFS 2.0 package, `layerfs`
-(`link:../layerfs-v2-merge/api/node`, LayerFS `layerfs_v2_0_0` at `d046e7e2c1`, product as `5d13a1f62f`); the package finds its native addon
-through the link's real path. The host makes one client, `client({ home })`
-([`layerfs.js`](layerfs.js)); every call names its project, `<store>/<project>`. Agents' shells
-run the native `layerfs` command (the linked checkout's `target/debug/layerfs`, or
-`LAYERFS_CONNECT_CLI`). See [the integration spec](../docs/layerfs-2.0-integration.md).
+Connect uses one explicit pinned LayerFS CLI and matching daemon, discovered through
+JSON version/help. Set `LAYERFS_CONNECT_CLI` to an absolute executable path;
+packaged builds use `runtime/bin/layerfs`. `LAYERFS_CONNECT_DAEMON` overrides
+the adjacent daemon. There is no PATH search or simulated backend.
 
-## Real and simulated LayerFS ([`sim/`](sim/))
+Each call runs once against the selected home. Missing or incompatible binaries
+fail startup. `LAYERFS_CONNECT_MODE` is retired: unset it; legacy `real` is accepted
+for compatibility, and any other value is rejected before a real home is opened.
+Saved mode preferences are ignored. Old simulation state is never migrated.
 
-The host runs in one of two modes, `LAYERFS_CONNECT_MODE` (`real`, the default, or `sim`), read once
-as [`layerfs.js`](layerfs.js) loads: `real` loads the linked `layerfs` package, `sim` the simulator
-in `sim/`, which exports the same `client`, `close`, `doctor` and `table`. Nothing above
-`layerfs.js` knows which one answers.
-
-- **The simulator** (`sim/world.js`) keeps one world per home in `<home>/sim-world.json`: machines,
-  Stores, buckets, projects with their Layers, Branches, Commits and files, and Sandboxes. Its
-  answers and refusals have the shapes and codes LayerFS 2.0.0 gives (recorded from the real
-  library); states are the SDK's words and work in flight shows as an `op` with its phase
-  (`machine.start · boot`, `store.push · send` with bytes). It takes arguments as the real package
-  does, from the real call table saved in `sim/table.json` (`node tools/sim-table.mjs` writes it
-  again; a test fails when it drifts). A call it does not cover is refused `Unsupported` naming it:
-  for now `workspace.exec`, `file.blame`, `file.diff` and `file.apply`, so agent chats on a project
-  cannot run commands in sim mode.
-- **Starting worlds** (`sim/seed.js`): `mac` (Docker, two Lima VMs, Stores on native and a VM, a
-  PostgreSQL Store, a backup, a running Sandbox), `empty` and `trouble` (the states that need the
-  person). A missing world file starts from `LAYERFS_SIM_PRESET` (default `mac`);
-  `POST /api/sim/reset { preset }` replaces the world. `LAYERFS_SIM_SPEED` scales every simulated
-  delay (`0` for tests).
-- **Separate state**: sim mode's `<state>` defaults to `~/.layerfs-connect-sim`, and a real home
-  (one with `layerfs.json`) is refused in sim mode, so a simulated call never reaches a real Store.
-  Sim mode records no native daemon, finds no CLI, and turns scenario runs and scenario chats off.
-- **The switch**: Electron starts the host with the saved mode (`<userData>/connect-mode.json`;
-  `LAYERFS_CONNECT_MODE` at launch overrides it, as `pnpm dev:sim` does). The LayerFS menu
-  (⌥⌘1 / ⌥⌘2) and the sidebar's mode chip (`docs/ui/shell.md`) switch: the host is stopped,
-  started in the other mode, and each window is replaced by one on the new host.
+Browser preview (`pnpm --dir desktop web`) uses these same real calls with a
+private temporary state root, or `LFS_STATE`. It contains no seeded example data.
 
 ## Deployment ([`config.js`](config.js))
 
-- `<state>`: `LAYERFS_CONNECT_STATE`, else `~/.layerfs-connect` (`~/.layerfs-connect-sim` in sim
-  mode): runs, `host.json`, agent state.
+- `<state>`: `LAYERFS_CONNECT_STATE`, else `~/.layerfs-connect`: runs, `host.json`, agent state.
 - `<state>/home-2`: the LayerFS 2.0 home (`LAYERFS_HOME`), private. The 1.1.0 `<state>/home` is
   left as it is; a non-empty home folder without a 2.0 `layerfs.json` is refused.
 - Every machine, Store, bucket and image is a record in the home; Connect keeps no LayerFS
@@ -268,8 +268,7 @@ host/
     history.js         immutable turn checkpoints and Pi session copies without replaying old work
   config.js            deployment (above)
   machines.js          Compute's machines (LayerFS 2.0): the view and its calls (below)
-  layerfs.js           the one LayerFS client (real or simulated), paging, the native daemon record
-  sim/                 the simulated LayerFS: index.js (the package's exports), world.js, seed.js, table.json
+  layerfs.js           the one LayerFS client, paging, the native daemon record
   seed.js              writes a seed.json fixture out as a folder
   checks/              final checks of a finished run (final.json …)
   parse/               the call parser: splits each step into classified segments
@@ -327,13 +326,14 @@ the layout 2 home's conversion refusal (`InUse` whose `related` items carry
 | `POST /api/machines/:name/start` | `machine.start`: waits until its worker answers |
 | `POST /api/machines/:name/stop` | `machine.stop`: `InUse` (409) while Sandboxes run on it, `related` naming them |
 | `DELETE /api/machines/:name` | removes a VM (an ssh machine a home already had is disconnected); `InUse` (409) while it holds Stores or running Sandboxes |
+| `GET /api/machines/:name/images` | read-only `machine.images`: selected-machine archive inventory and effective default digest; never starts workers or pulls images |
 | `POST /api/machines/:name/update` | a built-in's `{ image, docker, wsl }` or a VM's `{ cpus, memory }` |
 | `POST /api/machines/:name/stores` | `{ store }`: puts that sqlite Store on this machine as a Storage job: a push from native, a pull to native, or a pull then a push between two machines |
 | `GET /api/projects` | `ProjectSummary[]` (each with its Store's `state` and `op`) |
 | `POST /api/projects` | `{ name, store, source? }` starts a real Init into the existing Store `store` (a sqlite Store on any machine, through its worker, or a PostgreSQL Store) and returns `ProjectInitJob`; omit `source` for an empty project, or give an existing absolute folder to import. A Store that is down or busy refuses it |
 | `GET /api/project-inits/:id` | `ProjectInitJob`: Init's `scan`, `files`, `tree`, `publish`, `seal`, then `done` or `failed`, with live counts, a terminal error, and `ProjectSummary` on success. Unknown or expired jobs return 404. Polling never restarts a job. |
 | `GET /api/projects/:name` | `ProjectState` from the Store alone (Branches, Sandbox records, last Commit, Commit count, Store file and size); asks no Sandbox daemon. While the Store refuses Store calls (`Busy`, `Unresolved`, or `Unavailable` for a stopped machine) it answers from the home's records: the project, its Sandboxes, the Store's `storeState`, `storeOp`, `storeDown` and the `refusal`, with no Branches |
-| `POST /api/projects/:name/sandboxes` | `{ name, image?, machine? }`: `sandbox.create`. A sqlite project's Sandbox goes on its Store's machine; a PostgreSQL project's on `machine` (default native), which must have `supports.postgresql_sandbox` |
+| `POST /api/projects/:name/sandboxes` | `{ name, image?, machine? }`: `sandbox.create`; image is an exact digest or `{archive: absolute caller-local path, digest?}`. A sqlite project's Sandbox goes on its Store's machine; a PostgreSQL project's on `machine` (default native), which must have `supports.postgresql_sandbox` |
 | `GET /api/projects/:name/sandboxes` | `SandboxInfo[]` (`state`, `op`, `backend`, `route`) with each one's Workspaces (`sandbox.get`; each with `name` and `ws`); a refused read keeps the SDK's refusal in `refusal` |
 | `GET /api/sandboxes/:name` | one Sandbox with its Workspaces (`sandbox.get`) |
 | `POST /api/sandboxes/:name/workspaces` | `{ branch, fork?, name? }`: `workspace.mount` of a side Branch (main is refused, owner D14); `fork: true` forks it from main first; `name` names the Workspace (`<sandbox>:<name>`) |
@@ -370,8 +370,7 @@ environment for it.
   and `machine.status()` of the machines that run or hold or lost an operation (free disk, `op`).
   None of it starts a machine. `GET /api/platforms` answers `machine.platforms()` alone.
 - SSH hosts and Firecracker are turned off in Connect (`OFF` in machines.js): `machine.platforms()`
-  rows for them are left out, and so is lima's `nested` option (only Firecracker used it). The
-  simulator keeps them, as the real library has them.
+  rows for them are left out, and so is lima's `nested` option (only Firecracker used it).
 - `POST /api/machines` creates a VM (`machine.create`), sending only the options the platform
   declares; `DELETE /api/machines/<name>` removes it (`InUse` while it holds Stores or Sandboxes); `POST /api/machines/<name>/update`
   sets a built-in's image or a VM's size; `POST /api/machines/<name>/start|stop` power it.
@@ -529,26 +528,6 @@ exactly one segment; neighbouring lines of the same kind and call merge. A
 `local`. `workspace exec`'s inner command becomes the segment's `detail`.
 Non-bash tools are one `form: 'tool'` segment: subagent tools are
 `subagent`, job tools `job`.
-
-### Rich web-preview fixtures
-
-With `pnpm --dir desktop web` running, open its browser console and import
-`desktop/tools/populate-preview.mjs` through Vite's `/@fs` path (replace
-`<checkout>` with the absolute checkout path):
-
-```js
-const { populatePreview } = await import('/@fs<checkout>/desktop/tools/populate-preview.mjs')
-await populatePreview()
-```
-
-This adds five simulated machines, seven Stores, eighteen projects and twenty-nine
-Sandboxes with varied Workspace counts. SQLite Stores stay on their assigned
-machine; the PostgreSQL projects span native, Docker and the build VM. Workspace
-branches are forked from main. Projects start empty. Existing resources are kept,
-and repeating the command fills missing fixtures. Both `/api/sim` and the host's
-simulated status are checked before writing. No real VM, container or database
-is created. Fixtures persist for the current preview's temporary state directory;
-resetting the simulated world removes them.
 
 ### Paged desktop History
 

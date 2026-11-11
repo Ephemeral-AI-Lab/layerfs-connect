@@ -1,0 +1,73 @@
+{
+  "root": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/lfs-first-lima-svr28tzf",
+  "home": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/lfs-first-lima-svr28tzf/home",
+  "name": "first-use",
+  "cli": "/Users/yifanxu/Ephemeral-AI-Lab/layerfs-machine-start/target/debug/layerfs",
+  "bundle": "/Users/yifanxu/Ephemeral-AI-Lab/layerfs-connect/.cache/layerfs-bundles/833d04cf44e8e747929d50ab1170a48260d9381c/2.0.0/linux-aarch64",
+  "os_image": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/lfs-download-speed-2vbbk3t6/lima/ubuntu-24.04-server-cloudimg-arm64.img",
+  "os_sha256": "50e24e1fb79e89116e939d90aa7738f7af48c442fa1bc2510131e0b39c50348e",
+  "cache": "new home/cache/guest, newly downloaded stock OS; providers and Linux bundle already installed; uncontrolled host page cache",
+  "status": "PASS",
+  "steps": [
+    {
+      "args": [
+        "machine",
+        "create",
+        "first-use",
+        "lima",
+        "--cpus",
+        "2",
+        "--memory",
+        "4G",
+        "--disk",
+        "4G",
+        "--os-image",
+        "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/lfs-download-speed-2vbbk3t6/lima/ubuntu-24.04-server-cloudimg-arm64.img",
+        "--progress"
+      ],
+      "wall_ns": 30187692459,
+      "exit": 0,
+      "stderr": "{\"progress\":{\"stage\":\"bundle-validation\",\"state\":\"started\"}}\n{\"progress\":{\"stage\":\"bundle-validation\",\"state\":\"completed\",\"elapsed_ms\":0}}\n{\"progress\":{\"phase\":\"create\",\"machine\":\"first-use\"}}\n{\"progress\":{\"stage\":\"provider-and-worker\",\"state\":\"started\"}}\n{\"progress\":{\"stage\":\"provider-and-worker\",\"state\":\"completed\",\"elapsed_ms\":30133}}\n{\"progress\":{\"stage\":\"worker-compatibility\",\"state\":\"started\"}}\n{\"progress\":{\"stage\":\"worker-compatibility\",\"state\":\"completed\",\"elapsed_ms\":3}}\n"
+    },
+    {
+      "args": [
+        "machine",
+        "stop",
+        "first-use"
+      ],
+      "wall_ns": 3221212708,
+      "exit": 0,
+      "stderr": ""
+    },
+    {
+      "args": [
+        "machine",
+        "remove",
+        "first-use"
+      ],
+      "wall_ns": 497360750,
+      "exit": 0,
+      "stderr": ""
+    }
+  ],
+  "ready": {
+    "name": "first-use",
+    "platform": "lima",
+    "backend": "namespaces",
+    "supports": {
+      "sqlite": true,
+      "postgresql_sandbox": true,
+      "reason": null
+    },
+    "state": "running",
+    "cpus": 2,
+    "memory": 4294967296,
+    "disk": 4294967296,
+    "stores": [],
+    "sandboxes": [],
+    "os_image": "/var/folders/s4/xpkmz7wn6yq97w1ls_4f_dfc0000gn/T/lfs-download-speed-2vbbk3t6/lima/ubuntu-24.04-server-cloudimg-arm64.img",
+    "error": null
+  },
+  "download_plus_create_ns": 63004687042,
+  "cleaned": true
+}

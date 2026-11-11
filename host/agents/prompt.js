@@ -1,4 +1,13 @@
-export function connectPrompt({ cwd, project, workspace }, tools = ['bash', 'subagent', 'bg_wait', 'subagent_supervisor']) {
+/** A container/VM Sandbox chat: bash runs on this host and drives the Workspace through the LayerFS CLI. */
+export function hostShellSection(branch) {
+  return `## LayerFS Workspace through the CLI
+- \`bash\` runs on this host in a scratch folder, not inside the Workspace. Your project's Workspace is mounted in a Linux Sandbox on another machine: its handle is \`$LAYERFS_CONNECT_WS\`, on branch ${JSON.stringify(branch)} of \`$LAYERFS_CONNECT_PROJECT\`.
+- Run commands inside the Workspace with the LayerFS CLI: \`layerfs workspace exec "$LAYERFS_CONNECT_WS" '<command>' --stream\` (it starts in the Workspace root; quote the command once). Read, search and edit files there the same way, e.g. \`layerfs workspace exec "$LAYERFS_CONNECT_WS" 'rg -n foo src' --stream\`.
+- Saved history is available directly: \`layerfs file read "$LAYERFS_CONNECT_PROJECT" ${JSON.stringify(branch)} /path\`, \`layerfs branch commits "$LAYERFS_CONNECT_PROJECT" ${JSON.stringify(branch)}\`.
+- Connect saves the Workspace to ${JSON.stringify(branch)} after every \`bash\` call and records a restore point before each user message. Do not unmount the Workspace or close its Sandbox; never write \`connect.session.*\` branches.`
+}
+
+export function connectPrompt({ cwd, project, workspace, hostShell = false }, tools = ['bash', 'subagent', 'bg_wait', 'subagent_supervisor']) {
   const delegation = tools.filter((tool) => tool !== 'bash')
   const branch = workspace?.branch ?? 'session branch'
   const mountPath = workspace?.path ? ` mounted at ${JSON.stringify(workspace.path)}` : ''
@@ -12,8 +21,10 @@ export function connectPrompt({ cwd, project, workspace }, tools = ['bash', 'sub
 - Inspect and search with fast native tools: \`rg -n\` for content search, \`rg --files\` or \`find\` for file discovery, \`ls -la\` or \`stat\` for entries and permissions, \`sed -n '<start>,<end>p'\` or \`head\`/\`tail\` for bounded file slices, and \`git status\`/\`git diff\` when Git metadata is present.
 - Create and edit files cleanly: use quoted heredocs (\`cat <<'EOF' > path\`) for new files or full rewrites, and \`python3 -c\`, \`node -e\`, or \`patch\` for exact UTF-8 multi-line edits. Use \`mkdir -p\`, \`mv\`, \`cp\`, \`rm\`, and \`chmod\` for tree operations.
 - Batch related reads, searches, or cohesive file edits into a single \`bash\` call rather than issuing many tiny one-line commands.
-- Stateless shell boundary: every \`bash\` call starts in the workspace root (${project ? (workspace?.path ? JSON.stringify(workspace.path) : 'the mounted LayerFS Workspace root') : JSON.stringify(cwd)}) in a fresh shell. \`cd\`, shell variables, and functions do not persist across calls; use \`cd <subdir> && ...\` within a command and prefer workspace-relative paths so mount paths are never hardcoded into project files.`,
-    project
+- Stateless shell boundary: every \`bash\` call starts in ${hostShell ? 'a scratch folder on this host (reach the Workspace with \`layerfs workspace exec\`)' : `the workspace root (${project ? (workspace?.path ? JSON.stringify(workspace.path) : 'the mounted LayerFS Workspace root') : JSON.stringify(cwd)})`} in a fresh shell. \`cd\`, shell variables, and functions do not persist across calls; use \`cd <subdir> && ...\` within a command and prefer workspace-relative paths so mount paths are never hardcoded into project files.`,
+    project && hostShell
+      ? hostShellSection(branch)
+      : project
       ? `## LayerFS Workspace & Commit Semantics
 - Isolated mounted Workspace: every \`bash\` call—including subagent calls—executes inside this conversation's mounted LayerFS FUSE Workspace in a Linux Sandbox container. Pi's host control directory and the project's original import folder are not your execution filesystem.
 - Shared serialized execution: root and child agents share this single Workspace on branch ${JSON.stringify(branch)}. Connect serializes \`bash\` calls so each command's file mutations are captured deterministically.

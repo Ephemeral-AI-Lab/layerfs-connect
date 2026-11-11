@@ -4,12 +4,15 @@
 // pull, backup and restore routes to `storage` (storage.js), agent routes to the AgentManager
 // (agents/routes.js), and demo and run routes to `runs` (the RunManager of
 // runs/), which may be missing; then those routes answer 503 with the reason
-// it did not load. In sim mode `sim` answers /api/sim (the simulated world's
-// preset and the presets it can start from) and /api/sim/reset.
+// it did not load.
 import { createHash, randomBytes, timingSafeEqual } from 'node:crypto'
 import { createServer } from 'node:http'
 import { stringify } from './cli/json.js'
 import { agentRoute } from './agents/routes.js'
+import { withActivity, requestAction } from './activity/context.js'
+import { sanitizer } from './activity/redact.js'
+import { activityRoute } from './activity/routes.js'
+import { guardFixtureRequest } from './demo-presets/admission.js'
 
 /** A comment line on every event stream this often, so idle proxies and sockets stay open. */
 export const HEARTBEAT_MS = 15_000
@@ -59,6 +62,19 @@ export const newToken = () => randomBytes(32).toString('hex')
 /** An error the routes throw: answered as { code, message } with `status`. */
 export const httpError = (status, code, message) => Object.assign(new Error(message), { status, code })
 
+/** No CLI probes: admission must account for jobs between their child processes. */
+export function runtimeBusy({ projects, storage, doctor, simulations = null, agents = () => null, runs = () => null }) {
+  const reasons = [], agent = agents(), engine = runs()
+  if ([...(projects?.inits?.values() ?? [])].some(job => !job.ended) || projects?.creations?.size) reasons.push('project creation')
+  if ([...(storage?.jobs?.values() ?? [])].some(job => !job.ended)) reasons.push('storage job')
+  if ([...(doctor?.jobs?.values() ?? [])].some(job => ['queued', 'running'].includes(job.state))) reasons.push('Doctor job')
+  if ([...(agent?.records?.values() ?? [])].some(record => record.state === 'running' || record.needsStop || record.workspace?.process || record.children?.some(c => ['running', 'pending', 'queued', 'paused'].includes(c.state)))) reasons.push('chat or workspace execution')
+  if (['workspaceExecutions', 'workspacePreparations', 'creatingProjects', 'historyOperations', 'controlMutations', 'scenarioSetups', 'stopping'].some(key => agent?.[key]?.size)) reasons.push('agent operation')
+  if (engine?.starting || engine?.queue?.length || [...(engine?.records?.values() ?? [])].some(record => ['queued', 'starting', 'running'].includes(record.state))) reasons.push('scenario run')
+  if (simulations?.busy?.()) reasons.push('simulation')
+  return reasons
+}
+
 // Hashing both sides gives equal lengths, so the comparison takes the same time whatever was sent
 const digest = (text) => createHash('sha256').update(String(text)).digest()
 const same = (a, b) => timingSafeEqual(digest(a), digest(b))
@@ -66,7 +82,7 @@ const same = (a, b) => timingSafeEqual(digest(a), digest(b))
 const CORS = {
   'access-control-allow-origin': '*',
   'access-control-allow-methods': 'GET, POST, DELETE, OPTIONS',
-  'access-control-allow-headers': 'Authorization, Content-Type',
+  'access-control-allow-headers': 'Authorization, Content-Type, X-LFS-Action',
   'access-control-max-age': '600',
 }
 
@@ -106,13 +122,13 @@ export function errorAnswer(error) {
  * @param {() => string | null} [deps.runsError] why the RunManager is missing
  * @param {object} [deps.storage] storage.js's Storage: Stores, buckets, push/pull/move, backup/restore, PostgreSQL, doctor (absent: those routes 404)
  * @param {object} [deps.machines] machines.js's Machines: Compute's machines (absent: those routes 404)
- * @param {object} [deps.sim] in sim mode, the simulated world: { info(), reset(preset) } (absent: those routes 404)
  * @param {number} [deps.heartbeatMs]
  * @param {(line: string) => void} [deps.log]
  */
 export function createHandler(deps) {
-  const { token, projects, storage = null, machines = null, doctor = null, sim = null, runs = () => null, agents = () => null, runsError = () => null, heartbeatMs = HEARTBEAT_MS, log = (line) => process.stderr.write(`${line}\n`) } = deps
+  const { token, projects, storage = null, machines = null, doctor = null, runs = () => null, agents = () => null, runsError = () => null, heartbeatMs = HEARTBEAT_MS, log = (line) => process.stderr.write(`${line}\n`) } = deps
   const streams = new Set()
+  const activity = deps.activity ?? null
 
   /** The RunManager, or a 503 naming why it is not there. */
   const engine = () => {
@@ -128,6 +144,18 @@ export function createHandler(deps) {
   /** method + path segments -> the answer, or undefined when no route matches. */
   async function route(method, parts, query, body) {
     const [api, group, id, sub, ...rest] = parts
+    if (api === 'api' && group === 'demo-runtime' && method === 'GET') return { busy: runtimeBusy(deps) }
+    if (api === 'api' && group === 'demo-presets' && deps.presets) return deps.presets.route(method, parts.slice(2), body, query)
+    if (api === 'api' && group === 'cli-activity' && activity) return activityRoute(activity, method, parts.slice(2), query)
+    if (api === 'api' && group === 'simulations') {
+      const manager = deps.simulations
+      if (!manager) throw httpError(503, 'simulation-unavailable', 'The simulation runtime has not started.')
+      if (!id && !sub && method === 'POST') return manager.launch(body ?? {})
+      if (!id && !sub && method === 'GET') return manager.list()
+      if (id && !sub && method === 'GET') return manager.get(id)
+      if (id && sub === 'stop' && !rest.length && method === 'POST') return manager.stop(id)
+      return undefined
+    }
     if (api === 'api' && group === 'agent') {
       const manager = agents()
       if (!manager) throw httpError(503, 'agent-unavailable', 'The agent runtime has not started.')
@@ -149,6 +177,8 @@ export function createHandler(deps) {
         // a PostgreSQL database: { name, url, password (a reference), synchronousCommit? }
         if (id === 'postgresql' && !sub && method === 'POST') return storage.connectPostgresql(body ?? {})
         if (id && sub === 'stats' && method === 'GET') return projects.storeStats(id)
+        if (id && sub === 'observations' && method === 'GET') return projects.storeObservations(id)
+        if (id && sub === 'storage-report' && method === 'GET') return projects.storeStorageReport(id, query)
         if (id && !sub && method === 'DELETE') return storage.removeStore(id, { confirm: query.get('confirm') })
         if (id && sub === 'disconnect' && method === 'POST') return storage.disconnectStore(id)
         // a sqlite Store on native to a machine: { machine }
@@ -182,6 +212,7 @@ export function createHandler(deps) {
     if (machines && group === 'machines') {
       if (!id && !sub && method === 'GET') return machines.view()
       if (id && sub === 'inspect' && method === 'GET') return machines.inspect(id)
+      if (id && sub === 'images' && method === 'GET') return machines.images(id)
       if (id && sub === 'start' && method === 'POST') return machines.start(id)
       if (id && sub === 'stop' && method === 'POST') return machines.stop(id)
       if (!id && !sub && method === 'POST') return machines.create(body)
@@ -191,9 +222,6 @@ export function createHandler(deps) {
       if (id && sub === 'stores' && method === 'POST') return machines.moveStore(body?.store, id)
     }
     if (group === 'status' && !id && method === 'GET') return projects.status()
-    // the simulated world (sim mode only): its preset, and a fresh copy of one
-    if (sim && group === 'sim' && !id && method === 'GET') return sim.info()
-    if (sim && group === 'sim' && id === 'reset' && !sub && method === 'POST') return sim.reset(body?.preset)
     // `id` is a project key, `<store>/<project>`, sent as one encoded segment
     if (group === 'projects') {
       if (!id) {
@@ -213,6 +241,8 @@ export function createHandler(deps) {
       if (method !== 'GET') return undefined
       const branch = query.get('branch') ?? 'main'
       if (sub === 'history') return projects.history(id, query)
+      if (sub === 'storage-history') return projects.storageHistory(id, query)
+      if (sub === 'storage-report') return projects.storageReport(id, query)
       if (sub === 'branches') return projects.branches(id, query)
       if (sub === 'file-query') return projects.fileQuery(id, query)
       if (sub === 'stats') return projects.projectStats(id, query)
@@ -267,24 +297,34 @@ export function createHandler(deps) {
     res.write(': connected\n\n')
     const manager = runs()
     const agentManager = agents()
-    const forward = (event) => res.write(`data: ${stringify(event)}\n\n`)
+    let closed = false
+    const forward = (event) => { if (!closed && !res.writableEnded && !res.destroyed) res.write(`data: ${stringify(event)}\n\n`) }
     manager?.on('event', forward)
     agentManager?.on('event', forward)
     storage?.on?.('event', forward)
     doctor?.on?.('event', forward)
-    const beat = setInterval(() => res.write(': heartbeat\n\n'), heartbeatMs)
-    const stream = { res, close: () => res.end() }
+    activity?.on('event', forward)
+    deps.presets?.on('event', forward)
+    deps.simulations?.on('event', forward)
+    const beat = setInterval(() => { if (!closed && !res.writableEnded && !res.destroyed) res.write(': heartbeat\n\n') }, heartbeatMs)
+    const stream = { res, close: () => { done(); res.end() } }
     streams.add(stream)
     const done = () => {
+      if (closed) return
+      closed = true
       clearInterval(beat)
       manager?.off('event', forward)
       agentManager?.off('event', forward)
       storage?.off?.('event', forward)
       doctor?.off?.('event', forward)
+      activity?.off('event', forward)
+      deps.presets?.off('event', forward)
+      deps.simulations?.off('event', forward)
       streams.delete(stream)
     }
     req.on('close', done)
     res.on('close', done)
+    res.on('error', done)
   }
 
   async function handle(req, res) {
@@ -309,10 +349,28 @@ export function createHandler(deps) {
     const header = /^Bearer (.+)$/.exec(req.headers.authorization ?? '')?.[1]
     const given = isEvents ? (url.searchParams.get('token') ?? header) : header
     if (!given || !same(given, token)) return send(res, 401, { code: 'unauthorized', message: 'a valid bearer token is required' })
+    if (deps.readOnly && method !== 'GET') return send(res, 409, { code: 'ConnectBusy', message: 'The preset is running. Changes are available when it finishes; you can keep browsing its pages.' })
+    if (activity?.state) {
+      let metadata
+      try { metadata = JSON.parse(decodeURIComponent(String(req.headers['x-lfs-action'] ?? ''))) } catch { /* Optional correlation. */ }
+      try { guardFixtureRequest(activity.state, method, url.pathname, metadata?.id) }
+      catch (e) { const answer = errorAnswer(e); return send(res, answer.status, answer.body) }
+    }
+    if (deps.presets && parts[1] !== 'demo-presets') {
+      if (!['GET', 'OPTIONS'].includes(method) && parts[1] !== 'cli-activity') {
+        deps.presets.mutations++
+        let released = false
+        const release = () => { if (!released) { released = true; deps.presets.mutations-- } }
+        res.once('finish', release); res.once('close', release)
+      }
+      try { if (await deps.presets.forward(req, res, url, send)) return }
+      catch (e) { const answer = errorAnswer(e); return send(res, answer.status, answer.body) }
+    }
     if (isEvents) {
       if (method !== 'GET') return send(res, 405, { code: 'method-not-allowed', message: `${method} ${url.pathname}` })
       return events(req, res)
     }
+    let trackedAction
     try {
       let body = {}
       if (method === 'POST') {
@@ -323,11 +381,22 @@ export function createHandler(deps) {
           catch { throw httpError(400, 'invalid-input', 'Invalid JSON request body.') }
         }
       }
-      const answer = await route(method, parts, url.searchParams, body)
+      let metadata
+      try { metadata = JSON.parse(decodeURIComponent(String(req.headers['x-lfs-action'] ?? ''))) } catch { /* Older clients have no action metadata. */ }
+      const action = requestAction(metadata, method, url.pathname)
+      // Activity queries do not log themselves or launch additional LayerFS calls.
+      const track = activity && !['cli-activity', 'demo-presets', 'demo-runtime'].includes(parts[1])
+      const scrub = sanitizer()
+      const safeAction = Object.fromEntries(Object.entries(action).map(([key, value]) => [key, typeof value === 'string' ? scrub.bounded(value, 200).text : value]))
+      if (track && safeAction.origin === 'user') activity.record(safeAction, 'action.received')
+      if (track) trackedAction = safeAction
+      const answer = await withActivity({ action: safeAction, state: activity?.state }, () => route(method, parts, url.searchParams, body))
+      if (track && safeAction.origin === 'user') activity.record(safeAction, 'action.finished', { status: answer === undefined ? 404 : 200 })
       if (answer === undefined) return send(res, 404, { code: 'not-found', message: `no route ${method} ${url.pathname}` })
       send(res, 200, answer)
     } catch (error) {
       const { status, body } = errorAnswer(error)
+      if (trackedAction) { activity.record(trackedAction, 'action.finished', { status, error: true, code: typeof error.code === 'string' ? error.code : 'Failed' }); body.activityId = trackedAction.id }
       if (status >= 500 && status !== 503) log(`${method} ${url.pathname}: ${error?.stack ?? body.message}`)
       if (!res.headersSent) send(res, status, body)
       else res.end()
@@ -337,6 +406,7 @@ export function createHandler(deps) {
   handle.closeStreams = () => {
     for (const stream of [...streams]) stream.close()
   }
+  deps.presets?.on('environment', handle.closeStreams)
   return handle
 }
 

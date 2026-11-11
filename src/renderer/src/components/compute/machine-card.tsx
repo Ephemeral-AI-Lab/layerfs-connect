@@ -19,7 +19,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input'
 import { BUILT_IN, downReason, gib, inUse, kindLabel, machineState, type Os, sizeOf, storesOn } from '@/data/compute'
-import type { MachineAction } from '@/data/compute-sim'
+import type { MachineAction } from '@/data/machine-actions'
 import { bytes, shortDigest } from '@/data/format'
 import { chatLive } from '@/host/use-chat-sessions'
 import { cn } from '@/lib/utils'

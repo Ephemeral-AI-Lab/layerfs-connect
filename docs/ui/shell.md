@@ -21,7 +21,6 @@ Opens from: app launch; the window shows one place at a time.
 | [n] | Component | file:line | one line |
 |---|---|---|---|
 | 1 | `AppSidebar` | App.tsx:186 | 260px; folds to width 0 |
-| 2 | `SimStrip` | mode-switch.tsx:36 | Sim mode only: 3px stripes over the top edge |
 | 3 | `WindowBar` | window-bar.tsx:15 | Drag handle clear of the window controls |
 | 4 | `main.tab-body` | App.tsx:190 | The page for the current place |
 | 5 | `TabErrorBoundary` | App.tsx:191 | Keyed per place; a throw replaces only the page |
@@ -51,7 +50,7 @@ Opens from: app launch; the window shows one place at a time.
 | [9] v <laptop> No project                 1   |
 |        Explain this folder                x   |
 +-[10] Footer ----------------------------------+
-| <gear> Settings     [11] (<flask> Simulated)  |
+| <gear> Settings                            |
 +-----------------------------------------------+
 
 [6] hovered or focused:  v <project> api  shop         [<open>] [+]
@@ -69,7 +68,6 @@ Opens from: app launch; the window shows one place at a time.
 | 8 | `ShowAll` | app-sidebar.tsx:641 | After 5 chats; "Show all" + count / "Show fewer" |
 | 9 | No project group | app-sidebar.tsx:302 | Local-folder chats; + "New chat on a local folder" |
 | 10 | footer | app-sidebar.tsx:186 | Settings opens the dialog on its last section |
-| 11 | `ModeChip` | mode-switch.tsx:65 | "Simulated" (amber) or "Real"; opens the mode menu |
 
 Groups start open: the 3 newest, the open project's, the open chat's, any with a working chat.
 
@@ -95,71 +93,6 @@ Chats error     Could not load chats. [Retry]             app-sidebar.tsx:260
 ```
 
 ## Menus and dialogs
-
-### Mode menu (from the chip, opens upward)
-
-```text
-+-[1] ----------------------------------------------+
-| LayerFS                                           |
-| ( ) Real LayerFS                       Opt-Cmd-1  |
-|     Your LayerFS home: this Mac, Docker, your VMs |
-|     and Stores.                                   |
-| (o) Simulated LayerFS                  Opt-Cmd-2  |
-|     Sample machines, Stores and projects. Nothing |
-|     reaches your real home.                       |
-+-[2] ----------------------------------------------+
-| Start the simulated world again                   |
-| <reset> This Mac - started from                   |
-|         Docker, two Lima VMs, Stores on native... |
-| <reset> Fresh home                                |
-|         native and Docker only: no Stores or ...  |
-| <reset> Needs attention                           |
-|         a failed VM with its Store down, an ...   |
-+-[3] ----------------------------------------------+
-| Switching needs the Connect app.                  |
-+---------------------------------------------------+
-```
-
-| [n] | Component | file:line | one line |
-|---|---|---|---|
-| 1 | `ModeItem` radios | mode-switch.tsx:79 | Other mode opens Switch; off without `setMode` |
-| 2 | presets | mode-switch.tsx:83 | Sim mode only (GET /api/sim); each opens Reset |
-| 3 | no-switch line | mode-switch.tsx:101 | Only without `connect.setMode` |
-
-### Switch dialog
-
-```text
-+-[1] Switch to Real LayerFS? ------------------------------ x -+
-| Connect restarts on your real LayerFS home. The simulated     |
-| world is kept for the next time you switch.                   |
-| [2] 2 chats are working. They stop; you can continue them     |
-|     after switching back.                                     |
-| [3] <error>                                                   |
-|                              [Cancel]  [Switch and restart]*  |
-+---------------------------------------------------------------+
-```
-
-| [n] | Component | file:line | one line |
-|---|---|---|---|
-| 1 | `SwitchDialog` | mode-switch.tsx:130 | Busy: "Restarting...", no x; to sim: its own text |
-| 2 | working note | mode-switch.tsx:160 | Live chats; "1 chat is working. It stops; ..." |
-| 3 | error | mode-switch.tsx:165 | `setMode` failed; buttons come back |
-
-### Reset dialog
-
-```text
-+-[1] Start the simulated world again? --------------------- x -+
-| Every machine, Store, project and Sandbox in the simulated    |
-| world is replaced by the "This Mac" sample. Your real LayerFS |
-| home is not touched.                                          |
-| <error>                                                       |
-|                                     [Cancel]  [Start again]*  |
-+---------------------------------------------------------------+
-```
-
-| [n] | Component | file:line | one line |
-|---|---|---|---|
-| 1 | `ResetDialog` | mode-switch.tsx:180 | POST /api/sim/reset, reload; "Starting again..." |
 
 ### Delete chat dialog (a chat row's x)
 
@@ -272,7 +205,7 @@ Cross links      go.store    Store chips and links (project, machine, bucket car
 [1] One plain theme canvas across the window
  +-[2] Sidebar / thin divider---+-[3] Content--------------------+
  | quiet navigation and chats  | neutral raised composer           |
- | Settings + Real/Simulated   | opaque technical surfaces       |
+ | Settings   | opaque technical surfaces       |
  +-----------------------------+--------------------------------+
  [4] Menus and dialogs: opaque raised surface, neutral scrim
 ```
@@ -340,39 +273,58 @@ the full label remains available to assistive technology and on hover.
 The secondary sidebar also links Tools, Agents and Hooks to their Pi configuration panels.
 
 
-## Current desktop host-mode footer (2026-11-09)
 
-Source: `desktop/src/renderer/src/components/shell/Sidebar.tsx`. This updates
-the current desktop footer; earlier root-renderer layouts above are historical.
+## Real-only host (2026-11-09)
 
 ```text
-+-- User card ----------------------------------+
-| [avatar] Ephemeral-AI       [Settings] [Help] |
-|          Real LayerFS                        |
-+----------------------------------------------+
-Sim host: Simulated LayerFS
+Sidebar footer
++--------------------------------------+
+| Ephemeral-AI                         |
+| LayerFS                   Settings ? |
++--------------------------------------+
 ```
 
-The subtitle uses `connectBridge.mode`, supplied by the Electron preload or the
-selected web-preview host. It has no placeholder version. This mode label identifies
-the selected backend; it does not claim connectivity, a successful operation or
-Doctor coverage. Window and navigation behavior are unchanged.
+Desktop and browser preview use real LayerFS. No mode picker, simulation strip,
+mode menu, or switch dialog exists. Preview uses a private home and requires
+`LAYERFS_CONNECT_CLI`; startup errors identify missing/incompatible configuration.
 
-## Web preview mode selector (2026-11-09)
+## Desktop CLI activity navigation
 
 ```text
-+-- Sidebar footer -----------------------------+
-| Preview mode           [Simulated / Real v]   |
-| [Starting selected mode… / startup error]      |
-| [avatar] Ephemeral-AI    [Settings] [Help]     |
-|          Real / Simulated LayerFS             |
-+----------------------------------------------+
+Workspace sidebar
++--------------------------------------+
+| New chat                             |
+| Machines                             |
+| Storage                              |
+| CLI Activity                         |
+| Presets                              |
++--------------------------------------+
 ```
 
-Browser preview only. The selector starts the chosen host, then reloads to the
-new-chat page with `?mode=sim` or `?mode=real`. Unsent text is discarded by the
-reload. While starting it is disabled; a startup error appears below it and the
-current host remains selected. Each mode has a separate state/home and scratch
-folder. Switching leaves the other host alive, so commands are not implicitly
-cancelled. A stopped host requires an explicit preview restart; no mutation is
-replayed. The mode label reports the selected backend, not its health.
+`desktop/src/renderer/src/components/shell/Sidebar.tsx` links CLI Activity to
+`#/activity`. The action list, input/output and filters are specified in
+[cli-activity.md](cli-activity.md).
+
+Presets opens `#/presets` ([presets.md](presets.md)). When a demo environment is
+active, `PresetEnvironment` appears above the page with its name and Return to
+original environment. All pages and CLI Activity use that same home. Switching
+reloads the renderer to discard cached data; active work blocks switching.
+
+### Running conversation ordering
+
+```text
+Chats
+  [1] Project B                 unchanged during progress
+       Conversation B   working
+  [2] Project A                 unchanged during progress
+       Conversation A   working
+```
+
+| Region | Behavior |
+| --- | --- |
+| [1]–[2] | Running conversations keep their activity position; tool updates change status without reordering conversations or project groups. |
+| New or completed chat | May update recent ordering once; repeated progress does not. |
+| Live metadata | Transcript-free updates are batched; unchanged chat rows retain their identity. |
+
+Concurrent background reads of the same API address share one request. Explicit
+Refresh and reads following a mutation retain a fresh subsequent read.
